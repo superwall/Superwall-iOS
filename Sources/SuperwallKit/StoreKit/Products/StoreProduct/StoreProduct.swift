@@ -337,6 +337,12 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   }
 
   public convenience init(
+    sk1Product: SK1Product
+  ) {
+    self.init(sk1Product: sk1Product, entitlements: [])
+  }
+
+  convenience init(
     sk1Product: SK1Product,
     entitlements: Set<Entitlement>
   ) {
@@ -345,6 +351,13 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   public convenience init(
+    sk2Product: SK2Product
+  ) {
+    self.init(sk2Product: sk2Product, entitlements: [])
+  }
+
+  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
+  convenience init(
     sk2Product: SK2Product,
     entitlements: Set<Entitlement>
   ) {

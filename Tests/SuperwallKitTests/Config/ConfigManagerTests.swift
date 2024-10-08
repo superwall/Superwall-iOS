@@ -18,14 +18,14 @@ final class ConfigManagerTests: XCTestCase {
       .setting(\.buildId, to: "123")
     network.configReturnValue = .success(newConfig)
 
-    let storage = StorageMock()
     let configManager = ConfigManager(
       options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
-      storage: storage,
+      storage: dependencyContainer.storage,
       network: network,
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
 

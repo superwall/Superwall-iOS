@@ -4,7 +4,7 @@ import Combine
 
 actor StoreKitManager {
   /// Retrieves products from storekit.
-  private let productsFetcher: ProductsFetcherSK1
+  private let productsManager: ProductsManager
 
   private(set) var productsById: [String: StoreProduct] = [:]
   private struct ProductProcessingResult {
@@ -13,8 +13,8 @@ actor StoreKitManager {
     let productItems: [Product]
   }
 
-  init(productsFetcher: ProductsFetcherSK1) {
-    self.productsFetcher = productsFetcher
+  init(productsManager: ProductsManager) {
+    self.productsManager = productsManager
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -54,7 +54,7 @@ actor StoreKitManager {
       productItems: paywall?.products ?? []
     )
 
-    let products = try await productsFetcher.products(
+    let products = try await productsManager.products(
       identifiers: processingResult.productIdsToLoad,
       forPaywall: paywall,
       placement: placement

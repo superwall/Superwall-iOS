@@ -1,14 +1,14 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 03/01/2023.
 //
 
-import UIKit
 import Combine
-import SystemConfiguration
 import StoreKit
+import SystemConfiguration
+import UIKit
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -147,8 +147,8 @@ protocol UserAttributesPlacementFactory {
 }
 
 protocol ReceiptFactory {
-  func loadPurchasedProducts() async -> Set<StoreProduct>?
-  func refreshReceipt() async
+  func loadPurchasedProducts() async
+  func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
 

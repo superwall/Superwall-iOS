@@ -11,9 +11,8 @@ import SuperwallKit
 struct SuperwallEntitlementsView: View {
   @StateObject private var entitlements = Superwall.shared.entitlements // ensures didSetActiveEntitlements is auto updating
   var text: String {
+    // These are published properties that auto-update
     if entitlements.didSetActiveEntitlements {
-
-      // Using `publishedActive` so that it's auto-updating.
       if entitlements.publishedActive.isEmpty {
         return "You do not have any active entitlements so the paywall will always show when tapping the button."
       } else {

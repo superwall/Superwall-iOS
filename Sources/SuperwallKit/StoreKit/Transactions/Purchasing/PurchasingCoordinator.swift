@@ -31,7 +31,9 @@ actor PurchasingCoordinator {
     self.completion = completion
   }
 
-  func beginPurchase(of productId: String) {
+  func beginPurchase(
+    of productId: String
+  ) {
     self.purchaseDate = Date()
     self.productId = productId
   }

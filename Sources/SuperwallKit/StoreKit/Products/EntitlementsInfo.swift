@@ -35,6 +35,16 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
           return
         }
         let oldValue = self.backingActive
+
+        if didSetActiveEntitlements == false {
+          DispatchQueue.main.async {
+            self.didSetActiveEntitlements = true
+            self.delegateAdapter.activeEntitlementsDidChange(to: newValue)
+          }
+        }
+        guard newValue != oldValue else {
+          return
+        }
         self.backingActive = newValue
 
         DispatchQueue.main.async {
@@ -58,14 +68,12 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     oldValue: Set<Entitlement>,
     newValue: Set<Entitlement>
   ) {
-    self.storage.save(newValue, forType: ActiveEntitlements.self)
+    storage.save(newValue, forType: ActiveEntitlements.self)
 
-    if newValue != oldValue {
-      Task {
-        await delegateAdapter.activeEntitlementsDidChange(to: newValue)
-        let event = InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: newValue)
-        await Superwall.shared.track(event)
-      }
+    Task {
+      await delegateAdapter.activeEntitlementsDidChange(to: newValue)
+      let event = InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: newValue)
+      await Superwall.shared.track(event)
     }
   }
 
@@ -125,9 +133,12 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
       if let activeEntitlements = storage.get(ActiveEntitlements.self) {
         backingActive = activeEntitlements
+
+        // First time
         DispatchQueue.main.async { [weak self] in
           self?.publishedActive = activeEntitlements
           self?.didSetActiveEntitlements = true
+          self?.delegateAdapter.activeEntitlementsDidChange(to: activeEntitlements)
         }
       } else {
         backingActive = []

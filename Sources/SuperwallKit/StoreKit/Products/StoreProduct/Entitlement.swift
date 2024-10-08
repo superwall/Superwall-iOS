@@ -34,6 +34,14 @@ public enum EntitlementType: Int, Codable, Sendable {
       )
     }
   }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    switch self {
+    case .serviceLevel:
+      try container.encode(CodingKeys.serviceLevel.rawValue)
+    }
+  }
 }
 
 /// An entitlement that represents a subscription tier in your app.
@@ -53,7 +61,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   public init(
     id: String,
-    type: EntitlementType
+    type: EntitlementType = .serviceLevel
   ) {
     self.id = id
     self.type = type

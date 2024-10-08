@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 28/02/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
 import StoreKit
@@ -280,7 +281,7 @@ public final class PaywallInfo: NSObject {
     var output: [String: Any] = [
       "paywall_id": databaseId,
       "paywall_name": name,
-      "presented_by_event_name": presentedByPlacementWithName as Any,
+      "presented_by_placement_name": presentedByPlacementWithName as Any,
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
@@ -312,12 +313,12 @@ public final class PaywallInfo: NSObject {
 extension PaywallInfo: Stubbable {
   static func stub() -> PaywallInfo {
     return PaywallInfo(
-      databaseId: "abc",
-      identifier: "1",
-      name: "Test",
-      cacheKey: "cacheKey",
-      buildId: "buildId",
-      url: URL(string: "https://www.google.com")!,
+      databaseId: "test",
+      identifier: "test",
+      name: "test",
+      cacheKey: "test",
+      buildId: "test",
+      url: URL(string: "https://superwall.com")!,
       products: [],
       productIds: [],
       fromPlacementData: nil,
@@ -340,7 +341,52 @@ extension PaywallInfo: Stubbable {
       computedPropertyRequests: [],
       surveys: [],
       presentation: .init(
-        style: .fullscreen,
+        style: .none,
+        delay: 0
+      )
+    )
+  }
+
+  /// Used when purchasing internally.
+  static func empty() -> PaywallInfo {
+    return PaywallInfo(
+      databaseId: "",
+      identifier: "",
+      name: "",
+      cacheKey: "",
+      buildId: "",
+      url: URL(string: "https://superwall.com")!,
+      products: [],
+      productIds: [],
+      fromPlacementData: nil,
+      responseLoadStartTime: nil,
+      responseLoadCompleteTime: nil,
+      responseLoadFailTime: nil,
+      webViewLoadStartTime: nil,
+      webViewLoadCompleteTime: nil,
+      webViewLoadFailTime: nil,
+      productsLoadStartTime: nil,
+      productsLoadFailTime: nil,
+      productsLoadCompleteTime: nil,
+      experiment: .init(
+        id: "0",
+        groupId: "0",
+        variant: .init(
+          id: "0",
+          type: .holdout,
+          paywallId: "0"
+        )
+      ),
+      paywalljsVersion: nil,
+      isFreeTrialAvailable: false,
+      presentationSourceType: "",
+      featureGatingBehavior: .nonGated,
+      closeReason: .none,
+      localNotifications: [],
+      computedPropertyRequests: [],
+      surveys: [],
+      presentation: .init(
+        style: .none,
         delay: 0
       )
     )

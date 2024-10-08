@@ -1,13 +1,13 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 22/06/2022.
 //
 // swiftlint:disable type_body_length function_body_length file_length
 
-import UIKit
 import Combine
+import UIKit
 
 class ConfigManager {
   /// A publisher that emits just once only when `config` is non-`nil`.
@@ -128,8 +128,6 @@ class ConfigManager {
 
   func fetchConfiguration() async {
     do {
-      _ = await factory.loadPurchasedProducts()
-
       let startAt = Date()
 
       // Retrieve cached config and determine if refresh is enabled
@@ -144,12 +142,14 @@ class ConfigManager {
           throw CancellationError()
         }
         if let cachedConfig = cachedConfig,
-          enableConfigRefresh {
+          enableConfigRefresh
+        {
           do {
-            let result = try await self.fetchWithTimeout({
-              try await self.network.getConfig(maxRetry: 0)
-            },
-            timeout: timeout)
+            let result = try await self.fetchWithTimeout(
+              {
+                try await self.network.getConfig(maxRetry: 0)
+              },
+              timeout: timeout)
             return (result, false)
           } catch {
             // Return the cached config and set isUsingCached to true
@@ -171,12 +171,14 @@ class ConfigManager {
         let cachedGeoInfo = self.storage.get(LatestGeoInfo.self)
 
         if let cachedGeoInfo = cachedGeoInfo,
-          enableConfigRefresh {
+          enableConfigRefresh
+        {
           do {
-            let geoInfo = try await self.fetchWithTimeout({
-              try await self.network.getGeoInfo(maxRetry: 0)
-            },
-            timeout: timeout)
+            let geoInfo = try await self.fetchWithTimeout(
+              {
+                try await self.network.getGeoInfo(maxRetry: 0)
+              },
+              timeout: timeout)
             self.deviceHelper.geoInfo = geoInfo
             return false
           } catch {
@@ -193,7 +195,8 @@ class ConfigManager {
       let configFetchDuration = Date().timeIntervalSince(startAt)
       let isUsingCachedGeoInfo = await isUsingCachedGeo
 
-      let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus = isUsingCachedConfig ? .cached : .notCached
+      let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus =
+        isUsingCachedConfig ? .cached : .notCached
       Task {
         let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
           buildId: config.buildId,
@@ -244,7 +247,10 @@ class ConfigManager {
     }
   }
 
-  func fetchWithTimeout<T>(_ task: @escaping () async throws -> T, timeout: TimeInterval) async throws -> T {
+  private func fetchWithTimeout<T>(
+    _ task: @escaping () async throws -> T,
+    timeout: TimeInterval
+  ) async throws -> T {
     try await withThrowingTaskGroup(of: T.self) { group in
       group.addTask {
         try await task()
@@ -274,15 +280,17 @@ class ConfigManager {
     _ config: Config,
     isFirstTime: Bool
   ) async {
-    storage.save(config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
+    storage.save(
+      config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
     storage.save(config, forType: LatestConfig.self)
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
-    entitlementsInfo.entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(from: config.paywalls)
+    entitlementsInfo.entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(
+      from: config.paywalls)
 
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
-    _ = await factory.loadPurchasedProducts()
+    await factory.loadPurchasedProducts()
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }
@@ -301,7 +309,8 @@ class ConfigManager {
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
   /// config's triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
-    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description }) {
+    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description })
+    {
       await UIWindow.swizzleSendEvent()
     }
   }
@@ -319,7 +328,8 @@ class ConfigManager {
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
   func getAssignments() async throws {
-    let config = try await configState
+    let config =
+      try await configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
 
@@ -422,9 +432,11 @@ class ConfigManager {
       // Wait until the previous task is finished before continuing.
       await currentPreloadingTask?.value
 
-      guard let config = try? await self.configState
-        .compactMap({ $0.getConfig() })
-        .throwableAsync() else {
+      guard
+        let config = try? await self.configState
+          .compactMap({ $0.getConfig() })
+          .throwableAsync()
+      else {
         return
       }
       let expressionEvaluator = ExpressionEvaluator(
@@ -444,7 +456,9 @@ class ConfigManager {
       )
       // Do not preload the presented paywall. This is because if config refreshes, we
       // don't want to refresh the presented paywall until it's dismissed and presented again.
-      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall
+        .identifier
+      {
         paywallIds.remove(presentedPaywallId)
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)
@@ -453,11 +467,14 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by the provided triggers.
   func preloadPaywalls(for placementNames: Set<String>) async {
-    guard let config = try? await configState
-      .compactMap({ $0.getConfig() })
-      .throwableAsync() else {
-        return
-      }
+    guard
+      let config =
+        try? await configState
+        .compactMap({ $0.getConfig() })
+        .throwableAsync()
+    else {
+      return
+    }
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
     let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
     await preloadPaywalls(

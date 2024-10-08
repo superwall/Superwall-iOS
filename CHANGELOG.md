@@ -22,6 +22,34 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
+- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
+- Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
+- Consumables no longer count as lifetime subscriptions when using StoreKit 2.
+- Changes `presented_by_event_name` to `presented_by_placement_name`.
+
+### Enhancements
+
+- Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
+- Updates the RevenueCat example app to use StoreKit 2.
+
+## 3.10.1
+
+### Fixes
+
+- Tweaks logic for `purchase(_:)` and `restorePurchases()` so the SDK never finishes transactions made when there's a purchase controller present.
+
+## 3.10.0
+
+### Enhancements
+
+- Adds `purchase(_:)` to initiate a purchase of an `SKProduct` via Superwall regardless of whether you are using paywalls or not.
+- Adds `restorePurchases()` to restore purchases via Superwall.
+- Adds an optional `paywall(_:loadingStateDidChange)` function to the `PaywallViewControllerDelegate`. This is called when the loading state of the presented `PaywallViewController` did change.
+- Makes `loadingState` on the `PaywallViewController` a public published property.
+
+### Fixes
+
+- Tweaks AdServices token logic to prevent getting the token twice.
 
 ## 3.9.1
 
