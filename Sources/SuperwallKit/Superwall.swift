@@ -809,6 +809,19 @@ public final class Superwall: NSObject, ObservableObject {
       completion(result.toObjc())
     }
   }
+
+  /// Fetches an array of ``StoreProduct``s for your App Store products for given product identifiers.
+  ///
+  /// - Parameters:
+  ///   - identifiers: A collection of unique in-app purchase product identifiers that you've previously
+  ///   configured in App Store Connect. Duplicate identifiers in the collection are ignored.
+  ///
+  /// - Returns: An array of ``StoreProduct``s.
+  public func products(for identifiers: [String]) async -> [StoreProduct] {
+    // TODO: Add this. We need to get the products from Config outside of paywalls (they would not be using them). Maybe we preload the products so it's quick whenever they need it.
+    // TODO: Update the description based on how the products are being fetched.
+    return []
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate

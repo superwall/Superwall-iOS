@@ -32,6 +32,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds `products(for:)` which allows you to fetch the products you've added to Superwall
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Updates the RevenueCat example app to use StoreKit 2.
 
