@@ -47,6 +47,7 @@ class ConfigManager {
   private unowned let paywallManager: PaywallManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let entitlementsInfo: EntitlementsInfo
+  let expressionEvaluator: CELEvaluator
 
   /// A task that is non-`nil` when preloading all paywalls.
   private var currentPreloadingTask: Task<Void, Never>?
@@ -75,6 +76,10 @@ class ConfigManager {
     self.deviceHelper = deviceHelper
     self.entitlementsInfo = entitlementsInfo
     self.factory = factory
+    self.expressionEvaluator = CELEvaluator(
+      storage: self.storage,
+      factory: self.factory
+    )
   }
 
   /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
@@ -434,10 +439,6 @@ class ConfigManager {
       else {
         return
       }
-      let expressionEvaluator = ExpressionEvaluator(
-        storage: self.storage,
-        factory: self.factory
-      )
       let triggers = ConfigLogic.filterTriggers(
         config.triggers,
         removing: config.preloadingDisabled

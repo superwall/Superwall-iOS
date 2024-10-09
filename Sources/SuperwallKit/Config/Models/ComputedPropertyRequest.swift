@@ -59,22 +59,18 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
   /// The number of years since the placement occurred.
   case yearsSince
 
-  var prefix: String {
-    return description + "_"
-  }
-
   public var description: String {
     switch self {
     case .minutesSince:
-      return "minutesSince"
+      return "minutesSincePlacement"
     case .hoursSince:
-      return "hoursSince"
+      return "hoursSincePlacement"
     case .daysSince:
-      return "daysSince"
+      return "daysSincePlacement"
     case .monthsSince:
-      return "monthsSince"
+      return "monthsSincePlacement"
     case .yearsSince:
-      return "yearsSince"
+      return "yearsSincePlacement"
     }
   }
 

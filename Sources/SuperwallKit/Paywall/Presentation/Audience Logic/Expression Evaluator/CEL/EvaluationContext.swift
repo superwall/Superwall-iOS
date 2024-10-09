@@ -48,6 +48,8 @@ final class EvaluationContext: HostContext {
     return "\(number)"
   }
 
+  // Returns name = "daysSinceEvent"
+  // Args = "[{\"type\":\"string\",\"value\":\"campaign_trigger\"}]"  
   func deviceProperty(name: String, args: String) async -> String {
     // TODO: Fill this out properly
     return ""
@@ -77,6 +79,29 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
     return .bool(value)
   case let value as [Any]:
     return .list(value.map { toPassableValue(from: $0) })
+  case let value as JSON:
+    if let int = value.int {
+      return .int(int)
+    } else if let uint = value.uInt64 {
+      return .uint(uint)
+    } else if let float = value.double {
+      return .float(float)
+    } else if let string = value.string {
+      return .string(string)
+    } else if let bool = value.bool {
+      return .bool(bool)
+    } else if let array = value.array {
+      return .list(array.map { toPassableValue(from: $0) })
+    } else if let object = value.dictionaryObject {
+      let passableMap = object.reduce(into: [:]) { result, pair in
+        result[pair.0] = toPassableValue(from: pair.1)
+      }
+      return .map(passableMap)
+    }
+    let passableMap = value.reduce(into: [:]) { result, pair in
+      result[pair.0] = toPassableValue(from: pair.1)
+    }
+    return .map(passableMap)
   case let value as [AnyHashable: Any]:
     let stringKeyMap = value.compactMap { key, value -> (String, Any)? in
       if let key = key as? String {
@@ -92,6 +117,7 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
   case let value as PassableValue:
     return value
   default:
+    // TODO: Change this to return null instead
     fatalError("Unsupported type: \(anyValue)")
   }
 }

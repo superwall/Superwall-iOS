@@ -10,6 +10,8 @@ import Foundation
 
 struct ExecutionContext: Codable {
   let variables: PassableMap
+  let computed: [String: [PassableValue]]
+  let device: [String: [PassableValue]]
   let expression: String
   let platform: [String: String]
 }
@@ -33,42 +35,55 @@ indirect enum PassableValue: Codable {
 
   private enum CodingKeys: String, CodingKey {
     case list, map, function, int, uint, float, string, bytes, bool, timestamp, null
-    case value, args
+    case type, value, args
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
-    if let listValue = try? container.decode([PassableValue].self, forKey: .list) {
+    // Decode the type first
+    let type = try container.decode(String.self, forKey: .type)
+
+    switch type {
+    case "list":
+      let listValue = try container.decode([PassableValue].self, forKey: .value)
       self = .list(listValue)
-    } else if let mapValue = try? container.decode([String: PassableValue].self, forKey: .map) {
+    case "map":
+      let mapValue = try container.decode([String: PassableValue].self, forKey: .value)
       self = .map(mapValue)
-    } else if let functionValue = try? container.decode(String.self, forKey: .value) {
+    case "function":
+      let functionValue = try container.decode(String.self, forKey: .value)
       let args = try container.decodeIfPresent(PassableValue.self, forKey: .args)
       self = .function(value: functionValue, args: args)
-    } else if let intValue = try? container.decode(Int.self, forKey: .int) {
+    case "int":
+      let intValue = try container.decode(Int.self, forKey: .value)
       self = .int(intValue)
-    } else if let uintValue = try? container.decode(UInt64.self, forKey: .uint) {
+    case "uint":
+      let uintValue = try container.decode(UInt64.self, forKey: .value)
       self = .uint(uintValue)
-    } else if let floatValue = try? container.decode(Double.self, forKey: .float) {
+    case "float":
+      let floatValue = try container.decode(Double.self, forKey: .value)
       self = .float(floatValue)
-    } else if let stringValue = try? container.decode(String.self, forKey: .string) {
+    case "string":
+      let stringValue = try container.decode(String.self, forKey: .value)
       self = .string(stringValue)
-    } else if let bytesValue = try? container.decode(Data.self, forKey: .bytes) {
+    case "bytes":
+      let bytesValue = try container.decode(Data.self, forKey: .value)
       self = .bytes(bytesValue)
-    } else if let boolValue = try? container.decode(Bool.self, forKey: .bool) {
+    case "bool":
+      let boolValue = try container.decode(Bool.self, forKey: .value)
       self = .bool(boolValue)
-    } else if let timestampValue = try? container.decode(Int64.self, forKey: .timestamp) {
+    case "timestamp":
+      let timestampValue = try container.decode(Int64.self, forKey: .value)
       self = .timestamp(timestampValue)
-    } else if container.contains(.null) {
+    case "null":
       self = .null
-    } else {
-      // TODO: Review whether we should be throwing here or something softer
+    default:
       throw DecodingError.typeMismatch(
         PassableValue.self,
         DecodingError.Context(
           codingPath: decoder.codingPath,
-          debugDescription: "Unknown type"
+          debugDescription: "Unknown type: \(type)"
         )
       )
     }
@@ -77,30 +92,43 @@ indirect enum PassableValue: Codable {
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
+    // Add type and value keys for each case
     switch self {
     case .list(let value):
-      try container.encode(value, forKey: .list)
-    case .map(let value):
-      try container.encode(value, forKey: .map)
-    case let .function(value, args):
+      try container.encode("list", forKey: .type)
       try container.encode(value, forKey: .value)
-      try container.encode(args, forKey: .args)
+    case .map(let value):
+      try container.encode("map", forKey: .type)
+      try container.encode(value, forKey: .value)
+    case let .function(value, args):
+      try container.encode("function", forKey: .type)
+      var functionContainer = container.nestedContainer(keyedBy: CodingKeys.self, forKey: .value)
+      try functionContainer.encode(value, forKey: .value)
+      try functionContainer.encode(args, forKey: .args)
     case .int(let value):
-      try container.encode(value, forKey: .int)
+      try container.encode("int", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .uint(let value):
-      try container.encode(value, forKey: .uint)
+      try container.encode("uint", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .float(let value):
-      try container.encode(value, forKey: .float)
+      try container.encode("float", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .string(let value):
-      try container.encode(value, forKey: .string)
+      try container.encode("string", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .bytes(let value):
-      try container.encode(value, forKey: .bytes)
+      try container.encode("bytes", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .bool(let value):
-      try container.encode(value, forKey: .bool)
+      try container.encode("bool", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .timestamp(let value):
-      try container.encode(value, forKey: .timestamp)
+      try container.encode("timestamp", forKey: .type)
+      try container.encode(value, forKey: .value)
     case .null:
-      try container.encodeNil(forKey: .null)
+      try container.encode("null", forKey: .type)
+      try container.encodeNil(forKey: .value)
     }
   }
 }

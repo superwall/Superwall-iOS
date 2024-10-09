@@ -8,6 +8,13 @@
 import Foundation
 import SuperCEL
 
+protocol ExpressionEvaluating {
+  func evaluateExpression(
+    fromAudienceFilter audience: TriggerRule,
+    placementData: PlacementData?
+  ) async -> TriggerAudienceOutcome
+}
+
 struct CELEvaluator: ExpressionEvaluating {
   private unowned let storage: Storage
   private unowned let factory: AudienceFilterAttributesFactory
@@ -29,19 +36,26 @@ struct CELEvaluator: ExpressionEvaluating {
     placementData: PlacementData?
   ) async -> TriggerAudienceOutcome {
     let attributes = await factory.makeAudienceFilterAttributes(
-      forPlacement: placementData,
-      withComputedProperties: audience.computedPropertyRequests
+      forPlacement: placementData
     )
 
-    let passableValue = toPassableValue(from: attributes)
+    var computedProperties: [String: [PassableValue]] = [:]
+    for computedPropertyRequest in audience.computedPropertyRequests {
+      computedProperties[computedPropertyRequest.type.description] = [toPassableValue(from: computedPropertyRequest.placementName)]
+    }
+
+    let attributesPassableValue = toPassableValue(from: attributes)
     var variablesMap: [String: PassableValue] = [:]
-    if case let PassableValue.map(dictionary) = passableValue {
+    if case let PassableValue.map(dictionary) = attributesPassableValue {
       variablesMap = dictionary
     }
 
+
     let executionContext = ExecutionContext(
       variables: PassableMap(map: variablesMap),
-      expression: audience.expression ?? "",
+      computed: computedProperties,
+      device: [:],
+      expression: "device.daysSincePlacement(\"campaign_trigger\") == 3",//audience.expression ?? "", // "size(device.activeEntitlements) == 0"
       platform: [:]
     )
 
