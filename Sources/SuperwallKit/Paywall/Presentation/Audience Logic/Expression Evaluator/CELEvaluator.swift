@@ -57,7 +57,7 @@ struct CELEvaluator: ExpressionEvaluating {
       variables: PassableMap(map: variablesMap),
       computed: computedProperties,
       device: [:],
-      expression: "device.isMac == false",//audience.expression ?? "", // "size(device.activeEntitlements) == 0"
+      expression: audience.expression ?? "",
       platform: [:]
     )
 
