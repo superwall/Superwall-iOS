@@ -20,6 +20,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
+- Moves `ComputedPropertyRequestType` to be a top-level type.
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
 - Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
@@ -34,6 +35,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Updates the RevenueCat example app to use StoreKit 2.
+- Adds CEL compatibility to audience filters. We created a new package called `SuperCEL` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
 
 ## 3.10.1
 

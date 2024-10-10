@@ -12,132 +12,19 @@ import Foundation
 @objcMembers
 public final class ComputedPropertyRequest: NSObject, Codable {
   /// The type of device property to compute.
-  @objc(SWKComputedPropertyRequestType)
-  public enum ComputedPropertyRequestType: Int, Codable {
-    /// The number of minutes since the event occurred.
-    case minutesSince
-
-    /// The number of hours since the placement occurred.
-    case hoursSince
-
-    /// The number of days since the placement occurred.
-    case daysSince
-
-    /// The number of months since the placement occurred.
-    case monthsSince
-
-    /// The number of years since the placement occurred.
-    case yearsSince
-
-    var prefix: String {
-      switch self {
-      case .minutesSince:
-        return "minutesSince_"
-      case .hoursSince:
-        return "hoursSince_"
-      case .daysSince:
-        return "daysSince_"
-      case .monthsSince:
-        return "monthsSince_"
-      case .yearsSince:
-        return "yearsSince_"
-      }
-    }
-
-    var calendarComponent: Calendar.Component {
-      switch self {
-      case .minutesSince:
-        return .minute
-      case .hoursSince:
-        return .hour
-      case .daysSince:
-        return .day
-      case .monthsSince:
-        return .month
-      case .yearsSince:
-        return .year
-      }
-    }
-
-    func dateComponent(from components: DateComponents) -> Int? {
-      switch self {
-      case .minutesSince:
-        return components.minute
-      case .hoursSince:
-        return components.hour
-      case .daysSince:
-        return components.day
-      case .monthsSince:
-        return components.month
-      case .yearsSince:
-        return components.year
-      }
-    }
-
-    enum CodingKeys: String, CodingKey {
-      case minutesSince = "MINUTES_SINCE"
-      case hoursSince = "HOURS_SINCE"
-      case daysSince = "DAYS_SINCE"
-      case monthsSince = "MONTHS_SINCE"
-      case yearsSince = "YEARS_SINCE"
-    }
-
-    public init(from decoder: Decoder) throws {
-      let container = try decoder.singleValueContainer()
-      let rawValue = try container.decode(String.self)
-      let type = CodingKeys(rawValue: rawValue)
-      switch type {
-      case .minutesSince:
-        self = .minutesSince
-      case .hoursSince:
-        self = .hoursSince
-      case .daysSince:
-        self = .daysSince
-      case .monthsSince:
-        self = .monthsSince
-      case .yearsSince:
-        self = .yearsSince
-      case .none:
-        throw DecodingError.valueNotFound(
-          String.self,
-          .init(
-            codingPath: [],
-            debugDescription: "Unsupported computed property type."
-          )
-        )
-      }
-    }
-
-    public func encode(to encoder: Encoder) throws {
-      var container = encoder.singleValueContainer()
-      let rawValue: String
-
-      switch self {
-      case .minutesSince:
-        rawValue = CodingKeys.minutesSince.rawValue
-      case .hoursSince:
-        rawValue = CodingKeys.hoursSince.rawValue
-      case .daysSince:
-        rawValue = CodingKeys.daysSince.rawValue
-      case .monthsSince:
-        rawValue = CodingKeys.monthsSince.rawValue
-      case .yearsSince:
-        rawValue = CodingKeys.yearsSince.rawValue
-      }
-
-      try container.encode(rawValue)
-    }
-  }
-
-  /// The type of device property to compute.
   public let type: ComputedPropertyRequestType
 
   /// The name of the event used to compute the device property.
   public let placementName: String
 
-  enum CodingKeys: CodingKey {
+  enum CodingKeys: String, CodingKey {
     case type
-    case placementName
+    case placementName = "eventName"
+  }
+
+  init(type: ComputedPropertyRequestType, placementName: String) {
+    self.type = type
+    self.placementName = placementName
   }
 
   public func encode(to encoder: any Encoder) throws {
@@ -151,5 +38,107 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
     placementName = try container.decode(String.self, forKey: .placementName)
     super.init()
+  }
+}
+
+/// The type of device property to compute.
+@objc(SWKComputedPropertyRequestType)
+public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, CaseIterable {
+  /// The number of minutes since the placement occurred.
+  case minutesSince
+
+  /// The number of hours since the placement occurred.
+  case hoursSince
+
+  /// The number of days since the placement occurred.
+  case daysSince
+
+  /// The number of months since the placement occurred.
+  case monthsSince
+
+  /// The number of years since the placement occurred.
+  case yearsSince
+
+  var prefix: String {
+    return description + "_"
+  }
+
+  public var description: String {
+    switch self {
+    case .minutesSince:
+      return "minutesSince"
+    case .hoursSince:
+      return "hoursSince"
+    case .daysSince:
+      return "daysSince"
+    case .monthsSince:
+      return "monthsSince"
+    case .yearsSince:
+      return "yearsSince"
+    }
+  }
+
+  var calendarComponent: Calendar.Component {
+    switch self {
+    case .minutesSince:
+      return .minute
+    case .hoursSince:
+      return .hour
+    case .daysSince:
+      return .day
+    case .monthsSince:
+      return .month
+    case .yearsSince:
+      return .year
+    }
+  }
+
+  func dateComponent(from components: DateComponents) -> Int? {
+    switch self {
+    case .minutesSince:
+      return components.minute
+    case .hoursSince:
+      return components.hour
+    case .daysSince:
+      return components.day
+    case .monthsSince:
+      return components.month
+    case .yearsSince:
+      return components.year
+    }
+  }
+
+  enum CodingKeys: String, CodingKey {
+    case minutesSince = "MINUTES_SINCE"
+    case hoursSince = "HOURS_SINCE"
+    case daysSince = "DAYS_SINCE"
+    case monthsSince = "MONTHS_SINCE"
+    case yearsSince = "YEARS_SINCE"
+  }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.singleValueContainer()
+    let rawValue = try container.decode(String.self)
+    let type = CodingKeys(rawValue: rawValue)
+    switch type {
+    case .minutesSince:
+      self = .minutesSince
+    case .hoursSince:
+      self = .hoursSince
+    case .daysSince:
+      self = .daysSince
+    case .monthsSince:
+      self = .monthsSince
+    case .yearsSince:
+      self = .yearsSince
+    case .none:
+      throw DecodingError.valueNotFound(
+        String.self,
+        .init(
+          codingPath: [],
+          debugDescription: "Unsupported computed property type."
+        )
+      )
+    }
   }
 }

@@ -356,8 +356,7 @@ enum ConfigLogic {
     return triggersDictionary
   }
 
-  /// Gets the paywall IDs that no longer exist in the newly retrieved config, minus
-  /// any presenting paywall.
+  /// Gets the paywall IDs that no longer exist in the newly retrieved config.
   static func getRemovedOrChangedPaywallIds(
     oldConfig: Config,
     newConfig: Config
