@@ -21,13 +21,21 @@ final class EvaluationContext: HostContext {
     else {
       return ""
     }
-    let argsJson = JSON(args)
-    let value = argsJson["value"]
-
-    guard let name = value["name"].string else {
+    guard let argsData = args.data(using: .utf8) else {
       return ""
     }
-    let createdAt = value["createdAt"].string?.rfc3339date() ?? Date()
+
+    let decoder = JSONDecoder()
+    guard let passableValues = try? decoder.decode([PassableValue].self, from: argsData) else {
+      return ""
+    }
+
+    guard let firstPassableValue = passableValues.first else {
+      return ""
+    }
+    guard case let .string(name) = firstPassableValue else {
+      return ""
+    }
 
     let request = ComputedPropertyRequest(
       type: type,
@@ -38,18 +46,22 @@ final class EvaluationContext: HostContext {
       PlacementData(
         name: name,
         parameters: [:],
-        createdAt: createdAt
+        createdAt: Date()
       ),
       request: request
     ) else {
       return ""
     }
 
-    return "\(number)"
+    guard let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)) else {
+      return ""
+    }
+    guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+      return ""
+    }
+    return jsonString
   }
 
-  // Returns name = "daysSinceEvent"
-  // Args = "[{\"type\":\"string\",\"value\":\"campaign_trigger\"}]"  
   func deviceProperty(name: String, args: String) async -> String {
     // TODO: Fill this out properly
     return ""
@@ -65,6 +77,8 @@ extension Dictionary where Key == String, Value == Any {
 
 func toPassableValue(from anyValue: Any) -> PassableValue {
   switch anyValue {
+  case let value as Bool:
+    return .bool(value)
   case let value as Int:
     return .int(value)
   case let value as UInt64:
@@ -75,12 +89,12 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
     return .string(value)
   case let value as Data:
     return .bytes(value)
-  case let value as Bool:
-    return .bool(value)
   case let value as [Any]:
     return .list(value.map { toPassableValue(from: $0) })
   case let value as JSON:
-    if let int = value.int {
+    if let bool = value.bool {
+      return .bool(bool)
+    } else if let int = value.int {
       return .int(int)
     } else if let uint = value.uInt64 {
       return .uint(uint)
@@ -88,8 +102,6 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
       return .float(float)
     } else if let string = value.string {
       return .string(string)
-    } else if let bool = value.bool {
-      return .bool(bool)
     } else if let array = value.array {
       return .list(array.map { toPassableValue(from: $0) })
     } else if let object = value.dictionaryObject {

@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 14/08/2024.
 //
-// swiftlint:disable cyclomatic_complexity
 
 import Foundation
 

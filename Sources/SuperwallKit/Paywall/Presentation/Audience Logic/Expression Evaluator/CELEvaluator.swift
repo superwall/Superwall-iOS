@@ -36,12 +36,15 @@ struct CELEvaluator: ExpressionEvaluating {
     placementData: PlacementData?
   ) async -> TriggerAudienceOutcome {
     let attributes = await factory.makeAudienceFilterAttributes(
-      forPlacement: placementData
+      forPlacement: placementData,
+      withComputedProperties: audience.computedPropertyRequests
     )
 
     var computedProperties: [String: [PassableValue]] = [:]
     for computedPropertyRequest in audience.computedPropertyRequests {
-      computedProperties[computedPropertyRequest.type.description] = [toPassableValue(from: computedPropertyRequest.placementName)]
+      let description = computedPropertyRequest.type.description
+      let placementName = computedPropertyRequest.placementName
+      computedProperties[description] = [toPassableValue(from: placementName)]
     }
 
     let attributesPassableValue = toPassableValue(from: attributes)
@@ -50,12 +53,11 @@ struct CELEvaluator: ExpressionEvaluating {
       variablesMap = dictionary
     }
 
-
     let executionContext = ExecutionContext(
       variables: PassableMap(map: variablesMap),
       computed: computedProperties,
       device: [:],
-      expression: "device.daysSincePlacement(\"campaign_trigger\") == 3",//audience.expression ?? "", // "size(device.activeEntitlements) == 0"
+      expression: "device.isMac == false",//audience.expression ?? "", // "size(device.activeEntitlements) == 0"
       platform: [:]
     )
 

@@ -368,12 +368,16 @@ extension DependencyContainer: ApiFactory {
 // MARK: - Audience Filter Params
 extension DependencyContainer: AudienceFilterAttributesFactory {
   func makeAudienceFilterAttributes(
-    forPlacement placement: PlacementData?
+    forPlacement placement: PlacementData?,
+    withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> JSON {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
 
-    let deviceAttributes = await deviceHelper.getDeviceAttributes(since: placement)
+    let deviceAttributes = await deviceHelper.getDeviceAttributes(
+      since: placement,
+      computedPropertyRequests: computedPropertyRequests
+    )
     return JSON([
       "user": userAttributes,
       "device": deviceAttributes,

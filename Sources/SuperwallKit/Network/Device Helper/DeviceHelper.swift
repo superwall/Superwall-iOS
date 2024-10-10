@@ -373,20 +373,35 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
-  func getDeviceAttributes(since placement: PlacementData?) async -> [String: Any] {
-    return await getTemplateDevice()
+  func getDeviceAttributes(
+    since placement: PlacementData?,
+    computedPropertyRequests: [ComputedPropertyRequest]
+  ) async -> [String: Any] {
+    var dictionary = await getTemplateDevice()
+
+    let computedProperties = await getComputedDevicePropertiesSincePlacement(
+      placement,
+      requests: computedPropertyRequests
+    )
+    dictionary += computedProperties
+
+    return dictionary
   }
 
   private func getComputedDevicePropertiesSincePlacement(
-    _ placementData: PlacementData?,
+    _ placement: PlacementData?,
     requests computedPropertyRequests: [ComputedPropertyRequest]
   ) async -> [String: Any] {
-    var output: [String: [PassableValue]] = [:]
+    var output: [String: Any] = [:]
 
     for computedPropertyRequest in computedPropertyRequests {
-      output[computedPropertyRequest.type.description] = [toPassableValue(from: computedPropertyRequest.placementName)]
+      if let value = await storage.coreDataManager.getComputedPropertySincePlacement(
+        placement,
+        request: computedPropertyRequest
+      ) {
+        output[computedPropertyRequest.type.prefix + computedPropertyRequest.placementName] = value
+      }
     }
-    
 
     return output
   }

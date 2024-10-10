@@ -17,9 +17,9 @@ public final class ComputedPropertyRequest: NSObject, Codable {
   /// The name of the event used to compute the device property.
   public let placementName: String
 
-  enum CodingKeys: CodingKey {
+  enum CodingKeys: String, CodingKey {
     case type
-    case placementName
+    case placementName = "eventName"
   }
 
   init(type: ComputedPropertyRequestType, placementName: String) {
@@ -59,18 +59,22 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
   /// The number of years since the placement occurred.
   case yearsSince
 
+  var prefix: String {
+    return description + "_"
+  }
+
   public var description: String {
     switch self {
     case .minutesSince:
-      return "minutesSincePlacement"
+      return "minutesSince"
     case .hoursSince:
-      return "hoursSincePlacement"
+      return "hoursSince"
     case .daysSince:
-      return "daysSincePlacement"
+      return "daysSince"
     case .monthsSince:
-      return "monthsSincePlacement"
+      return "monthsSince"
     case .yearsSince:
-      return "yearsSincePlacement"
+      return "yearsSince"
     }
   }
 
