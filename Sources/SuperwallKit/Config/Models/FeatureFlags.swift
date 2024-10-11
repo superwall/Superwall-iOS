@@ -12,7 +12,7 @@ struct RawFeatureFlag: Codable {
   let enabled: Bool
 }
 
-struct FeatureFlags: Codable {
+struct FeatureFlags: Codable, Equatable {
   var enableSessionEvents: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool

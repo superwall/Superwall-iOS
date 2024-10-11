@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct ProductTemplate: Codable {
+struct ProductTemplate: Encodable {
   var eventName: String
-  var products: [ProductItem]
+  var products: [TemplatingProductItem]
 
   enum CodingKeys: String, CodingKey {
     case eventName = "event_name"
