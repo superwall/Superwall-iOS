@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Config: Codable {
+struct Config: Codable, Equatable {
   var buildId: String
   var triggers: Set<Trigger>
   var paywalls: [Paywall]
@@ -26,6 +26,7 @@ struct Config: Codable {
   }
 
   enum CodingKeys: String, CodingKey {
+    case requestId
     case buildId
     case triggers = "triggerOptions"
     case paywalls = "paywallResponses"
@@ -49,6 +50,7 @@ struct Config: Codable {
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
+    requestId = try values.decodeIfPresent(String.self, forKey: .requestId)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -65,6 +67,7 @@ struct Config: Codable {
     try container.encode(localizationConfig, forKey: .localization)
 
     try featureFlags.encode(to: encoder)
+    try container.encodeIfPresent(requestId, forKey: .requestId)
   }
 
   init(

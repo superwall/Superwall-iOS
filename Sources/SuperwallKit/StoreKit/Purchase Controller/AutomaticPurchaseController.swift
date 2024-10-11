@@ -32,16 +32,12 @@ final class AutomaticPurchaseController {
 extension AutomaticPurchaseController: PurchaseController {
   @MainActor
   func purchase(product: SKProduct) async -> PurchaseResult {
-    return await factory.purchase(
-      product: product,
-      isExternal: false
-    )
+    return await factory.purchase(product: product)
   }
 
   @MainActor
   func restorePurchases() async -> RestorationResult {
-    let result = await factory.restorePurchases(isExternal: false)
-
+    let result = await factory.restorePurchases()
     let hasRestored = result == .restored
     await factory.refreshReceipt()
     if hasRestored {

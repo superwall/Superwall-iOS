@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.10.1
+
+### Fixes
+
+- Tweaks logic for `purchase(_:)` and `restorePurchases()` so the SDK never finishes transactions made when there's a purchase controller present.
+- Fixes internal caching issues of the Superwall config.
+
 ## 3.10.0
 
 ### Enhancements

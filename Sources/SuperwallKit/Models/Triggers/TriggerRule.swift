@@ -71,7 +71,7 @@ enum TriggerRuleOutcome: Equatable {
   }
 }
 
-struct TriggerRule: Codable, Hashable {
+struct TriggerRule: Codable, Hashable, Equatable {
   var experiment: RawExperiment
   var expression: String?
   var expressionJs: String?

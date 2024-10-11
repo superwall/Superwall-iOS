@@ -218,7 +218,7 @@ final class TransactionManager {
       // restore function. So, when that function returns, it will hit the internal case first,
       // then here only to do the actual restore, before returning.
       if hasExternalPurchaseController {
-        return await factory.restorePurchases(isExternal: true)
+        return await factory.restorePurchases()
       }
 
       await logAndTrack(
@@ -227,7 +227,7 @@ final class TransactionManager {
         paywallInfo: .empty()
       )
 
-      let restorationResult = await factory.restorePurchases(isExternal: true)
+      let restorationResult = await factory.restorePurchases()
       let success = await handleRestoreResult(
         restorationResult,
         paywallInfo: .empty(),
@@ -302,23 +302,14 @@ final class TransactionManager {
     guard let sk1Product = product.sk1Product else {
       return .failed(PurchaseError.productUnavailable)
     }
-
+    await factory.makePurchasingCoordinator().beginPurchase(
+      of: product.productIdentifier
+    )
     switch purchaseSource {
     case .internal:
-      await factory.makePurchasingCoordinator().beginPurchase(
-        of: product.productIdentifier,
-        isExternal: false
-      )
       return await purchaseController.purchase(product: sk1Product)
     case .external:
-      await factory.makePurchasingCoordinator().beginPurchase(
-        of: product.productIdentifier,
-        isExternal: true
-      )
-      return await factory.purchase(
-        product: sk1Product,
-        isExternal: true
-      )
+      return await factory.purchase(product: sk1Product)
     }
   }
 

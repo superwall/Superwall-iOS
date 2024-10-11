@@ -12,7 +12,7 @@ struct RawFeatureFlag: Codable {
   let enabled: Bool
 }
 
-struct FeatureFlags: Codable {
+struct FeatureFlags: Codable, Equatable {
   var enableSessionEvents: Bool
   var enableExpressionParameters: Bool
   var enableUserIdSeed: Bool
@@ -43,7 +43,7 @@ struct FeatureFlags: Codable {
     enableThrottleSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_throttle_scheduling_policy", default: false)
     enableNoneSchedulingPolicy = rawFeatureFlags.value(forKey: "enable_none_scheduling_policy", default: false)
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
-    enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh", default: false)
+    enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh_v2", default: false)
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
   }
 
@@ -59,7 +59,7 @@ struct FeatureFlags: Codable {
       RawFeatureFlag(key: "enable_throttle_scheduling_policy", enabled: enableThrottleSchedulingPolicy),
       RawFeatureFlag(key: "enable_none_scheduling_policy", enabled: enableNoneSchedulingPolicy),
       RawFeatureFlag(key: "enable_multiple_paywall_urls", enabled: enableMultiplePaywallUrls),
-      RawFeatureFlag(key: "enable_config_refresh", enabled: enableConfigRefresh),
+      RawFeatureFlag(key: "enable_config_refresh_v2", enabled: enableConfigRefresh),
       RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction)
     ]
 

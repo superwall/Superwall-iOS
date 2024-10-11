@@ -17,7 +17,7 @@ enum TemplateLogic {
   ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
-      products: paywall.productItems
+      products: TemplatingProductItem.create(from: paywall.productItems)
     )
 
     let variablesTemplate = await factory.makeJsonVariables(
@@ -43,7 +43,7 @@ enum TemplateLogic {
     return templatesData?.base64EncodedString() ?? ""
   }
 
-  private static func utf8Encoded<T: Codable>(_ input: T) -> String {
+  private static func utf8Encoded<T: Encodable>(_ input: T) -> String {
     if let data = try? JSONEncoder().encode(input) {
       return String(data: data, encoding: .utf8) ?? "{}"
     } else {
