@@ -38,6 +38,31 @@ final class ConfigManagerTests: XCTestCase {
     XCTAssertEqual(configManager.config?.buildId, "123")
   }
 
+  func test_configEncodedCorrectly() async {
+    let dependencyContainer = DependencyContainer()
+
+    let paywall = Paywall.stub()
+      .setting(\.productItems, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")))])
+    let config: Config = Config(
+      buildId: "buildId",
+      triggers: [
+        .init(
+          eventName: "event",
+          rules: [.stub()]
+        )
+      ],
+      paywalls: [paywall],
+      logLevel: 2,
+      locales: ["fr"],
+      appSessionTimeout: 2202,
+      featureFlags: .stub(),
+      preloadingDisabled: .stub()
+    )
+    dependencyContainer.storage.save(config, forType: LatestConfig.self)
+    let newConfig = dependencyContainer.storage.get(LatestConfig.self)
+    XCTAssertEqual(config, newConfig)
+  }
+
   // MARK: - Confirm Assignments
   func test_confirmAssignment() async {
     let experimentId = "abc"
