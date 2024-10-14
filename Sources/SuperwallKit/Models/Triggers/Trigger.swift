@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Trigger: Codable, Hashable {
+struct Trigger: Codable, Hashable, Equatable {
   enum CodingKeys: String, CodingKey {
     case audiences = "rules"
     case placementName = "eventName"

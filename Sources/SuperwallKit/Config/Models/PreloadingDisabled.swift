@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct PreloadingDisabled: Codable {
+struct PreloadingDisabled: Codable, Equatable {
   let all: Bool
   let triggers: Set<String>
 }
