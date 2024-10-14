@@ -76,7 +76,7 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.id = try container.decode(String.self, forKey: .id)
-    self.store = try container.decode(Store.self, forKey: .store)
+    self.store = try container.decode(ProductStore.self, forKey: .store)
     super.init()
   }
 }
@@ -191,7 +191,7 @@ struct TemplatingProductItem: Encodable {
     case productId
   }
 
-  static func create(from productItems: [ProductItem]) -> [TemplatingProductItem] {
+  static func create(from productItems: [Product]) -> [TemplatingProductItem] {
     return productItems.map { TemplatingProductItem(name: $0.name, productId: $0.id) }
   }
 
