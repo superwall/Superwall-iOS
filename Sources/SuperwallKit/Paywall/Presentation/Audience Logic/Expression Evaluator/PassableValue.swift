@@ -12,7 +12,6 @@ struct ExecutionContext: Codable {
   let computed: [String: [PassableValue]]
   let device: [String: [PassableValue]]
   let expression: String
-  let platform: [String: String]
 }
 
 struct PassableMap: Codable {

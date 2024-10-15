@@ -35,6 +35,13 @@ struct CELEvaluator: ExpressionEvaluating {
     fromAudienceFilter audience: TriggerRule,
     placementData: PlacementData?
   ) async -> TriggerAudienceOutcome {
+    guard let expression = audience.expression else {
+      let audienceMatched = await expressionLogic.tryToMatchOccurrence(
+        from: audience,
+        expressionMatched: true
+      )
+      return audienceMatched
+    }
     let attributes = await factory.makeAudienceFilterAttributes(
       forPlacement: placementData,
       withComputedProperties: audience.computedPropertyRequests
@@ -52,13 +59,11 @@ struct CELEvaluator: ExpressionEvaluating {
     if case let PassableValue.map(dictionary) = attributesPassableValue {
       variablesMap = dictionary
     }
-
     let executionContext = ExecutionContext(
       variables: PassableMap(map: variablesMap),
       computed: computedProperties,
       device: [:],
-      expression: audience.expression ?? "",
-      platform: [:]
+      expression: expression
     )
 
     let noMatch = TriggerAudienceOutcome.noMatch(

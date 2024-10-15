@@ -88,6 +88,7 @@ final class DependencyContainer {
       api: api,
       storage: storage,
       network: network,
+      entitlementsInfo: entitlementsInfo,
       factory: self
     )
 
