@@ -42,6 +42,8 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
             self.delegateAdapter.activeEntitlementsDidChange(to: newValue)
           }
         }
+        storage.save(newValue, forType: ActiveEntitlements.self)
+
         guard newValue != oldValue else {
           return
         }
@@ -64,12 +66,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// You can bind to this to be notified when active entitlements change.
   @MainActor @Published public private(set) var publishedActive: Set<Entitlement> = []
 
+  /// Notifies delegate and tracks `activeEntitlements_didChange`.
   private func activeEntitlementsChanged(
     oldValue: Set<Entitlement>,
     newValue: Set<Entitlement>
   ) {
-    storage.save(newValue, forType: ActiveEntitlements.self)
-
     Task {
       await delegateAdapter.activeEntitlementsDidChange(to: newValue)
       let event = InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: newValue)
