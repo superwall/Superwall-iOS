@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SuperCEL",
+        "repositoryURL": "https://github.com/superwall/SuperCEL-iOS",
+        "state": {
+          "branch": null,
+          "revision": "f265a4ecff7dbc69b30048e2ee9cc2ecf2ce2a79",
+          "version": "0.1.8"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

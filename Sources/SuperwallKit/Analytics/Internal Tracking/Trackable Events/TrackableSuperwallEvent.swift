@@ -24,6 +24,23 @@ extension TrackableSuperwallEvent {
   }
 }
 
+protocol TrackablePrivateEvent: Trackable {}
+
+enum PrivateSuperwallEvent {
+  struct CELExpressionResult: TrackablePrivateEvent {
+    let rawName: String
+    var audienceFilterParams: [String : Any] = [:]
+    var canImplicitlyTriggerPaywall = false
+    func getSuperwallParameters() async -> [String : Any] { return [:] }
+
+    let celExpression: String
+    let celExpressionResult: Bool
+
+    let liquidExpression: String
+    let liquidExpressionResult: Bool
+  }
+}
+
 /// These are events that tracked internally and sent back to the user via the delegate.
 enum InternalSuperwallEvent {
   struct AppOpen: TrackableSuperwallEvent {
