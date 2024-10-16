@@ -42,16 +42,17 @@ final class ConfigManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let paywall = Paywall.stub()
-      .setting(\.productItems, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")))])
+      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")), entitlements: [])])
     let config: Config = Config(
       buildId: "buildId",
       triggers: [
         .init(
-          eventName: "event",
-          rules: [.stub()]
+          placementName: "event",
+          audiences: [.stub()]
         )
       ],
       paywalls: [paywall],
+      entitlements: [],
       logLevel: 2,
       locales: ["fr"],
       appSessionTimeout: 2202,
