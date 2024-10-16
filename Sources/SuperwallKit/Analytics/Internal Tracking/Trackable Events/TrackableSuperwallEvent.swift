@@ -569,9 +569,13 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
+      var eventParams: [String: Any] = [
+        "store": "APP_STORE"
+      ]
+
       switch state {
       case .restore:
-        var eventParams = await paywallInfo.eventParams(forProduct: product)
+        eventParams += await paywallInfo.eventParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict
         }
@@ -581,7 +585,7 @@ enum InternalSuperwallEvent {
         .abandon,
         .complete,
         .timeout:
-        var eventParams = await paywallInfo.eventParams(forProduct: product)
+        eventParams += await paywallInfo.eventParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict
         }
