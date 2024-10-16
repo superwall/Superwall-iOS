@@ -13,7 +13,11 @@ class StorageTests: XCTestCase {
   func test_saveConfirmedAssignments() {
     let dependencyContainer = DependencyContainer()
     let storage = Storage(factory: dependencyContainer)
-    let network = NetworkMock(factory: dependencyContainer)
+
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let configManager = ConfigManager(
       options: SuperwallOptions(),
       storeKitManager: dependencyContainer.storeKitManager,
