@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `maxConfigRetryCount` as a `SuperwallOption`. Use this to determine the number of times the SDK will attempt to get the Superwall configuration after a network failure before it times out.
+- Adds our `SuperCEL` package as a dependency. We are migrating towards using Google's Common Expression Language (CEL) in audience filters to allow for more complex features. The use of this is behind a feature flag.
 
 ## 3.10.1
 

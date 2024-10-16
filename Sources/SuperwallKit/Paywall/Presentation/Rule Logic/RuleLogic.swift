@@ -28,6 +28,7 @@ struct RuleLogic {
   unowned let configManager: ConfigManager
   unowned let storage: Storage
   unowned let factory: RuleAttributesFactory
+  let celEvaluator: CELEvaluator
 
   /// Determines the outcome of an event based on given triggers. It also determines
   /// whether there is an assignment to confirm based on the rule.
@@ -144,6 +145,37 @@ struct RuleLogic {
         fromRule: rule,
         eventData: event
       )
+      let liquidDidMatch: Bool
+
+      switch outcome {
+      case .match:
+        liquidDidMatch = true
+      case .noMatch:
+        liquidDidMatch = false
+      }
+      if configManager.config?.featureFlags.enableExpressionParameters == true,
+        let celExpression = rule.expressionCel {
+        Task {
+          let outcome = await celEvaluator.evaluateExpression(
+            fromRule: rule,
+            eventData: event
+          )
+          let didMatch: Bool
+          switch outcome {
+          case .match:
+            didMatch = true
+          case .noMatch:
+            didMatch = false
+          }
+          let celExpressionResult = PrivateSuperwallEvent.CELExpressionResult(
+            celExpression: celExpression,
+            celExpressionDidMatch: didMatch,
+            liquidExpression: rule.expression ?? "",
+            liquidExpressionDidMatch: liquidDidMatch
+          )
+          await Superwall.shared.track(celExpressionResult)
+        }
+      }
 
       switch outcome {
       case .match(let item):
