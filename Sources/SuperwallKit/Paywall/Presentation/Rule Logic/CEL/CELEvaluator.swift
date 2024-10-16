@@ -31,7 +31,7 @@ struct CELEvaluator: ExpressionEvaluating {
     fromRule audience: TriggerRule,
     eventData placementData: EventData?
   ) async -> TriggerRuleOutcome {
-    guard let expression = audience.expression else {
+    guard let expression = audience.expressionCel else {
       let audienceMatched = await expressionEvaluator.tryToMatchOccurrence(
         from: audience,
         expressionMatched: true

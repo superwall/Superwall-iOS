@@ -28,16 +28,22 @@ protocol TrackablePrivateEvent: Trackable {}
 
 enum PrivateSuperwallEvent {
   struct CELExpressionResult: TrackablePrivateEvent {
+    let celExpression: String
+    let celExpressionDidMatch: Bool
+    let liquidExpression: String
+    let liquidExpressionDidMatch: Bool
+
     let rawName = "cel_expression_result"
     var audienceFilterParams: [String : Any] = [:]
     var canImplicitlyTriggerPaywall = false
-    func getSuperwallParameters() async -> [String : Any] { return [:] }
-
-    let celExpression: String
-    let celExpressionDidMatch: Bool
-
-    let liquidExpression: String
-    let liquidExpressionDidMatch: Bool
+    func getSuperwallParameters() async -> [String : Any] {
+      return [
+        "cel_expression": celExpression,
+        "cel_expression_did_match": celExpressionDidMatch,
+        "liquid_expression": liquidExpression,
+        "liquid_expression_did_match": liquidExpressionDidMatch
+      ]
+    }
   }
 }
 
