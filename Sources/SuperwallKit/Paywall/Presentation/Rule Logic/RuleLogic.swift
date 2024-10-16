@@ -153,7 +153,7 @@ struct RuleLogic {
       case .noMatch:
         liquidDidMatch = false
       }
-      if configManager.config?.featureFlags.enableExpressionParameters == true,
+      if configManager.config?.featureFlags.enableCELLogging == true,
         let celExpression = rule.expressionCel {
         Task {
           let outcome = await celEvaluator.evaluateExpression(
