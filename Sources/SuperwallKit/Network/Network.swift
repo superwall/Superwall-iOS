@@ -12,12 +12,15 @@ import Combine
 class Network {
   private let urlSession: CustomURLSession
   private let factory: ApiFactory
+  private let options: SuperwallOptions
   private var applicationStateSubject: CurrentValueSubject<UIApplication.State, Never> = .init(.background)
 
   init(
     urlSession: CustomURLSession? = nil,
+    options: SuperwallOptions,
     factory: ApiFactory
   ) {
+    self.options = options
     self.urlSession = urlSession ?? CustomURLSession(factory: factory)
     self.factory = factory
 
@@ -147,7 +150,7 @@ class Network {
       let requestId = UUID().uuidString
       var config = try await urlSession.request(
         .config(
-          maxRetry: maxRetry,
+          maxRetry: maxRetry ?? options.maxConfigRetryCount,
           apiKey: factory.storage.apiKey
         ),
         data: SuperwallRequestData(
@@ -190,7 +193,7 @@ class Network {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
       let geoWrapper = try await urlSession.request(
-        .geo(maxRetry: maxRetry),
+        .geo(maxRetry: maxRetry ?? options.maxConfigRetryCount),
         data: SuperwallRequestData(factory: factory)
       )
       return geoWrapper.info

@@ -55,7 +55,11 @@ final class DependencyContainer {
     storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
-    network = Network(factory: self)
+    let options = options ?? SuperwallOptions()
+    network = Network(
+      options: options,
+      factory: self
+    )
 
     paywallRequestManager = PaywallRequestManager(
       storeKitManager: storeKitManager,
@@ -67,7 +71,6 @@ final class DependencyContainer {
       paywallRequestManager: paywallRequestManager
     )
 
-    let options = options ?? SuperwallOptions()
     api = Api(networkEnvironment: options.networkEnvironment)
     attributionPoster = AttributionPoster(
       collectAdServicesAttribution: options.collectAdServicesAttribution,

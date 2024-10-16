@@ -160,6 +160,20 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Defaults to `false`.
   public var collectAdServicesAttribution = false
 
+  /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
+  /// failure before it times out. Defaults to 6.
+  ///
+  /// Adjust this if you want the SDK to call the ``PaywallPresentationHandler/onError(_:)``
+  /// handler of the ``PaywallPresentationHandler`` faster when you call ``Superwall/register(event:)``
+  public var maxConfigRetryCount = 6 {
+    didSet {
+      // Must be >= 0
+      if maxConfigRetryCount < 0 {
+        maxConfigRetryCount = 0
+      }
+    }
+  }
+
   /// Configuration for printing to the console.
   @objc(SWKLogging)
   @objcMembers
