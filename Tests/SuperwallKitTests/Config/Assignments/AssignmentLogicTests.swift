@@ -25,6 +25,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: nil,
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -50,7 +51,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
     let outcome = await assignmentLogic.evaluateRules(
       forEvent: eventData,
@@ -89,6 +91,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: nil,
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -112,7 +115,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -154,6 +158,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: nil,
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -174,7 +179,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -212,6 +218,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: nil,
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -238,7 +245,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -276,6 +284,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -299,7 +308,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -332,6 +342,7 @@ class AssignmentLogicTests: XCTestCase {
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
       expressionJs: nil,
+      expressionCel: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -355,7 +366,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = RuleLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When

@@ -34,9 +34,9 @@ enum PrivateSuperwallEvent {
     let liquidExpressionDidMatch: Bool
 
     let rawName = "cel_expression_result"
-    var audienceFilterParams: [String : Any] = [:]
+    var audienceFilterParams: [String: Any] = [:]
     var canImplicitlyTriggerPaywall = false
-    func getSuperwallParameters() async -> [String : Any] {
+    func getSuperwallParameters() async -> [String: Any] {
       return [
         "cel_expression": celExpression,
         "cel_expression_did_match": celExpressionDidMatch,
