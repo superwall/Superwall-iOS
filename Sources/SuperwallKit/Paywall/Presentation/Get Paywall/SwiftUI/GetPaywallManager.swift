@@ -9,7 +9,11 @@ import SwiftUI
 
 final class GetPaywallManager: ObservableObject {
   @Published var userHasAccess = false
-  @Published var shouldDismiss = false
+  enum DismissState: Equatable {
+    case none
+    case dismiss(PaywallInfo)
+  }
+  @Published var dismissState: DismissState = .none
 
   enum State {
     case loading
@@ -61,9 +65,7 @@ extension GetPaywallManager: PaywallViewControllerDelegate {
     didFinishWith result: PaywallResult,
     shouldDismiss: Bool
   ) {
-    if shouldDismiss {
-      self.shouldDismiss.toggle()
-    }
+    self.dismissState = shouldDismiss ? .dismiss(paywall.info) : .none
 
     switch result {
     case .purchased,

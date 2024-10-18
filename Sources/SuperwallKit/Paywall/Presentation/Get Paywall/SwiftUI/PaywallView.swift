@@ -37,8 +37,8 @@ public struct PaywallView<
   private var paywallOverrides: PaywallOverrides?
 
   /// An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
-  /// will call `presentationMode.wrappedValue.dismiss()` by default.
-  private var onDismiss: (() -> Void)?
+  /// will call `presentationMode.wrappedValue.dismiss()` by default. Otherwise you must perform the dismissal of the paywall.
+  private var onRequestDismiss: ((PaywallInfo) -> Void)?
 
   /// A completion block that accepts a ``PaywallSkippedReason`` and returns an `View`.
   ///
@@ -70,12 +70,12 @@ public struct PaywallView<
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this
   ///   to override products and whether it ignores the subscription status. Defaults to `nil`.
-  ///   - onDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
-  ///   will call `presentationMode.wrappedValue.dismiss()` by default.
+  ///   - onRequestDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
+  ///   will call `presentationMode.wrappedValue.dismiss()` by default. Otherwise you must perform the dismissal of the paywall.
   ///   - onSkippedView: A completion block that accepts a ``PaywallSkippedReason`` and returns an `View`. This will show
-  ///   when the requested paywall is skipped.
+  ///   when the requested paywall is skipped. Defaults to `EmptyView()`.
   ///   - onErrorView: A completion block that accepts an ``Error`` and returns a `View`. This will show when the requested
-  ///   paywall is skipped.
+  ///   paywall is skipped. Defaults to `EmptyView()`.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the
   ///   [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_, this will be called when
   ///   the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be called only if the user is already paying
@@ -87,7 +87,7 @@ public struct PaywallView<
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    onDismiss: (() -> Void)? = nil,
+    onRequestDismiss: ((PaywallInfo) -> Void)? = nil,
     onSkippedView: ((PaywallSkippedReason) -> OnSkippedView)? = nil,
     onErrorView: ((Error) -> OnErrorView)? = nil,
     feature: (() -> Void)? = nil
@@ -95,7 +95,7 @@ public struct PaywallView<
     self.event = event
     self.params = params
     self.paywallOverrides = paywallOverrides
-    self.onDismiss = onDismiss
+    self.onRequestDismiss = onRequestDismiss
     self.onSkippedView = onSkippedView
     self.onErrorView = onErrorView
     self.feature = feature
@@ -122,9 +122,12 @@ public struct PaywallView<
         }
       }
     }
-    .onChange(of: manager.shouldDismiss) { newValue in
-      if newValue {
-        onDismiss?() ?? presentationMode.wrappedValue.dismiss()
+    .onChange(of: manager.dismissState) { newValue in
+      switch newValue {
+      case .dismiss(let info):
+        onRequestDismiss?(info) ?? presentationMode.wrappedValue.dismiss()
+      case .none:
+        break
       }
     }
     .onChange(of: manager.userHasAccess) { newValue in
@@ -161,8 +164,8 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this
   ///   to override products and whether it ignores the subscription status. Defaults to `nil`.
-  ///   - onDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
-  ///   will call `presentationMode.wrappedValue.dismiss()` by default.
+  ///   - onRequestDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
+  ///   will call `presentationMode.wrappedValue.dismiss()` by default. Otherwise you must perform the dismissal of the paywall.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the
   ///   [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_, this will be called when
   ///   the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be called only if the user is already paying
@@ -174,7 +177,7 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    onDismiss: (() -> Void)? = nil,
+    onRequestDismiss: ((PaywallInfo) -> Void)? = nil,
     feature: (() -> Void)? = nil
   ) {
     self.event = event
@@ -182,7 +185,7 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
     self.paywallOverrides = paywallOverrides
     self.onErrorView = nil
     self.onSkippedView = nil
-    self.onDismiss = onDismiss
+    self.onRequestDismiss = onRequestDismiss
     self.feature = feature
   }
 }
@@ -201,10 +204,10 @@ extension PaywallView where OnSkippedView == Never {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this
   ///   to override products and whether it ignores the subscription status. Defaults to `nil`.
-  ///   - onDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
-  ///   will call `presentationMode.wrappedValue.dismiss()` by default.
+  ///   - onRequestDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
+  ///   will call `presentationMode.wrappedValue.dismiss()` by default. Otherwise you must perform the dismissal of the paywall.
   ///   - onErrorView: A completion block that accepts an ``Error`` and returns a `View`. This will show when the requested
-  ///   paywall is skipped.
+  ///   paywall is skipped. Defaults to `EmptyView()`.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the
   ///   [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_, this will be called when
   ///   the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be called only if the user is already paying
@@ -216,14 +219,14 @@ extension PaywallView where OnSkippedView == Never {
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    onDismiss: (() -> Void)? = nil,
+    onRequestDismiss: ((PaywallInfo) -> Void)? = nil,
     onErrorView: @escaping (Error) -> OnErrorView,
     feature: (() -> Void)? = nil
   ) {
     self.event = event
     self.params = params
     self.paywallOverrides = paywallOverrides
-    self.onDismiss = onDismiss
+    self.onRequestDismiss = onRequestDismiss
     self.onErrorView = onErrorView
     self.onSkippedView = nil
     self.feature = feature
@@ -244,10 +247,10 @@ extension PaywallView where OnErrorView == Never {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this
   ///   to override products and whether it ignores the subscription status. Defaults to `nil`.
-  ///   - onDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
-  ///   will call `presentationMode.wrappedValue.dismiss()` by default.
+  ///   - onRequestDismiss: An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
+  ///   will call `presentationMode.wrappedValue.dismiss()` by default. Otherwise you must perform the dismissal of the paywall.
   ///   - onSkippedView: A completion block that accepts a ``PaywallSkippedReason`` and returns an `View`. This will show
-  ///   when the requested paywall is skipped.
+  ///   when the requested paywall is skipped. Defaults to `EmptyView()`.
   ///   - onErrorView: A completion block that accepts an ``Error`` and returns a `View`. This will show when the requested
   ///   paywall is skipped.
   ///   - feature: A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable via the
@@ -261,7 +264,7 @@ extension PaywallView where OnErrorView == Never {
     event: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    onDismiss: (() -> Void)? = nil,
+    onRequestDismiss: ((PaywallInfo) -> Void)? = nil,
     onSkippedView: @escaping (PaywallSkippedReason) -> OnSkippedView,
     feature: (() -> Void)? = nil
   ) {
@@ -271,6 +274,6 @@ extension PaywallView where OnErrorView == Never {
     self.onErrorView = nil
     self.onSkippedView = onSkippedView
     self.feature = feature
-    self.onDismiss = onDismiss
+    self.onRequestDismiss = onRequestDismiss
   }
 }
