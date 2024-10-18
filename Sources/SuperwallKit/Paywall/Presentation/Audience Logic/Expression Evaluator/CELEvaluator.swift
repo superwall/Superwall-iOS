@@ -78,17 +78,33 @@ struct CELEvaluator: ExpressionEvaluating {
       return noMatch
     }
 
-    let result = evaluateWithContext(
-      definition: jsonString,
-      context: evaluationContext
-    )
+    guard
+      let resultData = evaluateWithContext(
+        definition: jsonString,
+        context: evaluationContext
+      ).data(using: .utf8),
+      let result = try? JSONDecoder().decode(EvaluationResult.self, from: resultData)
+    else {
+      return noMatch
+    }
 
-    if result == "true" {
-      return await expressionLogic.tryToMatchOccurrence(
-        from: audience,
-        expressionMatched: true
+    switch result {
+    case .success(let value):
+      switch value {
+      case .bool(let value) where value == true:
+        return await expressionLogic.tryToMatchOccurrence(
+          from: audience,
+          expressionMatched: true
+        )
+      default:
+        return noMatch
+      }
+    case .failure(let message):
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: message
       )
-    } else {
       return noMatch
     }
   }

@@ -63,7 +63,6 @@ final class EvaluationContext: HostContext {
   }
 
   func deviceProperty(name: String, args: String) async -> String {
-    // TODO: Fill this out properly
     return ""
   }
 }
