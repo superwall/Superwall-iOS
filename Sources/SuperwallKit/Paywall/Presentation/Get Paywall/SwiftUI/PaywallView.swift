@@ -30,31 +30,31 @@ public struct PaywallView<
   /// of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   /// JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   /// be dropped.
-  private var params: [String: Any]? = nil
+  private var params: [String: Any]?
 
   /// An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override
   /// products, presentation style, and whether it ignores the subscription status. Defaults to `nil`.
-  private var paywallOverrides: PaywallOverrides? = nil
+  private var paywallOverrides: PaywallOverrides?
 
   /// An optional completion block that gets called when the paywall should dismiss. This defaults to `nil` and the SDK
   /// will call `presentationMode.wrappedValue.dismiss()` by default.
-  private var onDismiss: (() -> Void)? = nil
+  private var onDismiss: (() -> Void)?
 
   /// A completion block that accepts a ``PaywallSkippedReason`` and returns an `View`.
   ///
   /// This will show when the requested paywall is skipped.
-  private var onSkippedView: ((PaywallSkippedReason) -> OnSkippedView)? = nil
+  private var onSkippedView: ((PaywallSkippedReason) -> OnSkippedView)?
 
   /// A completion block that accepts an ``Error`` and returns a `View`. This will show when the requested paywall request
   /// throws an error.
-  private var onErrorView: ((Error) -> OnErrorView)? = nil
+  private var onErrorView: ((Error) -> OnErrorView)?
 
   /// A completion block containing a feature that you wish to paywall. Access to this block is remotely configurable
   /// via the [Superwall Dashboard](https://superwall.com/dashboard). If the paywall is set to _Non Gated_,
   /// this will be called when the paywall is dismissed or if the user is already paying. If the paywall is _Gated_, this will be
   /// called only if the user is already paying or if they begin paying. If no paywall is configured, this gets called immediately.
   /// This will not be called in the event of an error.
-  private var feature: (() -> Void)? = nil
+  private var feature: (() -> Void)?
 
   @StateObject private var manager = GetPaywallManager()
 
@@ -85,7 +85,7 @@ public struct PaywallView<
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
     event: String,
-    params: [String : Any]? = nil,
+    params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onDismiss: (() -> Void)? = nil,
     onSkippedView: ((PaywallSkippedReason) -> OnSkippedView)? = nil,
@@ -172,7 +172,7 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
     event: String,
-    params: [String : Any]? = nil,
+    params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onDismiss: (() -> Void)? = nil,
     feature: (() -> Void)? = nil
@@ -214,7 +214,7 @@ extension PaywallView where OnSkippedView == Never {
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
     event: String,
-    params: [String : Any]? = nil,
+    params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onDismiss: (() -> Void)? = nil,
     onErrorView: @escaping (Error) -> OnErrorView,
@@ -259,7 +259,7 @@ extension PaywallView where OnErrorView == Never {
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash. 
   public init(
     event: String,
-    params: [String : Any]? = nil,
+    params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onDismiss: (() -> Void)? = nil,
     onSkippedView: @escaping (PaywallSkippedReason) -> OnSkippedView,
