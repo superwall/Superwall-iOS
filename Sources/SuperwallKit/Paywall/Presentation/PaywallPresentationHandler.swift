@@ -52,7 +52,9 @@ public final class PaywallPresentationHandler: NSObject {
   /// - Parameter handler: A block that accepts a ``PaywallSkippedReasonObjc`` indicating why the paywall
   /// was skipped.
   @available(swift, obsoleted: 1.0)
-  public func onDismiss(_ handler: @escaping (PaywallInfo, PaywallResultObjc, StoreProduct?) -> Void) {
+  public func onDismiss(
+    _ handler: @escaping (PaywallInfo, PaywallResultObjc, StoreProduct?) -> Void
+  ) {
     self.onDismissHandlerObjc = handler
   }
 

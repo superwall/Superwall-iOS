@@ -5,8 +5,8 @@
 //  Created by Jake Mor on 10/9/21.
 //
 
-import Foundation
 import Combine
+import Foundation
 import UIKit
 
 extension Superwall {
@@ -124,51 +124,53 @@ extension Superwall {
 
     publisher
       .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { state in
-          switch state {
-          case .presented(let paywallInfo):
-            handler?.onPresentHandler?(paywallInfo)
-          case let .dismissed(paywallInfo, paywallResult):
-            if let handler = handler?.onDismissHandler {
-              handler(paywallInfo, paywallResult)
-            } else {
-              handler?.onDismissHandlerObjc?(paywallInfo, paywallResult.convertForObjc(), paywallResult.product)
-            }
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { state in
+            switch state {
+            case .presented(let paywallInfo):
+              handler?.onPresentHandler?(paywallInfo)
+            case let .dismissed(paywallInfo, paywallResult):
+              if let handler = handler?.onDismissHandler {
+                handler(paywallInfo, paywallResult)
+              } else {
+                handler?.onDismissHandlerObjc?(
+                  paywallInfo, paywallResult.convertForObjc(), paywallResult.product)
+              }
 
-            switch paywallResult {
-            case .purchased,
-              .restored:
-              completion?()
-            case .declined:
-              let closeReason = paywallInfo.closeReason
-              let featureGating = paywallInfo.featureGatingBehavior
-              if closeReason != .forNextPaywall && featureGating == .nonGated {
+              switch paywallResult {
+              case .purchased,
+                .restored:
                 completion?()
+              case .declined:
+                let closeReason = paywallInfo.closeReason
+                let featureGating = paywallInfo.featureGatingBehavior
+                if closeReason != .forNextPaywall && featureGating == .nonGated {
+                  completion?()
+                }
+                if closeReason == .webViewFailedToLoad && featureGating == .gated {
+                  let error = InternalPresentationLogic.presentationError(
+                    domain: "SWKPresentationError",
+                    code: 106,
+                    title: "Webview Failed",
+                    value: "Trying to present gated paywall but the webview could not load."
+                  )
+                  handler?.onErrorHandler?(error)
+                }
               }
-              if closeReason == .webViewFailedToLoad && featureGating == .gated {
-                let error = InternalPresentationLogic.presentationError(
-                  domain: "SWKPresentationError",
-                  code: 106,
-                  title: "Webview Failed",
-                  value: "Trying to present gated paywall but the webview could not load."
-                )
-                handler?.onErrorHandler?(error)
+            case .skipped(let reason):
+              if let handler = handler?.onSkipHandler {
+                handler(reason)
+              } else {
+                handler?.onSkipHandlerObjc?(reason.toObjc())
               }
+              completion?()
+            case .presentationError(let error):
+              handler?.onErrorHandler?(error)  // otherwise turning internet off would give unlimited access
             }
-          case .skipped(let reason):
-            if let handler = handler?.onSkipHandler {
-              handler(reason)
-            } else {
-              handler?.onSkipHandlerObjc?(reason.toObjc())
-            }
-            completion?()
-          case .presentationError(let error):
-            handler?.onErrorHandler?(error) // otherwise turning internet off would give unlimited access
           }
-        }
-      ))
+        ))
 
     // Assign the current register task while capturing the previous one.
     previousRegisterTask = Task { [weak self, previousRegisterTask] in

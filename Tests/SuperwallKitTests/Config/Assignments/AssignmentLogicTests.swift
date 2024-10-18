@@ -24,7 +24,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -88,7 +87,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -153,7 +151,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -211,7 +208,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -275,7 +271,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
@@ -331,7 +326,6 @@ class AssignmentLogicTests: XCTestCase {
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
-      expressionJs: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)
     )
