@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.10.2
+
+### Enhancements
+
+- Adds `maxConfigRetryCount` as a `SuperwallOption`. Use this to determine the number of times the SDK will attempt to get the Superwall configuration after a network failure before it times out.
+
 ## 3.10.1
 
 ### Fixes
