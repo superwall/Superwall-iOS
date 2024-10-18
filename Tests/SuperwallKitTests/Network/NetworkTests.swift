@@ -19,8 +19,12 @@ final class NetworkTests: XCTestCase {
   ) {
     _ = Task {
       let dependencyContainer = DependencyContainer()
-      let network = Network(urlSession: urlSession, factory: dependencyContainer)
-      
+      let network = Network(
+        urlSession: urlSession,
+        options: SuperwallOptions(),
+        factory: dependencyContainer
+      )
+
       _ = try? await network.getConfig(
         injectedApplicationStatePublisher: injectedApplicationStatePublisher,
         isRetryingCallback: { _ in }
@@ -52,7 +56,11 @@ final class NetworkTests: XCTestCase {
   func test_config_inForeground() async {
     let dependencyContainer = DependencyContainer()
     let urlSession = CustomURLSessionMock(factory: dependencyContainer)
-    let network = Network(urlSession: urlSession, factory: dependencyContainer)
+    let network = Network(
+      urlSession: urlSession,
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let publisher = CurrentValueSubject<UIApplication.State, Never>(.active)
       .eraseToAnyPublisher()
 
@@ -66,7 +74,11 @@ final class NetworkTests: XCTestCase {
   func test_config_inBackgroundThenForeground() async {
     let dependencyContainer = DependencyContainer()
     let urlSession = CustomURLSessionMock(factory: dependencyContainer)
-    let network = Network(urlSession: urlSession, factory: dependencyContainer)
+    let network = Network(
+      urlSession: urlSession,
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let publisher = [UIApplication.State.background, UIApplication.State.active]
       .publisher
       .eraseToAnyPublisher()
