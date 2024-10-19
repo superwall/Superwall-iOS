@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.10.3
+
+### Fixes
+
+- visionOS fixes.
+
 ## 3.10.2
 
 ### Enhancements
