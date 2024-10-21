@@ -18,7 +18,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/superwall/SuperCEL-iOS", from: "0.1.9")
+    .package(url: "https://github.com/superwall/SuperCEL-iOS", revision: "21914c36f71217f1118fe51193ed99a39180be44")
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.

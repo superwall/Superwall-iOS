@@ -2,6 +2,11 @@ name: SuperwallKit
 options:
   bundleIdentifer: com.superwall
 
+packages:
+  SuperCEL:
+    url: https://github.com/superwall/SuperCEL-iOS
+    exact: "0.1.9"
+
 targets:
   SuperwallKit:
     scheme:
@@ -28,6 +33,8 @@ targets:
     platform: iOS
     deploymentTarget: "13.0"
     sources: [Sources/]
+    dependencies:
+      - package: SuperCEL
   SuperwallKitTests:
     scheme: {}
     sources: [Tests/]
