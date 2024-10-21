@@ -17,7 +17,10 @@ final class SessionEventsManagerTests: XCTestCase {
       internalCachedTransactions: []
     )
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(options: SuperwallOptions(), factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     _ = SessionEventsManager(
       queue: SessionEventsQueue(
         storage: storage,
@@ -45,7 +48,10 @@ final class SessionEventsManagerTests: XCTestCase {
     let configManager = dependencyContainer.configManager!
     configManager.configState.send(.retrieved(.stub()))
 
-    let network = NetworkMock(options: SuperwallOptions(), factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     _ = SessionEventsManager(
       queue: SessionEventsQueue(
         storage: storage,
