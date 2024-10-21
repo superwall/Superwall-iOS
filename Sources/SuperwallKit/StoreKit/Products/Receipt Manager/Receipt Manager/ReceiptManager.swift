@@ -52,7 +52,7 @@ actor ReceiptManager: NSObject {
     storeKitVersion: SuperwallOptions.StoreKitVersion
   ) -> ReceiptManagerType {
     if #available(iOS 15.0, *),
-       storeKitVersion == .storeKit2 {
+      storeKitVersion == .storeKit2 {
       return SK2ReceiptManager()
     } else {
       return SK1ReceiptManager()
