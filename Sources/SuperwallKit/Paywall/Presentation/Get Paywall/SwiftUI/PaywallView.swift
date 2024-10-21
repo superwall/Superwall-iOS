@@ -140,7 +140,7 @@ public struct PaywallView<
         hasLoaded = true
         Task {
           await manager.getPaywall(
-            forEvent: event,
+            forPlacement: event,
             params: params,
             paywallOverrides: paywallOverrides
           )
