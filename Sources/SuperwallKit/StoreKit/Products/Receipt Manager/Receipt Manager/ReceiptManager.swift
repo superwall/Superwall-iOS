@@ -58,10 +58,9 @@ actor ReceiptManager: NSObject {
     } else {
       if #available(iOS 15.0, *) {
         #if swift(<5.7)
-        self._manager = SK2ReceiptManager()
+        self._manager = Self.versionedManager(storeKitVersion: storeKitVersion)
         #else
-        let manager = SK2ReceiptManager()
-        self.manager = manager
+        self.manager = Self.versionedManager(storeKitVersion: storeKitVersion)
         #endif
       } else {
         self.manager = SK1ReceiptManager()
@@ -69,6 +68,17 @@ actor ReceiptManager: NSObject {
     }
 
     self.receiptDelegate = receiptDelegate
+  }
+
+  static func versionedManager(
+    storeKitVersion: SuperwallOptions.StoreKitVersion
+  ) -> ReceiptManagerType {
+    if #available(iOS 15.0, *),
+       storeKitVersion == .storeKit2 {
+      return SK2ReceiptManager()
+    } else {
+      return SK1ReceiptManager()
+    }
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
