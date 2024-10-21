@@ -501,7 +501,7 @@ class DeviceHelper {
       utcDateTime: utcDateTimeString,
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
-      activeEntitlements: Superwall.shared.entitlements.active,
+      activeEntitlements: entitlementsInfo.active,
       isFirstAppOpen: isFirstAppOpen,
       sdkVersion: sdkVersion,
       sdkVersionPadded: sdkVersionPadded,
@@ -525,16 +525,19 @@ class DeviceHelper {
 
   private unowned let network: Network
   private unowned let storage: Storage
+  private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
 
   init(
     api: Api,
     storage: Storage,
     network: Network,
+    entitlementsInfo: EntitlementsInfo,
     factory: IdentityInfoFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
     self.network = network
+    self.entitlementsInfo = entitlementsInfo
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)

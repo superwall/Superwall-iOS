@@ -549,9 +549,13 @@ enum InternalSuperwallPlacement {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
+      var placementParams: [String: Any] = [
+        "store": "APP_STORE"
+      ]
+
       switch state {
       case .restore:
-        var placementParams = await paywallInfo.placementParams(forProduct: product)
+        placementParams += await paywallInfo.placementParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           placementParams += transactionDict
         }
@@ -561,7 +565,7 @@ enum InternalSuperwallPlacement {
         .abandon,
         .complete,
         .timeout:
-        var placementParams = await paywallInfo.placementParams(forProduct: product)
+        placementParams += await paywallInfo.placementParams(forProduct: product)
         if let transactionDict = model?.dictionary(withSnakeCase: true) {
           placementParams += transactionDict
         }

@@ -50,7 +50,7 @@ final class AttributionPoster {
 
   @objc
   private func applicationWillEnterForeground() {
-    #if os(iOS) || os(macOS) || VISION_OS
+    #if os(iOS) || os(macOS) || os(visionOS)
     guard Superwall.isInitialized else {
       return
     }

@@ -440,7 +440,6 @@ final class DebugViewController: UIViewController {
       type: .presentation
     )
 
-
     let publisher = PassthroughSubject<PaywallState, Never>()
     cancellable = publisher
       .receive(on: DispatchQueue.main)

@@ -37,7 +37,6 @@ struct SK2StoreProduct: StoreProductType {
   // We can't directly store instances of StoreKit.Product, since that causes
   // linking issues in iOS < 15, even with @available checks correctly in place.
   // So instead, we store the underlying product as Any and wrap it with casting.
-  // https://openradar.appspot.com/radar?id=4970535809187840
   private let _underlyingSK2Product: Any
   var underlyingSK2Product: SK2Product {
     // swiftlint:disable:next force_cast

@@ -206,13 +206,13 @@ extension Endpoint where
   Kind == EndpointKinds.Superwall,
   Response == Config {
   static func config(
-    maxRetry: Int?,
+    maxRetry: Int,
     apiKey: String
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: apiKey)]
 
     return Endpoint(
-      retryCount: maxRetry ?? 6,
+      retryCount: maxRetry,
       components: Components(
         host: .base,
         path: Api.version1 + "static_config",
@@ -258,10 +258,10 @@ extension Endpoint where
   Kind == EndpointKinds.Superwall,
   Response == GeoWrapper {
   static func geo(
-    maxRetry: Int?
+    maxRetry: Int
   ) -> Self {
     return Endpoint(
-      retryCount: maxRetry ?? 6,
+      retryCount: maxRetry,
       components: Components(
         host: .geo,
         path: Api.version1 + "geo"
