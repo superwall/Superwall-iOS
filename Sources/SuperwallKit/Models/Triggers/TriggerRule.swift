@@ -75,6 +75,7 @@ struct TriggerRule: Codable, Hashable, Equatable {
   var experiment: RawExperiment
   var expression: String?
   var expressionJs: String?
+  var expressionCel: String?
   var occurrence: TriggerRuleOccurrence?
   let computedPropertyRequests: [ComputedPropertyRequest]
   var preload: TriggerPreload
@@ -122,6 +123,7 @@ struct TriggerRule: Codable, Hashable, Equatable {
     case expression
     case variants
     case expressionJs
+    case expressionCel
     case occurrence
     case computedPropertyRequests = "computedProperties"
     case preload
@@ -142,6 +144,7 @@ struct TriggerRule: Codable, Hashable, Equatable {
 
     expression = try values.decodeIfPresent(String.self, forKey: .expression)
     expressionJs = try values.decodeIfPresent(String.self, forKey: .expressionJs)
+    expressionCel = try values.decodeIfPresent(String.self, forKey: .expressionCel)
     occurrence = try values.decodeIfPresent(TriggerRuleOccurrence.self, forKey: .occurrence)
     preload = try values.decode(TriggerPreload.self, forKey: .preload)
 
@@ -160,6 +163,7 @@ struct TriggerRule: Codable, Hashable, Equatable {
     try container.encode(experiment.variants, forKey: .variants)
     try container.encodeIfPresent(expression, forKey: .expression)
     try container.encodeIfPresent(expressionJs, forKey: .expressionJs)
+    try container.encodeIfPresent(expressionCel, forKey: .expressionCel)
     try container.encodeIfPresent(occurrence, forKey: .occurrence)
     try container.encode(preload, forKey: .preload)
 
@@ -168,11 +172,11 @@ struct TriggerRule: Codable, Hashable, Equatable {
     }
   }
 
-
   init(
     experiment: RawExperiment,
     expression: String?,
     expressionJs: String?,
+    expressionCel: String?,
     occurrence: TriggerRuleOccurrence? = nil,
     computedPropertyRequests: [ComputedPropertyRequest],
     preload: TriggerPreload
@@ -180,6 +184,7 @@ struct TriggerRule: Codable, Hashable, Equatable {
     self.experiment = experiment
     self.expression = expression
     self.expressionJs = expressionJs
+    self.expressionCel = expressionCel
     self.occurrence = occurrence
     self.computedPropertyRequests = computedPropertyRequests
     self.preload = preload
@@ -203,6 +208,7 @@ extension TriggerRule: Stubbable {
       ),
       expression: nil,
       expressionJs: nil,
+      expressionCel: nil,
       occurrence: nil,
       computedPropertyRequests: [],
       preload: .init(behavior: .always)

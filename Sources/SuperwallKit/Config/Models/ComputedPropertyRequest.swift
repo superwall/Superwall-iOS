@@ -13,7 +13,7 @@ import Foundation
 public final class ComputedPropertyRequest: NSObject, Codable {
   /// The type of device property to compute.
   @objc(SWKComputedPropertyRequestType)
-  public enum ComputedPropertyRequestType: Int, Codable {
+  public enum ComputedPropertyRequestType: Int, Codable, CaseIterable {
     /// The number of minutes since the event occurred.
     case minutesSince
 
@@ -30,17 +30,21 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     case yearsSince
 
     var prefix: String {
+      return description + "_"
+    }
+
+    var description: String {
       switch self {
       case .minutesSince:
-        return "minutesSince_"
+        return "minutesSince"
       case .hoursSince:
-        return "hoursSince_"
+        return "hoursSince"
       case .daysSince:
-        return "daysSince_"
+        return "daysSince"
       case .monthsSince:
-        return "monthsSince_"
+        return "monthsSince"
       case .yearsSince:
-        return "yearsSince_"
+        return "yearsSince"
       }
     }
 
@@ -150,6 +154,15 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
     eventName = try container.decode(String.self, forKey: .eventName)
+    super.init()
+  }
+
+  init(
+    type: ComputedPropertyRequestType,
+    eventName: String
+  ) {
+    self.type = type
+    self.eventName = eventName
     super.init()
   }
 }
