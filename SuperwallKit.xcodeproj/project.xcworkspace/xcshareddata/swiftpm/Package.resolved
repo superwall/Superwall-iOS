@@ -1,14 +1,15 @@
 {
+  "originHash" : "f7bddd1fb540fa4978fe10bcd081d8eef0630c75eda663e00ac15065d566a9d0",
   "pins" : [
     {
-      "identity" : "asn1swift",
+      "identity" : "supercel-ios",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/tikhop/ASN1Swift",
+      "location" : "https://github.com/superwall/SuperCEL-iOS",
       "state" : {
-        "revision" : "b53bee03a942623db25afc5bfb80227b2cb3b425",
-        "version" : "1.2.4"
+        "revision" : "21914c36f71217f1118fe51193ed99a39180be44",
+        "version" : "0.1.9"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

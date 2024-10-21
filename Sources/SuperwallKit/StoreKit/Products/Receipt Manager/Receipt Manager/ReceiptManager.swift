@@ -38,8 +38,8 @@ actor ReceiptManager: NSObject {
       return
     }
 
-    if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
+    if storeKitVersion == .storeKit2,
+      #available(iOS 15.0, *) {
       self.manager = SK2ReceiptManager()
     } else {
       self.manager = SK1ReceiptManager()
