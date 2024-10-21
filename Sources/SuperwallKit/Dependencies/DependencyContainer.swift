@@ -57,7 +57,10 @@ final class DependencyContainer {
       entitlementsInfo: entitlementsInfo,
       storeKitVersion: options.storeKitVersion
     )
-    network = Network(factory: self)
+    network = Network(
+      options: options,
+      factory: self
+    )
 
     storeKitManager = StoreKitManager(productsManager: productsManager)
 

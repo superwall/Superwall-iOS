@@ -37,6 +37,22 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Updates the RevenueCat example app to use StoreKit 2.
 - Adds CEL compatibility to audience filters. We created a new package called `SuperCEL` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
 
+## 3.11.0
+
+### Enhancements
+
+- Adds a `PaywallView` for SwiftUI users using iOS 14+. You can use this as a standalone paywall view that you can embed and present however you like instead of using `register`. This uses `getPaywall(forEvent:params:paywallOverrides:)` under the hood. Note that you're responsible for the deallocation of the view. If you have a `PaywallView` presented somewhere and you try to present the same `PaywallView` elsewhere, you will get a crash.
+
+### Fixes
+
+- visionOS fixes.
+
+## 3.10.2
+
+### Enhancements
+
+- Adds `maxConfigRetryCount` as a `SuperwallOption`. Use this to determine the number of times the SDK will attempt to get the Superwall configuration after a network failure before it times out.
+
 ## 3.10.1
 
 ### Fixes

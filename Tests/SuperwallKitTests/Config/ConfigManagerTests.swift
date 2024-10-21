@@ -13,7 +13,10 @@ import XCTest
 final class ConfigManagerTests: XCTestCase {
   func test_refreshConfiguration() async {
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let newConfig: Config = .stub()
       .setting(\.buildId, to: "123")
     network.configReturnValue = .success(newConfig)
@@ -74,7 +77,10 @@ final class ConfigManagerTests: XCTestCase {
       variant: variant
     )
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let storage = StorageMock()
     let configManager = ConfigManager(
       options: SuperwallOptions(),
@@ -101,7 +107,10 @@ final class ConfigManagerTests: XCTestCase {
 
   func test_loadAssignments_noConfig() async {
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let storage = StorageMock()
     let configManager = ConfigManager(
       options: SuperwallOptions(),
@@ -129,7 +138,10 @@ final class ConfigManagerTests: XCTestCase {
 
   func test_loadAssignments_noTriggers() async {
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let storage = StorageMock()
     let configManager = ConfigManager(
       options: SuperwallOptions(),
@@ -152,7 +164,10 @@ final class ConfigManagerTests: XCTestCase {
 
   func test_loadAssignments_saveAssignmentsFromServer() async {
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(factory: dependencyContainer)
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
     let storage = StorageMock()
     let configManager = ConfigManager(
       options: SuperwallOptions(),

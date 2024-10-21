@@ -28,6 +28,8 @@ extension Superwall {
   ///   ``PaywallSkippedReason`` and an optional `Error`. If the ``PaywallViewController`` couldn't be retrieved
   ///   because its presentation should be skipped, the ``PaywallSkippedReason`` will be non-`nil`. Any errors
   ///   will be in the `Error` object.
+  /// - Warning: You're responsible for the deallocation of the returned ``PaywallViewController``. If you have a ``PaywallViewController``
+  /// presented somewhere and you try to present the same ``PaywallViewController`` elsewhere, you will get a crash.
   @nonobjc public func getPaywall(
     forPlacement placement: String,
     params: [String: Any]? = nil,
@@ -71,6 +73,8 @@ extension Superwall {
   /// - Throws: An `Error` explaining why it couldn't get the view controller. If the ``PaywallViewController`` couldn't be retrieved
   /// because its presentation should be skipped, catch an error of type ``PaywallSkippedReason`` and switch over its cases to find out
   /// more info. All other errors will be returned in the general catch block.
+  /// - Warning: You're responsible for the deallocation of the returned ``PaywallViewController``. If you have a ``PaywallViewController``
+  /// presented somewhere and you try to present the same ``PaywallViewController`` elsewhere, you will get a crash.
   @MainActor
   @nonobjc public func getPaywall(
     forPlacement placement: String,
@@ -109,6 +113,8 @@ extension Superwall {
   ///   to see if it's presentation was intentionally skipped. Then check
   ///   ``GetPaywallResultObjc/error`` for any errors that may have occurred.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
+  /// - Warning: You're responsible for the deallocation of the returned ``PaywallViewController``. If you have a ``PaywallViewController``
+  /// presented somewhere and you try to present the same ``PaywallViewController`` elsewhere, you will get a crash.
   @available(swift, obsoleted: 1.0)
   @objc public func getPaywall(
     forPlacement placement: String,
