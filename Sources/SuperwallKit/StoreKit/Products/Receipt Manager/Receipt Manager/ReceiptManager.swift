@@ -21,8 +21,24 @@ actor ReceiptManager: NSObject {
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
-  private let manager: ReceiptManagerType
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
+
+  #if swift(<5.7)
+  // We can't directly store instances of ReceiptManagerType,
+  // since that causes linking issues in iOS < 15 with old Xcode
+  // versions, even with @available checks correctly in place.
+  // So instead, we store the underlying manager as Any and wrap
+  // it with casting.
+  // https://openradar.appspot.com/radar?id=4970535809187840
+  private let _manager: Any
+  var manager: ReceiptManagerType {
+    // swiftlint:disable:next force_cast
+    _manager as! ReceiptManagerType
+  }
+  #else
+  private let manager: ReceiptManagerType
+  #endif
+
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -38,14 +54,15 @@ actor ReceiptManager: NSObject {
       return
     }
 
-    if storeKitVersion == .storeKit1 {
-      self.manager = SK1ReceiptManager()
+    if #available(iOS 15.0, *),
+      storeKitVersion == .storeKit2 {
+      #if swift(<5.7)
+      self._manager = SK2ReceiptManager()
+      #else
+      self.manager = SK2ReceiptManager()
+      #endif
     } else {
-      if #available(iOS 15.0, *) {
-        self.manager = SK2ReceiptManager()
-      } else {
-        self.manager = SK1ReceiptManager()
-      }
+      self.manager = SK1ReceiptManager()
     }
 
     self.receiptDelegate = receiptDelegate
