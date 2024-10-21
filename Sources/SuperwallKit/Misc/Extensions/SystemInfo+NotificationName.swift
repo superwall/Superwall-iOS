@@ -6,7 +6,7 @@
 //
 // swiftlint:disable identifier_name
 
-#if os(iOS) || os(tvOS) || VISION_OS || targetEnvironment(macCatalyst)
+#if os(iOS) || os(tvOS) || os(visionOS) || targetEnvironment(macCatalyst)
 import UIKit
 #elseif os(watchOS)
 import UIKit
@@ -17,7 +17,7 @@ import AppKit
 
 enum SystemInfo {
   static var applicationWillEnterForegroundNotification: Notification.Name {
-    #if os(iOS) || os(tvOS) || VISION_OS
+    #if os(iOS) || os(tvOS) || os(visionOS)
     UIApplication.willEnterForegroundNotification
     #elseif os(macOS)
     NSApplication.willBecomeActiveNotification
