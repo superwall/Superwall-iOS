@@ -60,7 +60,8 @@ actor ReceiptManager: NSObject {
         #if swift(<5.7)
         self._manager = SK2ReceiptManager()
         #else
-        self.manager = SK2ReceiptManager()
+        let manager = SK2ReceiptManager()
+        self.manager = manager
         #endif
       } else {
         self.manager = SK1ReceiptManager()
