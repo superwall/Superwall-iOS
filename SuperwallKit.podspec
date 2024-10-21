@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
 	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '13.0'
 	s.requires_arc = true
-  s.dependency 'SuperCEL', '~> 0.1.1'
+  s.dependency 'SuperCEL', '0.1.9'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {

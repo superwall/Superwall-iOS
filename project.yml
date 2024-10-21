@@ -5,7 +5,7 @@ options:
 packages:
   SuperCEL:
     url: https://github.com/superwall/SuperCEL-iOS
-    from: "0.0.1"
+    exact: "0.1.9"
 
 targets:
   SuperwallKit:
