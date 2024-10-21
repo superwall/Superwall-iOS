@@ -12,16 +12,16 @@ enum EvaluationResult: Codable {
   case failure(String)
 
   private enum CodingKeys: String, CodingKey {
-    case ok = "Ok"
-    case error = "Err"
+    case success = "Ok"
+    case failure = "Err"
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
 
-    if let okValue = try? container.decode(PassableValue.self, forKey: .ok) {
+    if let okValue = try? container.decode(PassableValue.self, forKey: .success) {
       self = .success(okValue)
-    } else if let errValue = try? container.decode(String.self, forKey: .error) {
+    } else if let errValue = try? container.decode(String.self, forKey: .failure) {
       self = .failure(errValue)
     } else {
       throw DecodingError.typeMismatch(
@@ -39,9 +39,9 @@ enum EvaluationResult: Codable {
 
     switch self {
     case .success(let value):
-      try container.encode(value, forKey: .ok)
+      try container.encode(value, forKey: .success)
     case .failure(let message):
-      try container.encode(message, forKey: .error)
+      try container.encode(message, forKey: .failure)
     }
   }
 }

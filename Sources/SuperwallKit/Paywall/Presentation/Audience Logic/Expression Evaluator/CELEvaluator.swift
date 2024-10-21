@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 14/08/2024.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 import SuperCEL
