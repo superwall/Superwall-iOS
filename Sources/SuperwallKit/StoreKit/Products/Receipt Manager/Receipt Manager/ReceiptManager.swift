@@ -39,7 +39,6 @@ actor ReceiptManager: NSObject {
   private let manager: ReceiptManagerType
   #endif
 
-
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
     productsManager: ProductsManager,
@@ -54,15 +53,18 @@ actor ReceiptManager: NSObject {
       return
     }
 
-    if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
-      #if swift(<5.7)
-      self._manager = SK2ReceiptManager()
-      #else
-      self.manager = SK2ReceiptManager()
-      #endif
-    } else {
+    if storeKitVersion == .storeKit1 {
       self.manager = SK1ReceiptManager()
+    } else {
+      if #available(iOS 15.0, *) {
+        #if swift(<5.7)
+        self._manager = SK2ReceiptManager()
+        #else
+        self.manager = SK2ReceiptManager()
+        #endif
+      } else {
+        self.manager = SK1ReceiptManager()
+      }
     }
 
     self.receiptDelegate = receiptDelegate
