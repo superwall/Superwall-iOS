@@ -39,6 +39,7 @@ final class DependencyContainer {
   var receiptManager: ReceiptManager!
   var purchaseController: PurchaseController!
   var attributionPoster: AttributionPoster!
+  var celEvaluator: CELEvaluator!
   // swiftlint:enable implicitly_unwrapped_optional
   let productsFetcher = ProductsFetcherSK1()
   let paywallArchiveManager = PaywallArchiveManager()
@@ -55,6 +56,7 @@ final class DependencyContainer {
     storeKitManager = StoreKitManager(productsFetcher: productsFetcher)
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
+    celEvaluator = CELEvaluator(storage: storage, factory: self)
     let options = options ?? SuperwallOptions()
     network = Network(
       options: options,
