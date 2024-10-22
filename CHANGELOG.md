@@ -20,6 +20,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
 - Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
 - Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
+- Moves `ComputedPropertyRequestType` to be a top-level type.
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
 - Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
@@ -34,6 +35,23 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Updates the RevenueCat example app to use StoreKit 2.
+- Uses Superscript for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. This allows for complex expressions within the audience filter builder.
+
+## 3.11.0
+
+### Enhancements
+
+- Adds a `PaywallView` for SwiftUI users using iOS 14+. You can use this as a standalone paywall view that you can embed and present however you like instead of using `register`. This uses `getPaywall(forEvent:params:paywallOverrides:)` under the hood. Note that you're responsible for the deallocation of the view. If you have a `PaywallView` presented somewhere and you try to present the same `PaywallView` elsewhere, you will get a crash.
+
+### Fixes
+
+- visionOS fixes.
+
+## 3.10.2
+
+### Enhancements
+
+- Adds `maxConfigRetryCount` as a `SuperwallOption`. Use this to determine the number of times the SDK will attempt to get the Superwall configuration after a network failure before it times out.
 
 ## 3.10.1
 

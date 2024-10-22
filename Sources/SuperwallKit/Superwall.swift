@@ -220,10 +220,10 @@ public final class Superwall: NSObject, ObservableObject {
     // therefore, we don't need to make this detached.
     Task {
       Task {
-        #if os(iOS) || os(macOS) || VISION_OS
-          if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-            await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-          }
+        #if os(iOS) || os(macOS) || os(visionOS)
+        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+        }
         #endif
       }
 
@@ -576,10 +576,10 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       await Superwall.shared.track(InternalSuperwallPlacement.Reset())
 
-      #if os(iOS) || os(macOS) || VISION_OS
-        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-        }
+      #if os(iOS) || os(macOS) || os(visionOS)
+      if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+      }
       #endif
     }
   }

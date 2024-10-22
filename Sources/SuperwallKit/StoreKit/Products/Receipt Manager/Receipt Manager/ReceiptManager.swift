@@ -21,8 +21,8 @@ actor ReceiptManager: NSObject {
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
-  private let manager: ReceiptManagerType
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
+  private let manager: ReceiptManagerType
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -40,12 +40,23 @@ actor ReceiptManager: NSObject {
 
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
-      self.manager = SK2ReceiptManager()
+      self.manager = Self.versionedManager(storeKitVersion: storeKitVersion)
     } else {
       self.manager = SK1ReceiptManager()
     }
 
     self.receiptDelegate = receiptDelegate
+  }
+
+  static func versionedManager(
+    storeKitVersion: SuperwallOptions.StoreKitVersion
+  ) -> ReceiptManagerType {
+    if #available(iOS 15.0, *),
+      storeKitVersion == .storeKit2 {
+      return SK2ReceiptManager()
+    } else {
+      return SK1ReceiptManager()
+    }
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,

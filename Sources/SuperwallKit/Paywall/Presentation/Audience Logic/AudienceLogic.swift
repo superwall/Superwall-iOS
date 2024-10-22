@@ -132,15 +132,10 @@ struct AudienceLogic {
     for placement: PlacementData,
     withTrigger trigger: Trigger
   ) async -> RuleMatchOutcome {
-    let expressionEvaluator = ExpressionEvaluator(
-      storage: storage,
-      factory: factory
-    )
-
     var unmatchedAudiences: [UnmatchedAudience] = []
 
     for audience in trigger.audiences {
-      let outcome = await expressionEvaluator.evaluateExpression(
+      let outcome = await configManager.expressionEvaluator.evaluateExpression(
         fromAudienceFilter: audience,
         placementData: placement
       )
