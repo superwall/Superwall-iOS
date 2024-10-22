@@ -139,39 +139,6 @@ struct AudienceLogic {
         fromAudienceFilter: audience,
         placementData: placement
       )
-      let liquidDidMatch: Bool
-
-      switch outcome {
-      case .match:
-        liquidDidMatch = true
-      case .noMatch:
-        liquidDidMatch = false
-      }
-      if configManager.config?.featureFlags.enableCELLogging == true,
-        let celExpression = rule.expressionCel
-      {
-        Task {
-          let outcome = await celEvaluator.evaluateExpression(
-            fromRule: rule,
-            eventData: event
-          )
-          let didMatch: Bool
-          switch outcome {
-          case .match:
-            didMatch = true
-          case .noMatch:
-            didMatch = false
-          }
-          let celExpressionResult = PrivateSuperwallEvent.CELExpressionResult(
-            celExpression: celExpression,
-            celExpressionDidMatch: didMatch,
-            liquidExpression: rule.expression ?? "",
-            liquidExpressionDidMatch: liquidDidMatch
-          )
-          await Superwall.shared.track(celExpressionResult)
-        }
-      }
-
       switch outcome {
       case .match(let item):
         return .matched(item)

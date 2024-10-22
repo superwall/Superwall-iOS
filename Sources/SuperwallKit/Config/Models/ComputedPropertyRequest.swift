@@ -25,6 +25,7 @@ public final class ComputedPropertyRequest: NSObject, Codable {
   init(type: ComputedPropertyRequestType, placementName: String) {
     self.type = type
     self.placementName = placementName
+    super.init()
   }
 
   public func encode(to encoder: any Encoder) throws {
@@ -37,15 +38,6 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     type = try container.decode(ComputedPropertyRequestType.self, forKey: .type)
     placementName = try container.decode(String.self, forKey: .placementName)
-    super.init()
-  }
-
-  init(
-    type: ComputedPropertyRequestType,
-    eventName: String
-  ) {
-    self.type = type
-    self.eventName = eventName
     super.init()
   }
 }

@@ -33,7 +33,7 @@ class AppSessionManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 50_000_000)
 
-    await NotificationCenter.default.post(
+    NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
     try? await Task.sleep(nanoseconds: 50_000_000)
@@ -46,7 +46,7 @@ class AppSessionManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    await NotificationCenter.default.post(
+    NotificationCenter.default.post(
       Notification(name: UIApplication.willTerminateNotification)
     )
     try? await Task.sleep(nanoseconds: 50_000_000)
@@ -59,7 +59,7 @@ class AppSessionManagerTests: XCTestCase {
     dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    await NotificationCenter.default.post(
+    NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
@@ -72,14 +72,14 @@ class AppSessionManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 10_000_000)
 
-    await NotificationCenter.default.post(
+    NotificationCenter.default.post(
       Notification(name: UIApplication.willResignActiveNotification)
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
 
     XCTAssertNotNil(appSessionManager.appSession.endAt)
 
-    await NotificationCenter.default.post(
+    NotificationCenter.default.post(
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 

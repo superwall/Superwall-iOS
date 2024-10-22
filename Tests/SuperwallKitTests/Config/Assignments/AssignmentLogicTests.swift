@@ -51,8 +51,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
     let outcome = await assignmentLogic.evaluateAudienceFilters(
       forPlacement: eventData,
@@ -114,8 +113,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -177,8 +175,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -245,8 +242,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -307,8 +303,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
 
     // MARK: When
@@ -364,8 +359,7 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer,
-      celEvaluator: dependencyContainer.celEvaluator
+      factory: dependencyContainer
     )
 
     // MARK: When

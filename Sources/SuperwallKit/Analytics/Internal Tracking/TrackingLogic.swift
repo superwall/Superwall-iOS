@@ -39,7 +39,7 @@ enum TrackingLogic {
       "event_name": placementName
     ]
 
-    if trackableEvent is TrackablePrivateEvent {
+    if trackablePlacement is TrackablePrivatePlacement {
       audienceFilterParams["$is_private_event"] = true
     }
 
