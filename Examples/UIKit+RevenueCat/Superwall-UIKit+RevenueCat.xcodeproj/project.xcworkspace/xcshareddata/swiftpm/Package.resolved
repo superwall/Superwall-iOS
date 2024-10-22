@@ -11,12 +11,12 @@
         }
       },
       {
-        "package": "SuperCEL",
-        "repositoryURL": "https://github.com/superwall/SuperCEL-iOS",
+        "package": "Superscript",
+        "repositoryURL": "https://github.com/superwall/Superscript-iOS",
         "state": {
           "branch": null,
-          "revision": "6e5560d0758ad69d790a1fdfb9177bc226923095",
-          "version": "0.0.1"
+          "revision": "4e08d383977883aaee406b7f0e52afb81a4ea66f",
+          "version": null
         }
       }
     ]
