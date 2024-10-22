@@ -15,12 +15,9 @@ concurrency:
 
 jobs:
   run-tests:
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '14.3'
       - name: Git Checkout
         uses: actions/checkout@v3
       - name: xcodegen
