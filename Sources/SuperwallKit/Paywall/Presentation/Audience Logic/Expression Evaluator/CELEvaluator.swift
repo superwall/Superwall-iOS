@@ -7,7 +7,7 @@
 // swiftlint:disable function_body_length
 
 import Foundation
-import SuperCEL
+import Superscript
 
 protocol ExpressionEvaluating {
   func evaluateExpression(

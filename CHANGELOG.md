@@ -35,7 +35,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Updates the RevenueCat example app to use StoreKit 2.
-- Adds CEL compatibility to audience filters. We created a new package called `SuperCEL` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
+- Adds CEL compatibility to audience filters. We created a new package called `Superscript` which is included as a dependency for `SuperwallKit`. This allows for a lot more complex audience filters.
 
 ## 3.11.0
 
