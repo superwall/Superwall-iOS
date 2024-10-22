@@ -18,7 +18,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/superwall/Superscript-iOS", revision: "4e08d383977883aaee406b7f0e52afb81a4ea66f")
+    .package(url: "https://github.com/superwall/Superscript-iOS", .exact("0.1.12"))
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
