@@ -35,7 +35,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Updates the RevenueCat example app to use StoreKit 2.
-- Uses Superscript for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. This allows for complex expressions within the audience filter builder.
+- Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
 
 ## 3.11.0
 
