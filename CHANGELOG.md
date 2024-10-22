@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds a `PaywallView` for SwiftUI users using iOS 14+. You can use this as a standalone paywall view that you can embed and present however you like instead of using `register`. This uses `getPaywall(forEvent:params:paywallOverrides:)` under the hood. Note that you're responsible for the deallocation of the view. If you have a `PaywallView` presented somewhere and you try to present the same `PaywallView` elsewhere, you will get a crash.
-- Adds our `Superscript` package as a dependency. We are migrating towards using Google's Common Expression Language (CEL) in audience filters to allow for more complex features. The use of this is behind a feature flag.
+- Adds our `Superscript` package as a dependency. We are migrating towards using Google's Common Expression Language (CEL) in audience filters to allow for more complex expressions. The use of this is behind a feature flag.
 
 ### Fixes
 

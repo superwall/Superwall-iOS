@@ -9,6 +9,15 @@
           "revision": "c7058bfd80d7f42ca6aa392bf1fab769d1158bf1",
           "version": "5.5.0"
         }
+      },
+      {
+        "package": "Superscript",
+        "repositoryURL": "https://github.com/superwall/Superscript-iOS",
+        "state": {
+          "branch": null,
+          "revision": "4e08d383977883aaee406b7f0e52afb81a4ea66f",
+          "version": null
+        }
       }
     ]
   },
