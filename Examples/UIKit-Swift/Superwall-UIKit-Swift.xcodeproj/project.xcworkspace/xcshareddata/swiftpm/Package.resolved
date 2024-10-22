@@ -2,11 +2,11 @@
   "object": {
     "pins": [
       {
-        "package": "SuperCEL",
-        "repositoryURL": "https://github.com/superwall/SuperCEL-iOS",
+        "package": "Superscript",
+        "repositoryURL": "https://github.com/superwall/Superscript-iOS",
         "state": {
           "branch": null,
-          "revision": "21914c36f71217f1118fe51193ed99a39180be44",
+          "revision": "e79ca867318c799d96bc12ca3c0cbaf4931ea63d",
           "version": null
         }
       }

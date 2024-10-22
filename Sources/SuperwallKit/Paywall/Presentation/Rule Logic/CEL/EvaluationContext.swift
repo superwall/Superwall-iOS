@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SuperCEL
+import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage

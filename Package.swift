@@ -18,7 +18,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/superwall/SuperCEL-iOS", revision: "21914c36f71217f1118fe51193ed99a39180be44")
+    .package(url: "https://github.com/superwall/Superscript-iOS", revision: "e79ca867318c799d96bc12ca3c0cbaf4931ea63d")
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -26,7 +26,7 @@ let package = Package(
     .target(
       name: "SuperwallKit",
       dependencies: [
-        .product(name: "SuperCEL", package: "SuperCEL-iOS")
+        .product(name: "Superscript", package: "Superscript-iOS")
       ],
       exclude: ["Resources/BundleHelper.swift"],
       resources: [

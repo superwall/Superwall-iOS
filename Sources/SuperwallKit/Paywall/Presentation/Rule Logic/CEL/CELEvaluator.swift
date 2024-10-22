@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import SuperCEL
+import Superscript
 
 struct CELEvaluator: ExpressionEvaluating {
   private unowned let storage: Storage

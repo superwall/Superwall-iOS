@@ -3,9 +3,9 @@ options:
   bundleIdentifer: com.superwall
 
 packages:
-  SuperCEL:
-    url: https://github.com/superwall/SuperCEL-iOS
-    exactVersion: "0.1.9"
+  Superscript:
+    url: https://github.com/superwall/Superscript-iOS
+    exactVersion: "0.1.10"
 
 targets:
   SuperwallKit:
@@ -34,7 +34,7 @@ targets:
     deploymentTarget: "13.0"
     sources: [Sources/]
     dependencies:
-      - package: SuperCEL
+      - package: Superscript
   SuperwallKitTests:
     scheme: {}
     sources: [Tests/]
