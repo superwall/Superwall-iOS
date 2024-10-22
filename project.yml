@@ -2,6 +2,11 @@ name: SuperwallKit
 options:
   bundleIdentifer: com.superwall
 
+packages:
+  Superscript:
+    url: https://github.com/superwall/Superscript-iOS
+    exactVersion: "0.1.12"
+
 targets:
   SuperwallKit:
     scheme:
@@ -28,6 +33,8 @@ targets:
     platform: iOS
     deploymentTarget: "13.0"
     sources: [Sources/]
+    dependencies:
+      - package: Superscript
   SuperwallKitTests:
     scheme: {}
     sources: [Tests/]

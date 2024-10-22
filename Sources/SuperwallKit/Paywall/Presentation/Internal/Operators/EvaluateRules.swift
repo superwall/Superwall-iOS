@@ -20,7 +20,8 @@ extension Superwall {
       let ruleLogic = RuleLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
-        factory: dependencyContainer
+        factory: dependencyContainer,
+        celEvaluator: dependencyContainer.celEvaluator
       )
       return await ruleLogic.evaluateRules(
         forEvent: eventData,

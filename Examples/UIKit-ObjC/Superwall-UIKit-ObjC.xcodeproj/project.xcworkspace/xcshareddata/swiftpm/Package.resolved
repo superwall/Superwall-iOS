@@ -2,15 +2,6 @@
   "object": {
     "pins": [
       {
-        "package": "RevenueCat",
-        "repositoryURL": "https://github.com/RevenueCat/purchases-ios.git",
-        "state": {
-          "branch": null,
-          "revision": "c7058bfd80d7f42ca6aa392bf1fab769d1158bf1",
-          "version": "5.5.0"
-        }
-      },
-      {
         "package": "Superscript",
         "repositoryURL": "https://github.com/superwall/Superscript-iOS",
         "state": {
