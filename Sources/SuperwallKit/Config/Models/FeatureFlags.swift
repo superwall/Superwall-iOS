@@ -22,6 +22,7 @@ struct FeatureFlags: Codable, Equatable {
   var enableMultiplePaywallUrls: Bool
   var enableConfigRefresh: Bool
   var enableTextInteraction: Bool
+  var enableCELLogging: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -43,6 +44,7 @@ struct FeatureFlags: Codable, Equatable {
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh_v2", default: false)
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
+    enableCELLogging = rawFeatureFlags.value(forKey: "enable_cel_logging", default: false)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -57,7 +59,8 @@ struct FeatureFlags: Codable, Equatable {
       RawFeatureFlag(key: "enable_none_scheduling_policy", enabled: enableNoneSchedulingPolicy),
       RawFeatureFlag(key: "enable_multiple_paywall_urls", enabled: enableMultiplePaywallUrls),
       RawFeatureFlag(key: "enable_config_refresh_v2", enabled: enableConfigRefresh),
-      RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction)
+      RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction),
+      RawFeatureFlag(key: "enable_cel_logging", enabled: enableCELLogging)
     ]
 
     try container.encode(rawFeatureFlags, forKey: .toggles)
@@ -72,7 +75,8 @@ struct FeatureFlags: Codable, Equatable {
     enableNoneSchedulingPolicy: Bool,
     enableMultiplePaywallUrls: Bool,
     enableConfigRefresh: Bool,
-    enableTextInteraction: Bool
+    enableTextInteraction: Bool,
+    enableCELLogging: Bool
   ) {
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
@@ -83,6 +87,7 @@ struct FeatureFlags: Codable, Equatable {
     self.enableMultiplePaywallUrls = enableMultiplePaywallUrls
     self.enableConfigRefresh = enableConfigRefresh
     self.enableTextInteraction = enableTextInteraction
+    self.enableCELLogging = enableCELLogging
   }
 }
 
@@ -109,7 +114,8 @@ extension FeatureFlags: Stubbable {
       enableNoneSchedulingPolicy: true,
       enableMultiplePaywallUrls: true,
       enableConfigRefresh: true,
-      enableTextInteraction: true
+      enableTextInteraction: true,
+      enableCELLogging: true
     )
   }
 }

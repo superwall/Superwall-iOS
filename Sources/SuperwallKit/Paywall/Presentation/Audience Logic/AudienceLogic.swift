@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 09/08/2022.
 //
@@ -66,7 +66,7 @@ struct AudienceLogic {
     case .matched(let item):
       matchedRuleItem = item
     case .noMatchingAudiences(let unmatchedAudiences):
-      return.init(triggerResult: .noAudienceMatch(unmatchedAudiences))
+      return .init(triggerResult: .noAudienceMatch(unmatchedAudiences))
     }
 
     let variant: Experiment.Variant
@@ -139,6 +139,38 @@ struct AudienceLogic {
         fromAudienceFilter: audience,
         placementData: placement
       )
+      let liquidDidMatch: Bool
+
+      switch outcome {
+      case .match:
+        liquidDidMatch = true
+      case .noMatch:
+        liquidDidMatch = false
+      }
+      if configManager.config?.featureFlags.enableCELLogging == true,
+        let celExpression = rule.expressionCel
+      {
+        Task {
+          let outcome = await celEvaluator.evaluateExpression(
+            fromRule: rule,
+            eventData: event
+          )
+          let didMatch: Bool
+          switch outcome {
+          case .match:
+            didMatch = true
+          case .noMatch:
+            didMatch = false
+          }
+          let celExpressionResult = PrivateSuperwallEvent.CELExpressionResult(
+            celExpression: celExpression,
+            celExpressionDidMatch: didMatch,
+            liquidExpression: rule.expression ?? "",
+            liquidExpressionDidMatch: liquidDidMatch
+          )
+          await Superwall.shared.track(celExpressionResult)
+        }
+      }
 
       switch outcome {
       case .match(let item):

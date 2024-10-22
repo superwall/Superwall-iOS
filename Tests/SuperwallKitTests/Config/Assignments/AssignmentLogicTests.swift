@@ -1,12 +1,13 @@
 //
 //  TriggerLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 09/03/2022.
 //
 // swiftlint:disable all
 
 import XCTest
+
 @testable import SuperwallKit
 
 @available(iOS 14, *)
@@ -19,8 +20,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.type, to: .holdout)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
@@ -49,7 +51,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
     let outcome = await assignmentLogic.evaluateAudienceFilters(
       forPlacement: eventData,
@@ -82,8 +85,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: paywallId)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
@@ -110,7 +114,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -146,8 +151,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: paywallId)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
@@ -171,7 +177,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -193,7 +200,9 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertNil(confirmableAssignments)
   }
 
-  func testGetOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition() async throws {
+  func testGetOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition()
+    async throws
+  {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -203,8 +212,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: paywallId)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: nil,
@@ -224,7 +234,8 @@ class AssignmentLogicTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toVariant()
-    let variant2 = variantOption
+    let variant2 =
+      variantOption
       .setting(\.paywallId, to: "123")
       .toVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
@@ -234,7 +245,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -266,8 +278,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: paywallId)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
@@ -294,7 +307,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When
@@ -321,8 +335,9 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: paywallId)
       .setting(\.id, to: variantId)
     let rawExperiment = RawExperiment.stub()
-      .setting(\.variants, to: [variantOption]
-    )
+      .setting(
+        \.variants, to: [variantOption]
+      )
     let triggerRule = TriggerRule(
       experiment: rawExperiment,
       expression: "params.a == \"c\"",
@@ -349,7 +364,8 @@ class AssignmentLogicTests: XCTestCase {
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      celEvaluator: dependencyContainer.celEvaluator
     )
 
     // MARK: When

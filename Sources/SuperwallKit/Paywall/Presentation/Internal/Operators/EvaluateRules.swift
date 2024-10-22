@@ -20,7 +20,8 @@ extension Superwall {
       let audienceLogic = AudienceLogic(
         configManager: dependencyContainer.configManager,
         storage: dependencyContainer.storage,
-        factory: dependencyContainer
+        factory: dependencyContainer,
+        celEvaluator: dependencyContainer.celEvaluator
       )
       return await audienceLogic.evaluateAudienceFilters(
         forPlacement: placementData,

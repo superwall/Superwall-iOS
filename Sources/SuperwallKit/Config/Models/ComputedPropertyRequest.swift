@@ -39,6 +39,15 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     placementName = try container.decode(String.self, forKey: .placementName)
     super.init()
   }
+
+  init(
+    type: ComputedPropertyRequestType,
+    eventName: String
+  ) {
+    self.type = type
+    self.eventName = eventName
+    super.init()
+  }
 }
 
 /// The type of device property to compute.

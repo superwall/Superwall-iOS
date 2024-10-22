@@ -95,7 +95,8 @@ struct TriggerRule: Codable, Hashable, Equatable {
       let values = try decoder.container(keyedBy: CodingKeys.self)
 
       let behavior = try values.decode(TriggerPreloadBehavior.self, forKey: .behavior)
-      let requiresReevaluation = try values.decodeIfPresent(Bool.self, forKey: .requiresReEvaluation) ?? false
+      let requiresReevaluation =
+        try values.decodeIfPresent(Bool.self, forKey: .requiresReEvaluation) ?? false
       if requiresReevaluation {
         self.behavior = .always
       } else {
@@ -142,10 +143,11 @@ struct TriggerRule: Codable, Hashable, Equatable {
     occurrence = try values.decodeIfPresent(TriggerAudienceOccurrence.self, forKey: .occurrence)
     preload = try values.decode(TriggerPreload.self, forKey: .preload)
 
-    let throwableComputedProperties = try values.decodeIfPresent(
-      [Throwable<ComputedPropertyRequest>].self,
-      forKey: .computedPropertyRequests
-    ) ?? []
+    let throwableComputedProperties =
+      try values.decodeIfPresent(
+        [Throwable<ComputedPropertyRequest>].self,
+        forKey: .computedPropertyRequests
+      ) ?? []
     computedPropertyRequests = throwableComputedProperties.compactMap { try? $0.result.get() }
   }
 
@@ -187,10 +189,10 @@ extension TriggerRule: Stubbable {
         groupId: "2",
         variants: [
           .init(
-          type: .holdout,
-          id: "3",
-          percentage: 20,
-          paywallId: nil
+            type: .holdout,
+            id: "3",
+            percentage: 20,
+            paywallId: nil
           )
         ]
       ),
