@@ -108,6 +108,12 @@ public final class PaywallInfo: NSObject {
   /// The time it took to load the paywall products.
   public let productsLoadDuration: TimeInterval?
 
+  /// An iso date string indicating when the shimmer view began loading.
+  public let shimmerLoadStartTime: String?
+
+  /// An iso date string indicating when the shimmer view finished loading.
+  public let shimmerLoadCompleteTime: String?
+
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
@@ -154,6 +160,8 @@ public final class PaywallInfo: NSObject {
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
+    shimmerLoadStartTime: Date?,
+    shimmerLoadCompleteTime: Date?,
     experiment: Experiment?,
     paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
@@ -226,6 +234,10 @@ public final class PaywallInfo: NSObject {
     } else {
       self.productsLoadDuration = nil
     }
+
+    self.shimmerLoadStartTime = shimmerLoadStartTime?.isoString ?? ""
+    self.shimmerLoadCompleteTime = shimmerLoadCompleteTime?.isoString ?? ""
+
     self.closeReason = closeReason
   }
 
@@ -252,6 +264,8 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
+      "shimmerView_load_complete_time": shimmerLoadCompleteTime as Any,
+      "shimmerView_load_start_time": shimmerLoadStartTime as Any,
       // TODO: Remove in v4:
       "trigger_session_id": "" as Any,
       "experiment_id": experiment?.id as Any,
@@ -352,6 +366,8 @@ extension PaywallInfo: Stubbable {
       productsLoadStartTime: nil,
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
+      shimmerLoadStartTime: nil,
+      shimmerLoadCompleteTime: nil,
       experiment: nil,
       paywalljsVersion: nil,
       isFreeTrialAvailable: false,
@@ -391,6 +407,8 @@ extension PaywallInfo: Stubbable {
       productsLoadStartTime: nil,
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
+      shimmerLoadStartTime: nil,
+      shimmerLoadCompleteTime: nil,
       experiment: .init(
         id: "0",
         groupId: "0",
