@@ -819,4 +819,36 @@ enum InternalSuperwallEvent {
       }
     }
   }
+
+  struct ShimmerLoad: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete
+    }
+    let state: State
+    let paywallId: String
+    var loadDuration: Double?
+    var visibleDuration: Double?
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .shimmerViewStart
+      case .complete:
+        return .shimmerViewComplete
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "paywall_id": paywallId
+      ]
+
+      if state == .complete {
+        params += [
+          "visible_duration": visibleDuration ?? 0.0
+        ]
+      }
+      return params
+    }
+  }
 }
