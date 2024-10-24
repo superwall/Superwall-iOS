@@ -7,9 +7,6 @@
 
 import Foundation
 
-typealias ASN1Codable = ASN1Encodable & ASN1Decodable
-
-protocol ASN1Encodable: Encodable { }
 protocol ASN1Decodable: Decodable
 {
 	static var template: ASN1Template { get }
