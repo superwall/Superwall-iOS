@@ -181,6 +181,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the AdServices token request finishes.
   case adServicesTokenRequestComplete
 
+  /// When the shimmer view starts to show.
+  case shimmerViewStart
+
+  /// When the shimmer view stops showing.
+  case shimmerViewComplete
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -293,6 +299,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "adServicesTokenRequest_fail"
     case .adServicesTokenRequestComplete:
       return "adServicesTokenRequest_complete"
+    case .shimmerViewStart:
+      return "shimmerView_start"
+    case .shimmerViewComplete:
+      return "shimmerView_complete"
     }
   }
 }

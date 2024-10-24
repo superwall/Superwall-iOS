@@ -112,6 +112,10 @@ enum TrackingLogic {
       }
     }
 
+    if let event = event as? InternalSuperwallEvent.ShimmerLoad {
+      return !disableVerboseEvents
+    }
+
     if let event = event as? InternalSuperwallEvent.PaywallProductsLoad {
       switch event.state {
       case .start, .complete:

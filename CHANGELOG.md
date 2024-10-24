@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.11.2
+
+### Enhancements
+
+- Adds `shimmerView_start` and `shimmerView_complete` events. The `shimmerView_complete` event contains a `visible_duration` parameter which indicates how long the shimmer view was visible after paywall open, if at all.
+
 ## 3.11.1
 
 ### Fixes

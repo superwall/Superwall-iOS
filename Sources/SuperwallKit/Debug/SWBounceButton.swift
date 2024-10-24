@@ -9,13 +9,6 @@ import Foundation
 import UIKit
 import AVFoundation
 
-protocol BounceButtonToggleDelegate: AnyObject {
-  func buttonDidToggle(
-    _ button: SWBounceButton,
-    isOn: Bool
-  )
-}
-
 final class SWBounceButton: UIButton {
   // MARK: - Properties
   var greedyTouches = true
@@ -54,7 +47,6 @@ final class SWBounceButton: UIButton {
   var onBackgroundColor: UIColor = primaryButtonBackgroundColor
   var offBackgroundColor: UIColor = secondaryButtonBackgroundColor
 
-  weak var bounceButtonToggleDelegate: BounceButtonToggleDelegate?
   var shouldOnlyAnimateText = false
   var shouldAnimateLightly = false
   var didAddTargetForCustomAction = false
@@ -125,7 +117,6 @@ final class SWBounceButton: UIButton {
   func shouldToggle() {
     if canToggle {
       isOn.toggle()
-      bounceButtonToggleDelegate?.buttonDidToggle(self, isOn: isOn)
       backgroundColor = isOn ? onBackgroundColor : offBackgroundColor
     }
   }

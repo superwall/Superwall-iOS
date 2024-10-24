@@ -194,6 +194,12 @@ public enum SuperwallEvent {
   /// When the AdServices token request finishes.
   case adServicesTokenRequestComplete(token: String)
 
+  /// When the shimmer view starts to show.
+  case shimmerViewStart
+
+  /// When the shimmer view stops showing.
+  case shimmerViewComplete
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -341,6 +347,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .adServicesTokenRequestFail)
     case .adServicesTokenRequestComplete:
       return .init(objcEvent: .adServicesTokenRequestComplete)
+    case .shimmerViewStart:
+      return .init(objcEvent: .shimmerViewStart)
+    case .shimmerViewComplete:
+      return .init(objcEvent: .shimmerViewComplete)
     }
   }
 }
