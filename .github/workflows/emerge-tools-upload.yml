@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    env:
+      PRODUCT_NAME: SuperwallKit
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
@@ -17,11 +19,11 @@ jobs:
         uses: xavierLowmiller/xcodegen-action@1.1.2
 
       - name: Build XCFramework
-        run: sh make-xcframework.sh SuperwallKit
+        run: sh make-xcframework.sh $PRODUCT_NAME
 
       - name: Upload artifact to Emerge
         uses: EmergeTools/emerge-upload-action@v1.1.0
         with:
           build_type: release
-          artifact_path: ./build/SuperwallKit.xcframework.zip
+          artifact_path: ./build/${{ env.PRODUCT_NAME }}.xcframework.zip
           emerge_api_key: ${{ secrets.EMERGE_API_KEY }}
