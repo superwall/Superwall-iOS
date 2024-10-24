@@ -45,7 +45,7 @@ build_framework() {
         -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH" \
         -sdk "$sdk" \
         -destination "$destination" \
-        EXCLUDED_ARCHS="arm64"
+        EXCLUDED_ARCHS="arm64" \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
         SWIFT_VERSION=5.10
