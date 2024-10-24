@@ -39,15 +39,16 @@ build_framework() {
 
     rm -rf "$XCODEBUILD_ARCHIVE_PATH"
 
-    xcodebuild archive \
+        xcodebuild archive \
         -scheme $scheme \
         -archivePath $XCODEBUILD_ARCHIVE_PATH \
         -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH" \
         -sdk "$sdk" \
         -destination "$destination" \
+        EXCLUDED_ARCHS="arm64"
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
-        SWIFT_VERSION=5.9.2
+        SWIFT_VERSION=5.10
 
     FRAMEWORK_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks"
     mkdir -p "$FRAMEWORK_PATH"
