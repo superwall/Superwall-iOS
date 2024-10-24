@@ -12,7 +12,7 @@ XCODEBUILD_DERIVED_DATA_PATH="$XCODEBUILD_BUILD_DIR/DerivedData"
 PACKAGE_NAME=$1
 if [ -z "$PACKAGE_NAME" ]; then
     echo "No package name provided. Using the first scheme found in the Package.swift."
-    PACKAGE_NAME=$(xcodebuild -list | awk 'schemes && NF>0 { print $1; exit } /Schemes:$/ { schemes = 1 }')
+    PACKAGE_NAME=$(xcodebuild -list -workspace . | awk 'schemes && NF>0 { print $1; exit } /Schemes:$/ { schemes = 1 }')
     echo "Using: $PACKAGE_NAME"
 fi
 
@@ -39,22 +39,24 @@ build_framework() {
 
     rm -rf "$XCODEBUILD_ARCHIVE_PATH"
 
-        xcodebuild archive \
+    xcodebuild archive \
         -scheme $scheme \
         -archivePath $XCODEBUILD_ARCHIVE_PATH \
         -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH" \
         -sdk "$sdk" \
         -destination "$destination" \
+        -workspace . \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
+        INSTALL_PATH='Library/Frameworks' \
         OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface
 
-    FRAMEWORK_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks"
-    mkdir -p "$FRAMEWORK_PATH"
+    FRAMEWORK_MODULES_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks/$scheme.framework/Modules"
+    mkdir -p "$FRAMEWORK_MODULES_PATH"
     cp -r \
-    "$XCODEBUILD_DERIVED_DATA_PATH/Build/Intermediates.noindex/ArchiveIntermediates/$scheme/BuildProductsPath/Release-$sdk/$scheme.framework" \
-    "$FRAMEWORK_PATH"
+    "$XCODEBUILD_DERIVED_DATA_PATH/Build/Intermediates.noindex/ArchiveIntermediates/$scheme/BuildProductsPath/Release-$sdk/$scheme.swiftmodule" \
+    "$FRAMEWORK_MODULES_PATH/$scheme.swiftmodule"
     # Delete private swiftinterface
-    rm -f "$FRAMEWORK_PATH/Modules/$scheme.swiftmodule/*.private.swiftinterface"
+    rm -f "$FRAMEWORK_MODULES_PATH/$scheme.swiftmodule/*.private.swiftinterface"
 }
 
 echo "Modifying Package.swift"
