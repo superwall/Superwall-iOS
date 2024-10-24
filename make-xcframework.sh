@@ -47,7 +47,7 @@ build_framework() {
         -destination "$destination" \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         INSTALL_PATH='Library/Frameworks' \
-        OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface
+        OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
         SWIFT_VERSION=5.10
 
     FRAMEWORK_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks"
