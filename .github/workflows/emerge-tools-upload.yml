@@ -25,5 +25,5 @@ jobs:
         uses: EmergeTools/emerge-upload-action@v1.1.0
         with:
           build_type: release
-          artifact_path: ./build/${{ env.PRODUCT_NAME }}.xcframework.zip
+          artifact_path: ./${{ env.PRODUCT_NAME }}.xcframework.zip
           emerge_api_key: ${{ secrets.EMERGE_API_KEY }}
