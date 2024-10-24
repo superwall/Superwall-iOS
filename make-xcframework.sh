@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "Using PRODUCT_NAME: $PRODUCT_NAME"
-echo "Building in $(pwd)"
-echo "Archive path: $XCODEBUILD_ARCHIVE_PATH"
-
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd -P)"
@@ -51,7 +47,7 @@ build_framework() {
         -destination "$destination" \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
         OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
-        SWIFT_VERSION=5.10
+        SWIFT_VERSION=5.9.2
 
     FRAMEWORK_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks"
     mkdir -p "$FRAMEWORK_PATH"
