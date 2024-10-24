@@ -10,29 +10,15 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      # Checkout the repository
       - name: Git Checkout
         uses: actions/checkout@v3
 
-      # Generate Xcode project with XcodeGen
-      - name: Run XcodeGen
-        uses: xavierLowmiller/xcodegen-action@1.2.3
+      - name: Create XCFramework
+        uses: unsignedapps/swift-create-xcframework@v2
+#      - name: Build XCFramework
+#        run: sh build.sh
 
-      # Build the iOS release bundle using xcodebuild
-      - name: Generate iOS release bundle
-        run: |
-          xcodebuild -project SuperwallKit.xcodeproj \
-          -scheme SuperwallKit \
-          -sdk iphoneos \
-          -configuration Release \
-          -archivePath ./build/SuperwallKit.xcarchive archive
-
-      # Zip the xcarchive for upload
-      - name: Zip the xcarchive
-        run: zip -r ./build/SuperwallKit.xcarchive.zip ./build/SuperwallKit.xcarchive
-
-      # Upload base build to Emerge
-      - name: Upload Base Build to Emerge
+      - name: Upload artifact to Emerge
         uses: EmergeTools/emerge-upload-action@v1.1.0
         with:
           artifact_path: ./build/SuperwallKit.xcarchive.zip
