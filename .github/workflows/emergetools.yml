@@ -1,0 +1,32 @@
+name: Emerge Tools Upload
+
+on:
+  push:
+    branches: #[ develop ]
+      - '**'
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.2.3
+
+      - name: Generate iOS release bundle
+        run: |
+          xcodebuild -project SuperwallKit.xcodeproj \
+          -scheme SuperwallKit \
+          -sdk iphoneos \
+          -configuration Release \
+          -archivePath ./build/SuperwallKit.xcarchive archive
+
+      - name: Zip the xcarchive
+        run: zip -r ./build/SuperwallKit.xcarchive.zip ./build/SuperwallKit.xcarchive
+
+      - name: Upload artifact to Emerge
+        uses: EmergeTools/emerge-upload-action@v1.1.0
+        with:
+          artifact_path: ./build/SuperwallKit.xcarchive.zip
+          emerge_api_key: ${{ secrets.EMERGE_API_KEY }}
+          build_type: release
