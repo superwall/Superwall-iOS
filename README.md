@@ -24,6 +24,9 @@
   <a href="https://superwall.com/">
     <img src="https://img.shields.io/github/v/tag/superwall/Superwall-iOS" alt="Version Number">
   </a>
+  <a href="https://www.emergetools.com/app/example/ios/com.superwall.SuperwallKit/manual?utm_campaign=badge-data">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fwww.emergetools.com%2Fapi%2Fv2%2Fpublic_new_build%3FexampleId%3Dcom.superwall.SuperwallKit%26platform%3Dios%26badgeOption%3Dmax_install_size_only%26buildType%3Dmanual&query=$.badgeMetadata&label=SuperwallKit&logo=apple" alt="Install size" />
+  </a>
 </p>
 
 ----------------

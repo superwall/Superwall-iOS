@@ -45,10 +45,8 @@ build_framework() {
         -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH" \
         -sdk "$sdk" \
         -destination "$destination" \
-        EXCLUDED_ARCHS="arm64" \
         BUILD_LIBRARY_FOR_DISTRIBUTION=YES \
-        OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface \
-        SWIFT_VERSION=5.10
+        OTHER_SWIFT_FLAGS=-no-verify-emitted-module-interface
 
     FRAMEWORK_PATH="$XCODEBUILD_ARCHIVE_PATH/Products/Library/Frameworks"
     mkdir -p "$FRAMEWORK_PATH"
@@ -62,8 +60,6 @@ build_framework() {
 echo "Modifying Package.swift"
 backup_package_swift
 modify_package_swift
-
-xcodebuild clean -project $PACKAGE_NAME.xcodeproj -scheme $PACKAGE_NAME -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH"
 
 build_framework "iphonesimulator" "generic/platform=iOS Simulator" "$PACKAGE_NAME"
 build_framework "iphoneos" "generic/platform=iOS" "$PACKAGE_NAME"
