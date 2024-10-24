@@ -63,6 +63,8 @@ echo "Modifying Package.swift"
 backup_package_swift
 modify_package_swift
 
+xcodebuild clean -project $PACKAGE_NAME.xcodeproj -scheme $PACKAGE_NAME -derivedDataPath "$XCODEBUILD_DERIVED_DATA_PATH"
+
 build_framework "iphonesimulator" "generic/platform=iOS Simulator" "$PACKAGE_NAME"
 build_framework "iphoneos" "generic/platform=iOS" "$PACKAGE_NAME"
 

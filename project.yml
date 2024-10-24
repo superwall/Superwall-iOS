@@ -9,6 +9,8 @@ packages:
 
 targets:
   SuperwallKit:
+    buildSettings:
+      ALWAYS_SEARCH_USER_PATHS: NO
     scheme:
       testTargets:
         - name: SuperwallKitTests
