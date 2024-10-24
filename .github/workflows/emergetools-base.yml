@@ -1,18 +1,23 @@
-name: Emerge Tools Upload
+name: Emerge Base Build Upload
 
 on:
   push:
-    branches: #[ develop ]
-      - '**'
+    branches:
+      - master
+
 jobs:
   build:
     runs-on: macos-latest
     steps:
+      # Checkout the repository
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: xcodegen
+
+      # Generate Xcode project with XcodeGen
+      - name: Run XcodeGen
         uses: xavierLowmiller/xcodegen-action@1.2.3
 
+      # Build the iOS release bundle using xcodebuild
       - name: Generate iOS release bundle
         run: |
           xcodebuild -project SuperwallKit.xcodeproj \
@@ -21,12 +26,20 @@ jobs:
           -configuration Release \
           -archivePath ./build/SuperwallKit.xcarchive archive
 
+      # Zip the xcarchive for upload
       - name: Zip the xcarchive
         run: zip -r ./build/SuperwallKit.xcarchive.zip ./build/SuperwallKit.xcarchive
 
-      - name: Upload artifact to Emerge
+      # Upload base build to Emerge
+      - name: Upload Base Build to Emerge
         uses: EmergeTools/emerge-upload-action@v1.1.0
         with:
           artifact_path: ./build/SuperwallKit.xcarchive.zip
           emerge_api_key: ${{ secrets.EMERGE_API_KEY }}
           build_type: release
+          branch: ${{ github.ref_name }}  # The branch name
+          sha: ${{ github.sha }}  # The current commit SHA (HEAD)
+          previousSha: ${{ github.event.before }}  # The previous commit SHA (HEAD^)
+          repoName: ${{ github.repository }}  # The repository name
+          filename: SuperwallKit.xcarchive.zip  # The file being uploaded
+          tag: default  # Tag it as the default base build
