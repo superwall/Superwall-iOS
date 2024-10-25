@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 20/04/2022.
 //
@@ -36,7 +36,7 @@ enum TrackingLogic {
     var audienceFilterParams: [String: Any] = [
       "$is_standard_event": isSuperwallPlacement,
       "$event_name": placementName,
-      "event_name": placementName
+      "event_name": placementName,
     ]
 
     if trackablePlacement is TrackablePrivatePlacement {
@@ -112,6 +112,10 @@ enum TrackingLogic {
       }
     }
 
+    if let placement = placement as? InternalSuperwallPlacement.ShimmerLoad {
+      return !disableVerboseEvents
+    }
+
     if let placement = placement as? InternalSuperwallPlacement.PaywallProductsLoad {
       switch placement.state {
       case .start, .complete:
@@ -160,7 +164,8 @@ enum TrackingLogic {
 
   /// Checks whether the user is tracking a placement with the same name as a superwall placement.
   static func checkNotSuperwallPlacement(_ placement: String) throws {
-    for superwallPlacement in SuperwallPlacementObjc.allCases where superwallPlacement.description == placement {
+    for superwallPlacement in SuperwallPlacementObjc.allCases
+    where superwallPlacement.description == placement {
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,
@@ -189,7 +194,8 @@ enum TrackingLogic {
     paywallViewController: PaywallViewController?
   ) -> ImplicitTriggerOutcome {
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .deepLink = placement.superwallPlacement {
+      case .deepLink = placement.superwallPlacement
+    {
       return .deepLinkTrigger
     }
 
@@ -203,36 +209,42 @@ enum TrackingLogic {
       SuperwallPlacementObjc.transactionAbandon.description,
       SuperwallPlacementObjc.transactionFail.description,
       SuperwallPlacementObjc.paywallDecline.description,
-      SuperwallPlacementObjc.customPlacement.description
+      SuperwallPlacementObjc.customPlacement.description,
     ]
 
     if let referringPlacementName = paywallViewController?.info.presentedByPlacementWithName,
-      notAllowedReferringPlacementNames.contains(referringPlacementName) {
+      notAllowedReferringPlacementNames.contains(referringPlacementName)
+    {
       return .dontTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionAbandon = placement.superwallPlacement {
+      case .transactionAbandon = placement.superwallPlacement
+    {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionFail = placement.superwallPlacement {
+      case .transactionFail = placement.superwallPlacement
+    {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .paywallDecline = placement.superwallPlacement {
+      case .paywallDecline = placement.superwallPlacement
+    {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .customPlacement = placement.superwallPlacement {
+      case .customPlacement = placement.superwallPlacement
+    {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .surveyResponse = placement.superwallPlacement {
+      case .surveyResponse = placement.superwallPlacement
+    {
       return .closePaywallThenTriggerPaywall
     }
 

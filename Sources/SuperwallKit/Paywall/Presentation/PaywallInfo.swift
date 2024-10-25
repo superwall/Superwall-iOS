@@ -91,6 +91,12 @@ public final class PaywallInfo: NSObject {
   /// The time it took to load the paywall products.
   public let productsLoadDuration: TimeInterval?
 
+  /// An iso date string indicating when the shimmer view began loading.
+  public let shimmerLoadStartTime: String?
+
+  /// An iso date string indicating when the shimmer view finished loading.
+  public let shimmerLoadCompleteTime: String?
+
   /// The paywall.js version installed on the paywall website.
   public let paywalljsVersion: String?
 
@@ -136,6 +142,8 @@ public final class PaywallInfo: NSObject {
     productsLoadStartTime: Date?,
     productsLoadFailTime: Date?,
     productsLoadCompleteTime: Date?,
+    shimmerLoadStartTime: Date?,
+    shimmerLoadCompleteTime: Date?,
     experiment: Experiment?,
     paywalljsVersion: String?,
     isFreeTrialAvailable: Bool,
@@ -179,7 +187,8 @@ public final class PaywallInfo: NSObject {
     self.responseLoadFailTime = responseLoadFailTime?.isoString ?? ""
 
     if let startTime = responseLoadStartTime,
-      let endTime = responseLoadCompleteTime {
+      let endTime = responseLoadCompleteTime
+    {
       self.responseLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.responseLoadDuration = nil
@@ -190,7 +199,8 @@ public final class PaywallInfo: NSObject {
     self.webViewLoadFailTime = webViewLoadFailTime?.isoString ?? ""
 
     if let startTime = webViewLoadStartTime,
-      let endTime = webViewLoadCompleteTime {
+      let endTime = webViewLoadCompleteTime
+    {
       self.webViewLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.webViewLoadDuration = nil
@@ -201,11 +211,16 @@ public final class PaywallInfo: NSObject {
     self.productsLoadFailTime = productsLoadFailTime?.isoString ?? ""
 
     if let startTime = productsLoadStartTime,
-      let endTime = productsLoadCompleteTime {
+      let endTime = productsLoadCompleteTime
+    {
       self.productsLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.productsLoadDuration = nil
     }
+
+    self.shimmerLoadStartTime = shimmerLoadStartTime?.isoString ?? ""
+    self.shimmerLoadCompleteTime = shimmerLoadCompleteTime?.isoString ?? ""
+
     self.closeReason = closeReason
   }
 
@@ -232,17 +247,20 @@ public final class PaywallInfo: NSObject {
       "paywall_products_load_complete_time": productsLoadCompleteTime as Any,
       "paywall_products_load_fail_time": productsLoadFailTime as Any,
       "paywall_products_load_duration": productsLoadDuration as Any,
+      "shimmerView_load_complete_time": shimmerLoadCompleteTime as Any,
+      "shimmerView_load_start_time": shimmerLoadStartTime as Any,
       "experiment_id": experiment?.id as Any,
       "variant_id": experiment?.variant.id as Any,
       "cache_key": cacheKey,
       "build_id": buildId,
-      "close_reason": closeReason.description
+      "close_reason": closeReason.description,
     ]
 
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
-        let output = output[key] {
+        let output = output[key]
+      {
         loadingVars[key] = output
       }
     }
@@ -283,7 +301,7 @@ public final class PaywallInfo: NSObject {
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
-      "presented_by": presentedBy as Any
+      "presented_by": presentedBy as Any,
     ]
 
     output["primary_product_id"] = ""
@@ -329,6 +347,8 @@ extension PaywallInfo: Stubbable {
       productsLoadStartTime: nil,
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
+      shimmerLoadStartTime: nil,
+      shimmerLoadCompleteTime: nil,
       experiment: nil,
       paywalljsVersion: nil,
       isFreeTrialAvailable: false,
@@ -366,6 +386,8 @@ extension PaywallInfo: Stubbable {
       productsLoadStartTime: nil,
       productsLoadFailTime: nil,
       productsLoadCompleteTime: nil,
+      shimmerLoadStartTime: nil,
+      shimmerLoadCompleteTime: nil,
       experiment: .init(
         id: "0",
         groupId: "0",

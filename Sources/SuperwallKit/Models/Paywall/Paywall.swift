@@ -60,12 +60,13 @@ struct Paywall: Codable {
       productIds = products.map { $0.id }
     }
   }
+  // MARK: - Added by client
 
   var responseLoadingInfo: LoadingInfo
   var webviewLoadingInfo: LoadingInfo
+  var shimmerLoadingInfo: LoadingInfo
   var productsLoadingInfo: LoadingInfo
 
-  // MARK: - Added by client
   /// An array of the ids of paywall products.
   ///
   /// This is set on init and whenever products are updated.
@@ -147,6 +148,9 @@ struct Paywall: Codable {
     case productsLoadStartTime
     case productsLoadCompleteTime
     case productsLoadFailTime
+
+    case shimmerLoadStartTime
+    case shimmerLoadCompleteTime
   }
 
   init(from decoder: Decoder) throws {
@@ -211,6 +215,13 @@ struct Paywall: Codable {
       startAt: webviewLoadStartTime,
       endAt: webviewLoadCompleteTime,
       failAt: webviewLoadFailTime
+    )
+
+    let shimmerLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .shimmerLoadStartTime)
+    let shimmerLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .shimmerLoadCompleteTime)
+    shimmerLoadingInfo = LoadingInfo(
+      startAt: shimmerLoadStartTime,
+      endAt: shimmerLoadCompleteTime
     )
 
     let productsLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadStartTime)
@@ -316,6 +327,7 @@ struct Paywall: Codable {
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
     productsLoadingInfo: LoadingInfo,
+    shimmerLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
     productVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
@@ -346,6 +358,7 @@ struct Paywall: Codable {
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
     self.productsLoadingInfo = productsLoadingInfo
+    self.shimmerLoadingInfo = shimmerLoadingInfo
     self.paywalljsVersion = paywalljsVersion
     self.productVariables = productVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
@@ -378,6 +391,8 @@ struct Paywall: Codable {
       productsLoadStartTime: productsLoadingInfo.startAt,
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
+      shimmerLoadStartTime: shimmerLoadingInfo.startAt,
+      shimmerLoadCompleteTime: shimmerLoadingInfo.endAt,
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
@@ -436,6 +451,7 @@ extension Paywall: Stubbable {
       responseLoadingInfo: .init(),
       webviewLoadingInfo: .init(),
       productsLoadingInfo: .init(),
+      shimmerLoadingInfo: .init(),
       paywalljsVersion: ""
     )
   }

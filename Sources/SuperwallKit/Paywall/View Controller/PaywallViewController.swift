@@ -1,15 +1,15 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by brian on 7/21/21.
 //
 // swiftlint:disable file_length type_body_length
 
-import WebKit
-import UIKit
-import SafariServices
 import Combine
+import SafariServices
+import UIKit
+import WebKit
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, LoadingDelegate {
@@ -102,15 +102,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
     #if os(visionOS)
-    return paywall.backgroundColor
-    #else
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
-    switch style {
-    case .dark:
-      return paywall.darkBackgroundColor ?? paywall.backgroundColor
-    default:
       return paywall.backgroundColor
-    }
+    #else
+      let style = UIScreen.main.traitCollection.userInterfaceStyle
+      switch style {
+      case .dark:
+        return paywall.darkBackgroundColor ?? paywall.backgroundColor
+      default:
+        return paywall.backgroundColor
+      }
     #endif
   }
 
@@ -127,7 +127,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       target: self,
       action: #selector(reloadWebView)
     )
-	}()
+  }()
 
   /// A button that exits the paywall.
   private lazy var exitButton: UIButton = {
@@ -161,15 +161,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// paywall presentation.
   private var unsavedOccurrence: TriggerAudienceOccurrence?
 
+  private var lastOpen: Date?
+
   private unowned let factory: TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
   private weak var paywallArchiveManager: PaywallArchiveManager?
 
-	// MARK: - View Lifecycle
+  // MARK: - View Lifecycle
 
-	init(
+  init(
     paywall: Paywall,
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
@@ -187,7 +189,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       locale: deviceHelper.locale
     )
     self.deviceHelper = deviceHelper
-		self.eventDelegate = eventDelegate
+    self.eventDelegate = eventDelegate
     self.delegate = delegate
 
     self.factory = factory
@@ -197,22 +199,22 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
-	}
+  }
 
-	required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
-	}
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
 
   public override func viewDidLoad() {
     super.viewDidLoad()
     configureUI()
     loadWebView()
-	}
+  }
 
   private func configureUI() {
     modalPresentationCapturesStatusBarAppearance = true
     #if !os(visionOS)
-    setNeedsStatusBarAppearanceUpdate()
+      setNeedsStatusBarAppearanceUpdate()
     #endif
     view.backgroundColor = backgroundColor
 
@@ -232,19 +234,25 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       webView.topAnchor.constraint(equalTo: view.topAnchor),
       webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
 
-      refreshPaywallButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
-      refreshPaywallButton.trailingAnchor.constraint(equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
+      refreshPaywallButton.topAnchor.constraint(
+        equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+      refreshPaywallButton.trailingAnchor.constraint(
+        equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
       refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
       refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
 
       exitButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
-      exitButton.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
+      exitButton.leadingAnchor.constraint(
+        equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
       exitButton.widthAnchor.constraint(equalToConstant: 55),
-      exitButton.heightAnchor.constraint(equalToConstant: 55)
+      exitButton.heightAnchor.constraint(equalToConstant: 55),
     ])
   }
 
   nonisolated private func trackOpen() async {
+    await MainActor.run {
+      lastOpen = Date()
+    }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     let paywallOpen = await InternalSuperwallPlacement.PaywallOpen(paywallInfo: info)
@@ -252,6 +260,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackClose() async {
+    await MainActor.run {
+      lastOpen = nil
+    }
     let paywallClose = await InternalSuperwallPlacement.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
@@ -289,7 +300,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     loadingState = .loadingURL
 
     if let paywallArchiveManager = self.paywallArchiveManager,
-      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest)
+    {
       Task {
         if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
           loadWebViewFromArchive(url: url)
@@ -368,6 +380,30 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           completion: { _ in
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
+            Task.detached { [weak self] in
+              guard let self = self else {
+                return
+              }
+              let shimmerEndDate = Date()
+              await MainActor.run {
+                self.paywall.shimmerLoadingInfo.endAt = shimmerEndDate
+              }
+
+              let visibleDuration: Double = await MainActor.run {
+                if let lastOpen = self.lastOpen {
+                  return max(
+                    0, shimmerEndDate.timeIntervalSince1970 - lastOpen.timeIntervalSince1970)
+                } else {
+                  return 0.0
+                }
+              }
+              let shimmerComplete = await InternalSuperwallEvent.ShimmerLoad(
+                state: .complete,
+                paywallId: self.paywall.identifier,
+                visibleDuration: visibleDuration
+              )
+              await Superwall.shared.track(shimmerComplete)
+            }
           }
         )
       }
@@ -394,9 +430,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
     self.shimmerView = shimmerView
+    Task {
+      paywall.shimmerLoadingInfo.startAt = Date()
+
+      let shimmerStart = InternalSuperwallEvent.ShimmerLoad(
+        state: .start,
+        paywallId: paywall.identifier
+      )
+      await Superwall.shared.track(shimmerStart)
+    }
   }
 
   private func addLoadingView() {
@@ -412,7 +457,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         loadingViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         loadingViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         loadingViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       ])
       self.loadingViewController = loadingViewController
     } else {
@@ -430,10 +475,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   // MARK: - Timeout
 
   private func showRefreshButtonAfterTimeout(_ isVisible: Bool) {
-		showRefreshTimer?.invalidate()
-		showRefreshTimer = nil
+    showRefreshTimer?.invalidate()
+    showRefreshTimer = nil
 
-		if isVisible {
+    if isVisible {
       showRefreshTimer = Timer.scheduledTimer(
         withTimeInterval: 5.0,
         repeats: false
@@ -463,14 +508,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           self.exitButton.alpha = 1.0
         }
       }
-		} else {
-			hideRefreshButton()
-		}
-	}
+    } else {
+      hideRefreshButton()
+    }
+  }
 
-	private func hideRefreshButton() {
-		showRefreshTimer?.invalidate()
-		showRefreshTimer = nil
+  private func hideRefreshButton() {
+    showRefreshTimer?.invalidate()
+    showRefreshTimer = nil
     UIView.springAnimate(
       animations: {
         self.refreshPaywallButton.alpha = 0.0
@@ -481,7 +526,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.isHidden = true
       }
     )
-	}
+  }
 
   // MARK: - Presentation Logic
 
@@ -506,7 +551,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   ) {
     if Superwall.shared.isPaywallPresented
       || presenter is PaywallViewController
-      || isBeingPresented {
+      || isBeingPresented
+    {
       return completion(false)
     }
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
@@ -529,7 +575,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
     if let override = override,
-      override != .none {
+      override != .none
+    {
       presentationStyle = override
     } else {
       presentationStyle = paywall.presentation.style
@@ -548,14 +595,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     case .drawer:
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
-      if #available(iOS 16.0, *),
-        UIDevice.current.userInterfaceIdiom == .phone {
-        sheetPresentationController?.detents = [
-          .custom(resolver: { context in
-            return 0.7 * context.maximumDetentValue
-          })
-        ]
-      }
+        if #available(iOS 16.0, *),
+          UIDevice.current.userInterfaceIdiom == .phone
+        {
+          sheetPresentationController?.detents = [
+            .custom(resolver: { context in
+              return 0.7 * context.maximumDetentValue
+            })
+          ]
+        }
       #endif
     case .none:
       break
@@ -613,7 +661,9 @@ extension PaywallViewController: SWWebViewDelegate {
 
 // MARK: - UIAdaptivePresentationControllerDelegate
 extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
-  public func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) {
+  public func presentationControllerDidAttemptToDismiss(
+    _ presentationController: UIPresentationController
+  ) {
     dismiss(
       result: .declined,
       closeReason: .manualClose
@@ -643,7 +693,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     }
     let safariVC = SFSafariViewController(url: url)
     #if !os(visionOS)
-    safariVC.delegate = self
+      safariVC.delegate = self
     #endif
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
@@ -675,8 +725,9 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(false) // ignore-xcode-12
+      !deviceHelper.isMac
+    {
+      webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
     }
 
     if webView.loadingHandler.didFailToLoad {
@@ -692,9 +743,8 @@ extension PaywallViewController {
       return false
     }
     guard
-      modalPresentationStyle == .formSheet ||
-      modalPresentationStyle == .pageSheet ||
-      modalPresentationStyle == .popover
+      modalPresentationStyle == .formSheet || modalPresentationStyle == .pageSheet
+        || modalPresentationStyle == .popover
     else {
       return false
     }
@@ -789,8 +839,9 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(true) // ignore-xcode-12
+      !deviceHelper.isMac
+    {
+      webView.setAllMediaPlaybackSuspended(true)  // ignore-xcode-12
     }
 
     resetPresentationPreparations()
@@ -824,16 +875,20 @@ extension PaywallViewController {
           requestType: .paywallDeclineCheck
         )
         let presentingPlacement = info.presentedByPlacementWithName
-        let presentedByPaywallDecline = presentingPlacement == SuperwallPlacementObjc.paywallDecline.description
-        let presentedByTransactionAbandon = presentingPlacement == SuperwallPlacementObjc.transactionAbandon.description
-        let presentedByTransactionFail = presentingPlacement == SuperwallPlacementObjc.transactionFail.description
+        let presentedByPaywallDecline =
+          presentingPlacement == SuperwallPlacementObjc.paywallDecline.description
+        let presentedByTransactionAbandon =
+          presentingPlacement == SuperwallPlacementObjc.transactionAbandon.description
+        let presentedByTransactionFail =
+          presentingPlacement == SuperwallPlacementObjc.transactionFail.description
 
         await Superwall.shared.track(paywallDecline)
 
         if case .paywall = presentationResult,
           !presentedByPaywallDecline,
           !presentedByTransactionAbandon,
-          !presentedByTransactionFail {
+          !presentedByTransactionFail
+        {
           // If a paywall_decline trigger is active and the current paywall wasn't presented
           // by paywall_decline, transaction_abandon, or transaction_fail, it lands here so
           // as not to dismiss the paywall. track() will do that before presenting the next paywall.
@@ -920,12 +975,12 @@ extension PaywallViewController {
 }
 
 #if !os(visionOS)
-// MARK: - SFSafariViewControllerDelegate
-extension PaywallViewController: SFSafariViewControllerDelegate {
-  public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-		isSafariVCPresented = false
-	}
-}
+  // MARK: - SFSafariViewControllerDelegate
+  extension PaywallViewController: SFSafariViewControllerDelegate {
+    public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+      isSafariVCPresented = false
+    }
+  }
 #endif
 
 // MARK: - GameControllerDelegate

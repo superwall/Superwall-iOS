@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 21/04/2022.
 //
@@ -77,7 +77,8 @@ public enum SuperwallPlacement {
   /// - Note: The `transaction` is an optional ``StoreTransaction`` object. Most of the time
   /// this won't be `nil`. However, it could be `nil` if you are using a ``PurchaseController``
   /// and the transaction object couldn't be detected after you return `.purchased` in ``PurchaseController/purchase(product:)``.
-  case transactionComplete(transaction: StoreTransaction?, product: StoreProduct, paywallInfo: PaywallInfo)
+  case transactionComplete(
+    transaction: StoreTransaction?, product: StoreProduct, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart(product: StoreProduct, paywallInfo: PaywallInfo)
@@ -134,7 +135,8 @@ public enum SuperwallPlacement {
   case paywallProductsLoadComplete(triggeredPlacementName: String?)
 
   /// When the request to load the paywall's products has failed and is being retried.
-  case paywallProductsLoadRetry(triggeredPlacementName: String?, paywallInfo: PaywallInfo, attempt: Int)
+  case paywallProductsLoadRetry(
+    triggeredPlacementName: String?, paywallInfo: PaywallInfo, attempt: Int)
 
   /// When the response to a paywall survey is recorded.
   case surveyResponse(
@@ -193,6 +195,12 @@ public enum SuperwallPlacement {
 
   /// When the AdServices token request finishes.
   case adServicesTokenRequestComplete(token: String)
+
+  /// When the shimmer view starts to show.
+  case shimmerViewStart
+
+  /// When the shimmer view stops showing.
+  case shimmerViewComplete
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -341,6 +349,10 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .adServicesTokenRequestFail)
     case .adServicesTokenRequestComplete:
       return .init(objcPlacement: .adServicesTokenRequestComplete)
+    case .shimmerViewStart:
+      return .init(objcPlacement: .shimmerViewStart)
+    case .shimmerViewComplete:
+      return .init(objcPlacement: .shimmerViewComplete)
     }
   }
 }

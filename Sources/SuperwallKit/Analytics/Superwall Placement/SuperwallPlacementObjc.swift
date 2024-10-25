@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 07/11/2022.
 //
@@ -181,8 +181,14 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the AdServices token request finishes.
   case adServicesTokenRequestComplete
 
+  /// When the shimmer view starts to show.
+  case shimmerViewStart
+
+  /// When the shimmer view stops showing.
+  case shimmerViewComplete
+
   public init(placement: SuperwallPlacement) {
-    self = placement.backingData.objcPlacement
+    self = placement.backingData.objcEvent
   }
 
   var description: String {
@@ -293,6 +299,10 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "adServicesTokenRequest_fail"
     case .adServicesTokenRequestComplete:
       return "adServicesTokenRequest_complete"
+    case .shimmerViewStart:
+      return "shimmerView_start"
+    case .shimmerViewComplete:
+      return "shimmerView_complete"
     }
   }
 }
