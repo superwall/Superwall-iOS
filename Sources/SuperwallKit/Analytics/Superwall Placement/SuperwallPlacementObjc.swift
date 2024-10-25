@@ -188,7 +188,7 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   case shimmerViewComplete
 
   public init(placement: SuperwallPlacement) {
-    self = placement.backingData.objcEvent
+    self = placement.backingData.objcPlacement
   }
 
   var description: String {

@@ -817,7 +817,7 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct ShimmerLoad: TrackableSuperwallEvent {
+  struct ShimmerLoad: TrackableSuperwallPlacement {
     enum State {
       case start
       case complete
@@ -826,7 +826,7 @@ enum InternalSuperwallPlacement {
     let paywallId: String
     var loadDuration: Double?
     var visibleDuration: Double?
-    var superwallEvent: SuperwallEvent {
+    var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
         return .shimmerViewStart

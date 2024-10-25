@@ -113,7 +113,7 @@ enum TrackingLogic {
     }
 
     if let placement = placement as? InternalSuperwallPlacement.ShimmerLoad {
-      return !disableVerboseEvents
+      return !disableVerbosePlacements
     }
 
     if let placement = placement as? InternalSuperwallPlacement.PaywallProductsLoad {

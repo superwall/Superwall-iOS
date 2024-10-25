@@ -397,7 +397,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
                   return 0.0
                 }
               }
-              let shimmerComplete = await InternalSuperwallEvent.ShimmerLoad(
+              let shimmerComplete = await InternalSuperwallPlacement.ShimmerLoad(
                 state: .complete,
                 paywallId: self.paywall.identifier,
                 visibleDuration: visibleDuration
@@ -436,7 +436,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     Task {
       paywall.shimmerLoadingInfo.startAt = Date()
 
-      let shimmerStart = InternalSuperwallEvent.ShimmerLoad(
+      let shimmerStart = InternalSuperwallPlacement.ShimmerLoad(
         state: .start,
         paywallId: paywall.identifier
       )

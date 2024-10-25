@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/superwall/SuperCEL-iOS",
       "state" : {
-        "revision" : "21914c36f71217f1118fe51193ed99a39180be44",
-        "version" : "0.1.9"
+        "revision" : "4e08d383977883aaee406b7f0e52afb81a4ea66f",
+        "version" : "0.1.12"
       }
     }
   ],
