@@ -297,14 +297,20 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct ActiveEntitlementsDidChange: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .activeEntitlementsDidChange
-    let activeEntitlements: Set<Entitlement>
+  struct EntitlementStatusDidChange: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .entitlementStatusDidChange
+    let status: EntitlementStatus
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
-      return [
-        "active_entitlements": activeEntitlements.map { $0.id }.joined()
+      var params: [String: Any] = [
+        "status": status.description
       ]
+      if case let .hasActiveEntitlements(entitlements) = status {
+        params += [
+          "active_entitlement_ids": entitlements.map(\.id).joined()
+        ]
+      }
+      return params
     }
   }
 

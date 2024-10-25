@@ -17,7 +17,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: Configure Superwall
     #warning("Replace the API key with your own.")
     Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9")
-
+    Superwall.shared.delegate = self
     return true
   }
 
@@ -28,4 +28,10 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 
   func application(_ application: UIApplication, didDiscardSceneSessions sceneSessions: Set<UISceneSession>) {}
+}
+
+extension AppDelegate: SuperwallDelegate {
+  func entitlementStatusDidChange(to newValue: EntitlementStatus) {
+    print("*** ENTITLEMENTS DID CHANGE to", newValue.description)
+  }
 }

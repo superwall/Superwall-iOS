@@ -36,7 +36,7 @@ final class AutomaticPurchaseController {
     }
 
     await MainActor.run { [entitlements] in
-      Superwall.shared.entitlements.set(entitlements)
+      Superwall.shared.entitlements.setActive(entitlements)
     }
   }
 }
