@@ -170,7 +170,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   // MARK: - Private API
 
-  // TODO: Change this to just track the status. Need to remove didSetActive and publishedActive and just use the status. Also now saving status to storage too so need to get that. When the app opens the delegate shouldn't fire at all. Copy subscriptionStatus for this.
   private func listenToEntitlementStatus() {
     $status
       .removeDuplicates()
