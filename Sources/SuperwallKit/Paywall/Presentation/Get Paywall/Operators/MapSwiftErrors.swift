@@ -29,12 +29,6 @@ extension Superwall {
         } else {
           return PaywallSkippedReason.placementNotFound
         }
-      case .userIsSubscribed:
-        if toObjc {
-          return PaywallSkippedReasonObjc.userIsSubscribed
-        } else {
-          return PaywallSkippedReason.userIsSubscribed
-        }
       default:
         return error
       }

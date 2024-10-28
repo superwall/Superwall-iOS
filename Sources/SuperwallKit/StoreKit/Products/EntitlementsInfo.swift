@@ -104,21 +104,23 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       return
     }
 
+    let storedStatus = self.storage.get(EntitlementStatusKey.self) ?? .unknown
+    self.status = storedStatus
+
+    DispatchQueue.main.async {
+      self.listenToEntitlementStatus()
+    }
+
     queue.sync { [weak self] in
       guard let self = self else {
         return
       }
       entitlementsByProductId = self.storage.get(EntitlementsByProductId.self) ?? [:]
 
-      let storedStatus = self.storage.get(EntitlementStatusKey.self) ?? .unknown
       if case let .active(activeEntitlements) = storedStatus {
         backingActive = activeEntitlements
       } else {
         backingActive = []
-      }
-      DispatchQueue.main.async {
-        self.status = storedStatus
-        self.listenToEntitlementStatus()
       }
 
       backingAll = Set(entitlementsByProductId.values.joined())

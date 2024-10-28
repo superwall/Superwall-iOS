@@ -26,16 +26,6 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
   /// double check its spelling.
   case placementNotFound
 
-  /// The user is subscribed.
-  ///
-  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
-  /// letting Superwall handle subscription-related logic, it will be based on the on-device
-  /// receipts. Otherwise it'll be based on the value you've set.
-  ///
-  /// By default, paywalls do not show to users who are already subscribed. You can override this
-  /// behavior in the paywall editor.
-  case userIsSubscribed
-
   public var description: String {
     switch self {
     case .placementNotFound:
@@ -44,16 +34,13 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
       return "The paywall was skipped because the user is part of a holdout."
     case .noAudienceMatch:
       return "The paywall was skipped because the user doesn't match any audience."
-    case .userIsSubscribed:
-      return "The paywall was skipped because the user is subscribed."
     }
   }
 
   public static func == (lhs: PaywallSkippedReason, rhs: PaywallSkippedReason) -> Bool {
     switch (lhs, rhs) {
     case (.noAudienceMatch, .noAudienceMatch),
-      (.placementNotFound, .placementNotFound),
-      (.userIsSubscribed, .userIsSubscribed):
+      (.placementNotFound, .placementNotFound):
       return true
     case let (.holdout(experiment1), .holdout(experiment2)):
       return experiment1 == experiment2
@@ -70,8 +57,6 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
       return .noAudienceMatch
     case .placementNotFound:
       return .placementNotFound
-    case .userIsSubscribed:
-      return .userIsSubscribed
     }
   }
 }
@@ -91,16 +76,6 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
   /// double check its spelling.
   case placementNotFound
 
-  /// The user is subscribed.
-  ///
-  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
-  /// letting Superwall handle subscription-related logic, it will be based on the on-device
-  /// receipts. Otherwise it'll be based on the value you've set.
-  ///
-  /// By default, paywalls do not show to users who are already subscribed. You can override this
-  /// behavior in the paywall editor.
-  case userIsSubscribed
-
   /// The presentation wasn't skipped.
   case none
 
@@ -112,8 +87,6 @@ public enum PaywallSkippedReasonObjc: Int, Error, Sendable, Equatable, CustomStr
       return "The paywall was skipped because the user is part of a holdout."
     case .noAudienceMatch:
       return "The paywall was skipped because the user doesn't match any audience."
-    case .userIsSubscribed:
-      return "The paywall was skipped because the user is subscribed."
     case .none:
       return "The paywall was not skipped."
     }

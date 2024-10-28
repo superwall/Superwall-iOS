@@ -68,9 +68,6 @@ public final class PresentationResultObjc: NSObject, Sendable {
     case .noAudienceMatch:
       self.value = .noAudienceMatch
       self.experiment = nil
-    case .userIsSubscribed:
-      self.value = .userIsSubscribed
-      self.experiment = nil
     case .paywallNotAvailable:
       self.value = .paywallNotAvailable
       self.experiment = nil

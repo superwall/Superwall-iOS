@@ -57,9 +57,6 @@
 
   [handler onSkip:^(enum SWKPaywallSkippedReason reason) {
     switch (reason) {
-      case SWKPaywallSkippedReasonUserIsSubscribed:
-        NSLog(@"Paywall not shown because user is subscribed.");
-        break;
       case SWKPaywallSkippedReasonHoldout:
         NSLog(@"Paywall not shown because user is in a holdout group.");
         break;
@@ -112,8 +109,10 @@
       break;
     case SWKEntitlementStatusInactive:
       self.subscriptionLabel.text = @"You do not have any active entitlements so the paywall will always show when clicking the button.";
+      break;
     case SWKEntitlementStatusActive:
       self.subscriptionLabel.text = @"You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements.";
+      break;
     default:
       break;
   }
