@@ -22,7 +22,7 @@ public enum EntitlementStatus: Equatable, Codable {
     switch (lhs, rhs) {
     case (.unknown, .unknown), (.inactive, .inactive):
       return true
-    case (.active(let lhsSet), .active(let rhsSet)):
+    case let (.active(lhsSet), .active(rhsSet)):
       return lhsSet == rhsSet
     default:
       return false

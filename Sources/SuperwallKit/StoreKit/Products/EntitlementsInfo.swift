@@ -144,21 +144,18 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// Check the delegate function
   /// ``SuperwallDelegateObjc/entitlementStatusDidChange(to:)``
   /// to receive a callback with the new value every time it changes.
-  @objc
   @available(swift, obsoleted: 1.0)
   public func getStatus() -> EntitlementStatusObjc {
     return status.toObjc()
   }
 
   /// Sets ``EntitlementsInfo/status`` to an`unknown` state.
-  @objc
   @available(swift, obsoleted: 1.0)
   public func setUnknownStatus() {
     status = .unknown
   }
 
   /// Sets ``EntitlementsInfo/status`` to an`inactive` state.
-  @objc
   @available(swift, obsoleted: 1.0)
   public func setInactiveStatus() {
     status = .inactive
@@ -166,7 +163,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   /// Sets ``EntitlementsInfo/status`` to an`active` state with the
   /// specified entitlements.
-  @objc
   @available(swift, obsoleted: 1.0)
   public func setActiveStatus(with entitlements: Set<Entitlement>) {
     status = .active(entitlements)
