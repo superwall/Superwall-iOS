@@ -269,30 +269,33 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["presented_by_event_name"] as? String, paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_subscriptionStatusDidChange_hasOneEntitlement() async {
-    let entitlement: Set<Entitlement> = [.stub()]
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: entitlement))
+  func test_entitlementStatusDidChange_hasOneEntitlement() async {
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = await Superwall.shared.track(InternalSuperwallPlacement.EntitlementStatusDidChange(status: .active([.stub()])))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! String, entitlement.map { $0.id }.joined())
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "entitlementStatus_didChange")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "ACTIVE")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String, entitlements.map { $0.id }.joined())
   }
 
   func test_subscriptionStatusDidChange_hasTwoEntitlements() async {
     let entitlements: Set<Entitlement> = [.stub(), Entitlement(id: "test2", type: .serviceLevel)]
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: entitlements))
+    let result = await Superwall.shared.track(InternalSuperwallPlacement.EntitlementStatusDidChange(status: .active(entitlements)))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlements"] as! String, entitlements.map { $0.id }.joined())
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "entitlementStatus_didChange")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "ACTIVE")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String, entitlements.map { $0.id }.joined())
   }
 
   func test_subscriptionStatusDidChange_noEntitlements() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.ActiveEntitlementsDidChange(activeEntitlements: []))
+    let result = await Superwall.shared.track(InternalSuperwallPlacement.EntitlementStatusDidChange(status: .inactive))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "activeEntitlements_didChange")
-    XCTAssertTrue((result.parameters.audienceFilterParams["$active_entitlements"] as! String) == "")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "entitlementStatus_didChange")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "INACTIVE")
+    XCTAssertNil(result.parameters.audienceFilterParams["$active_entitlement_ids"] as? String)
   }
 
   func test_triggerFire_noRuleMatch() async {

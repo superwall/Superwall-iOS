@@ -112,7 +112,7 @@ enum TrackingLogic {
       }
     }
 
-    if let placement = placement as? InternalSuperwallPlacement.ShimmerLoad {
+    if placement is InternalSuperwallPlacement.ShimmerLoad {
       return !disableVerbosePlacements
     }
 

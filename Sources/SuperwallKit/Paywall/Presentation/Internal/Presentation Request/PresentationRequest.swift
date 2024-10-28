@@ -138,8 +138,7 @@ struct PresentationRequest {
 
   struct Flags {
     var isDebuggerLaunched: Bool
-    var didSetActiveEntitlements: AnyPublisher<Bool, Never>
-    var entitlements: EntitlementsInfo
+    var entitlementStatus: AnyPublisher<EntitlementStatus, Never>
     var isPaywallPresented: Bool
     var type: PresentationRequestType
   }

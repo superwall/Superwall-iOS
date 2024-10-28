@@ -29,14 +29,12 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
-    // If they haven't changed, don't disturb main thread.
-    if Superwall.shared.entitlements.didSetActiveEntitlements,
-      entitlements == Superwall.shared.entitlements.active {
-      return
-    }
-
     await MainActor.run { [entitlements] in
-      Superwall.shared.entitlements.setActive(entitlements)
+      if entitlements.isEmpty {
+        Superwall.shared.entitlements.status = .inactive
+      } else {
+        Superwall.shared.entitlements.status = .active(entitlements)
+      }
     }
   }
 }

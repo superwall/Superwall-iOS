@@ -305,7 +305,7 @@ enum InternalSuperwallPlacement {
       var params: [String: Any] = [
         "status": status.description
       ]
-      if case let .hasActiveEntitlements(entitlements) = status {
+      if case let .active(entitlements) = status {
         params += [
           "active_entitlement_ids": entitlements.map(\.id).joined()
         ]

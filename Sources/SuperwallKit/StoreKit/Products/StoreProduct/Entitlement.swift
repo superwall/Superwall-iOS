@@ -66,6 +66,28 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.id = id
     self.type = type
   }
+
+  public init(
+    id: String
+  ) {
+    self.id = id
+    self.type = .serviceLevel
+  }
+
+  // Override isEqual to define equality based on `id` and `type`
+   public override func isEqual(_ object: Any?) -> Bool {
+     guard let other = object as? Entitlement else {
+       return false
+     }
+     return self.id == other.id && self.type == other.type
+   }
+
+   public override var hash: Int {
+     var hasher = Hasher()
+     hasher.combine(id)
+     hasher.combine(type)
+     return hasher.finalize()
+   }
 }
 
 // MARK: - Stubbable

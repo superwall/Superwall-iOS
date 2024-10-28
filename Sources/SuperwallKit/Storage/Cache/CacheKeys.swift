@@ -137,12 +137,12 @@ enum EntitlementsByProductId: Storable {
   typealias Value = [String: Set<Entitlement>]
 }
 
-enum ActiveEntitlements: Storable {
+enum EntitlementStatusKey: Storable {
   static var key: String {
-    "store.activeEntitlements"
+    "store.entitlementStatus"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = Set<Entitlement>
+  typealias Value = EntitlementStatus
 }
 
 enum SurveyAssignmentKey: Storable {

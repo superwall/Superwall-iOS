@@ -27,12 +27,12 @@
   // Configure the navigation bar.
   self.navigationItem.hidesBackButton = YES;
 
-  // Update for current subscription state.
+  // Update for current entitlement status.
   [self updateForEntitlements];
 
   // Listen for changes to the subscription state.
   __weak typeof(self) weakSelf = self;
-  [[NSNotificationCenter defaultCenter] addObserverForName:SSAAppDelegateDidUpdateEntitlements object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
+  [[NSNotificationCenter defaultCenter] addObserverForName:SSAAppDelegateEntitlementStatusDidChange object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification * _Nonnull note) {
     [weakSelf updateForEntitlements];
   }];
 }
@@ -104,16 +104,18 @@
 #pragma mark - Private
 
 - (void)updateForEntitlements {
-  bool didSetActiveEntitlements = Superwall.sharedInstance.entitlements.didSetActiveEntitlements;
+  SWKEntitlementStatus status = [Superwall.sharedInstance.entitlements getStatus];
 
-  if (didSetActiveEntitlements) {
-    if (Superwall.sharedInstance.entitlements.active.count == 0) {
+  switch (status) {
+    case SWKEntitlementStatusUnknown:
+      self.subscriptionLabel.text = @"Loading entitlements.";
+      break;
+    case SWKEntitlementStatusInactive:
       self.subscriptionLabel.text = @"You do not have any active entitlements so the paywall will always show when clicking the button.";
-    } else {
+    case SWKEntitlementStatusActive:
       self.subscriptionLabel.text = @"You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements.";
-    }
-  } else {
-    self.subscriptionLabel.text = @"Loading entitlements.";
+    default:
+      break;
   }
 }
 

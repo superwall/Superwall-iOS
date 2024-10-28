@@ -36,36 +36,9 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   }
 
   /// The active entitlements.
-  public private(set) var active: Set<Entitlement> {
-    get {
-      return queue.sync {
-        return backingActive
-      }
-    }
-    set {
-      queue.async { [weak self] in
-        guard let self = self else {
-          return
-        }
-        let oldValue = self.backingActive
-
-        if didSetActiveEntitlements == false {
-          DispatchQueue.main.async {
-            self.didSetActiveEntitlements = true
-          }
-        }
-        storage.save(newValue, forType: ActiveEntitlements.self)
-
-        guard newValue != oldValue else {
-          return
-        }
-        self.backingActive = newValue
-
-        DispatchQueue.main.async {
-          self.publishedActive = newValue
-          self.didSetActiveEntitlements = true
-        }
-      }
+  public var active: Set<Entitlement> {
+    return queue.sync {
+      return backingActive
     }
   }
 
@@ -77,17 +50,29 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/entitlementStatusDidChange(to:)``
   /// to receive a callback with the new value every time it changes.
-  @Published public private(set) var status: EntitlementStatus = .unknown
+  @Published public var status: EntitlementStatus = .unknown {
+    didSet {
+      if case let .active(entitlements) = status {
+        if entitlements.isEmpty {
+          status = .inactive
+          return
+        }
+      }
+      queue.async { [weak self] in
+        guard let self = self else {
+          return
+        }
+        switch self.status {
+        case .active(let entitlements):
+          self.backingActive = entitlements
+        default:
+          self.backingActive = []
+        }
+      }
+    }
+  }
 
   // MARK: - Internal vars
-  /// A published property for ``EntitlementsInfo/active``.
-  ///
-  /// You can bind to this to be notified when active entitlements change.
-  @Published private(set) var publishedActive: Set<Entitlement> = []
-
-  /// When the active entitlements have been set.
-  @Published private(set) var didSetActiveEntitlements = false
-
   /// The entitlements that belong to each product ID.
   var entitlementsByProductId: [String: Set<Entitlement>] = [:] {
     didSet {
@@ -119,23 +104,21 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       return
     }
 
-    DispatchQueue.main.async { [weak self] in
-      self?.listenToEntitlementStatus()
-    }
+    queue.sync { [weak self] in
+      guard let self = self else {
+        return
+      }
+      entitlementsByProductId = self.storage.get(EntitlementsByProductId.self) ?? [:]
 
-    queue.sync {
-      entitlementsByProductId = storage.get(EntitlementsByProductId.self) ?? [:]
-
-      if let activeEntitlements = storage.get(ActiveEntitlements.self) {
+      let storedStatus = self.storage.get(EntitlementStatusKey.self) ?? .unknown
+      if case let .active(activeEntitlements) = storedStatus {
         backingActive = activeEntitlements
-
-        // First time
-        DispatchQueue.main.async { [weak self] in
-          self?.publishedActive = activeEntitlements
-          self?.didSetActiveEntitlements = true
-        }
       } else {
         backingActive = []
+      }
+      DispatchQueue.main.async {
+        self.status = storedStatus
+        self.listenToEntitlementStatus()
       }
 
       backingAll = Set(entitlementsByProductId.values.joined())
@@ -143,22 +126,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   }
 
   // MARK: - Public API
-
-  /// Sets the active entitlements.
-  ///
-  /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
-  @objc(setActiveEntitlements:)
-  public func setActive(_ activeEntitlements: Set<Entitlement>) {
-    active = activeEntitlements
-  }
-
-  /// Sets the active entitlements.
-  ///
-  /// - Parameter entitlements: A `Set` of ``Entitlement`` objects.
-  @nonobjc
-  public func setActive(_ activeEntitlements: [Entitlement]) {
-    active = Set(activeEntitlements)
-  }
 
   /// Returns a `Set` of ``Entitlement``s belonging to a given `productId`.
   ///
@@ -170,30 +137,60 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
+  // MARK: - Objc API
+
+  /// Returns the entitlement status of the user.
+  ///
+  /// Check the delegate function
+  /// ``SuperwallDelegateObjc/entitlementStatusDidChange(to:)``
+  /// to receive a callback with the new value every time it changes.
+  @objc
+  @available(swift, obsoleted: 1.0)
+  public func getStatus() -> EntitlementStatusObjc {
+    return status.toObjc()
+  }
+
+  /// Sets ``EntitlementsInfo/status`` to an`unknown` state.
+  @objc
+  @available(swift, obsoleted: 1.0)
+  public func setUnknownStatus() {
+    status = .unknown
+  }
+
+  /// Sets ``EntitlementsInfo/status`` to an`inactive` state.
+  @objc
+  @available(swift, obsoleted: 1.0)
+  public func setInactiveStatus() {
+    status = .inactive
+  }
+
+  /// Sets ``EntitlementsInfo/status`` to an`active` state with the
+  /// specified entitlements.
+  @objc
+  @available(swift, obsoleted: 1.0)
+  public func setActiveStatus(with entitlements: Set<Entitlement>) {
+    status = .active(entitlements)
+  }
+
   // MARK: - Private API
 
-  @MainActor
+  // TODO: Change this to just track the status. Need to remove didSetActive and publishedActive and just use the status. Also now saving status to storage too so need to get that. When the app opens the delegate shouldn't fire at all. Copy subscriptionStatus for this.
   private func listenToEntitlementStatus() {
-    $didSetActiveEntitlements.combineLatest($publishedActive)
+    $status
+      .removeDuplicates()
       .dropFirst()
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] didSet, active in
+        receiveValue: { [weak self] newStatus in
           guard let self = self else {
             return
           }
-          if !didSet {
-            self.status = .unknown
-          } else if publishedActive.isEmpty {
-            self.status = .noActiveEntitlements
-          } else {
-            self.status = .hasActiveEntitlements(active)
-          }
+          self.storage.save(newStatus, forType: EntitlementStatusKey.self)
 
-          self.delegateAdapter.entitlementStatusDidChange(to: self.status)
           Task {
-            let event = InternalSuperwallPlacement.EntitlementStatusDidChange(status: self.status)
+            await self.delegateAdapter.entitlementStatusDidChange(to: newStatus)
+            let event = InternalSuperwallPlacement.EntitlementStatusDidChange(status: newStatus)
             await Superwall.shared.track(event)
           }
         }

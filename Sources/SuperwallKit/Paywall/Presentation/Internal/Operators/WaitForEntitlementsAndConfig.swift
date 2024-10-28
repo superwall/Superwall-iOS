@@ -23,11 +23,10 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    let isEntitlementsReadyTask = Task {
-      for try await value in request.flags.didSetActiveEntitlements.values where value == true {
-        return
-      }
-      throw CancellationError()
+    let entitlementStatusTask = Task {
+      return try await request.flags.entitlementStatus
+        .filter { $0 != .unknown }
+        .throwableAsync()
     }
 
     // Create a 5 sec timer. If the entitlements are retrieved it'll
@@ -36,12 +35,13 @@ extension Superwall {
       timeInterval: 5,
       repeats: false
     ) { _ in
-      isEntitlementsReadyTask.cancel()
+      entitlementStatusTask.cancel()
     }
     RunLoop.main.add(timer, forMode: .default)
 
+    let entitlementStatus: EntitlementStatus
     do {
-      try await isEntitlementsReadyTask.value
+      entitlementStatus = try await entitlementStatusTask.value
     } catch {
       Task {
         let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
@@ -73,7 +73,7 @@ extension Superwall {
 
     let configState = dependencyContainer.configManager.configState
 
-    if request.flags.entitlements.active.isEmpty {
+    if entitlementStatus == .inactive {
       do {
         // If the user has no active entitlements, wait for config to return.
         try await dependencyContainer.configManager.configState
