@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `shimmerView_start` and `shimmerView_complete` events. The `shimmerView_complete` event contains a `visible_duration` parameter which indicates how long the shimmer view was visible after paywall open, if at all.
 
+### Fixes
+
+- Fixes issue where using a `PurchaseController` with `Superwall.shared.purchase(product)` was resulting in transaction events being tracked twice.
+
 ## 3.11.1
 
 ### Fixes

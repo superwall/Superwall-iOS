@@ -70,6 +70,14 @@ final class TransactionManager {
 
     let result = await purchase(product, purchaseSource: purchaseSource)
 
+    // Return early if using a purchase controller and purchasing externally.
+    // This avoids duplicate calls by the purchase function of the purchase
+    // controller.
+    if case .external = purchaseSource,
+      factory.makeHasExternalPurchaseController() {
+      return result
+    }
+
     switch result {
     case .purchased:
       await didPurchase(
@@ -401,6 +409,11 @@ final class TransactionManager {
         paywallViewController.loadingState = .loadingPurchase
       }
     case .external:
+      // If an external purchase controller is being used, skip because this will
+      // get called by the purchase function of the purchase controller.
+      if factory.makeHasExternalPurchaseController() {
+        return
+      }
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
