@@ -316,6 +316,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         await webView.loadURL(from: paywall)
       }
     }
+
+    webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
   }
 
   private func loadWebViewFromArchive(url: URL) {

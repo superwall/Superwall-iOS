@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `shimmerView_start` and `shimmerView_complete` events. The `shimmerView_complete` event contains a `visible_duration` parameter which indicates how long the shimmer view was visible after paywall open, if at all.
+- Adds `isScrollEnabled` to `PaywallInfo`, which indicates whether the webview should scroll or not.
 
 ### Fixes
 

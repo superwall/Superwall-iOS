@@ -140,6 +140,9 @@ public final class PaywallInfo: NSObject {
   /// Information about the presentation of the paywall.
   public let presentation: PaywallPresentationInfo
 
+  /// Indicates whether scrolling of the webview is enabled.
+  public let isScrollEnabled: Bool
+
   init(
     databaseId: String,
     identifier: String,
@@ -171,7 +174,8 @@ public final class PaywallInfo: NSObject {
     localNotifications: [LocalNotification],
     computedPropertyRequests: [ComputedPropertyRequest],
     surveys: [Survey],
-    presentation: PaywallPresentationInfo
+    presentation: PaywallPresentationInfo,
+    isScrollEnabled: Bool
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -239,6 +243,7 @@ public final class PaywallInfo: NSObject {
     self.shimmerLoadCompleteTime = shimmerLoadCompleteTime?.isoString ?? ""
 
     self.closeReason = closeReason
+    self.isScrollEnabled = isScrollEnabled
   }
 
   func eventParams(
@@ -272,7 +277,8 @@ public final class PaywallInfo: NSObject {
       "variant_id": experiment?.variant.id as Any,
       "cache_key": cacheKey,
       "build_id": buildId,
-      "close_reason": closeReason.description
+      "close_reason": closeReason.description,
+      "is_scroll_enabled": isScrollEnabled as Any
     ]
 
     var loadingVars: [String: Any] = [:]
@@ -381,7 +387,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         condition: .checkUserSubscription,
         delay: 0
-      )
+      ),
+      isScrollEnabled: true
     )
   }
 
@@ -430,7 +437,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         condition: .checkUserSubscription,
         delay: 0
-      )
+      ),
+      isScrollEnabled: true
     )
   }
 }
