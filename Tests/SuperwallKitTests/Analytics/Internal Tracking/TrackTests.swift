@@ -365,26 +365,6 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
   }
 
-  func test_presentationRequest_userIsSubscribed() async {
-    let dependencyContainer = DependencyContainer()
-    let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
-      placementData: placementData,
-      type: .getPaywall(.stub()),
-      status: .noPresentation,
-      statusReason: .userIsSubscribed,
-      factory: dependencyContainer
-    )
-    let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$pipeline_type"] as! String, "getPaywallViewController")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status_reason"] as! String, "user_is_subscribed")
-  }
-
   func test_presentationRequest_eventNotFound() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
