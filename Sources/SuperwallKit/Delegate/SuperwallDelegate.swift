@@ -12,22 +12,19 @@ import Foundation
 /// The delegate methods receive callbacks from the SDK in response to certain events that happen on the paywall.
 ///
 /// You set this directly using ``Superwall/delegate``.
-/// 
+///
 /// To learn how to conform to the delegate in your app and best practices, see
 /// [our docs](https://docs.superwall.com/docs/3rd-party-analytics).
 public protocol SuperwallDelegate: AnyObject {
-  /// Called when the active ``Superwall/entitlements`` changes.
-  ///
-  /// If you're letting Superwall handle entitlement logic, then this is based on
-  /// the device receipt. Otherwise, this will reflect the value that you set.
+  /// Called when the entitlements ``EntitlementsInfo/status`` changes.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
-  /// use the published properties of ``EntitlementsInfo/publishedActive`` to react to
+  /// use the published property ``EntitlementsInfo/status`` to react to
   /// changes as they happen.
   ///
-  /// - Parameter newValue: The new value of the active ``Superwall/entitlements``. 
+  /// - Parameter newValue: The new value of  the entitlement ``EntitlementsInfo/status``.
   @MainActor
-  func activeEntitlementsDidChange(to newValue: Set<Entitlement>)
+  func entitlementStatusDidChange(to newValue: EntitlementStatus)
 
   /// Called whenever an internal analytics event is tracked.
   ///
@@ -97,7 +94,7 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 extension SuperwallDelegate {
-  public func activeEntitlementsDidChange(to newValue: Set<Entitlement>) {}
+  public func entitlementStatusDidChange(to newValue: EntitlementStatus) {}
 
   public func handleCustomPaywallAction(withName name: String) {}
 

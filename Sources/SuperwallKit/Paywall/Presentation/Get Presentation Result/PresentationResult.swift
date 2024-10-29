@@ -32,16 +32,6 @@ public enum PresentationResult: Sendable, Equatable {
   ///   - experiment: The experiment associated with the placement.
   case holdout(Experiment)
 
-  /// The user is subscribed.
-  ///
-  /// This means ``Superwall/subscriptionStatus`` is set to `.active`. If you're
-  /// letting Superwall handle subscription-related logic, it will be based on the on-device
-  /// receipts. Otherwise it'll be based on the value you've set.
-  ///
-  /// By default, paywalls do not show to users who are already subscribed. You can override this
-  /// behavior in the paywall editor.
-  case userIsSubscribed
-
   /// The paywall is unavailable. This could be because there's no internet, no view controller to
   /// present from, or the paywall is already presented.
   case paywallNotAvailable

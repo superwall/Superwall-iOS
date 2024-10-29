@@ -245,7 +245,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       exitButton.leadingAnchor.constraint(
         equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
       exitButton.widthAnchor.constraint(equalToConstant: 55),
-      exitButton.heightAnchor.constraint(equalToConstant: 55),
+      exitButton.heightAnchor.constraint(equalToConstant: 55)
     ])
   }
 
@@ -300,8 +300,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     loadingState = .loadingURL
 
     if let paywallArchiveManager = self.paywallArchiveManager,
-      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest)
-    {
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
       Task {
         if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
           loadWebViewFromArchive(url: url)
@@ -430,7 +429,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
     ])
     self.shimmerView = shimmerView
     Task {
@@ -457,7 +456,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         loadingViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         loadingViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         loadingViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
       ])
       self.loadingViewController = loadingViewController
     } else {
@@ -551,8 +550,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   ) {
     if Superwall.shared.isPaywallPresented
       || presenter is PaywallViewController
-      || isBeingPresented
-    {
+      || isBeingPresented {
       return completion(false)
     }
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
@@ -575,8 +573,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
     if let override = override,
-      override != .none
-    {
+      override != .none {
       presentationStyle = override
     } else {
       presentationStyle = paywall.presentation.style
@@ -596,8 +593,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
         if #available(iOS 16.0, *),
-          UIDevice.current.userInterfaceIdiom == .phone
-        {
+          UIDevice.current.userInterfaceIdiom == .phone {
           sheetPresentationController?.detents = [
             .custom(resolver: { context in
               return 0.7 * context.maximumDetentValue
@@ -725,8 +721,7 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac
-    {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
     }
 
@@ -839,8 +834,7 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac
-    {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(true)  // ignore-xcode-12
     }
 
@@ -887,8 +881,7 @@ extension PaywallViewController {
         if case .paywall = presentationResult,
           !presentedByPaywallDecline,
           !presentedByTransactionAbandon,
-          !presentedByTransactionFail
-        {
+          !presentedByTransactionFail {
           // If a paywall_decline trigger is active and the current paywall wasn't presented
           // by paywall_decline, transaction_abandon, or transaction_fail, it lands here so
           // as not to dismiss the paywall. track() will do that before presenting the next paywall.

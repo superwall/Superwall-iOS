@@ -52,8 +52,6 @@ struct HomeView: View {
           }
           handler.onSkip { reason in
             switch reason {
-            case .userIsSubscribed:
-              print("Paywall not shown because user is subscribed.")
             case .holdout(let experiment):
               print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
             case .noAudienceMatch:

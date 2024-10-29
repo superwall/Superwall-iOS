@@ -43,7 +43,11 @@ final class RCPurchaseController: PurchaseController {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
         let superwallEntitlements = customerInfo.entitlements.active.keys.map { Entitlement(id: $0) }
-        Superwall.shared.entitlements.set(superwallEntitlements)
+        if superwallEntitlements.isEmpty {
+          Superwall.shared.entitlements.status = .inactive
+        } else {
+          Superwall.shared.entitlements.status = .active(Set(superwallEntitlements))
+        }
       }
     }
   }

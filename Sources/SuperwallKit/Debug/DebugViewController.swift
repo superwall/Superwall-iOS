@@ -463,8 +463,6 @@ final class DebugViewController: UIViewController {
             errorMessage = "The user didn't match an audience."
           case .placementNotFound:
             errorMessage = "Couldn't find placement."
-          case .userIsSubscribed:
-            errorMessage = "The user is subscribed."
           }
           self.presentAlert(
             title: "Paywall Skipped",

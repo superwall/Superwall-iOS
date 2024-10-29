@@ -54,7 +54,6 @@ public final class PaywallOverrides: NSObject, Sendable {
   ///
   /// - parameters:
   ///   - productsByName: A dictionary mapping the name of the product to override on the paywall with a ``StoreProduct``.
-  ///   - ignoreSubscriptionStatus: Set this to `true` to always show the paywall, regardless of whether the user has an active subscription or not.
   ///   - presentationStyleOverride: A ``PaywallPresentationStyle`` enum that specifies the presentation style for the paywall.
   public init(
     productsByName: [String: StoreProduct] = [:],
