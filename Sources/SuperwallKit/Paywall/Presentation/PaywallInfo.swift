@@ -3,6 +3,8 @@
 //  Superwall
 //
 //  Created by Yusuf Tör on 28/02/2022.
+//
+// swiftlint:disable file_length
 
 import Foundation
 import StoreKit
@@ -187,8 +189,7 @@ public final class PaywallInfo: NSObject {
     self.responseLoadFailTime = responseLoadFailTime?.isoString ?? ""
 
     if let startTime = responseLoadStartTime,
-      let endTime = responseLoadCompleteTime
-    {
+      let endTime = responseLoadCompleteTime {
       self.responseLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.responseLoadDuration = nil
@@ -199,8 +200,7 @@ public final class PaywallInfo: NSObject {
     self.webViewLoadFailTime = webViewLoadFailTime?.isoString ?? ""
 
     if let startTime = webViewLoadStartTime,
-      let endTime = webViewLoadCompleteTime
-    {
+      let endTime = webViewLoadCompleteTime {
       self.webViewLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.webViewLoadDuration = nil
@@ -211,8 +211,7 @@ public final class PaywallInfo: NSObject {
     self.productsLoadFailTime = productsLoadFailTime?.isoString ?? ""
 
     if let startTime = productsLoadStartTime,
-      let endTime = productsLoadCompleteTime
-    {
+      let endTime = productsLoadCompleteTime {
       self.productsLoadDuration = endTime.timeIntervalSince1970 - startTime.timeIntervalSince1970
     } else {
       self.productsLoadDuration = nil
@@ -253,14 +252,13 @@ public final class PaywallInfo: NSObject {
       "variant_id": experiment?.variant.id as Any,
       "cache_key": cacheKey,
       "build_id": buildId,
-      "close_reason": closeReason.description,
+      "close_reason": closeReason.description
     ]
 
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
       if key.contains("_load_"),
-        let output = output[key]
-      {
+        let output = output[key] {
         loadingVars[key] = output
       }
     }
@@ -301,7 +299,7 @@ public final class PaywallInfo: NSObject {
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
-      "presented_by": presentedBy as Any,
+      "presented_by": presentedBy as Any
     ]
 
     output["primary_product_id"] = ""

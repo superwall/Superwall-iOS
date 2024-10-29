@@ -28,9 +28,6 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// There's already a paywall presented.
   case paywallAlreadyPresented
 
-  /// The user is subscribed.
-  case userIsSubscribed
-
   /// The user is in a holdout group.
   case holdout(Experiment)
 
@@ -61,8 +58,6 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "debugger_presented"
     case .paywallAlreadyPresented:
       return "paywall_already_presented"
-    case .userIsSubscribed:
-      return "user_is_subscribed"
     case .holdout:
       return "holdout"
     case .noAudienceMatch:

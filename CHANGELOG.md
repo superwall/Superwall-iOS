@@ -12,7 +12,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 // TODO: Add more info here
 
 - Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
-- Changes `subscriptionStatus_didChange` to `activeEntitlements_didChange`.
+- Removes `subscriptionStatus_didChange`.
+- Removes `subscriptionStatusDidChange(to:)` from the `SuperwallDelegate`.
 - Renames `productItems` to `products` in `PaywallInfo`.
 - Renames `register(event:)` to `register(placement:)`.
 - Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
@@ -34,6 +35,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
+- Adds `Superwall.shared.entitlements`. This is a published property of type `EntitlementStatus`. If you're using Combine or SwiftUI, you can listen to this to receive updates whenever it changes. Otherwise, you can use the `SuperwallDelegate` method `entitlementStatusDidChange(to:)`. If you're not using a `PurchaseController`, we will handle the entitlements for you depending on what products the user purchases. However, if you're using a `PurchaseControler`, you can set the entitlement status, which can be `.unknown`, `.inactive`, or `.active(Set<Entitlement>)`. You can also access `all`, `active` and `inactive` entitlements from the entitlements object.
+- Adds `getStatus()`, `setUnknownStatus()`, `setInactiveStatus()`, and `setActiveStatus(with:)` on `Superwall.shared.entitlements` for Objective-C users.
+- Tracks an `entitlementStatus_didChange` event whenever the entitlement status changes.
 - Updates the RevenueCat example app to use StoreKit 2.
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
 

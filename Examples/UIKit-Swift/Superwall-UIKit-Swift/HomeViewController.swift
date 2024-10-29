@@ -36,20 +36,16 @@ final class HomeViewController: UIViewController {
     super.viewDidLoad()
 
     // Get notified when active entitlements changed.
-    subscribedCancellable = Publishers.CombineLatest(
-      Superwall.shared.entitlements.$didSetActiveEntitlements,
-      Superwall.shared.entitlements.$publishedActive
-    )
+    subscribedCancellable = Superwall.shared.entitlements.$status
     .receive(on: DispatchQueue.main)
-    .sink { [weak self] didSet, activeEntitlements in
-      if didSet {
-        if activeEntitlements.isEmpty {
-          self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
-        } else {
-          self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
-        }
-      } else {
+    .sink { [weak self] status in
+      switch status {
+      case .unknown:
         self?.subscriptionLabel.text = "Loading active entitlements."
+      case .inactive:
+        self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
+      case .active:
+        self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
       }
     }
 
@@ -74,8 +70,6 @@ final class HomeViewController: UIViewController {
     }
     handler.onSkip { reason in
       switch reason {
-      case .userIsSubscribed:
-        print("Paywall not shown because user is subscribed.")
       case .holdout(let experiment):
         print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
       case .noAudienceMatch:

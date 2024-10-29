@@ -44,8 +44,6 @@ extension Superwall {
     }
 
     switch error {
-    case .userIsSubscribed:
-      return .userIsSubscribed
     case .noPaywallViewController:
       return .paywallNotAvailable
     case .noAudienceMatch:

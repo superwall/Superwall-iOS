@@ -36,7 +36,7 @@ enum TrackingLogic {
     var audienceFilterParams: [String: Any] = [
       "$is_standard_event": isSuperwallPlacement,
       "$event_name": placementName,
-      "event_name": placementName,
+      "event_name": placementName
     ]
 
     if trackablePlacement is TrackablePrivatePlacement {
@@ -112,7 +112,7 @@ enum TrackingLogic {
       }
     }
 
-    if let placement = placement as? InternalSuperwallPlacement.ShimmerLoad {
+    if placement is InternalSuperwallPlacement.ShimmerLoad {
       return !disableVerbosePlacements
     }
 
@@ -194,8 +194,7 @@ enum TrackingLogic {
     paywallViewController: PaywallViewController?
   ) -> ImplicitTriggerOutcome {
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .deepLink = placement.superwallPlacement
-    {
+      case .deepLink = placement.superwallPlacement {
       return .deepLinkTrigger
     }
 
@@ -209,42 +208,36 @@ enum TrackingLogic {
       SuperwallPlacementObjc.transactionAbandon.description,
       SuperwallPlacementObjc.transactionFail.description,
       SuperwallPlacementObjc.paywallDecline.description,
-      SuperwallPlacementObjc.customPlacement.description,
+      SuperwallPlacementObjc.customPlacement.description
     ]
 
     if let referringPlacementName = paywallViewController?.info.presentedByPlacementWithName,
-      notAllowedReferringPlacementNames.contains(referringPlacementName)
-    {
+      notAllowedReferringPlacementNames.contains(referringPlacementName) {
       return .dontTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionAbandon = placement.superwallPlacement
-    {
+      case .transactionAbandon = placement.superwallPlacement {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionFail = placement.superwallPlacement
-    {
+      case .transactionFail = placement.superwallPlacement {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .paywallDecline = placement.superwallPlacement
-    {
+      case .paywallDecline = placement.superwallPlacement {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .customPlacement = placement.superwallPlacement
-    {
+      case .customPlacement = placement.superwallPlacement {
       return .closePaywallThenTriggerPaywall
     }
 
     if let placement = placement as? TrackableSuperwallPlacement,
-      case .surveyResponse = placement.superwallPlacement
-    {
+      case .surveyResponse = placement.superwallPlacement {
       return .closePaywallThenTriggerPaywall
     }
 
