@@ -14,6 +14,7 @@ actor PurchasingCoordinator {
   var productId: String?
   var lastInternalTransaction: SKPaymentTransaction?
   var purchaseDate: Date?
+  var source: PurchaseSource?
   var transactions: [String: SKPaymentTransaction] = [:]
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
@@ -32,10 +33,12 @@ actor PurchasingCoordinator {
   }
 
   func beginPurchase(
-    of productId: String
+    of productId: String,
+    source: PurchaseSource
   ) {
     self.purchaseDate = Date()
     self.productId = productId
+    self.source = source
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -139,5 +142,6 @@ actor PurchasingCoordinator {
     completion?(result)
     completion = nil
     productId = nil
+    source = nil
   }
 }

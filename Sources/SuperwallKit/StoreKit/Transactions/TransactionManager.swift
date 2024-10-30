@@ -283,7 +283,9 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: paywallInfo,
         product: product,
-        model: transaction
+        model: transaction,
+        source: .internal,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionRestore)
@@ -297,7 +299,9 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: .empty(),
         product: product,
-        model: transaction
+        model: transaction,
+        source: .external,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -311,7 +315,8 @@ final class TransactionManager {
       return .failed(PurchaseError.productUnavailable)
     }
     await factory.makePurchasingCoordinator().beginPurchase(
-      of: product.productIdentifier
+      of: product.productIdentifier,
+      source: purchaseSource
     )
     switch purchaseSource {
     case .internal:
@@ -351,7 +356,9 @@ final class TransactionManager {
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
           product: product,
-          model: nil
+          model: nil,
+          source: .internal,
+          storeKitVersion: .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
         await paywallViewController.webView.messageHandler.handle(.transactionFail)
@@ -372,7 +379,9 @@ final class TransactionManager {
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
           product: product,
-          model: nil
+          model: nil,
+          source: .external,
+          storeKitVersion: .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
       }
@@ -400,7 +409,9 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil
+        model: nil,
+        source: .internal,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionStart)
@@ -424,7 +435,9 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil
+        model: nil,
+        source: .external,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -519,7 +532,9 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil
+        model: nil,
+        source: .internal,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
@@ -540,7 +555,9 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil
+        model: nil,
+        source: .external,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -563,7 +580,9 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
-        model: nil
+        model: nil,
+        source: .internal,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
@@ -579,7 +598,9 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
         product: nil,
-        model: nil
+        model: nil,
+        source: .external,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -640,7 +661,9 @@ final class TransactionManager {
         state: .complete(product, transaction),
         paywallInfo: paywallInfo,
         product: product,
-        model: transaction
+        model: transaction,
+        source: .internal,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionComplete)
@@ -680,7 +703,9 @@ final class TransactionManager {
         state: .complete(product, transaction),
         paywallInfo: .empty(),
         product: product,
-        model: transaction
+        model: transaction,
+        source: .external,
+        storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
 

@@ -559,9 +559,19 @@ enum InternalSuperwallEvent {
         return .transactionTimeout(paywallInfo: paywallInfo)
       }
     }
+    enum StoreKitVersion: String {
+      case storeKit1 = "STOREKIT1"
+      case storeKit2 = "STOREKIT2"
+    }
+    enum TransactionSource: String {
+      case `internal` = "SUPERWALL"
+      case external = "APP"
+    }
     let paywallInfo: PaywallInfo
     let product: StoreProduct?
     let model: StoreTransaction?
+    let source: TransactionSource
+    let storeKitVersion: StoreKitVersion
 
     var audienceFilterParams: [String: Any] {
       switch state {
@@ -576,7 +586,9 @@ enum InternalSuperwallEvent {
 
     func getSuperwallParameters() async -> [String: Any] {
       var eventParams: [String: Any] = [
-        "store": "APP_STORE"
+        "store": "APP_STORE",
+        "source": source.rawValue,
+        "storeKitVersion": storeKitVersion.rawValue
       ]
 
       switch state {

@@ -153,11 +153,17 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         if let error = error as? SKError {
           switch error.code {
           case .overlayTimeout:
+            var source: InternalSuperwallEvent.Transaction.TransactionSource = .internal
+            if case .external = await coordinator.source {
+              source = .external
+            }
             let trackedEvent = await InternalSuperwallEvent.Transaction(
               state: .timeout,
               paywallInfo: paywallViewController?.info ?? .empty(),
               product: nil,
-              model: nil
+              model: nil,
+              source: source,
+              storeKitVersion: .storeKit1
             )
             await Superwall.shared.track(trackedEvent)
             await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
