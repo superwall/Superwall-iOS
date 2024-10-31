@@ -562,10 +562,6 @@ enum InternalSuperwallPlacement {
         return .transactionTimeout(paywallInfo: paywallInfo)
       }
     }
-    enum StoreKitVersion: String {
-      case storeKit1 = "STOREKIT1"
-      case storeKit2 = "STOREKIT2"
-    }
     enum TransactionSource: String {
       case `internal` = "SUPERWALL"
       case external = "APP"
@@ -574,7 +570,7 @@ enum InternalSuperwallPlacement {
     let product: StoreProduct?
     let model: StoreTransaction?
     let source: TransactionSource
-    let storeKitVersion: StoreKitVersion
+    let storeKitVersion: SuperwallOptions.StoreKitVersion
 
     var audienceFilterParams: [String: Any] {
       switch state {

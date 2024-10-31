@@ -15,6 +15,7 @@ final class TransactionManager {
   private let receiptManager: ReceiptManager
   private let purchaseController: PurchaseController
   private let placementsQueue: PlacementsQueue
+  private let purchaseManager: PurchaseManager
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -28,12 +29,14 @@ final class TransactionManager {
     receiptManager: ReceiptManager,
     purchaseController: PurchaseController,
     placementsQueue: PlacementsQueue,
+    purchaseManager: PurchaseManager,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.purchaseController = purchaseController
     self.placementsQueue = placementsQueue
+    self.purchaseManager = purchaseManager
     self.factory = factory
   }
 
@@ -286,7 +289,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .internal,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionRestore)
       await paywallViewController.webView.messageHandler.handle(.transactionRestore)
@@ -302,7 +305,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .external,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -356,7 +359,7 @@ final class TransactionManager {
           product: product,
           model: nil,
           source: .internal,
-          storeKitVersion: .storeKit1
+          storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
         await paywallViewController.webView.messageHandler.handle(.transactionFail)
@@ -379,7 +382,7 @@ final class TransactionManager {
           product: product,
           model: nil,
           source: .external,
-          storeKitVersion: .storeKit1
+          storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
       }
@@ -409,7 +412,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .internal,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionStart)
       await paywallViewController.webView.messageHandler.handle(.transactionStart)
@@ -435,7 +438,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .external,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -532,7 +535,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .internal,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionAbandon)
       await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
@@ -555,7 +558,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .external,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -580,7 +583,7 @@ final class TransactionManager {
         product: nil,
         model: nil,
         source: .internal,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionFail)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
@@ -598,7 +601,7 @@ final class TransactionManager {
         product: nil,
         model: nil,
         source: .external,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
@@ -663,7 +666,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .internal,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionComplete)
       await paywallViewController.webView.messageHandler.handle(.transactionComplete)
@@ -705,7 +708,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .external,
-        storeKitVersion: .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionComplete)
 

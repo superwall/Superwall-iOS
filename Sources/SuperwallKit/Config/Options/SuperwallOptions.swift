@@ -18,12 +18,12 @@ public final class SuperwallOptions: NSObject, Encodable {
   public var paywalls = PaywallOptions()
 
   /// An enum representing the StoreKit versions the SDK should use.
-  public enum StoreKitVersion {
+  public enum StoreKitVersion: String {
     /// Use StoreKit 1.
-    case storeKit1
+    case storeKit1 = "STOREKIT1"
 
     /// Use StoreKit 2.
-    case storeKit2
+    case storeKit2 = "STOREKIT2"
   }
 
   /// The StoreKit version that the SDK should use.

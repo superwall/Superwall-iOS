@@ -154,7 +154,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
             if case .external = await coordinator.source {
               source = .external
             }
-            let transactionTimeout = await InternalSuperwallEvent.Transaction(
+            let transactionTimeout = await InternalSuperwallPlacement.Transaction(
               state: .timeout,
               paywallInfo: paywallViewController?.info ?? .empty(),
               product: nil,

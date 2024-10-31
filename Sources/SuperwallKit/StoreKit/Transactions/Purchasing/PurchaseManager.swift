@@ -23,6 +23,7 @@ final class PurchaseManager: Purchasing {
     // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2TransactionListener! as! SK2TransactionListener
   }
+  let isUsingSK2: Bool
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -42,6 +43,7 @@ final class PurchaseManager: Purchasing {
         receiptManager: receiptManager,
         factory: factory
       )
+      isUsingSK2 = true
       Task {
         await sk2TransactionListener.listenForTransactions()
       }
@@ -53,6 +55,7 @@ final class PurchaseManager: Purchasing {
         coordinator: coordinator,
         factory: factory
       )
+      isUsingSK2 = false
     }
   }
 
