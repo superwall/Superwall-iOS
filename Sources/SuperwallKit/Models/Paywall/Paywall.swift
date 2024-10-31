@@ -60,6 +60,10 @@ struct Paywall: Codable {
       productIds = products.map { $0.id }
     }
   }
+
+  /// Indicates whether scrolling is enabled on the webview.
+  var isScrollEnabled: Bool
+
   // MARK: - Added by client
 
   var responseLoadingInfo: LoadingInfo
@@ -136,6 +140,7 @@ struct Paywall: Codable {
     case computedPropertyRequests = "computedProperties"
     case surveys
     case manifest
+    case isScrollEnabled
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -249,6 +254,7 @@ struct Paywall: Codable {
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
+    isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
   }
 
   func encode(to encoder: Encoder) throws {
@@ -304,6 +310,7 @@ struct Paywall: Codable {
     }
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
+    try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
   }
 
   // Only used in stub
@@ -337,7 +344,8 @@ struct Paywall: Codable {
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
     surveys: [Survey] = [],
-    manifest: ArchiveManifest? = nil
+    manifest: ArchiveManifest? = nil,
+    isScrollEnabled: Bool
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -369,6 +377,7 @@ struct Paywall: Codable {
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
     self.manifest = manifest
+    self.isScrollEnabled = isScrollEnabled
   }
 
   func getInfo(fromPlacement: PlacementData?) -> PaywallInfo {
@@ -402,7 +411,8 @@ struct Paywall: Codable {
       localNotifications: localNotifications,
       computedPropertyRequests: computedPropertyRequests,
       surveys: surveys,
-      presentation: presentation
+      presentation: presentation,
+      isScrollEnabled: isScrollEnabled
     )
   }
 
@@ -452,7 +462,8 @@ extension Paywall: Stubbable {
       webviewLoadingInfo: .init(),
       productsLoadingInfo: .init(),
       shimmerLoadingInfo: .init(),
-      paywalljsVersion: ""
+      paywalljsVersion: "",
+      isScrollEnabled: true
     )
   }
 }
