@@ -130,19 +130,20 @@ final class DependencyContainer {
       factory: self
     )
 
-    transactionManager = TransactionManager(
-      storeKitManager: storeKitManager,
-      receiptManager: receiptManager,
-      purchaseController: purchaseController,
-      placementsQueue: placementsQueue,
-      factory: self
-    )
-
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       identityManager: identityManager,
+      factory: self
+    )
+
+    transactionManager = TransactionManager(
+      storeKitManager: storeKitManager,
+      receiptManager: receiptManager,
+      purchaseController: purchaseController,
+      placementsQueue: placementsQueue,
+      purchaseManager: purchaseManager,
       factory: self
     )
   }
