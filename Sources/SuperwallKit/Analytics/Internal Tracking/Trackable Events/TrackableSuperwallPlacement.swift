@@ -587,7 +587,7 @@ enum InternalSuperwallPlacement {
       var placementParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storeKitVersion": storeKitVersion.rawValue
+        "storekit_version": storeKitVersion.rawValue
       ]
 
       switch state {
@@ -611,10 +611,11 @@ enum InternalSuperwallPlacement {
         switch error {
         case .failure(let message, _),
           .pending(let message):
-          return await paywallInfo.placementParams(
+          let paywallInfoParams = await paywallInfo.placementParams(
             forProduct: product,
             otherParams: ["message": message]
           )
+          return placementParams + paywallInfoParams
         }
       }
     }
