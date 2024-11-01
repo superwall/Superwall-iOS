@@ -161,6 +161,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// paywall presentation.
   private var unsavedOccurrence: TriggerRuleOccurrence?
 
+  private var lastOpen: Date?
+
   private unowned let factory: TriggerFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
@@ -245,6 +247,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackOpen() async {
+    await MainActor.run {
+      lastOpen = Date()
+    }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
     let trackedEvent = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
@@ -252,6 +257,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   nonisolated private func trackClose() async {
+    await MainActor.run {
+      lastOpen = nil
+    }
     let trackedEvent = await InternalSuperwallEvent.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
@@ -308,6 +316,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         await webView.loadURL(from: paywall)
       }
     }
+
+    webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
   }
 
   private func loadWebViewFromArchive(url: URL) {
@@ -368,6 +378,29 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           completion: { _ in
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
+            Task.detached { [weak self] in
+              guard let self = self else {
+                return
+              }
+              let shimmerEndDate = Date()
+              await MainActor.run {
+                self.paywall.shimmerLoadingInfo.endAt = shimmerEndDate
+              }
+
+              let visibleDuration: Double = await MainActor.run {
+                if let lastOpen = self.lastOpen {
+                  return max(0, shimmerEndDate.timeIntervalSince1970 - lastOpen.timeIntervalSince1970)
+                } else {
+                  return 0.0
+                }
+              }
+              let shimmerComplete = await InternalSuperwallEvent.ShimmerLoad(
+                state: .complete,
+                paywallId: self.paywall.identifier,
+                visibleDuration: visibleDuration
+              )
+              await Superwall.shared.track(shimmerComplete)
+            }
           }
         )
       }
@@ -397,6 +430,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
     ])
     self.shimmerView = shimmerView
+    Task {
+      paywall.shimmerLoadingInfo.startAt = Date()
+
+      let shimmerStart = InternalSuperwallEvent.ShimmerLoad(
+        state: .start,
+        paywallId: paywall.identifier
+      )
+      await Superwall.shared.track(shimmerStart)
+    }
   }
 
   private func addLoadingView() {

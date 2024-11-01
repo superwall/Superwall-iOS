@@ -559,9 +559,19 @@ enum InternalSuperwallEvent {
         return .transactionTimeout(paywallInfo: paywallInfo)
       }
     }
+    enum StoreKitVersion: String {
+      case storeKit1 = "STOREKIT1"
+      case storeKit2 = "STOREKIT2"
+    }
+    enum TransactionSource: String {
+      case `internal` = "SUPERWALL"
+      case external = "APP"
+    }
     let paywallInfo: PaywallInfo
     let product: StoreProduct?
     let model: StoreTransaction?
+    let source: TransactionSource
+    let storeKitVersion: StoreKitVersion
 
     var audienceFilterParams: [String: Any] {
       switch state {
@@ -576,7 +586,9 @@ enum InternalSuperwallEvent {
 
     func getSuperwallParameters() async -> [String: Any] {
       var eventParams: [String: Any] = [
-        "store": "APP_STORE"
+        "store": "APP_STORE",
+        "source": source.rawValue,
+        "storekit_version": storeKitVersion.rawValue
       ]
 
       switch state {
@@ -600,10 +612,11 @@ enum InternalSuperwallEvent {
         switch error {
         case .failure(let message, _),
           .pending(let message):
-          return await paywallInfo.eventParams(
+          let paywallInfoParams = await paywallInfo.eventParams(
             forProduct: product,
             otherParams: ["message": message]
           )
+          return eventParams + paywallInfoParams
         }
       }
     }
@@ -817,6 +830,38 @@ enum InternalSuperwallEvent {
           "token": token
         ]
       }
+    }
+  }
+
+  struct ShimmerLoad: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete
+    }
+    let state: State
+    let paywallId: String
+    var loadDuration: Double?
+    var visibleDuration: Double?
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .shimmerViewStart
+      case .complete:
+        return .shimmerViewComplete
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "paywall_id": paywallId
+      ]
+
+      if state == .complete {
+        params += [
+          "visible_duration": visibleDuration ?? 0.0
+        ]
+      }
+      return params
     }
   }
 }

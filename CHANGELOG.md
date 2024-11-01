@@ -2,6 +2,20 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.11.2
+
+### Enhancements
+
+- Adds `shimmerView_start` and `shimmerView_complete` events. The `shimmerView_complete` event contains a `visible_duration` parameter which indicates how long the shimmer view was visible after paywall open, if at all.
+- Adds `isScrollEnabled` to `PaywallInfo`, which indicates whether the webview should scroll or not.
+- Updates Superscript to [v0.1.15](https://github.com/superwall/Superscript-iOS/releases/tag/0.1.15).
+- Adds `$source`, `$store`, and `$storekit_version` to transaction events.
+
+### Fixes
+
+- Fixes issue where using a `PurchaseController` with `Superwall.shared.purchase(product)` was resulting in transaction events being tracked twice.
+- Fixes build issues for visionOS, Mac Catalyst, and watchOS.
+
 ## 3.11.1
 
 ### Fixes

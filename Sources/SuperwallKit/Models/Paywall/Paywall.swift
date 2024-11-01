@@ -65,11 +65,16 @@ struct Paywall: Codable {
     }
   }
 
-  var responseLoadingInfo: LoadingInfo
-  var webviewLoadingInfo: LoadingInfo
-  var productsLoadingInfo: LoadingInfo
+  /// Indicates whether scrolling is enabled on the webview.
+  var isScrollEnabled: Bool
 
   // MARK: - Added by client
+
+  var responseLoadingInfo: LoadingInfo
+  var webviewLoadingInfo: LoadingInfo
+  var shimmerLoadingInfo: LoadingInfo
+  var productsLoadingInfo: LoadingInfo
+
   /// An array of the ids of paywall products.
   ///
   /// This is set on init and whenever products are updated.
@@ -139,6 +144,7 @@ struct Paywall: Codable {
     case computedPropertyRequests = "computedProperties"
     case surveys
     case manifest
+    case isScrollEnabled
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -151,6 +157,9 @@ struct Paywall: Codable {
     case productsLoadStartTime
     case productsLoadCompleteTime
     case productsLoadFailTime
+
+    case shimmerLoadStartTime
+    case shimmerLoadCompleteTime
   }
 
   init(from decoder: Decoder) throws {
@@ -220,6 +229,13 @@ struct Paywall: Codable {
       failAt: webviewLoadFailTime
     )
 
+    let shimmerLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .shimmerLoadStartTime)
+    let shimmerLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .shimmerLoadCompleteTime)
+    shimmerLoadingInfo = LoadingInfo(
+      startAt: shimmerLoadStartTime,
+      endAt: shimmerLoadCompleteTime
+    )
+
     let productsLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadStartTime)
     let productsLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadCompleteTime)
     let productsLoadFailTime = try values.decodeIfPresent(Date.self, forKey: .productsLoadFailTime)
@@ -245,6 +261,7 @@ struct Paywall: Codable {
     computedPropertyRequests = throwableComputedPropertyRequests.compactMap { try? $0.result.get() }
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
+    isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
   }
 
   func encode(to encoder: Encoder) throws {
@@ -301,6 +318,7 @@ struct Paywall: Codable {
     }
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
+    try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
   }
 
 
@@ -347,6 +365,7 @@ struct Paywall: Codable {
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
     productsLoadingInfo: LoadingInfo,
+    shimmerLoadingInfo: LoadingInfo,
     paywalljsVersion: String,
     productVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
@@ -356,7 +375,8 @@ struct Paywall: Codable {
     localNotifications: [LocalNotification] = [],
     computedPropertyRequests: [ComputedPropertyRequest] = [],
     surveys: [Survey] = [],
-    manifest: ArchiveManifest? = nil
+    manifest: ArchiveManifest? = nil,
+    isScrollEnabled: Bool
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -377,6 +397,7 @@ struct Paywall: Codable {
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
     self.productsLoadingInfo = productsLoadingInfo
+    self.shimmerLoadingInfo = shimmerLoadingInfo
     self.paywalljsVersion = paywalljsVersion
     self.productVariables = productVariables
     self.isFreeTrialAvailable = isFreeTrialAvailable
@@ -388,6 +409,7 @@ struct Paywall: Codable {
     self.surveys = surveys
     self.products = Self.makeProducts(from: productItems)
     self.manifest = manifest
+    self.isScrollEnabled = isScrollEnabled
   }
 
   func getInfo(fromEvent: EventData?) -> PaywallInfo {
@@ -411,6 +433,8 @@ struct Paywall: Codable {
       productsLoadStartTime: productsLoadingInfo.startAt,
       productsLoadFailTime: productsLoadingInfo.failAt,
       productsLoadCompleteTime: productsLoadingInfo.endAt,
+      shimmerLoadStartTime: shimmerLoadingInfo.startAt,
+      shimmerLoadCompleteTime: shimmerLoadingInfo.endAt,
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
@@ -420,7 +444,8 @@ struct Paywall: Codable {
       localNotifications: localNotifications,
       computedPropertyRequests: computedPropertyRequests,
       surveys: surveys,
-      presentation: presentation
+      presentation: presentation,
+      isScrollEnabled: isScrollEnabled
     )
   }
 
@@ -470,7 +495,9 @@ extension Paywall: Stubbable {
       responseLoadingInfo: .init(),
       webviewLoadingInfo: .init(),
       productsLoadingInfo: .init(),
-      paywalljsVersion: ""
+      shimmerLoadingInfo: .init(),
+      paywalljsVersion: "",
+      isScrollEnabled: true
     )
   }
 }
