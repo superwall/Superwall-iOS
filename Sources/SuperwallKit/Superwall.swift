@@ -759,6 +759,58 @@ public final class Superwall: NSObject, ObservableObject {
       completion(result.toObjc())
     }
   }
+
+  public func observe(_ state: ObserverState) {
+    if let sk1State = state.sk1State {
+      switch sk1State {
+      case .addToPaymentQueue(let product):
+        /*
+         Start a purchase here
+         */
+        break
+      case .finishTransaction(let transaction):
+        switch transaction.transactionState {
+        case .purchased:
+          break
+        case .purchasing:
+          break
+        case .failed:
+          break
+        case .deferred:
+          break
+        case .restored:
+          break
+        }
+      }
+    } else if #available(iOS 15.0, *),
+      let sk2State = state.sk2State {
+      switch sk2State {
+      case .purchaseBegin(let product):
+        /*
+         Start a purchase here
+         */
+        break
+      case let .purchaseResult(product, purchaseResult):
+        switch purchaseResult {
+        case .pending:
+          break
+        case .success(let verificationResult):
+          switch verificationResult {
+          case .unverified(let transaction, let error):
+            break
+          case .verified(let transaction):
+            break
+          }
+        case .userCancelled:
+          break
+        @unknown default:
+          break
+        }
+      case let .purchaseError(product, error):
+        break
+      }
+    }
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate
