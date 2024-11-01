@@ -588,7 +588,7 @@ enum InternalSuperwallEvent {
       var eventParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storeKitVersion": storeKitVersion.rawValue
+        "storekit_version": storeKitVersion.rawValue
       ]
 
       switch state {
@@ -612,10 +612,11 @@ enum InternalSuperwallEvent {
         switch error {
         case .failure(let message, _),
           .pending(let message):
-          return await paywallInfo.eventParams(
+          let paywallInfoParams = await paywallInfo.eventParams(
             forProduct: product,
             otherParams: ["message": message]
           )
+          return eventParams + paywallInfoParams
         }
       }
     }
