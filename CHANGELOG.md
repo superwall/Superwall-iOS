@@ -41,6 +41,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Updates the RevenueCat example app to use StoreKit 2.
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
 
+## 3.11.3
+
+### Enhancements
+
+- Updates Superscript to [0.1.16](https://github.com/superwall/Superscript-iOS/releases/tag/0.1.16).
+
 ## 3.11.2
 
 ### Enhancements
