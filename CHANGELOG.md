@@ -4,7 +4,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 3.11.3
 
-- Updates Superscript to [v0.1.16](https://github.com/superwall/Superscript-iOS/releases/tag/0.1.15).
+### Enhancements
+
+- Updates Superscript to [0.1.16](https://github.com/superwall/Superscript-iOS/releases/tag/0.1.16).
 
 ## 3.11.2
 
