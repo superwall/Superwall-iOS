@@ -11,11 +11,12 @@ import StoreKit
 /// An actor that manages and coordinates the storing of types associated with purchasing.
 actor PurchasingCoordinator {
   private var completion: ((PurchaseResult) -> Void)?
-  var productId: String?
   var lastInternalTransaction: SKPaymentTransaction?
   var purchaseDate: Date?
   var source: PurchaseSource?
   var transactions: [String: SKPaymentTransaction] = [:]
+  var isFreeTrialAvailable = false
+  var product: StoreProduct?
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
   func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
@@ -33,12 +34,14 @@ actor PurchasingCoordinator {
   }
 
   func beginPurchase(
-    of productId: String,
-    source: PurchaseSource
+    of product: StoreProduct,
+    source: PurchaseSource,
+    isFreeTrialAvailable: Bool
   ) {
     self.purchaseDate = Date()
-    self.productId = productId
     self.source = source
+    self.isFreeTrialAvailable = isFreeTrialAvailable
+    self.product = product
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -101,7 +104,7 @@ actor PurchasingCoordinator {
 
   /// Stores the transaction if purchased and is the latest for a specific product ID.
   /// This is used as a fallback if we can't retrieve the transaction using SK2.
-  func storeIfPurchased(_ transaction: SK1Transaction) async {
+  func storeIfPurchased(_ transaction: SK1Transaction) {
     guard case .purchased = transaction.transactionState else {
       return
     }
@@ -125,9 +128,12 @@ actor PurchasingCoordinator {
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) {
+    if result == .purchased {
+      storeIfPurchased(transaction)
+    }
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    guard productId == transaction.payment.productIdentifier else {
+    guard product?.productIdentifier == transaction.payment.productIdentifier else {
       return
     }
     // If the transaction completed a purchase, check it is within the last
@@ -140,8 +146,13 @@ actor PurchasingCoordinator {
     }
     lastInternalTransaction = transaction
     completion?(result)
+  }
+
+  func reset() {
+    purchaseDate = nil
     completion = nil
-    productId = nil
+    product = nil
     source = nil
+    isFreeTrialAvailable = false
   }
 }

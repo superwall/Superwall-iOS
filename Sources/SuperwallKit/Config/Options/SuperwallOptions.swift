@@ -133,6 +133,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
 
+  /// A boolean that controls the finishing of transactions in conjunction with ``Superwall/observe(_:)``. Defaults to `false`.
+  ///
+  /// Set this to true if using ``Superwall/observe(_:)``. This will prevent Superwall from finishing transactions on your behalf.
+  public var isObservingPurchases = false
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///

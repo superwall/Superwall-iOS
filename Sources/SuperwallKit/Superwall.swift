@@ -760,54 +760,76 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  public func observe(_ state: ObserverState) {
-    if let sk1State = state.sk1State {
-      switch sk1State {
-      case .addToPaymentQueue(let product):
-        /*
-         Start a purchase here
-         */
-        break
-      case .finishTransaction(let transaction):
-        switch transaction.transactionState {
-        case .purchased:
-          break
-        case .purchasing:
-          break
-        case .failed:
-          break
-        case .deferred:
-          break
-        case .restored:
-          break
-        }
-      }
-    } else if #available(iOS 15.0, *),
-      let sk2State = state.sk2State {
-      switch sk2State {
-      case .purchaseBegin(let product):
-        /*
-         Start a purchase here
-         */
-        break
-      case let .purchaseResult(product, purchaseResult):
-        switch purchaseResult {
-        case .pending:
-          break
-        case .success(let verificationResult):
-          switch verificationResult {
-          case .unverified(let transaction, let error):
-            break
-          case .verified(let transaction):
-            break
+  /// Observes purchasing states for revenue tracking.
+  ///
+  /// This can be used to enable revenue tracking with an existing project, regardless of whether you're using
+  /// `StoreKit1` or `StoreKit2`.
+  ///
+  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/isObservingPurchases`` to `true`.
+  public func observe(_ state: PurchasingObserverState) {
+    let isUsingPurchaseController = dependencyContainer.makeHasExternalPurchaseController()
+    if !options.isObservingPurchases,
+      !isUsingPurchaseController {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You are observing purchases but the SuperwallOption isObservingPurchases is false. Please set it to true."
+      )
+    }
+    Task {
+      let coordinator = dependencyContainer.makePurchasingCoordinator()
+
+      if let sk1State = state.sk1State {
+        switch sk1State {
+        case .addToPaymentQueue(let product):
+          let storeProduct = StoreProduct(sk1Product: product)
+          await dependencyContainer.transactionManager.prepareToPurchase(
+            product: storeProduct,
+            purchaseSource: .external(storeProduct)
+          )
+          await coordinator.setCompletion { [weak self] result in
+            Task {
+              await self?.dependencyContainer.transactionManager.handle(
+                result: result,
+                state: .observing
+              )
+            }
           }
-        case .userCancelled:
-          break
-        @unknown default:
-          break
+        case .updatedTransaction(let transaction):
+          await dependencyContainer.productPurchaser.handle(transaction)
         }
-      case let .purchaseError(product, error):
-        break
+      } else if #available(iOS 15.0, *),
+        let sk2State = state.sk2State {
+        switch sk2State {
+        case .purchaseBegin(let product):
+          let storeProduct = StoreProduct(sk2Product: product)
+          await dependencyContainer.transactionManager.prepareToPurchase(
+            product: storeProduct,
+            purchaseSource: .external(storeProduct)
+          )
+        case let .purchaseResult(purchaseResult):
+          let result = await purchaseResult.toInternalPurchaseResult(coordinator)
+          await dependencyContainer.transactionManager.handle(
+            result: result,
+            state: .observing
+          )
+        case let .purchaseError(error):
+          if let error = error as? StoreKitError {
+            switch error {
+            case .userCancelled:
+              return await dependencyContainer.transactionManager.handle(
+                result: .cancelled,
+                state: .observing
+              )
+            default:
+              break
+            }
+          }
+          await dependencyContainer.transactionManager.handle(
+            result: .failed(error),
+            state: .observing
+          )
+        }
       }
     }
   }

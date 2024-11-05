@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.0
+
+### Enhancements
+
+- Adds `Superwall.shared.observe(_:)` and the `SuperwallOption` `isObservingPurchases`. You can use this to observe transactions in your existing native paywalls/code.
+
 ## 3.11.3
 
 ### Enhancements
