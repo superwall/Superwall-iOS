@@ -342,7 +342,11 @@ final class TransactionManager {
     switch purchaseSource {
     case .internal:
       return await purchaseController.purchase(product: sk1Product)
+    case .purchaseFunc:
       return await factory.purchase(product: sk1Product)
+    case .observeFunc:
+      // No-op, there's no way this can be called from observe.
+      return .cancelled
     }
   }
 
