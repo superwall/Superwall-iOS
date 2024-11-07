@@ -16,12 +16,6 @@ import StoreKit
     case purchaseResult(StoreKit.Product.PurchaseResult)
     case purchaseError(Error)
   }
-  enum SK1ObserverState {
-    case addToPaymentQueue(SK1Product)
-    case updatedTransaction(SK1Transaction)
-  }
-
-  let sk1State: SK1ObserverState?
 
   // swiftlint:disable:next identifier_name
   var _sk2State: Any?
@@ -32,10 +26,8 @@ import StoreKit
   }
 
   init(
-    sk1State: SK1ObserverState? = nil,
     _sk2State: Any? = nil
   ) {
-    self.sk1State = sk1State
     self._sk2State = _sk2State
   }
 
@@ -106,44 +98,6 @@ import StoreKit
   public static func purchaseError(_ error: Error) -> PurchasingObserverState {
     return PurchasingObserverState(
       _sk2State: SK2ObserverState.purchaseError(error)
-    )
-  }
-
-  // MARK: - StoreKit 1
-
-  /// Indicates that the StoreKit 1 `SKPayment` will be added to the `SKPaymentQueue`.
-  ///
-  /// Call this **before** you call `SKPaymentQueue.default().add(payment)`:
-  ///
-  /// ```swift
-  /// Superwall.shared.willAddToPaymentQueue(product)
-  /// let payment = SKMutablePayment(product: product)
-  /// SKPaymentQueue.default().add(payment)
-  /// ```
-  /// - Parameter product: The StoreKit 1 product that will be purchased.
-  /// - Returns: A `PurchasingObserverState` object.
-  public static func willAddToPaymentQueue(_ product: SKProduct) -> PurchasingObserverState {
-    return PurchasingObserverState(
-      sk1State: .addToPaymentQueue(product)
-    )
-  }
-
-  /// Observes the updated transaction from the payment queue.
-  ///
-  /// Call this inside `paymentQueue(_:updatedTransactions:)`.
-  ///
-  /// ```swift
-  /// Superwall.shared.willAddToPaymentQueue(product)
-  /// let payment = SKMutablePayment(product: product)
-  /// SKPaymentQueue.default().add(payment)
-  /// ```
-  /// - Parameter transaction: The StoreKit 1 transaction that received an update.
-  /// - Returns: A `PurchasingObserverState` object.
-  public static func updatedTransaction(
-    _ transaction: SKPaymentTransaction
-  ) -> PurchasingObserverState {
-    return PurchasingObserverState(
-      sk1State: .updatedTransaction(transaction)
     )
   }
 }

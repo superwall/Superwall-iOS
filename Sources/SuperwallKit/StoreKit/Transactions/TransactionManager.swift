@@ -16,6 +16,7 @@ final class TransactionManager {
   private let purchaseController: PurchaseController
   private let sessionEventsManager: SessionEventsManager
   private let eventsQueue: EventsQueue
+  private let productsFetcher: ProductsFetcherSK1
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -34,6 +35,7 @@ final class TransactionManager {
     purchaseController: PurchaseController,
     sessionEventsManager: SessionEventsManager,
     eventsQueue: EventsQueue,
+    productsFetcher: ProductsFetcherSK1,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
@@ -41,6 +43,7 @@ final class TransactionManager {
     self.purchaseController = purchaseController
     self.sessionEventsManager = sessionEventsManager
     self.eventsQueue = eventsQueue
+    self.productsFetcher = productsFetcher
     self.factory = factory
   }
 
@@ -67,8 +70,11 @@ final class TransactionManager {
         return .failed(PurchaseError.productUnavailable)
       }
       product = storeProduct
-    case .external(let storeProduct):
+    case .purchaseFunc(let storeProduct):
       product = storeProduct
+    case .observeFunc:
+      // This is a no-op, there's no way someone can call this func using observe.
+      return .cancelled
     }
     await prepareToPurchase(
       product: product,
@@ -80,7 +86,7 @@ final class TransactionManager {
     // Return early if using a purchase controller and purchasing externally.
     // This avoids duplicate calls by the purchase function of the purchase
     // controller.
-    if case .external = purchaseSource,
+    if case .purchaseFunc = purchaseSource,
       factory.makeHasExternalPurchaseController() {
       // Not resetting coordinator here because we need it with the purchase controller
       // call.
@@ -336,7 +342,6 @@ final class TransactionManager {
     switch purchaseSource {
     case .internal:
       return await purchaseController.purchase(product: sk1Product)
-    case .external:
       return await factory.purchase(product: sk1Product)
     }
   }
@@ -382,7 +387,8 @@ final class TransactionManager {
         await Superwall.shared.track(trackedEvent)
         await paywallViewController.webView.messageHandler.handle(.transactionFail)
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -403,6 +409,35 @@ final class TransactionManager {
           storeKitVersion: .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
+      }
+    }
+  }
+
+  func observeTransaction(for productId: String) async {
+    guard let storeProduct = try? await productsFetcher.products(
+      identifiers: [productId],
+      forPaywall: nil,
+      event: nil
+    ).first else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .superwallCore,
+        message: "There's a purchase happening of a product with id \(productId), "
+          + "but we couldn't retrieve it to observe its purchase."
+      )
+      return
+    }
+    let coordinator = factory.makePurchasingCoordinator()
+    await prepareToPurchase(
+      product: storeProduct,
+      purchaseSource: .observeFunc(storeProduct)
+    )
+    await coordinator.setCompletion { [weak self] result in
+      Task {
+        await self?.handle(
+          result: result,
+          state: .observing
+        )
       }
     }
   }
@@ -440,12 +475,25 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .loadingPurchase
       }
-    case .external:
+
+/*
+ - If we have a coordinator when using purchase controller + observing.
+ - the coordinator will start for purchase controller, then it will start for purchase ->
+ - This will overwrite. When really it should be a coordinator specific to the initiation path.
+
+ LEts say we start the transaction on purchasing, we will be able to call prepareToPurchase and 1. its observing
+ so will pass here, when setting the source we know it won't be from us. However, what about
+*/
+    case .purchaseFunc,
+        .observeFunc:
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
-      if factory.makeHasExternalPurchaseController() {
+      let options = factory.makeSuperwallOptions()
+      if !options.isObservingPurchases,
+        factory.makeHasExternalPurchaseController() {
         return
       }
+
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -512,7 +560,8 @@ final class TransactionManager {
           result: .purchased(productId: product.productIdentifier)
         )
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -570,7 +619,8 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .ready
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -619,7 +669,8 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .paywallTransactions,
@@ -735,7 +786,8 @@ final class TransactionManager {
           await Superwall.shared.track(trackedEvent)
         }
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .complete(product, transaction),
         paywallInfo: .empty(),

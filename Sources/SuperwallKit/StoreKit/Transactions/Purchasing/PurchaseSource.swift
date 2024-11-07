@@ -11,12 +11,15 @@ enum PurchaseSource {
   case `internal`(String, PaywallViewController)
 
   /// The purchase was initiated externally by the user calling ``Superwall/purchase(_:)-7gwwe``.
-  case external(StoreProduct)
+  case purchaseFunc(StoreProduct)
+
+  case observeFunc(StoreProduct)
 
   func toRestoreSource() -> RestoreSource {
     switch self {
     case .internal(_, let paywallViewController): return .internal(paywallViewController)
-    case .external: return .external
+    case .purchaseFunc: return .external
+    case .observeFunc: return .external
     }
   }
 

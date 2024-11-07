@@ -656,8 +656,16 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
+    if options.isObservingPurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the SuperwallOption isObservingPurchases is set to true."
+      )
+      return .cancelled
+    }
     let storeProduct = StoreProduct(sk1Product: product)
-    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+    return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
   /// Initiates a purchase of a `SKProduct`.
@@ -678,8 +686,7 @@ public final class Superwall: NSObject, ObservableObject {
     completion: @escaping (PurchaseResult) -> Void
   ) {
     Task {
-      let storeProduct = StoreProduct(sk1Product: product)
-      let result = await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+      let result = await purchase(product)
       await MainActor.run {
         completion(result)
       }
@@ -765,47 +772,42 @@ public final class Superwall: NSObject, ObservableObject {
   /// This can be used to enable revenue tracking with an existing project, regardless of whether you're using
   /// `StoreKit1` or `StoreKit2`.
   ///
-  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/isObservingPurchases`` to `true`.
+  /// - Note: You cannot use this function in conjunction with ``Superwall/purchase(_:)``.
+  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/isObservingPurchases`` to `true`
+  /// otherwise it will not work.
   public func observe(_ state: PurchasingObserverState) {
-    let isUsingPurchaseController = dependencyContainer.makeHasExternalPurchaseController()
-    if !options.isObservingPurchases,
-      !isUsingPurchaseController {
+    if !options.isObservingPurchases {
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
-        message: "You are observing purchases but the SuperwallOption isObservingPurchases is false. Please set it to true."
+        message: "You are trying to observe purchases but the SuperwallOption isObservingPurchases is false. Please set it to true to be able to observe purchases."
       )
+      return
     }
-    Task {
-      let coordinator = dependencyContainer.makePurchasingCoordinator()
 
-      if let sk1State = state.sk1State {
-        switch sk1State {
-        case .addToPaymentQueue(let product):
-          let storeProduct = StoreProduct(sk1Product: product)
-          await dependencyContainer.transactionManager.prepareToPurchase(
-            product: storeProduct,
-            purchaseSource: .external(storeProduct)
-          )
-          await coordinator.setCompletion { [weak self] result in
-            Task {
-              await self?.dependencyContainer.transactionManager.handle(
-                result: result,
-                state: .observing
-              )
-            }
-          }
-        case .updatedTransaction(let transaction):
-          await dependencyContainer.productPurchaser.handle(transaction)
+    Task {
+      // If already purchasing, and source is internal, do not continue, or if using the
+      // purchase function. However, that isn't allowed.
+      // Observing is an external source, so we shouldn't intefere with that.
+      let coordinator = dependencyContainer.makePurchasingCoordinator()
+      if let source = await coordinator.source {
+        switch source {
+        case .internal,
+          .purchaseFunc:
+          return
+        case .observeFunc:
+          break
         }
-      } else if #available(iOS 15.0, *),
+      }
+
+      if #available(iOS 15.0, *),
         let sk2State = state.sk2State {
         switch sk2State {
         case .purchaseBegin(let product):
           let storeProduct = StoreProduct(sk2Product: product)
           await dependencyContainer.transactionManager.prepareToPurchase(
             product: storeProduct,
-            purchaseSource: .external(storeProduct)
+            purchaseSource: .observeFunc(storeProduct)
           )
         case let .purchaseResult(purchaseResult):
           let result = await purchaseResult.toInternalPurchaseResult(coordinator)

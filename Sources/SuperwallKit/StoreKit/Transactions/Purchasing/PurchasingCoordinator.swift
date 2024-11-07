@@ -10,13 +10,18 @@ import StoreKit
 
 /// An actor that manages and coordinates the storing of types associated with purchasing.
 actor PurchasingCoordinator {
-  private var completion: ((PurchaseResult) -> Void)?
-  var lastInternalTransaction: SKPaymentTransaction?
+  var lastInternalTransaction: StoreTransaction?
   var purchaseDate: Date?
   var source: PurchaseSource?
-  var transactions: [String: SKPaymentTransaction] = [:]
+  var transactions: [String: StoreTransaction] = [:]
   var isFreeTrialAvailable = false
   var product: StoreProduct?
+  private var completion: ((PurchaseResult) -> Void)?
+  private let factory: StoreTransactionFactory
+
+  init(factory: StoreTransactionFactory) {
+    self.factory = factory
+  }
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
   func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
@@ -71,15 +76,14 @@ actor PurchasingCoordinator {
     // If no transaction retrieved, try to get last transaction if
     // the SDK handled purchasing.
     if let transaction = lastInternalTransaction {
-      let storeTransaction = await factory.makeStoreTransaction(from: transaction)
       lastInternalTransaction = nil
-      return storeTransaction
+      return transaction
     }
 
     func getLastExternalStoreTransaction() async -> StoreTransaction? {
       if let transaction = transactions[productId],
         dateIsWithinLastHour(transaction.transactionDate) {
-        return await factory.makeStoreTransaction(from: transaction)
+        return transaction
       }
       return nil
     }
@@ -104,8 +108,8 @@ actor PurchasingCoordinator {
 
   /// Stores the transaction if purchased and is the latest for a specific product ID.
   /// This is used as a fallback if we can't retrieve the transaction using SK2.
-  func storeIfPurchased(_ transaction: SK1Transaction) {
-    guard case .purchased = transaction.transactionState else {
+  func storeIfPurchased(_ transaction: StoreTransaction) {
+    guard case .purchased = transaction.state else {
       return
     }
     let productId = transaction.payment.productIdentifier
@@ -126,6 +130,23 @@ actor PurchasingCoordinator {
 
   func completePurchase(
     of transaction: SK1Transaction,
+    result: PurchaseResult
+  ) async {
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    completePurchase(of: transaction, result: result)
+  }
+
+  @available(iOS 15.0, *)
+  func completePurchase(
+    of transaction: SK2Transaction,
+    result: PurchaseResult
+  ) async {
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    completePurchase(of: transaction, result: result)
+  }
+
+  private func completePurchase(
+    of transaction: StoreTransaction,
     result: PurchaseResult
   ) {
     if result == .purchased {
