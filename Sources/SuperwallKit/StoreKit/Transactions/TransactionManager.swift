@@ -281,8 +281,8 @@ final class TransactionManager {
     var transaction: StoreTransaction?
     let restoreType: RestoreType
 
-    let coordinatorRestore = await coordinator.source?.toRestoreSource()
-    guard let source = restoreSource ?? coordinatorRestore else {
+    let coordinatorSource = await coordinator.source
+    guard let source = restoreSource ?? coordinatorSource?.toRestoreSource() else {
       return
     }
 
@@ -300,16 +300,21 @@ final class TransactionManager {
       restoreType = .viaRestore
     }
 
+    var isObserved = false
+    if case .observeFunc = coordinatorSource {
+      isObserved = true
+    }
+
     switch source {
     case .internal(let paywallViewController):
       let paywallInfo = await paywallViewController.info
-
       let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore(restoreType),
         paywallInfo: paywallInfo,
         product: product,
         model: transaction,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -326,6 +331,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -365,6 +371,11 @@ final class TransactionManager {
       return
     }
 
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
     switch source {
     case .internal(_, let paywallViewController):
       Logger.debug(
@@ -386,6 +397,7 @@ final class TransactionManager {
           product: product,
           model: nil,
           source: .internal,
+          isObserved: isObserved,
           storeKitVersion: .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
@@ -410,6 +422,7 @@ final class TransactionManager {
           product: product,
           model: nil,
           source: .external,
+          isObserved: isObserved,
           storeKitVersion: .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
@@ -453,6 +466,11 @@ final class TransactionManager {
   ) async {
     let isFreeTrialAvailable = await receiptManager.isFreeTrialAvailable(for: product)
 
+    var isObserved = false
+    if case .observeFunc = purchaseSource {
+      isObserved = true
+    }
+
     switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
@@ -471,6 +489,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -510,6 +529,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -598,6 +618,11 @@ final class TransactionManager {
       return
     }
 
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
     switch source {
     case .internal(_, let paywallViewController):
       Logger.debug(
@@ -615,6 +640,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -639,6 +665,7 @@ final class TransactionManager {
         product: product,
         model: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -649,6 +676,11 @@ final class TransactionManager {
     let coordinator = factory.makePurchasingCoordinator()
     guard let source = await coordinator.source else {
       return
+    }
+
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
     }
 
     switch source {
@@ -669,6 +701,7 @@ final class TransactionManager {
         product: nil,
         model: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -688,6 +721,7 @@ final class TransactionManager {
         product: nil,
         model: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -742,6 +776,11 @@ final class TransactionManager {
     }
     let didStartFreeTrial = await coordinator.isFreeTrialAvailable
 
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
     switch source {
     case .internal(_, let paywallViewController):
       let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
@@ -755,6 +794,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -798,6 +838,7 @@ final class TransactionManager {
         product: product,
         model: transaction,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: .storeKit1
       )
       await Superwall.shared.track(trackedEvent)

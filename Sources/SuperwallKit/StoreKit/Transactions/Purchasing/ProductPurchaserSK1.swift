@@ -174,6 +174,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     for skTransaction: SKPaymentTransaction,
     paywallViewController: PaywallViewController? = nil
   ) async {
+    // Only continue if using internal purchase controller, in a purchasing
+    // state, or observing. The transaction may be readded to the queue if
+    // finishing fails so we need to make sure we can re-finish the transaction.
+    // It doesn't matter if purchased internally or externally.
     let source = await coordinator.source
     if let source = source {
       switch source {
@@ -191,10 +195,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       }
     }
 
-    // Only continue if using internal purchase controller or observing. The transaction may be
-    // readded to the queue if finishing fails so we need to make sure
-    // we can re-finish the transaction. It doesn't matter if purchased internally or
-    // externally.
     let purchaseDate = await coordinator.purchaseDate
     let options = factory.makeSuperwallOptions()
 
@@ -292,9 +292,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
     var source: InternalSuperwallEvent.Transaction.TransactionSource = .internal
 
+    var isObserved = false
     switch await coordinator.source {
-    case .purchaseFunc,
-        .observeFunc:
+    case .observeFunc:
+      isObserved = true
+      source = .external
+    case .purchaseFunc:
       source = .external
     default:
       break
@@ -306,6 +309,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       product: nil,
       model: nil,
       source: source,
+      isObserved: isObserved,
       storeKitVersion: .storeKit1
     )
     await Superwall.shared.track(trackedEvent)
