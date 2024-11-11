@@ -86,7 +86,7 @@ class SWWebView: WKWebView {
     wkConfig = config
 
     super.init(
-      frame: .zero,
+      frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height),
       configuration: wkConfig
     )
     self.loadingHandler.loadingDelegate = self
