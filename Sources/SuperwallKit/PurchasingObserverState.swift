@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 01/11/2024.
 //
+// swiftlint:disable identifier_name
 
 import Foundation
 import StoreKit
@@ -17,11 +18,9 @@ import StoreKit
     case purchaseError(Error)
   }
 
-  // swiftlint:disable:next identifier_name
   var _sk2State: Any?
   @available(iOS 15.0, *)
   var sk2State: SK2ObserverState? {
-    // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2State as? SK2ObserverState
   }
 

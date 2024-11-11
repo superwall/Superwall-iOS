@@ -660,7 +660,8 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
-        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the SuperwallOption isObservingPurchases is set to true."
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption isObservingPurchases is set to true."
       )
       return .cancelled
     }
@@ -780,7 +781,8 @@ public final class Superwall: NSObject, ObservableObject {
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
-        message: "You are trying to observe purchases but the SuperwallOption isObservingPurchases is false. Please set it to true to be able to observe purchases."
+        message: "You are trying to observe purchases but the SuperwallOption isObservingPurchases is "
+          + "false. Please set it to true to be able to observe purchases."
       )
       return
     }

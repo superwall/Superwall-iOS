@@ -160,9 +160,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   ) {
     var storedIds = storage.get(PurchasingProductIds.self) ?? []
     for transaction in transactions {
-      if let id = storedIds.filter({
+      if let id = storedIds.first(where: {
         $0 == transaction.payment.productIdentifier
-      }).first {
+      }) {
         storedIds.remove(id)
       }
     }

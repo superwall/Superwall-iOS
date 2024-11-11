@@ -498,17 +498,8 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .loadingPurchase
       }
-
-/*
- - If we have a coordinator when using purchase controller + observing.
- - the coordinator will start for purchase controller, then it will start for purchase ->
- - This will overwrite. When really it should be a coordinator specific to the initiation path.
-
- LEts say we start the transaction on purchasing, we will be able to call prepareToPurchase and 1. its observing
- so will pass here, when setting the source we know it won't be from us. However, what about
-*/
     case .purchaseFunc,
-        .observeFunc:
+      .observeFunc:
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
       let options = factory.makeSuperwallOptions()
