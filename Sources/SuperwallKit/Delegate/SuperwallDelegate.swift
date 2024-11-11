@@ -22,9 +22,14 @@ public protocol SuperwallDelegate: AnyObject {
   /// use the published property ``EntitlementsInfo/status`` to react to
   /// changes as they happen.
   ///
-  /// - Parameter newValue: The new value of  the entitlement ``EntitlementsInfo/status``.
+  /// - Parameters:
+  ///   - oldValue: The old value of the entitlement ``EntitlementsInfo/status``.
+  ///   - newValue: The new value of the entitlement ``EntitlementsInfo/status``.
   @MainActor
-  func entitlementStatusDidChange(to newValue: EntitlementStatus)
+  func entitlementStatusDidChange(
+    from oldValue: EntitlementStatus,
+    to newValue: EntitlementStatus
+  )
 
   /// Called whenever an internal analytics event is tracked.
   ///
@@ -94,7 +99,10 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 extension SuperwallDelegate {
-  public func entitlementStatusDidChange(to newValue: EntitlementStatus) {}
+  public func entitlementStatusDidChange(
+    from oldValue: EntitlementStatus,
+    to newValue: EntitlementStatus
+  ) {}
 
   public func handleCustomPaywallAction(withName name: String) {}
 

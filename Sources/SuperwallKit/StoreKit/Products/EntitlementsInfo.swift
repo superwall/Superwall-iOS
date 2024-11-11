@@ -48,8 +48,8 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// notified whenever it changes.
   ///
   /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/entitlementStatusDidChange(to:)``
-  /// to receive a callback with the new value every time it changes.
+  /// ``SuperwallDelegate/entitlementStatusDidChange(from:to:)``
+  /// to receive a callback every time it changes.
   @Published public var status: EntitlementStatus = .unknown {
     didSet {
       if case let .active(entitlements) = status {
@@ -144,8 +144,8 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// Returns the entitlement status of the user.
   ///
   /// Check the delegate function
-  /// ``SuperwallDelegateObjc/entitlementStatusDidChange(to:)``
-  /// to receive a callback with the new value every time it changes.
+  /// ``SuperwallDelegateObjc/entitlementStatusDidChange(from:to:)``
+  /// to receive a callback every time it changes.
   @available(swift, obsoleted: 1.0)
   public func getStatus() -> EntitlementStatusObjc {
     return status.toObjc()
@@ -176,17 +176,24 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     $status
       .removeDuplicates()
       .dropFirst()
+      .scan((previous: status, current: status)) { previousPair, newStatus in
+        // Shift the current value to previous, and set the new status as the current value
+        (previous: previousPair.current, current: newStatus)
+      }
       .receive(on: DispatchQueue.main)
       .subscribe(Subscribers.Sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] newStatus in
+        receiveValue: { [weak self] statusPair in
           guard let self = self else {
             return
           }
+          let oldStatus = statusPair.previous
+          let newStatus = statusPair.current
+
           self.storage.save(newStatus, forType: EntitlementStatusKey.self)
 
           Task {
-            await self.delegateAdapter.entitlementStatusDidChange(to: newStatus)
+            await self.delegateAdapter.entitlementStatusDidChange(from: oldStatus, to: newStatus)
             let event = InternalSuperwallPlacement.EntitlementStatusDidChange(status: newStatus)
             await Superwall.shared.track(event)
           }
