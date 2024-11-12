@@ -25,7 +25,7 @@ public enum PurchasingObserverState {
   /// }
   /// ```
   /// - Parameter product: The StoreKit 2 product that will be purchased.
-  case purchaseWillBegin(StoreKit.Product)
+  case purchaseWillBegin(for: StoreKit.Product)
 
   /// Observes the purchase result after purchasing a StoreKit 2 product.
   ///
