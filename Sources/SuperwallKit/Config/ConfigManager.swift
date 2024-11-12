@@ -286,8 +286,10 @@ class ConfigManager {
     storage.save(config, forType: LatestConfig.self)
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
-    entitlementsInfo.entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(
+
+    let entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(
       from: config.paywalls)
+    entitlementsInfo.setEntitlementsFromConfig(entitlementsByProductId)
 
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.

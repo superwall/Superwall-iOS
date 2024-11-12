@@ -55,7 +55,7 @@ final class TransactionManager {
       guard let storeProduct = await storeKitManager.productsById[productId] else {
         Logger.debug(
           logLevel: .error,
-          scope: .paywallTransactions,
+          scope: .transactions,
           message:
             "Trying to purchase \(productId) but the product has failed to load. Visit https://superwall.com/l/missing-products to diagnose."
         )
@@ -147,7 +147,7 @@ final class TransactionManager {
     ) async {
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: message
       )
       let trackedEvent = InternalSuperwallPlacement.Restore(
@@ -342,7 +342,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier,
@@ -367,7 +367,7 @@ final class TransactionManager {
     case .external:
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier
@@ -398,7 +398,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Purchasing",
         info: ["paywall_vc": paywallViewController],
         error: nil
@@ -428,7 +428,7 @@ final class TransactionManager {
       }
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "External Transaction Purchasing"
       )
 
@@ -454,7 +454,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier,
@@ -488,7 +488,7 @@ final class TransactionManager {
     case .external:
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier
@@ -522,7 +522,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Abandoned",
         info: ["product_id": product.productIdentifier, "paywall_vc": paywallViewController],
         error: nil
@@ -546,7 +546,7 @@ final class TransactionManager {
     case .external:
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Abandoned",
         info: ["product_id": product.productIdentifier],
         error: nil
@@ -569,7 +569,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Pending",
         info: ["paywall_vc": paywallViewController],
         error: nil
@@ -590,7 +590,7 @@ final class TransactionManager {
     case .external:
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Transaction Pending",
         error: nil
       )
@@ -631,7 +631,7 @@ final class TransactionManager {
       guard let topMostViewController = await UIViewController.topMostViewController else {
         Logger.debug(
           logLevel: .error,
-          scope: .paywallTransactions,
+          scope: .transactions,
           message:
             "Could not find the top-most view controller to present a transaction alert from."
         )

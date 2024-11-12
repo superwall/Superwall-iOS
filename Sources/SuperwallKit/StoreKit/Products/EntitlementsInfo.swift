@@ -172,6 +172,15 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   // MARK: - Private API
 
+  func setEntitlementsFromConfig(_ entitlementsByProductId: [String: Set<Entitlement>]) {
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      self.entitlementsByProductId = entitlementsByProductId
+    }
+  }
+
   private func listenToEntitlementStatus() {
     $status
       .removeDuplicates()

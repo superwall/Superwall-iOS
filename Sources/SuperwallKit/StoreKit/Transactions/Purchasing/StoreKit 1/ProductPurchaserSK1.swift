@@ -94,7 +94,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
     Logger.debug(
       logLevel: .debug,
-      scope: .paywallTransactions,
+      scope: .transactions,
       message: "Restore Completed Transactions Finished"
     )
     restoration.dispatchGroup.notify(queue: restoration.queue) { [weak self] in
@@ -108,7 +108,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   ) {
     Logger.debug(
       logLevel: .debug,
-      scope: .paywallTransactions,
+      scope: .transactions,
       message: "Restore Completed Transactions Failed With Error",
       error: error
     )

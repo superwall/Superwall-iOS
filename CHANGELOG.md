@@ -31,6 +31,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames the `PurchaseResult` case `purchased(productId: String)` to `purchased(Product)`.
 - Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
 - Changes the Objective-C `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object, a `PaywallResult` object, and an optional `StoreProduct`, so you know which product was purchased after dismiss.
+- Renames `LogScope` case `paywallTransactions` to `transactions`.
 
 ### Enhancements
 
@@ -40,6 +41,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Tracks an `entitlementStatus_didChange` event whenever the entitlement status changes.
 - Updates the RevenueCat example app to use StoreKit 2.
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
+- Adds the `LogScope` case `entitlements`.
 
 ## 3.11.3
 

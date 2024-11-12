@@ -87,14 +87,14 @@ final class ProductPurchaserSK2: Purchasing {
     if hasRestored {
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Restore Completed Transactions Finished"
       )
       return .restored
     } else {
       Logger.debug(
         logLevel: .debug,
-        scope: .paywallTransactions,
+        scope: .transactions,
         message: "Restore Completed Transactions Failed With Error",
         error: error
       )

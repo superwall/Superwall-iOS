@@ -122,7 +122,7 @@ extension ReceiptManager: SKRequestDelegate {
     }
     Logger.debug(
       logLevel: .debug,
-      scope: .paywallTransactions,
+      scope: .transactions,
       message: "Receipt refresh request finished.",
       info: ["request": request]
     )
@@ -138,7 +138,7 @@ extension ReceiptManager: SKRequestDelegate {
     }
     Logger.debug(
       logLevel: .error,
-      scope: .paywallTransactions,
+      scope: .transactions,
       message: "Receipt refresh request failed.",
       info: ["request": request],
       error: error

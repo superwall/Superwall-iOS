@@ -29,9 +29,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case receipts
   case superwallCore
   case paywallPresentation
-
-  // TODO: In v4 rename to transactions
-  case paywallTransactions
+  case entitlements
+  case transactions
   case paywallViewController
   case cache
   case all
@@ -76,8 +75,10 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "superwallCore"
     case .paywallPresentation:
       return "paywallPresentation"
-    case .paywallTransactions:
-      return "paywallTransactions"
+    case .transactions:
+      return "transactions"
+    case .entitlements:
+      return "entitlements"
     case .paywallViewController:
       return "paywallViewController"
     case .cache:
