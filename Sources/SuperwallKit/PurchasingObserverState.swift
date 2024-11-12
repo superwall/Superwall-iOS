@@ -4,34 +4,13 @@
 //
 //  Created by Yusuf Tör on 01/11/2024.
 //
-// swiftlint:disable identifier_name
 
 import Foundation
 import StoreKit
 
 /// Represents the state of purchasing when observing purchases.
-@objc public class PurchasingObserverState: NSObject {
-  @available(iOS 15.0, *)
-  enum SK2ObserverState {
-    case purchaseBegin(StoreKit.Product)
-    case purchaseResult(StoreKit.Product.PurchaseResult)
-    case purchaseError(Error)
-  }
-
-  var _sk2State: Any?
-  @available(iOS 15.0, *)
-  var sk2State: SK2ObserverState? {
-    return self._sk2State as? SK2ObserverState
-  }
-
-  init(
-    _sk2State: Any? = nil
-  ) {
-    self._sk2State = _sk2State
-  }
-
-  // MARK: - StoreKit 2
-
+@available(iOS 15.0, *)
+public enum PurchasingObserverState {
   /// Indicates that the StoreKit 2 purchase will begin.
   ///
   /// Call this **before** you call `product.purchase()`:
@@ -46,13 +25,7 @@ import StoreKit
   /// }
   /// ```
   /// - Parameter product: The StoreKit 2 product that will be purchased.
-  /// - Returns: A `PurchasingObserverState` object.
-  @available(iOS 15.0, *)
-  public static func purchaseWillBegin(for product: StoreKit.Product) -> PurchasingObserverState {
-    return PurchasingObserverState(
-      _sk2State: SK2ObserverState.purchaseBegin(product)
-    )
-  }
+  case purchaseWillBegin(StoreKit.Product)
 
   /// Observes the purchase result after purchasing a StoreKit 2 product.
   ///
@@ -69,14 +42,7 @@ import StoreKit
   /// ```
   /// - Parameter result: The StoreKit 2 `PurchaseResult`.
   /// - Returns: A `PurchasingObserverState` object.
-  @available(iOS 15.0, *)
-  public static func purchaseResult(
-    _ result: StoreKit.Product.PurchaseResult
-  ) -> PurchasingObserverState {
-    return PurchasingObserverState(
-      _sk2State: SK2ObserverState.purchaseResult(result)
-    )
-  }
+  case purchaseResult(StoreKit.Product.PurchaseResult)
 
   /// Indicates there was an error when purchasing a StoreKit 2 product.
   ///
@@ -92,11 +58,5 @@ import StoreKit
   /// }
   /// ```
   /// - Parameter error: The StoreKit 2 error.
-  /// - Returns: A `PurchasingObserverState` object.
-  @available(iOS 15.0, *)
-  public static func purchaseError(_ error: Error) -> PurchasingObserverState {
-    return PurchasingObserverState(
-      _sk2State: SK2ObserverState.purchaseError(error)
-    )
-  }
+  case purchaseError(Error)
 }

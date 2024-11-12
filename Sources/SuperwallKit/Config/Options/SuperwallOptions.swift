@@ -133,9 +133,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// received the go-ahead from the Superwall team.
   public var networkEnvironment: NetworkEnvironment = .release
 
-  /// A boolean that controls the finishing of transactions in conjunction with ``Superwall/observe(_:)``. Defaults to `false`.
+  /// A boolean that determines whether Superwall observes StoreKit purchases outside of Superwall. Defaults to `false`.
   ///
-  /// Set this to true if using ``Superwall/observe(_:)``. This will prevent Superwall from finishing transactions on your behalf.
+  /// When `true`, we will observe StoreKit 1 transactions and report them in your Superwall dashboard. Superwall will not finish
+  /// transactions made outside of Superwall. To observe StoreKit 2 transactions, you must place calls to ``Superwall/observe(_:)``
+  /// around your purchasing logic.
   public var isObservingPurchases = false
 
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.

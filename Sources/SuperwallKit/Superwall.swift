@@ -768,14 +768,14 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Observes purchasing states for revenue tracking.
+  /// Observes StoreKit 2 purchasing states for revenue tracking.
   ///
-  /// This can be used to enable revenue tracking with an existing project, regardless of whether you're using
-  /// `StoreKit1` or `StoreKit2`.
+  /// This can be used to enable revenue tracking with an existing project.
   ///
   /// - Note: You cannot use this function in conjunction with ``Superwall/purchase(_:)``.
   /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/isObservingPurchases`` to `true`
   /// otherwise it will not work.
+  @available(iOS 15.0, *)
   public func observe(_ state: PurchasingObserverState) {
     if !options.isObservingPurchases {
       Logger.debug(
@@ -802,38 +802,35 @@ public final class Superwall: NSObject, ObservableObject {
         }
       }
 
-      if #available(iOS 15.0, *),
-        let sk2State = state.sk2State {
-        switch sk2State {
-        case .purchaseBegin(let product):
-          let storeProduct = StoreProduct(sk2Product: product)
-          await dependencyContainer.transactionManager.prepareToPurchase(
-            product: storeProduct,
-            purchaseSource: .observeFunc(storeProduct)
-          )
-        case let .purchaseResult(purchaseResult):
-          let result = await purchaseResult.toInternalPurchaseResult(coordinator)
-          await dependencyContainer.transactionManager.handle(
-            result: result,
-            state: .observing
-          )
-        case let .purchaseError(error):
-          if let error = error as? StoreKitError {
-            switch error {
-            case .userCancelled:
-              return await dependencyContainer.transactionManager.handle(
-                result: .cancelled,
-                state: .observing
-              )
-            default:
-              break
-            }
+      switch state {
+      case .purchaseWillBegin(let product):
+        let storeProduct = StoreProduct(sk2Product: product)
+        await dependencyContainer.transactionManager.prepareToPurchase(
+          product: storeProduct,
+          purchaseSource: .observeFunc(storeProduct)
+        )
+      case let .purchaseResult(purchaseResult):
+        let result = await purchaseResult.toInternalPurchaseResult(coordinator)
+        await dependencyContainer.transactionManager.handle(
+          result: result,
+          state: .observing
+        )
+      case let .purchaseError(error):
+        if let error = error as? StoreKitError {
+          switch error {
+          case .userCancelled:
+            return await dependencyContainer.transactionManager.handle(
+              result: .cancelled,
+              state: .observing
+            )
+          default:
+            break
           }
-          await dependencyContainer.transactionManager.handle(
-            result: .failed(error),
-            state: .observing
-          )
         }
+        await dependencyContainer.transactionManager.handle(
+          result: .failed(error),
+          state: .observing
+        )
       }
     }
   }
