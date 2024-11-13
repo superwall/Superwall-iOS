@@ -390,7 +390,7 @@ final class TransactionManager {
       )
 
       let paywallInfo = await paywallViewController.info
-      Task {
+      Task { [isObserved] in
         let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
@@ -415,7 +415,7 @@ final class TransactionManager {
         error: error
       )
 
-      Task {
+      Task { [isObserved] in
         let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
@@ -449,8 +449,8 @@ final class TransactionManager {
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
-    await coordinator.setCompletion { [weak self] result in
-      Task {
+    await coordinator.setCompletion { result in
+      Task { [weak self] in
         await self?.handle(
           result: result,
           state: .observing
