@@ -656,12 +656,12 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
-    if options.isObservingPurchases {
+    if options.shouldObservePurchases {
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
         message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
-          + "SuperwallOption isObservingPurchases is set to true."
+          + "SuperwallOption shouldObservePurchases is set to true."
       )
       return .cancelled
     }
@@ -773,15 +773,15 @@ public final class Superwall: NSObject, ObservableObject {
   /// This can be used to enable revenue tracking with an existing project.
   ///
   /// - Note: You cannot use this function in conjunction with ``Superwall/purchase(_:)``.
-  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/isObservingPurchases`` to `true`
+  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/shouldObservePurchases`` to `true`
   /// otherwise it will not work.
   @available(iOS 15.0, *)
   public func observe(_ state: PurchasingObserverState) {
-    if !options.isObservingPurchases {
+    if !options.shouldObservePurchases {
       Logger.debug(
         logLevel: .error,
         scope: .superwallCore,
-        message: "You are trying to observe purchases but the SuperwallOption isObservingPurchases is "
+        message: "You are trying to observe purchases but the SuperwallOption shouldObservePurchases is "
           + "false. Please set it to true to be able to observe purchases."
       )
       return

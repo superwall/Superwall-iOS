@@ -503,7 +503,7 @@ final class TransactionManager {
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
       let options = factory.makeSuperwallOptions()
-      if !options.isObservingPurchases,
+      if !options.shouldObservePurchases,
         factory.makeHasExternalPurchaseController() {
         return
       }

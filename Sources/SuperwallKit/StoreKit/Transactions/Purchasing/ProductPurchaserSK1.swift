@@ -63,7 +63,7 @@ final class ProductPurchaserSK1: NSObject {
 
     let hasPurchaseController = factory.makeHasExternalPurchaseController()
     let options = factory.makeSuperwallOptions()
-    self.shouldFinishTransaction = !hasPurchaseController && !options.isObservingPurchases
+    self.shouldFinishTransaction = !hasPurchaseController && !options.shouldObservePurchases
 
     super.init()
     SKPaymentQueue.default().add(self)
@@ -204,7 +204,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       // come from a function within Superwall, check that it's not
       // a purchase that's been readded to the queue. Then start observing it.
       if source == nil,
-        options.isObservingPurchases {
+        options.shouldObservePurchases {
         var storedIds = storage.get(PurchasingProductIds.self) ?? []
         let isExistingTransaction = storedIds.contains(
           where: { $0 == skTransaction.payment.productIdentifier }
