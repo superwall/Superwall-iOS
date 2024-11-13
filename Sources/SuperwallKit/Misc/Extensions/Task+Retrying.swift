@@ -22,8 +22,8 @@ extension Task where Failure == Error {
         do {
           let result = try await operation()
           if let (_, response) = result as? (Data, URLResponse),
-             let httpResponse = response as? HTTPURLResponse,
-             !(200...299).contains(httpResponse.statusCode) {
+            let httpResponse = response as? HTTPURLResponse,
+            !(200...299).contains(httpResponse.statusCode) {
             throw URLError(.badServerResponse)
           }
           return result
