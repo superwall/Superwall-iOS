@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.0
+
+### Enhancements
+
+- Adds the `SuperwallOption` `shouldObservePurchases`. Set this to `true` to allow us to observe StoreKit 1 transactions you make with your app outside of Superwall. When this is enabled Superwall will not finish your external transactions. If you're using StoreKit 2 outside of Superwall, you will also need to use `Superwall.shared.observe(_:)` in conjunction with the `SuperwallOption`. This is placed before, after, and in the catch block of a StoreKit 2 purchase using the parameters `.purchaseWillBegin(for:)`, `.purchaseResult(_:)`, and `purchaseError(_:)`, respectively.
+
 ## 3.11.3
 
 ### Enhancements
