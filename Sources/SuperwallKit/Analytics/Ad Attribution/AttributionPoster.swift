@@ -13,6 +13,7 @@ final class AttributionPoster {
   private var isCollecting = false
 
   private unowned let storage: Storage
+  private unowned let network: Network
 
   private var adServicesTokenToPostIfNeeded: String? {
     get async throws {
@@ -35,10 +36,12 @@ final class AttributionPoster {
 
   init(
     collectAdServicesAttribution: Bool,
-    storage: Storage
+    storage: Storage,
+    network: Network
   ) {
     self.collectAdServicesAttribution = collectAdServicesAttribution
     self.storage = storage
+    self.network = network
 
     NotificationCenter.default.addObserver(
       self,
@@ -87,6 +90,9 @@ final class AttributionPoster {
       await Superwall.shared.track(
         InternalSuperwallEvent.AdServicesTokenRetrieval(state: .complete(token))
       )
+
+      let data = await network.sendToken(token)
+      Superwall.shared.setUserAttributes(data)
     } catch {
       await Superwall.shared.track(
         InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))

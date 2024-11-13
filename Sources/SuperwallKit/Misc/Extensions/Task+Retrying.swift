@@ -20,10 +20,15 @@ extension Task where Failure == Error {
     Task(priority: priority) {
       for attempt in 0..<maxRetryCount {
         do {
-          return try await operation()
+          let result = try await operation()
+          if let (_, response) = result as? (Data, URLResponse),
+             let httpResponse = response as? HTTPURLResponse,
+             !(200...299).contains(httpResponse.statusCode) {
+            throw URLError(.badServerResponse)
+          }
+          return result
         } catch {
           isRetryingCallback?(attempt + 1)
-
           if let retryInterval = retryInterval {
             let oneSecond = TimeInterval(1_000_000_000)
             let nanoseconds = UInt64(oneSecond * retryInterval)

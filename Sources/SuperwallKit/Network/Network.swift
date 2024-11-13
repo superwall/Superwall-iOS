@@ -270,4 +270,22 @@ class Network {
       )
     }
   }
+
+  func sendToken(_ token: String) async -> [String: JSON] {
+    do {
+      return try await urlSession.request(
+        .adServices(token: token),
+        data: SuperwallRequestData(factory: factory)
+      ).attribution
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /apple-ad-services/token",
+        info: ["payload": token],
+        error: error
+      )
+      return [:]
+    }
+  }
 }

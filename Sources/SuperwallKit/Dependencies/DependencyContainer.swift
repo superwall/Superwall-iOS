@@ -76,7 +76,8 @@ final class DependencyContainer {
     api = Api(networkEnvironment: options.networkEnvironment)
     attributionPoster = AttributionPoster(
       collectAdServicesAttribution: options.collectAdServicesAttribution,
-      storage: storage
+      storage: storage,
+      network: network
     )
     deviceHelper = DeviceHelper(
       api: api,
