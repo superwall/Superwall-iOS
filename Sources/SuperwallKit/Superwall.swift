@@ -790,7 +790,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       // If already purchasing, and source is internal, do not continue, or if using the
       // purchase function. However, that isn't allowed.
-      // Observing is an external source, so we shouldn't intefere with that.
+      // Observing is an external source, so we shouldn't interfere with that.
       let coordinator = dependencyContainer.makePurchasingCoordinator()
       if let source = await coordinator.source {
         switch source {

@@ -138,6 +138,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// When `true`, we will observe StoreKit 1 transactions and report them in your Superwall dashboard. Superwall will not finish
   /// transactions made outside of Superwall. To observe StoreKit 2 transactions, you must place calls to ``Superwall/observe(_:)``
   /// around your purchasing logic.
+  ///
+  /// - Note: You cannot use ``Superwall/purchase(_:)`` while this is `true`.
   public var isObservingPurchases = false
 
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
