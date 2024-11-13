@@ -571,7 +571,15 @@ enum InternalSuperwallEvent {
     let product: StoreProduct?
     let model: StoreTransaction?
     let source: TransactionSource
+    let isObserved: Bool
     let storeKitVersion: StoreKitVersion
+
+    var canImplicitlyTriggerPaywall: Bool {
+      if isObserved {
+        return false
+      }
+      return superwallEvent.canImplicitlyTriggerPaywall
+    }
 
     var audienceFilterParams: [String: Any] {
       switch state {

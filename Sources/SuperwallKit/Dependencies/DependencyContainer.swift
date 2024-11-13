@@ -136,6 +136,7 @@ final class DependencyContainer {
       purchaseController: purchaseController,
       sessionEventsManager: sessionEventsManager,
       eventsQueue: eventsQueue,
+      productsFetcher: productsFetcher,
       factory: self
     )
 
@@ -145,6 +146,7 @@ final class DependencyContainer {
       sessionEventsManager: sessionEventsManager,
       identityManager: identityManager,
       storage: storage,
+      transactionManager: transactionManager,
       factory: self
     )
   }
