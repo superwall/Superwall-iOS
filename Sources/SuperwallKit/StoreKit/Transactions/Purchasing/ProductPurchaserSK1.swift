@@ -289,7 +289,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     SKPaymentQueue.default().finishTransaction(skTransaction)
   }
 
-  func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
+  private func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
     var source: InternalSuperwallEvent.Transaction.TransactionSource = .internal
 
     var isObserved = false

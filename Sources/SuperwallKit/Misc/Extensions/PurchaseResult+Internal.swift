@@ -19,7 +19,7 @@ extension StoreKit.Product.PurchaseResult {
       case .verified(let transaction):
         let transactionDate = transaction.purchaseDate
         if let purchaseDate = await coordinator.purchaseDate,
-          transactionDate < purchaseDate {
+          transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
           return .restored
         } else {
           return .purchased

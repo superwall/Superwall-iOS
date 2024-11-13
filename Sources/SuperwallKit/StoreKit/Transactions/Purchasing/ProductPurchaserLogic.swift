@@ -56,7 +56,7 @@ enum ProductPurchaserLogic {
     guard let purchaseDate = purchaseDate else {
       return false
     }
-    // If has a transaction date and that happened at least an hour before purchase
+    // If has a transaction date and that happened at least 20s before purchase
     // button was pressed...
     if let transactionDate = transaction.transactionDate,
       transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
