@@ -11,7 +11,7 @@ import StoreKit
 
 final class ProductPurchaserSK1: NSObject {
   // MARK: Purchasing
-  let coordinator = PurchasingCoordinator()
+  let coordinator: PurchasingCoordinator
 
   // MARK: Restoration
   final class Restoration {
@@ -24,6 +24,7 @@ final class ProductPurchaserSK1: NSObject {
     )
   }
   private let restoration = Restoration()
+  private let shouldFinishTransaction: Bool
 
   // MARK: Dependencies
   private let storeKitManager: StoreKitManager
@@ -31,7 +32,10 @@ final class ProductPurchaserSK1: NSObject {
   private let sessionEventsManager: SessionEventsManager
   private let identityManager: IdentityManager
   private let storage: Storage
-  private let factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
+  private let transactionManager: TransactionManager
+  private let factory: HasExternalPurchaseControllerFactory
+    & StoreTransactionFactory
+    & OptionsFactory
 
   deinit {
     SKPaymentQueue.default().remove(self)
@@ -43,14 +47,23 @@ final class ProductPurchaserSK1: NSObject {
     sessionEventsManager: SessionEventsManager,
     identityManager: IdentityManager,
     storage: Storage,
-    factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
+    transactionManager: TransactionManager,
+    factory: HasExternalPurchaseControllerFactory
+      & StoreTransactionFactory
+      & OptionsFactory
   ) {
+    self.coordinator = PurchasingCoordinator(factory: factory)
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.sessionEventsManager = sessionEventsManager
     self.identityManager = identityManager
+    self.transactionManager = transactionManager
     self.factory = factory
     self.storage = storage
+
+    let hasPurchaseController = factory.makeHasExternalPurchaseController()
+    let options = factory.makeSuperwallOptions()
+    self.shouldFinishTransaction = !hasPurchaseController && !options.shouldObservePurchases
 
     super.init()
     SKPaymentQueue.default().add(self)
@@ -127,11 +140,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     restoration.dispatchGroup.enter()
     Task {
       let paywallViewController = Superwall.shared.paywallViewController
-      let purchaseDate = await coordinator.purchaseDate
+
       for transaction in transactions {
-        await coordinator.storeIfPurchased(transaction)
-        await checkForTimeout(of: transaction, in: paywallViewController)
-        await updatePurchaseCompletionBlock(for: transaction, purchaseDate: purchaseDate)
+        await updatePurchaseCompletionBlock(
+          for: transaction,
+          paywallViewController: paywallViewController
+        )
       }
       await loadPurchasedProductsIfPossible(from: transactions)
       restoration.dispatchGroup.leave()
@@ -140,67 +154,76 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
 
   // MARK: - Private API
 
-  private func checkForTimeout(
-    of transaction: SKPaymentTransaction,
-    in paywallViewController: PaywallViewController?
-  ) async {
-    guard #available(iOS 14, *) else {
-      return
-    }
-    switch transaction.transactionState {
-    case .failed:
-      if let error = transaction.error {
-        if let error = error as? SKError {
-          switch error.code {
-          case .overlayTimeout:
-            var source: InternalSuperwallEvent.Transaction.TransactionSource = .internal
-            if case .external = await coordinator.source {
-              source = .external
-            }
-            let trackedEvent = await InternalSuperwallEvent.Transaction(
-              state: .timeout,
-              paywallInfo: paywallViewController?.info ?? .empty(),
-              product: nil,
-              model: nil,
-              source: source,
-              storeKitVersion: .storeKit1
-            )
-            await Superwall.shared.track(trackedEvent)
-            await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
-          default:
-            break
-          }
-        }
+  func paymentQueue(
+    _ queue: SKPaymentQueue,
+    removedTransactions transactions: [SKPaymentTransaction]
+  ) {
+    var storedIds = storage.get(PurchasingProductIds.self) ?? []
+    for transaction in transactions {
+      if let id = storedIds.first(where: {
+        $0 == transaction.payment.productIdentifier
+      }) {
+        storedIds.remove(id)
       }
-    default:
-      break
     }
+    storage.save(storedIds, forType: PurchasingProductIds.self)
   }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
-  private func updatePurchaseCompletionBlock(
+  func updatePurchaseCompletionBlock(
     for skTransaction: SKPaymentTransaction,
-    purchaseDate: Date?
+    paywallViewController: PaywallViewController? = nil
   ) async {
-    // Only continue if using internal purchase controller. The transaction may be
-    // readded to the queue if finishing fails so we need to make sure
-    // we can re-finish the transaction. It doesn't matter if purchased internally or
-    // externally.
-    if factory.makeHasExternalPurchaseController() {
-      return
+    // Only continue if using internal purchase controller, in a purchasing
+    // state, or observing. The transaction may be readded to the queue if
+    // finishing fails so we need to make sure we can re-finish the transaction.
+    // It doesn't matter if purchased internally or externally.
+    let source = await coordinator.source
+    if let source = source {
+      switch source {
+      case .internal,
+        .purchaseFunc:
+        if factory.makeHasExternalPurchaseController() {
+          return
+        }
+      case .observeFunc:
+        break
+      }
+    } else if skTransaction.transactionState == .purchasing {} else {
+      if factory.makeHasExternalPurchaseController() {
+        return
+      }
     }
 
+    let purchaseDate = await coordinator.purchaseDate
+    let options = factory.makeSuperwallOptions()
+
     switch skTransaction.transactionState {
+    case .purchasing:
+      // If in observer mode, and the purchasing transaction has not
+      // come from a function within Superwall, check that it's not
+      // a purchase that's been readded to the queue. Then start observing it.
+      if source == nil,
+        options.shouldObservePurchases {
+        var storedIds = storage.get(PurchasingProductIds.self) ?? []
+        let isExistingTransaction = storedIds.contains(
+          where: { $0 == skTransaction.payment.productIdentifier }
+        )
+        if !isExistingTransaction {
+          await transactionManager.observeTransaction(for: skTransaction.payment.productIdentifier)
+          storedIds.insert(skTransaction.payment.productIdentifier)
+          storage.save(storedIds, forType: PurchasingProductIds.self)
+        }
+      }
     case .purchased:
+      finishTransaction(skTransaction)
       do {
         try await ProductPurchaserLogic.validate(
           transaction: skTransaction,
           since: purchaseDate,
           withProductId: skTransaction.payment.productIdentifier
         )
-        SKPaymentQueue.default().finishTransaction(skTransaction)
-
-        if hasRestored(skTransaction, purchaseDate: purchaseDate) {
+        if ProductPurchaserLogic.hasRestored(skTransaction, purchaseDate: purchaseDate) {
           await coordinator.completePurchase(
             of: skTransaction,
             result: .restored
@@ -212,14 +235,13 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           )
         }
       } catch {
-        SKPaymentQueue.default().finishTransaction(skTransaction)
         await coordinator.completePurchase(
           of: skTransaction,
           result: .failed(error)
         )
       }
     case .failed:
-      SKPaymentQueue.default().finishTransaction(skTransaction)
+      finishTransaction(skTransaction)
       if let error = skTransaction.error {
         if let error = error as? SKError {
           switch error.code {
@@ -236,7 +258,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           if #available(iOS 14, *) {
             switch error.code {
             case .overlayTimeout:
-              await coordinator.completePurchase(
+              await trackTimeout(paywallViewController: paywallViewController)
+              return await coordinator.completePurchase(
                 of: skTransaction,
                 result: .cancelled
               )
@@ -250,30 +273,47 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           result: .failed(error))
       }
     case .deferred:
-      SKPaymentQueue.default().finishTransaction(skTransaction)
+      finishTransaction(skTransaction)
       await coordinator.completePurchase(of: skTransaction, result: .pending)
     case .restored:
-      SKPaymentQueue.default().finishTransaction(skTransaction)
+      finishTransaction(skTransaction)
     default:
       break
     }
   }
 
-  private func hasRestored(
-    _ transaction: SKPaymentTransaction,
-    purchaseDate: Date?
-  ) -> Bool {
-    guard let purchaseDate = purchaseDate else {
-      return false
+  private func finishTransaction(_ skTransaction: SKPaymentTransaction) {
+    guard shouldFinishTransaction else {
+      return
     }
-    // If has a transaction date and that happened before purchase
-    // button was pressed...
-    if let transactionDate = transaction.transactionDate,
-      transactionDate < purchaseDate {
-      return true
+    SKPaymentQueue.default().finishTransaction(skTransaction)
+  }
+
+  private func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
+    var source: InternalSuperwallEvent.Transaction.TransactionSource = .internal
+
+    var isObserved = false
+    switch await coordinator.source {
+    case .observeFunc:
+      isObserved = true
+      source = .external
+    case .purchaseFunc:
+      source = .external
+    default:
+      break
     }
 
-    return false
+    let trackedEvent = await InternalSuperwallEvent.Transaction(
+      state: .timeout,
+      paywallInfo: paywallViewController?.info ?? .empty(),
+      product: nil,
+      model: nil,
+      source: source,
+      isObserved: isObserved,
+      storeKitVersion: .storeKit1
+    )
+    await Superwall.shared.track(trackedEvent)
+    await paywallViewController?.webView.messageHandler.handle(.transactionTimeout)
   }
 
   /// Loads purchased products in the StoreKitManager if a purchase or restore has occurred.

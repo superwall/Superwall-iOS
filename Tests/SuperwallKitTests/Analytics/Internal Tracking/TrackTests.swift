@@ -842,7 +842,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .start(product), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, storeKitVersion: .storeKit1))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .start(product), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -927,7 +927,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .complete(product, transaction), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, storeKitVersion: .storeKit1))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .complete(product, transaction), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -1012,7 +1012,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .restore(RestoreType.viaPurchase(transaction)), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, storeKitVersion: .storeKit2))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .restore(RestoreType.viaPurchase(transaction)), paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit2))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -1098,7 +1098,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .timeout, paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, storeKitVersion: .storeKit1))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .timeout, paywallInfo: paywallInfo, product: product, model: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -1184,7 +1184,7 @@ final class TrackingTests: XCTestCase {
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let error = TransactionError.failure("failed mate", product)
-    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .fail(error), paywallInfo: paywallInfo, product: product, model: transaction, source: .external, storeKitVersion: .storeKit1))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.Transaction(state: .fail(error), paywallInfo: paywallInfo, product: product, model: transaction, source: .external, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 

@@ -656,8 +656,17 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     let storeProduct = StoreProduct(sk1Product: product)
-    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+    return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
   /// Initiates a purchase of a `SKProduct`.
@@ -678,8 +687,7 @@ public final class Superwall: NSObject, ObservableObject {
     completion: @escaping (PurchaseResult) -> Void
   ) {
     Task {
-      let storeProduct = StoreProduct(sk1Product: product)
-      let result = await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+      let result = await purchase(product)
       await MainActor.run {
         completion(result)
       }
@@ -757,6 +765,73 @@ public final class Superwall: NSObject, ObservableObject {
   public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
     restorePurchases { result in
       completion(result.toObjc())
+    }
+  }
+
+  /// Observes StoreKit 2 purchasing states for revenue tracking.
+  ///
+  /// This can be used to enable revenue tracking with an existing project.
+  ///
+  /// - Note: You cannot use this function in conjunction with ``Superwall/purchase(_:)``.
+  /// - Warning: If you use this you **must** set the `SuperwallOption` ``SuperwallOptions/shouldObservePurchases`` to `true`
+  /// otherwise it will not work.
+  @available(iOS 15.0, *)
+  public func observe(_ state: PurchasingObserverState) {
+    if !options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You are trying to observe purchases but the SuperwallOption shouldObservePurchases is "
+          + "false. Please set it to true to be able to observe purchases."
+      )
+      return
+    }
+
+    Task {
+      // If already purchasing, and source is internal, do not continue, or if using the
+      // purchase function. However, that isn't allowed.
+      // Observing is an external source, so we shouldn't interfere with that.
+      let coordinator = dependencyContainer.makePurchasingCoordinator()
+      if let source = await coordinator.source {
+        switch source {
+        case .internal,
+          .purchaseFunc:
+          return
+        case .observeFunc:
+          break
+        }
+      }
+
+      switch state {
+      case .purchaseWillBegin(let product):
+        let storeProduct = StoreProduct(sk2Product: product)
+        await dependencyContainer.transactionManager.prepareToPurchase(
+          product: storeProduct,
+          purchaseSource: .observeFunc(storeProduct)
+        )
+      case let .purchaseResult(purchaseResult):
+        let result = await purchaseResult.toInternalPurchaseResult(coordinator)
+        await dependencyContainer.transactionManager.handle(
+          result: result,
+          state: .observing
+        )
+      case let .purchaseError(error):
+        if let error = error as? StoreKitError {
+          switch error {
+          case .userCancelled:
+            return await dependencyContainer.transactionManager.handle(
+              result: .cancelled,
+              state: .observing
+            )
+          default:
+            break
+          }
+        }
+        await dependencyContainer.transactionManager.handle(
+          result: .failed(error),
+          state: .observing
+        )
+      }
     }
   }
 }

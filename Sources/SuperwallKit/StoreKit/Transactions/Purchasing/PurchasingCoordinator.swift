@@ -10,12 +10,18 @@ import StoreKit
 
 /// An actor that manages and coordinates the storing of types associated with purchasing.
 actor PurchasingCoordinator {
-  private var completion: ((PurchaseResult) -> Void)?
-  var productId: String?
-  var lastInternalTransaction: SKPaymentTransaction?
+  var lastInternalTransaction: StoreTransaction?
   var purchaseDate: Date?
   var source: PurchaseSource?
-  var transactions: [String: SKPaymentTransaction] = [:]
+  var transactions: [String: StoreTransaction] = [:]
+  var isFreeTrialAvailable = false
+  var product: StoreProduct?
+  private var completion: ((PurchaseResult) -> Void)?
+  private let factory: StoreTransactionFactory
+
+  init(factory: StoreTransactionFactory) {
+    self.factory = factory
+  }
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
   func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
@@ -33,12 +39,14 @@ actor PurchasingCoordinator {
   }
 
   func beginPurchase(
-    of productId: String,
-    source: PurchaseSource
+    of product: StoreProduct,
+    source: PurchaseSource,
+    isFreeTrialAvailable: Bool
   ) {
     self.purchaseDate = Date()
-    self.productId = productId
     self.source = source
+    self.isFreeTrialAvailable = isFreeTrialAvailable
+    self.product = product
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -68,15 +76,14 @@ actor PurchasingCoordinator {
     // If no transaction retrieved, try to get last transaction if
     // the SDK handled purchasing.
     if let transaction = lastInternalTransaction {
-      let storeTransaction = await factory.makeStoreTransaction(from: transaction)
       lastInternalTransaction = nil
-      return storeTransaction
+      return transaction
     }
 
     func getLastExternalStoreTransaction() async -> StoreTransaction? {
       if let transaction = transactions[productId],
         dateIsWithinLastHour(transaction.transactionDate) {
-        return await factory.makeStoreTransaction(from: transaction)
+        return transaction
       }
       return nil
     }
@@ -101,8 +108,8 @@ actor PurchasingCoordinator {
 
   /// Stores the transaction if purchased and is the latest for a specific product ID.
   /// This is used as a fallback if we can't retrieve the transaction using SK2.
-  func storeIfPurchased(_ transaction: SK1Transaction) async {
-    guard case .purchased = transaction.transactionState else {
+  func storeIfPurchased(_ transaction: StoreTransaction) {
+    guard case .purchased = transaction.state else {
       return
     }
     let productId = transaction.payment.productIdentifier
@@ -124,10 +131,30 @@ actor PurchasingCoordinator {
   func completePurchase(
     of transaction: SK1Transaction,
     result: PurchaseResult
+  ) async {
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    completePurchase(of: transaction, result: result)
+  }
+
+  @available(iOS 15.0, *)
+  func completePurchase(
+    of transaction: SK2Transaction,
+    result: PurchaseResult
+  ) async {
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    completePurchase(of: transaction, result: result)
+  }
+
+  private func completePurchase(
+    of transaction: StoreTransaction,
+    result: PurchaseResult
   ) {
+    if result == .purchased {
+      storeIfPurchased(transaction)
+    }
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    guard productId == transaction.payment.productIdentifier else {
+    guard product?.productIdentifier == transaction.payment.productIdentifier else {
       return
     }
     // If the transaction completed a purchase, check it is within the last
@@ -140,8 +167,13 @@ actor PurchasingCoordinator {
     }
     lastInternalTransaction = transaction
     completion?(result)
+  }
+
+  func reset() {
+    purchaseDate = nil
     completion = nil
-    productId = nil
+    product = nil
     source = nil
+    isFreeTrialAvailable = false
   }
 }

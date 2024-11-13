@@ -34,7 +34,7 @@ final class RCPurchaseController: PurchaseController {
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        let hasActiveSubscription = !customerInfo.entitlements.active.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
+        let hasActiveSubscription = !customerInfo.entitlements.activeInCurrentEnvironment.isEmpty // Why? -> https://www.revenuecat.com/docs/entitlements#entitlements
         if hasActiveSubscription {
           Superwall.shared.subscriptionStatus = .active
         } else {
