@@ -312,7 +312,7 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: paywallInfo,
         product: product,
-        model: transaction,
+        transaction: transaction,
         source: .internal,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -329,7 +329,7 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: .empty(),
         product: product,
-        model: transaction,
+        transaction: transaction,
         source: .external,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -395,7 +395,7 @@ final class TransactionManager {
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
           product: product,
-          model: nil,
+          transaction: nil,
           source: .internal,
           isObserved: isObserved,
           storeKitVersion: .storeKit1
@@ -420,7 +420,7 @@ final class TransactionManager {
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
           product: product,
-          model: nil,
+          transaction: nil,
           source: .external,
           isObserved: isObserved,
           storeKitVersion: .storeKit1
@@ -487,7 +487,7 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil,
+        transaction: nil,
         source: .internal,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -518,7 +518,7 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil,
+        transaction: nil,
         source: .external,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -629,7 +629,7 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil,
+        transaction: nil,
         source: .internal,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -654,7 +654,7 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil,
+        transaction: nil,
         source: .external,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -690,7 +690,7 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
-        model: nil,
+        transaction: nil,
         source: .internal,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -710,7 +710,7 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
         product: nil,
-        model: nil,
+        transaction: nil,
         source: .external,
         isObserved: isObserved,
         storeKitVersion: .storeKit1
@@ -772,92 +772,70 @@ final class TransactionManager {
       isObserved = true
     }
 
+    let type: InternalSuperwallEvent.Transaction.TransactionType = {
+      if product.subscriptionPeriod == nil {
+        return .nonRecurringProductPurchase
+      } else if didStartFreeTrial {
+        return .freeTrialStart
+      } else {
+        return .subscriptionStart
+      }
+    }()
+
+    let paywallInfo: PaywallInfo
+    let eventSource: InternalSuperwallEvent.Transaction.Source
     switch source {
     case .internal(_, let paywallViewController):
-      let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
-      let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
-
-      let paywallInfo = await paywallViewController.info
-
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete(product, transaction),
-        paywallInfo: paywallInfo,
-        product: product,
-        model: transaction,
-        source: .internal,
-        isObserved: isObserved,
-        storeKitVersion: .storeKit1
-      )
-      await Superwall.shared.track(trackedEvent)
+      paywallInfo = await paywallViewController.info
+      eventSource = .internal
       await paywallViewController.webView.messageHandler.handle(.transactionComplete)
-
-      // Immediately flush the events queue on transaction complete.
-      await eventsQueue.flushInternal()
-
-      if product.subscriptionPeriod == nil {
-        let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
-          paywallInfo: paywallInfo,
-          product: product
-        )
-        await Superwall.shared.track(trackedEvent)
-      } else {
-        if didStartFreeTrial {
-          let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          await Superwall.shared.track(trackedEvent)
-
-          let notifications = paywallInfo.localNotifications.filter {
-            $0.type == .trialStarted
-          }
-
-          await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
-        } else {
-          let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          await Superwall.shared.track(trackedEvent)
-        }
-      }
     case .purchaseFunc,
       .observeFunc:
-      let trackedEvent = InternalSuperwallEvent.Transaction(
-        state: .complete(product, transaction),
-        paywallInfo: .empty(),
-        product: product,
-        model: transaction,
-        source: .external,
-        isObserved: isObserved,
-        storeKitVersion: .storeKit1
-      )
-      await Superwall.shared.track(trackedEvent)
+      paywallInfo = .empty()
+      eventSource = .external
+    }
 
-      // Immediately flush the events queue on transaction complete.
-      await eventsQueue.flushInternal()
+    let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
+      state: .complete(product, transaction, type),
+      paywallInfo: paywallInfo,
+      product: product,
+      transaction: transaction,
+      source: eventSource,
+      isObserved: isObserved,
+      storeKitVersion: .storeKit1
+    )
+    await Superwall.shared.track(trackedTransactionEvent)
+    await eventsQueue.flushInternal()
 
-      if product.subscriptionPeriod == nil {
-        let trackedEvent = InternalSuperwallEvent.NonRecurringProductPurchase(
-          paywallInfo: .empty(),
-          product: product
+    switch type {
+    case .nonRecurringProductPurchase:
+      await Superwall.shared.track(
+        InternalSuperwallEvent.NonRecurringProductPurchase(
+          paywallInfo: paywallInfo,
+          product: product,
+          transaction: transaction
         )
-        await Superwall.shared.track(trackedEvent)
-      } else {
-        if didStartFreeTrial {
-          let trackedEvent = InternalSuperwallEvent.FreeTrialStart(
-            paywallInfo: .empty(),
-            product: product
-          )
-          await Superwall.shared.track(trackedEvent)
-        } else {
-          let trackedEvent = InternalSuperwallEvent.SubscriptionStart(
-            paywallInfo: .empty(),
-            product: product
-          )
-          await Superwall.shared.track(trackedEvent)
-        }
+      )
+    case .freeTrialStart:
+      await Superwall.shared.track(
+        InternalSuperwallEvent.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product,
+          transaction: transaction
+        )
+      )
+      let notifications = paywallInfo.localNotifications.filter {
+        $0.type == .trialStarted
       }
+      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+    case .subscriptionStart:
+      await Superwall.shared.track(
+        InternalSuperwallEvent.SubscriptionStart(
+          paywallInfo: paywallInfo,
+          product: product,
+          transaction: transaction
+        )
+      )
     }
   }
 }

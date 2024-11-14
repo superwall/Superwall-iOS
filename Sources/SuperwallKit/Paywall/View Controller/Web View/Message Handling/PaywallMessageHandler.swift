@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable line_length function_body_length type_body_length
+// swiftlint:disable line_length function_body_length type_body_length file_length
 
 import UIKit
 import WebKit
@@ -27,6 +27,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let sessionEventsManager: SessionEventsManager
+  private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
 
   struct EnqueuedMessage {
@@ -38,9 +39,11 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   init(
     sessionEventsManager: SessionEventsManager,
+    receiptManager: ReceiptManager,
     factory: VariablesFactory
   ) {
     self.sessionEventsManager = sessionEventsManager
+    self.receiptManager = receiptManager
     self.factory = factory
   }
 
@@ -181,6 +184,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let base64Templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       event: eventData,
+      receiptManager: receiptManager,
       factory: factory
     )
     await passMessageToWebView(base64Templates)
@@ -237,6 +241,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       event: eventData,
+      receiptManager: receiptManager,
       factory: factory
     )
     let scriptSrc = """

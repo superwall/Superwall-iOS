@@ -114,6 +114,15 @@ actor ReceiptManager: NSObject {
   func hasPurchasedProduct(withId productId: String) -> Bool {
     return purchases.first { $0.productIdentifier == productId } != nil
   }
+
+  /// Determines whether the user is subscribed to the given product id.
+  func isSubscribed(to productId: String) -> Bool {
+    return purchases
+      .filter { $0.productIdentifier == productId }
+      .sorted { $0.purchaseDate > $1.purchaseDate }
+      .first?
+      .isActive == true
+  }
 }
 
 extension ReceiptManager: SKRequestDelegate {

@@ -223,6 +223,7 @@ extension DependencyContainer: ViewControllerFactory {
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: sessionEventsManager,
+      receiptManager: receiptManager,
       factory: self
     )
     let webView = SWWebView(
