@@ -49,6 +49,8 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   }
 
   /// All the attributes that can be referenced in Superwall rules.
+  ///
+  /// Note that `isSubscribed` is added to the attributes right before a paywall is displayed.
   public var attributes: [String: String] {
     return [
       "rawPrice": "\(price)",

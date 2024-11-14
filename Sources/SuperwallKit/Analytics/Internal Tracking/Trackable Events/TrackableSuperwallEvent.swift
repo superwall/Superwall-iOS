@@ -576,7 +576,7 @@ enum InternalSuperwallEvent {
     let storeKitVersion: StoreKitVersion
 
     enum TransactionType: String {
-      case nonRecurringProductPurchase = "NON_RENEWING_PRODUCT_PURCHASE"
+      case nonRecurringProductPurchase = "NON_RECURRING_PRODUCT_PURCHASE"
       case freeTrialStart = "FREE_TRIAL_START"
       case subscriptionStart = "SUBSCRIPTION_START"
     }

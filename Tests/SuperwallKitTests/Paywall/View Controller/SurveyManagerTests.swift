@@ -21,6 +21,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -63,6 +64,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -106,6 +108,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -148,6 +151,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -190,6 +194,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -232,6 +237,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -280,6 +286,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -331,6 +338,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -380,6 +388,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -433,6 +442,7 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
