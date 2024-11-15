@@ -153,7 +153,6 @@ struct SK2StoreProduct: StoreProductType {
     return "\(period)ly"
   }
 
-
   var periodWeeks: Int {
     guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
       return 0
