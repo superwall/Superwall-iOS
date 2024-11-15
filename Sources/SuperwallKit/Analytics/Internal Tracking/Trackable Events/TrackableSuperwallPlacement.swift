@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 20/04/2022.
 //
@@ -41,7 +41,7 @@ enum PrivateSuperwallPlacement {
         "cel_expression": celExpression,
         "cel_expression_did_match": celExpressionDidMatch,
         "liquid_expression": liquidExpression,
-        "liquid_expression_did_match": liquidExpressionDidMatch
+        "liquid_expression_did_match": liquidExpressionDidMatch,
       ]
     }
   }
@@ -63,7 +63,7 @@ enum InternalSuperwallPlacement {
     func getSuperwallParameters() async -> [String: Any] {
       return [
         "application_installed_at": appInstalledAtString,
-        "using_purchase_controller": hasExternalPurchaseController
+        "using_purchase_controller": hasExternalPurchaseController,
       ]
     }
   }
@@ -93,7 +93,7 @@ enum InternalSuperwallPlacement {
       let output = paywallInfo.audienceFilterParams()
       return output + [
         "survey_selected_option_title": selectedOption.title,
-        "survey_custom_response": customResponse as Any
+        "survey_custom_response": customResponse as Any,
       ]
     }
     let survey: Survey
@@ -105,7 +105,7 @@ enum InternalSuperwallPlacement {
       let params: [String: Any] = [
         "survey_id": survey.id,
         "survey_assignment_key": survey.assignmentKey,
-        "survey_selected_option_id": selectedOption.id
+        "survey_selected_option_id": selectedOption.id,
       ]
 
       return await paywallInfo.placementParams(otherParams: params)
@@ -151,15 +151,17 @@ enum InternalSuperwallPlacement {
         "lastPathComponent": url.lastPathComponent,
         "host": url.host ?? "",
         "query": url.query ?? "",
-        "fragment": url.fragment ?? ""
+        "fragment": url.fragment ?? "",
       ]
     }
 
     var audienceFilterParams: [String: Any] {
-      guard let urlComponents = URLComponents(
-        url: url,
-        resolvingAgainstBaseURL: false
-      ) else {
+      guard
+        let urlComponents = URLComponents(
+          url: url,
+          resolvingAgainstBaseURL: false
+        )
+      else {
         return [:]
       }
       guard let queryItems = urlComponents.queryItems else {
@@ -228,7 +230,7 @@ enum InternalSuperwallPlacement {
       var params = options.toDictionary()
       params += [
         "using_purchase_controller": hasExternalPurchaseController,
-        "has_delegate": hasDelegate
+        "has_delegate": hasDelegate,
       ]
       return params
     }
@@ -273,7 +275,7 @@ enum InternalSuperwallPlacement {
     let placementData: PlacementData?
     var audienceFilterParams: [String: Any] {
       switch state {
-      case .complete(paywallInfo: let paywallInfo):
+      case .complete(let paywallInfo):
         return paywallInfo.audienceFilterParams()
       default:
         return [:]
@@ -336,21 +338,22 @@ enum InternalSuperwallPlacement {
           "result": "no_rule_match"
         ]
         for unmatchedAudience in unmatchedAudiences {
-          params["unmatched_audience_\(unmatchedAudience.experimentId)"] = unmatchedAudience.source.rawValue
+          params["unmatched_audience_\(unmatchedAudience.experimentId)"] =
+            unmatchedAudience.source.rawValue
         }
         return params
       case .holdout(let experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
-          "result": "holdout"
+          "result": "holdout",
         ]
       case let .paywall(experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": experiment.variant.paywallId as Any,
-          "result": "present"
+          "result": "present",
         ]
       case .placementNotFound:
         return params + [
@@ -369,7 +372,8 @@ enum InternalSuperwallPlacement {
     let type: PresentationRequestType
     let status: PaywallPresentationRequestStatus
     let statusReason: PaywallPresentationRequestStatusReason?
-    let factory: AudienceFilterAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
+    let factory:
+      AudienceFilterAttributesFactory & FeatureFlagsFactory & ComputedPropertyRequestsFactory
 
     var superwallPlacement: SuperwallPlacement {
       return .paywallPresentationRequest(
@@ -383,11 +387,12 @@ enum InternalSuperwallPlacement {
         "source_event_name": placementData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
-        "status_reason": statusReason?.description ?? ""
+        "status_reason": statusReason?.description ?? "",
       ]
 
       if let featureFlags = factory.makeFeatureFlags(),
-        featureFlags.enableExpressionParameters {
+        featureFlags.enableExpressionParameters
+      {
         let computedPropertyRequests = factory.makeComputedPropertyRequests()
         let audienceFilters = await factory.makeAudienceFilterAttributes(
           forPlacement: placementData,
@@ -396,7 +401,8 @@ enum InternalSuperwallPlacement {
 
         if let audienceFiltersDictionary = audienceFilters.dictionaryObject,
           let jsonData = try? JSONSerialization.data(withJSONObject: audienceFiltersDictionary),
-          let decoded = String(data: jsonData, encoding: .utf8) {
+          let decoded = String(data: jsonData, encoding: .utf8)
+        {
           params += [
             "expression_params": decoded
           ]
@@ -524,7 +530,7 @@ enum InternalSuperwallPlacement {
       case start(StoreProduct)
       case fail(TransactionError)
       case abandon(StoreProduct)
-      case complete(StoreProduct, StoreTransaction?)
+      case complete(StoreProduct, StoreTransaction?, TransactionType)
       case restore(RestoreType)
       case timeout
     }
@@ -547,7 +553,8 @@ enum InternalSuperwallPlacement {
           product: product,
           paywallInfo: paywallInfo
         )
-      case let .complete(product, model):
+      case let .complete(product, model, _):
+        // TODO: In v4 add in type:
         return .transactionComplete(
           transaction: model,
           product: product,
@@ -562,15 +569,29 @@ enum InternalSuperwallPlacement {
         return .transactionTimeout(paywallInfo: paywallInfo)
       }
     }
-    enum TransactionSource: String {
+    enum Source: String {
       case `internal` = "SUPERWALL"
       case external = "APP"
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct?
-    let model: StoreTransaction?
-    let source: TransactionSource
+    let transaction: StoreTransaction?
+    let source: Source
+    let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion
+
+    enum TransactionType: String {
+      case nonRecurringProductPurchase = "NON_RECURRING_PRODUCT_PURCHASE"
+      case freeTrialStart = "FREE_TRIAL_START"
+      case subscriptionStart = "SUBSCRIPTION_START"
+    }
+
+    var canImplicitlyTriggerPaywall: Bool {
+      if isObserved {
+        return false
+      }
+      return superwallEvent.canImplicitlyTriggerPaywall
+    }
 
     var audienceFilterParams: [String: Any] {
       switch state {
@@ -584,26 +605,38 @@ enum InternalSuperwallPlacement {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
+      var storefrontCountryCode = ""
+      var storefrontId = ""
+      if #available(iOS 15.0, *) {
+        storefrontCountryCode = await Storefront.current?.countryCode ?? ""
+        storefrontId = await Storefront.current?.id ?? ""
+      }
       var placementParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storekit_version": storeKitVersion.rawValue
+        "storekit_version": storeKitVersion.rawValue,
       ]
 
       switch state {
       case .restore:
         placementParams += await paywallInfo.placementParams(forProduct: product)
-        if let transactionDict = model?.dictionary(withSnakeCase: true) {
+        if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
           placementParams += transactionDict
         }
-        placementParams["restore_via_purchase_attempt"] = model != nil
+        placementParams["restore_via_purchase_attempt"] = transaction != nil
         return placementParams
+      case .complete(_, _, let type):
+        placementParams += [
+          "storefront_countryCode": storefrontCountryCode,
+          "storefront_id": storefrontId,
+          "transaction_type": type.rawValue,
+        ]
+        fallthrough
       case .start,
         .abandon,
-        .complete,
         .timeout:
         placementParams += await paywallInfo.placementParams(forProduct: product)
-        if let transactionDict = model?.dictionary(withSnakeCase: true) {
+        if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
           placementParams += transactionDict
         }
         return placementParams
@@ -627,12 +660,17 @@ enum InternalSuperwallPlacement {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.placementParams(forProduct: product)
+      var params = await paywallInfo.placementParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 
@@ -651,12 +689,17 @@ enum InternalSuperwallPlacement {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.placementParams(forProduct: product)
+      var params = await paywallInfo.placementParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 
@@ -669,12 +712,17 @@ enum InternalSuperwallPlacement {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.placementParams(forProduct: product)
+      var params = await paywallInfo.placementParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 
@@ -734,9 +782,11 @@ enum InternalSuperwallPlacement {
     var superwallPlacement: SuperwallPlacement {
       switch state {
       case .start:
-        return .paywallProductsLoadStart(triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
+        return .paywallProductsLoadStart(
+          triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
       case .fail:
-        return .paywallProductsLoadFail(triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
+        return .paywallProductsLoadFail(
+          triggeredPlacementName: placementData?.name, paywallInfo: paywallInfo)
       case .complete:
         return .paywallProductsLoadComplete(triggeredPlacementName: placementData?.name)
       case .retry(let attempt):
@@ -781,7 +831,7 @@ enum InternalSuperwallPlacement {
         "config_build_id": buildId,
         "retry_count": retryCount,
         "cache_status": cacheStatus.rawValue,
-        "fetch_duration": fetchDuration
+        "fetch_duration": fetchDuration,
       ]
     }
   }

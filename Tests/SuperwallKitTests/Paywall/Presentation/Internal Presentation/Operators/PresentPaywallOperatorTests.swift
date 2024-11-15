@@ -1,13 +1,14 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 06/12/2022.
 //
 
-import XCTest
-@testable import SuperwallKit
 import Combine
+import XCTest
+
+@testable import SuperwallKit
 
 final class PresentPaywallOperatorTests: XCTestCase {
   var cancellables: [AnyCancellable] = []
@@ -30,7 +31,10 @@ final class PresentPaywallOperatorTests: XCTestCase {
     .store(in: &cancellables)
     let dependencyContainer = DependencyContainer()
 
-    let messageHandler = PaywallMessageHandler(factory: dependencyContainer)
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
     let webView = SWWebView(
       isMac: false,
       messageHandler: messageHandler,
@@ -93,7 +97,10 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
 
-    let messageHandler = PaywallMessageHandler(factory: dependencyContainer)
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
     let webView = SWWebView(
       isMac: false,
       messageHandler: messageHandler,
@@ -125,7 +132,8 @@ final class PresentPaywallOperatorTests: XCTestCase {
       XCTFail("Should fail")
     } catch {
       if let error = error as? PresentationPipelineError,
-        case .paywallAlreadyPresented = error {
+        case .paywallAlreadyPresented = error
+      {
 
       } else {
         XCTFail("Wrong error type")

@@ -40,9 +40,7 @@ class DeviceHelper {
     return flags
   }
 
-  var appVersion: String {
-    Bundle.main.releaseVersionNumber ?? ""
-  }
+  let appVersion = Bundle.main.releaseVersionNumber ?? ""
 
   let osVersion: String = {
     let systemVersion = ProcessInfo.processInfo.operatingSystemVersion
@@ -258,6 +256,7 @@ class DeviceHelper {
   }()
 
   private let sdkVersionPadded: String
+  private let appVersionPadded: String
 
   private var daysSinceInstall: Int {
     let fromDate = appInstallDate ?? Date()
@@ -406,9 +405,9 @@ class DeviceHelper {
     return output
   }
 
-  static func makePaddedSdkVersion(using sdkVersion: String) -> String {
+  static func makePaddedVersion(using version: String) -> String {
     // Separate out the "beta" part from the main version.
-    let components = sdkVersion.split(separator: "-")
+    let components = version.split(separator: "-")
     if components.isEmpty {
       return ""
     }
@@ -471,6 +470,7 @@ class DeviceHelper {
       aliases: aliases,
       vendorId: vendorId,
       appVersion: appVersion,
+      appVersionPadded: appVersionPadded,
       osVersion: osVersion,
       deviceModel: model,
       deviceLocale: locale,
@@ -541,7 +541,8 @@ class DeviceHelper {
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.factory = factory
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
-    self.sdkVersionPadded = Self.makePaddedSdkVersion(using: sdkVersion)
+    self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
+    self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
   }
 
   func getGeoInfo(maxRetry: Int? = nil) async {

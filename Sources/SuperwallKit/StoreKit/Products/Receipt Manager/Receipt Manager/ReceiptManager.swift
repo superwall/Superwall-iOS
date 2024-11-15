@@ -113,6 +113,22 @@ actor ReceiptManager: NSObject {
       }
     }
   }
+
+  // TODO: Check if need hasPurchaseProduct and change isSubscribed to something else depending on SK1 or SK2
+
+  /// Determines whether the purchases already contain the given product ID.
+  func hasPurchasedProduct(withId productId: String) -> Bool {
+    return purchases.first { $0.productIdentifier == productId } != nil
+  }
+
+  /// Determines whether the user is subscribed to the given product id.
+  func isSubscribed(to productId: String) -> Bool {
+    return purchases
+      .filter { $0.productIdentifier == productId }
+      .sorted { $0.purchaseDate > $1.purchaseDate }
+      .first?
+      .isActive == true
+  }
 }
 
 extension ReceiptManager: SKRequestDelegate {

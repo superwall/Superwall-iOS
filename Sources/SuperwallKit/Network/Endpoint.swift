@@ -270,3 +270,24 @@ extension Endpoint where
     )
   }
 }
+
+// MARK: - Ad Services
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == AdServicesResponse {
+  static func adServices(token: String) -> Self {
+    let body = ["token": token]
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(body)
+
+    return Endpoint(
+      retryCount: 3,
+      retryInterval: 5,
+      components: Components(
+        host: .base,
+        path: Api.version1 + "apple-search-ads/token",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}

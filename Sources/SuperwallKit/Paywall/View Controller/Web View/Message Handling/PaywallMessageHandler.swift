@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable line_length function_body_length type_body_length
+// swiftlint:disable line_length function_body_length type_body_length file_length
 
 import UIKit
 import WebKit
@@ -26,6 +26,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
+  private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
 
   struct EnqueuedMessage {
@@ -35,7 +36,11 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
   private var messageQueue: Queue<EnqueuedMessage> = Queue()
 
-  init(factory: VariablesFactory) {
+  init(
+    receiptManager: ReceiptManager,
+    factory: VariablesFactory
+  ) {
+    self.receiptManager = receiptManager
     self.factory = factory
   }
 
@@ -159,7 +164,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let event = [
       "event_name": placement,
       "paywall_id": paywall.databaseId,
-      "paywall_identifier": paywall.identifier
+      "paywall_identifier": paywall.identifier,
     ]
     guard let jsonEncodedEvent = try? JSONEncoder().encode([event]) else {
       return
@@ -176,6 +181,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let base64Templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
       placement: eventData,
+      receiptManager: receiptManager,
       factory: factory
     )
     await passMessageToWebView(base64Templates)
@@ -183,8 +189,8 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func passMessageToWebView(_ base64String: String) {
     let messageScript = """
-      window.paywall.accept64('\(base64String)');
-    """
+        window.paywall.accept64('\(base64String)');
+      """
 
     Logger.debug(
       logLevel: .debug,
@@ -231,13 +237,14 @@ final class PaywallMessageHandler: WebEventDelegate {
     let placementData = await delegate?.request?.presentationInfo.placementData
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      placement: placementData,
+      placement: eventData,
+      receiptManager: receiptManager,
       factory: factory
     )
     let scriptSrc = """
-      window.paywall.accept64('\(templates)');
-      window.paywall.accept64('\(htmlSubstitutions)');
-    """
+        window.paywall.accept64('\(templates)');
+        window.paywall.accept64('\(htmlSubstitutions)');
+      """
 
     Logger.debug(
       logLevel: .debug,
@@ -266,10 +273,11 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
 
       // block selection
-      let selectionString = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
-      + "var head = document.head || document.getElementsByTagName('head')[0]; "
-      + "var style = document.createElement('style'); style.type = 'text/css'; "
-      + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
+      let selectionString =
+        "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
+        + "var head = document.head || document.getElementsByTagName('head')[0]; "
+        + "var style = document.createElement('style'); style.type = 'text/css'; "
+        + "style.appendChild(document.createTextNode(css)); head.appendChild(style); "
 
       let selectionScript = WKUserScript(
         source: selectionString,
@@ -278,10 +286,14 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
       self.delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
 
-      let preventSelection = "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
+      let preventSelection =
+        "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
-      let preventZoom: String = "var meta = document.createElement('meta');" + "meta.name = 'viewport';" + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';" + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
+      let preventZoom: String =
+        "var meta = document.createElement('meta');" + "meta.name = 'viewport';"
+        + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';"
+        + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
       self.delegate?.webView.evaluateJavaScript(preventZoom)
 
       while !messageQueue.isEmpty {
@@ -299,15 +311,15 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func openUrl(_ url: URL) {
     #if os(visionOS)
-    openUrlInSafari(url)
+      openUrlInSafari(url)
     #else
-    detectHiddenPaywallEvent(
-      "openUrl",
-      userInfo: ["url": url]
-    )
-    hapticFeedback()
-    delegate?.eventDidOccur(.openedURL(url: url))
-    delegate?.presentSafariInApp(url)
+      detectHiddenPaywallEvent(
+        "openUrl",
+        userInfo: ["url": url]
+      )
+      hapticFeedback()
+      delegate?.eventDidOccur(.openedURL(url: url))
+      delegate?.presentSafariInApp(url)
     #endif
   }
 
@@ -365,7 +377,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     var info: [String: Any] = [
       "self": self,
       "Superwall.shared.paywallViewController": paywallDebugDescription,
-      "event": eventName
+      "event": eventName,
     ]
     if let userInfo = userInfo {
       info = info.merging(userInfo)
@@ -386,7 +398,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       return
     }
     #if !os(visionOS)
-    UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
+      UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
     #endif
   }
 }

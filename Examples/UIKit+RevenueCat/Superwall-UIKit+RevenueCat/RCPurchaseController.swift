@@ -6,10 +6,10 @@
 //  Created by Jake Mor on 4/26/23.
 //
 
-import SuperwallKit
-import StoreKit
-import RevenueCat
 import Combine
+import RevenueCat
+import StoreKit
+import SuperwallKit
 
 enum PurchasingError: LocalizedError {
   case sk2ProductNotFound
@@ -18,7 +18,7 @@ enum PurchasingError: LocalizedError {
     switch self {
     case .sk2ProductNotFound:
       return "Superwall didn't pass a StoreKit 2 product to purchase. Are you sure you're not "
-      + "configuring Superwall with a SuperwallOption to use StoreKit 1?"
+        + "configuring Superwall with a SuperwallOption to use StoreKit 1?"
     }
   }
 }
@@ -42,7 +42,9 @@ final class RCPurchaseController: PurchaseController {
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        var superwallEntitlements = customerInfo.entitlements.activeInCurrentEnvironment.keys.map { Entitlement(id: $0) }
+        var superwallEntitlements = customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
+          Entitlement(id: $0)
+        }
         if superwallEntitlements.isEmpty {
           Superwall.shared.entitlements.status = .inactive
         } else {
@@ -67,7 +69,8 @@ final class RCPurchaseController: PurchaseController {
         return .cancelled
       } else {
         if let transaction = revenueCatResult.transaction,
-           purchaseDate > transaction.purchaseDate {
+          purchaseDate > transaction.purchaseDate
+        {
           return .restored
         } else {
           return .purchased

@@ -54,6 +54,8 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   }
 
   /// All the attributes that can be referenced in audience filters.
+  ///
+  /// Note that `isSubscribed` is added to the attributes right before a paywall is displayed.
   public var attributes: [String: String] {
     return [
       "rawPrice": "\(price)",
@@ -86,7 +88,7 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "languageCode": languageCode ?? "n/a",
       "currencyCode": currencyCode ?? "n/a",
       "currencySymbol": currencySymbol ?? "n/a",
-      "identifier": productIdentifier
+      "identifier": productIdentifier,
     ]
   }
 

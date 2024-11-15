@@ -16,6 +16,7 @@ final class TransactionManager {
   private let purchaseController: PurchaseController
   private let placementsQueue: PlacementsQueue
   private let purchaseManager: PurchaseManager
+  private let productsFetcher: ProductsFetcherSK1
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -23,6 +24,10 @@ final class TransactionManager {
     & StoreTransactionFactory
     & DeviceHelperFactory
     & HasExternalPurchaseControllerFactory
+  enum State {
+    case observing
+    case purchasing(PurchaseSource)
+  }
 
   init(
     storeKitManager: StoreKitManager,
@@ -30,6 +35,7 @@ final class TransactionManager {
     purchaseController: PurchaseController,
     placementsQueue: PlacementsQueue,
     purchaseManager: PurchaseManager,
+    productsFetcher: ProductsFetcherSK1,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
@@ -37,10 +43,13 @@ final class TransactionManager {
     self.purchaseController = purchaseController
     self.placementsQueue = placementsQueue
     self.purchaseManager = purchaseManager
+    self.productsFetcher = productsFetcher
     self.factory = factory
   }
 
   /// Purchases the given product and handles the result appropriately.
+  ///
+  /// This uses a `PurchasingCoordinator` to coordinate the purchasing from start to finish.
   ///
   /// - Parameters:
   ///   - productId: The ID of the product to purchase.
@@ -62,35 +71,49 @@ final class TransactionManager {
         return .failed(PurchaseError.productUnavailable)
       }
       product = storeProduct
-    case .external(let storeProduct):
+    case .purchaseFunc(let storeProduct):
       product = storeProduct
+    case .observeFunc:
+      // This is a no-op, there's no way someone can call this func using observe.
+      return .cancelled
     }
-    let isEligibleForFreeTrial = await receiptManager.isFreeTrialAvailable(for: product)
-
-    await prepareToPurchase(product: product, purchaseSource: purchaseSource)
+    await prepareToPurchase(
+      product: product,
+      purchaseSource: purchaseSource
+    )
 
     let result = await purchase(product, purchaseSource: purchaseSource)
 
     // Return early if using a purchase controller and purchasing externally.
     // This avoids duplicate calls by the purchase function of the purchase
     // controller.
-    if case .external = purchaseSource,
-      factory.makeHasExternalPurchaseController() {
+    if case .purchaseFunc = purchaseSource,
+      factory.makeHasExternalPurchaseController()
+    {
+      // Not resetting coordinator here because we need it with the purchase controller
+      // call.
       return result
     }
 
+    await handle(
+      result: result,
+      state: .purchasing(purchaseSource)
+    )
+
+    return result
+  }
+
+  func handle(
+    result: PurchaseResult,
+    state: State
+  ) async {
+    let coordinator = factory.makePurchasingCoordinator()
+
     switch result {
     case .purchased:
-      await didPurchase(
-        product: product,
-        purchaseSource: purchaseSource,
-        didStartFreeTrial: isEligibleForFreeTrial
-      )
+      await didPurchase()
     case .restored:
-      await didRestore(
-        product: product,
-        restoreSource: purchaseSource.toRestoreSource()
-      )
+      await didRestore()
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
       guard
@@ -100,41 +123,40 @@ final class TransactionManager {
           shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
         )
       else {
-        await trackFailure(
-          error: error,
-          product: product,
-          purchaseSource: purchaseSource
-        )
-        if case let .internal(_, paywallViewController) = purchaseSource {
-          await paywallViewController.togglePaywallSpinner(isHidden: true)
+        await trackFailure(error: error)
+        switch state {
+        case .observing:
+          break
+        case .purchasing(let purchaseSource):
+          if case let .internal(_, paywallViewController) = purchaseSource {
+            await paywallViewController.togglePaywallSpinner(isHidden: true)
+          }
         }
-        return result
+        return await coordinator.reset()
       }
       switch outcome {
       case .cancelled:
-        await trackCancelled(
-          product: product,
-          purchaseSource: purchaseSource
-        )
+        await trackCancelled()
       case .presentAlert:
-        await trackFailure(
-          error: error,
-          product: product,
-          purchaseSource: purchaseSource
-        )
-        await presentAlert(
-          title: "An error occurred",
-          message: error.safeLocalizedDescription,
-          source: purchaseSource.toGenericSource()
-        )
+        await trackFailure(error: error)
+        switch state {
+        case .observing:
+          break
+        case .purchasing(let purchaseSource):
+          await presentAlert(
+            title: "An error occurred",
+            message: error.safeLocalizedDescription,
+            source: purchaseSource.toGenericSource()
+          )
+        }
       }
     case .pending:
-      await handlePendingTransaction(purchaseSource: purchaseSource)
+      await handlePendingTransaction()
     case .cancelled:
-      await trackCancelled(product: product, purchaseSource: purchaseSource)
+      await trackCancelled()
     }
 
-    return result
+    await coordinator.reset()
   }
 
   @MainActor
@@ -180,7 +202,8 @@ final class TransactionManager {
             " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
         }
         if case .failed(let error) = restorationResult,
-          let error = error {
+          let error = error
+        {
           message += " Original restoration error message: \(error.safeLocalizedDescription)"
         }
         await logAndTrack(
@@ -259,17 +282,21 @@ final class TransactionManager {
     }
   }
 
-  private func didRestore(
-    product: StoreProduct? = nil,
-    restoreSource: RestoreSource
-  ) async {
-    let purchasingCoordinator = factory.makePurchasingCoordinator()
+  func didRestore(restoreSource: RestoreSource? = nil) async {
+    let coordinator = factory.makePurchasingCoordinator()
     var transaction: StoreTransaction?
     let restoreType: RestoreType
 
+    let coordinatorSource = await coordinator.source
+    guard let source = restoreSource ?? coordinatorSource?.toRestoreSource() else {
+      return
+    }
+
+    let product = await coordinator.product
+
     if let product = product {
       // Product exists so much have been via a purchase of a specific product.
-      transaction = await purchasingCoordinator.getLatestTransaction(
+      transaction = await coordinator.getLatestTransaction(
         forProductId: product.productIdentifier,
         factory: factory
       )
@@ -279,7 +306,12 @@ final class TransactionManager {
       restoreType = .viaRestore
     }
 
-    switch restoreSource {
+    var isObserved = false
+    if case .observeFunc = coordinatorSource {
+      isObserved = true
+    }
+
+    switch source {
     case .internal(let paywallViewController):
       let paywallInfo = await paywallViewController.info
 
@@ -287,8 +319,9 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: paywallInfo,
         product: product,
-        model: transaction,
+        transaction: transaction,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionRestore)
@@ -303,8 +336,9 @@ final class TransactionManager {
         state: .restore(restoreType),
         paywallInfo: .empty(),
         product: product,
-        model: transaction,
+        transaction: transaction,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -315,15 +349,17 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
-    await factory.makePurchasingCoordinator().beginPurchase(
-      of: product.productIdentifier,
-      source: purchaseSource
-    )
+    guard let sk1Product = product.sk1Product else {
+      return .failed(PurchaseError.productUnavailable)
+    }
     switch purchaseSource {
     case .internal:
-      return await purchaseController.purchase(product: product)
-    case .external:
-      return await factory.purchase(product: product)
+      return await purchaseController.purchase(product: sk1Product)
+    case .purchaseFunc:
+      return await factory.purchase(product: sk1Product)
+    case .observeFunc:
+      // No-op, there's no way this can be called from observe.
+      return .cancelled
     }
   }
 
@@ -333,12 +369,21 @@ final class TransactionManager {
 
   // MARK: - Transaction lifecycle
 
-  private func trackFailure(
-    error: Error,
-    product: StoreProduct,
-    purchaseSource: PurchaseSource
-  ) async {
-    switch purchaseSource {
+  func trackFailure(error: Error) async {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard
+      let source = await coordinator.source,
+      let product = await coordinator.product
+    else {
+      return
+    }
+
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
+    switch source {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -346,25 +391,27 @@ final class TransactionManager {
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController
+          "paywall_vc": paywallViewController,
         ],
         error: error
       )
 
       let paywallInfo = await paywallViewController.info
-      Task {
+      Task { [isObserved] in
         let trackedEvent = InternalSuperwallPlacement.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
           product: product,
-          model: nil,
+          transaction: nil,
           source: .internal,
+          isObserved: isObserved,
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
         await paywallViewController.webView.messageHandler.handle(.transactionFail)
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -375,13 +422,14 @@ final class TransactionManager {
         error: error
       )
 
-      Task {
+      Task { [isObserved] in
         let trackedEvent = InternalSuperwallPlacement.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
           product: product,
-          model: nil,
+          transaction: nil,
           source: .external,
+          isObserved: isObserved,
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
         await Superwall.shared.track(trackedEvent)
@@ -389,11 +437,49 @@ final class TransactionManager {
     }
   }
 
+  func observeTransaction(for productId: String) async {
+    guard
+      let storeProduct = try? await productsFetcher.products(
+        identifiers: [productId],
+        forPaywall: nil,
+        event: nil
+      ).first
+    else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .superwallCore,
+        message: "There's a purchase happening of a product with id \(productId), "
+          + "but we couldn't retrieve it to observe its purchase."
+      )
+      return
+    }
+    let coordinator = factory.makePurchasingCoordinator()
+    await prepareToPurchase(
+      product: storeProduct,
+      purchaseSource: .observeFunc(storeProduct)
+    )
+    await coordinator.setCompletion { result in
+      Task { [weak self] in
+        await self?.handle(
+          result: result,
+          state: .observing
+        )
+      }
+    }
+  }
+
   /// Tracks the analytics and logs the start of the transaction.
-  private func prepareToPurchase(
+  func prepareToPurchase(
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async {
+    let isFreeTrialAvailable = await receiptManager.isFreeTrialAvailable(for: product)
+
+    var isObserved = false
+    if case .observeFunc = purchaseSource {
+      isObserved = true
+    }
+
     switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
@@ -410,8 +496,9 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil,
+        transaction: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionStart)
@@ -420,12 +507,17 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .loadingPurchase
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
-      if factory.makeHasExternalPurchaseController() {
+      let options = factory.makeSuperwallOptions()
+      if !options.shouldObservePurchases,
+        factory.makeHasExternalPurchaseController()
+      {
         return
       }
+
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -436,29 +528,43 @@ final class TransactionManager {
         state: .start(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil,
+        transaction: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
+
+    await factory.makePurchasingCoordinator().beginPurchase(
+      of: product,
+      source: purchaseSource,
+      isFreeTrialAvailable: isFreeTrialAvailable
+    )
   }
 
   /// Dismisses the view controller, if the developer hasn't disabled the option.
-  private func didPurchase(
-    product: StoreProduct,
-    purchaseSource: PurchaseSource,
-    didStartFreeTrial: Bool
-  ) async {
-    switch purchaseSource {
+  func didPurchase() async {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard
+      let source = await coordinator.source,
+      let product = await coordinator.product
+    else {
+      return
+    }
+
+    switch source {
     case .internal(_, let paywallViewController):
+      guard let product = await coordinator.product else {
+        return
+      }
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController
+          "paywall_vc": paywallViewController,
         ],
         error: nil
       )
@@ -470,13 +576,7 @@ final class TransactionManager {
       )
 
       await receiptManager.loadPurchasedProducts()
-
-      await trackTransactionDidSucceed(
-        transaction,
-        product: product,
-        purchaseSource: purchaseSource,
-        didStartFreeTrial: didStartFreeTrial
-      )
+      await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
       if superwallOptions.paywalls.automaticallyDismiss {
@@ -485,7 +585,8 @@ final class TransactionManager {
           result: .purchased(product)
         )
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -504,21 +605,26 @@ final class TransactionManager {
 
       await receiptManager.loadPurchasedProducts()
 
-      await trackTransactionDidSucceed(
-        transaction,
-        product: product,
-        purchaseSource: purchaseSource,
-        didStartFreeTrial: didStartFreeTrial
-      )
+      await trackTransactionDidSucceed(transaction)
     }
   }
 
   /// Track the cancelled
-  private func trackCancelled(
-    product: StoreProduct,
-    purchaseSource: PurchaseSource
-  ) async {
-    switch purchaseSource {
+  func trackCancelled() async {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard
+      let source = await coordinator.source,
+      let product = await coordinator.product
+    else {
+      return
+    }
+
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
+    switch source {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -533,8 +639,9 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
-        model: nil,
+        transaction: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionAbandon)
@@ -543,7 +650,8 @@ final class TransactionManager {
       await MainActor.run {
         paywallViewController.loadingState = .ready
       }
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -556,16 +664,27 @@ final class TransactionManager {
         state: .abandon(product),
         paywallInfo: .empty(),
         product: product,
-        model: nil,
+        transaction: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
     }
   }
 
-  private func handlePendingTransaction(purchaseSource: PurchaseSource) async {
-    switch purchaseSource {
+  func handlePendingTransaction() async {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard let source = await coordinator.source else {
+      return
+    }
+
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
+    switch source {
     case .internal(_, let paywallViewController):
       Logger.debug(
         logLevel: .debug,
@@ -581,13 +700,15 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
-        model: nil,
+        transaction: nil,
         source: .internal,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(transactionFail)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
-    case .external:
+    case .purchaseFunc,
+      .observeFunc:
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -599,8 +720,9 @@ final class TransactionManager {
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
         product: nil,
-        model: nil,
+        transaction: nil,
         source: .external,
+        isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
       await Superwall.shared.track(trackedEvent)
@@ -610,7 +732,7 @@ final class TransactionManager {
       title: "Waiting for Approval",
       message:
         "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
-      source: purchaseSource.toGenericSource()
+      source: source.toGenericSource()
     )
   }
 
@@ -647,95 +769,85 @@ final class TransactionManager {
     }
   }
 
-  func trackTransactionDidSucceed(
-    _ transaction: StoreTransaction?,
-    product: StoreProduct,
-    purchaseSource: PurchaseSource,
-    didStartFreeTrial: Bool
-  ) async {
-    switch purchaseSource {
+  func trackTransactionDidSucceed(_ transaction: StoreTransaction?) async {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard
+      let source = await coordinator.source,
+      let product = await coordinator.product
+    else {
+      return
+    }
+    let didStartFreeTrial = await coordinator.isFreeTrialAvailable
+
+    var isObserved = false
+    if case .observeFunc = source {
+      isObserved = true
+    }
+
+    let type: InternalSuperwallEvent.Transaction.TransactionType = {
+      if product.subscriptionPeriod == nil {
+        return .nonRecurringProductPurchase
+      } else if didStartFreeTrial {
+        return .freeTrialStart
+      } else {
+        return .subscriptionStart
+      }
+    }()
+
+    let paywallInfo: PaywallInfo
+    let eventSource: InternalSuperwallEvent.Transaction.Source
+    switch source {
     case .internal(_, let paywallViewController):
-      let paywallShowingFreeTrial = await paywallViewController.paywall.isFreeTrialAvailable == true
-      let didStartFreeTrial = product.hasFreeTrial && paywallShowingFreeTrial
-
-      let paywallInfo = await paywallViewController.info
-
-      let transactionComplete = InternalSuperwallPlacement.Transaction(
-        state: .complete(product, transaction),
-        paywallInfo: paywallInfo,
-        product: product,
-        model: transaction,
-        source: .internal,
-        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
-      )
-      await Superwall.shared.track(transactionComplete)
+      paywallInfo = await paywallViewController.info
+      eventSource = .internal
       await paywallViewController.webView.messageHandler.handle(.transactionComplete)
+    case .purchaseFunc,
+      .observeFunc:
+      paywallInfo = .empty()
+      eventSource = .external
+    }
 
-      // Immediately flush the placements queue on transaction complete.
-      await placementsQueue.flushInternal()
+    let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
+      state: .complete(product, transaction, type),
+      paywallInfo: paywallInfo,
+      product: product,
+      transaction: transaction,
+      source: eventSource,
+      isObserved: isObserved,
+      storeKitVersion: .storeKit1
+    )
+    await Superwall.shared.track(trackedTransactionEvent)
+    await placementsQueue.flushInternal()
 
-      if product.subscriptionPeriod == nil {
-        let nonRecurringProductPurchase = InternalSuperwallPlacement.NonRecurringProductPurchase(
+    switch type {
+    case .nonRecurringProductPurchase:
+      await Superwall.shared.track(
+        InternalSuperwallPlacement.NonRecurringProductPurchase(
           paywallInfo: paywallInfo,
-          product: product
+          product: product,
+          transaction: transaction
         )
-        await Superwall.shared.track(nonRecurringProductPurchase)
-      } else {
-        if didStartFreeTrial {
-          let freeTrialStart = InternalSuperwallPlacement.FreeTrialStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          await Superwall.shared.track(freeTrialStart)
-
-          let notifications = paywallInfo.localNotifications.filter {
-            $0.type == .trialStarted
-          }
-
-          await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
-        } else {
-          let subscriptionStart = InternalSuperwallPlacement.SubscriptionStart(
-            paywallInfo: paywallInfo,
-            product: product
-          )
-          await Superwall.shared.track(subscriptionStart)
-        }
-      }
-    case .external:
-      let transactionComplete = InternalSuperwallPlacement.Transaction(
-        state: .complete(product, transaction),
-        paywallInfo: .empty(),
-        product: product,
-        model: transaction,
-        source: .external,
-        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(transactionComplete)
-
-      // Immediately flush the placements queue on transaction complete.
-      await placementsQueue.flushInternal()
-
-      if product.subscriptionPeriod == nil {
-        let nonRecurringProductPurchase = InternalSuperwallPlacement.NonRecurringProductPurchase(
-          paywallInfo: .empty(),
-          product: product
+    case .freeTrialStart:
+      await Superwall.shared.track(
+        InternalSuperwallPlacement.FreeTrialStart(
+          paywallInfo: paywallInfo,
+          product: product,
+          transaction: transaction
         )
-        await Superwall.shared.track(nonRecurringProductPurchase)
-      } else {
-        if didStartFreeTrial {
-          let freeTrialStart = InternalSuperwallPlacement.FreeTrialStart(
-            paywallInfo: .empty(),
-            product: product
-          )
-          await Superwall.shared.track(freeTrialStart)
-        } else {
-          let subscriptionStart = InternalSuperwallPlacement.SubscriptionStart(
-            paywallInfo: .empty(),
-            product: product
-          )
-          await Superwall.shared.track(subscriptionStart)
-        }
+      )
+      let notifications = paywallInfo.localNotifications.filter {
+        $0.type == .trialStarted
       }
+      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+    case .subscriptionStart:
+      await Superwall.shared.track(
+        InternalSuperwallEvent.SubscriptionStart(
+          paywallInfo: paywallInfo,
+          product: product,
+          transaction: transaction
+        )
+      )
     }
   }
 }

@@ -89,6 +89,14 @@ enum Transactions: Storable {
   typealias Value = [StoreTransaction]
 }
 
+enum PurchasingProductIds: Storable {
+  static var key: String {
+    "store.purchasingProductIds"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Set<String>
+}
+
 enum Version: Storable {
   static var key: String {
     "store.version"

@@ -21,6 +21,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -62,6 +63,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -104,6 +106,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -145,6 +148,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -186,6 +190,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -227,6 +232,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -274,6 +280,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -324,6 +331,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -371,6 +379,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -423,6 +432,7 @@ final class SurveyManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
