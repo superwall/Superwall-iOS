@@ -10,9 +10,11 @@ import Foundation
 final class SK1ReceiptManager: ReceiptManagerType {
   private let receiptData: () -> Data?
   var purchasedSubscriptionGroupIds: Set<String>?
-  private var purchases: Set<Purchase> = []
+  var purchases: Set<Purchase> = []
 
-  init(receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData) {
+  init(
+    receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
+  ) {
     self.receiptData = receiptData
   }
 
@@ -31,7 +33,11 @@ final class SK1ReceiptManager: ReceiptManagerType {
       return []
     }
     purchases = Set(payload.purchases.map {
-      Purchase(id: $0.productIdentifier, isActive: $0.isActive)
+      Purchase(
+        id: $0.productIdentifier,
+        isActive: $0.isActive,
+        purchaseDate: $0.purchaseDate
+      )
     })
     return purchases
   }
@@ -51,7 +57,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
   }
 
   /// Determines whether the purchases already contain the given product ID.
-  private func hasPurchasedProduct(withId productId: String) -> Bool {
+  func hasPurchasedProduct(withId productId: String) -> Bool {
     return purchases.first { $0.id == productId } != nil
   }
 }

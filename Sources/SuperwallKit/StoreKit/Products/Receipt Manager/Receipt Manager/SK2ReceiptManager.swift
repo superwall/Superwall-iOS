@@ -9,6 +9,8 @@ import Foundation
 import StoreKit
 
 protocol ReceiptManagerType: AnyObject {
+  var purchases: Set<Purchase> { get }
+
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
   func loadPurchases() async -> Set<Purchase>
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool
@@ -17,6 +19,7 @@ protocol ReceiptManagerType: AnyObject {
 @available(iOS 15.0, *)
 final class SK2ReceiptManager: ReceiptManagerType {
   private var sk2IntroOfferEligibility: [String: Bool] = [:]
+  var purchases: Set<Purchase> = []
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     for storeProduct in storeProducts {
@@ -34,19 +37,28 @@ final class SK2ReceiptManager: ReceiptManagerType {
         if let expirationDate = transaction.expirationDate {
           if expirationDate < Date() {
             purchases.insert(
-              Purchase(id: transaction.productID, isActive: false)
+              Purchase(
+                id: transaction.productID,
+                isActive: false,
+                purchaseDate: transaction.purchaseDate
+              )
             )
             continue
           }
         }
         purchases.insert(
-          Purchase(id: transaction.productID, isActive: true)
+          Purchase(
+            id: transaction.productID,
+            isActive: true,
+            purchaseDate: transaction.purchaseDate
+          )
         )
       case .unverified:
         // TODO: Should we log here?
         break
       }
     }
+    self.purchases = purchases
     return purchases
   }
 

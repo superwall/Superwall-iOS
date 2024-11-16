@@ -13,7 +13,7 @@ protocol Purchasing {
 }
 
 final class PurchaseManager: Purchasing {
-  let coordinator = PurchasingCoordinator()
+  let coordinator: PurchasingCoordinator
   private let purchaser: Purchasing
 
   // swiftlint:disable:next identifier_name
@@ -30,8 +30,13 @@ final class PurchaseManager: Purchasing {
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     identityManager: IdentityManager,
-    factory: HasExternalPurchaseControllerFactory & StoreTransactionFactory
+    storage: Storage,
+    factory: HasExternalPurchaseControllerFactory
+      & StoreTransactionFactory
+      & OptionsFactory
+      & TransactionManagerFactory
   ) {
+    coordinator = PurchasingCoordinator(factory: factory)
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
       purchaser = ProductPurchaserSK2(
@@ -53,6 +58,7 @@ final class PurchaseManager: Purchasing {
         receiptManager: receiptManager,
         identityManager: identityManager,
         coordinator: coordinator,
+        storage: storage,
         factory: factory
       )
       isUsingSK2 = false

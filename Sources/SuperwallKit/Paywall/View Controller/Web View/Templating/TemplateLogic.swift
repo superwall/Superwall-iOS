@@ -24,7 +24,7 @@ enum TemplateLogic {
     // Dynamically set isSubscribed for each product
     var productVariables = paywall.productVariables ?? []
 
-    for product in paywall.productItems {
+    for product in paywall.products {
       if let index = productVariables.firstIndex(where: { $0.name == product.name }) {
         let isSubscribed = await receiptManager.isSubscribed(to: product.id)
         productVariables[index].attributes["isSubscribed"] = JSON(isSubscribed)

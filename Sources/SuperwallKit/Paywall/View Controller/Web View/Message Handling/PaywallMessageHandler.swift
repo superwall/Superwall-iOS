@@ -237,7 +237,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let placementData = await delegate?.request?.presentationInfo.placementData
     let templates = await TemplateLogic.getBase64EncodedTemplates(
       from: paywall,
-      placement: eventData,
+      placement: placementData,
       receiptManager: receiptManager,
       factory: factory
     )

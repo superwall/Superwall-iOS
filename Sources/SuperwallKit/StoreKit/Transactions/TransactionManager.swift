@@ -16,7 +16,7 @@ final class TransactionManager {
   private let purchaseController: PurchaseController
   private let placementsQueue: PlacementsQueue
   private let purchaseManager: PurchaseManager
-  private let productsFetcher: ProductsFetcherSK1
+  private let productsManager: ProductsManager
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -35,7 +35,7 @@ final class TransactionManager {
     purchaseController: PurchaseController,
     placementsQueue: PlacementsQueue,
     purchaseManager: PurchaseManager,
-    productsFetcher: ProductsFetcherSK1,
+    productsManager: ProductsManager,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
@@ -43,7 +43,7 @@ final class TransactionManager {
     self.purchaseController = purchaseController
     self.placementsQueue = placementsQueue
     self.purchaseManager = purchaseManager
-    self.productsFetcher = productsFetcher
+    self.productsManager = productsManager
     self.factory = factory
   }
 
@@ -349,14 +349,11 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
-    guard let sk1Product = product.sk1Product else {
-      return .failed(PurchaseError.productUnavailable)
-    }
     switch purchaseSource {
     case .internal:
-      return await purchaseController.purchase(product: sk1Product)
+      return await purchaseController.purchase(product: product)
     case .purchaseFunc:
-      return await factory.purchase(product: sk1Product)
+      return await factory.purchase(product: product)
     case .observeFunc:
       // No-op, there's no way this can be called from observe.
       return .cancelled
@@ -439,10 +436,10 @@ final class TransactionManager {
 
   func observeTransaction(for productId: String) async {
     guard
-      let storeProduct = try? await productsFetcher.products(
+      let storeProduct = try? await productsManager.products(
         identifiers: [productId],
         forPaywall: nil,
-        event: nil
+        placement: nil
       ).first
     else {
       Logger.debug(
@@ -784,7 +781,7 @@ final class TransactionManager {
       isObserved = true
     }
 
-    let type: InternalSuperwallEvent.Transaction.TransactionType = {
+    let type: InternalSuperwallPlacement.Transaction.TransactionType = {
       if product.subscriptionPeriod == nil {
         return .nonRecurringProductPurchase
       } else if didStartFreeTrial {
@@ -795,7 +792,7 @@ final class TransactionManager {
     }()
 
     let paywallInfo: PaywallInfo
-    let eventSource: InternalSuperwallEvent.Transaction.Source
+    let eventSource: InternalSuperwallPlacement.Transaction.Source
     switch source {
     case .internal(_, let paywallViewController):
       paywallInfo = await paywallViewController.info
@@ -807,7 +804,7 @@ final class TransactionManager {
       eventSource = .external
     }
 
-    let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
+    let trackedTransactionEvent = InternalSuperwallPlacement.Transaction(
       state: .complete(product, transaction, type),
       paywallInfo: paywallInfo,
       product: product,
@@ -842,7 +839,7 @@ final class TransactionManager {
       await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     case .subscriptionStart:
       await Superwall.shared.track(
-        InternalSuperwallEvent.SubscriptionStart(
+        InternalSuperwallPlacement.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product,
           transaction: transaction

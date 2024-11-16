@@ -136,6 +136,7 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       identityManager: identityManager,
+      storage: storage,
       factory: self
     )
 
@@ -143,10 +144,9 @@ final class DependencyContainer {
       storeKitManager: storeKitManager,
       receiptManager: receiptManager,
       purchaseController: purchaseController,
-      sessionEventsManager: sessionEventsManager,
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
-      productsFetcher: productsFetcher,
+      productsManager: productsManager,
       factory: self
     )
   }
@@ -159,6 +159,12 @@ extension DependencyContainer: IdentityInfoFactory {
       aliasId: identityManager.aliasId,
       appUserId: identityManager.appUserId
     )
+  }
+}
+
+extension DependencyContainer: TransactionManagerFactory {
+  func makeTransactionManager() -> TransactionManager {
+    return transactionManager
   }
 }
 

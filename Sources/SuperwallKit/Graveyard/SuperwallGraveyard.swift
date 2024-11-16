@@ -78,6 +78,7 @@ extension Superwall {
       webView: SWWebView(
         isMac: false,
         messageHandler: .init(
+          receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer
         ),
         isOnDeviceCacheEnabled: false,

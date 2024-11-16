@@ -84,6 +84,10 @@ protocol IdentityInfoFactory: AnyObject {
   func makeIdentityInfo() async -> IdentityInfo
 }
 
+protocol TransactionManagerFactory: AnyObject {
+  func makeTransactionManager() -> TransactionManager
+}
+
 protocol LocaleIdentifierFactory: AnyObject {
   func makeLocaleIdentifier() -> String?
 }

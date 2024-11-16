@@ -598,7 +598,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: StoreProduct) async -> PurchaseResult {
-    return await dependencyContainer.transactionManager.purchase(.external(product))
+    return await dependencyContainer.transactionManager.purchase(.purchaseFunc(product))
   }
 
   /// Initiates a purchase of a `SKProduct`.
@@ -641,7 +641,7 @@ public final class Superwall: NSObject, ObservableObject {
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
     // TODO: Review what happens with entitlements here if they purchase without any...
     let storeProduct = StoreProduct(sk2Product: product, entitlements: [])
-    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+    return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
   /// Initiates a purchase of a `SKProduct`.

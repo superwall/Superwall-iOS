@@ -590,7 +590,7 @@ enum InternalSuperwallPlacement {
       if isObserved {
         return false
       }
-      return superwallEvent.canImplicitlyTriggerPaywall
+      return superwallPlacement.canImplicitlyTriggerPaywall
     }
 
     var audienceFilterParams: [String: Any] {

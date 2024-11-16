@@ -31,11 +31,11 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   private let receiptManager: ReceiptManager
   private let identityManager: IdentityManager
   private let storage: Storage
-  private let transactionManager: TransactionManager
   private let factory:
     HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
+      & TransactionManagerFactory
 
   deinit {
     SKPaymentQueue.default().remove(self)
@@ -47,18 +47,17 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     identityManager: IdentityManager,
     coordinator: PurchasingCoordinator,
     storage: Storage,
-    transactionManager: TransactionManager,
     factory: HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
+      & TransactionManagerFactory
   ) {
     self.coordinator = coordinator
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.identityManager = identityManager
-    self.transactionManager = transactionManager
+    self.storage = storage
     self.factory = factory
-    self.coordinator = coordinator
 
     let hasPurchaseController = factory.makeHasExternalPurchaseController()
     let options = factory.makeSuperwallOptions()
@@ -212,6 +211,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           where: { $0 == skTransaction.payment.productIdentifier }
         )
         if !isExistingTransaction {
+          let transactionManager = factory.makeTransactionManager()
           await transactionManager.observeTransaction(for: skTransaction.payment.productIdentifier)
           storedIds.insert(skTransaction.payment.productIdentifier)
           storage.save(storedIds, forType: PurchasingProductIds.self)
@@ -292,7 +292,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   private func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
-    var source: InternalSuperwallEvent.Transaction.Source = .internal
+    var source: InternalSuperwallPlacement.Transaction.Source = .internal
 
     var isObserved = false
     switch await coordinator.source {
@@ -305,7 +305,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       break
     }
 
-    let trackedEvent = await InternalSuperwallEvent.Transaction(
+    let trackedEvent = await InternalSuperwallPlacement.Transaction(
       state: .timeout,
       paywallInfo: paywallViewController?.info ?? .empty(),
       product: nil,
