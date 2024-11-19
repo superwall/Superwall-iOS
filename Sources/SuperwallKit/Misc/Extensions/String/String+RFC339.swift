@@ -14,7 +14,7 @@ extension String {
   }
 }
 
-private var rfc3339DateFormatter: ISO8601DateFormatter = {
+var rfc3339DateFormatter: ISO8601DateFormatter = {
   let formatter = ISO8601DateFormatter()
   formatter.formatOptions = .withInternetDateTime
   formatter.timeZone = TimeZone(abbreviation: "UTC")
