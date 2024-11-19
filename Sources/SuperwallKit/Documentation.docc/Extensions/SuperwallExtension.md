@@ -67,7 +67,6 @@ The ``Superwall`` class is used to access all the features of the SDK. Before us
 - ``restorePurchases()``
 - ``restorePurchases(completion:)-4fx45``
 - ``restorePurchases(completion:)-4cxt5``
-- ``observe(_:)``
 - ``SuperwallOptions/shouldObservePurchases``
 
 ### In-App Previews
