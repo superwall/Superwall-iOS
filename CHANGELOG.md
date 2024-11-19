@@ -47,7 +47,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds the `SuperwallOption` `shouldObservePurchases`. Set this to `true` to allow us to observe StoreKit 1 transactions you make with your app outside of Superwall. When this is enabled Superwall will not finish your external transactions. If you're using StoreKit 2 outside of Superwall, you will also need to use `Superwall.shared.observe(_:)` in conjunction with the `SuperwallOption`. This is placed before, after, and in the catch block of a StoreKit 2 purchase using the parameters `.purchaseWillBegin(for:)`, `.purchaseResult(_:)`, and `purchaseError(_:)`, respectively.
+- Adds the `SuperwallOption` `shouldObservePurchases`. Set this to `true` to allow us to observe StoreKit 1 transactions you make with your app outside of Superwall. When this is enabled Superwall will not finish your external transactions. StoreKit 2 is not supported... yet.
 - Adds Apple Search Ads keyword data to user attributes, which is visible on the user's page in Superwall. This data will soon be added to Charts. If the `SuperwallOption` `collectAdServicesAttribution` is enabled and you have added your client credentials from the Advanced Search Ads account settings page to Superwall, the Advanced attribution data will be collected. This includes the keyword name, campaign name, bid amount, match type, and more. Otherwise, the basic attribution data will be collected, which is mostly IDs.
 - Adds `isSubscribed` to product attributes so that you can use `products.primary.isSubscribed` as a dynamic value in the paywall editor.
 - Adds `device.appVersionPadded` to the device properties that you can use in audience filters.
@@ -55,6 +55,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where network requests that returned an error code weren't being retried.
+- Fixes date formatting on a device property.
 
 ## 3.11.3
 
