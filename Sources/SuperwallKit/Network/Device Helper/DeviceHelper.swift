@@ -311,12 +311,7 @@ class DeviceHelper {
   }()
 
   private let utcDateTimeFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.calendar = Calendar(identifier: .iso8601)
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-    formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-    return formatter
+    return String.rfc3339DateFormatter
   }()
 
   private var localDateString: String {
