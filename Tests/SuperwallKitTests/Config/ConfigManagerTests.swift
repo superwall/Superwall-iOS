@@ -60,7 +60,8 @@ final class ConfigManagerTests: XCTestCase {
       locales: ["fr"],
       appSessionTimeout: 2202,
       featureFlags: .stub(),
-      preloadingDisabled: .stub()
+      preloadingDisabled: .stub(),
+      attribution: .init(appleSearchAds: .init(enabled: true))
     )
     dependencyContainer.storage.save(config, forType: LatestConfig.self)
     let newConfig = dependencyContainer.storage.get(LatestConfig.self)

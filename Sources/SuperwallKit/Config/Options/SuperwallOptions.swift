@@ -177,11 +177,6 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
-  /// Collects the `AdServices` attributes and attaches them to the user attributes.
-  ///
-  /// Defaults to `false`.
-  public var collectAdServicesAttribution = false
-
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
@@ -224,7 +219,6 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
-    case collectAdServicesAttribution
   }
 
   public override init() {
@@ -245,7 +239,6 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
-    try container.encode(collectAdServicesAttribution, forKey: .collectAdServicesAttribution)
   }
 
   func toDictionary() -> [String: Any] {

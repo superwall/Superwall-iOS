@@ -6,14 +6,16 @@
 //
 
 import Foundation
+import Combine
 
 final class AttributionPoster {
   private let attributionFetcher = AttributionFetcher()
-  private let collectAdServicesAttribution: Bool
   private var isCollecting = false
 
   private unowned let storage: Storage
   private unowned let network: Network
+  private unowned let configManager: ConfigManager
+  private var cancellables: [AnyCancellable] = []
 
   private var adServicesTokenToPostIfNeeded: String? {
     get async throws {
@@ -35,13 +37,17 @@ final class AttributionPoster {
   }
 
   init(
-    collectAdServicesAttribution: Bool,
     storage: Storage,
-    network: Network
+    network: Network,
+    configManager: ConfigManager
   ) {
-    self.collectAdServicesAttribution = collectAdServicesAttribution
     self.storage = storage
     self.network = network
+    self.configManager = configManager
+
+    if #available(iOS 14.3, *) {
+      listenToConfig()
+    }
 
     NotificationCenter.default.addObserver(
       self,
@@ -51,15 +57,32 @@ final class AttributionPoster {
     )
   }
 
+
+  @available(iOS 14.3, *)
+  private func listenToConfig() {
+    configManager.configState
+      .compactMap { $0.getConfig() }
+      .first { config in
+        config.attribution?.appleSearchAds?.enabled == true
+      }
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] _ in
+          Task {
+            await self?.getAdServicesTokenIfNeeded()
+          }
+        }
+      )
+      .store(in: &cancellables)
+  }
+
   @objc
   private func applicationWillEnterForeground() {
     #if os(iOS) || os(macOS) || os(visionOS)
     guard Superwall.isInitialized else {
       return
     }
-    if isCollecting {
-      return
-    }
+
     Task(priority: .background) {
       if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
         await getAdServicesTokenIfNeeded()
@@ -73,12 +96,15 @@ final class AttributionPoster {
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   func getAdServicesTokenIfNeeded() async {
+    if isCollecting {
+      return
+    }
     defer {
       isCollecting = false
     }
     do {
       isCollecting = true
-      guard collectAdServicesAttribution else {
+      guard configManager.config?.attribution?.appleSearchAds?.enabled == true else {
         return
       }
       guard let token = try await adServicesTokenToPostIfNeeded else {

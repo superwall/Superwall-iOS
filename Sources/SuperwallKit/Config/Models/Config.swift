@@ -17,6 +17,7 @@ struct Config: Codable, Equatable {
   var featureFlags: FeatureFlags
   var preloadingDisabled: PreloadingDisabled
   var requestId: String?
+  var attribution: Attribution?
   var allComputedProperties: [ComputedPropertyRequest] {
     return triggers.flatMap {
       $0.audiences.flatMap {
@@ -35,6 +36,7 @@ struct Config: Codable, Equatable {
     case appSessionTimeout = "appSessionTimeoutMs"
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
+    case attribution = "attributionOptions"
   }
 
   init(from decoder: Decoder) throws {
@@ -47,6 +49,7 @@ struct Config: Codable, Equatable {
     appSessionTimeout = try values.decode(Milliseconds.self, forKey: .appSessionTimeout)
     featureFlags = try FeatureFlags(from: decoder)
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
+    attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -62,6 +65,7 @@ struct Config: Codable, Equatable {
     try container.encode(logLevel, forKey: .logLevel)
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
+    try container.encodeIfPresent(attribution, forKey: .attribution)
 
     let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
     try container.encode(localizationConfig, forKey: .localization)
@@ -79,7 +83,8 @@ struct Config: Codable, Equatable {
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
-    preloadingDisabled: PreloadingDisabled
+    preloadingDisabled: PreloadingDisabled,
+    attribution: Attribution
   ) {
     self.buildId = buildId
     self.triggers = triggers
@@ -89,6 +94,7 @@ struct Config: Codable, Equatable {
     self.appSessionTimeout = appSessionTimeout
     self.featureFlags = featureFlags
     self.preloadingDisabled = preloadingDisabled
+    self.attribution = attribution
   }
 }
 
@@ -104,7 +110,8 @@ extension Config: Stubbable {
       locales: [],
       appSessionTimeout: 3600000,
       featureFlags: .stub(),
-      preloadingDisabled: .stub()
+      preloadingDisabled: .stub(),
+      attribution: .init(appleSearchAds: .init(enabled: true))
     )
   }
 }
