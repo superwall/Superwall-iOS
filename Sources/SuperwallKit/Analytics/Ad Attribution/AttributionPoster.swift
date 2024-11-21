@@ -67,8 +67,8 @@ final class AttributionPoster {
       }
       .sink(
         receiveCompletion: { _ in },
-        receiveValue: { [weak self] _ in
-          Task {
+        receiveValue: { _ in
+          Task { [weak self] in
             await self?.getAdServicesTokenIfNeeded()
           }
         }
