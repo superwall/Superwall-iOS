@@ -204,8 +204,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       // come from a function within Superwall, check that it's not
       // a purchase that's been readded to the queue. Then start observing it.
       if source == nil,
-        options.shouldObservePurchases
-      {
+        options.shouldObservePurchases {
         var storedIds = storage.get(PurchasingProductIds.self) ?? []
         let isExistingTransaction = storedIds.contains(
           where: { $0 == skTransaction.payment.productIdentifier }

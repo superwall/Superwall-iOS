@@ -88,8 +88,7 @@ final class TransactionManager {
     // This avoids duplicate calls by the purchase function of the purchase
     // controller.
     if case .purchaseFunc = purchaseSource,
-      factory.makeHasExternalPurchaseController()
-    {
+      factory.makeHasExternalPurchaseController() {
       // Not resetting coordinator here because we need it with the purchase controller
       // call.
       return result
@@ -159,6 +158,30 @@ final class TransactionManager {
     await coordinator.reset()
   }
 
+  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+  func logSK2ObserverModeTransaction(
+    _ transaction: SK2Transaction,
+    decodedJwsPayload: [String: Any]?
+  ) async {
+    guard let product = try? await productsManager.products(
+      identifiers: [transaction.productID],
+      forPaywall: nil,
+      placement: nil
+    ).first else {
+      return
+    }
+    await prepareToPurchase(
+      product: product,
+      purchaseSource: .observeFunc(product)
+    )
+
+    let hasOffer = decodedJwsPayload?["offerDiscountType"] != nil
+    let coordinator = factory.makePurchasingCoordinator()
+    await coordinator.setIsFreeTrialAvailable(to: hasOffer)
+
+    await didPurchase()
+  }
+
   @MainActor
   @discardableResult
   func tryToRestore(_ restoreSource: RestoreSource) async -> RestorationResult {
@@ -202,8 +225,7 @@ final class TransactionManager {
             " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
         }
         if case .failed(let error) = restorationResult,
-          let error = error
-        {
+          let error = error {
           message += " Original restoration error message: \(error.safeLocalizedDescription)"
         }
         await logAndTrack(
@@ -388,7 +410,7 @@ final class TransactionManager {
         message: "Transaction Error",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController,
+          "paywall_vc": paywallViewController
         ],
         error: error
       )
@@ -510,8 +532,7 @@ final class TransactionManager {
       // get called by the purchase function of the purchase controller.
       let options = factory.makeSuperwallOptions()
       if !options.shouldObservePurchases,
-        factory.makeHasExternalPurchaseController()
-      {
+        factory.makeHasExternalPurchaseController() {
         return
       }
 
@@ -561,7 +582,7 @@ final class TransactionManager {
         message: "Transaction Succeeded",
         info: [
           "product_id": product.productIdentifier,
-          "paywall_vc": paywallViewController,
+          "paywall_vc": paywallViewController
         ],
         error: nil
       )
@@ -774,7 +795,23 @@ final class TransactionManager {
     else {
       return
     }
-    let didStartFreeTrial = await coordinator.isFreeTrialAvailable
+
+    // If observing
+    if #available(iOS 15.0, *),
+      let purchaser = purchaseManager.purchaser as? ProductPurchaserSK2,
+      let id = transaction?.sk2Transaction?.id {
+      let observer = purchaser.sk2ObserverModePurchaseDetector
+      await observer.insertToCachedTransactionIds([id])
+    }
+
+    let didStartOffer: Bool
+
+    if #available(iOS 17.2, *),
+      let sk2Transaction = transaction?.sk2Transaction {
+      didStartOffer = sk2Transaction.offer != nil
+    } else {
+      didStartOffer = await coordinator.isFreeTrialAvailable
+    }
 
     var isObserved = false
     if case .observeFunc = source {
@@ -784,7 +821,7 @@ final class TransactionManager {
     let type: InternalSuperwallPlacement.Transaction.TransactionType = {
       if product.subscriptionPeriod == nil {
         return .nonRecurringProductPurchase
-      } else if didStartFreeTrial {
+      } else if didStartOffer {
         return .freeTrialStart
       } else {
         return .subscriptionStart

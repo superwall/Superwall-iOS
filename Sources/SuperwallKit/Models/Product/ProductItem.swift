@@ -88,8 +88,7 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
     // ID of the app, it gets ignored.
     let bundleId = try container.decodeIfPresent(String.self, forKey: .bundleId)
     if let bundleId = bundleId,
-      bundleId != Bundle.main.bundleIdentifier
-    {
+      bundleId != Bundle.main.bundleIdentifier {
       throw DecodingError.typeMismatch(
         String.self,
         .init(

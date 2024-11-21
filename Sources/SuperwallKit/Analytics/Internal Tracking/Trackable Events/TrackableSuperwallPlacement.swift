@@ -41,7 +41,7 @@ enum PrivateSuperwallPlacement {
         "cel_expression": celExpression,
         "cel_expression_did_match": celExpressionDidMatch,
         "liquid_expression": liquidExpression,
-        "liquid_expression_did_match": liquidExpressionDidMatch,
+        "liquid_expression_did_match": liquidExpressionDidMatch
       ]
     }
   }
@@ -63,7 +63,7 @@ enum InternalSuperwallPlacement {
     func getSuperwallParameters() async -> [String: Any] {
       return [
         "application_installed_at": appInstalledAtString,
-        "using_purchase_controller": hasExternalPurchaseController,
+        "using_purchase_controller": hasExternalPurchaseController
       ]
     }
   }
@@ -93,7 +93,7 @@ enum InternalSuperwallPlacement {
       let output = paywallInfo.audienceFilterParams()
       return output + [
         "survey_selected_option_title": selectedOption.title,
-        "survey_custom_response": customResponse as Any,
+        "survey_custom_response": customResponse as Any
       ]
     }
     let survey: Survey
@@ -105,7 +105,7 @@ enum InternalSuperwallPlacement {
       let params: [String: Any] = [
         "survey_id": survey.id,
         "survey_assignment_key": survey.assignmentKey,
-        "survey_selected_option_id": selectedOption.id,
+        "survey_selected_option_id": selectedOption.id
       ]
 
       return await paywallInfo.placementParams(otherParams: params)
@@ -151,7 +151,7 @@ enum InternalSuperwallPlacement {
         "lastPathComponent": url.lastPathComponent,
         "host": url.host ?? "",
         "query": url.query ?? "",
-        "fragment": url.fragment ?? "",
+        "fragment": url.fragment ?? ""
       ]
     }
 
@@ -230,7 +230,7 @@ enum InternalSuperwallPlacement {
       var params = options.toDictionary()
       params += [
         "using_purchase_controller": hasExternalPurchaseController,
-        "has_delegate": hasDelegate,
+        "has_delegate": hasDelegate
       ]
       return params
     }
@@ -346,14 +346,14 @@ enum InternalSuperwallPlacement {
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
-          "result": "holdout",
+          "result": "holdout"
         ]
       case let .paywall(experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": experiment.variant.paywallId as Any,
-          "result": "present",
+          "result": "present"
         ]
       case .placementNotFound:
         return params + [
@@ -387,12 +387,11 @@ enum InternalSuperwallPlacement {
         "source_event_name": placementData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
-        "status_reason": statusReason?.description ?? "",
+        "status_reason": statusReason?.description ?? ""
       ]
 
       if let featureFlags = factory.makeFeatureFlags(),
-        featureFlags.enableExpressionParameters
-      {
+        featureFlags.enableExpressionParameters {
         let computedPropertyRequests = factory.makeComputedPropertyRequests()
         let audienceFilters = await factory.makeAudienceFilterAttributes(
           forPlacement: placementData,
@@ -401,8 +400,7 @@ enum InternalSuperwallPlacement {
 
         if let audienceFiltersDictionary = audienceFilters.dictionaryObject,
           let jsonData = try? JSONSerialization.data(withJSONObject: audienceFiltersDictionary),
-          let decoded = String(data: jsonData, encoding: .utf8)
-        {
+          let decoded = String(data: jsonData, encoding: .utf8) {
           params += [
             "expression_params": decoded
           ]
@@ -614,7 +612,7 @@ enum InternalSuperwallPlacement {
       var placementParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storekit_version": storeKitVersion.rawValue,
+        "storekit_version": storeKitVersion.rawValue
       ]
 
       switch state {
@@ -629,7 +627,7 @@ enum InternalSuperwallPlacement {
         placementParams += [
           "storefront_countryCode": storefrontCountryCode,
           "storefront_id": storefrontId,
-          "transaction_type": type.rawValue,
+          "transaction_type": type.rawValue
         ]
         fallthrough
       case .start,
@@ -831,7 +829,7 @@ enum InternalSuperwallPlacement {
         "config_build_id": buildId,
         "retry_count": retryCount,
         "cache_status": cacheStatus.rawValue,
-        "fetch_duration": fetchDuration,
+        "fetch_duration": fetchDuration
       ]
     }
   }

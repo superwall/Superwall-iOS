@@ -164,7 +164,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     let event = [
       "event_name": placement,
       "paywall_id": paywall.databaseId,
-      "paywall_identifier": paywall.identifier,
+      "paywall_identifier": paywall.identifier
     ]
     guard let jsonEncodedEvent = try? JSONEncoder().encode([event]) else {
       return
@@ -189,8 +189,8 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func passMessageToWebView(_ base64String: String) {
     let messageScript = """
-        window.paywall.accept64('\(base64String)');
-      """
+    window.paywall.accept64('\(base64String)');
+    """
 
     Logger.debug(
       logLevel: .debug,
@@ -242,9 +242,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       factory: factory
     )
     let scriptSrc = """
-        window.paywall.accept64('\(templates)');
-        window.paywall.accept64('\(htmlSubstitutions)');
-      """
+    window.paywall.accept64('\(templates)');
+    window.paywall.accept64('\(htmlSubstitutions)');
+    """
 
     Logger.debug(
       logLevel: .debug,
@@ -377,7 +377,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     var info: [String: Any] = [
       "self": self,
       "Superwall.shared.paywallViewController": paywallDebugDescription,
-      "event": eventName,
+      "event": eventName
     ]
     if let userInfo = userInfo {
       info = info.merging(userInfo)
