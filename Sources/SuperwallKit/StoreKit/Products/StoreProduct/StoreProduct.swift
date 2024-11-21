@@ -88,7 +88,7 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "languageCode": languageCode ?? "n/a",
       "currencyCode": currencyCode ?? "n/a",
       "currencySymbol": currencySymbol ?? "n/a",
-      "identifier": productIdentifier,
+      "identifier": productIdentifier
     ]
   }
 

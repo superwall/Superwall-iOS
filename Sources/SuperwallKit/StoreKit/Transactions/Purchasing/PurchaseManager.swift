@@ -14,7 +14,13 @@ protocol Purchasing {
 
 final class PurchaseManager: Purchasing {
   let coordinator: PurchasingCoordinator
-  private let purchaser: Purchasing
+  let purchaser: Purchasing
+  private unowned let factory: Factory
+  typealias Factory = HasExternalPurchaseControllerFactory
+    & StoreTransactionFactory
+    & OptionsFactory
+    & TransactionManagerFactory
+    & PurchasedTransactionsFactory
 
   // swiftlint:disable:next identifier_name
   var _sk2TransactionListener: Any?
@@ -23,7 +29,10 @@ final class PurchaseManager: Purchasing {
     // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2TransactionListener! as! SK2TransactionListener
   }
-  let isUsingSK2: Bool
+
+  var isUsingSK2: Bool {
+    return !(purchaser is ProductPurchaserSK1)
+  }
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -31,24 +40,22 @@ final class PurchaseManager: Purchasing {
     receiptManager: ReceiptManager,
     identityManager: IdentityManager,
     storage: Storage,
-    factory: HasExternalPurchaseControllerFactory
-      & StoreTransactionFactory
-      & OptionsFactory
-      & TransactionManagerFactory
+    factory: Factory
   ) {
+    self.factory = factory
     coordinator = PurchasingCoordinator(factory: factory)
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
       purchaser = ProductPurchaserSK2(
         identityManager: identityManager,
         receiptManager: receiptManager,
+        storage: storage,
         factory: factory
       )
-      self._sk2TransactionListener = SK2TransactionListener(
+      _sk2TransactionListener = SK2TransactionListener(
         receiptManager: receiptManager,
         factory: factory
       )
-      isUsingSK2 = true
       Task {
         await sk2TransactionListener.listenForTransactions()
       }
@@ -61,7 +68,6 @@ final class PurchaseManager: Purchasing {
         storage: storage,
         factory: factory
       )
-      isUsingSK2 = false
     }
   }
 

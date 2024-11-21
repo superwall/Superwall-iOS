@@ -45,7 +45,7 @@ enum TemplateLogic {
     let encodedTemplates = [
       utf8Encoded(productsTemplate),
       utf8Encoded(variablesTemplate),
-      utf8Encoded(freeTrialTemplate),
+      utf8Encoded(freeTrialTemplate)
     ]
 
     let templatesString = "[" + encodedTemplates.joined(separator: ",") + "]"

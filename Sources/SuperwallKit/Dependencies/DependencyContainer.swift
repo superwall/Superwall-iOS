@@ -83,11 +83,7 @@ final class DependencyContainer {
     )
 
     api = Api(networkEnvironment: options.networkEnvironment)
-    attributionPoster = AttributionPoster(
-      collectAdServicesAttribution: options.collectAdServicesAttribution,
-      storage: storage,
-      network: network
-    )
+
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
@@ -105,6 +101,12 @@ final class DependencyContainer {
       deviceHelper: deviceHelper,
       entitlementsInfo: entitlementsInfo,
       factory: self
+    )
+
+    attributionPoster = AttributionPoster(
+      storage: storage,
+      network: network,
+      configManager: configManager
     )
 
     placementsQueue = PlacementsQueue(

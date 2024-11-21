@@ -8,20 +8,64 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, *)
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: HasExternalPurchaseControllerFactory
+  private unowned let factory: Factory
+  typealias Factory = HasExternalPurchaseControllerFactory
+    & OptionsFactory
+    & TransactionManagerFactory
+    & PurchasedTransactionsFactory
+  let sk2ObserverModePurchaseDetector: SK2ObserverModePurchaseDetector
 
   init(
     identityManager: IdentityManager,
     receiptManager: ReceiptManager,
-    factory: HasExternalPurchaseControllerFactory
+    storage: Storage,
+    factory: Factory
   ) {
     self.identityManager = identityManager
     self.receiptManager = receiptManager
     self.factory = factory
+
+    sk2ObserverModePurchaseDetector = SK2ObserverModePurchaseDetector(
+      storage: storage,
+      allTransactionsProvider: SK2AllTransactionsProvider(),
+      factory: factory
+    )
+
+    // Cache legacy transactions if observer mode turned on.
+    let options = factory.makeSuperwallOptions()
+    if options.shouldObservePurchases {
+      Task {
+        await sk2ObserverModePurchaseDetector.cacheLegacyTransactions()
+      }
+    }
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleApplicationDidBecomeActive),
+      name: SystemInfo.applicationDidBecomeActiveNotification,
+      object: nil
+    )
+  }
+
+  @objc
+  private func handleApplicationDidBecomeActive() {
+    let options = factory.makeSuperwallOptions()
+    let shouldObservePurchases = options.shouldObservePurchases
+    let storeKitVersion = options.storeKitVersion
+
+    if shouldObservePurchases,
+      storeKitVersion == .storeKit2 {
+      Task(priority: .utility) { [weak self] in
+        guard let self = self else {
+          return
+        }
+        await self.sk2ObserverModePurchaseDetector.detectUnobservedTransactions(delegate: self)
+      }
+    }
   }
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
@@ -45,7 +89,7 @@ final class ProductPurchaserSK2: Purchasing {
         await receiptManager.loadPurchasedProducts()
 
         let transactionDate = transaction.purchaseDate
-        if transactionDate < purchaseDate {
+        if transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
           return .restored
         }
         return .purchased
@@ -100,5 +144,19 @@ final class ProductPurchaserSK2: Purchasing {
       )
       return .failed(error)
     }
+  }
+}
+
+@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+extension ProductPurchaserSK2: SK2ObserverModePurchaseDetectorDelegate {
+  func logSK2ObserverModeTransaction(
+    transaction: SK2Transaction,
+    decodedJwsPayload: [String: Any]?
+  ) async throws {
+    let transactionManager = factory.makeTransactionManager()
+    await transactionManager.logSK2ObserverModeTransaction(
+      transaction,
+      decodedJwsPayload: decodedJwsPayload
+    )
   }
 }

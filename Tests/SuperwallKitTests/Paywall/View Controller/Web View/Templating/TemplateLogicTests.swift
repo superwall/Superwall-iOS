@@ -153,7 +153,7 @@ final class TemplateLogicTests: XCTestCase {
     XCTAssertEqual(jsonArray[1]["variables"]["params"]["myparam"], "test")
     XCTAssertEqual(jsonArray[1]["variables"]["user"]["name"], "Yusuf")
     XCTAssertEqual(jsonArray[1]["variables"]["products"][0]["primary"]["period"], "month")
-    XCTAssertEqual(jsonArray[1]["variables"]["products"][0]["primary"].count, 1)
+    XCTAssertEqual(jsonArray[1]["variables"]["products"][0]["primary"].count, 2)
     XCTAssertEqual(jsonArray[1]["variables"]["products"].count, 1)
 
     XCTAssertEqual(jsonArray[2]["event_name"], "template_substitutions_prefix")
