@@ -59,10 +59,14 @@ public final class PaywallOptions: NSObject, Encodable {
 
     /// Defines the message of the alert presented to the user when notification permissions are denied.
     /// Defaults to `Please enable notification permissions from the Settings app so we can notify you when your free trial ends.`
-    public var message = "Please enable notification permissions from the Settings app so we can notify you when your free trial ends."
+    public var message = "Please enable notification permissions from "
+      + "the Settings app so we can notify you when your free trial ends."
 
-    /// Defines the title of the close button in the alert presented to the user when notification permissions are denied. Defaults to `Okay`.
-    public var closeButtonTitle = "Okay"
+    /// Defines the title of the action button in the alert presented to the user when notification permissions are denied. Defaults to `Open Settings`.
+    public var actionButtonTitle = "Open Settings"
+
+    /// Defines the title of the close button in the alert presented to the user when notification permissions are denied. Defaults to `Not now`.
+    public var closeButtonTitle = "Not now"
 
     private enum CodingKeys: CodingKey {
       case deniedTitle
