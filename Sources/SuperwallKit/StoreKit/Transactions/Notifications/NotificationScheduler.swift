@@ -38,6 +38,20 @@ enum NotificationScheduler {
       return
     }
     guard await NotificationScheduler.askForPermissionsIfNecessary(using: notificationCenter) else {
+      if let notificationPermissionsDenied = Superwall.shared.options.paywalls.notificationPermissionsDenied {
+        await withCheckedContinuation { continuation in
+          Task {
+            await Superwall.shared.paywallViewController?.presentAlert(
+              title: notificationPermissionsDenied.title,
+              message: notificationPermissionsDenied.message,
+              closeActionTitle: notificationPermissionsDenied.closeButtonTitle,
+              onClose: {
+                continuation.resume()
+              }
+            )
+          }
+        }
+      }
       return
     }
 
