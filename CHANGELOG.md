@@ -49,9 +49,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the `SuperwallOption` `shouldObservePurchases`. Set this to `true` to allow us to observe StoreKit 1 transactions you make with your app outside of Superwall. When this is enabled Superwall will not finish your external transactions. StoreKit 2 is not supported... yet.
-- Adds Apple Search Ads attribution data to user attributes, which is visible on the user's page in Superwall. Attribution data will be collected if you have enabled Basic or Advanced Apple Search Ads in the Superwall dashboard settings. Advanced attribution data includes the keyword name, campaign name, bid amount, match type, and more. Otherwise, the basic attribution data will be collected, which is mostly IDs. This data will soon be added to Charts. 
+- Adds Apple Search Ads attribution data to user attributes, which is visible on the user's page in Superwall. Attribution data will be collected if you have enabled Basic or Advanced Apple Search Ads in the Superwall dashboard settings. Advanced attribution data includes the keyword name, campaign name, bid amount, match type, and more. Otherwise, the basic attribution data will be collected, which is mostly IDs. This data will soon be added to Charts.
 - Adds `isSubscribed` to product attributes so that you can use `products.primary.isSubscribed` as a dynamic value in the paywall editor.
 - Adds `device.appVersionPadded` to the device properties that you can use in audience filters.
+- Adds a `notificationPermissionsDenied` `PaywallOption`, which you can set to show an alert after a user denies notification permissions.
 
 ### Fixes
 

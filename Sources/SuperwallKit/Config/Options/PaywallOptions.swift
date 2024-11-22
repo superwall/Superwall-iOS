@@ -50,6 +50,36 @@ public final class PaywallOptions: NSObject, Encodable {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
+  @objc(SWKNotificationPermissionsDenied)
+  @objcMembers
+  public final class NotificationPermissionsDenied: NSObject, Encodable {
+    /// The title of the alert presented to the user when notification permissions are denied. Defaults to
+    /// `Notification Permissions Denied`.
+    public var title = "Notification Permissions Denied"
+
+    /// Defines the message of the alert presented to the user when notification permissions are denied.
+    /// Defaults to `Please enable notification permissions from the Settings app so we can notify you when your free trial ends.`
+    public var message = "Please enable notification permissions from the Settings app so we can notify you when your free trial ends."
+
+    /// Defines the title of the close button in the alert presented to the user when notification permissions are denied. Defaults to `Okay`.
+    public var closeButtonTitle = "Okay"
+
+    private enum CodingKeys: CodingKey {
+      case deniedTitle
+      case deniedMessage
+      case deniedCloseButtonTitle
+    }
+
+    public func encode(to encoder: any Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(title, forKey: .deniedTitle)
+      try container.encode(message, forKey: .deniedMessage)
+      try container.encode(closeButtonTitle, forKey: .deniedCloseButtonTitle)
+    }
+  }
+  /// Defines the messaging of the alert presented to the user when notification permissions are denied.
+  public var notificationPermissionsDenied: NotificationPermissionsDenied?
+
   /// Shows an alert after a purchase fails. Defaults to `true`.
   ///
   /// Set this to `false` if you're using a `PurchaseController` and want to show

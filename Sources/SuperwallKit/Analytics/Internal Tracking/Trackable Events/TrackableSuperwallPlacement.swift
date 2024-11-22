@@ -629,6 +629,8 @@ enum InternalSuperwallPlacement {
           "storefront_id": storefrontId,
           "transaction_type": type.rawValue
         ]
+        let appleSearchAttributes = Superwall.shared.userAttributes.filter { $0.key.hasPrefix("apple_search_ads_") }
+        eventParams += appleSearchAttributes
         fallthrough
       case .start,
         .abandon,
