@@ -551,11 +551,11 @@ enum InternalSuperwallPlacement {
           product: product,
           paywallInfo: paywallInfo
         )
-      case let .complete(product, model, _):
-        // TODO: In v4 add in type:
+      case let .complete(product, model, type):
         return .transactionComplete(
           transaction: model,
           product: product,
+          type: type,
           paywallInfo: paywallInfo
         )
       case .restore(let restoreType):
@@ -577,12 +577,6 @@ enum InternalSuperwallPlacement {
     let source: Source
     let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion
-
-    enum TransactionType: String {
-      case nonRecurringProductPurchase = "NON_RECURRING_PRODUCT_PURCHASE"
-      case freeTrialStart = "FREE_TRIAL_START"
-      case subscriptionStart = "SUBSCRIPTION_START"
-    }
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
@@ -627,10 +621,10 @@ enum InternalSuperwallPlacement {
         placementParams += [
           "storefront_countryCode": storefrontCountryCode,
           "storefront_id": storefrontId,
-          "transaction_type": type.rawValue
+          "transaction_type": type.description
         ]
         let appleSearchAttributes = Superwall.shared.userAttributes.filter { $0.key.hasPrefix("apple_search_ads_") }
-        eventParams += appleSearchAttributes
+        placementParams += appleSearchAttributes
         fallthrough
       case .start,
         .abandon,

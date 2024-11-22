@@ -78,7 +78,7 @@ public enum SuperwallPlacement {
   /// this won't be `nil`. However, it could be `nil` if you are using a ``PurchaseController``
   /// and the transaction object couldn't be detected after you return `.purchased` in ``PurchaseController/purchase(product:)``.
   case transactionComplete(
-    transaction: StoreTransaction?, product: StoreProduct, paywallInfo: PaywallInfo)
+    transaction: StoreTransaction?, product: StoreProduct, type: TransactionType, paywallInfo: PaywallInfo)
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart(product: StoreProduct, paywallInfo: PaywallInfo)

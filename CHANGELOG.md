@@ -32,6 +32,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
 - Changes the Objective-C `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object, a `PaywallResult` object, and an optional `StoreProduct`, so you know which product was purchased after dismiss.
 - Renames `LogScope` case `paywallTransactions` to `transactions`.
+- Adds `type` to the `transactionComplete` placement.
 
 ### Enhancements
 

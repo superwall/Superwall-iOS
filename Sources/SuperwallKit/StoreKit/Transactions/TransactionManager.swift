@@ -818,7 +818,7 @@ final class TransactionManager {
       isObserved = true
     }
 
-    let type: InternalSuperwallPlacement.Transaction.TransactionType = {
+    let type: TransactionType = {
       if product.subscriptionPeriod == nil {
         return .nonRecurringProductPurchase
       } else if didStartOffer {
