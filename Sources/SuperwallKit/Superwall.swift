@@ -656,8 +656,17 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     let storeProduct = StoreProduct(sk1Product: product)
-    return await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+    return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
   /// Initiates a purchase of a `SKProduct`.
@@ -678,8 +687,7 @@ public final class Superwall: NSObject, ObservableObject {
     completion: @escaping (PurchaseResult) -> Void
   ) {
     Task {
-      let storeProduct = StoreProduct(sk1Product: product)
-      let result = await dependencyContainer.transactionManager.purchase(.external(storeProduct))
+      let result = await purchase(product)
       await MainActor.run {
         completion(result)
       }

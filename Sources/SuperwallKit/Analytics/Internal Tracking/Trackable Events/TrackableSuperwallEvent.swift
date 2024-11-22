@@ -521,7 +521,7 @@ enum InternalSuperwallEvent {
       case start(StoreProduct)
       case fail(TransactionError)
       case abandon(StoreProduct)
-      case complete(StoreProduct, StoreTransaction?)
+      case complete(StoreProduct, StoreTransaction?, TransactionType)
       case restore(RestoreType)
       case timeout
     }
@@ -544,7 +544,8 @@ enum InternalSuperwallEvent {
           product: product,
           paywallInfo: paywallInfo
         )
-      case let .complete(product, model):
+      case let .complete(product, model, _):
+        // TODO: In v4 add in type:
         return .transactionComplete(
           transaction: model,
           product: product,
@@ -563,15 +564,29 @@ enum InternalSuperwallEvent {
       case storeKit1 = "STOREKIT1"
       case storeKit2 = "STOREKIT2"
     }
-    enum TransactionSource: String {
+    enum Source: String {
       case `internal` = "SUPERWALL"
       case external = "APP"
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct?
-    let model: StoreTransaction?
-    let source: TransactionSource
+    let transaction: StoreTransaction?
+    let source: Source
+    let isObserved: Bool
     let storeKitVersion: StoreKitVersion
+
+    enum TransactionType: String {
+      case nonRecurringProductPurchase = "NON_RECURRING_PRODUCT_PURCHASE"
+      case freeTrialStart = "FREE_TRIAL_START"
+      case subscriptionStart = "SUBSCRIPTION_START"
+    }
+
+    var canImplicitlyTriggerPaywall: Bool {
+      if isObserved {
+        return false
+      }
+      return superwallEvent.canImplicitlyTriggerPaywall
+    }
 
     var audienceFilterParams: [String: Any] {
       switch state {
@@ -585,6 +600,12 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
+      var storefrontCountryCode = ""
+      var storefrontId = ""
+      if #available(iOS 15.0, *) {
+        storefrontCountryCode = await Storefront.current?.countryCode ?? ""
+        storefrontId = await Storefront.current?.id ?? ""
+      }
       var eventParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
@@ -594,17 +615,25 @@ enum InternalSuperwallEvent {
       switch state {
       case .restore:
         eventParams += await paywallInfo.eventParams(forProduct: product)
-        if let transactionDict = model?.dictionary(withSnakeCase: true) {
+        if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict
         }
-        eventParams["restore_via_purchase_attempt"] = model != nil
+        eventParams["restore_via_purchase_attempt"] = transaction != nil
         return eventParams
+      case .complete(_, _, let type):
+        eventParams += [
+          "storefront_countryCode": storefrontCountryCode,
+          "storefront_id": storefrontId,
+          "transaction_type": type.rawValue
+        ]
+        let appleSearchAttributes = Superwall.shared.userAttributes.filter { $0.key.hasPrefix("apple_search_ads_") }
+        eventParams += appleSearchAttributes
+        fallthrough
       case .start,
         .abandon,
-        .complete,
         .timeout:
         eventParams += await paywallInfo.eventParams(forProduct: product)
-        if let transactionDict = model?.dictionary(withSnakeCase: true) {
+        if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
           eventParams += transactionDict
         }
         return eventParams
@@ -628,12 +657,17 @@ enum InternalSuperwallEvent {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      var params = await paywallInfo.eventParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 
@@ -652,12 +686,17 @@ enum InternalSuperwallEvent {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      var params = await paywallInfo.eventParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 
@@ -670,12 +709,17 @@ enum InternalSuperwallEvent {
     }
     let paywallInfo: PaywallInfo
     let product: StoreProduct
+    let transaction: StoreTransaction?
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.eventParams(forProduct: product)
+      var params = await paywallInfo.eventParams(forProduct: product)
+      if let transactionDict = transaction?.dictionary(withSnakeCase: true) {
+        params += transactionDict
+      }
+      return params
     }
   }
 

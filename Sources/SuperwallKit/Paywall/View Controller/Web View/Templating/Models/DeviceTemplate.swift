@@ -14,6 +14,7 @@ struct DeviceTemplate: Codable {
   var aliases: [String]
   var vendorId: String
   var appVersion: String
+  var appVersionPadded: String
   var osVersion: String
   var deviceModel: String
   var deviceLocale: String

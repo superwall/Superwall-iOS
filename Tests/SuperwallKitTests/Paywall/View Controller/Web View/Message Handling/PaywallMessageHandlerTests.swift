@@ -14,6 +14,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -39,6 +40,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -65,6 +67,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -88,6 +91,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -113,6 +117,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -138,6 +143,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -163,6 +169,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -186,6 +193,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(
@@ -210,6 +218,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = FakeWebView(

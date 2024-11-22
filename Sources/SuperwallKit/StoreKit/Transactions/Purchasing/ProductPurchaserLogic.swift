@@ -48,4 +48,21 @@ enum ProductPurchaserLogic {
       throw PurchaseError.unverifiedTransaction
     }
   }
+
+  static func hasRestored(
+    _ transaction: SKPaymentTransaction,
+    purchaseDate: Date?
+  ) -> Bool {
+    guard let purchaseDate = purchaseDate else {
+      return false
+    }
+    // If has a transaction date and that happened at least 20s before purchase
+    // button was pressed...
+    if let transactionDate = transaction.transactionDate,
+      transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
+      return true
+    }
+
+    return false
+  }
 }

@@ -74,10 +74,7 @@ final class DependencyContainer {
     )
 
     api = Api(networkEnvironment: options.networkEnvironment)
-    attributionPoster = AttributionPoster(
-      collectAdServicesAttribution: options.collectAdServicesAttribution,
-      storage: storage
-    )
+
     deviceHelper = DeviceHelper(
       api: api,
       storage: storage,
@@ -93,6 +90,12 @@ final class DependencyContainer {
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
       factory: self
+    )
+
+    attributionPoster = AttributionPoster(
+      storage: storage,
+      network: network,
+      configManager: configManager
     )
 
     eventsQueue = EventsQueue(
@@ -136,6 +139,7 @@ final class DependencyContainer {
       purchaseController: purchaseController,
       sessionEventsManager: sessionEventsManager,
       eventsQueue: eventsQueue,
+      productsFetcher: productsFetcher,
       factory: self
     )
 
@@ -145,6 +149,7 @@ final class DependencyContainer {
       sessionEventsManager: sessionEventsManager,
       identityManager: identityManager,
       storage: storage,
+      transactionManager: transactionManager,
       factory: self
     )
   }
@@ -220,6 +225,7 @@ extension DependencyContainer: ViewControllerFactory {
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: sessionEventsManager,
+      receiptManager: receiptManager,
       factory: self
     )
     let webView = SWWebView(

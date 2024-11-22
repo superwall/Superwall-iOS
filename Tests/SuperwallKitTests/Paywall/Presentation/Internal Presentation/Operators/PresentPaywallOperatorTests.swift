@@ -32,6 +32,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(
@@ -98,6 +99,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       sessionEventsManager: dependencyContainer.sessionEventsManager,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer
     )
     let webView = SWWebView(

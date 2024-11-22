@@ -10,7 +10,7 @@ import Foundation
 
 final class SWConsoleViewController: UIViewController {
   var products: [StoreProduct] = []
-  var tableViewCellData: [(String, String)] = []
+  var tableViewCellData: [(String, Any)] = []
 
   lazy var productPicker: UIPickerView = {
     let picker = UIPickerView()
@@ -149,7 +149,7 @@ extension SWConsoleViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     let (key, value) = tableViewCellData[indexPath.row]
-    cell.textLabel?.text = value
+    cell.textLabel?.text = "\(value)"
     cell.textLabel?.textColor = .white
     let text: String
     if let selectedProduct = selectedProduct {

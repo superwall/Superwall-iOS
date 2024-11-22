@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 import UIKit
@@ -268,6 +269,24 @@ class Network {
         info: ["payload": session],
         error: error
       )
+    }
+  }
+
+  func sendToken(_ token: String) async -> [String: JSON] {
+    do {
+      return try await urlSession.request(
+        .adServices(token: token),
+        data: SuperwallRequestData(factory: factory)
+      ).attribution
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /apple-ad-services/token",
+        info: ["payload": token],
+        error: error
+      )
+      return [:]
     }
   }
 }

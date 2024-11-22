@@ -13,6 +13,7 @@ enum TemplateLogic {
   static func getBase64EncodedTemplates(
     from paywall: Paywall,
     event: EventData?,
+    receiptManager: ReceiptManager,
     factory: VariablesFactory
   ) async -> String {
     let productsTemplate = ProductTemplate(
@@ -20,8 +21,18 @@ enum TemplateLogic {
       products: TemplatingProductItem.create(from: paywall.productItems)
     )
 
+    // Dynamically set isSubscribed for each product
+    var productVariables = paywall.productVariables ?? []
+
+    for product in paywall.productItems {
+      if let index = productVariables.firstIndex(where: { $0.name == product.name }) {
+        let isSubscribed = await receiptManager.isSubscribed(to: product.id)
+        productVariables[index].attributes["isSubscribed"] = JSON(isSubscribed)
+      }
+    }
+
     let variablesTemplate = await factory.makeJsonVariables(
-      products: paywall.productVariables,
+      products: productVariables,
       computedPropertyRequests: paywall.computedPropertyRequests,
       event: event
     )

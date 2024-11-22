@@ -9,7 +9,7 @@ import Foundation
 
 struct ProductVariable: Codable, Equatable {
   let name: String
-  let attributes: JSON
+  var attributes: JSON
 
   /// Encodes in the format `"name": [attributes]`
   func encode(to encoder: Encoder) throws {

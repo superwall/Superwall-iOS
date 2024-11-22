@@ -17,6 +17,7 @@ let response = #"""
   }
   ],
   "build_id": "poWduJZYQvCA8QbWLrjJC",
+  "attribution_options":{"apple_search_ads":{"enabled":true}},
   "ts": 1719479293597,
   "trigger_options": [{
     "trigger_version": "V2",

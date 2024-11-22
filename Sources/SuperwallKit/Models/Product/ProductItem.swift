@@ -48,6 +48,9 @@ public enum Store: Int, Codable, Sendable {
 @objc(SWKAppStoreProduct)
 @objcMembers
 public final class AppStoreProduct: NSObject, Codable, Sendable {
+  /// The bundleId that the product is associated with
+  let bundleId: String?
+
   /// The store the product belongs to.
   let store: Store
 
@@ -55,6 +58,7 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
   public let id: String
 
   enum CodingKeys: String, CodingKey {
+    case bundleId
     case id = "productIdentifier"
     case store
   }
@@ -63,6 +67,7 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
     store: Store = .appStore,
     id: String
   ) {
+    self.bundleId = Bundle.main.bundleIdentifier
     self.store = store
     self.id = id
   }
@@ -71,12 +76,28 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(id, forKey: .id)
     try container.encode(store, forKey: .store)
+    try container.encodeIfPresent(bundleId, forKey: .bundleId)
   }
 
   public init(from decoder: any Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.id = try container.decode(String.self, forKey: .id)
     self.store = try container.decode(Store.self, forKey: .store)
+
+    // If the bundle ID is present, and it's not equal to the bundle
+    // ID of the app, it gets ignored.
+    let bundleId = try container.decodeIfPresent(String.self, forKey: .bundleId)
+    if let bundleId = bundleId,
+      bundleId != Bundle.main.bundleIdentifier {
+      throw DecodingError.typeMismatch(
+        String.self,
+        .init(
+          codingPath: [],
+          debugDescription: "The bundle id of the product didn't match the bundle id of the app."
+        )
+      )
+    }
+    self.bundleId = bundleId
     super.init()
   }
 }
