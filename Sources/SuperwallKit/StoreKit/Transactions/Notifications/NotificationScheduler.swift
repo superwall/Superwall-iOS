@@ -5,7 +5,7 @@
 //  Created by Yusuf Tör on 19/06/2023.
 //
 
-import Foundation
+import UIKit
 import UserNotifications
 
 enum NotificationScheduler {
@@ -40,11 +40,18 @@ enum NotificationScheduler {
     guard await NotificationScheduler.askForPermissionsIfNecessary(using: notificationCenter) else {
       if let notificationPermissionsDenied = Superwall.shared.options.paywalls.notificationPermissionsDenied {
         await withCheckedContinuation { continuation in
-          Task {
-            await Superwall.shared.paywallViewController?.presentAlert(
+          Task { @MainActor in
+            Superwall.shared.paywallViewController?.presentAlert(
               title: notificationPermissionsDenied.title,
               message: notificationPermissionsDenied.message,
+              actionTitle: notificationPermissionsDenied.actionButtonTitle,
               closeActionTitle: notificationPermissionsDenied.closeButtonTitle,
+              action: {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                  UIApplication.shared.open(url)
+                }
+                continuation.resume()
+              },
               onClose: {
                 continuation.resume()
               }
