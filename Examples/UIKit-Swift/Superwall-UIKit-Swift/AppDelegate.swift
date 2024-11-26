@@ -16,7 +16,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
   ) -> Bool {
     // MARK: Configure Superwall
     #warning("Replace the API key with your own.")
-    Superwall.configure(apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9")
+    Superwall.configure(apiKey: "pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d")
     Superwall.shared.delegate = self
     return true
   }

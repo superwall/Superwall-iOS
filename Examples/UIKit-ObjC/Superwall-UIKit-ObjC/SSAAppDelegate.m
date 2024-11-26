@@ -23,7 +23,7 @@ NSNotificationName const SSAAppDelegateEntitlementStatusDidChange = @"SSAAppDele
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Initialize the Superwall service.
-  [Superwall configureWithApiKey:@"pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"];
+  [Superwall configureWithApiKey:@"pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d"];
   [[Superwall sharedInstance] setDelegate:self];
   
   return YES;

@@ -16,7 +16,7 @@ struct SuperwallSwiftUIExampleApp: App {
 
   init() {
     #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
-    let apiKey = "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"
+    let apiKey = "pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d"
     Superwall.configure(apiKey: apiKey)
     isPreviouslyLoggedIn.send(Superwall.shared.isLoggedIn)
   }

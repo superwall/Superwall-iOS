@@ -39,10 +39,6 @@ enum TrackingLogic {
       "event_name": placementName
     ]
 
-    if trackablePlacement is TrackablePrivatePlacement {
-      audienceFilterParams["$is_private_event"] = true
-    }
-
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {
       guard let value = clean(input: superwallParameters[key]) else {
