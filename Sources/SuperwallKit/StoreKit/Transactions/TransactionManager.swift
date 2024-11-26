@@ -499,6 +499,9 @@ final class TransactionManager {
       isObserved = true
     }
 
+    // Skip transaction start tracking if using StoreKit2 and the source is observeFunc
+    let shouldTrackTransactionStart = !(purchaseManager.isUsingSK2 && isObserved)
+
     switch purchaseSource {
     case .internal(_, let paywallViewController):
       Logger.debug(
@@ -527,12 +530,12 @@ final class TransactionManager {
         paywallViewController.loadingState = .loadingPurchase
       }
     case .purchaseFunc,
-      .observeFunc:
+        .observeFunc:
       // If an external purchase controller is being used, skip because this will
       // get called by the purchase function of the purchase controller.
       let options = factory.makeSuperwallOptions()
       if !options.shouldObservePurchases,
-        factory.makeHasExternalPurchaseController() {
+         factory.makeHasExternalPurchaseController() {
         return
       }
 
@@ -541,17 +544,19 @@ final class TransactionManager {
         scope: .transactions,
         message: "External Transaction Purchasing"
       )
-
-      let trackedEvent = InternalSuperwallPlacement.Transaction(
-        state: .start(product),
-        paywallInfo: .empty(),
-        product: product,
-        transaction: nil,
-        source: .external,
-        isObserved: isObserved,
-        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
-      )
-      await Superwall.shared.track(trackedEvent)
+      
+      if shouldTrackTransactionStart {
+        let trackedEvent = InternalSuperwallPlacement.Transaction(
+          state: .start(product),
+          paywallInfo: .empty(),
+          product: product,
+          transaction: nil,
+          source: .external,
+          isObserved: isObserved,
+          storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
+        )
+        await Superwall.shared.track(trackedEvent)
+      }
     }
 
     await factory.makePurchasingCoordinator().beginPurchase(
