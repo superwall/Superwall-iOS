@@ -493,6 +493,7 @@ class DeviceHelper {
       localDateTime: localDateTimeString,
       isSandbox: isSandbox,
       activeEntitlements: entitlementsInfo.active,
+      entitlementStatus: entitlementsInfo.status.description,
       isFirstAppOpen: isFirstAppOpen,
       sdkVersion: sdkVersion,
       sdkVersionPadded: sdkVersionPadded,
