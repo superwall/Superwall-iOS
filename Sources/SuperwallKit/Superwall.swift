@@ -457,6 +457,11 @@ public final class Superwall: NSObject, ObservableObject {
       completion?()
       return shared
     }
+
+    // Force StoreKit 1 for Objective-C
+    let options = options ?? SuperwallOptions()
+    options.storeKitVersion = .storeKit1
+
     superwall = Superwall(
       apiKey: apiKey,
       purchaseController: purchaseController.flatMap {

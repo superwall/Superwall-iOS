@@ -59,12 +59,16 @@ public final class Entitlement: NSObject, Codable, Sendable {
     case type
   }
 
-  public init(
+  init(
     id: String,
     type: EntitlementType = .serviceLevel
   ) {
     self.id = id
     self.type = type
+  }
+
+  static var `default`: Entitlement {
+    return .init(id: "default")
   }
 
   public init(

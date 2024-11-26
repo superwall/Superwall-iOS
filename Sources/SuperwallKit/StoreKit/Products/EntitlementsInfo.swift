@@ -42,7 +42,8 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  /// A published, read-only property that indicates the entitlement status of the user.
+  /// A published property that indicates the entitlement status of the user. If you're using a
+  /// `PurchaseController`, you must set this.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
   /// notified whenever it changes.
