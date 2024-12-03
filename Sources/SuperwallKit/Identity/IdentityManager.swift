@@ -200,6 +200,7 @@ class IdentityManager {
       }
 
       // Regenerate seed based on userId.
+      let semaphore = DispatchSemaphore(value: 0)
       self.group.enter()
       Task {
         let config = try? await self.configManager.configState
@@ -211,7 +212,10 @@ class IdentityManager {
           self._seed = seed
         }
         self.group.leave()
+        semaphore.signal()
       }
+
+      semaphore.wait()
 
       func getAssignmentsAsync() {
         Task.detached {
