@@ -15,6 +15,12 @@ struct Variables: Encodable {
   let params: JSON
   var products: [ProductVariable] = []
 
+  // These are needed for backwards compatibility with v3 paywalls.
+  // Do not remove otherwise product attributes won't work.
+  var primary: JSON = [:]
+  var secondary: JSON = [:]
+  var tertiary: JSON = [:]
+
   init(
     products: [ProductVariable]?,
     params: JSON?,
@@ -27,6 +33,22 @@ struct Variables: Encodable {
     guard let products = products else {
       return
     }
+
+    // These are needed for backwards compatibility with v3 paywalls.
+    // Do not remove otherwise product attributes won't work.
+    for product in products {
+      switch product.name {
+      case "primary":
+        primary = product.attributes
+      case "secondary":
+        secondary = product.attributes
+      case "tertiary":
+        tertiary = product.attributes
+      default:
+        break
+      }
+    }
+
     self.products = products
   }
 
