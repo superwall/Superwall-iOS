@@ -18,8 +18,7 @@ extension StoreKit.VerificationResult where SignedType == StoreKit.Transaction {
   var verifiedTransaction: StoreKit.Transaction? {
     switch self {
     case let .verified(transaction): return transaction
-    case let .unverified(transaction, error):
-      return nil
+    case .unverified: return nil
     }
   }
 
