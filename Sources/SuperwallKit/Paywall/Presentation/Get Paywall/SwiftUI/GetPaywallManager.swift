@@ -11,7 +11,7 @@ final class GetPaywallManager: ObservableObject {
   @Published var userHasAccess = false
   enum DismissState: Equatable {
     case none
-    case dismiss(PaywallInfo)
+    case dismiss(PaywallInfo, PaywallResult)
   }
   @Published var dismissState: DismissState = .none
 
@@ -65,7 +65,7 @@ extension GetPaywallManager: PaywallViewControllerDelegate {
     didFinishWith result: PaywallResult,
     shouldDismiss: Bool
   ) {
-    self.dismissState = shouldDismiss ? .dismiss(paywall.info) : .none
+    self.dismissState = shouldDismiss ? .dismiss(paywall.info, result) : .none
 
     switch result {
     case .purchased,

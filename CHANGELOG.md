@@ -30,6 +30,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Changes `presented_by_event_name` to `presented_by_placement_name`.
 - Renames the `PurchaseResult` case `purchased(productId: String)` to `purchased(Product)`.
 - Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
+- Changes the `onRequestDismiss` block of the `PaywallView` to accept both a `PaywallInfo` object and a `PaywallResult` object.
 - Changes the Objective-C `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object, a `PaywallResult` object, and an optional `StoreProduct`, so you know which product was purchased after dismiss.
 - Renames `LogScope` case `paywallTransactions` to `transactions`.
 - Adds `type` to the `transactionComplete` placement.
