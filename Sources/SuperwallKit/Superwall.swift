@@ -458,9 +458,11 @@ public final class Superwall: NSObject, ObservableObject {
       return shared
     }
 
-    // Force StoreKit 1 for Objective-C
+    // Force StoreKit 1 for Objective-C if they're using a purchase controller.
     let options = options ?? SuperwallOptions()
-    options.storeKitVersion = .storeKit1
+    if purchaseController != nil {
+      options.storeKitVersion = .storeKit1
+    }
 
     superwall = Superwall(
       apiKey: apiKey,
