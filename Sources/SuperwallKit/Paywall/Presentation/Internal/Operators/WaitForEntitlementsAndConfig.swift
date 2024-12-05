@@ -23,6 +23,35 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
+    let configState = dependencyContainer.configManager.configState
+
+    // First try to get config. If no config, wait for it.
+    if configState.value.getConfig() == nil {
+      do {
+        try await dependencyContainer.configManager.configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        // If config completely dies, then throw an error
+        let error = InternalPresentationLogic.presentationError(
+          domain: "SWKPresentationError",
+          code: 104,
+          title: "No Config",
+          value: "Trying to present paywall without the Superwall config."
+        )
+        let state: PaywallState = .presentationError(error)
+        paywallStatePublisher?.send(state)
+        paywallStatePublisher?.send(completion: .finished)
+        throw PresentationPipelineError.noConfig
+      }
+    } else {
+      // If there is config, continue.
+    }
+
+    // Now get the entitlement status. This has to be done after the retrieving
+    // of config because entitlements are within config. Otherwise, if config
+    // hasn't been retrieved we would get an error saying "entitlements not set"
+    // but actually it's a config issue.
     let entitlementStatusTask = Task {
       return try await request.flags.entitlementStatus
         .filter { $0 != .unknown }
@@ -69,31 +98,6 @@ extension Superwall {
     }
 
     timer.invalidate()
-
-    let configState = dependencyContainer.configManager.configState
-
-    // If no config, wait for it.
-    if configState.value.getConfig() == nil {
-      do {
-        try await dependencyContainer.configManager.configState
-          .compactMap { $0.getConfig() }
-          .throwableAsync()
-      } catch {
-        // If config completely dies, then throw an error
-        let error = InternalPresentationLogic.presentationError(
-          domain: "SWKPresentationError",
-          code: 104,
-          title: "No Config",
-          value: "Trying to present paywall without the Superwall config."
-        )
-        let state: PaywallState = .presentationError(error)
-        paywallStatePublisher?.send(state)
-        paywallStatePublisher?.send(completion: .finished)
-        throw PresentationPipelineError.noConfig
-      }
-    } else {
-      // If there is config, continue.
-    }
 
     // Get the identity. This may or may not wait depending on whether the dev
     // specifically wants to wait for assignments.
