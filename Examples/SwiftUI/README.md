@@ -9,7 +9,7 @@ Usually, to integrate SuperwallKit into your app, you first need to have configu
 Feature | Sample Project Location
 --- | ---
 🕹 Configuring SuperwallKit | [SuperwallSwiftUIExampleApp.swift](Superwall-SwiftUI/SuperwallSwiftUIExampleApp.swift#L20)
-👉 Registering an event | [HomeView.swift](Superwall-SwiftUI/HomeView.swift#L53)
+👉 Registering a placement | [HomeView.swift](Superwall-SwiftUI/HomeView.swift#L53)
 👥 Identifying account | [WelcomeView.swift](Superwall-SwiftUI/WelcomeView.swift#L69)
 👥 Resetting account | [HomeView.swift](Superwall-SwiftUI/HomeView.swift#L62)
 
@@ -52,15 +52,15 @@ You'll see the home view:
 
 ## Presenting a Paywall
 
-At the heart of Superwall's SDK lies [Superwall.shared.register(event:params:handler:feature:)](Superwall-SwiftUI/HomeView.swift#L53).
+At the heart of Superwall's SDK lies [Superwall.shared.register(placement:params:handler:feature:)](Superwall-SwiftUI/HomeView.swift#L53).
 
-This allows you to register an event to access a feature that may or may not be paywalled later in time. It also allows you to choose whether the user can access the feature even if they don't make a purchase. You can read more about this [in our docs](https://docs.superwall.com/docs).
+This allows you to register a placement to access a feature that may or may not be paywalled later in time. It also allows you to choose whether the user can access the feature even if they don't make a purchase. You can read more about this [in our docs](https://docs.superwall.com/docs).
 
-On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event to a Campaign and attach some presentation rules. For this app, we've already done this for you.
+On the [Superwall Dashboard](https://superwall.com/dashboard) you add this placement to a Campaign and create audience filters. For this app, we've already done this for you.
 
-When an event is registered, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
+When a placement is registered, SuperwallKit evaluates the audience filters associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.register(event:params:handler:feature:)](Superwall-SwiftUI/HomeView.swift#L53), you present a paywall in response to the event `campaign_trigger`.
+By calling [Superwall.shared.register(placement:params:handler:feature:)](Superwall-SwiftUI/HomeView.swift#L53), you present a paywall in response to the placement `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button to launch a feature that is behind a paywall:
 
@@ -68,7 +68,7 @@ On screen you'll see some explanatory text and a button to launch a feature that
   <img src="https://user-images.githubusercontent.com/3296904/158836596-10d00960-50b8-4fd0-a36f-dd484a305d22.png" alt="Explicitly triggering a paywall" width="220px" />
 </p>
 
-Tap the **Launch Feature** button and you'll see the paywall. If the event is disabled on the dashboard, the paywall wouldn't show and the feature would fire immediately. In this case, the feature is just an alert.
+Tap the **Launch Feature** button and you'll see the paywall. If the placement is disabled on the dashboard, the paywall wouldn't show and the feature would fire immediately. In this case, the feature is just an alert.
 
 ## Purchasing a subscription
 

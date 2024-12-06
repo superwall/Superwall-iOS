@@ -49,12 +49,3 @@ targets:
       path: SuperwallKit.xcodeproj/SuperwallTests_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
-        CFBundleExecutable: "$(EXECUTABLE_NAME)"
-        CFBundleIdentifier: "$(PRODUCT_BUNDLE_IDENTIFIER)"
-        CFBundleInfoDictionaryVersion: "6.0"
-        CFBundleName: "$(PRODUCT_NAME)"
-        CFBundlePackageType: "FMWK"
-        CFBundleShortVersionString: "1.0"
-        CFBundleSignature: ????
-        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        NSPrincipalClass: ""

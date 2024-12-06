@@ -24,7 +24,7 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     // MARK: Step 2 - Configure Superwall
     /// Always configure Superwall first. Pass in the `purchaseController` you just created.
     Superwall.configure(
-      apiKey: "pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9",
+      apiKey: "pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d",
       purchaseController: purchaseController
     )
 
@@ -32,13 +32,12 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
     /// Always configure RevenueCat after Superwall
     Purchases.configure(with:
       .builder(withAPIKey: "appl_XmYQBWbTAFiwLeWrBJOeeJJtTql")
-      .with(storeKitVersion: .storeKit1)
       .build()
     )
 
-    // MARK: Step 4 – Sync Subscription Status
-    /// Keep Superwall's subscription status up-to-date with RevenueCat's.
-    purchaseController.syncSubscriptionStatus()
+    // MARK: Step 4 – Sync Entitlements
+    /// Keep Superwall's entitlements up-to-date with RevenueCat's.
+    purchaseController.syncEntitlements()
 
     return true
   }

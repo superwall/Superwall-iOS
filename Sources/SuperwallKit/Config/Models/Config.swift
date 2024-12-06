@@ -20,7 +20,7 @@ struct Config: Codable, Equatable {
   var attribution: Attribution?
   var allComputedProperties: [ComputedPropertyRequest] {
     return triggers.flatMap {
-      $0.rules.flatMap {
+      $0.audiences.flatMap {
         $0.computedPropertyRequests
       }
     }
@@ -78,6 +78,7 @@ struct Config: Codable, Equatable {
     buildId: String,
     triggers: Set<Trigger>,
     paywalls: [Paywall],
+    entitlements: Set<Entitlement>,
     logLevel: Int,
     locales: Set<String>,
     appSessionTimeout: Milliseconds,
@@ -104,6 +105,7 @@ extension Config: Stubbable {
       buildId: "poWduJZYQbCA8QbWLrjJC",
       triggers: [.stub()],
       paywalls: [.stub()],
+      entitlements: [],
       logLevel: 0,
       locales: [],
       appSessionTimeout: 3600000,

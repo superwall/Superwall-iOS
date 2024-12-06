@@ -1,5 +1,5 @@
 //
-//  TrackEventViewController.swift
+//  HomeViewController.swift
 //  SuperwallUIKitExample
 //
 //  Created by Yusuf Tör on 05/04/2022.
@@ -36,19 +36,19 @@ final class HomeViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
 
-    // subscribe to subscriptionStatus changes
-    subscribedCancellable = Superwall.shared.$subscriptionStatus
-      .receive(on: DispatchQueue.main)
-      .sink { [weak self] status in
-        switch status {
-        case .unknown:
-          self?.subscriptionLabel.text = "Loading subscription status."
-        case .active:
-          self?.subscriptionLabel.text = "You currently have an active subscription. Therefore, the paywall will never show. For the purposes of this app, delete and reinstall the app to clear subscriptions."
-        case .inactive:
-          self?.subscriptionLabel.text = "You do not have an active subscription so the paywall will show when clicking the button."
-        }
+    // Get notified when active entitlements changed.
+    subscribedCancellable = Superwall.shared.entitlements.$status
+    .receive(on: DispatchQueue.main)
+    .sink { [weak self] status in
+      switch status {
+      case .unknown:
+        self?.subscriptionLabel.text = "Loading active entitlements."
+      case .inactive:
+        self?.subscriptionLabel.text = "You do not have any active entitlements so the paywall will always show when clicking the button."
+      case .active:
+        self?.subscriptionLabel.text = "You currently have an active entitlement. The audience filter is configured to only show a paywall if there are no entitlements so the paywall will never show. For the purposes of this app, delete and reinstall the app to clear entitlements."
       }
+    }
 
     navigationItem.hidesBackButton = true
   }
@@ -65,8 +65,8 @@ final class HomeViewController: UIViewController {
 
   @IBAction private func launchFeature() {
     let handler = PaywallPresentationHandler()
-    handler.onDismiss { paywallInfo in
-      print("The paywall dismissed. PaywallInfo:", paywallInfo)
+    handler.onDismiss { paywallInfo, paywallResult in
+      print("The paywall dismissed. PaywallInfo: \(paywallInfo), PaywallResult: \(paywallResult)")
     }
     handler.onPresent { paywallInfo in
       print("The paywall presented. PaywallInfo:", paywallInfo)
@@ -76,18 +76,16 @@ final class HomeViewController: UIViewController {
     }
     handler.onSkip { reason in
       switch reason {
-      case .userIsSubscribed:
-        print("Paywall not shown because user is subscribed.")
       case .holdout(let experiment):
         print("Paywall not shown because user is in a holdout group in Experiment: \(experiment.id)")
-      case .noRuleMatch:
-        print("Paywall not shown because user doesn't match any rules.")
-      case .eventNotFound:
-        print("Paywall not shown because this event isn't part of a campaign.")
+      case .noAudienceMatch:
+        print("Paywall not shown because user doesn't match any audience.")
+      case .placementNotFound:
+        print("Paywall not shown because this placement isn't part of a campaign.")
       }
     }
 
-    Superwall.shared.register(event: "campaign_trigger", handler: handler) {
+    Superwall.shared.register(placement: "campaign_trigger", handler: handler) {
       // code in here can be remotely configured to execute. Either
       // (1) always after presentation or
       // (2) only if the user pays
