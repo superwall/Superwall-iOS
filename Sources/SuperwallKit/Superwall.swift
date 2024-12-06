@@ -458,9 +458,10 @@ public final class Superwall: NSObject, ObservableObject {
       return shared
     }
 
-    // Force StoreKit 1 for Objective-C if they're using a purchase controller.
+    // Force StoreKit 1 for Objective-C if they're using a purchase controller
+    // or observing transactions.
     let options = options ?? SuperwallOptions()
-    if purchaseController != nil {
+    if purchaseController != nil || options.shouldObservePurchases {
       options.storeKitVersion = .storeKit1
     }
 
