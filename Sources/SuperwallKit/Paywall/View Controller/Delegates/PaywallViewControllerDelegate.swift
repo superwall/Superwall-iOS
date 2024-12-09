@@ -43,7 +43,8 @@ public protocol PaywallViewControllerDelegate: AnyObject {
 }
 
 extension PaywallViewControllerDelegate {
-  public func paywall(
+  @MainActor
+  func paywall(
     _ paywall: PaywallViewController,
     loadingStateDidChange loadingState: PaywallLoadingState
   ) {}
@@ -86,7 +87,8 @@ public protocol PaywallViewControllerDelegateObjc: AnyObject {
 }
 
 extension PaywallViewControllerDelegateObjc {
-  public func paywall(
+  @MainActor
+  func paywall(
     _ paywall: PaywallViewController,
     loadingStateDidChange loadingState: PaywallLoadingState
   ) {}
