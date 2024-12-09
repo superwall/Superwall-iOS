@@ -44,7 +44,7 @@ SuperwallKit is [configured](Superwall-UIKit-Swift/AppDelegate.swift#L19) on app
 
 ## Logging In
 
-On the welcome screen, enter your name in the **text field**This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-UIKit-Swift/Services/SuperwallService.swift#L58). You don't need to set user attributes, but it can be useful if you want to create a rule to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
+On the welcome screen, enter your name in the **text field**This saves to the Superwall user attributes using [Superwall.shared.setUserAttributes(_:)](Superwall-UIKit-Swift/Services/SuperwallService.swift#L58). You don't need to set user attributes, but it can be useful if you want to create a audience filter to present a paywall based on a specific attribute you've set. You can also recall user attributes on your paywall to personalise the messaging.
 
 Tap **Log In**. This identifies the user (with a hardcoded userId that we've set), retrieving any paywalls that have already been assigned to them.
 
@@ -56,15 +56,15 @@ You'll see the home screen:
 
 ## Presenting a Paywall
 
-At the heart of Superwall's SDK lies [Superwall.shared.register(event:params:handler:feature:)](Superwall-SwiftUI/HomeViewController.swift#L72).
+At the heart of Superwall's SDK lies [Superwall.shared.register(placement:params:handler:feature:)](Superwall-SwiftUI/HomeViewController.swift#L72).
 
-This allows you to register an event to access a feature that may or may not be paywalled later in time. It also allows you to choose whether the user can access the feature even if they don't make a purchase. You can read more about this [in our docs](https://docs.superwall.com/docs).
+This allows you to register a placement to access a feature that may or may not be paywalled later in time. It also allows you to choose whether the user can access the feature even if they don't make a purchase. You can read more about this [in our docs](https://docs.superwall.com/docs).
 
-On the [Superwall Dashboard](https://superwall.com/dashboard) you add this event to a Campaign and attach some presentation rules. For this app, we've already done this for you.
+On the [Superwall Dashboard](https://superwall.com/dashboard) you add this placement to a Campaign and create audience filters. For this app, we've already done this for you.
 
-When an event is registered, SuperwallKit evaluates the rules associated with it to determine whether or not to show a paywall.
+When a placement is registered, SuperwallKit evaluates the audience filter associated with it to determine whether or not to show a paywall.
 
-By calling [Superwall.shared.register(event:params:handler:feature:)](Superwall-SwiftUI/HomeViewController.swift#L72), you present a paywall in response to the event `campaign_trigger`.
+By calling [Superwall.shared.register(placement:params:handler:feature:)](Superwall-SwiftUI/HomeViewController.swift#L72), you present a paywall in response to the placement `campaign_trigger`.
 
 On screen you'll see some explanatory text and a button to launch a feature that is behind a paywall:
 
@@ -72,7 +72,7 @@ On screen you'll see some explanatory text and a button to launch a feature that
   <img src="https://user-images.githubusercontent.com/3296904/161961942-2b7ccf40-83d1-47c5-8f49-6fb409b17491.png" alt="Presenting a paywall" width="220px" />
 </p>
 
-Tap the **Launch Feature** button and you'll see the paywall. If the event is disabled on the dashboard, the paywall wouldn't show and the feature would fire immediately. In this case, the feature is just an alert.
+Tap the **Launch Feature** button and you'll see the paywall. If the placement is disabled on the dashboard, the paywall wouldn't show and the feature would fire immediately. In this case, the feature is just an alert.
 
 ## Purchasing a subscription
 

@@ -13,7 +13,7 @@
 #pragma mark - Constants
 
 /// Notification name for posting a change to the subscribe state.
-NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelegateDidUpdateSubscribedState";
+NSNotificationName const SSAAppDelegateEntitlementStatusDidChange = @"SSAAppDelegateEntitlementStatusDidChange";
 
 @interface SSAAppDelegate () <SWKSuperwallDelegate>
 
@@ -23,7 +23,7 @@ NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelega
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
   // Initialize the Superwall service.
-  [Superwall configureWithApiKey:@"pk_e6bd9bd73182afb33e95ffdf997b9df74a45e1b5b46ed9c9"];
+  [Superwall configureWithApiKey:@"pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d"];
   [[Superwall sharedInstance] setDelegate:self];
   
   return YES;
@@ -37,9 +37,9 @@ NSNotificationName const SSAAppDelegateDidUpdateSubscribedState = @"SSAAppDelega
 
 #pragma mark - SuperwallDelegate
 
-- (void)subscriptionStatusDidChangeTo:(enum SWKSubscriptionStatus)newValue {
+- (void)entitlementStatusDidChangeTo:(enum SWKEntitlementStatus)newValue {
   dispatch_async(dispatch_get_main_queue(), ^{
-    [[NSNotificationCenter defaultCenter] postNotificationName:SSAAppDelegateDidUpdateSubscribedState object:self];
+    [[NSNotificationCenter defaultCenter] postNotificationName:SSAAppDelegateEntitlementStatusDidChange object:self];
   });
 }
 

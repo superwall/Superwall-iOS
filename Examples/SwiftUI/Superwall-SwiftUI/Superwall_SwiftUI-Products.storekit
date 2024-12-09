@@ -90,12 +90,8 @@
           "displayPrice" : "89.99",
           "familyShareable" : false,
           "groupNumber" : 1,
-          "internalID" : "301B442B",
-          "introductoryOffer" : {
-            "internalID" : "2A4CC7D6",
-            "paymentMode" : "free",
-            "subscriptionPeriod" : "P1W"
-          },
+          "internalID" : "38D8615F",
+          "introductoryOffer" : null,
           "localizations" : [
             {
               "description" : "with a free 7 day trial",
@@ -103,9 +99,37 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "sk.superwall.annual.89.99_7",
+          "productID" : "superwall_max_8999",
           "recurringSubscriptionPeriod" : "P1Y",
-          "referenceName" : "sw_8999_yr",
+          "referenceName" : "Max",
+          "subscriptionGroupID" : "49A58F4B",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "E02B772A",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "with a free 7 day trial",
+              "displayName" : "Yearly Subscription",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "superwall_pro_3999",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Pro",
           "subscriptionGroupID" : "49A58F4B",
           "type" : "RecurringSubscription",
           "winbackOffers" : [
