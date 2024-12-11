@@ -18,6 +18,7 @@ struct Config: Codable, Equatable {
   var preloadingDisabled: PreloadingDisabled
   var requestId: String?
   var attribution: Attribution?
+  var products: [Product]
   var allComputedProperties: [ComputedPropertyRequest] {
     return triggers.flatMap {
       $0.audiences.flatMap {
@@ -37,6 +38,7 @@ struct Config: Codable, Equatable {
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
     case attribution = "attributionOptions"
+    case products = "products"
   }
 
   init(from decoder: Decoder) throws {
@@ -54,6 +56,7 @@ struct Config: Codable, Equatable {
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
     requestId = try values.decodeIfPresent(String.self, forKey: .requestId)
+    products = try values.decode([Product].self, forKey: .products)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -66,6 +69,7 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
+    try container.encodeIfPresent(products, forKey: .products)
 
     let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
     try container.encode(localizationConfig, forKey: .localization)
@@ -84,7 +88,8 @@ struct Config: Codable, Equatable {
     appSessionTimeout: Milliseconds,
     featureFlags: FeatureFlags,
     preloadingDisabled: PreloadingDisabled,
-    attribution: Attribution
+    attribution: Attribution,
+    products: [Product]
   ) {
     self.buildId = buildId
     self.triggers = triggers
@@ -95,6 +100,7 @@ struct Config: Codable, Equatable {
     self.featureFlags = featureFlags
     self.preloadingDisabled = preloadingDisabled
     self.attribution = attribution
+    self.products = products
   }
 }
 
@@ -111,7 +117,8 @@ extension Config: Stubbable {
       appSessionTimeout: 3600000,
       featureFlags: .stub(),
       preloadingDisabled: .stub(),
-      attribution: .init(appleSearchAds: .init(enabled: true))
+      attribution: .init(appleSearchAds: .init(enabled: true)),
+      products: []
     )
   }
 }

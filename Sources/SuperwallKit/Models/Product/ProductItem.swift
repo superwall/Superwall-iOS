@@ -138,7 +138,10 @@ public final class Product: NSObject, Codable, Sendable {
   }
 
   /// The name of the product in the editor.
-  public let name: String
+  ///
+  /// This is optional because products can also be decoded from outside
+  /// of a paywall.
+  public let name: String?
 
   /// The type of product
   public let type: StoreProductType
@@ -159,7 +162,7 @@ public final class Product: NSObject, Codable, Sendable {
   public let objcAdapter: StoreProductAdapterObjc
 
   init(
-    name: String,
+    name: String?,
     type: StoreProductType,
     entitlements: Set<Entitlement>
   ) {
@@ -179,7 +182,7 @@ public final class Product: NSObject, Codable, Sendable {
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
-    try container.encode(name, forKey: .name)
+    try container.encodeIfPresent(name, forKey: .name)
 
     try container.encode(entitlements, forKey: .entitlements)
 
@@ -191,7 +194,7 @@ public final class Product: NSObject, Codable, Sendable {
 
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    name = try container.decode(String.self, forKey: .name)
+    name = try container.decodeIfPresent(String.self, forKey: .name)
 
     // These will throw an error if the StoreProduct is not an AppStoreProduct or if the
     // entitlement type is not `SERVICE_LEVEL`, which must be caught in a `Throwable` and
@@ -213,7 +216,15 @@ struct TemplatingProductItem: Encodable {
   }
 
   static func create(from productItems: [Product]) -> [TemplatingProductItem] {
-    return productItems.map { TemplatingProductItem(name: $0.name, productId: $0.id) }
+    return productItems.compactMap {
+      guard let name = $0.name else {
+        return nil
+      }
+      return TemplatingProductItem(
+        name: name,
+        productId: $0.id
+      )
+    }
   }
 
   func encode(to encoder: Encoder) throws {

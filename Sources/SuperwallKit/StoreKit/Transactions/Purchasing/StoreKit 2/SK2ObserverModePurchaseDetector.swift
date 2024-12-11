@@ -16,19 +16,18 @@ import Foundation
 import StoreKit
 
 /// A delegate protocol for handling verified transactions in observer mode.
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+@available(iOS 17.2, *)
 protocol SK2ObserverModePurchaseDetectorDelegate: AnyObject {
   /// Handles a verified transaction.
   /// - Parameters:
   ///   - transaction: The verified transaction to be processed.
   func logSK2ObserverModeTransaction(
-    transaction: SK2Transaction,
-    decodedJwsPayload: [String: Any]?
+    _ transaction: SK2Transaction
   ) async throws
 }
 
 /// Actor responsibile for detecting purchases from StoreKit2 that should be processed by observer mode.
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+@available(iOS 17.2, *)
 actor SK2ObserverModePurchaseDetector {
   private let storage: Storage
   private let allTransactionsProvider: AllTransactionsProviderType
@@ -99,12 +98,6 @@ actor SK2ObserverModePurchaseDetector {
       return
     }
 
-    // Extract the JWS (JSON Web Signature) representation of the most recent transaction
-    let jwsRepresentation = mostRecentTransaction.jwsRepresentation
-
-    // Decode the JWS representation and extract the payload
-    let decodedJwsPayload = decodeJWSPayload(jwsRepresentation: jwsRepresentation)
-
     // Extract the verified transaction object
     guard let transaction = mostRecentTransaction.verifiedTransaction else {
       // Exit early if the transaction could not be verified
@@ -133,15 +126,13 @@ actor SK2ObserverModePurchaseDetector {
       // Update the cache with the new synced transaction IDs
       insertToCachedTransactionIds(Set(unsyncedTransactionIDs))
 
-      guard decodedJwsPayload?["transactionReason"] as? String == "PURCHASE" else {
+      // Check that the transaction reason is purchase and not renewal.
+      guard transaction.reason == .purchase else {
         return
       }
 
       // Delegate the handling of the verified transaction for observer mode
-      try await delegate.logSK2ObserverModeTransaction(
-        transaction: transaction,
-        decodedJwsPayload: decodedJwsPayload
-      )
+      try await delegate.logSK2ObserverModeTransaction(transaction)
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -159,42 +150,6 @@ actor SK2ObserverModePurchaseDetector {
     var cachedTxnIds = storage.get(SK2TransactionIds.self) ?? []
     cachedTxnIds.formUnion(ids)
     storage.save(cachedTxnIds, forType: SK2TransactionIds.self)
-  }
-
-  func decodeJWSPayload(jwsRepresentation: String) -> [String: Any]? {
-    // Split the JWS into its parts: header.payload.signature
-    let components = jwsRepresentation.split(separator: ".")
-    guard components.count == 3 else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .transactions,
-        message: "Invalid JWS representation."
-      )
-      return nil
-    }
-
-    let payload = components[1]
-
-    let paddedPayload = String(payload)
-      .padding(
-        toLength: ((payload.count + 3) / 4) * 4,
-        withPad: "=",
-        startingAt: 0
-      )
-    guard
-      let payloadData = Data(base64Encoded: paddedPayload),
-      let json = try? JSONSerialization.jsonObject(with: payloadData, options: []),
-      let decodedPayload = json as? [String: Any]
-    else {
-      Logger.debug(
-        logLevel: .debug,
-        scope: .transactions,
-        message: "Failed to decode payload"
-      )
-      return nil
-    }
-
-    return decodedPayload
   }
 }
 

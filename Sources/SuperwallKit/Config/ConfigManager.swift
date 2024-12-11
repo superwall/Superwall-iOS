@@ -287,8 +287,7 @@ class ConfigManager {
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
 
-    let entitlementsByProductId = ConfigLogic.extractEntitlementsByProductId(
-      from: config.paywalls)
+    let entitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
     entitlementsInfo.setEntitlementsFromConfig(entitlementsByProductId)
 
     // Load the products after entitlementsInfo is set because we need to map

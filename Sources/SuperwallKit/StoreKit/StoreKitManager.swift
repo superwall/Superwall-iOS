@@ -32,12 +32,15 @@ actor StoreKitManager {
       guard let storeProduct = output.productsById[productItem.id] else {
         return
       }
-      productAttributes.append(
-        ProductVariable(
-          name: productItem.name,
-          attributes: storeProduct.attributesJson
+
+      if let name = productItem.name {
+        productAttributes.append(
+          ProductVariable(
+            name: name,
+            attributes: storeProduct.attributesJson
+          )
         )
-      )
+      }
     }
 
     return productAttributes
