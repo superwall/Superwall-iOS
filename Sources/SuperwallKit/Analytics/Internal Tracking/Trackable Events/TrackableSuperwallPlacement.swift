@@ -583,7 +583,7 @@ enum InternalSuperwallPlacement {
       var placementParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storekit_version": storeKitVersion.rawValue
+        "storekit_version": storeKitVersion.description
       ]
 
       switch state {
