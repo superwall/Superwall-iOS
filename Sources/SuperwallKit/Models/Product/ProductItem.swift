@@ -100,6 +100,23 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
     self.bundleId = bundleId
     super.init()
   }
+
+  public override func isEqual(_ object: Any?) -> Bool {
+    guard let other = object as? AppStoreProduct else {
+      return false
+    }
+    return bundleId == other.bundleId
+      && store == other.store
+      && id == other.id
+  }
+
+  public override var hash: Int {
+    var hasher = Hasher()
+    hasher.combine(bundleId)
+    hasher.combine(store)
+    hasher.combine(id)
+    return hasher.finalize()
+  }
 }
 
 /// An objc-only type that specifies a store and a product.
@@ -127,7 +144,7 @@ public final class StoreProductAdapterObjc: NSObject, Codable, Sendable {
 @objcMembers
 public final class Product: NSObject, Codable, Sendable {
   /// The type of store and its associated product.
-  public enum StoreProductType: Codable, Sendable {
+  public enum StoreProductType: Codable, Sendable, Hashable {
     case appStore(AppStoreProduct)
   }
 
@@ -203,6 +220,23 @@ public final class Product: NSObject, Codable, Sendable {
     let storeProduct = try container.decode(AppStoreProduct.self, forKey: .storeProduct)
     type = .appStore(storeProduct)
     objcAdapter = .init(store: .appStore, appStoreProduct: storeProduct)
+  }
+
+  public override func isEqual(_ object: Any?) -> Bool {
+    guard let other = object as? Product else {
+      return false
+    }
+    return name == other.name
+    && type == other.type
+    && entitlements == other.entitlements
+  }
+
+  public override var hash: Int {
+    var hasher = Hasher()
+    hasher.combine(name)
+    hasher.combine(type)
+    hasher.combine(entitlements)
+    return hasher.finalize()
   }
 }
 
