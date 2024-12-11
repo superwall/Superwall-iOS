@@ -25,6 +25,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
 - Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
+// TODO: Mention SK1 with objective c when using purchase controller/observer mode. Must set it when purchasing.
 - Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
 - Consumables no longer count as lifetime subscriptions when using StoreKit 2.
 - Changes `presented_by_event_name` to `presented_by_placement_name`.
@@ -44,7 +45,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Updates the RevenueCat example app to use StoreKit 2.
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
 - Adds the `LogScope` case `entitlements`.
-- Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value).
+- Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
 
 ## 3.12.0
 

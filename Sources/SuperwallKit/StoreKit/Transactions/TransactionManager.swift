@@ -158,11 +158,8 @@ final class TransactionManager {
     await coordinator.reset()
   }
 
-  @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
-  func logSK2ObserverModeTransaction(
-    _ transaction: SK2Transaction,
-    decodedJwsPayload: [String: Any]?
-  ) async {
+  @available(iOS 17.2, *)
+  func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
     guard let product = try? await productsManager.products(
       identifiers: [transaction.productID],
       forPaywall: nil,
@@ -175,7 +172,8 @@ final class TransactionManager {
       purchaseSource: .observeFunc(product)
     )
 
-    let hasOffer = decodedJwsPayload?["offerDiscountType"] != nil
+
+    let hasOffer = transaction.offer != nil
     let coordinator = factory.makePurchasingCoordinator()
     await coordinator.setIsFreeTrialAvailable(to: hasOffer)
 
@@ -801,8 +799,9 @@ final class TransactionManager {
       return
     }
 
-    // If observing
-    if #available(iOS 15.0, *),
+    // Insert the transaction ID into the cache if observing. This prevents racing with
+    // the SK2 observer.
+    if #available(iOS 17.2, *),
       let purchaser = purchaseManager.purchaser as? ProductPurchaserSK2,
       let id = transaction?.sk2Transaction?.id {
       let observer = purchaser.sk2ObserverModePurchaseDetector

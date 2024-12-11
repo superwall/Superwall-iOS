@@ -630,7 +630,7 @@ public final class Superwall: NSObject, ObservableObject {
       )
       return .cancelled
     }
-    let storeProduct = StoreProduct(sk1Product: product, entitlements: [])
+    let storeProduct = StoreProduct(sk1Product: product)
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
@@ -647,8 +647,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
-    // TODO: Review what happens with entitlements here if they purchase without any...
-    let storeProduct = StoreProduct(sk2Product: product, entitlements: [])
+    let storeProduct = StoreProduct(sk2Product: product)
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
@@ -787,6 +786,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
   /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
+    // Await config because we must have entitlements before restoring.
+
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
     let result = await dependencyContainer.transactionManager.tryToRestore(.external)
     return result
   }

@@ -17,7 +17,14 @@ final class ProductPurchaserSK2: Purchasing {
     & OptionsFactory
     & TransactionManagerFactory
     & PurchasedTransactionsFactory
-  let sk2ObserverModePurchaseDetector: SK2ObserverModePurchaseDetector
+
+  // swiftlint:disable:next identifier_name
+  var _sk2ObserverModePurchaseDetector: Any?
+  @available(iOS 17.2, *)
+  var sk2ObserverModePurchaseDetector: SK2ObserverModePurchaseDetector {
+    // swiftlint:disable:next force_cast force_unwrapping
+    return self._sk2ObserverModePurchaseDetector! as! SK2ObserverModePurchaseDetector
+  }
 
   init(
     identityManager: IdentityManager,
@@ -29,19 +36,22 @@ final class ProductPurchaserSK2: Purchasing {
     self.receiptManager = receiptManager
     self.factory = factory
 
-    sk2ObserverModePurchaseDetector = SK2ObserverModePurchaseDetector(
-      storage: storage,
-      allTransactionsProvider: SK2AllTransactionsProvider(),
-      factory: factory
-    )
+    if #available(iOS 17.2, *) {
+      _sk2ObserverModePurchaseDetector = SK2ObserverModePurchaseDetector(
+        storage: storage,
+        allTransactionsProvider: SK2AllTransactionsProvider(),
+        factory: factory
+      )
 
-    // Cache legacy transactions if observer mode turned on.
-    let options = factory.makeSuperwallOptions()
-    if options.shouldObservePurchases {
-      Task {
-        await sk2ObserverModePurchaseDetector.cacheLegacyTransactions()
+      // Cache legacy transactions if observer mode turned on.
+      let options = factory.makeSuperwallOptions()
+      if options.shouldObservePurchases {
+        Task {
+          await sk2ObserverModePurchaseDetector.cacheLegacyTransactions()
+        }
       }
     }
+
 
     NotificationCenter.default.addObserver(
       self,
@@ -58,7 +68,8 @@ final class ProductPurchaserSK2: Purchasing {
     let storeKitVersion = options.storeKitVersion
 
     if shouldObservePurchases,
-      storeKitVersion == .storeKit2 {
+      storeKitVersion == .storeKit2,
+      #available(iOS 17.2, *) {
       Task(priority: .utility) { [weak self] in
         guard let self = self else {
           return
@@ -147,16 +158,12 @@ final class ProductPurchaserSK2: Purchasing {
   }
 }
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
+@available(iOS 17.2, *)
 extension ProductPurchaserSK2: SK2ObserverModePurchaseDetectorDelegate {
-  func logSK2ObserverModeTransaction(
-    transaction: SK2Transaction,
-    decodedJwsPayload: [String: Any]?
-  ) async throws {
+  func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async throws {
     let transactionManager = factory.makeTransactionManager()
     await transactionManager.logSK2ObserverModeTransaction(
-      transaction,
-      decodedJwsPayload: decodedJwsPayload
+      transaction
     )
   }
 }
