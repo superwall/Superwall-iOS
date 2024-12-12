@@ -40,21 +40,29 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    do {
-      try await Superwall.shared.waitForEntitlementsAndConfig(
-        request,
-        paywallStatePublisher: statePublisher,
-        dependencyContainer: dependencyContainer
-      )
-    } catch {
-      expectation1.fulfill()
+    Task {
+      do {
+        try await Superwall.shared.waitForEntitlementsAndConfig(
+          request,
+          paywallStatePublisher: statePublisher,
+          dependencyContainer: dependencyContainer
+        )
+      } catch {
+        expectation1.fulfill()
+      }
     }
 
-    await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
+    Task.detached {
+      try? await Task.sleep(nanoseconds: 500_000_000)
+      self.dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    }
+
+    await fulfillment(of: [expectation1, stateExpectation], timeout: 6.5)
   }
 
   func test_waitForEntitlementsAndConfig_noIdentity_unknownStatus_becomesActive() async {
     let expectation1 = expectation(description: "Got identity")
+    expectation1.isInverted = true
 
     let unknownPublisher = CurrentValueSubject<EntitlementStatus, Never>(.unknown)
     let request = PresentationRequest.stub()
@@ -62,11 +70,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
+    stateExpectation.isInverted = true
 
     statePublisher.sink { completion in
       stateExpectation.fulfill()
-      unknownPublisher.send(.active([.stub()]))
     } receiveValue: { state in
       stateExpectation.fulfill()
     }
@@ -84,16 +91,16 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
       }
     }
 
+    try? await Task.sleep(for: .seconds(1))
+
+    unknownPublisher.send(.active([.stub()]))
+
     await fulfillment(of: [expectation1, stateExpectation], timeout: 5.5)
   }
 
   func test_waitForEntitlementsAndConfig_activeStatus_noConfig_hasConfigAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
-    let entitlementsInfo = EntitlementsInfo(
-      storage: dependencyContainer.storage,
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      isTesting: true
-    )
+
     let activePublisher = CurrentValueSubject<EntitlementStatus, Never>(.active([.stub()]))
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
@@ -158,12 +165,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.entitlementStatus, to: inactivePublisher)
 
-    let entitlementsInfo = EntitlementsInfo(
-      storage: dependencyContainer.storage,
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      isTesting: true
-    )
-
     Task {
       try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
@@ -176,11 +177,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation1 = expectation(description: "Got identity")
     expectation1.isInverted = true
 
-    let entitlementsInfo = EntitlementsInfo(
-      storage: dependencyContainer.storage,
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      isTesting: true
-    )
     let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
@@ -263,11 +259,6 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   func test_waitForEntitlementsAndConfig_inactiveStatus_hasConfig_hasIdentity() {
     let expectation1 = expectation(description: "Got identity")
 
-    let entitlementsInfo = EntitlementsInfo(
-      storage: dependencyContainer.storage,
-      delegateAdapter: dependencyContainer.delegateAdapter,
-      isTesting: true
-    )
     let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()

@@ -45,7 +45,7 @@ final class ConfigManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let paywall = Paywall.stub()
-      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")), entitlements: [])])
+      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")), entitlements: [.stub()])])
     let config: Config = Config(
       buildId: "buildId",
       triggers: [
@@ -61,7 +61,8 @@ final class ConfigManagerTests: XCTestCase {
       appSessionTimeout: 2202,
       featureFlags: .stub(),
       preloadingDisabled: .stub(),
-      attribution: .init(appleSearchAds: .init(enabled: true))
+      attribution: .init(appleSearchAds: .init(enabled: true)),
+      products: paywall.products
     )
     dependencyContainer.storage.save(config, forType: LatestConfig.self)
     let newConfig = dependencyContainer.storage.get(LatestConfig.self)

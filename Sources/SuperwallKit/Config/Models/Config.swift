@@ -69,7 +69,7 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
-    try container.encodeIfPresent(products, forKey: .products)
+    try container.encode(products, forKey: .products)
 
     let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
     try container.encode(localizationConfig, forKey: .localization)

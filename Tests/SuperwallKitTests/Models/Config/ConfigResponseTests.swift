@@ -470,7 +470,45 @@ let response = #"""
   "disable_preload": {
     "all": false,
     "triggers": []
-  }
+  },
+  "products": [
+    {
+      "store_product": {
+        "store": "APP_STORE",
+        "product_identifier": "com.ui_tests.monthly"
+      },
+      "entitlements": [
+        {
+          "identifier": "default",
+          "type": "SERVICE_LEVEL"
+        }
+      ]
+    },
+    {
+      "store_product": {
+        "store": "APP_STORE",
+        "product_identifier": "com.ui_tests.annual"
+      },
+      "entitlements": [
+        {
+          "identifier": "default",
+          "type": "SERVICE_LEVEL"
+        }
+      ]
+    },
+    {
+      "store_product": {
+        "store": "APP_STORE",
+        "product_identifier": "incorrect_product_identifier"
+      },
+      "entitlements": [
+        {
+          "identifier": "default",
+          "type": "SERVICE_LEVEL"
+        }
+      ]
+    }
+  ]
 }
 """#
 
