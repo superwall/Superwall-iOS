@@ -40,8 +40,8 @@ final class ProductsManager {
 
   func products(
     identifiers: Set<String>,
-    forPaywall paywall: Paywall?,
-    placement: PlacementData?
+    forPaywall paywall: Paywall? = nil,
+    placement: PlacementData? = nil
   ) async throws -> Set<StoreProduct> {
     return try await productsFetcher.products(
       identifiers: identifiers,

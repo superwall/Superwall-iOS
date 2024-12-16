@@ -476,6 +476,35 @@ public final class Superwall: NSObject, ObservableObject {
     return shared
   }
 
+  /// Gets the ``StoreProduct``s for given product identifiers.
+  ///
+  /// - Parameter identifiers: A set of product identifiers.
+  /// - Returns: A `Set` of ``StoreProduct``s.
+  public func products(for identifiers: Set<String>) async -> Set<StoreProduct> {
+    // Await config because we must have entitlements before fetching products.
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+
+    let products = try? await dependencyContainer.productsManager.products(identifiers: identifiers)
+    return products ?? []
+  }
+
+  /// Gets the ``StoreProduct``s for given product identifiers.
+  ///
+  /// - Parameters:
+  ///   - identifiers: A set of product identifiers.
+  ///   - completion: A completion block that accepts a `Set` of ``StoreProduct`` objects.
+  public func products(
+    for identifiers: Set<String>,
+    completion: @escaping (Set<StoreProduct>) -> Void
+  ) async {
+    Task {
+      let products = await products(for: identifiers)
+      completion(products)
+    }
+  }
+
   // MARK: - Preloading
 
   /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
@@ -787,7 +816,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
     // Await config because we must have entitlements before restoring.
-
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
