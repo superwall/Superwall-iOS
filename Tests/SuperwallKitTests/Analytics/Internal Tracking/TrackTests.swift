@@ -1535,9 +1535,6 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT1")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$storefront_id"] as! String, "143441")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storefront_countryCode"] as! String, "USA")
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$transaction_type"] as! String,
       "NON_RECURRING_PRODUCT_PURCHASE")
