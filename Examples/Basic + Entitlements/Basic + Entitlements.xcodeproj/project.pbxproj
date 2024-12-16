@@ -9,7 +9,7 @@
 /* Begin PBXBuildFile section */
 		884D9822291151510013225F /* SuperwallKit in Frameworks */ = {isa = PBXBuildFile; productRef = 884D9821291151510013225F /* SuperwallKit */; };
 		887111582D0B027E00D737A4 /* Colors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 887111572D0B027E00D737A4 /* Colors.swift */; };
-		888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */; };
+		888F488827DA6B0F009C74A3 /* SuperwallDemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F488727DA6B0F009C74A3 /* SuperwallDemoApp.swift */; };
 		888F488C27DA6B10009C74A3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488B27DA6B10009C74A3 /* Images.xcassets */; };
 		888F488F27DA6B10009C74A3 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */; };
 		888F48C327DB8584009C74A3 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 888F48C227DB8584009C74A3 /* HomeView.swift */; };
@@ -27,7 +27,7 @@
 /* Begin PBXFileReference section */
 		887111572D0B027E00D737A4 /* Colors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Colors.swift; sourceTree = "<group>"; };
 		888F488427DA6B0F009C74A3 /* Superwall-SwiftUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Superwall-SwiftUI.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallSwiftUIExampleApp.swift; sourceTree = "<group>"; };
+		888F488727DA6B0F009C74A3 /* SuperwallDemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallDemoApp.swift; sourceTree = "<group>"; };
 		888F488B27DA6B10009C74A3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		888F488E27DA6B10009C74A3 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		888F48BE27DA7352009C74A3 /* paywall-ios */ = {isa = PBXFileReference; lastKnownFileType = wrapper; name = "paywall-ios"; path = ../..; sourceTree = "<group>"; };
@@ -40,7 +40,7 @@
 		888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Regular.ttf"; sourceTree = "<group>"; };
 		888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Bold.ttf"; sourceTree = "<group>"; };
 		88A801CF28EAE717004244CA /* SuperwallEntitlementsView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallEntitlementsView.swift; sourceTree = "<group>"; };
-		88EE539127DF64BB00F1FFFB /* Superwall_SwiftUI-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_SwiftUI-Products.storekit"; sourceTree = "<group>"; };
+		88EE539127DF64BB00F1FFFB /* Superwall_Basic+Entitlements-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_Basic+Entitlements-Products.storekit"; sourceTree = "<group>"; };
 		88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		88F9F1E227E21718004FCE83 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -81,8 +81,8 @@
 				888F48C627DBA46B009C74A3 /* Design */,
 				888F48C927DBA54A009C74A3 /* Components */,
 				888F48CD27DBA5BA009C74A3 /* Info.plist */,
-				88EE539127DF64BB00F1FFFB /* Superwall_SwiftUI-Products.storekit */,
-				888F488727DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift */,
+				88EE539127DF64BB00F1FFFB /* Superwall_Basic+Entitlements-Products.storekit */,
+				888F488727DA6B0F009C74A3 /* SuperwallDemoApp.swift */,
 				88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */,
 				888F48C227DB8584009C74A3 /* HomeView.swift */,
 			);
@@ -244,7 +244,7 @@
 				88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */,
 				888F48D127DBA62D009C74A3 /* Font.swift in Sources */,
 				88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */,
-				888F488827DA6B0F009C74A3 /* SuperwallSwiftUIExampleApp.swift in Sources */,
+				888F488827DA6B0F009C74A3 /* SuperwallDemoApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

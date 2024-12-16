@@ -50,6 +50,9 @@
             ReferencedContainer = "container:Basic + Entitlements.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../Basic + Entitlements/Superwall_Basic+Entitlements-Products.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

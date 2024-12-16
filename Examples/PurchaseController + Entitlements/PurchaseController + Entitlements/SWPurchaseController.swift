@@ -10,13 +10,11 @@ import SuperwallKit
 
 // MARK: Quickstart (v3.0.0+)
 /// 1. Copy this file into your app
-/// 2. Create a `PurchaseController` wherever Superwall and RevenueCat are being initialized.
-///   `let purchaseController = RCPurchaseController()`
-/// 3. First, configure Superwall. Pass in the `purchaseController` you just created.
+/// 2. Create a `PurchaseController` wherever Superwall is being initialized.
+///   `let purchaseController = SWPurchaseController()`
+/// 3. Configure Superwall. Pass in the `purchaseController` you just created.
 ///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
-/// 4. Second, configure RevenueCat.
-///   `Purchases.configure(withAPIKey: "revenuecat_api_key")`
-/// 5. Third, Keep Superwall's entitlements up-to-date with RevenueCat's.
+/// 5. Then, keep Superwall's entitlements up-to-date with StoreKit's entitlements.
 ///   `purchaseController.syncEntitlements()`
 final class SWPurchaseController: PurchaseController {
   // MARK: Sync Entitlements
@@ -42,7 +40,7 @@ final class SWPurchaseController: PurchaseController {
   }
 
   // MARK: Handle Purchases
-  /// Makes a purchase with Superwall and returns its result. This gets called when
+  /// Makes a purchase with Superwall and returns its result after syncing entitlements. This gets called when
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: StoreProduct) async -> PurchaseResult {
     let result = await Superwall.shared.purchase(product)
@@ -51,7 +49,7 @@ final class SWPurchaseController: PurchaseController {
   }
 
   // MARK: Handle Restores
-  /// Makes a restore with Superwall and returns its result.
+  /// Makes a restore with Superwall and returns its result after syncing entitlements.
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
     let result = await Superwall.shared.restorePurchases()

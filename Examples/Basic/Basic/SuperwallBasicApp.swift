@@ -10,7 +10,7 @@ import Combine
 import SuperwallKit
 
 @main
-struct SuperwallSwiftUIExampleApp: App {
+struct SuperwallBasicApp: App {
   @State private var isLoggedIn = false
   private var isPreviouslyLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
