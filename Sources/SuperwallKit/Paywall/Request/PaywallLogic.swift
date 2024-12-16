@@ -106,7 +106,7 @@ enum PaywallLogic {
 
       swProducts.append(storeProduct.swProduct)
 
-      if let name =  productItem.name {
+      if let name = productItem.name {
         productVariables.append(
           ProductVariable(
             name: name,

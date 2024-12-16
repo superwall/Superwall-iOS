@@ -46,6 +46,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
 - Adds the `LogScope` case `entitlements`.
 - Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
+- Adds `products(for:)` which gets the ``StoreProduct`s for given product identifiers.
 
 ## 3.12.0
 

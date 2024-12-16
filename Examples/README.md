@@ -1,13 +1,13 @@
 # Example Apps
 
-We have four example apps – Swift-UIKit with RevenueCat, Swift-UIKit (with StoreKit), SwiftUI, and Objective-C + UIKit. They all have the same functionality and each has an accompanying tutorial that gives an overview of the app.
+We have four example apps – Basic, Basic + Entitlements, PurchaseController + Entitlements, RevenueCat + Entitlements.
 
 Please select which app you'd like to use:
 
-- [Swift-UIKit with RevenueCat Example App](UIKit+RevenueCat)
-- [Swift-UIKit with StoreKit Example App](UIKit-Swift)
-- [SwiftUI Example App](SwiftUI)
-- [Objective-C-UIKit](UIKit+RevenueCat)
+- [Basic Example App](Basic)
+- [Basic + Entitlements Example App](Basic + Entitlements)
+- [PurchaseController + Entitlements Example App](PurchaseController + Entitlements)
+- [RevenueCat + Entitlements Example App](RevenueCat + Entitlements)
 
 ## Support
 
