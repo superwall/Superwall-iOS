@@ -1,13 +1,13 @@
 {
-  "originHash" : "f7bddd1fb540fa4978fe10bcd081d8eef0630c75eda663e00ac15065d566a9d0",
+  "originHash" : "db362fdf36eaf1c479870b40c7a6c2e2165345c7210ebe36257ee38523125878",
   "pins" : [
     {
-      "identity" : "supercel-ios",
+      "identity" : "superscript-ios",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/superwall/SuperCEL-iOS",
+      "location" : "https://github.com/superwall/Superscript-iOS",
       "state" : {
-        "revision" : "4e08d383977883aaee406b7f0e52afb81a4ea66f",
-        "version" : "0.1.12"
+        "revision" : "a917ad513e171e658a73f9ae7329f3cffa42f173",
+        "version" : "0.1.16"
       }
     }
   ],
