@@ -3,7 +3,7 @@
 //
 //  Created by Jake Mor on 8/10/21.
 //
-// swiftlint:disable type_body_length file_length
+// swiftlint:disable type_body_length file_length function_body_length
 
 import UIKit
 import Foundation

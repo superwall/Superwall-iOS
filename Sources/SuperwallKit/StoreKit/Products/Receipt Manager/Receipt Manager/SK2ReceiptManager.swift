@@ -57,9 +57,9 @@ final class SK2ReceiptManager: ReceiptManagerType {
         Logger.debug(
           logLevel: .warn,
           scope: .transactions,
-          message: "Your receipt contains an unverified transaction \(transaction.debugDescription). \(error.localizedDescription)"
+          message: "The purchased transactions contains an unverified transaction "
+            + "\(transaction.debugDescription). \(error.localizedDescription)"
         )
-        break
       }
     }
     self.purchases = purchases
