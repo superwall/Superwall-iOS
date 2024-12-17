@@ -1,13 +1,11 @@
 # Example Apps
 
-We have four example apps – Basic, Basic + Entitlements, PurchaseController + Entitlements, RevenueCat + Entitlements.
+We have two example apps – Basic and Advanced. With the basic app, Superwall handles everything for you. Check out the Advanced app if you want to use entitlements, have more control over the purchasing/restore process, or want to use RevenueCat.
 
 Please select which app you'd like to use:
 
 - [Basic Example App](Basic)
-- [Basic + Entitlements Example App](Basic + Entitlements)
-- [PurchaseController + Entitlements Example App](PurchaseController + Entitlements)
-- [RevenueCat + Entitlements Example App](RevenueCat + Entitlements)
+- [Advanced Example App](Advanced)
 
 ## Support
 
