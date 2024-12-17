@@ -11,7 +11,7 @@ import SuperwallKit
 import RevenueCat
 
 @main
-struct SuperwallDemoApp: App {
+struct SuperwallAdvancedApp: App {
   @State private var isLoggedIn = false
   private var isPreviouslyLoggedIn = CurrentValueSubject<Bool, Never>(false)
 
