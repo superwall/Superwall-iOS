@@ -386,19 +386,12 @@ enum ConfigLogic {
     return removedOrChangedPaywallIds
   }
 
-  // TODO: Add tests for this:
   /// Returns the entitlements mapped to a product ID.
   static func extractEntitlements(
     from config: Config
   ) -> [String: Set<Entitlement>] {
-    var entitlementsByProductId: [String: Set<Entitlement>] = [:]
-
-    config.products
-      .forEach { product in
-        if entitlementsByProductId[product.id] == nil {
-          entitlementsByProductId[product.id] = product.entitlements
-        }
-      }
-    return entitlementsByProductId
+    return Dictionary(
+      uniqueKeysWithValues: config.products.map { ($0.id, $0.entitlements) }
+    )
   }
 }

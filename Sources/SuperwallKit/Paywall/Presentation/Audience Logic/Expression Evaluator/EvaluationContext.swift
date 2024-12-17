@@ -128,7 +128,6 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
   case let value as PassableValue:
     return value
   default:
-    // TODO: Change this to return null instead
-    fatalError("Unsupported type: \(anyValue)")
+    return .null
   }
 }

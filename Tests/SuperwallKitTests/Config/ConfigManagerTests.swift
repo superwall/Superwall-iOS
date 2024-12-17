@@ -55,7 +55,6 @@ final class ConfigManagerTests: XCTestCase {
         )
       ],
       paywalls: [paywall],
-      entitlements: [],
       logLevel: 2,
       locales: ["fr"],
       appSessionTimeout: 2202,

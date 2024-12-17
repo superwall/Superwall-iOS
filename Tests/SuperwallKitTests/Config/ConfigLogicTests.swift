@@ -1134,4 +1134,32 @@ final class ConfigLogicTests: XCTestCase {
 
     XCTAssertEqual(result, Set([oldPaywall.identifier, removedPaywall.identifier]))
   }
+
+  // MARK: - extractEntitlements
+
+  func test_extractEntitlements_noEntitlements() {
+    let productId = "123"
+    let entitlement = Entitlement.stub()
+    let config = Config(
+      buildId: "poWduJZYQbCA8QbWLrjJC",
+      triggers: [.stub()],
+      paywalls: [.stub()],
+      logLevel: 0,
+      locales: [],
+      appSessionTimeout: 3600000,
+      featureFlags: .stub(),
+      preloadingDisabled: .stub(),
+      attribution: .init(appleSearchAds: .init(enabled: true)),
+      products: [
+        .init(
+          name: "test",
+          type: .appStore(.init(id: productId)),
+          entitlements: [entitlement]
+        )
+      ]
+    )
+    let entitlements = ConfigLogic.extractEntitlements(from: config)
+
+    XCTAssertEqual(entitlements[productId], [entitlement])
+  }
 }
