@@ -431,6 +431,15 @@ let response = #"""
         ]
       },
       {
+        "store_product": {
+          "store":"PLAY_STORE",
+          "product_identifier":"com.ui_tests.quarterly2",
+          "base_plan_identifier":"test-2",
+          "offer":{"type":"AUTOMATIC"}
+        },
+        "entitlements":[]
+      },
+      {
         "reference_name": "primary",
         "store_product": {
           "store": "PLAY_STORE",

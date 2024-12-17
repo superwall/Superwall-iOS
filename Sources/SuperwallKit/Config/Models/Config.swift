@@ -56,7 +56,12 @@ struct Config: Codable, Equatable {
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
     requestId = try values.decodeIfPresent(String.self, forKey: .requestId)
-    products = try values.decode([Product].self, forKey: .products)
+
+    let appStoreProductItems = try values.decodeIfPresent(
+      [Throwable<Product>].self,
+      forKey: .products
+    ) ?? []
+    products = appStoreProductItems.compactMap { try? $0.result.get() }
   }
 
   func encode(to encoder: Encoder) throws {
@@ -69,7 +74,10 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
-    try container.encode(products, forKey: .products)
+
+    if !products.isEmpty {
+      try container.encode(products, forKey: .products)
+    }
 
     let localizationConfig = LocalizationConfig(locales: locales.map { LocalizationConfig.LocaleConfig(locale: $0) })
     try container.encode(localizationConfig, forKey: .localization)
