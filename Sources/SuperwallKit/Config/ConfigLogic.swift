@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
-// swiftlint:disable array_constructor type_body_length file_length
+// swiftlint:disable array_constructor type_body_length
 
 import Foundation
 
@@ -31,55 +31,34 @@ enum ConfigLogic {
     // This could have a zero percentage.
     if variants.count == 1,
       let variant = variants.first {
-      return .init(
-        id: variant.id,
-        type: variant.type,
-        paywallId: variant.paywallId
-      )
+      return variant.toExperimentVariant()
     }
 
     // Calculate the total sum of variant percentages.
-    let variantSum = variants.reduce(0) { partialResult, variant in
-      partialResult + variant.percentage
-    }
+    let totalPercentage = variants.reduce(0) { $0 + $1.percentage }
 
     // Something went wrong on the dashboard, where all variants
     // have 0% set. Choose a random one.
-    if variantSum == 0 {
+    if totalPercentage == 0 {
       // Choose a random variant
-      let randomVariantIndex = randomiser(0..<variants.count)
-      let variant = variants[randomVariantIndex]
-      return .init(
-        id: variant.id,
-        type: variant.type,
-        paywallId: variant.paywallId
-      )
+      let randomIndex = randomiser(0..<variants.count)
+      return variants[randomIndex].toExperimentVariant()
     }
 
     // Choose a random percentage e.g. 21
-    let randomPercentage = randomiser(0..<variantSum)
+    let randomPercentage = randomiser(0..<totalPercentage)
 
-    // Normalise the percentage e.g. 21/99 = 0.212
-    let normRandomPercentage = Double(randomPercentage) / Double(variantSum)
+    // Select the variant based on cumulative percentage
+    var cumulativePercentage = 0
 
-    var totalNormVariantPercentage = 0.0
-
-    // Loop through all variants
     for variant in variants {
-      // Calculate the normalised variant percentage, e.g. 20 -> 0.2
-      let normVariantPercentage = Double(variant.percentage) / Double(variantSum)
-
       // Add to total variant percentage
-      totalNormVariantPercentage += normVariantPercentage
+      cumulativePercentage += variant.percentage
 
-      // See if selected is less than total. If it is then break .
-      // e.g. Loop 1: 0.212 < (0 + 0.2) = nope, Loop 2: 0.212 < (0.2 + 0.3) = match
-      if normRandomPercentage < totalNormVariantPercentage {
-        return .init(
-          id: variant.id,
-          type: variant.type,
-          paywallId: variant.paywallId
-        )
+      // See if selected is less than total. If it is then return.
+      // e.g. Loop 1: 21 < (0 + 20) = nope, Loop 2: 21 < (20 + 30) = match
+      if randomPercentage < cumulativePercentage {
+        return variant.toExperimentVariant()
       }
     }
 
@@ -213,7 +192,7 @@ enum ConfigLogic {
       }
 
       // Save this to disk, remove any unconfirmed assignments with the same experiment ID.
-      confirmedAssignments[assignment.experimentId] = variantOption.toVariant()
+      confirmedAssignments[assignment.experimentId] = variantOption.toExperimentVariant()
       unconfirmedAssignments[assignment.experimentId] = nil
     }
 

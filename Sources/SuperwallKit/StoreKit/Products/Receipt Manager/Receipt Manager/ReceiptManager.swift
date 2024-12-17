@@ -77,7 +77,6 @@ actor ReceiptManager: NSObject {
       return
     }
 
-    // TODO: Could make this more efficient so we don't loop through everything every time.
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 

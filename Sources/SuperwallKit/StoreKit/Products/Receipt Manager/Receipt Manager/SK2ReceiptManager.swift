@@ -53,8 +53,12 @@ final class SK2ReceiptManager: ReceiptManagerType {
             purchaseDate: transaction.purchaseDate
           )
         )
-      case .unverified:
-        // TODO: Should we log here?
+      case let .unverified(transaction, error):
+        Logger.debug(
+          logLevel: .warn,
+          scope: .transactions,
+          message: "Your receipt contains an unverified transaction \(transaction.debugDescription). \(error.localizedDescription)"
+        )
         break
       }
     }

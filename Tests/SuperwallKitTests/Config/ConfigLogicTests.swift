@@ -29,7 +29,7 @@ final class ConfigLogicTests: XCTestCase {
         .setting(\.percentage, to: 0)
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toVariant(), variant)
+      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
     } catch let error as ConfigLogic.TriggerAudienceError {
       XCTAssertEqual(error, ConfigLogic.TriggerAudienceError.invalidState)
     } catch {
@@ -68,7 +68,7 @@ final class ConfigLogicTests: XCTestCase {
         .setting(\.percentage, to: 0)
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toVariant(), variant)
+      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
     } catch {
       XCTFail("Should have produced a no variant error")
     }
@@ -91,7 +91,7 @@ final class ConfigLogicTests: XCTestCase {
           return 98
         }
       )
-      XCTAssertEqual(options.last!.toVariant(), variant)
+      XCTAssertEqual(options.last!.toExperimentVariant(), variant)
     } catch {
       XCTFail("Should have produced a no variant error")
     }
@@ -114,7 +114,7 @@ final class ConfigLogicTests: XCTestCase {
           return 65
         }
       )
-      XCTAssertEqual(options[1].toVariant(), variant)
+      XCTAssertEqual(options[1].toExperimentVariant(), variant)
     } catch {
       XCTFail("Should have produced a no variant error")
     }
@@ -137,7 +137,7 @@ final class ConfigLogicTests: XCTestCase {
           return 0
         }
       )
-      XCTAssertEqual(options.first!.toVariant(), variant)
+      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
     } catch {
       XCTFail("Should have produced a no variant error")
     }
@@ -219,7 +219,7 @@ final class ConfigLogicTests: XCTestCase {
             return 0
           }
         )
-        XCTAssertEqual(options.first!.toVariant(), variant)
+        XCTAssertEqual(options.first!.toExperimentVariant(), variant)
       } catch {
         XCTFail("Should have produced a no variant error")
       }
@@ -279,7 +279,7 @@ final class ConfigLogicTests: XCTestCase {
 
     // When
     XCTAssertEqual(variant.unconfirmed.count, 1)
-    XCTAssertEqual(variant.unconfirmed[experimentId], variantOption.toVariant())
+    XCTAssertEqual(variant.unconfirmed[experimentId], variantOption.toExperimentVariant())
     XCTAssertTrue(variant.confirmed.isEmpty)
   }
 
@@ -309,12 +309,12 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [experimentId: variantOption.toVariant()]
+      confirmedAssignments: [experimentId: variantOption.toExperimentVariant()]
     )
 
     // Then
     XCTAssertEqual(variant.confirmed.count, 1)
-    XCTAssertEqual(variant.confirmed[experimentId], variantOption.toVariant())
+    XCTAssertEqual(variant.confirmed[experimentId], variantOption.toExperimentVariant())
     XCTAssertTrue(variant.unconfirmed.isEmpty)
   }
 
@@ -347,12 +347,12 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [experimentId: oldVariantOption.toVariant()]
+      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()]
     )
 
     // Then
     XCTAssertEqual(variant.unconfirmed.count, 1)
-    XCTAssertEqual(variant.unconfirmed[experimentId], newVariantOption.toVariant())
+    XCTAssertEqual(variant.unconfirmed[experimentId], newVariantOption.toExperimentVariant())
     XCTAssertTrue(variant.confirmed.isEmpty)
   }
 
@@ -379,7 +379,7 @@ final class ConfigLogicTests: XCTestCase {
           )
         ])
       ],
-      confirmedAssignments: [experimentId: oldVariantOption.toVariant()]
+      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()]
     )
 
     // Then
@@ -432,11 +432,11 @@ final class ConfigLogicTests: XCTestCase {
     let result = ConfigLogic.transferAssignmentsFromServerToDisk(
       assignments: assignments,
       triggers: triggers,
-      confirmedAssignments: [experimentId: oldVariantOption.toVariant()],
+      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()],
       unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
     )
 
-    XCTAssertEqual(result.confirmed[experimentId], variantOption.toVariant())
+    XCTAssertEqual(result.confirmed[experimentId], variantOption.toExperimentVariant())
     XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
   }
 
@@ -494,8 +494,8 @@ final class ConfigLogicTests: XCTestCase {
       unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
     )
     XCTAssertEqual(result.confirmed.count, 2)
-    XCTAssertEqual(result.confirmed[experimentId1], variantOption1.toVariant())
-    XCTAssertEqual(result.confirmed[experimentId2], variantOption2.toVariant())
+    XCTAssertEqual(result.confirmed[experimentId1], variantOption1.toExperimentVariant())
+    XCTAssertEqual(result.confirmed[experimentId2], variantOption2.toExperimentVariant())
     XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
   }
 

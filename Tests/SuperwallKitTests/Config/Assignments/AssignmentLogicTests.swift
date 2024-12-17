@@ -41,7 +41,7 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
@@ -105,7 +105,7 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
@@ -170,7 +170,7 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
@@ -230,11 +230,11 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     let variant2 =
       variantOption
       .setting(\.paywallId, to: "123")
-      .toVariant()
+      .toExperimentVariant()
     let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant2
@@ -296,7 +296,7 @@ class AssignmentLogicTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let storage = StorageMock()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]
@@ -352,7 +352,7 @@ class AssignmentLogicTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let storage = StorageMock()
-    let variant = variantOption.toVariant()
+    let variant = variantOption.toExperimentVariant()
     dependencyContainer.configManager.unconfirmedAssignments = [
       rawExperiment.id: variant
     ]

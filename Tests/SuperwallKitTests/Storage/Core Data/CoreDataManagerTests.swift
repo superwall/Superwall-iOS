@@ -192,7 +192,6 @@ class CoreDataManagerTests: XCTestCase {
       interval: interval
     )
 
-
     measure {
       let exp = expectation(description: "Finished")
       Task {

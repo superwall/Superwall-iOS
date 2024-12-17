@@ -43,7 +43,6 @@ actor SK2TransactionListener {
             await transaction.finish()
           }
 
-          // TODO: We should be more smart here. This will run through Transaction.all every time there's an update. Do we really need to do that? Consider products previously expiring in solution to, maybe we do need to.
           await receiptManager.loadPurchasedProducts()
         }
       }

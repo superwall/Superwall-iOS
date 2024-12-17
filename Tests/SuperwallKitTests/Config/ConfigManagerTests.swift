@@ -208,7 +208,7 @@ final class ConfigManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 1_000_000)
 
-    XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variantOption.toVariant())
+    XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variantOption.toExperimentVariant())
     XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)
   }
 }
