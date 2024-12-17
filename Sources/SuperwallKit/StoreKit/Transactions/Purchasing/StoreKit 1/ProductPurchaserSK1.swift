@@ -42,6 +42,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   }
 
   init(
+    shouldFinishTransactions: Bool,
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
     identityManager: IdentityManager,
@@ -58,10 +59,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     self.identityManager = identityManager
     self.storage = storage
     self.factory = factory
-
-    let hasPurchaseController = factory.makeHasExternalPurchaseController()
-    let options = factory.makeSuperwallOptions()
-    self.shouldFinishTransaction = !hasPurchaseController && !options.shouldObservePurchases
+    self.shouldFinishTransaction = shouldFinishTransactions
 
     super.init()
     SKPaymentQueue.default().add(self)

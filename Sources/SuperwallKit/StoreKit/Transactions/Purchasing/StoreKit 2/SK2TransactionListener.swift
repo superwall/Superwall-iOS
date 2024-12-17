@@ -11,6 +11,7 @@ import StoreKit
 @available(iOS 15.0, *)
 actor SK2TransactionListener {
   private(set) var taskHandle: Task<Void, Never>?
+  private let shouldFinishTransactions: Bool
   private let factory: HasExternalPurchaseControllerFactory
   private unowned let receiptManager: ReceiptManager
 
@@ -20,9 +21,11 @@ actor SK2TransactionListener {
   }
 
   init(
+    shouldFinishTransactions: Bool,
     receiptManager: ReceiptManager,
     factory: HasExternalPurchaseControllerFactory
   ) {
+    self.shouldFinishTransactions = shouldFinishTransactions
     self.receiptManager = receiptManager
     self.factory = factory
   }
@@ -36,7 +39,7 @@ actor SK2TransactionListener {
         case let .verified(transaction),
           let .unverified(transaction, _):
 
-          if await !factory.makeHasExternalPurchaseController() {
+          if self.shouldFinishTransactions {
             await transaction.finish()
           }
 

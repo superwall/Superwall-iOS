@@ -44,6 +44,11 @@ final class PurchaseManager: Purchasing {
   ) {
     self.factory = factory
     coordinator = PurchasingCoordinator(factory: factory)
+
+    let hasPurchaseController = factory.makeHasExternalPurchaseController()
+    let options = factory.makeSuperwallOptions()
+    let shouldFinishTransactions = !hasPurchaseController && !options.shouldObservePurchases
+
     if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
       purchaser = ProductPurchaserSK2(
@@ -53,6 +58,7 @@ final class PurchaseManager: Purchasing {
         factory: factory
       )
       _sk2TransactionListener = SK2TransactionListener(
+        shouldFinishTransactions: shouldFinishTransactions,
         receiptManager: receiptManager,
         factory: factory
       )
@@ -61,6 +67,7 @@ final class PurchaseManager: Purchasing {
       }
     } else {
       purchaser = ProductPurchaserSK1(
+        shouldFinishTransactions: shouldFinishTransactions,
         storeKitManager: storeKitManager,
         receiptManager: receiptManager,
         identityManager: identityManager,
