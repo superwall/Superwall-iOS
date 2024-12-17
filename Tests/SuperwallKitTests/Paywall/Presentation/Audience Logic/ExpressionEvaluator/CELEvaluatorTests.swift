@@ -179,7 +179,7 @@ final class CELEvaluatorTests: XCTestCase {
       factory: dependencyContainer
     )
     let rule: TriggerRule = .stub()
-      .setting(\.expression, to: "device.activeEntitlements.exists(e, e.identifier == \"bronze\")")
+      .setting(\.expression, to: "[\"bronze\"].all(identifier, device.activeEntitlements.contains(identifier))")
     let result = await evaluator.evaluateExpression(
       fromAudienceFilter: rule,
       placementData: .stub()
