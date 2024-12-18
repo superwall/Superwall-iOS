@@ -89,7 +89,6 @@ actor ReceiptManager: NSObject {
     await manager.isEligibleForIntroOffer(storeProduct)
   }
 
-
   /// Determines whether the user is subscribed to the given product id.
   func isSubscribed(to productId: String) -> Bool {
     return manager.purchases
@@ -97,6 +96,14 @@ actor ReceiptManager: NSObject {
       .sorted { $0.purchaseDate > $1.purchaseDate }
       .first?
       .isActive == true
+  }
+
+  func getActiveProductIds() -> Set<String> {
+    return Set(
+      manager.purchases
+      .filter(\.isActive)
+      .map(\.id)
+    )
   }
 
   /// This refreshes the device receipt.

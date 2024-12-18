@@ -89,6 +89,7 @@ final class DependencyContainer {
       storage: storage,
       network: network,
       entitlementsInfo: entitlementsInfo,
+      receiptManager: receiptManager,
       factory: self
     )
 

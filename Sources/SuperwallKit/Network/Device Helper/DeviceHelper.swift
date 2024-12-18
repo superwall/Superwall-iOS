@@ -494,6 +494,7 @@ class DeviceHelper {
       isSandbox: isSandbox,
       activeEntitlements: Set(entitlementsInfo.active.map { $0.id }),
       activeEntitlementObjects: entitlementsInfo.active,
+      activeProducts: await receiptManager.getActiveProductIds(),
       entitlementStatus: entitlementsInfo.status.description,
       isFirstAppOpen: isFirstAppOpen,
       sdkVersion: sdkVersion,
@@ -519,6 +520,7 @@ class DeviceHelper {
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let entitlementsInfo: EntitlementsInfo
+  private unowned let receiptManager: ReceiptManager
   private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
 
   init(
@@ -526,12 +528,14 @@ class DeviceHelper {
     storage: Storage,
     network: Network,
     entitlementsInfo: EntitlementsInfo,
+    receiptManager: ReceiptManager,
     factory: IdentityInfoFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
+    self.receiptManager = receiptManager
     self.factory = factory
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)

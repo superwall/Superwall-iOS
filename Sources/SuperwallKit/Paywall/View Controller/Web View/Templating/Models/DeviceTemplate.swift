@@ -47,6 +47,7 @@ struct DeviceTemplate: Codable {
   var isSandbox: String
   var activeEntitlements: Set<String>
   var activeEntitlementObjects: Set<Entitlement>
+  var activeProducts: Set<String>
   var entitlementStatus: String
   var isFirstAppOpen: Bool
   var sdkVersion: String
