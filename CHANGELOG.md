@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.3
+
+### Fixes
+
+- Adds the obsoleted attribute to more variants of `register(event:)` for a smoother upgrade path.
+
 ## 4.0.0-alpha.2
 
 ### Breaking Changes

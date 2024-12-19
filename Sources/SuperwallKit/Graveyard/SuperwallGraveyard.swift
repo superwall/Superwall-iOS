@@ -48,6 +48,24 @@ extension Superwall {
     feature: @escaping () -> Void
   ) {}
 
+  @available(*, unavailable, renamed: "register(placement:params:handler:)")
+  @objc public func register(
+    event: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil
+  ) {}
+
+  @available(*, unavailable, renamed: "register(placement:params:)")
+  @objc public func register(
+    event: String,
+    params: [String: Any]? = nil
+  ) {}
+
+  @available(*, unavailable, renamed: "register(placement:)")
+  @objc public func register(
+    event: String
+  ) {}
+
   @available(*, unavailable, renamed: "preloadPaywalls(forPlacements:)")
   @objc public func preloadPaywalls(forEvents eventNames: Set<String>) {}
 
