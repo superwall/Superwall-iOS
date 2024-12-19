@@ -8,7 +8,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the obsoleted attribute to more variants of `register(event:)` for a smoother upgrade path.
 
-
 ### Fixes
 
 - Fixes issue with optional audience filter properties inside `PaywallInfo`.
