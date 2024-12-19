@@ -4,9 +4,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.0.0-alpha.3
 
-### Fixes
+### Enhancements
 
 - Adds the obsoleted attribute to more variants of `register(event:)` for a smoother upgrade path.
+
+
+### Fixes
+
+- Fixes issue with optional audience filter properties inside `PaywallInfo`.
 
 ## 4.0.0-alpha.2
 

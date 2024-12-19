@@ -320,8 +320,10 @@ public final class PaywallInfo: NSObject {
       } else if index == 2 {
         output["tertiary_product_id"] = product.id
       }
-      let key = "\(product.name)_product_id"
-      output[key] = product.id
+      if let name = product.name {
+        let key = "\(name)_product_id"
+        output[key] = product.id
+      }
     }
 
     return output
