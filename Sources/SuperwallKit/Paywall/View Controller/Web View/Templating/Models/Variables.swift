@@ -16,7 +16,7 @@ struct Variables: Encodable {
   var products: [ProductVariable] = []
 
   // These are needed for backwards compatibility with v3 paywalls.
-  // Do not remove otherwise product attributes won't work.
+  // MARK: Do not remove otherwise product attributes won't work.
   var primary: JSON = [:]
   var secondary: JSON = [:]
   var tertiary: JSON = [:]
@@ -35,7 +35,7 @@ struct Variables: Encodable {
     }
 
     // These are needed for backwards compatibility with v3 paywalls.
-    // Do not remove otherwise product attributes won't work.
+    // MARK: Do not remove otherwise product attributes won't work.
     for product in products {
       switch product.name {
       case "primary":

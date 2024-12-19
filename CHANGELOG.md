@@ -8,9 +8,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Removes `trigger_session_id` from `PaywallInfo` params.
 - `ProductInfo` is renamed to `Product` and the old `Product` class no longer exists.
-
-// TODO: Add more info here
-
 - Removes `Superwall.shared.subscriptionStatus` in favor of entitlements.
 - Removes `subscriptionStatus_didChange`.
 - Removes `subscriptionStatusDidChange(to:)` from the `SuperwallDelegate`.
@@ -24,8 +21,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Moves `ComputedPropertyRequestType` to be a top-level type.
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
-- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`.
-// TODO: Mention SK1 with objective c when using purchase controller/observer mode. Must set it when purchasing.
+- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`. Note that when using Objective-C and providing a PurchaseController or using observer mode, the SDK will default to `.storeKit1`. If you're using the purchase function, you must use `.storeKit1`.
 - Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
 - Consumables no longer count as lifetime subscriptions when using StoreKit 2.
 - Changes `presented_by_event_name` to `presented_by_placement_name`.
