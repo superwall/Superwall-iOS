@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.3
+
+### Enhancements
+
+- Adds the obsoleted attribute to more variants of `register(event:)` for a smoother upgrade path.
+
+### Fixes
+
+- Fixes issue with optional audience filter properties inside `PaywallInfo`.
+
 ## 4.0.0-alpha.2
 
 ### Breaking Changes
