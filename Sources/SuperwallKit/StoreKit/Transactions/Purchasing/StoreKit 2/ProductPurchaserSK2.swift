@@ -98,11 +98,6 @@ final class ProductPurchaserSK2: Purchasing {
       case let .success(.verified(transaction)):
         await transaction.finish()
         await receiptManager.loadPurchasedProducts()
-
-        let transactionDate = transaction.purchaseDate
-        if transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
-          return .restored
-        }
         return .purchased
       case let .success(.unverified(transaction, error)):
         await transaction.finish()

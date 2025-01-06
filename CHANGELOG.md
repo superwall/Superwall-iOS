@@ -2,11 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.5
+
+### Fixes
+
+- Removes date checking for transactions, which was resulting in some purchases being marked as restored.
+
 ## 4.0.0-alpha.4
 
 ### Fixes
 
-- Fixes bug for storekit version specific in a `transaction_complete` event.
+- Fixes bug for StoreKit version specified in a `transaction_complete` event.
 - Reverts change of `presented_by_placement_name` to `presented_by_event_name` to fix campaign charts.
 
 ## 4.0.0-alpha.3
