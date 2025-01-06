@@ -884,7 +884,7 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["$paywall_url"] as! String,
       paywallInfo.url.absoluteString)
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
@@ -957,7 +957,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
   }
 
@@ -988,7 +988,7 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["$paywall_url"] as! String,
       paywallInfo.url.absoluteString)
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
@@ -1060,7 +1060,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
   }
 
@@ -1091,7 +1091,7 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["$paywall_url"] as! String,
       paywallInfo.url.absoluteString)
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
@@ -1164,7 +1164,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
   }
 
@@ -1195,7 +1195,7 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["$paywall_url"] as! String,
       paywallInfo.url.absoluteString)
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
@@ -1267,7 +1267,7 @@ final class TrackingTests: XCTestCase {
     XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
     XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
     XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_placement_name"] as? String,
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
   }
 

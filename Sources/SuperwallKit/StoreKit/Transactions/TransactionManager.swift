@@ -852,7 +852,7 @@ final class TransactionManager {
       transaction: transaction,
       source: eventSource,
       isObserved: isObserved,
-      storeKitVersion: .storeKit1
+      storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
     )
     await Superwall.shared.track(trackedTransactionEvent)
     await placementsQueue.flushInternal()
