@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.1
+
+### Fixes
+
+- Fixes issue for flutter when enabling Apple Search Ads on the Dashboard.
+
 ## 3.12.0
 
 ### Enhancements
