@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-alpha.4
+
+### Fixes
+
+- Fixes bug for storekit version specific in a `transaction_complete` event.
+- Reverts change of `presented_by_placement_name` to `presented_by_event_name` to fix campaign charts.
+
 ## 4.0.0-alpha.3
 
 ### Enhancements
@@ -34,7 +41,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`. Note that when using Objective-C and providing a PurchaseController or using observer mode, the SDK will default to `.storeKit1`. If you're using the purchase function, you must use `.storeKit1`.
 - Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
 - Consumables no longer count as lifetime subscriptions when using StoreKit 2.
-- Changes `presented_by_event_name` to `presented_by_placement_name`.
 - Renames the `PurchaseResult` case `purchased(productId: String)` to `purchased(Product)`.
 - Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
 - Changes the `onRequestDismiss` block of the `PaywallView` to accept both a `PaywallInfo` object and a `PaywallResult` object.
