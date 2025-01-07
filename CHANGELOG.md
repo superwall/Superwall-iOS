@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Removes date checking for transactions, which was resulting in some purchases being marked as restored.
+- Checks for the `SKIncludeConsumableInAppPurchaseHistory` info.plist key. If set to `true`, defaults to using `.storeKit2` only if on iOS 18+.
 
 ## 4.0.0-alpha.4
 
