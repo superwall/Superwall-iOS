@@ -58,12 +58,7 @@ final class RCPurchaseController: PurchaseController {
       if revenueCatResult.userCancelled {
         return .cancelled
       } else {
-        if let transaction = revenueCatResult.transaction,
-           purchaseDate > transaction.purchaseDate {
-          return .restored
-        } else {
-          return .purchased
-        }
+        return .purchased
       }
     } catch let error as ErrorCode {
       if error == .paymentPendingError {

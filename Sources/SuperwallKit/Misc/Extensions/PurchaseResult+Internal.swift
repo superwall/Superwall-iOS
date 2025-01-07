@@ -17,13 +17,7 @@ extension StoreKit.Product.PurchaseResult {
       case .unverified(_, let error):
         return .failed(error)
       case .verified(let transaction):
-        let transactionDate = transaction.purchaseDate
-        if let purchaseDate = await coordinator.purchaseDate,
-          transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
-          return .restored
-        } else {
-          return .purchased
-        }
+        return .purchased
       }
     case .userCancelled:
       return .cancelled

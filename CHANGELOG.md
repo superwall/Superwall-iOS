@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue for flutter when enabling Apple Search Ads on the Dashboard.
+- Removes date checking for transactions, which was resulting in some purchases being marked as restored.
 
 ## 3.12.0
 
