@@ -129,8 +129,40 @@ class IdentityManager {
     }
     self._userAttributes = storage.get(UserAttributes.self) ?? [:]
 
+    let didCleanUserAttributes = storage.get(DidCleanUserAttributes.self) ?? false
+    if !didCleanUserAttributes {
+      cleanUserAttributes()
+    }
+
     if !extraAttributes.isEmpty {
       mergeUserAttributes(extraAttributes, shouldTrackMerge: false)
+    }
+  }
+
+  /// Removes any attributes as JSON
+  private func cleanUserAttributes() {
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      var cleanedAttributes: [String: Any] = [:]
+
+      for attribute in self._userAttributes {
+        let key = attribute.key
+        var value = attribute.value
+
+        if let jsonValue = value as? JSON {
+          value = jsonValue.rawValue
+        }
+
+        if JSONSerialization.isValidJSONObject([key: value]) {
+          cleanedAttributes[key] = value
+        }
+        // Skip values that can't be represented in JSON.
+      }
+      self._userAttributes = cleanedAttributes
+      storage.save(cleanedAttributes, forType: UserAttributes.self)
+      storage.save(true, forType: DidCleanUserAttributes.self)
     }
   }
 
