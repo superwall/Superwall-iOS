@@ -223,17 +223,10 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
           since: purchaseDate,
           withProductId: skTransaction.payment.productIdentifier
         )
-        if ProductPurchaserLogic.hasRestored(skTransaction, purchaseDate: purchaseDate) {
-          await coordinator.completePurchase(
-            of: skTransaction,
-            result: .restored
-          )
-        } else {
-          await coordinator.completePurchase(
-            of: skTransaction,
-            result: .purchased
-          )
-        }
+        await coordinator.completePurchase(
+          of: skTransaction,
+          result: .purchased
+        )
       } catch {
         await coordinator.completePurchase(
           of: skTransaction,
