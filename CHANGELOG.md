@@ -68,6 +68,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
 - Adds `products(for:)` which gets the ``StoreProduct`s for given product identifiers.
 
+## 3.12.2
+
+### Fixes
+
+- Fixes visionOS build issues.
+
 ## 3.12.1
 
 ### Fixes
