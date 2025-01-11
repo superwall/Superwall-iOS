@@ -85,8 +85,16 @@ class SWWebView: WKWebView {
     config.preferences = preferences
     wkConfig = config
 
+    let size: CGSize
+
+    #if os(visionOS)
+    size = .zero
+    #else
+    size = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+    #endif
+
     super.init(
-      frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height),
+      frame: CGRect(origin: .zero, size: size),
       configuration: wkConfig
     )
     self.loadingHandler.loadingDelegate = self
