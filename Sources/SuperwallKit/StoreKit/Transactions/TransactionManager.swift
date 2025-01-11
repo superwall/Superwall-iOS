@@ -158,7 +158,7 @@ final class TransactionManager {
     await coordinator.reset()
   }
 
-  @available(iOS 17.2, *)
+  @available(iOS 17.2, visionOS 1.1, *)
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
     guard let product = try? await productsManager.products(
       identifiers: [transaction.productID],
@@ -171,7 +171,6 @@ final class TransactionManager {
       product: product,
       purchaseSource: .observeFunc(product)
     )
-
 
     let hasOffer = transaction.offer != nil
     let coordinator = factory.makePurchasingCoordinator()
@@ -810,7 +809,7 @@ final class TransactionManager {
 
     let didStartOffer: Bool
 
-    if #available(iOS 17.2, *),
+    if #available(iOS 17.2, visionOS 1.1, *),
       let sk2Transaction = transaction?.sk2Transaction {
       didStartOffer = sk2Transaction.offer != nil
     } else {
