@@ -94,7 +94,9 @@ extension Superwall {
           // preserve $ for Superwall-only values
           continue
         }
-        customAttributes[key] = value
+        if JSONSerialization.isValidJSONObject([key: value]) {
+          customAttributes[key] = value
+        }
       }
     }
 

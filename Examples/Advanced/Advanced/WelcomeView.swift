@@ -36,7 +36,9 @@ struct WelcomeView: View {
       .navigationTitle("")
     }
     .accentColor(.primaryTeal300)
+    #if !os(visionOS)
     .scrollDismissesKeyboard(.immediately)
+    #endif
   }
 
   private func logo() -> some View {

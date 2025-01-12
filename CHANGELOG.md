@@ -2,11 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.1
+
+### Fixes
+
+- Removes date checking for transactions, which was resulting in some purchases being marked as restored.
+- Checks for the `SKIncludeConsumableInAppPurchaseHistory` info.plist key. If set to `true`, defaults to using `.storeKit2` only if on iOS 18+.
+- Fixes visionOS issues.
+
 ## 4.0.0-alpha.4
 
 ### Fixes
 
-- Fixes bug for storekit version specific in a `transaction_complete` event.
+- Fixes bug for StoreKit version specified in a `transaction_complete` event.
 - Reverts change of `presented_by_placement_name` to `presented_by_event_name` to fix campaign charts.
 
 ## 4.0.0-alpha.3
@@ -59,6 +67,19 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the `LogScope` case `entitlements`.
 - Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
 - Adds `products(for:)` which gets the ``StoreProduct`s for given product identifiers.
+
+## 3.12.2
+
+### Fixes
+
+- Fixes visionOS build issues.
+
+## 3.12.1
+
+### Fixes
+
+- Fixes issue for flutter when enabling Apple Search Ads on the Dashboard. This is done by cleaning all user attributes such that only those that are JSON serializable are stored.
+- Removes date checking for transactions, which was resulting in some purchases being marked as restored.
 
 ## 3.12.0
 

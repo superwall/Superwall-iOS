@@ -69,7 +69,7 @@ final class ProductPurchaserSK2: Purchasing {
 
     if shouldObservePurchases,
       storeKitVersion == .storeKit2,
-      #available(iOS 17.2, *) {
+      #available(iOS 17.2, visionOS 1.1, *) {
       Task(priority: .utility) { [weak self] in
         guard let self = self else {
           return
@@ -90,19 +90,21 @@ final class ProductPurchaserSK2: Purchasing {
         options.insert(.appAccountToken(uuid))
       }
 
-      let purchaseDate = Date()
+      let result: StoreKit.Product.PurchaseResult
 
-      let result = try await product.purchase()
+      #if os(visionOS)
+      guard let scene = await UIApplication.shared.connectedScenes.first else {
+        return .cancelled
+      }
+      result = try await product.purchase(confirmIn: scene)
+      #else
+      result = try await product.purchase()
+      #endif
 
       switch result {
       case let .success(.verified(transaction)):
         await transaction.finish()
         await receiptManager.loadPurchasedProducts()
-
-        let transactionDate = transaction.purchaseDate
-        if transactionDate.isAtLeastTwentySecondsBefore(purchaseDate) {
-          return .restored
-        }
         return .purchased
       case let .success(.unverified(transaction, error)):
         await transaction.finish()
@@ -158,7 +160,7 @@ final class ProductPurchaserSK2: Purchasing {
   }
 }
 
-@available(iOS 17.2, *)
+@available(iOS 17.2, visionOS 1.1, *)
 extension ProductPurchaserSK2: SK2ObserverModePurchaseDetectorDelegate {
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async throws {
     let transactionManager = factory.makeTransactionManager()

@@ -65,18 +65,11 @@ final class RCPurchaseController: PurchaseController {
         throw PurchasingError.sk2ProductNotFound
       }
       let storeProduct = RevenueCat.StoreProduct(sk2Product: sk2Product)
-      let purchaseDate = Date()
       let revenueCatResult = try await Purchases.shared.purchase(product: storeProduct)
       if revenueCatResult.userCancelled {
         return .cancelled
       } else {
-        if let transaction = revenueCatResult.transaction,
-          purchaseDate > transaction.purchaseDate
-        {
-          return .restored
-        } else {
-          return .purchased
-        }
+        return .purchased
       }
     } catch let error as ErrorCode {
       if error == .paymentPendingError {
