@@ -230,7 +230,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   }
 
   public override init() {
-    if let includeConsumableHistory = Bundle.main.object(forInfoDictionaryKey: "SKIncludeConsumableInAppPurchaseHistory") as? Bool,
+    let key = "SKIncludeConsumableInAppPurchaseHistory"
+    if let includeConsumableHistory = Bundle.main.object(forInfoDictionaryKey: key) as? Bool,
       includeConsumableHistory {
       if #available(iOS 18.0, *) {
         self.storeKitVersion = .storeKit2
