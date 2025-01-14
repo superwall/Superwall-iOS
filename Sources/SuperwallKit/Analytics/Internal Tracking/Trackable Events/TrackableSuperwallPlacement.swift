@@ -375,8 +375,7 @@ enum InternalSuperwallPlacement {
           withComputedProperties: computedPropertyRequests
         )
 
-        if let audienceFiltersDictionary = audienceFilters.dictionaryObject,
-          let jsonData = try? JSONSerialization.data(withJSONObject: audienceFiltersDictionary),
+        if let jsonData = try? JSONSerialization.data(withJSONObject: audienceFilters),
           let decoded = String(data: jsonData, encoding: .utf8) {
           params += [
             "expression_params": decoded

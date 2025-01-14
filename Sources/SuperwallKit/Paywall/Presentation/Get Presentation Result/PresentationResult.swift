@@ -35,4 +35,16 @@ public enum PresentationResult: Sendable, Equatable {
   /// The paywall is unavailable. This could be because there's no internet, no view controller to
   /// present from, or the paywall is already presented.
   case paywallNotAvailable
+
+  // MARK: - Graveyard
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the placement to a campaign on the dashboard and
+  /// double check its spelling.
+  @available(*, unavailable, renamed: "placementNotFound")
+  case eventNotFound
+
+  /// No matching audience was found for this placement so no paywall will be shown.
+  @available(*, unavailable, renamed: "noAudienceMatch")
+  case noRuleMatch
 }

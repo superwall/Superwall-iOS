@@ -387,7 +387,7 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
   func makeAudienceFilterAttributes(
     forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
-  ) async -> JSON {
+  ) async -> [String: Any] {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
 
@@ -395,11 +395,11 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
       since: placement,
       computedPropertyRequests: computedPropertyRequests
     )
-    return JSON([
+    return [
       "user": userAttributes,
       "device": deviceAttributes,
       "params": placement?.parameters.dictionaryObject ?? ""
-    ] as [String: Any])
+    ]
   }
 }
 

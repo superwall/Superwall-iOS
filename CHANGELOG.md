@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.2
+
+### Fixes
+
+- Fixes an issue to do with audience filters.
+- Readds unavailable functions from v3 to make the upgrade path smoother.
+
 ## 4.0.0-beta.1
 
 ### Fixes
@@ -37,18 +44,18 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Removes `subscriptionStatus_didChange`.
 - Removes `subscriptionStatusDidChange(to:)` from the `SuperwallDelegate`.
 - Renames `productItems` to `products` in `PaywallInfo`.
-- Renames `register(event:)` to `register(placement:)`.
-- Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`.
-- Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`.
-- Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`.
-- Renames the `TriggerResult` `eventNotFound` case to `placementNotFound`.
-- Renames the `PresentationResult` and `PaywallSkippedReason` `noRuleMatch` case to `noAudienceMatch`.
+- Renames `register(event:)` to `register(placement:)`. DONE
+- Renames `preloadPaywalls(forEvents:)` to `preloadPaywalls(forPlacements:)`. DONE
+- Renames `getPaywall(forEvent:)` to `getPaywall(forPlacement:)`. DONE
+- Renames `getPresentationResult(forEvent:)` to `getPresentationResult(forPlacement:)`. DONE
+- Renames the `TriggerResult`, `PresentationResult` and `PaywallSkippedReason` `eventNotFound` case to `placementNotFound` and `noEventMatch` to `noAudienceMatch`. DONE
+- Renames `handleSuperwallEvent(withInfo:)` to `handleSuperwallPlacement(withInfo:). DONE
 - Moves `ComputedPropertyRequestType` to be a top-level type.
 - Renames `Store` to `ProductStore`.
 - Removes `Superwall.shared.isConfigured` in favor of `Superwall.shared.configurationStatus`.
-- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`. Note that when using Objective-C and providing a PurchaseController or using observer mode, the SDK will default to `.storeKit1`. If you're using the purchase function, you must use `.storeKit1`.
-- Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`.
-- Consumables no longer count as lifetime subscriptions when using StoreKit 2.
+- Defaults to StoreKit 2 for product purchasing for apps running on iOS 15+. You can change this back to StoreKit 1 by setting the `SuperwallOption` `storeKitVersion` to `.storeKit1`. When using Objective-C and providing a PurchaseController or using observer mode, the SDK will default to `.storeKit1`. If you're using Objective-C and using `purchase(_:)`, you must use `.storeKit1`.
+- Changes the `PurchaseController` purchase function to `func purchase(product: StoreProduct) async -> PurchaseResult`. There will be an StoreKit 2 product accessible via `product.sk2Product` by default. However, if you're using the StoreKit 1 `SuperwallOption` or your app is running on an iOS version lower than iOS 15, this will be `nil` and you can access the StoreKit 1 product via `product.sk1Product`. DONE
+- Consumables no longer count as lifetime subscriptions when using StoreKit 2. REVISIT
 - Renames the `PurchaseResult` case `purchased(productId: String)` to `purchased(Product)`.
 - Changes the Swift `onDismiss` block of the `PaywallPresentationHandler` to accept both a `PaywallInfo` object and a `PaywallResult` object so you know which product was purchased after dismiss.
 - Changes the `onRequestDismiss` block of the `PaywallView` to accept both a `PaywallInfo` object and a `PaywallResult` object.

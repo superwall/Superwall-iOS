@@ -62,7 +62,7 @@ protocol AudienceFilterAttributesFactory: AnyObject {
   func makeAudienceFilterAttributes(
     forPlacement placement: PlacementData?,
     withComputedProperties computedPropertyRequests: [ComputedPropertyRequest]
-  ) async -> JSON
+  ) async -> [String: Any]
 }
 
 protocol FeatureFlagsFactory: AnyObject {

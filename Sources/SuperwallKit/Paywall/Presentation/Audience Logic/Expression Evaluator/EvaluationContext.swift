@@ -75,9 +75,15 @@ extension Dictionary where Key == String, Value == Any {
 }
 
 func toPassableValue(from anyValue: Any) -> PassableValue {
+  if let number = anyValue as? NSNumber {
+    // Check if it is a boolean
+    if CFGetTypeID(number) == CFBooleanGetTypeID() {
+        return .bool(number.boolValue)
+    }
+    // If not a boolean, let the switch handle the rest
+  }
+
   switch anyValue {
-  case let value as Bool:
-    return .bool(value)
   case let value as Int:
     return .int(value)
   case let value as UInt64:
@@ -86,19 +92,21 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
     return .float(value)
   case let value as String:
     return .string(value)
+  case let value as Bool:
+    return .bool(value)
   case let value as Data:
     return .bytes(value)
   case let value as [Any]:
     return .list(value.map { toPassableValue(from: $0) })
   case let value as JSON:
-    if let bool = value.bool {
-      return .bool(bool)
-    } else if let int = value.int {
+    if let int = value.int {
       return .int(int)
     } else if let uint = value.uInt64 {
       return .uint(uint)
     } else if let float = value.double {
       return .float(float)
+    } else if let bool = value.bool {
+      return .bool(bool)
     } else if let string = value.string {
       return .string(string)
     } else if let array = value.array {

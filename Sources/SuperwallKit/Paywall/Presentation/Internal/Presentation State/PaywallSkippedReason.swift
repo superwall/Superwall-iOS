@@ -59,6 +59,19 @@ public enum PaywallSkippedReason: Error, Sendable, Equatable, CustomStringConver
       return .placementNotFound
     }
   }
+
+  // MARK: - Graveyard
+
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the placement to a campaign on the dashboard and
+  /// double check its spelling.
+  @available(*, unavailable, renamed: "placementNotFound")
+  case eventNotFound
+
+  /// No matching rule was found for this event so no paywall will be shown.
+  @available(*, unavailable, renamed: "noAudienceMatch")
+  case noRuleMatch
 }
 
 /// Objective-C-only enum. Specifies the reason the paywall presentation was skipped.

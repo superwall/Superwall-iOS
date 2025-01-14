@@ -38,6 +38,17 @@ public enum TriggerResult: Sendable, Equatable {
   ///
   /// In these instances, consider falling back to a native paywall.
   case error(NSError)
+
+  /// This event was not found on the dashboard.
+  ///
+  /// Please make sure you have added the placement to a campaign on the dashboard and
+  /// double check its spelling.
+  @available(*, unavailable, renamed: "placementNotFound")
+  case eventNotFound
+
+  /// No matching audience was found for this placement so no paywall will be shown.
+  @available(*, unavailable, renamed: "noAudienceMatch")
+  case noRuleMatch
 }
 
 /// The result of a paywall trigger. `noAudienceMatch` is an associated enum.

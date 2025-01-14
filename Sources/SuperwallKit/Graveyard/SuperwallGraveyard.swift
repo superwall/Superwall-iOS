@@ -140,3 +140,24 @@ extension Superwall {
     return .init(trackResult: .placementNotFound)
   }
 }
+
+@available(*, unavailable, renamed: "SuperwallPlacementInfo")
+@objc(SWKSuperwallEventInfo)
+@objcMembers
+public final class SuperwallEventInfo: NSObject {}
+
+extension SuperwallDelegate {
+  @available(*, unavailable, renamed: "handleSuperwallPlacement(withInfo:)")
+  public func handleSuperwallEvent(withInfo placementInfo: SuperwallEventInfo) {}
+}
+
+@available(*, unavailable, renamed: "ProductStore")
+@objc(SWKStore)
+public enum Store: Int {
+  case appStore
+}
+
+@available(*, unavailable, renamed: "Product")
+@objc(SWKProductInfo)
+@objcMembers
+public final class ProductInfo: NSObject, Codable, Sendable {}
