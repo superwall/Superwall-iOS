@@ -78,7 +78,7 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
   if let number = anyValue as? NSNumber {
     // Check if it is a boolean
     if CFGetTypeID(number) == CFBooleanGetTypeID() {
-        return .bool(number.boolValue)
+      return .bool(number.boolValue)
     }
     // If not a boolean, let the switch handle the rest
   }

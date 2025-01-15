@@ -2,12 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.3
+
+### Breaking Changes
+
+- Renames `PaywallView(event:)` to `PaywallView(placement:)`.
+
 ## 4.0.0-beta.2
 
 ### Fixes
 
 - Fixes an issue to do with audience filters.
-- Readds unavailable functions from v3 to make the upgrade path smoother.
+- Re-adds unavailable functions from v3 to make the upgrade path smoother.
 
 ## 4.0.0-beta.1
 
