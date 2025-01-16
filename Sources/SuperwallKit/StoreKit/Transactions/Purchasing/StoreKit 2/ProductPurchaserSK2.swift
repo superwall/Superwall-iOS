@@ -12,6 +12,7 @@ import StoreKit
 final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager
+  private let coordinator: PurchasingCoordinator
   private unowned let factory: Factory
   typealias Factory = HasExternalPurchaseControllerFactory
     & OptionsFactory
@@ -30,10 +31,12 @@ final class ProductPurchaserSK2: Purchasing {
     identityManager: IdentityManager,
     receiptManager: ReceiptManager,
     storage: Storage,
+    coordinator: PurchasingCoordinator,
     factory: Factory
   ) {
     self.identityManager = identityManager
     self.receiptManager = receiptManager
+    self.coordinator = coordinator
     self.factory = factory
 
     if #available(iOS 17.2, *) {
@@ -105,10 +108,14 @@ final class ProductPurchaserSK2: Purchasing {
       case let .success(.verified(transaction)):
         await transaction.finish()
         await receiptManager.loadPurchasedProducts()
-        return .purchased
+        let result = PurchaseResult.purchased
+        await coordinator.storeTransaction(transaction, result: result)
+        return result
       case let .success(.unverified(transaction, error)):
         await transaction.finish()
-        return .failed(error)
+        let result = PurchaseResult.failed(error)
+        await coordinator.storeTransaction(transaction, result: result)
+        return result
       case .userCancelled:
         return .cancelled
       case .pending:

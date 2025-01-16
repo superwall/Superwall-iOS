@@ -209,7 +209,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         )
         if !isExistingTransaction {
           let transactionManager = factory.makeTransactionManager()
-          await transactionManager.observeTransaction(for: skTransaction.payment.productIdentifier)
+          await transactionManager.observeSK1Transaction(for: skTransaction.payment.productIdentifier)
           storedIds.insert(skTransaction.payment.productIdentifier)
           storage.save(storedIds, forType: PurchasingProductIds.self)
         }
@@ -262,7 +262,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
         }
         await coordinator.completePurchase(
           of: skTransaction,
-          result: .failed(error))
+          result: .failed(error)
+        )
       }
     case .deferred:
       finishTransaction(skTransaction)

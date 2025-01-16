@@ -59,6 +59,7 @@ The `Superwall` class is used to access all the features of the SDK. Before usin
 - `PaywallViewController`
 - `PaywallViewControllerDelegate`
 - `PaywallViewControllerDelegateObjc`
+- `PaywallView`
 
 ### Handling Purchases
 
