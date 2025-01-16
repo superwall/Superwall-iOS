@@ -189,7 +189,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// failure before it times out. Defaults to 6.
   ///
   /// Adjust this if you want the SDK to call the ``PaywallPresentationHandler/onError(_:)``
-  /// handler of the ``PaywallPresentationHandler`` faster when you call ``Superwall/register(event:)``
+  /// handler of the ``PaywallPresentationHandler`` faster when you call ``Superwall/register(placement:)``
   public var maxConfigRetryCount = 6 {
     didSet {
       // Must be >= 0
