@@ -137,20 +137,21 @@ actor PurchasingCoordinator {
     result: PurchaseResult
   ) async {
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
+    storeTransaction(transaction, result: result)
+    completion?(result)
   }
 
   @available(iOS 15.0, *)
-  func completePurchase(
-    of transaction: SK2Transaction,
+  func storeTransaction(
+    _ transaction: SK2Transaction,
     result: PurchaseResult
   ) async {
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
+    storeTransaction(transaction, result: result)
   }
 
-  private func completePurchase(
-    of transaction: StoreTransaction,
+  private func storeTransaction(
+    _ transaction: StoreTransaction,
     result: PurchaseResult
   ) {
     if result == .purchased {
@@ -170,7 +171,6 @@ actor PurchasingCoordinator {
       }
     }
     lastInternalTransaction = transaction
-    completion?(result)
   }
 
   func reset() {

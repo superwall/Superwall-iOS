@@ -453,7 +453,7 @@ final class TransactionManager {
     }
   }
 
-  func observeTransaction(for productId: String) async {
+  func observeSK1Transaction(for productId: String) async {
     guard
       let storeProduct = try? await productsManager.products(
         identifiers: [productId],

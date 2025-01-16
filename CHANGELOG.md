@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Renames `PaywallView(event:)` to `PaywallView(placement:)`.
 
+### Fixes
+
+- Adds extra check to get StoreKit 2 transaction data on `transaction_complete`.
+
 ## 4.0.0-beta.2
 
 ### Fixes
