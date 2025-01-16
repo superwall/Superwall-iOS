@@ -55,6 +55,7 @@ final class PurchaseManager: Purchasing {
         identityManager: identityManager,
         receiptManager: receiptManager,
         storage: storage,
+        coordinator: coordinator,
         factory: factory
       )
       _sk2TransactionListener = SK2TransactionListener(

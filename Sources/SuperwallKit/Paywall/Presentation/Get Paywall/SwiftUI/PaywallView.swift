@@ -9,7 +9,7 @@ import SwiftUI
 
 /// A SwiftUI paywall view that you can embed into your app.
 ///
-/// This uses ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)`` under the hood.
+/// This uses ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)`` under the hood.
 ///
 /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
 /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
@@ -21,10 +21,10 @@ public struct PaywallView<
   @State private var hasLoaded = false
   @Environment(\.presentationMode) private var presentationMode
 
-  /// The name of the event, as you have defined on the Superwall dashboard.
-  private let event: String
+  /// The name of the placement, as you have defined on the Superwall dashboard.
+  private let placement: String
 
-  /// Optional parameters you'd like to pass with your event. Defaults to `nil`.
+  /// Optional parameters you'd like to pass with your placement. Defaults to `nil`.
   ///
   /// These can be referenced within the rules
   /// of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
@@ -60,11 +60,11 @@ public struct PaywallView<
 
   /// A SwiftUI paywall view that you can embed into your app.
   ///
-  /// This uses ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)`` under the hood.
+  /// This uses ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)`` under the hood.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the rules
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -84,7 +84,7 @@ public struct PaywallView<
   /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
-    event: String,
+    placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onRequestDismiss: ((PaywallInfo, PaywallResult) -> Void)? = nil,
@@ -92,7 +92,7 @@ public struct PaywallView<
     onErrorView: ((Error) -> OnErrorView)? = nil,
     feature: (() -> Void)? = nil
   ) {
-    self.event = event
+    self.placement = placement
     self.params = params
     self.paywallOverrides = paywallOverrides
     self.onRequestDismiss = onRequestDismiss
@@ -140,7 +140,7 @@ public struct PaywallView<
         hasLoaded = true
         Task {
           await manager.getPaywall(
-            forPlacement: event,
+            forPlacement: placement,
             params: params,
             paywallOverrides: paywallOverrides
           )
@@ -154,10 +154,10 @@ public struct PaywallView<
 extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///
-  /// This uses ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)`` under the hood.
+  /// This uses ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)`` under the hood.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
@@ -174,13 +174,13 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
-    event: String,
+    placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onRequestDismiss: ((PaywallInfo, PaywallResult) -> Void)? = nil,
     feature: (() -> Void)? = nil
   ) {
-    self.event = event
+    self.placement = placement
     self.params = params
     self.paywallOverrides = paywallOverrides
     self.onErrorView = nil
@@ -194,11 +194,11 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
 extension PaywallView where OnSkippedView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///
-  /// This uses ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)`` under the hood.
+  /// This uses ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)`` under the hood.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the rules
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -216,14 +216,14 @@ extension PaywallView where OnSkippedView == Never {
   /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
   public init(
-    event: String,
+    placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onRequestDismiss: ((PaywallInfo, PaywallResult) -> Void)? = nil,
     onErrorView: @escaping (Error) -> OnErrorView,
     feature: (() -> Void)? = nil
   ) {
-    self.event = event
+    self.placement = placement
     self.params = params
     self.paywallOverrides = paywallOverrides
     self.onRequestDismiss = onRequestDismiss
@@ -237,11 +237,11 @@ extension PaywallView where OnSkippedView == Never {
 extension PaywallView where OnErrorView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///
-  /// This uses ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)`` under the hood.
+  /// This uses ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)`` under the hood.
   ///
   /// - Parameters:
-  ///   -  event: The name of the event, as you have defined on the Superwall dashboard.
-  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the rules
+  ///   -  placement: The name of the placement, as you have defined on the Superwall dashboard.
+  ///   - params: Optional parameters you'd like to pass with your placement. These can be referenced within the rules
   ///   of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any
   ///   JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will
   ///   be dropped.
@@ -261,14 +261,14 @@ extension PaywallView where OnErrorView == Never {
   /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
   /// and you try to present the same `PaywallView` elsewhere, you will get a crash. 
   public init(
-    event: String,
+    placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     onRequestDismiss: ((PaywallInfo, PaywallResult) -> Void)? = nil,
     onSkippedView: @escaping (PaywallSkippedReason) -> OnSkippedView,
     feature: (() -> Void)? = nil
   ) {
-    self.event = event
+    self.placement = placement
     self.params = params
     self.paywallOverrides = paywallOverrides
     self.onErrorView = nil
