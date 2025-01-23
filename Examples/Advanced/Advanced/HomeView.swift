@@ -93,7 +93,7 @@ struct HomeView: View {
       ZStack {
         switch page {
         case .nonGated:
-          Text("Non gated feature launched")
+          Text("Non-gated feature launched")
         case .pro:
           Text("Pro feature launched")
         case .diamond:

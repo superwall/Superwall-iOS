@@ -90,16 +90,16 @@ actor ReceiptManager: NSObject {
   }
 
   /// Determines whether the user is subscribed to the given product id.
-  func isSubscribed(to productId: String) -> Bool {
-    return manager.purchases
+  func isSubscribed(to productId: String) async -> Bool {
+    return await manager.purchases
       .filter { $0.id == productId }
       .sorted { $0.purchaseDate > $1.purchaseDate }
       .first?
       .isActive == true
   }
 
-  func getActiveProductIds() -> Set<String> {
-    return Set(
+  func getActiveProductIds() async -> Set<String> {
+    return await Set(
       manager.purchases
       .filter(\.isActive)
       .map(\.id)

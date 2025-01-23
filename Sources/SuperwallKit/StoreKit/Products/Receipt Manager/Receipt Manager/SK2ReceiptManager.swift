@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 protocol ReceiptManagerType: AnyObject {
-  var purchases: Set<Purchase> { get }
+  var purchases: Set<Purchase> { get async }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
   func loadPurchases() async -> Set<Purchase>
@@ -17,7 +17,7 @@ protocol ReceiptManagerType: AnyObject {
 }
 
 @available(iOS 15.0, *)
-final class SK2ReceiptManager: ReceiptManagerType {
+actor SK2ReceiptManager: ReceiptManagerType {
   private var sk2IntroOfferEligibility: [String: Bool] = [:]
   var purchases: Set<Purchase> = []
 

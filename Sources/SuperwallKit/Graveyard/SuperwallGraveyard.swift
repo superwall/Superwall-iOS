@@ -142,8 +142,6 @@ extension Superwall {
 }
 
 @available(*, unavailable, renamed: "SuperwallPlacementInfo")
-@objc(SWKSuperwallEventInfo)
-@objcMembers
 public final class SuperwallEventInfo: NSObject {}
 
 extension SuperwallDelegate {
@@ -152,12 +150,9 @@ extension SuperwallDelegate {
 }
 
 @available(*, unavailable, renamed: "ProductStore")
-@objc(SWKStore)
 public enum Store: Int {
   case appStore
 }
 
 @available(*, unavailable, renamed: "Product")
-@objc(SWKProductInfo)
-@objcMembers
 public final class ProductInfo: NSObject, Codable, Sendable {}
