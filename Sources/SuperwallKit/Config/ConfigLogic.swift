@@ -45,7 +45,7 @@ enum ConfigLogic {
 
     // Something went wrong on the dashboard, where all variants
     // have 0% set. Choose a random one.
-    if variantSum == 0 {
+    if variantSum == 0  {
       // Choose a random variant
       let randomVariantIndex = randomiser(0..<variants.count)
       let variant = variants[randomVariantIndex]
@@ -60,7 +60,7 @@ enum ConfigLogic {
     let randomPercentage = randomiser(0..<variantSum)
 
     // Normalise the percentage e.g. 21/99 = 0.212
-    let normRandomPercentage = Double(randomPercentage) / Double(variantSum)
+    let normRandomPercentage = Double(randomPercentage) / Double(variantSum - 1)
 
     var totalNormVariantPercentage = 0.0
 
@@ -74,7 +74,7 @@ enum ConfigLogic {
 
       // See if selected is less than total. If it is then break .
       // e.g. Loop 1: 0.212 < (0 + 0.2) = nope, Loop 2: 0.212 < (0.2 + 0.3) = match
-      if normRandomPercentage < totalNormVariantPercentage {
+      if normRandomPercentage <= totalNormVariantPercentage {
         return .init(
           id: variant.id,
           type: variant.type,
