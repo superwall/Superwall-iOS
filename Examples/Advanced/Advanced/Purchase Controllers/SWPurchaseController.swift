@@ -1,6 +1,6 @@
 //
-//  PurchaseController.swift
-//  PurchaseController + Entitlements
+//  SWPurchaseController.swift
+//  Advanced
 //
 //  Created by Yusuf Tör on 13/12/2024.
 //
@@ -14,13 +14,13 @@ import SuperwallKit
 ///   `let purchaseController = SWPurchaseController()`
 /// 3. Configure Superwall. Pass in the `purchaseController` you just created.
 ///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
-/// 5. Then, keep Superwall's entitlements up-to-date with StoreKit's entitlements.
-///   `purchaseController.syncEntitlements()`
+/// 5. Then, keep Superwall's subscription status up-to-date with StoreKit's entitlements.
+///   `purchaseController.syncSubscriptionStatus()`
 final class SWPurchaseController: PurchaseController {
-  // MARK: Sync Entitlements
-  /// Makes sure that Superwall knows the customer's entitlements by
-  /// changing `Superwall.shared.entitlements.status`
-  func syncEntitlements() async {
+  // MARK: Sync Subscription Status
+  /// Makes sure that Superwall knows the customer's subscription status by
+  /// changing `Superwall.shared.subscriptionStatus`
+  func syncSubscriptionStatus() async {
     var products: Set<String> = []
     for await verificationResult in Transaction.currentEntitlements {
       switch verificationResult {
@@ -35,25 +35,25 @@ final class SWPurchaseController: PurchaseController {
     let entitlements = Set(storeProducts.flatMap { $0.entitlements })
 
     await MainActor.run {
-      Superwall.shared.entitlements.status = .active(entitlements)
+      Superwall.shared.subscriptionStatus = .active(entitlements)
     }
   }
 
   // MARK: Handle Purchases
-  /// Makes a purchase with Superwall and returns its result after syncing entitlements. This gets called when
+  /// Makes a purchase with Superwall and returns its result after syncing subscription status. This gets called when
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: StoreProduct) async -> PurchaseResult {
     let result = await Superwall.shared.purchase(product)
-    await syncEntitlements()
+    await syncSubscriptionStatus()
     return result
   }
 
   // MARK: Handle Restores
-  /// Makes a restore with Superwall and returns its result after syncing entitlements.
+  /// Makes a restore with Superwall and returns its result after syncing subscription status.
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
     let result = await Superwall.shared.restorePurchases()
-    await syncEntitlements()
+    await syncSubscriptionStatus()
     return result
   }
 }

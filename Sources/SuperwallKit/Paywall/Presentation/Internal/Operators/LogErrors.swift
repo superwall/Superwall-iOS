@@ -13,7 +13,7 @@ extension Superwall {
     _ error: Error
   ) {
     if let reason = error as? PresentationPipelineError,
-      case .entitlementsTimeout = reason {
+      case .subscriptionStatusTimeout = reason {
       // Don't print anything if we've just cancelled a pipeline that timed out.
       return
     }

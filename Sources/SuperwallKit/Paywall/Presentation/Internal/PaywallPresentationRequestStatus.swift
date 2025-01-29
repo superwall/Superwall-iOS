@@ -15,7 +15,7 @@ public enum PaywallPresentationRequestStatus: String {
   /// The request won't result in a paywall presentation.
   case noPresentation = "no_presentation"
 
-  /// There was a timeout when trying to get the user's entitlements, identity
+  /// There was a timeout when trying to get the user's susbcription status, identity
   /// or configuration from the server.
   case timeout
 }
@@ -46,11 +46,11 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
   /// The config hasn't been retrieved from the server in time.
   case noConfig
 
-  /// The entitlements timed out.
+  /// The subscription status timed out.
   ///
-  /// This happens when the ``Superwall/entitlements``
+  /// This happens when the ``Superwall/subscriptionStatus``
   /// haven't been set within 5 seconds.
-  case entitlementsTimeout
+  case subscriptionStatusTimeout
 
   public var description: String {
     switch self {
@@ -70,8 +70,8 @@ public enum PaywallPresentationRequestStatusReason: Error, CustomStringConvertib
       return "no_presenter"
     case .noConfig:
       return "no_config"
-    case .entitlementsTimeout:
-      return "entitlements_timeout"
+    case .subscriptionStatusTimeout:
+      return "subscriptionStatus_timeout"
     }
   }
 }

@@ -117,7 +117,7 @@ extension Superwall {
     )
 
     do {
-      try await waitForEntitlementsAndConfig(request, paywallStatePublisher: nil)
+      try await waitForSubsStatusAndConfig(request, paywallStatePublisher: nil)
     } catch {
       return logErrors(from: request, error)
     }

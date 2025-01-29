@@ -42,37 +42,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  /// A published property that indicates the entitlement status of the user. If you're using a
-  /// `PurchaseController`, you must set this.
-  ///
-  /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever it changes.
-  ///
-  /// Otherwise, you can check the delegate function
-  /// ``SuperwallDelegate/entitlementStatusDidChange(from:to:)``
-  /// to receive a callback every time it changes.
-  @Published public var status: EntitlementStatus = .unknown {
-    didSet {
-      if case let .active(entitlements) = status {
-        if entitlements.isEmpty {
-          status = .inactive
-          return
-        }
-      }
-      queue.async { [weak self] in
-        guard let self = self else {
-          return
-        }
-        switch self.status {
-        case .active(let entitlements):
-          self.backingActive = entitlements
-        default:
-          self.backingActive = []
-        }
-      }
-    }
-  }
-
   // MARK: - Internal vars
   /// The entitlements that belong to each product ID.
   var entitlementsByProductId: [String: Set<Entitlement>] = [:] {
@@ -105,24 +74,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       return
     }
 
-    let storedStatus = self.storage.get(EntitlementStatusKey.self) ?? .unknown
-    self.status = storedStatus
-
-    DispatchQueue.main.async {
-      self.listenToEntitlementStatus()
-    }
-
-    queue.sync { [weak self] in
+    queue.async { [weak self] in
       guard let self = self else {
         return
       }
       entitlementsByProductId = self.storage.get(EntitlementsByProductId.self) ?? [:]
-
-      if case let .active(activeEntitlements) = storedStatus {
-        backingActive = activeEntitlements
-      } else {
-        backingActive = []
-      }
 
       backingAll = Set(entitlementsByProductId.values.joined())
     }
@@ -140,38 +96,21 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  // MARK: - Objc API
-
-  /// Returns the entitlement status of the user.
-  ///
-  /// Check the delegate function
-  /// ``SuperwallDelegateObjc/entitlementStatusDidChange(from:to:)``
-  /// to receive a callback every time it changes.
-  @available(swift, obsoleted: 1.0)
-  public func getStatus() -> EntitlementStatusObjc {
-    return status.toObjc()
-  }
-
-  /// Sets ``EntitlementsInfo/status`` to an`unknown` state.
-  @available(swift, obsoleted: 1.0)
-  public func setUnknownStatus() {
-    status = .unknown
-  }
-
-  /// Sets ``EntitlementsInfo/status`` to an`inactive` state.
-  @available(swift, obsoleted: 1.0)
-  public func setInactiveStatus() {
-    status = .inactive
-  }
-
-  /// Sets ``EntitlementsInfo/status`` to an`active` state with the
-  /// specified entitlements.
-  @available(swift, obsoleted: 1.0)
-  public func setActiveStatus(with entitlements: Set<Entitlement>) {
-    status = .active(entitlements)
-  }
-
   // MARK: - Private API
+
+  func subscriptionStatusDidSet(_ subscriptionStatus: SubscriptionStatus) {
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      switch subscriptionStatus {
+      case .active(let entitlements):
+        self.backingActive = entitlements
+      default:
+        self.backingActive = []
+      }
+    }
+  }
 
   func setEntitlementsFromConfig(_ entitlementsByProductId: [String: Set<Entitlement>]) {
     queue.async { [weak self] in
@@ -180,34 +119,5 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       }
       self.entitlementsByProductId = entitlementsByProductId
     }
-  }
-
-  private func listenToEntitlementStatus() {
-    $status
-      .removeDuplicates()
-      .dropFirst()
-      .scan((previous: status, current: status)) { previousPair, newStatus in
-        // Shift the current value to previous, and set the new status as the current value
-        (previous: previousPair.current, current: newStatus)
-      }
-      .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] statusPair in
-          guard let self = self else {
-            return
-          }
-          let oldStatus = statusPair.previous
-          let newStatus = statusPair.current
-
-          self.storage.save(newStatus, forType: EntitlementStatusKey.self)
-
-          Task {
-            await self.delegateAdapter.entitlementStatusDidChange(from: oldStatus, to: newStatus)
-            let event = InternalSuperwallPlacement.EntitlementStatusDidChange(status: newStatus)
-            await Superwall.shared.track(event)
-          }
-        }
-      ))
   }
 }

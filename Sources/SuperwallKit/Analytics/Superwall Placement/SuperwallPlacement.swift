@@ -39,7 +39,7 @@ public enum SuperwallPlacement {
   case deviceAttributes(attributes: [String: Any])
 
   /// When the entitlement status did change.
-  case entitlementStatusDidChange
+  case subscriptionStatusDidChange
 
   /// Anytime the app leaves the foreground.
   case appClose
@@ -257,8 +257,8 @@ extension SuperwallPlacement {
       return .init(objcPlacement: .sessionStart)
     case .deviceAttributes:
       return .init(objcPlacement: .deviceAttributes)
-    case .entitlementStatusDidChange:
-      return .init(objcPlacement: .entitlementStatusDidChange)
+    case .subscriptionStatusDidChange:
+      return .init(objcPlacement: .subscriptionStatusDidChange)
     case .appClose:
       return .init(objcPlacement: .appClose)
     case .deepLink:

@@ -16,19 +16,19 @@ import Foundation
 /// To learn how to conform to the delegate in your app and best practices, see
 /// [our docs](https://docs.superwall.com/docs/3rd-party-analytics).
 public protocol SuperwallDelegate: AnyObject {
-  /// Called when the entitlements ``EntitlementsInfo/status`` changes.
+  /// Called when the ``Superwall/subscriptionStatus`` changes.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
-  /// use the published property ``EntitlementsInfo/status`` to react to
+  /// use the published property ``Superwall/subscriptionStatus`` to react to
   /// changes as they happen.
   ///
   /// - Parameters:
-  ///   - oldValue: The old value of the entitlement ``EntitlementsInfo/status``.
-  ///   - newValue: The new value of the entitlement ``EntitlementsInfo/status``.
+  ///   - oldValue: The old value of the ``Superwall/subscriptionStatus``.
+  ///   - newValue: The new value of the ``Superwall/subscriptionStatus``.
   @MainActor
-  func entitlementStatusDidChange(
-    from oldValue: EntitlementStatus,
-    to newValue: EntitlementStatus
+  func subscriptionStatusDidChange(
+    from oldValue: SubscriptionStatus,
+    to newValue: SubscriptionStatus
   )
 
   /// Called whenever an internal analytics event is tracked.
@@ -99,9 +99,9 @@ public protocol SuperwallDelegate: AnyObject {
 }
 
 extension SuperwallDelegate {
-  public func entitlementStatusDidChange(
-    from oldValue: EntitlementStatus,
-    to newValue: EntitlementStatus
+  public func subscriptionStatusDidChange(
+    from oldValue: SubscriptionStatus,
+    to newValue: SubscriptionStatus
   ) {}
 
   public func handleCustomPaywallAction(withName name: String) {}

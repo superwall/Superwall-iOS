@@ -87,17 +87,17 @@ final class SuperwallDelegateAdapter {
   }
 
   @MainActor
-  func entitlementStatusDidChange(
-    from oldValue: EntitlementStatus,
-    to newValue: EntitlementStatus
+  func subscriptionStatusDidChange(
+    from oldValue: SubscriptionStatus,
+    to newValue: SubscriptionStatus
   ) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.entitlementStatusDidChange(
+      swiftDelegate.subscriptionStatusDidChange(
         from: oldValue,
         to: newValue
       )
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.entitlementStatusDidChange?(
+      objcDelegate.subscriptionStatusDidChange?(
         from: oldValue.toObjc(),
         to: newValue.toObjc()
       )

@@ -10,13 +10,13 @@ import Foundation
 import Combine
 
 extension Superwall {
-  /// Waits for config to be received and the identity and entitlements of the user to
+  /// Waits for config to be received and the identity and subscription status of the user to
   /// be established before continuing.
   ///
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - dependencyContainer: Used for testing only.
-  func waitForEntitlementsAndConfig(
+  func waitForSubsStatusAndConfig(
     _ request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer? = nil
@@ -48,35 +48,35 @@ extension Superwall {
       // If there is config, continue.
     }
 
-    // Now get the entitlement status. This has to be done after the retrieving
+    // Now get the subscription status. This has to be done after the retrieving
     // of config because entitlements are within config. Otherwise, if config
-    // hasn't been retrieved we would get an error saying "entitlements not set"
+    // hasn't been retrieved we would get an error saying "subscriptionStatus not set"
     // but actually it's a config issue.
-    let entitlementStatusTask = Task {
-      return try await request.flags.entitlementStatus
+    let subscriptionStatusTask = Task {
+      return try await request.flags.subscriptionStatus
         .filter { $0 != .unknown }
         .throwableAsync()
     }
 
-    // Create a 5 sec timer. If the entitlement status is retrieved it'll
+    // Create a 5 sec timer. If the subscription status is retrieved it'll
     // get cancelled. Otherwise will log a timeout and fail the request.
     let timer = Timer(
       timeInterval: 5,
       repeats: false
     ) { _ in
-      entitlementStatusTask.cancel()
+      subscriptionStatusTask.cancel()
     }
     RunLoop.main.add(timer, forMode: .default)
 
     do {
-      _ = try await entitlementStatusTask.value
+      _ = try await subscriptionStatusTask.value
     } catch {
       Task {
         let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
           placementData: request.presentationInfo.placementData,
           type: request.flags.type,
           status: .timeout,
-          statusReason: .entitlementsTimeout,
+          statusReason: .subscriptionStatusTimeout,
           factory: dependencyContainer
         )
         await self.track(presentationRequest)
@@ -84,17 +84,17 @@ extension Superwall {
       Logger.debug(
         logLevel: .info,
         scope: .paywallPresentation,
-        message: "Timeout: Superwall.shared.entitlements have not been set for over 5 seconds resulting in a failure."
+        message: "Timeout: Superwall.shared.subscriptionStatus has not been set for over 5 seconds resulting in a failure."
       )
       let error = InternalPresentationLogic.presentationError(
         domain: "SWKPresentationError",
         code: 105,
         title: "Timeout",
-        value: "The entitlements were not set."
+        value: "The subscription status was not set."
       )
       paywallStatePublisher?.send(.presentationError(error))
       paywallStatePublisher?.send(completion: .finished)
-      throw PresentationPipelineError.entitlementsTimeout
+      throw PresentationPipelineError.subscriptionStatusTimeout
     }
 
     timer.invalidate()

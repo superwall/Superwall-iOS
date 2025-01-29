@@ -495,7 +495,7 @@ class DeviceHelper {
       activeEntitlements: Set(entitlementsInfo.active.map { $0.id }),
       activeEntitlementObjects: entitlementsInfo.active,
       activeProducts: await receiptManager.getActiveProductIds(),
-      entitlementStatus: entitlementsInfo.status.description,
+      subscriptionStatus: Superwall.shared.subscriptionStatus.description,
       isFirstAppOpen: isFirstAppOpen,
       sdkVersion: sdkVersion,
       sdkVersionPadded: sdkVersionPadded,
