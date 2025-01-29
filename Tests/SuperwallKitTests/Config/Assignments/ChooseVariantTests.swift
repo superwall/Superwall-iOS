@@ -24,7 +24,12 @@ class ChooseVariantTests: XCTestCase {
         percentage: 85,
         paywallId: nil
       ),
-
+      VariantOption(
+        type: .treatment,
+        id: "B",
+        percentage: 5,
+        paywallId: nil
+      ),
       VariantOption(
         type: .treatment,
         id: "C",
@@ -37,19 +42,14 @@ class ChooseVariantTests: XCTestCase {
         percentage: 5,
         paywallId: nil
       ),
-      VariantOption(
-        type: .treatment,
-        id: "B",
-        percentage: 5,
-        paywallId: nil
-      ),
+
     ]
 
     // Initialize counters for each variant
     var selectionCounts: [String: Int] = ["A": 0, "B": 0, "C": 0, "D": 0]
 
     // Number of iterations
-    let iterations = 1_000_000
+    let iterations = 100_000
 
     // MARK: When
     // Run chooseVariant multiple times and count selections

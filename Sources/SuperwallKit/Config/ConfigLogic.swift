@@ -30,7 +30,7 @@ enum ConfigLogic {
     // If there's only one variant, return it.
     // This could have a zero percentage.
     if variants.count == 1,
-      let variant = variants.first {
+       let variant = variants.first {
       return .init(
         id: variant.id,
         type: variant.type,
@@ -38,15 +38,20 @@ enum ConfigLogic {
       )
     }
 
-    // Calculate the total sum of variant percentages.
-    let variantSum = variants.reduce(0) { partialResult, variant in
-      partialResult + variant.percentage
+    let validVariants = variants.filter { $0.percentage > 0 }
+
+    // if there is only 1 variant with weight > 0, return it
+    if validVariants.count == 1,
+      let variant = validVariants.first {
+      return .init(
+        id: variant.id,
+        type: variant.type,
+        paywallId: variant.paywallId
+      )
     }
 
-    // Something went wrong on the dashboard, where all variants
-    // have 0% set. Choose a random one.
-    if variantSum == 0  {
-      // Choose a random variant
+    // if there are no variants with weight > 0, choose a random one.
+    if validVariants.isEmpty {
       let randomVariantIndex = randomiser(0..<variants.count)
       let variant = variants[randomVariantIndex]
       return .init(
@@ -56,31 +61,23 @@ enum ConfigLogic {
       )
     }
 
-    // Choose a random percentage e.g. 21
-    let randomPercentage = randomiser(0..<variantSum)
-
-    // Normalise the percentage e.g. 21/99 = 0.212
-    let normRandomPercentage = Double(randomPercentage) / Double(variantSum - 1)
-
-    var totalNormVariantPercentage = 0.0
-
-    // Loop through all variants
-    for variant in variants {
-      // Calculate the normalised variant percentage, e.g. 20 -> 0.2
-      let normVariantPercentage = Double(variant.percentage) / Double(variantSum)
-
-      // Add to total variant percentage
-      totalNormVariantPercentage += normVariantPercentage
-
-      // See if selected is less than total. If it is then break .
-      // e.g. Loop 1: 0.212 < (0 + 0.2) = nope, Loop 2: 0.212 < (0.2 + 0.3) = match
-      if normRandomPercentage <= totalNormVariantPercentage {
-        return .init(
-          id: variant.id,
-          type: variant.type,
-          paywallId: variant.paywallId
-        )
+    // create an array of variantIds, each repeated by its percentage.
+    var validVariantIds: [String] = []
+    for variant in validVariants {
+      for _ in 0..<variant.percentage {
+        validVariantIds.append(variant.id)
       }
+    }
+
+    // choose a random variant id from the array.
+    let randomVariantIndex = randomiser(0..<validVariantIds.count)
+    let variantId = validVariantIds[randomVariantIndex]
+    if let variant = variants.first(where: { $0.id == variantId }) {
+      return .init(
+        id: variant.id,
+        type: variant.type,
+        paywallId: variant.paywallId
+      )
     }
 
     throw TriggerRuleError.invalidState
