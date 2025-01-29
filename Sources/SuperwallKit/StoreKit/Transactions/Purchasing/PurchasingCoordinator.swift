@@ -157,14 +157,6 @@ actor PurchasingCoordinator {
     guard product?.productIdentifier == transaction.payment.productIdentifier else {
       return
     }
-    // If the transaction completed a purchase, check it is within the last
-    // hour since starting purchase. Otherwise old purchased products may come
-    // through and complete the purchase.
-    if result == .purchased {
-      guard dateIsWithinLastHour(transaction.transactionDate) else {
-        return
-      }
-    }
     lastInternalTransaction = transaction
     completion?(result)
   }
