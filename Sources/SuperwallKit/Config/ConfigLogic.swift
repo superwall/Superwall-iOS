@@ -28,7 +28,6 @@ enum ConfigLogic {
     }
 
     // If there's only one variant, return it.
-    // This could have a zero percentage.
     if variants.count == 1,
       let variant = variants.first {
       return .init(
@@ -39,16 +38,12 @@ enum ConfigLogic {
     }
 
     // Calculate the total sum of variant percentages.
-    let variantSum = variants.reduce(0) { partialResult, variant in
-      partialResult + variant.percentage
-    }
+    let variantSum = variants.reduce(0) { $0 + $1.percentage }
 
-    // Something went wrong on the dashboard, where all variants
-    // have 0% set. Choose a random one.
+    // If all variants have 0% set, choose a random one.
     if variantSum == 0 {
-      // Choose a random variant
-      let randomVariantIndex = randomiser(0..<variants.count)
-      let variant = variants[randomVariantIndex]
+      let randomIndex = randomiser(0..<variants.count)
+      let variant = variants[randomIndex]
       return .init(
         id: variant.id,
         type: variant.type,
@@ -56,25 +51,14 @@ enum ConfigLogic {
       )
     }
 
-    // Choose a random percentage e.g. 21
-    let randomPercentage = randomiser(0..<variantSum)
+    // Choose a random threshold within the total sum.
+    let randomThreshold = randomiser(0..<variantSum)
+    var cumulativeSum = 0
 
-    // Normalise the percentage e.g. 21/99 = 0.212
-    let normRandomPercentage = Double(randomPercentage) / Double(variantSum)
-
-    var totalNormVariantPercentage = 0.0
-
-    // Loop through all variants
+    // Iterate through variants and return the first that crosses the threshold.
     for variant in variants {
-      // Calculate the normalised variant percentage, e.g. 20 -> 0.2
-      let normVariantPercentage = Double(variant.percentage) / Double(variantSum)
-
-      // Add to total variant percentage
-      totalNormVariantPercentage += normVariantPercentage
-
-      // See if selected is less than total. If it is then break .
-      // e.g. Loop 1: 0.212 < (0 + 0.2) = nope, Loop 2: 0.212 < (0.2 + 0.3) = match
-      if normRandomPercentage < totalNormVariantPercentage {
+      cumulativeSum += variant.percentage
+      if randomThreshold < cumulativeSum {
         return .init(
           id: variant.id,
           type: variant.type,
