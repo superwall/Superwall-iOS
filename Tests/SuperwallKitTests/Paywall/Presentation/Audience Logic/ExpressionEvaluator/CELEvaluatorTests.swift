@@ -138,7 +138,7 @@ final class CELEvaluatorTests: XCTestCase {
   func testEvaluateExpression_noEntitlements_match() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.status = .inactive
+    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.inactive)
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -156,7 +156,7 @@ final class CELEvaluatorTests: XCTestCase {
   func testEvaluateExpression_noEntitlements_noMatch() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.status = .active([.stub()])
+    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.stub()]))
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
@@ -173,7 +173,7 @@ final class CELEvaluatorTests: XCTestCase {
   func testEvaluateExpression_containsSpecificEntitlement() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
-    dependencyContainer.entitlementsInfo.status = .active([.init(id: "bronze")])
+    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.init(id: "bronze")]))
     let evaluator = CELEvaluator(
       storage: dependencyContainer.storage,
       factory: dependencyContainer
