@@ -20,7 +20,7 @@ final class AutomaticPurchaseController {
     self.entitlementsInfo = entitlementsInfo
   }
 
-  func syncEntitlements(withPurchases purchases: Set<Purchase>) async {
+  func syncSubscriptionStatus(withPurchases purchases: Set<Purchase>) async {
     let activePurchases = purchases.filter { $0.isActive }
     var entitlements: Set<Entitlement> = []
 
@@ -31,9 +31,9 @@ final class AutomaticPurchaseController {
 
     await MainActor.run { [entitlements] in
       if entitlements.isEmpty {
-        Superwall.shared.entitlements.status = .inactive
+        Superwall.shared.subscriptionStatus = .inactive
       } else {
-        Superwall.shared.entitlements.status = .active(entitlements)
+        Superwall.shared.subscriptionStatus = .active(entitlements)
       }
     }
   }
@@ -69,7 +69,7 @@ extension AutomaticPurchaseController: InternalPurchaseController {
 // MARK: - ReceiptDelegate
 
 extension AutomaticPurchaseController: ReceiptDelegate {
-  func syncEntitlements(purchases: Set<Purchase>) async {
-    await syncEntitlements(withPurchases: purchases)
+  func syncSubscriptionStatus(purchases: Set<Purchase>) async {
+    await syncSubscriptionStatus(withPurchases: purchases)
   }
 }

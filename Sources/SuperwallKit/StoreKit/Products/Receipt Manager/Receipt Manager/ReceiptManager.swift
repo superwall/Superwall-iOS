@@ -9,7 +9,7 @@ import Foundation
 import StoreKit
 
 protocol ReceiptDelegate: AnyObject {
-  func syncEntitlements(purchases: Set<Purchase>) async
+  func syncSubscriptionStatus(purchases: Set<Purchase>) async
 }
 
 struct Purchase: Hashable {
@@ -65,7 +65,7 @@ actor ReceiptManager: NSObject {
   func loadPurchasedProducts() async {
     let purchases = await manager.loadPurchases()
 
-    await receiptDelegate?.syncEntitlements(purchases: purchases)
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
 
     let purchasedProductIds = Set(purchases.map { $0.id })
 

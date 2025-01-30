@@ -81,7 +81,7 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   case subscriptionStart
 
   /// When the entitlement status did change.
-  case entitlementStatusDidChange
+  case subscriptionStatusDidChange
 
   /// When the user successfully completes a transaction for a subscription product with an introductory offer.
   case freeTrialStart
@@ -207,8 +207,8 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
       return "session_start"
     case .deviceAttributes:
       return "device_attributes"
-    case .entitlementStatusDidChange:
-      return "entitlementStatus_didChange"
+    case .subscriptionStatusDidChange:
+      return "subscriptionStatus_didChange"
     case .appClose:
       return "app_close"
     case .deepLink:

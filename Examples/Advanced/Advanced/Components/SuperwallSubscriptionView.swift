@@ -17,8 +17,8 @@ struct SuperwallSubscriptionView: View {
       return "Loading subscription status."
     case .inactive:
       return "You do not have an active subscription so a paywall will always show."
-    case .active:
-      return "You are subscribed so a paywall will not show. For the purposes of this app, delete and reinstall the app to clear your subscriptions."
+    case .active(let entitlements):
+      return "You currently have an active subscription with the \(entitlements.map { $0.id }.joined(separator: " and ")) entitlement. For the purposes of this app, delete and reinstall the app to clear your transactions."
     }
   }
 

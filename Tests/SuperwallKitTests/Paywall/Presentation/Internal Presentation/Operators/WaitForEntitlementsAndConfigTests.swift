@@ -24,10 +24,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   func test_waitForEntitlementsAndConfig_noIdentity_unknownStatus() async {
     let expectation1 = expectation(description: "Got identity")
 
-    let unknownPublisher = CurrentValueSubject<EntitlementStatus, Never>(.unknown)
+    let unknownPublisher = CurrentValueSubject<SubscriptionStatus, Never>(.unknown)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: unknownPublisher)
+      .setting(\.flags.subscriptionStatus, to: unknownPublisher)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -42,7 +42,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     Task {
       do {
-        try await Superwall.shared.waitForEntitlementsAndConfig(
+        try await Superwall.shared.waitForSubsStatusAndConfig(
           request,
           paywallStatePublisher: statePublisher,
           dependencyContainer: dependencyContainer
@@ -64,9 +64,9 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation1 = expectation(description: "Got identity")
     expectation1.isInverted = true
 
-    let unknownPublisher = CurrentValueSubject<EntitlementStatus, Never>(.unknown)
+    let unknownPublisher = CurrentValueSubject<SubscriptionStatus, Never>(.unknown)
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: unknownPublisher.eraseToAnyPublisher())
+      .setting(\.flags.subscriptionStatus, to: unknownPublisher.eraseToAnyPublisher())
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -81,7 +81,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     Task {
       do {
-        try await Superwall.shared.waitForEntitlementsAndConfig(
+        try await Superwall.shared.waitForSubsStatusAndConfig(
           request,
           paywallStatePublisher: statePublisher,
           dependencyContainer: dependencyContainer
@@ -101,10 +101,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   func test_waitForEntitlementsAndConfig_activeStatus_noConfig_hasConfigAfterDelay() async {
     let expectation1 = expectation(description: "Got identity")
 
-    let activePublisher = CurrentValueSubject<EntitlementStatus, Never>(.active([.stub()]))
+    let activePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.active([.stub()]))
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: activePublisher)
+      .setting(\.flags.subscriptionStatus, to: activePublisher)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
 
@@ -121,7 +121,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
 
     do {
-      try await Superwall.shared.waitForEntitlementsAndConfig(
+      try await Superwall.shared.waitForSubsStatusAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -138,18 +138,18 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
-    let activePublisher = CurrentValueSubject<EntitlementStatus, Never>(.active([.stub()]))
+    let activePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.active([.stub()]))
       .eraseToAnyPublisher()
 
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: activePublisher)
+      .setting(\.flags.subscriptionStatus, to: activePublisher)
 
     // Sleep to allow reset to complete, then set identity as false.
     try? await Task.sleep(nanoseconds: 1_000_000_000)
     identityManager.identitySubject.send(false)
 
     Task {
-      try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitForSubsStatusAndConfig(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -160,13 +160,13 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation = expectation(description: "Got identity")
     expectation.isInverted = true
 
-    let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
+    let inactivePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: inactivePublisher)
+      .setting(\.flags.subscriptionStatus, to: inactivePublisher)
 
     Task {
-      try await Superwall.shared.waitForEntitlementsAndConfig(request, dependencyContainer: dependencyContainer)
+      try await Superwall.shared.waitForSubsStatusAndConfig(request, dependencyContainer: dependencyContainer)
       expectation.fulfill()
     }
 
@@ -177,10 +177,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     let expectation1 = expectation(description: "Got identity")
     expectation1.isInverted = true
 
-    let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
+    let inactivePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: inactivePublisher)
+      .setting(\.flags.subscriptionStatus, to: inactivePublisher)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -199,7 +199,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     dependencyContainer.configManager.configState.send(completion: .failure(error))
 
     Task {
-      try await Superwall.shared.waitForEntitlementsAndConfig(
+      try await Superwall.shared.waitForSubsStatusAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -219,10 +219,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
       delegateAdapter: dependencyContainer.delegateAdapter,
       isTesting: true
     )
-    let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
+    let inactivePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: inactivePublisher)
+      .setting(\.flags.subscriptionStatus, to: inactivePublisher)
 
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
@@ -245,7 +245,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
       try? await Task.sleep(nanoseconds: 1_000_000_000)
       identityManager.identitySubject.send(false)
 
-      try await Superwall.shared.waitForEntitlementsAndConfig(
+      try await Superwall.shared.waitForSubsStatusAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer
@@ -259,10 +259,10 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   func test_waitForEntitlementsAndConfig_inactiveStatus_hasConfig_hasIdentity() {
     let expectation1 = expectation(description: "Got identity")
 
-    let inactivePublisher = CurrentValueSubject<EntitlementStatus, Never>(.inactive)
+    let inactivePublisher = CurrentValueSubject<SubscriptionStatus, Never>(.inactive)
       .eraseToAnyPublisher()
     let request = PresentationRequest.stub()
-      .setting(\.flags.entitlementStatus, to: inactivePublisher)
+      .setting(\.flags.subscriptionStatus, to: inactivePublisher)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     let stateExpectation = expectation(description: "Output a state")
@@ -281,7 +281,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
       // Sleep to allow reset to complete, then set identity as true.
       identityManager.identitySubject.send(true)
 
-      try await Superwall.shared.waitForEntitlementsAndConfig(
+      try await Superwall.shared.waitForSubsStatusAndConfig(
         request,
         paywallStatePublisher: statePublisher,
         dependencyContainer: dependencyContainer

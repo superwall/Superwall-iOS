@@ -7,18 +7,18 @@
 
 import Foundation
 
-/// An enum representing the entitlement status of the user.
-public enum EntitlementStatus: Equatable, Codable {
-  /// The entitlement status is unknown.
+/// An enum representing the subscription status of the user.
+public enum SubscriptionStatus: Equatable, Codable {
+  /// The subscription status is unknown.
   case unknown
 
-  /// The user doesn't have any active entitlements.
+  /// The user doesn't have an active subscription.
   case inactive
 
-  /// The user has active entitlements.
+  /// The user has an active subscription with a `Set` of one or more entitlements.
   case active(Set<Entitlement>)
 
-  public static func == (lhs: EntitlementStatus, rhs: EntitlementStatus) -> Bool {
+  public static func == (lhs: SubscriptionStatus, rhs: SubscriptionStatus) -> Bool {
     switch (lhs, rhs) {
     case (.unknown, .unknown), (.inactive, .inactive):
       return true
@@ -29,7 +29,17 @@ public enum EntitlementStatus: Equatable, Codable {
     }
   }
 
-  func toObjc() -> EntitlementStatusObjc {
+  /// A convenience boolean indicating whether the subscription status is active.
+  public var isActive: Bool {
+    switch self {
+    case .active:
+      return true
+    default:
+      return false
+    }
+  }
+
+  func toObjc() -> SubscriptionStatusObjc {
     switch self {
     case .active:
       return .active
@@ -42,7 +52,7 @@ public enum EntitlementStatus: Equatable, Codable {
 }
 
 // MARK: - CustomStringConvertible
-extension EntitlementStatus: CustomStringConvertible {
+extension SubscriptionStatus: CustomStringConvertible {
   public var description: String {
     switch self {
     case .active:
@@ -56,20 +66,20 @@ extension EntitlementStatus: CustomStringConvertible {
 }
 
 /// An enum representing the entitlement status of the user.
-@objc(SWKEntitlementStatus)
-public enum EntitlementStatusObjc: Int {
-  /// The entitlement status is unknown.
+@objc(SWKSubscriptionStatus)
+public enum SubscriptionStatusObjc: Int {
+  /// The subscription status is unknown.
   case unknown
 
-  /// The user doesn't have any active entitlements.
+  /// The user doesn't have an active subscription.
   case inactive
 
-  /// The user has active entitlements.
+  /// The user has an active subscription.
   case active
 }
 
 // MARK: - CustomStringConvertible
-extension EntitlementStatusObjc: CustomStringConvertible {
+extension SubscriptionStatusObjc: CustomStringConvertible {
   public var description: String {
     switch self {
     case .active:

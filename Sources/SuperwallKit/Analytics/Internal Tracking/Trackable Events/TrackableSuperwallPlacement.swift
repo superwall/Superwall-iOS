@@ -276,9 +276,9 @@ enum InternalSuperwallPlacement {
     }
   }
 
-  struct EntitlementStatusDidChange: TrackableSuperwallPlacement {
-    let superwallPlacement: SuperwallPlacement = .entitlementStatusDidChange
-    let status: EntitlementStatus
+  struct SubscriptionStatusDidChange: TrackableSuperwallPlacement {
+    let superwallPlacement: SuperwallPlacement = .subscriptionStatusDidChange
+    let status: SubscriptionStatus
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = [

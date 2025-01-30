@@ -1,7 +1,7 @@
 // swiftlint:disable all
 //
 //  RCPurchaseController.swift
-//  PurchaseController + Entitlements
+//  Advanced
 //
 //  Created by Yusuf Tor on 13/12/24.
 //
@@ -31,26 +31,23 @@ enum PurchasingError: LocalizedError {
 ///   `Superwall.configure(apiKey: "superwall_api_key", purchaseController: purchaseController)`
 /// 4. Second, configure RevenueCat.
 ///   `Purchases.configure(withAPIKey: "revenuecat_api_key")`
-/// 5. Third, Keep Superwall's entitlements up-to-date with RevenueCat's.
-///   `purchaseController.syncEntitlements()`
+/// 5. Third, Keep Superwall's subscription status up-to-date with RevenueCat's.
+///   `purchaseController.syncSubscriptionStatus()`
 final class RCPurchaseController: PurchaseController {
-  // MARK: Sync Entitlements
+  // MARK: Sync Subscription Status
   /// Makes sure that Superwall knows the customer's entitlements by
   /// changing `Superwall.shared.entitlements`
-  func syncEntitlements() {
+  func syncSubscriptionStatus() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
+
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
         let superwallEntitlements = customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
           Entitlement(id: $0)
         }
         await MainActor.run { [superwallEntitlements] in
-          if superwallEntitlements.isEmpty {
-            Superwall.shared.entitlements.status = .inactive
-          } else {
-            Superwall.shared.entitlements.status = .active(Set(superwallEntitlements))
-          }
+          Superwall.shared.subscriptionStatus = .active(Set(superwallEntitlements))
         }
       }
     }

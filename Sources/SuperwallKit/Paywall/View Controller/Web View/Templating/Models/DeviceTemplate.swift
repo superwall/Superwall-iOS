@@ -48,7 +48,7 @@ struct DeviceTemplate: Codable {
   var activeEntitlements: Set<String>
   var activeEntitlementObjects: Set<Entitlement>
   var activeProducts: Set<String>
-  var entitlementStatus: String
+  var subscriptionStatus: String
   var isFirstAppOpen: Bool
   var sdkVersion: String
   var sdkVersionPadded: String

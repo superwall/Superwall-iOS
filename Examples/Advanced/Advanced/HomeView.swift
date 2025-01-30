@@ -64,7 +64,7 @@ struct HomeView: View {
         .background(Color.primaryTeal300)
         .padding()
 
-      SuperwallEntitlementsView()
+      SuperwallSubscriptionView()
 
       VStack(spacing: 20) {
         BrandedButton(title: "Launch Non-Gated Feature") {

@@ -1,5 +1,5 @@
 //
-//  PurchaseController+EntitlementsApp.swift
+//  SuperwallBasicApp.swift
 //  SuperwallSwiftUIExample
 //
 //  Created by Yusuf Tör on 10/03/2022.

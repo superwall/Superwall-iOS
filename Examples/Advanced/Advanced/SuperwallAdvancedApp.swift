@@ -1,5 +1,5 @@
 //
-//  PurchaseController+EntitlementsApp.swift
+//  SuperwallAdvancedApp.swift
 //  SuperwallSwiftUIExample
 //
 //  Created by Yusuf Tör on 10/03/2022.
@@ -33,9 +33,9 @@ struct SuperwallAdvancedApp: App {
       purchaseController: purchaseController
     )
 
-    // Step 3 - Sync Entitlements
+    // Step 3 - Sync Subscription Status
     Task {
-      await purchaseController.syncEntitlements()
+      await purchaseController.syncSubscriptionStatus()
     }
     */
 
@@ -59,9 +59,9 @@ struct SuperwallAdvancedApp: App {
       .build()
     )
 
-    // Step 4 – Sync Entitlements
-    /// Keep Superwall's entitlements up-to-date with RevenueCat's.
-    purchaseController.syncEntitlements()
+    // Step 4 – Sync Subscription Status
+    /// Keep Superwall's subscription status up-to-date with RevenueCat's.
+    purchaseController.syncSubscriptionStatus()
     */
 
     isPreviouslyLoggedIn.send(Superwall.shared.isLoggedIn)

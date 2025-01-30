@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.5
+
+### Breaking Changes
+
+- Replaces `entitlements.status` with `subscriptionStatus`.
+
+### Enhancements
+
+- Adds `Superwall.shared.subscriptionStatus.isActive` as a convenience variable.
+
 ## 4.0.0-beta.4
 
 ### Fixes
@@ -90,6 +100,18 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the `LogScope` case `entitlements`.
 - Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
 - Adds `products(for:)` which gets the ``StoreProduct`s for given product identifiers.
+
+## 3.12.4
+
+### Fixes
+
+- Simplifies and corrects logic for choosing paywall variants.
+
+## 3.12.3
+
+### Fixes
+
+- Fixes an issue where trying to purchase a product that was previously purchased may prevent the spinner from disappearing on the paywall.
 
 ## 3.12.2
 

@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
@@ -28,36 +28,28 @@ enum ConfigLogic {
     }
 
     // If there's only one variant, return it.
-    // This could have a zero percentage.
     if variants.count == 1,
       let variant = variants.first {
       return variant.toExperimentVariant()
     }
 
     // Calculate the total sum of variant percentages.
-    let totalPercentage = variants.reduce(0) { $0 + $1.percentage }
+    let variantSum = variants.reduce(0) { $0 + $1.percentage }
 
-    // Something went wrong on the dashboard, where all variants
-    // have 0% set. Choose a random one.
-    if totalPercentage == 0 {
-      // Choose a random variant
+    // If all variants have 0% set, choose a random one.
+    if variantSum == 0 {
       let randomIndex = randomiser(0..<variants.count)
       return variants[randomIndex].toExperimentVariant()
     }
 
-    // Choose a random percentage e.g. 21
-    let randomPercentage = randomiser(0..<totalPercentage)
+    // Choose a random threshold within the total sum.
+    let randomThreshold = randomiser(0..<variantSum)
+    var cumulativeSum = 0
 
-    // Select the variant based on cumulative percentage
-    var cumulativePercentage = 0
-
+    // Iterate through variants and return the first that crosses the threshold.
     for variant in variants {
-      // Add to total variant percentage
-      cumulativePercentage += variant.percentage
-
-      // See if selected is less than total. If it is then return.
-      // e.g. Loop 1: 21 < (0 + 20) = nope, Loop 2: 21 < (20 + 30) = match
-      if randomPercentage < cumulativePercentage {
+      cumulativeSum += variant.percentage
+      if randomThreshold < cumulativeSum {
         return variant.toExperimentVariant()
       }
     }
@@ -179,15 +171,19 @@ enum ConfigLogic {
 
     for assignment in assignments {
       // Get the trigger with the matching experiment ID
-      guard let trigger = triggers.first(
-        where: { $0.audiences.contains(where: { $0.experiment.id == assignment.experimentId }) }
-      ) else {
+      guard
+        let trigger = triggers.first(
+          where: { $0.audiences.contains(where: { $0.experiment.id == assignment.experimentId }) }
+        )
+      else {
         continue
       }
       // Get the variant with the matching variant ID
-      guard let variantOption = trigger.audiences.compactMap({
-        $0.experiment.variants.first { $0.id == assignment.variantId }
-      }).first else {
+      guard
+        let variantOption = trigger.audiences.compactMap({
+          $0.experiment.variants.first { $0.id == assignment.variantId }
+        }).first
+      else {
         continue
       }
 
@@ -347,12 +343,14 @@ enum ConfigLogic {
     let newPaywallIds = Set(newPaywalls.map { $0.identifier })
 
     // Create dictionary for quick lookup of cacheKeys
-    let oldPaywallCacheKeys = Dictionary(uniqueKeysWithValues: oldPaywalls.map { ($0.identifier, $0.cacheKey) })
+    let oldPaywallCacheKeys = Dictionary(
+      uniqueKeysWithValues: oldPaywalls.map { ($0.identifier, $0.cacheKey) })
 
     let removedPaywallIds = oldPaywallIds.subtracting(newPaywallIds)
 
     // Find identifiers that are no longer in the new configuration or whose cacheKey has changed
-    let removedOrChangedPaywallIds = removedPaywallIds
+    let removedOrChangedPaywallIds =
+      removedPaywallIds
       .union(
         newPaywalls.filter { paywall in
           let cacheKeyExists = oldPaywallCacheKeys[paywall.identifier] != nil
