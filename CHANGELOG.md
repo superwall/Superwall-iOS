@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.3
+
+### Fixes
+
+- Fixes an issue where trying to purchase a product that was previously purchased may prevent the spinner from disappearing on the paywall.
+
 ## 3.12.2
 
 ### Fixes
