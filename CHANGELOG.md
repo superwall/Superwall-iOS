@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.4
+
+### Fixes
+
+- Simplifies and corrects logic for choosing paywall variants.
+
 ## 3.12.3
 
 ### Fixes

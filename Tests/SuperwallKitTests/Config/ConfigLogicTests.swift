@@ -30,10 +30,25 @@ final class ConfigLogicTests: XCTestCase {
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
       XCTAssertEqual(options.first!.toVariant(), variant)
-    } catch let error as ConfigLogic.TriggerRuleError {
-      XCTAssertEqual(error, ConfigLogic.TriggerRuleError.invalidState)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      XCTFail("Shouldn't fail")
+    }
+  }
+
+  func test_chooseVariant_1PercentSum() {
+    do {
+      let options: [VariantOption] = [
+        .stub()
+        .setting(\.percentage, to: 1),
+        .stub()
+        .setting(\.percentage, to: 0),
+        .stub()
+        .setting(\.percentage, to: 0)
+      ]
+      let variant = try ConfigLogic.chooseVariant(from: options)
+      XCTAssertEqual(options.first!.toVariant(), variant)
+    } catch {
+      XCTFail("Shouldn't fail")
     }
   }
 
@@ -70,7 +85,7 @@ final class ConfigLogicTests: XCTestCase {
       let variant = try ConfigLogic.chooseVariant(from: options)
       XCTAssertEqual(options.first!.toVariant(), variant)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      XCTFail("Shouldn't fail")
     }
   }
 
@@ -93,7 +108,7 @@ final class ConfigLogicTests: XCTestCase {
       )
       XCTAssertEqual(options.last!.toVariant(), variant)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      XCTFail("Shouldn't fail")
     }
   }
 
@@ -116,7 +131,7 @@ final class ConfigLogicTests: XCTestCase {
       )
       XCTAssertEqual(options[1].toVariant(), variant)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      XCTFail("Shouldn't fail")
     }
   }
 
@@ -139,9 +154,83 @@ final class ConfigLogicTests: XCTestCase {
       )
       XCTAssertEqual(options.first!.toVariant(), variant)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      XCTFail("Shouldn't fail")
     }
   }
+
+
+  func testChooseVariant_distribution() throws {
+    // MARK: Given
+    let variants: [VariantOption] = [
+      .stub()
+      .setting(\.id, to: "A")
+      .setting(\.percentage, to: 85),
+      .stub()
+      .setting(\.id, to: "B")
+      .setting(\.percentage, to: 5),
+      .stub()
+      .setting(\.id, to: "C")
+      .setting(\.percentage, to: 5),
+      .stub()
+      .setting(\.id, to: "D")
+      .setting(\.percentage, to: 5)
+    ]
+
+    // Initialize counters for each variant
+    var selectionCounts: [String: Int] = ["A": 0, "B": 0, "C": 0, "D": 0]
+
+    // Number of iterations
+    let iterations = 100_000
+
+    // MARK: When
+    // Run chooseVariant multiple times and count selections
+    for _ in 1...iterations {
+      let selectedVariant = try ConfigLogic.chooseVariant(from: variants)
+      selectionCounts[selectedVariant.id, default: 0] += 1
+    }
+
+    // MARK: Then
+    // Calculate observed percentages
+    let observedPercentages: [String: Double] = selectionCounts.mapValues { Double($0) / Double(iterations) * 100 }
+
+    // Define expected percentages
+    let expectedPercentages: [String: Double] = ["A": 85.0, "B": 5.0, "C": 5.0, "D": 5.0]
+
+    // Define acceptable margin of error (e.g., ±1%)
+    let marginOfError = 1.0
+
+    // Assert that each observed percentage is within the acceptable range
+    for (variantID, expectedPercentage) in expectedPercentages {
+      guard let observedPercentage = observedPercentages[variantID] else {
+        XCTFail("Variant \(variantID) was not selected at all.")
+        continue
+      }
+      XCTAssertEqual(
+        observedPercentage,
+        expectedPercentage,
+        accuracy: marginOfError,
+        "Variant \(variantID) selection percentage \(observedPercentage)% is not within \(marginOfError)% of expected \(expectedPercentage)%."
+      )
+    }
+
+    // Optional: Print the results for debugging purposes
+    print("Variant Selection Distribution after \(iterations) iterations:")
+    for (variantID, count) in selectionCounts {
+      let percentage = observedPercentages[variantID] ?? 0.0
+      print("Variant \(variantID): \(count) selections (\(String(format: "%.2f", percentage))%)")
+    }
+  }
+
+  // MARK: - Helper Method for chooseVariant
+
+  /// Helper method to access the chooseVariant function.
+  /// Adjust the access level based on where chooseVariant is defined.
+  static func chooseVariant(
+    from variants: [VariantOption]
+  ) throws -> Experiment.Variant {
+    return try ConfigLogic.chooseVariant(from: variants)
+  }
+
 
   // MARK: - getRulesPerTriggerGroup
 
@@ -182,7 +271,7 @@ final class ConfigLogicTests: XCTestCase {
     XCTAssertTrue(rules.contains(trigger1.rules))
   }
 
-  // MARK: - Choose Variants
+  // MARK: - Assign Variants
   func test_assignVariants_noTriggers() {
     // Given
     let confirmedAssignments = [

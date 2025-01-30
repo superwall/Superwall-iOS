@@ -28,9 +28,8 @@ enum ConfigLogic {
     }
 
     // If there's only one variant, return it.
-    // This could have a zero percentage.
     if variants.count == 1,
-       let variant = variants.first {
+      let variant = variants.first {
       return .init(
         id: variant.id,
         type: variant.type,
@@ -38,11 +37,13 @@ enum ConfigLogic {
       )
     }
 
-    let validVariants = variants.filter { $0.percentage > 0 }
+    // Calculate the total sum of variant percentages.
+    let variantSum = variants.reduce(0) { $0 + $1.percentage }
 
-    // if there is only 1 variant with weight > 0, return it
-    if validVariants.count == 1,
-      let variant = validVariants.first {
+    // If all variants have 0% set, choose a random one.
+    if variantSum == 0 {
+      let randomIndex = randomiser(0..<variants.count)
+      let variant = variants[randomIndex]
       return .init(
         id: variant.id,
         type: variant.type,
@@ -50,34 +51,20 @@ enum ConfigLogic {
       )
     }
 
-    // if there are no variants with weight > 0, choose a random one.
-    if validVariants.isEmpty {
-      let randomVariantIndex = randomiser(0..<variants.count)
-      let variant = variants[randomVariantIndex]
-      return .init(
-        id: variant.id,
-        type: variant.type,
-        paywallId: variant.paywallId
-      )
-    }
+    // Choose a random threshold within the total sum.
+    let randomThreshold = randomiser(0..<variantSum)
+    var cumulativeSum = 0
 
-    // create an array of variantIds, each repeated by its percentage.
-    var validVariantIds: [String] = []
-    for variant in validVariants {
-      for _ in 0..<variant.percentage {
-        validVariantIds.append(variant.id)
+    // Iterate through variants and return the first that crosses the threshold.
+    for variant in variants {
+      cumulativeSum += variant.percentage
+      if randomThreshold < cumulativeSum {
+        return .init(
+          id: variant.id,
+          type: variant.type,
+          paywallId: variant.paywallId
+        )
       }
-    }
-
-    // choose a random variant id from the array.
-    let randomVariantIndex = randomiser(0..<validVariantIds.count)
-    let variantId = validVariantIds[randomVariantIndex]
-    if let variant = variants.first(where: { $0.id == variantId }) {
-      return .init(
-        id: variant.id,
-        type: variant.type,
-        paywallId: variant.paywallId
-      )
     }
 
     throw TriggerRuleError.invalidState
