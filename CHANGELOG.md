@@ -7,6 +7,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Breaking Changes
 
 - Replaces `entitlements.status` with `subscriptionStatus`.
+- `entitlementStatusDidChange` reverted to `subscriptionStatusDidChange`.
+- `EntitlementStatus` removed in favor of `SubscriptionStatus`.
 
 ### Enhancements
 
