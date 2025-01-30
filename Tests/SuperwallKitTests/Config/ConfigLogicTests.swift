@@ -47,7 +47,7 @@ final class ConfigLogicTests: XCTestCase {
           .setting(\.percentage, to: 0),
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toVariant(), variant)
+      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
     } catch {
       XCTFail("Shouldn't fail")
     }

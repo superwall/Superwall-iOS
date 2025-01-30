@@ -84,7 +84,8 @@ extension Superwall {
       Logger.debug(
         logLevel: .info,
         scope: .paywallPresentation,
-        message: "Timeout: Superwall.shared.subscriptionStatus has not been set for over 5 seconds resulting in a failure."
+        message: "Timeout: Superwall.shared.subscriptionStatus has not been set "
+        + "for over 5 seconds resulting in a failure."
       )
       let error = InternalPresentationLogic.presentationError(
         domain: "SWKPresentationError",

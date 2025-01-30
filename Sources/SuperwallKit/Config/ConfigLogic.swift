@@ -29,8 +29,7 @@ enum ConfigLogic {
 
     // If there's only one variant, return it.
     if variants.count == 1,
-      let variant = variants.first
-    {
+      let variant = variants.first {
       return variant.toExperimentVariant()
     }
 
@@ -292,8 +291,7 @@ enum ConfigLogic {
 
     for variant in preloadableVariants {
       if variant.type == .treatment,
-        let paywallId = variant.paywallId
-      {
+        let paywallId = variant.paywallId {
         identifiers.insert(paywallId)
       }
     }
@@ -316,8 +314,7 @@ enum ConfigLogic {
         continue
       }
       if variant.type == .treatment,
-        let paywallId = variant.paywallId
-      {
+        let paywallId = variant.paywallId {
         identifiers.insert(paywallId)
       }
     }
