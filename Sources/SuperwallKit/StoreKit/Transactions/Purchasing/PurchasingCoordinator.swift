@@ -23,6 +23,10 @@ actor PurchasingCoordinator {
     self.factory = factory
   }
 
+  func setIsFreeTrialAvailable(to newValue: Bool) {
+    isFreeTrialAvailable = newValue
+  }
+
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
   func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
     guard
@@ -133,20 +137,21 @@ actor PurchasingCoordinator {
     result: PurchaseResult
   ) async {
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
+    storeTransaction(transaction, result: result)
+    completion?(result)
   }
 
   @available(iOS 15.0, *)
-  func completePurchase(
-    of transaction: SK2Transaction,
+  func storeTransaction(
+    _ transaction: SK2Transaction,
     result: PurchaseResult
   ) async {
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
+    storeTransaction(transaction, result: result)
   }
 
-  private func completePurchase(
-    of transaction: StoreTransaction,
+  private func storeTransaction(
+    _ transaction: StoreTransaction,
     result: PurchaseResult
   ) {
     if result == .purchased {
@@ -158,7 +163,6 @@ actor PurchasingCoordinator {
       return
     }
     lastInternalTransaction = transaction
-    completion?(result)
   }
 
   func reset() {
