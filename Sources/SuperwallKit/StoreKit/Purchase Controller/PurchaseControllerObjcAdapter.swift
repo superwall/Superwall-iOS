@@ -24,8 +24,6 @@ final class PurchaseControllerObjcAdapter: PurchaseController {
           switch result {
           case .purchased:
             continuation.resume(returning: .purchased)
-          case .restored:
-            continuation.resume(returning: .restored)
           case .pending:
             continuation.resume(returning: .pending)
           case .cancelled:

@@ -111,8 +111,6 @@ final class TransactionManager {
     switch result {
     case .purchased:
       await didPurchase()
-    case .restored:
-      await didRestore()
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
       guard
