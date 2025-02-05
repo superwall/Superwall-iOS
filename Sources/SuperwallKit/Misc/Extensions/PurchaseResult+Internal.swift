@@ -16,7 +16,7 @@ extension StoreKit.Product.PurchaseResult {
       switch verificationResult {
       case .unverified(_, let error):
         return .failed(error)
-      case .verified(let transaction):
+      case .verified:
         return .purchased
       }
     case .userCancelled:

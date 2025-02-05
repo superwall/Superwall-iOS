@@ -58,13 +58,18 @@ extension Superwall {
         .throwableAsync()
     }
 
+    // Capture only the cancel action because the whole task is non-sendable and gives a warning.
+    let cancelTask = {
+      subscriptionStatusTask.cancel()
+    }
+
     // Create a 5 sec timer. If the subscription status is retrieved it'll
     // get cancelled. Otherwise will log a timeout and fail the request.
     let timer = Timer(
       timeInterval: 5,
       repeats: false
     ) { _ in
-      subscriptionStatusTask.cancel()
+      cancelTask()
     }
     RunLoop.main.add(timer, forMode: .default)
 
