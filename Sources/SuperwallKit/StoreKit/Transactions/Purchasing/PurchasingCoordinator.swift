@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 14/09/2023.
 //
@@ -136,9 +136,16 @@ actor PurchasingCoordinator {
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) async {
+    // Only complete if the product ID of the transaction is the same as
+    // the purchasing transaction.
+    guard product?.productIdentifier == transaction.payment.productIdentifier else {
+      return
+    }
     let transaction = await factory.makeStoreTransaction(from: transaction)
     storeTransaction(transaction, result: result)
+
     completion?(result)
+    completion = nil
   }
 
   @available(iOS 15.0, *)
@@ -156,11 +163,6 @@ actor PurchasingCoordinator {
   ) {
     if result == .purchased {
       storeIfPurchased(transaction)
-    }
-    // Only complete if the product ID of the transaction is the same as
-    // the purchasing transaction.
-    guard product?.productIdentifier == transaction.payment.productIdentifier else {
-      return
     }
     lastInternalTransaction = transaction
   }

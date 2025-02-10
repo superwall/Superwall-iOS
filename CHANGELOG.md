@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.7
+
+### Fixes
+
+- Fixes SK1 swift continuation leak when purchasing.
+
 ## 4.0.0-beta.6
 
 ### Breaking Changes
@@ -108,6 +114,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the `LogScope` case `entitlements`.
 - Adds StoreKit 2 observer mode. This can be enabled by setting the `SuperwallOptions` `shouldObservePurchases` to `true` and `storeKitVersion` to `.storeKit2` (which is the default value). Note that this is only available with apps running iOS 17.2+.
 - Adds `products(for:)` which gets the ``StoreProduct`s for given product identifiers.
+
+## 3.12.5
+
+### Fixes
+
+- Fixes a rare crash to do with swift continuation leaks when purchasing.
 
 ## 3.12.4
 
