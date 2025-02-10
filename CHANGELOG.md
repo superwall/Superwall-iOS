@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.0-beta.7
+
+### Fixes
+
+- Fixes SK1 swift continuation leak when purchasing.
+
 ## 4.0.0-beta.6
 
 ### Breaking Changes
