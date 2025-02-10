@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 14/09/2023.
 //
@@ -86,7 +86,8 @@ actor PurchasingCoordinator {
 
     func getLastExternalStoreTransaction() async -> StoreTransaction? {
       if let transaction = transactions[productId],
-        dateIsWithinLastHour(transaction.transactionDate) {
+        dateIsWithinLastHour(transaction.transactionDate)
+      {
         return transaction
       }
       return nil
@@ -120,7 +121,8 @@ actor PurchasingCoordinator {
 
     // If there is an existing transaction, which has a transaction date...
     if let existingTransaction = transactions[productId],
-      let existingTransactionDate = existingTransaction.transactionDate {
+      let existingTransactionDate = existingTransaction.transactionDate
+    {
       // And if the new transaction date was after the stored transaction, update.
       // Else, ignore.
       if transaction.transactionDate?.compare(existingTransactionDate) == .orderedDescending {
