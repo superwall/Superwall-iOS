@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes a rare crash to do with swift continuation leaks when purchasing.
+- Fixes a rare crash to do with a swift continuation leak when purchasing.
 
 ## 3.12.4
 
