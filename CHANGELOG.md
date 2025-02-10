@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 3.12.5
+
+### Fixes
+
+- Fixes a rare crash to do with a swift continuation leak when purchasing.
+
 ## 3.12.4
 
 ### Fixes

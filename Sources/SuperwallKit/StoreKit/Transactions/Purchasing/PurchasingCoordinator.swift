@@ -159,6 +159,7 @@ actor PurchasingCoordinator {
     }
     lastInternalTransaction = transaction
     completion?(result)
+    completion = nil
   }
 
   func reset() {
