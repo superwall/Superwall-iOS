@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes SK1 swift continuation leak when purchasing.
+- Fixes an SK1 swift continuation leak when purchasing.
 
 ## 4.0.0-beta.6
 
