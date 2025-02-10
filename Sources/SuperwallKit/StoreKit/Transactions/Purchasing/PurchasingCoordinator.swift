@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 14/09/2023.
 //
@@ -21,6 +21,10 @@ actor PurchasingCoordinator {
 
   init(factory: StoreTransactionFactory) {
     self.factory = factory
+  }
+
+  func setIsFreeTrialAvailable(to newValue: Bool) {
+    isFreeTrialAvailable = newValue
   }
 
   /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
@@ -132,34 +136,35 @@ actor PurchasingCoordinator {
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) async {
-    let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
-  }
-
-  @available(iOS 15.0, *)
-  func completePurchase(
-    of transaction: SK2Transaction,
-    result: PurchaseResult
-  ) async {
-    let transaction = await factory.makeStoreTransaction(from: transaction)
-    completePurchase(of: transaction, result: result)
-  }
-
-  private func completePurchase(
-    of transaction: StoreTransaction,
-    result: PurchaseResult
-  ) {
-    if result == .purchased {
-      storeIfPurchased(transaction)
-    }
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
     guard product?.productIdentifier == transaction.payment.productIdentifier else {
       return
     }
-    lastInternalTransaction = transaction
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    storeTransaction(transaction, result: result)
+
     completion?(result)
     completion = nil
+  }
+
+  @available(iOS 15.0, *)
+  func storeTransaction(
+    _ transaction: SK2Transaction,
+    result: PurchaseResult
+  ) async {
+    let transaction = await factory.makeStoreTransaction(from: transaction)
+    storeTransaction(transaction, result: result)
+  }
+
+  private func storeTransaction(
+    _ transaction: StoreTransaction,
+    result: PurchaseResult
+  ) {
+    if result == .purchased {
+      storeIfPurchased(transaction)
+    }
+    lastInternalTransaction = transaction
   }
 
   func reset() {
