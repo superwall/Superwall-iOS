@@ -35,8 +35,8 @@ enum PurchasingError: LocalizedError {
 ///   `purchaseController.syncSubscriptionStatus()`
 final class RCPurchaseController: PurchaseController {
   // MARK: Sync Subscription Status
-  /// Makes sure that Superwall knows the customer's entitlements by
-  /// changing `Superwall.shared.entitlements`
+  /// Makes sure that Superwall knows the customer's subscription status by
+  /// changing `Superwall.shared.subscriptionStatus`
   func syncSubscriptionStatus() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {

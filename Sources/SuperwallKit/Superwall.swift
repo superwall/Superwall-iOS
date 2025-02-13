@@ -83,7 +83,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Properties stored about the user, set using ``setUserAttributes(_:)-1wql2``.
+  /// Properties stored about the user, set using ``setUserAttributes(_:)``.
   public var userAttributes: [String: Any] {
     return dependencyContainer.identityManager.userAttributes
   }
@@ -450,7 +450,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
@@ -493,7 +493,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
@@ -589,7 +589,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   // MARK: - Preloading
 
-  /// Preloads all paywalls that the user may see based on campaigns and triggers turned on in your Superwall dashboard.
+  /// Preloads all paywalls that the user may see based on campaigns and placements in your Superwall dashboard.
   ///
   /// To use this, first set ``PaywallOptions/shouldPreload``  to `false` when configuring the SDK. Then call this
   /// function when you would like preloading to begin.
@@ -607,7 +607,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// function when you would like preloading to begin.
   ///
   /// Note: This will not reload any paywalls you've already preloaded.
-  /// - Parameter placements: A set of names of events whose paywalls you want to preload.
+  /// - Parameter placements: A set of placement names whose paywalls you want to preload.
   public func preloadPaywalls(forPlacements placements: Set<String>) {
     Task { [weak self] in
       await self?.dependencyContainer.configManager.preloadPaywalls(for: placements)

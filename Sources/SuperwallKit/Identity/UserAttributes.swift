@@ -8,12 +8,11 @@
 import Foundation
 
 extension Superwall {
-  /// Sets user attributes for use in paywalls and the Superwall dashboard.
+  /// Sets user attributes for use in paywalls and on the Superwall dashboard.
   ///
-  /// If the existing user attributes dictionary already has a value for a given property, the old
-  /// value is overwritten. Existing properties will not be affected.
-  /// Useful for analytics and campaign audience filters you may define in the Superwall Dashboard.
-  /// They should **not** be used as a source of truth for sensitive information.
+  /// If an attribute already exists, its value will be overwritten while other attributes remain unchanged.
+  /// This is useful for analytics and campaign audience filters you may define in the Superwall Dashboard.
+  /// **Note:** These attributes should not be used as a source of truth for sensitive information.
   ///
   /// Here's how you might set user attributes after retrieving your user's data:
   ///  ```swift
