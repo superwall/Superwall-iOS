@@ -40,12 +40,13 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
+    // TODO: Will we choose assignments again, need to make sure we don't choose again if already in memory.
+
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
-    dependencyContainer.configManager.unconfirmedAssignments = [
-      rawExperiment.id: variant
-    ]
+
     let storage = StorageMock()
+    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
 
     // MARK: When
     let assignmentLogic = AudienceLogic(
@@ -66,11 +67,12 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(returnedExperiment.groupId, rawExperiment.groupId)
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
 
-    let expectedConfirmableAssignments = ConfirmableAssignment(
+    let expectedConfirmableAssignments = Assignment(
       experimentId: triggerRule.experiment.id,
-      variant: variant
+      variant: variant,
+      isSentToServer: false
     )
-    let confirmableAssignments = outcome.confirmableAssignment!
+    let confirmableAssignments = outcome.assignment!
     XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
   }
 
@@ -106,10 +108,10 @@ class AssignmentLogicTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
-    dependencyContainer.configManager.unconfirmedAssignments = [
-      rawExperiment.id: variant
-    ]
+
     let storage = StorageMock()
+    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
@@ -131,11 +133,13 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
 
-    let expectedConfirmableAssignments = ConfirmableAssignment(
+    let expectedConfirmableAssignments = Assignment(
       experimentId: triggerRule.experiment.id,
-      variant: variant
+      variant: variant,
+      isSentToServer: false
     )
-    let confirmableAssignments = outcome.confirmableAssignment!
+    let confirmableAssignments = outcome.assignment!
+
     XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
   }
 
@@ -171,7 +175,11 @@ class AssignmentLogicTests: XCTestCase {
 
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
-    let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
+
+    let storage = StorageMock()
+    let assignment = Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: true)
+    storage.saveAssignments([assignment])
+
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
@@ -193,8 +201,8 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
 
-    let confirmableAssignments = outcome.confirmableAssignment
-    XCTAssertNil(confirmableAssignments)
+    let outcomeAssignment = outcome.assignment
+    XCTAssertEqual(assignment, outcomeAssignment)
   }
 
   func testGetOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition()
@@ -235,10 +243,12 @@ class AssignmentLogicTests: XCTestCase {
       variantOption
       .setting(\.paywallId, to: "123")
       .toExperimentVariant()
-    let storage = StorageMock(confirmedAssignments: [rawExperiment.id: variant])
-    dependencyContainer.configManager.unconfirmedAssignments = [
-      rawExperiment.id: variant2
-    ]
+    let storage = StorageMock()
+    storage.saveAssignments([
+      Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: true),
+      Assignment(experimentId: "otherExperimnet", variant: variant2, isSentToServer: false)
+    ])
+
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
@@ -260,8 +270,8 @@ class AssignmentLogicTests: XCTestCase {
     XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
     XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
 
-    let confirmableAssignments = outcome.confirmableAssignment
-    XCTAssertNil(confirmableAssignments)
+    let assignment = outcome.assignment
+    XCTAssertEqual(assignment?.variant, variant)
   }
 
   func testGetOutcome_noRuleMatch() async throws {
@@ -295,11 +305,10 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let storage = StorageMock()
     let variant = variantOption.toExperimentVariant()
-    dependencyContainer.configManager.unconfirmedAssignments = [
-      rawExperiment.id: variant
-    ]
+    let storage = StorageMock()
+    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
@@ -316,7 +325,7 @@ class AssignmentLogicTests: XCTestCase {
     guard case .noAudienceMatch = outcome.triggerResult else {
       return XCTFail("Incorrect outcome. Expected noAudienceMatch")
     }
-    let confirmableAssignments = outcome.confirmableAssignment
+    let confirmableAssignments = outcome.assignment
     XCTAssertNil(confirmableAssignments)
   }
 
@@ -351,11 +360,10 @@ class AssignmentLogicTests: XCTestCase {
     let triggers = [eventName: trigger]
 
     let dependencyContainer = DependencyContainer()
-    let storage = StorageMock()
     let variant = variantOption.toExperimentVariant()
-    dependencyContainer.configManager.unconfirmedAssignments = [
-      rawExperiment.id: variant
-    ]
+    let storage = StorageMock()
+    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
       storage: storage,
@@ -373,7 +381,7 @@ class AssignmentLogicTests: XCTestCase {
       return XCTFail("Incorrect outcome. Expected unknown event")
     }
 
-    let confirmableAssignments = outcome.confirmableAssignment
+    let confirmableAssignments = outcome.assignment
     XCTAssertNil(confirmableAssignments)
   }
 }

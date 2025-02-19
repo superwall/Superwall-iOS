@@ -441,11 +441,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// Gets an array of all confirmed experiment assignments.
   ///
   /// - Returns: An array of ``ConfirmedAssignment`` objects.
-  public func getAssignments() -> [ConfirmedAssignment] {
-    let confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
-    return confirmedAssignments.map {
-      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
-    }
+  public func getAssignments() -> Set<Assignment> {
+    let confirmedAssignments = dependencyContainer.storage.getAssignments()
+    return confirmedAssignments
   }
 
   /// Confirms all experiment assignments and returns them in an array.
@@ -456,7 +454,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// in user, placement, or device parameters used in audience filters.
   ///
   /// - Returns: An array of ``ConfirmedAssignment`` objects.
-  public func confirmAllAssignments() async -> [ConfirmedAssignment] {
+  public func confirmAllAssignments() async ->Set<Assignment> {
     let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
     await track(confirmAllAssignments)
 
@@ -464,11 +462,7 @@ public final class Superwall: NSObject, ObservableObject {
       return []
     }
 
-    let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
-    var assignments = Set(
-      storedAssignments.map {
-        ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
-      })
+    var assignments = dependencyContainer.storage.getAssignments()
 
     for trigger in triggers {
       let eventData = PlacementData(
@@ -485,10 +479,10 @@ public final class Superwall: NSObject, ObservableObject {
       )
 
       if let assignment = await confirmAssignments(presentationRequest) {
-        assignments.insert(assignment)
+        assignments.update(with: assignment)
       }
     }
-    return Array(assignments)
+    return assignments
   }
 
   /// Confirms all experiment assignments and returns them in an array.
@@ -499,7 +493,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// in user, placement, or device parameters used in audience filters.
   ///
   /// - Parameter completion: A completion block that accepts an array of ``ConfirmedAssignment`` objects.
-  public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
+  public func confirmAllAssignments(completion: ((Set<Assignment>) -> Void)? = nil) {
     Task {
       let result = await confirmAllAssignments()
       completion?(result)

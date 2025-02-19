@@ -53,20 +53,20 @@ class Storage {
   /// This means that we'll need to wait for assignments before firing triggers.
   var neverCalledStaticConfig = false
 
-  /// The confirmed assignments for the user loaded from the cache.
-  private var confirmedAssignments: [Experiment.ID: Experiment.Variant]? {
+  /// The assignments for the user loaded from the cache.
+  private var assignments: Set<Assignment>? {
     get {
       queue.sync {
-        self._confirmedAssignments
+        self._assignments
       }
     }
     set {
       queue.async { [weak self] in
-        self?._confirmedAssignments = newValue
+        self?._assignments = newValue
       }
     }
   }
-  private var _confirmedAssignments: [Experiment.ID: Experiment.Variant]?
+  private var _assignments: Set<Assignment>?
 
   private let queue = DispatchQueue(label: "com.superwall.storage")
 
@@ -130,7 +130,7 @@ class Storage {
     cache.cleanUserFiles()
 
     queue.async { [weak self] in
-      self?._confirmedAssignments = nil
+      self?._assignments = nil
       self?._didTrackFirstSeen = false
     }
 
@@ -196,17 +196,26 @@ class Storage {
     save(Date(), forType: LastPaywallView.self)
   }
 
-  func saveConfirmedAssignments(_ assignments: [Experiment.ID: Experiment.Variant]) {
-    save(assignments, forType: ConfirmedAssignments.self)
-    confirmedAssignments = assignments
+  /// Saves a `Set` of assignments to disk.
+  func saveAssignments(_ newAssignments: Set<Assignment>) {
+    var confirmedAssignments = getAssignments()
+
+    // Update each confirmed assignment from the new set,
+    // replacing any existing assignment with the same experimentId.
+    for newAssignment in newAssignments {
+      confirmedAssignments.update(with: newAssignment)
+    }
+
+    save(confirmedAssignments, forType: Assignments.self)
+    self.assignments = confirmedAssignments
   }
 
-  func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
-    if let confirmedAssignments = confirmedAssignments {
-      return confirmedAssignments
+  func getAssignments() -> Set<Assignment> {
+    if let assignments = assignments {
+      return assignments
     } else {
-      let assignments = get(ConfirmedAssignments.self) ?? [:]
-      confirmedAssignments = assignments
+      let assignments = get(Assignments.self) ?? []
+      self.assignments = assignments
       return assignments
     }
   }

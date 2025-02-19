@@ -10,8 +10,8 @@
 import UIKit
 
 class Cache {
-  private static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
-  private static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
+  static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
+  static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
@@ -36,11 +36,11 @@ class Cache {
       .first?
       .appendingPathComponent(Cache.cacheDirectoryPrefix)
     userSpecificDocumentUrl = fileManager
-      .urls(for: .documentDirectory, in: .userDomainMask)
+      .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
       .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
     appSpecificDocumentUrl = fileManager
-      .urls(for: .documentDirectory, in: .userDomainMask)
+      .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
       .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
@@ -60,6 +60,77 @@ class Cache {
         object: nil
       )
     #endif
+  }
+
+  // MARK: - Migrate
+  func moveDataFromDocumentsToApplicationSupport() {
+    ioQueue.async {
+      let fileManager = FileManager.default
+
+      guard
+        let documentDirectory = fileManager.urls(
+          for: .documentDirectory,
+          in: .userDomainMask
+        ).first,
+        let applicationSupportDirectory = fileManager.urls(
+          for: .applicationSupportDirectory,
+          in: .userDomainMask
+        ).first
+      else {
+        return
+      }
+
+      let userSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+
+      let userSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+
+      do {
+        // Ensure the Application Support directory exists
+        if !fileManager.fileExists(atPath: applicationSupportDirectory.path) {
+          try fileManager.createDirectory(
+            at: applicationSupportDirectory,
+            withIntermediateDirectories: true,
+            attributes: nil
+          )
+        }
+
+        // Move user-specific data
+        if fileManager.fileExists(atPath: userSpecificDocumentUrl.path) {
+          try fileManager.moveItem(
+            at: userSpecificDocumentUrl,
+            to: userSpecificSupportUrl
+          )
+        } else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .cache,
+            message: "No user-specific data found at \(userSpecificDocumentUrl.path)"
+          )
+        }
+
+        // Move app-specific data
+        if fileManager.fileExists(atPath: appSpecificDocumentUrl.path) {
+          try fileManager.moveItem(
+            at: appSpecificDocumentUrl,
+            to: appSpecificSupportUrl
+          )
+        } else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .cache,
+            message: "No app-specific data found at \(appSpecificDocumentUrl.path)"
+          )
+        }
+      } catch {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .cache,
+          message: "Error moving files: \(error.localizedDescription)"
+        )
+      }
+    }
   }
 
   // MARK: - Store data

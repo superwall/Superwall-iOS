@@ -281,23 +281,26 @@ final class ConfigLogicTests: XCTestCase {
   // MARK: - Assign Variants
   func test_assignVariants_noTriggers() {
     // Given
-    let confirmedAssignments = [
-      "exp1": Experiment.Variant(
-        id: "1",
-        type: .treatment,
-        paywallId: "abc"
+    let confirmedAssignments = Set([
+      Assignment(
+        experimentId: "exp1",
+        variant: Experiment.Variant(
+          id: "1",
+          type: .treatment,
+          paywallId: "abc"
+        ),
+        isSentToServer: true
       )
-    ]
+    ])
 
     // When
-    let variant = ConfigLogic.chooseAssignments(
+    let assignments = ConfigLogic.chooseAssignments(
       fromTriggers: [],
       confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmed.isEmpty)
-    XCTAssertEqual(variant.confirmed, confirmedAssignments)
+    XCTAssertEqual(assignments, confirmedAssignments)
   }
 
   func test_chooseVariant_1Percent99Percent_choose1Percent() {
@@ -323,13 +326,17 @@ final class ConfigLogicTests: XCTestCase {
 
   func test_chooseAssignments_noRules() {
     // Given
-    let confirmedAssignments = [
-      "exp1": Experiment.Variant(
-        id: "1",
-        type: .treatment,
-        paywallId: "abc"
+    let confirmedAssignments = Set([
+      Assignment(
+        experimentId: "exp1",
+        variant: Experiment.Variant(
+          id: "1",
+          type: .treatment,
+          paywallId: "abc"
+        ),
+        isSentToServer: true
       )
-    ]
+    ])
     // When
     let variant = ConfigLogic.chooseAssignments(
       fromTriggers: [
@@ -340,8 +347,7 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmed.isEmpty)
-    XCTAssertEqual(variant.confirmed, confirmedAssignments)
+    XCTAssertEqual(variant, confirmedAssignments)
   }
 
   func test_chooseAssignments_variantAsOfYetUnconfirmed() {
@@ -376,13 +382,12 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: [:]
+      confirmedAssignments: []
     )
 
     // When
-    XCTAssertEqual(variant.unconfirmed.count, 1)
-    XCTAssertEqual(variant.unconfirmed[experimentId], variantOption.toExperimentVariant())
-    XCTAssertTrue(variant.confirmed.isEmpty)
+    XCTAssertEqual(variant.count, 1)
+    XCTAssertEqual(variant.first!.variant, variantOption.toExperimentVariant())
   }
 
   func test_chooseAssignments_variantAlreadyConfirmed() {
@@ -395,9 +400,16 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.id, to: variantId)
       .setting(\.paywallId, to: paywallId)
       .setting(\.type, to: .treatment)
+    let confirmedAssignments = Set([
+      Assignment(
+        experimentId: experimentId,
+        variant: variantOption.toExperimentVariant(),
+        isSentToServer: true
+      )
+    ])
 
     // When
-    let variant = ConfigLogic.chooseAssignments(
+    let assignments = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
           .setting(
@@ -417,13 +429,12 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: [experimentId: variantOption.toExperimentVariant()]
+      confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertEqual(variant.confirmed.count, 1)
-    XCTAssertEqual(variant.confirmed[experimentId], variantOption.toExperimentVariant())
-    XCTAssertTrue(variant.unconfirmed.isEmpty)
+    XCTAssertEqual(assignments.count, 1)
+    XCTAssertEqual(assignments.first!.variant, variantOption.toExperimentVariant())
   }
 
   func test_chooseAssignments_variantAlreadyConfirmed_nowUnavailable() {
@@ -439,9 +450,16 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.id, to: "oldVariantId")
       .setting(\.paywallId, to: paywallId)
       .setting(\.type, to: .treatment)
+    let confirmedAssignments = Set([
+      Assignment(
+        experimentId: experimentId,
+        variant: oldVariantOption.toExperimentVariant(),
+        isSentToServer: true
+      )
+    ])
 
     // When
-    let variant = ConfigLogic.chooseAssignments(
+    let assignments = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
           .setting(
@@ -461,13 +479,12 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()]
+      confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertEqual(variant.unconfirmed.count, 1)
-    XCTAssertEqual(variant.unconfirmed[experimentId], newVariantOption.toExperimentVariant())
-    XCTAssertTrue(variant.confirmed.isEmpty)
+    XCTAssertEqual(assignments.count, 1)
+    XCTAssertEqual(assignments.first!.variant, newVariantOption.toExperimentVariant())
   }
 
   func test_chooseAssignments_variantAlreadyConfirmed_nowNoVariants() {
@@ -479,9 +496,16 @@ final class ConfigLogicTests: XCTestCase {
       .setting(\.id, to: "oldVariantId")
       .setting(\.paywallId, to: paywallId)
       .setting(\.type, to: .treatment)
+    let confirmedAssignments = Set([
+      Assignment(
+        experimentId: experimentId,
+        variant: oldVariantOption.toExperimentVariant(),
+        isSentToServer: true
+      )
+    ])
 
     // When
-    let variant = ConfigLogic.chooseAssignments(
+    let assignments = ConfigLogic.chooseAssignments(
       fromTriggers: [
         .stub()
           .setting(
@@ -497,36 +521,36 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()]
+      confirmedAssignments: confirmedAssignments
     )
 
     // Then
-    XCTAssertTrue(variant.unconfirmed.isEmpty)
-    XCTAssertTrue(variant.confirmed.isEmpty)
+    XCTAssertTrue(assignments.isEmpty)
   }
 
   // MARK: - processAssignmentsFromServer
 
   func test_processAssignmentsFromServer_noAssignments() {
-    let confirmedVariant: Experiment.Variant = .init(id: "def", type: .treatment, paywallId: "ghi")
+    let variant: Experiment.Variant = .init(id: "def", type: .treatment, paywallId: "ghi")
+    let localAssignments = Set([
+      Assignment(experimentId: "abc", variant: variant, isSentToServer: false)
+    ])
     let unconfirmedVariant: Experiment.Variant = .init(
       id: "mno", type: .treatment, paywallId: "pqr")
     let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-      assignments: [],
+      serverAssignments: [],
       triggers: [.stub()],
-      confirmedAssignments: ["abc": .init(id: "def", type: .treatment, paywallId: "ghi")],
-      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+      localAssignments: localAssignments
     )
-    XCTAssertEqual(result.confirmed["abc"], confirmedVariant)
-    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
+    XCTAssertEqual(result, localAssignments)
   }
 
   func test_processAssignmentsFromServer_overwriteConfirmedAssignment() {
     let experimentId = "abc"
     let variantId = "def"
 
-    let assignments: [Assignment] = [
-      Assignment(
+    let serverAssignments: [PostbackAssignment] = [
+      PostbackAssignment(
         experimentId: experimentId,
         variantId: variantId
       )
@@ -548,18 +572,28 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
+    let unconfirmedVariant = Experiment.Variant(id: "mno", type: .treatment, paywallId: "pqr")
+    let localAssignments = Set([
+      Assignment(
+        experimentId: experimentId,
+        variant: oldVariantOption.toExperimentVariant(),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: "jkl",
+        variant: unconfirmedVariant,
+        isSentToServer: false
+      )
+    ])
 
-    let unconfirmedVariant: Experiment.Variant = .init(
-      id: "mno", type: .treatment, paywallId: "pqr")
-    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-      assignments: assignments,
+    let assignments = ConfigLogic.transferAssignmentsFromServerToDisk(
+      serverAssignments: serverAssignments,
       triggers: triggers,
-      confirmedAssignments: [experimentId: oldVariantOption.toExperimentVariant()],
-      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+      localAssignments: localAssignments
     )
 
-    XCTAssertEqual(result.confirmed[experimentId], variantOption.toExperimentVariant())
-    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
+    XCTAssertEqual(assignments.first(where: { $0.experimentId == experimentId })!.variant, variantOption.toExperimentVariant())
+    XCTAssertEqual(assignments.first(where: { $0.experimentId == "jkl" })!.variant, unconfirmedVariant)
   }
 
   func test_processAssignmentsFromServer_multipleAssignments() {
@@ -569,12 +603,12 @@ final class ConfigLogicTests: XCTestCase {
     let experimentId2 = "ghi"
     let variantId2 = "klm"
 
-    let assignments: [Assignment] = [
-      Assignment(
+    let assignments: [PostbackAssignment] = [
+      PostbackAssignment(
         experimentId: experimentId1,
         variantId: variantId1
       ),
-      Assignment(
+      PostbackAssignment(
         experimentId: experimentId2,
         variantId: variantId2
       ),
@@ -610,18 +644,24 @@ final class ConfigLogicTests: XCTestCase {
           ])
     ]
 
-    let unconfirmedVariant: Experiment.Variant = .init(
-      id: "mno", type: .treatment, paywallId: "pqr")
+    let unconfirmedVariant = Experiment.Variant(id: "mno", type: .treatment, paywallId: "pqr")
+    let localAssignments = Set([
+      Assignment(
+        experimentId: "jkl",
+        variant: unconfirmedVariant,
+        isSentToServer: false
+      )
+    ])
+
     let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-      assignments: assignments,
+      serverAssignments: assignments,
       triggers: triggers,
-      confirmedAssignments: [:],
-      unconfirmedAssignments: ["jkl": .init(id: "mno", type: .treatment, paywallId: "pqr")]
+      localAssignments: localAssignments
     )
-    XCTAssertEqual(result.confirmed.count, 2)
-    XCTAssertEqual(result.confirmed[experimentId1], variantOption1.toExperimentVariant())
-    XCTAssertEqual(result.confirmed[experimentId2], variantOption2.toExperimentVariant())
-    XCTAssertEqual(result.unconfirmed["jkl"], unconfirmedVariant)
+    XCTAssertEqual(result.count, 3)
+    XCTAssertEqual(result.first(where: { $0.experimentId == experimentId1 })?.variant, variantOption1.toExperimentVariant())
+    XCTAssertEqual(result.first(where: { $0.experimentId == experimentId2 })?.variant, variantOption2.toExperimentVariant())
+    XCTAssertEqual(result.first(where: { $0.experimentId == "jkl" })?.variant, unconfirmedVariant)
   }
 
   // MARK: - getStaticPaywall
@@ -742,16 +782,19 @@ final class ConfigLogicTests: XCTestCase {
               .setting(\.preload, to: .init(behavior: .always))
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: paywallId1, type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      )
+    ])
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
@@ -776,16 +819,19 @@ final class ConfigLogicTests: XCTestCase {
               .setting(\.preload, to: .init(behavior: .never))
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: paywallId1, type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      )
+    ])
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertTrue(ids.isEmpty)
@@ -812,16 +858,20 @@ final class ConfigLogicTests: XCTestCase {
               .setting(\.preload, to: .init(behavior: .ifTrue))
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
-    ]
+
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: paywallId1, type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      )
+    ])
 
     let evaluator = ExpressionEvaluatorMock(outcome: .noMatch(.stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertTrue(ids.isEmpty)
@@ -848,16 +898,20 @@ final class ConfigLogicTests: XCTestCase {
               .setting(\.preload, to: .init(behavior: .ifTrue))
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: paywallId1, type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      )
+    ])
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(.stub()))
 
+    
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
@@ -894,15 +948,19 @@ final class ConfigLogicTests: XCTestCase {
               )
           ]),
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: paywallId1, type: .treatment, paywallId: paywallId1)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: paywallId1, type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      )
+    ])
+
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
@@ -924,15 +982,18 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: "variantId1", type: .holdout, paywallId: nil)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .holdout, paywallId: nil),
+        isSentToServer: true
+      )
+    ])
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertTrue(ids.isEmpty)
@@ -957,16 +1018,25 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
-      experiment2: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
-    ]
+
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: true
+      )
+    ])
+
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1])
@@ -1007,18 +1077,29 @@ final class ConfigLogicTests: XCTestCase {
               )
           ]),
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
-      experiment2: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment3,
+        variant: .init(id: "variantId3", type: .treatment, paywallId: paywallId3),
+        isSentToServer: false
+      )
+    ])
+
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
     let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [
-        experiment3: .init(id: "variantId3", type: .treatment, paywallId: paywallId3)
-      ],
+      assignments: assignments,
       expressionEvaluator: evaluator
     )
     XCTAssertEqual(ids, [paywallId1, paywallId3])
@@ -1044,14 +1125,21 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: experiment2, type: .treatment, paywallId: paywallId1),
-      experiment2: .init(id: experiment2, type: .treatment, paywallId: paywallId2),
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: true
+      )
+    ])
     let ids = ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      assignments: assignments
     )
     XCTAssertEqual(ids, [paywallId1])
   }
@@ -1075,14 +1163,21 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: experiment2, type: .holdout, paywallId: paywallId1),
-      experiment2: .init(id: experiment2, type: .treatment, paywallId: paywallId2),
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .holdout, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: true
+      )
+    ])
     let ids = ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: [:]
+      assignments: assignments
     )
     XCTAssertTrue(ids.isEmpty)
   }
@@ -1106,16 +1201,21 @@ final class ConfigLogicTests: XCTestCase {
               )
           ])
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: experiment2, type: .treatment, paywallId: paywallId1)
-    ]
-    let unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment2: .init(id: experiment2, type: .treatment, paywallId: paywallId2)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: false
+      )
+    ])
     let ids = ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      assignments: assignments
     )
     XCTAssertEqual(ids, [paywallId1])
   }
@@ -1152,16 +1252,21 @@ final class ConfigLogicTests: XCTestCase {
               )
           ]),
     ]
-    let confirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment1: .init(id: experiment2, type: .treatment, paywallId: paywallId1)
-    ]
-    let unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [
-      experiment2: .init(id: experiment2, type: .treatment, paywallId: paywallId2)
-    ]
+    let assignments = Set([
+      Assignment(
+        experimentId: experiment1,
+        variant: .init(id: "variantId1", type: .treatment, paywallId: paywallId1),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: experiment2,
+        variant: .init(id: "variantId2", type: .treatment, paywallId: paywallId2),
+        isSentToServer: true
+      )
+    ])
     let ids = ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: triggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      assignments: assignments
     )
     XCTAssertEqual(ids, [paywallId1])
   }

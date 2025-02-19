@@ -8,14 +8,14 @@
 import Foundation
 
 struct AssignmentPostback: Codable, Equatable {
-  var assignments: [Assignment]
+  var assignments: [PostbackAssignment]
 
-  static func create(from confirmableAssignment: ConfirmableAssignment) -> AssignmentPostback {
+  static func create(from confirmedAssignment: Assignment) -> AssignmentPostback {
     return AssignmentPostback(
       assignments: [
-        Assignment(
-          experimentId: confirmableAssignment.experimentId,
-          variantId: confirmableAssignment.variant.id
+        PostbackAssignment(
+          experimentId: confirmedAssignment.experimentId,
+          variantId: confirmedAssignment.variant.id
         )
       ]
     )

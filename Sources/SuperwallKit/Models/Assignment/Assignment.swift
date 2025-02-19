@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Assignment: Codable, Equatable {
+struct PostbackAssignment: Codable, Equatable {
   var experimentId: String
   var variantId: String
 }
