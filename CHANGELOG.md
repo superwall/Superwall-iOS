@@ -36,7 +36,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `purchase(_:)` support for both StoreKit 2 products and `StoreProduct`.
 - Adds `Superwall.shared.subscriptionStatus.isActive` as a convenience variable.
 - Adds entitlements as associated values to the `active` case of `Superwall.shared.subscriptionStatus`. If you're not using a `PurchaseController`, we will handle the entitlements for you depending on what products the user purchases.
-- Adds `Superwall.shared.entitlements` which you has the following properties: `all`, `active` and `inactive`.
+- Adds `Superwall.shared.entitlements` which has the following properties: `all`, `active` and `inactive`.
 - Adds `setUnknownSubscriptionStatus()`, `setInactiveSubscriptionStatus()`, and `setActiveSubscriptionStatus(with:)` for Objective-C users.
 - Updates the example apps. We now have Basic and Advanced. Basic is a simple plug-and-play superwall setup that doesn't use entitlements. Advanced uses entitlements and has three possible ways of configuring Superwall: 1. Letting Superwall manage everything, 2. Using a purchase controller with StoreKit, 2. Using a purchase controller with RevenueCat.
 - Uses `Superscript` for all audience filter evaluations. This is our in-house package that uses Google's Common Expression Language to evaluate audience filters. It allows for complex expressions within the audience filter builder.
