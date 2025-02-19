@@ -162,7 +162,7 @@ Please see our [migration guide](https://superwall.com/docs/migrating-to-v4) and
 
 ### Fixes
 
-- Fixes a rare crash to do with swift continuation leaks when purchasing.
+- Fixes a rare crash to do with a swift continuation leak when purchasing.
 
 ## 3.12.4
 
