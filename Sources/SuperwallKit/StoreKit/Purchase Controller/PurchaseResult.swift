@@ -22,7 +22,7 @@ public enum PurchaseResult: Sendable, Equatable {
   /// - `.paymentCancelled`,
   /// - `.overlayTimeout`
   ///
-  /// In StoreKit 2, this is the `.userCancelled` error state.
+  /// In StoreKit 2, this is the `.cancelled` error state.
   ///
   /// With RevenueCat, this is when the `userCancelled` boolean returns `true` from the purchase
   /// method.
@@ -30,9 +30,6 @@ public enum PurchaseResult: Sendable, Equatable {
 
   /// The product was purchased.
   case purchased
-
-  /// The product was restored.
-  case restored
 
   /// The purchase is pending and requires action from the developer.
   ///
@@ -64,7 +61,6 @@ public enum PurchaseResult: Sendable, Equatable {
     switch self {
     case .cancelled: return .cancelled
     case .purchased: return .purchased
-    case .restored: return .restored
     case .pending: return .pending
     case .failed: return .failed
     }
@@ -91,9 +87,6 @@ public enum PurchaseResultObjc: Int, Sendable, Equatable {
 
   /// The product was purchased.
   case purchased
-
-  /// The product was restored.
-  case restored
 
   /// The purchase is pending and requires action from the developer.
   ///

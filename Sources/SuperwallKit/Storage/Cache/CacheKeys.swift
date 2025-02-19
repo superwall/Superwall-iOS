@@ -65,6 +65,14 @@ enum DidTrackFirstSeen: Storable {
   typealias Value = Bool
 }
 
+enum DidCacheLegacyTransactions: Storable {
+  static var key: String {
+    "store.didCacheLegacyTransactions"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
 enum DidTrackFirstSession: Storable {
   static var key: String {
     "store.didTrackFirstSession"
@@ -145,7 +153,15 @@ enum SdkVersion: Storable {
   typealias Value = String
 }
 
-enum ActiveSubscriptionStatus: Storable {
+enum EntitlementsByProductId: Storable {
+  static var key: String {
+    "store.entitlementsByProductId"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = [String: Set<Entitlement>]
+}
+
+enum SubscriptionStatusKey: Storable {
   static var key: String {
     "store.subscriptionStatus"
   }
@@ -161,7 +177,7 @@ enum SurveyAssignmentKey: Storable {
   typealias Value = String
 }
 
-enum DisableVerboseEvents: Storable {
+enum DisableVerbosePlacements: Storable {
   static var key: String {
     "store.disableVerboseEvents"
   }
@@ -191,4 +207,12 @@ enum AdServicesTokenStorage: Storable {
   }
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = String
+}
+
+enum SK2TransactionIds: Storable {
+  static var key: String {
+    "store.syncedSK2TransactionIds"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Set<UInt64>
 }

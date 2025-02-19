@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-    s.version      = "3.12.5"
+  s.version      = "4.0.0"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
 	s.license      =  { :type => 'MIT', :text => <<-LICENSE
 		MIT License
 
-		Copyright (c) 2024 Superwall
+		Copyright (c) 2025 Superwall
 
 		Permission is hereby granted, free of charge, to any person obtaining a copy
 		of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
 	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '13.0'
 	s.requires_arc = true
-  s.dependency 'Superscript', '0.1.16'
+  s.dependency 'Superscript', '0.1.17'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {

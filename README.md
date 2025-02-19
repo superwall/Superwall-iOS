@@ -37,9 +37,9 @@
 
 **SuperwallKit** is an open source framework that provides a wrapper around `WebKit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
 
-## Migrating to v3
+## Migrating to v4
 
-- If you're upgrading from v2.x of our SDK (called Paywall), please follow our [Migration Guide](https://docs.superwall.com/docs/migrating-to-v3)
+- If you're upgrading from v3.x of our SDK, please follow our [Migration Guide](https://docs.superwall.com/docs/migrating-to-v4)
 
 ## Features
 |   | Superwall |
@@ -62,7 +62,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 
 - Select **File ▸ Add Packages...**
 - Search for `https://github.com/superwall/Superwall-iOS` in the search bar.
-- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **3.0.0**.
+- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **4.0.0**.
 - Make sure your project name is selected in **Add to Project**.
 - Then, **Add Package**.
 
@@ -72,7 +72,7 @@ The preferred installation method is with [Swift Package Manager](https://swift.
 To include the *Superwall* SDK in your app, add the following to your Podfile:
 
 ```
-pod 'SuperwallKit', '< 4.0.0'
+pod 'SuperwallKit', '< 5.0.0'
 ```
 
 Next, run `pod repo update` to update your local spec repo.
@@ -89,10 +89,8 @@ Read our Kodeco (previously Ray Wenderlich) tutorial: [Superwall: Remote Paywall
 
 Check out our sample apps for a hands-on demonstration of the SDK:
 
-- [Swift-UIKit with RevenueCat Example App](Examples/UIKit+RevenueCat)
-- [Swift-UIKit with StoreKit Example App](Examples/UIKit-Swift)
-- [SwiftUI Example App](Examples/SwiftUI)
-- [Objective-C-UIKit](Examples/UIKit+RevenueCat)
+- [Basic Example App](Examples/Basic)
+- [Advanced Example App](Examples/Advanced)
 
 ## Contributing
 
