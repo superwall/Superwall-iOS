@@ -29,7 +29,6 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case receipts
   case superwallCore
   case paywallPresentation
-  case entitlements
   case transactions
   case paywallViewController
   case cache
@@ -77,8 +76,6 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "paywallPresentation"
     case .transactions:
       return "transactions"
-    case .entitlements:
-      return "entitlements"
     case .paywallViewController:
       return "paywallViewController"
     case .cache:
