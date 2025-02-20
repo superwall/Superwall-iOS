@@ -23,7 +23,7 @@ enum PurchasingError: LocalizedError {
   }
 }
 
-// MARK: Quickstart (v3.0.0+)
+// MARK: Quickstart (v4.0.0+)
 /// 1. Copy this file into your app
 /// 2. Create an `RCPurchaseController` wherever Superwall and RevenueCat are being initialized.
 ///   `let purchaseController = RCPurchaseController()`

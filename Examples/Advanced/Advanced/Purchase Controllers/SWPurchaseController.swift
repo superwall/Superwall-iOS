@@ -8,7 +8,7 @@
 import StoreKit
 import SuperwallKit
 
-// MARK: Quickstart (v3.0.0+)
+// MARK: Quickstart (v4.0.0+)
 /// 1. Copy this file into your app
 /// 2. Create a `PurchaseController` wherever Superwall is being initialized.
 ///   `let purchaseController = SWPurchaseController()`
