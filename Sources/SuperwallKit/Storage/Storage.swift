@@ -102,7 +102,7 @@ class Storage {
   }
 
   private func migrateData() {
-    let version = cache.read(Version.self) ?? .v1
+    let version = cache.read(Version.self) ?? cache.read(Version.self, fromDirectory: .appSpecificDocuments) ?? .v1
     FileManagerMigrator.migrate(
       fromVersion: version,
       cache: cache
@@ -166,7 +166,7 @@ class Storage {
 
   /// Records the app install
   func recordAppInstall(
-  trackPlacement: @escaping (Trackable) async -> TrackingResult
+    trackPlacement: @escaping (Trackable) async -> TrackingResult
   ) {
     let didTrackAppInstall = get(DidTrackAppInstall.self) ?? false
     if didTrackAppInstall {
@@ -196,18 +196,27 @@ class Storage {
     save(Date(), forType: LastPaywallView.self)
   }
 
-  /// Saves a `Set` of assignments to disk.
-  func saveAssignments(_ newAssignments: Set<Assignment>) {
-    var confirmedAssignments = getAssignments()
+  /// Overwrites the existing assignments with a new `Set` of assignments to disk.
+  func overwriteAssignments(_ newAssignments: Set<Assignment>) {
+    let assignments = getAssignments()
 
-    // Update each confirmed assignment from the new set,
-    // replacing any existing assignment with the same experimentId.
-    for newAssignment in newAssignments {
-      confirmedAssignments.update(with: newAssignment)
+    // No need to save again if they're exactly the same assignments.
+    if assignments.isFullyEqual(to: newAssignments) {
+      return
     }
 
-    save(confirmedAssignments, forType: Assignments.self)
-    self.assignments = confirmedAssignments
+    save(newAssignments, forType: Assignments.self)
+    self.assignments = newAssignments
+  }
+
+  /// Updates a specific assignment on disk
+  func updateAssignment(_ newAssignment: Assignment) {
+    var assignments = getAssignments()
+
+    assignments.update(with: newAssignment)
+
+    save(assignments, forType: Assignments.self)
+    self.assignments = assignments
   }
 
   func getAssignments() -> Set<Assignment> {

@@ -69,6 +69,7 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   // MARK: - Confirm Assignments
+  @available(iOS 16.0, *)
   func test_confirmAssignment() async {
     let experimentId = "abc"
     let variantId = "def"
@@ -96,9 +97,41 @@ final class ConfigManagerTests: XCTestCase {
     )
     configManager.postbackAssignment(assignment)
 
-    let milliseconds = 200
-    let nanoseconds = UInt64(milliseconds * 1_000_000)
-    try? await Task.sleep(nanoseconds: nanoseconds)
+    try? await Task.sleep(for: .seconds(1))
+
+    XCTAssertTrue(network.assignmentsConfirmed)
+    XCTAssertEqual(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant, variant)
+  }
+
+  @available(iOS 16.0, *)
+  func test_confirmAssignment_updateNewVariant() async {
+    let experimentId = "abc"
+    let variantId = "def"
+    let variant: Experiment.Variant = .init(id: variantId, type: .treatment, paywallId: "jkl")
+    let assignment = Assignment(
+      experimentId: experimentId,
+      variant: variant,
+      isSentToServer: false
+    )
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let storage = StorageMock()
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      factory: dependencyContainer
+    )
+    configManager.postbackAssignment(assignment)
+
+    try? await Task.sleep(for: .seconds(1))
 
     XCTAssertTrue(network.assignmentsConfirmed)
     XCTAssertEqual(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant, variant)

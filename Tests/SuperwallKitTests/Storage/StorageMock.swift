@@ -75,8 +75,12 @@ final class StorageMock: Storage {
     return internalConfirmedAssignments ?? []
   }
 
-  override func saveAssignments(_ newAssignments: Set<Assignment>) {
+  override func overwriteAssignments(_ newAssignments: Set<Assignment>) {
     internalConfirmedAssignments = newAssignments
+  }
+
+  override func updateAssignment(_ newAssignment: Assignment) {
+    internalConfirmedAssignments?.update(with: newAssignment)
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {

@@ -312,14 +312,14 @@ class ConfigManager {
   // MARK: - Assignments
 
   private func choosePaywallVariants(from triggers: Set<Trigger>) {
-    var confirmedAssignments = storage.getAssignments()
+    var assignments = storage.getAssignments()
 
-    confirmedAssignments = ConfigLogic.chooseAssignments(
+    assignments = ConfigLogic.chooseAssignments(
       fromTriggers: triggers,
-      confirmedAssignments: confirmedAssignments
+      assignments: assignments
     )
 
-    storage.saveAssignments(confirmedAssignments)
+    storage.overwriteAssignments(assignments)
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
@@ -339,13 +339,13 @@ class ConfigManager {
       let serverAssignments = try await network.getAssignments()
       var localAssignments = storage.getAssignments()
 
-      localAssignments = ConfigLogic.transferAssignmentsFromServerToDisk(
-        serverAssignments: serverAssignments,
-        triggers: triggers,
-        localAssignments: localAssignments
+      localAssignments = ConfigLogic.transferAssignments(
+        fromServer: serverAssignments,
+        toDisk: localAssignments,
+        triggers: triggers
       )
 
-      storage.saveAssignments(localAssignments)
+      storage.overwriteAssignments(localAssignments)
 
       Task { await preloadPaywalls() }
     } catch {
@@ -360,9 +360,12 @@ class ConfigManager {
 
   /// Posts back an assignment to the server and updates on-device confirmed assignments.
   func postbackAssignment(_ assignment: Assignment) {
-    Task {
-      let confirmedAssignment = await network.confirmAssignment(assignment)
-      storage.saveAssignments([confirmedAssignment])
+    Task { [weak self] in
+      guard let self = self else {
+        return
+      }
+      let confirmedAssignment = await self.network.confirmAssignment(assignment)
+      self.storage.updateAssignment(confirmedAssignment)
     }
   }
 

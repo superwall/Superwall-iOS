@@ -40,13 +40,11 @@ class AssignmentLogicTests: XCTestCase {
     )
     let triggers = [eventName: trigger]
 
-    // TODO: Will we choose assignments again, need to make sure we don't choose again if already in memory.
-
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
 
     let storage = StorageMock()
-    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+    storage.overwriteAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
 
     // MARK: When
     let assignmentLogic = AudienceLogic(
@@ -110,7 +108,7 @@ class AssignmentLogicTests: XCTestCase {
     let variant = variantOption.toExperimentVariant()
 
     let storage = StorageMock()
-    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+    storage.overwriteAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
 
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
@@ -178,7 +176,7 @@ class AssignmentLogicTests: XCTestCase {
 
     let storage = StorageMock()
     let assignment = Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: true)
-    storage.saveAssignments([assignment])
+    storage.overwriteAssignments([assignment])
 
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
@@ -244,7 +242,7 @@ class AssignmentLogicTests: XCTestCase {
       .setting(\.paywallId, to: "123")
       .toExperimentVariant()
     let storage = StorageMock()
-    storage.saveAssignments([
+    storage.overwriteAssignments([
       Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: true),
       Assignment(experimentId: "otherExperimnet", variant: variant2, isSentToServer: false)
     ])
@@ -307,7 +305,7 @@ class AssignmentLogicTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
     let storage = StorageMock()
-    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+    storage.overwriteAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
 
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,
@@ -362,7 +360,7 @@ class AssignmentLogicTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let variant = variantOption.toExperimentVariant()
     let storage = StorageMock()
-    storage.saveAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
+    storage.overwriteAssignments([Assignment(experimentId: rawExperiment.id, variant: variant, isSentToServer: false)])
 
     let assignmentLogic = AudienceLogic(
       configManager: dependencyContainer.configManager,

@@ -210,7 +210,7 @@ class Network {
   }
 
   func confirmAssignment(_ assignment: Assignment) async -> Assignment {
-    let postback = AssignmentPostback.create(from: assignment)
+    let postback = PostbackAssignmentWrapper.create(from: assignment)
 
     do {
       try await urlSession.request(

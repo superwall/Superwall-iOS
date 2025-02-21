@@ -10,7 +10,7 @@ import XCTest
 @testable import SuperwallKit
 
 class StorageTests: XCTestCase {
-  func test_saveConfirmedAssignments() {
+  func test_overwriteAssignments() {
     let dependencyContainer = DependencyContainer()
     let storage = Storage(factory: dependencyContainer)
     let network = NetworkMock(
@@ -35,7 +35,7 @@ class StorageTests: XCTestCase {
         isSentToServer: false
       )
     ])
-    storage.saveAssignments(assignments)
+    storage.overwriteAssignments(assignments)
 
     let retrievedAssignments = storage.getAssignments()
     XCTAssertEqual(retrievedAssignments.first, assignments.first)

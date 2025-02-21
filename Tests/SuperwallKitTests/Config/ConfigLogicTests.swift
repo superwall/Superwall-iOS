@@ -296,7 +296,7 @@ final class ConfigLogicTests: XCTestCase {
     // When
     let assignments = ConfigLogic.chooseAssignments(
       fromTriggers: [],
-      confirmedAssignments: confirmedAssignments
+      assignments: confirmedAssignments
     )
 
     // Then
@@ -343,7 +343,7 @@ final class ConfigLogicTests: XCTestCase {
         .stub()
           .setting(\.audiences, to: [])
       ],
-      confirmedAssignments: confirmedAssignments
+      assignments: confirmedAssignments
     )
 
     // Then
@@ -382,7 +382,7 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: []
+      assignments: []
     )
 
     // When
@@ -429,7 +429,7 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: confirmedAssignments
+      assignments: confirmedAssignments
     )
 
     // Then
@@ -479,7 +479,7 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: confirmedAssignments
+      assignments: confirmedAssignments
     )
 
     // Then
@@ -521,31 +521,31 @@ final class ConfigLogicTests: XCTestCase {
                 )
             ])
       ],
-      confirmedAssignments: confirmedAssignments
+      assignments: confirmedAssignments
     )
 
     // Then
     XCTAssertTrue(assignments.isEmpty)
   }
 
-  // MARK: - processAssignmentsFromServer
+  // MARK: - transferAssignmentsFromServerToDisk
 
-  func test_processAssignmentsFromServer_noAssignments() {
+  func test_transferAssignmentsFromServerToDisk_noAssignments() {
     let variant: Experiment.Variant = .init(id: "def", type: .treatment, paywallId: "ghi")
     let localAssignments = Set([
       Assignment(experimentId: "abc", variant: variant, isSentToServer: false)
     ])
     let unconfirmedVariant: Experiment.Variant = .init(
       id: "mno", type: .treatment, paywallId: "pqr")
-    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-      serverAssignments: [],
-      triggers: [.stub()],
-      localAssignments: localAssignments
+    let result = ConfigLogic.transferAssignments(
+      fromServer: [],
+      toDisk: localAssignments,
+      triggers: [.stub()]
     )
     XCTAssertEqual(result, localAssignments)
   }
 
-  func test_processAssignmentsFromServer_overwriteConfirmedAssignment() {
+  func test_transferAssignmentsFromServerToDisk_overwriteConfirmedAssignment() {
     let experimentId = "abc"
     let variantId = "def"
 
@@ -586,17 +586,18 @@ final class ConfigLogicTests: XCTestCase {
       )
     ])
 
-    let assignments = ConfigLogic.transferAssignmentsFromServerToDisk(
-      serverAssignments: serverAssignments,
-      triggers: triggers,
-      localAssignments: localAssignments
+    let assignments = ConfigLogic.transferAssignments(
+      fromServer: serverAssignments,
+      toDisk: localAssignments,
+      triggers: triggers
     )
 
+    XCTAssertEqual(assignments.count, 2, "Should be overriding the assignment by experiment ID, check the equality func")
     XCTAssertEqual(assignments.first(where: { $0.experimentId == experimentId })!.variant, variantOption.toExperimentVariant())
     XCTAssertEqual(assignments.first(where: { $0.experimentId == "jkl" })!.variant, unconfirmedVariant)
   }
 
-  func test_processAssignmentsFromServer_multipleAssignments() {
+  func test_transferAssignmentsFromServerToDisk_multipleAssignments() {
     let experimentId1 = "abc"
     let variantId1 = "def"
 
@@ -653,15 +654,55 @@ final class ConfigLogicTests: XCTestCase {
       )
     ])
 
-    let result = ConfigLogic.transferAssignmentsFromServerToDisk(
-      serverAssignments: assignments,
-      triggers: triggers,
-      localAssignments: localAssignments
+    let result = ConfigLogic.transferAssignments(
+      fromServer: assignments,
+      toDisk: localAssignments,
+      triggers: triggers
     )
     XCTAssertEqual(result.count, 3)
     XCTAssertEqual(result.first(where: { $0.experimentId == experimentId1 })?.variant, variantOption1.toExperimentVariant())
     XCTAssertEqual(result.first(where: { $0.experimentId == experimentId2 })?.variant, variantOption2.toExperimentVariant())
     XCTAssertEqual(result.first(where: { $0.experimentId == "jkl" })?.variant, unconfirmedVariant)
+  }
+
+  func test_transferAssignments_noMatchingTrigger() {
+    let variant = Experiment.Variant(id: "v1", type: .treatment, paywallId: "p1")
+    let local = Set([Assignment(experimentId: "exp1", variant: variant, isSentToServer: false)])
+
+    let serverAssignment = PostbackAssignment(experimentId: "nonexistent", variantId: "v1")
+    let triggers: Set<Trigger> = [.stub()] // Does not include experimentId "nonexistent"
+
+    let result = ConfigLogic.transferAssignments(
+      fromServer: [serverAssignment],
+      toDisk: local,
+      triggers: triggers
+    )
+
+    XCTAssertEqual(result, local)
+  }
+
+  /// Server assignment with no matching trigger is ignored
+  func test_transferAssignments_noMatchingVariant() {
+    let trigger = Trigger.stub()
+      .setting(\.audiences, to: [
+        .stub()
+          .setting(
+            \.experiment,
+            to: .stub()
+              .setting(\.id, to: "exp1")
+              .setting(\.variants, to: [VariantOption.stub().setting(\.id, to: "v2")])
+          )]
+      )
+    let local = Set<Assignment>()
+    let serverAssignment = PostbackAssignment(experimentId: "exp1", variantId: "v1")
+
+    let result = ConfigLogic.transferAssignments(
+      fromServer: [serverAssignment],
+      toDisk: local,
+      triggers: [trigger]
+    )
+
+    XCTAssertEqual(result, local)
   }
 
   // MARK: - getStaticPaywall

@@ -14,6 +14,6 @@ final class ConfigManagerMock: ConfigManager {
 
   override func postbackAssignment(_ assignment: Assignment) {
     confirmedAssignment = true
-    storage.saveAssignments([assignment])
+    storage.updateAssignment(assignment)
   }
 }

@@ -14,11 +14,6 @@ enum ConfigLogic {
     case invalidState
   }
 
-  struct AssignmentOutcome {
-    let confirmed: [Experiment.ID: Experiment.Variant]
-    let unconfirmed: [Experiment.ID: Experiment.Variant]
-  }
-
   static func chooseVariant(
     from variants: [VariantOption],
     randomiser: (Range<Int>) -> Int = Int.random(in:)
@@ -85,57 +80,47 @@ enum ConfigLogic {
     return uniqueTriggerAudiences
   }
 
+  /// Updates existing assignments by removing, replacing or inserting new
+  /// ones based on the given triggers.
   static func chooseAssignments(
     fromTriggers triggers: Set<Trigger>,
-    confirmedAssignments: Set<Assignment>
+    assignments: Set<Assignment>
   ) -> Set<Assignment> {
-    var confirmedAssignments = confirmedAssignments
-
+    var assignments = assignments
     let groupedTriggerAudiences = getAudienceFiltersPerCampaign(from: triggers)
 
     // Loop through each trigger and each of its audiences.
     for audienceGroup in groupedTriggerAudiences {
       for audience in audienceGroup {
+        let experimentId = audience.experiment.id
         let availableVariantIds = Set(audience.experiment.variants.map { $0.id })
 
-        // Check whether we have already chosen a variant for the experiment on disk.
-        if let index = confirmedAssignments.firstIndex(
-          where: { $0.experimentId == audience.experiment.id }
-        ) {
-          let confirmedVariant = confirmedAssignments[index].variant
-          // If the variant doesn't exist anymore, remove and choose a new one.
-          if !availableVariantIds.contains(confirmedVariant.id) {
-            confirmedAssignments.remove(at: index)
-
-            // If we couldn't choose a variant, because of an invalid state, such as no variants available, continue.
-            guard let newVariant = try? Self.chooseVariant(from: audience.experiment.variants) else {
-              continue
-            }
-            confirmedAssignments.insert(
-              Assignment(
-                experimentId: audience.experiment.id,
-                variant: newVariant,
-                isSentToServer: false
-              )
-            )
-          }
-        } else {
-          // No variant found on disk so dice roll to choose a variant and store in memory
-          guard let newVariant = try? Self.chooseVariant(from: audience.experiment.variants) else {
+        // Check whether we already have an assignment for the experiment.
+        if let index = assignments.firstIndex(where: { $0.experimentId == experimentId }) {
+          let confirmedVariant = assignments[index].variant
+          // If the existing variant is still available, continue.
+          if availableVariantIds.contains(confirmedVariant.id) {
             continue
           }
-          confirmedAssignments.insert(
-            Assignment(
-              experimentId: audience.experiment.id,
-              variant: newVariant,
-              isSentToServer: false
-            )
-          )
+          // Remove the assignment with an invalid variant.
+          assignments.remove(at: index)
         }
+
+        // Choose a new variant for the experiment.
+        guard let newVariant = try? Self.chooseVariant(from: audience.experiment.variants) else {
+          continue
+        }
+        assignments.insert(
+          Assignment(
+            experimentId: experimentId,
+            variant: newVariant,
+            isSentToServer: false
+          )
+        )
       }
     }
 
-    return confirmedAssignments
+    return assignments
   }
 
   /// Removes any triggers whose preloading has been remotely disabled.
@@ -154,10 +139,10 @@ enum ConfigLogic {
 
   /// Loops through assignments retrieved from the server to get variants by id.
   /// Returns updated confirmed/unconfirmed assignments to save.
-  static func transferAssignmentsFromServerToDisk(
-    serverAssignments: [PostbackAssignment],
-    triggers: Set<Trigger>,
-    localAssignments: Set<Assignment>
+  static func transferAssignments(
+    fromServer serverAssignments: [PostbackAssignment],
+    toDisk localAssignments: Set<Assignment>,
+    triggers: Set<Trigger>
   ) -> Set<Assignment> {
     var localAssignments = localAssignments
 
@@ -170,19 +155,21 @@ enum ConfigLogic {
       else {
         continue
       }
-      // Get the variant with the matching variant ID
+      // Get the variant from the trigger with the matching variant ID
       guard
-        let variantOption = trigger.audiences.compactMap({
+        let triggerVariant = trigger.audiences.compactMap({
           $0.experiment.variants.first { $0.id == serverAssignment.variantId }
         }).first
       else {
         continue
       }
 
+      // Insert or replace an assignment that has the same experiment ID
+      // with the new variant.
       localAssignments.update(with:
         Assignment(
           experimentId: serverAssignment.experimentId,
-          variant: variantOption.toExperimentVariant(),
+          variant: triggerVariant.toExperimentVariant(),
           isSentToServer: true
         )
       )
