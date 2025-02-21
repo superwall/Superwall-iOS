@@ -13,7 +13,7 @@ struct PresentablePipelineOutput {
   let debugInfo: [String: Any]
   let paywallViewController: PaywallViewController
   let presenter: UIViewController
-  let confirmableAssignment: ConfirmableAssignment?
+  let assignment: Assignment?
 }
 
 extension Superwall {

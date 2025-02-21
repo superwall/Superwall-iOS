@@ -27,7 +27,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
-      XCTAssertNil(output.confirmableAssignment)
+      XCTAssertNil(output.assignment)
 
       switch output.triggerResult {
       case .paywall(let experiment):
@@ -57,7 +57,7 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
-      XCTAssertNil(output.confirmableAssignment)
+      XCTAssertNil(output.assignment)
 
       switch output.triggerResult {
       case .placementNotFound:

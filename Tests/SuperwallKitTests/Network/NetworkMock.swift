@@ -13,7 +13,7 @@ final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
   var getConfigCalled = false
   var assignmentsConfirmed = false
-  var assignments: [Assignment] = []
+  var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
@@ -36,11 +36,13 @@ final class NetworkMock: Network {
     }
   }
 
-  override func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
+  override func confirmAssignment(_ assignment: Assignment) async -> Assignment {
     assignmentsConfirmed = true
+    assignment.markAsSent()
+    return assignment
   }
 
-  override func getAssignments() async throws -> [Assignment] {
+  override func getAssignments() async throws -> [PostbackAssignment] {
     return assignments
   }
 }

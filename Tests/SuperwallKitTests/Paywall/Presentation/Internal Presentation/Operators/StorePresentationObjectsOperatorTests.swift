@@ -26,7 +26,7 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
         delegate: nil
       ),
       presenter: UIViewController(),
-      confirmableAssignment: nil
+      assignment: nil
     )
 
     Superwall.shared.storePresentationObjects(

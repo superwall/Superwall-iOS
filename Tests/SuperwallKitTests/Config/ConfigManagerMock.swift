@@ -12,9 +12,8 @@ import UIKit
 final class ConfigManagerMock: ConfigManager {
   var confirmedAssignment = false
 
-  override func confirmAssignment(
-    _ confirmableAssignment: ConfirmableAssignment
-  ) {
+  override func postbackAssignment(_ assignment: Assignment) {
     confirmedAssignment = true
+    storage.updateAssignment(assignment)
   }
 }

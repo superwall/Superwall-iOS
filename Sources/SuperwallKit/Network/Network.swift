@@ -209,24 +209,29 @@ class Network {
     }
   }
 
-  func confirmAssignments(_ confirmableAssignments: AssignmentPostback) async {
+  func confirmAssignment(_ assignment: Assignment) async -> Assignment {
+    let postback = PostbackAssignmentWrapper.create(from: assignment)
+
     do {
       try await urlSession.request(
-        .confirmAssignments(confirmableAssignments),
+        .confirmAssignments(postback),
         data: SuperwallRequestData(factory: factory)
       )
+      assignment.markAsSent()
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /confirm_assignments",
-        info: ["assignments": confirmableAssignments],
+        info: ["assignments": postback],
         error: error
       )
     }
+
+    return assignment
   }
 
-  func getAssignments() async throws -> [Assignment] {
+  func getAssignments() async throws -> [PostbackAssignment] {
     do {
       let result = try await urlSession.request(
         .assignments(),

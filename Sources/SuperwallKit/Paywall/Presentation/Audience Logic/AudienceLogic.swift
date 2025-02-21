@@ -8,13 +8,8 @@
 
 import Foundation
 
-struct ConfirmableAssignment: Equatable {
-  let experimentId: Experiment.ID
-  let variant: Experiment.Variant
-}
-
 struct AudienceFilterEvaluationOutcome {
-  var confirmableAssignment: ConfirmableAssignment?
+  var assignment: Assignment?
   var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
 }
@@ -51,40 +46,35 @@ struct AudienceLogic {
     forPlacement placement: PlacementData,
     triggers: [String: Trigger]
   ) async -> AudienceFilterEvaluationOutcome {
+    // Ensure the trigger exists for the placement.
     guard let trigger = triggers[placement.name] else {
-      return AudienceFilterEvaluationOutcome(triggerResult: .placementNotFound)
+      return AudienceFilterEvaluationOutcome(
+        triggerResult: .placementNotFound
+      )
     }
 
+    // Find a matching rule for the placement using the trigger.
     let ruleMatchOutcome = await findMatchingRule(
       for: placement,
       withTrigger: trigger
     )
 
     let matchedRuleItem: MatchedItem
-
     switch ruleMatchOutcome {
     case .matched(let item):
       matchedRuleItem = item
     case .noMatchingAudiences(let unmatchedAudiences):
-      return .init(triggerResult: .noAudienceMatch(unmatchedAudiences))
+      return AudienceFilterEvaluationOutcome(
+        triggerResult: .noAudienceMatch(unmatchedAudiences)
+      )
     }
 
-    let variant: Experiment.Variant
-    var confirmableAssignment: ConfirmableAssignment?
     let rule = matchedRuleItem.audience
-    // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
-    // First check the disk, otherwise check memory.
-    let confirmedAssignments = storage.getConfirmedAssignments()
-    if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
-      variant = confirmedVariant
-    } else if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
-      confirmableAssignment = ConfirmableAssignment(
-        experimentId: rule.experiment.id,
-        variant: unconfirmedVariant
-      )
-      variant = unconfirmedVariant
-    } else {
-      // If no variant in memory or disk
+
+    guard let confirmedAssignment = storage.getAssignments()
+      .first(where: { $0.experimentId == rule.experiment.id })
+    else {
+      // If no variant in memory or disk, return an error.
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
           "Not Found",
@@ -100,33 +90,30 @@ struct AudienceLogic {
       return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
     }
 
+    let variant = confirmedAssignment.variant
+    let experiment = Experiment(
+      id: rule.experiment.id,
+      groupId: rule.experiment.groupId,
+      variant: variant
+    )
+
+    // Return the appropriate outcome based on the variant type.
     switch variant.type {
     case .holdout:
       return AudienceFilterEvaluationOutcome(
-        confirmableAssignment: confirmableAssignment,
+        assignment: confirmedAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .holdout(
-          Experiment(
-            id: rule.experiment.id,
-            groupId: rule.experiment.groupId,
-            variant: variant
-          )
-        )
+        triggerResult: .holdout(experiment)
       )
     case .treatment:
       return AudienceFilterEvaluationOutcome(
-        confirmableAssignment: confirmableAssignment,
+        assignment: confirmedAssignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .paywall(
-          Experiment(
-            id: rule.experiment.id,
-            groupId: rule.experiment.groupId,
-            variant: variant
-          )
-        )
+        triggerResult: .paywall(experiment)
       )
     }
   }
+
 
   func findMatchingRule(
     for placement: PlacementData,

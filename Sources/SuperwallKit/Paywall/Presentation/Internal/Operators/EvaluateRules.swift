@@ -12,7 +12,7 @@ extension Superwall {
   ///
   /// - Parameter request: The presentation request
   /// - Returns: An `AudienceFilterEvaluationOutcome` object containing the trigger result,
-  /// confirmable assignment, and unsaved occurrence.
+  /// confirmed assignment, and unsaved occurrence.
   func evaluateAudienceFilter(
     from request: PresentationRequest
   ) async throws -> AudienceFilterEvaluationOutcome {

@@ -10,8 +10,8 @@
 import UIKit
 
 class Cache {
-  private static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
-  private static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
+  static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
+  static let appSpecificDocumentDirectoryPrefix = "com.superwall.document.appSpecific.Store"
   private static let cacheDirectoryPrefix = "com.superwall.cache.Store"
   private static let ioQueuePrefix = "com.superwall.queue.Store"
   private static let defaultMaxCachePeriodInSecond: TimeInterval = 60 * 60 * 24 * 7 // a week
@@ -29,18 +29,21 @@ class Cache {
   private var maxDiskCacheSize: UInt = 0
 
   /// Specify distinc name param, it represents folder name for disk cache
-  init(ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)) {
-    fileManager = FileManager()
+  init(
+    fileManager: FileManager = FileManager(),
+    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)
+  ) {
+    self.fileManager = fileManager
     cacheUrl = fileManager
       .urls(for: .cachesDirectory, in: .userDomainMask)
       .first?
       .appendingPathComponent(Cache.cacheDirectoryPrefix)
     userSpecificDocumentUrl = fileManager
-      .urls(for: .documentDirectory, in: .userDomainMask)
+      .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
       .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
     appSpecificDocumentUrl = fileManager
-      .urls(for: .documentDirectory, in: .userDomainMask)
+      .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
       .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
@@ -60,6 +63,117 @@ class Cache {
         object: nil
       )
     #endif
+  }
+
+  // MARK: - Migrate
+  func moveDataFromDocumentsToApplicationSupport() {
+    ioQueue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      guard
+        let documentDirectory = self.fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
+        let applicationSupportDirectory = self.fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+      else {
+        return
+      }
+
+      let userSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+
+      let userSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+
+      do {
+        // Create the destination directories if they don't exist.
+        if !self.fileManager.fileExists(atPath: userSpecificSupportUrl.path) {
+          try self.fileManager.createDirectory(
+            at: userSpecificSupportUrl,
+            withIntermediateDirectories: true,
+            attributes: nil
+          )
+        }
+        if !self.fileManager.fileExists(atPath: appSpecificSupportUrl.path) {
+          try self.fileManager.createDirectory(
+            at: appSpecificSupportUrl,
+            withIntermediateDirectories: true,
+            attributes: nil
+          )
+        }
+
+        // Move user-specific data by enumerating individual items.
+        if self.fileManager.fileExists(atPath: userSpecificDocumentUrl.path) {
+          let userItems = try self.fileManager.contentsOfDirectory(atPath: userSpecificDocumentUrl.path)
+          for item in userItems {
+            let sourceURL = userSpecificDocumentUrl.appendingPathComponent(item)
+            let destinationURL = userSpecificSupportUrl.appendingPathComponent(item)
+            // Remove item if the file/directory already exists at the destination.
+            if self.fileManager.fileExists(atPath: destinationURL.path) {
+              try self.fileManager.removeItem(at: destinationURL)
+            }
+
+            try self.fileManager.moveItem(
+              at: sourceURL,
+              to: destinationURL
+            )
+          }
+        } else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .cache,
+            message: "No user-specific data found at \(userSpecificDocumentUrl.path)"
+          )
+        }
+
+        // Remove the user-specific folder if empty
+        if let userSpecificFolder = try? fileManager.contentsOfDirectory(
+          at: userSpecificDocumentUrl,
+          includingPropertiesForKeys: nil,
+          options: []
+        ), userSpecificFolder.isEmpty {
+          try fileManager.removeItem(at: userSpecificDocumentUrl)
+        }
+
+        // Move app-specific data by enumerating individual items.
+        if self.fileManager.fileExists(atPath: appSpecificDocumentUrl.path) {
+          let appItems = try self.fileManager.contentsOfDirectory(atPath: appSpecificDocumentUrl.path)
+          for item in appItems {
+            let sourceURL = appSpecificDocumentUrl.appendingPathComponent(item)
+            let destinationURL = appSpecificSupportUrl.appendingPathComponent(item)
+            // Skip moving if the file/directory already exists at the destination.
+            if self.fileManager.fileExists(atPath: destinationURL.path) {
+              try self.fileManager.removeItem(at: destinationURL)
+            }
+
+            try self.fileManager.moveItem(
+              at: sourceURL,
+              to: destinationURL
+            )
+          }
+        } else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .cache,
+            message: "No app-specific data found at \(appSpecificDocumentUrl.path)"
+          )
+        }
+
+        // Remove the app-specific folder if empty
+        if let appSpecificFolder = try? fileManager.contentsOfDirectory(
+          at: appSpecificDocumentUrl,
+          includingPropertiesForKeys: nil,
+          options: []
+        ), appSpecificFolder.isEmpty {
+          try fileManager.removeItem(at: appSpecificDocumentUrl)
+        }
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .cache,
+          message: "Migration of document data failed: \(error.localizedDescription)"
+        )
+      }
+    }
   }
 
   // MARK: - Store data

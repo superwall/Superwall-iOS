@@ -11,6 +11,7 @@ import Foundation
 enum DataStoreVersion: Int, CaseIterable, Codable {
   case v1
   case v2
+  case v3
 }
 
 enum FileManagerMigrator {
@@ -28,6 +29,8 @@ enum FileManagerMigrator {
     case .v1:
       V1Migrator.migrateToNextVersion(cache: cache)
     case .v2:
+      V2Migrator.migrateToNextVersion(cache: cache)
+    case .v3:
       break
     }
 
