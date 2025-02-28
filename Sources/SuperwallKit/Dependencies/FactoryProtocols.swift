@@ -147,7 +147,7 @@ protocol PurchasedTransactionsFactory {
 }
 
 protocol UserAttributesPlacementFactory {
-  func makeUserAttributesPlacement() -> InternalSuperwallPlacement.Attributes
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes
 }
 
 protocol ReceiptFactory {
@@ -157,5 +157,5 @@ protocol ReceiptFactory {
 }
 
 protocol ConfigAttributesFactory {
-  func makeConfigAttributes() -> InternalSuperwallPlacement.ConfigAttributes
+  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes
 }

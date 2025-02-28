@@ -229,7 +229,7 @@ extension Superwall {
     publisher: PassthroughSubject<PaywallState, Never>
   ) async {
     do {
-      try TrackingLogic.checkNotSuperwallPlacement(placement)
+      try TrackingLogic.checkNotSuperwallEvent(placement)
     } catch {
       return
     }

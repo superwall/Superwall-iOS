@@ -494,8 +494,8 @@ extension DependencyContainer: PurchasedTransactionsFactory {
 
 // MARK: - User Attributes Placement Factory
 extension DependencyContainer: UserAttributesPlacementFactory {
-  func makeUserAttributesPlacement() -> InternalSuperwallPlacement.Attributes {
-    return InternalSuperwallPlacement.Attributes(
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes {
+    return InternalSuperwallEvent.Attributes(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       audienceFilterParams: identityManager.userAttributes
     )
@@ -519,11 +519,11 @@ extension DependencyContainer: ReceiptFactory {
 
 // MARK: - Config Attributes Factory
 extension DependencyContainer: ConfigAttributesFactory {
-  func makeConfigAttributes() -> InternalSuperwallPlacement.ConfigAttributes {
+  func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes {
     let hasSwiftDelegate = delegateAdapter.swiftDelegate != nil
     let hasObjcDelegate = delegateAdapter.objcDelegate != nil
 
-    return InternalSuperwallPlacement.ConfigAttributes(
+    return InternalSuperwallEvent.ConfigAttributes(
       options: configManager.options,
       hasExternalPurchaseController: purchaseController.isInternal == false,
       hasDelegate: hasSwiftDelegate || hasObjcDelegate

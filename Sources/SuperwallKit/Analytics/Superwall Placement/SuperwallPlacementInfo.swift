@@ -8,27 +8,36 @@
 import Foundation
 
 /// Contains information about the internally tracked superwall placement.
-@objc(SWKSuperwallPlacementInfo)
-@objcMembers
-public final class SuperwallPlacementInfo: NSObject {
-  /// The placement that was tracked.
-  public let placement: SuperwallPlacement
+public typealias SuperwallPlacementInfo = SuperwallEventInfo
 
-  /// Objective-C compatible ``SuperwallPlacement``.
-  @objc(placement)
-  public lazy var objcPlacement: SuperwallPlacementObjc = {
-    return SuperwallPlacementObjc(placement: placement)
+/// Contains information about the internally tracked superwall event.
+@objc(SWKSuperwallEventInfo)
+@objcMembers
+public final class SuperwallEventInfo: NSObject {
+  /// The event that was tracked.
+  @available(*, deprecated, renamed: "event")
+  public var placement: SuperwallEvent {
+    return event
+  }
+
+  /// The event that was tracked.
+  public let event: SuperwallEvent
+
+  /// Objective-C compatible ``SuperwallEvent``.
+  @objc(event)
+  public lazy var objcEvent: SuperwallEventObjc = {
+    return SuperwallEventObjc(event: event)
   }()
 
-  /// A dictionary of params associated with the placement.
+  /// A dictionary of params associated with the event.
   public let params: [String: Any]
 
-  /// Initializes an instance of the the internally tracked superwall placement result.
+  /// Initializes an instance of the the internally tracked superwall event result.
   /// - Parameters:
-  ///   - placement: The placement that was tracked.
+  ///   - event: The event that was tracked.
   ///   - params: A dictionary of params associated with the placement.
-  public init(placement: SuperwallPlacement, params: [String: Any]) {
-    self.placement = placement
+  public init(event: SuperwallEvent, params: [String: Any]) {
+    self.event = event
     self.params = params
   }
 }

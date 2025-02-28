@@ -38,7 +38,7 @@ extension UIWindow {
         return
       }
       Task {
-        let touchesBegan = InternalSuperwallPlacement.TouchesBegan()
+        let touchesBegan = InternalSuperwallEvent.TouchesBegan()
         await Superwall.shared.track(touchesBegan)
       }
 

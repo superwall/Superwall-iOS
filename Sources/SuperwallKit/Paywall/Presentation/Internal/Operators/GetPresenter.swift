@@ -111,7 +111,7 @@ extension Superwall {
       break
     }
 
-    let triggerFire = InternalSuperwallPlacement.TriggerFire(
+    let triggerFire = InternalSuperwallEvent.TriggerFire(
       triggerResult: triggerResult,
       triggerName: placementName
     )

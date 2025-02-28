@@ -9,6 +9,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Confirms all paywall assignments locally to reduce the amount of preloading of paywalls on each cold app open.
 - Migrates documents used for user and app data out of the documents folder and into the application support folder.
 
+### Fixes
+
+- Deprecates the naming of `handleSuperwallPlacement(withInfo:) back to `handleSuperwallEvent(withInfo:)`.
+- Deprecates `SuperwallPlacement` back to `SuperwallEvent`.
+- Deprecates `SuperwallPlacementInfo` back to `SuperwallEventInfo`.
+- Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
+
 ## 4.0.0
 
 ### Breaking Changes

@@ -146,7 +146,7 @@ class Storage {
       }
 
       Task {
-        await Superwall.shared.track(InternalSuperwallPlacement.FirstSeen())
+        await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
       }
       self.save(true, forType: DidTrackFirstSeen.self)
       self._didTrackFirstSeen = true
@@ -177,7 +177,7 @@ class Storage {
     let deviceInfo = factory.makeDeviceInfo()
 
     Task {
-      let appInstall = InternalSuperwallPlacement.AppInstall(
+      let appInstall = InternalSuperwallEvent.AppInstall(
         appInstalledAtString: deviceInfo.appInstalledAtString,
         hasExternalPurchaseController: hasExternalPurchaseController
       )

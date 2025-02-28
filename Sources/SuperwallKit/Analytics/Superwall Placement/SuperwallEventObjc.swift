@@ -9,9 +9,9 @@ import Foundation
 
 /// Objective-C-only analytical placements that are automatically tracked by Superwall.
 ///
-/// These placements are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/handleSuperwallPlacement(withInfo:)``.
-@objc(SWKSuperwallPlacement)
-public enum SuperwallPlacementObjc: Int, CaseIterable {
+/// These placements are tracked internally by the SDK and sent to the delegate method ``SuperwallKit/SuperwallDelegateObjc/handleSuperwallEvent(withInfo:)``.
+@objc(SWKSuperwallEvent)
+public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
 
@@ -31,7 +31,7 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the user's identity aliases after calling identify.
   case identityAlias
 
-  /// When the app is opened at least an hour since last  ``SuperwallPlacement/appClose``.
+  /// When the app is opened at least an hour since last  ``SuperwallEvent/appClose``.
   ///
   /// This placement can be used to trigger a paywall. Just add the `session_start` placement to a campaign.
   case sessionStart
@@ -187,8 +187,8 @@ public enum SuperwallPlacementObjc: Int, CaseIterable {
   /// When the shimmer view stops showing.
   case shimmerViewComplete
 
-  public init(placement: SuperwallPlacement) {
-    self = placement.backingData.objcPlacement
+  public init(event: SuperwallEvent) {
+    self = event.backingData.objcEvent
   }
 
   var description: String {

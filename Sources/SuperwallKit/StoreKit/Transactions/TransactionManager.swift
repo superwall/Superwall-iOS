@@ -181,7 +181,7 @@ final class TransactionManager {
   @discardableResult
   func tryToRestore(_ restoreSource: RestoreSource) async -> RestorationResult {
     func logAndTrack(
-      state: InternalSuperwallPlacement.Restore.State,
+      state: InternalSuperwallEvent.Restore.State,
       message: String,
       paywallInfo: PaywallInfo
     ) async {
@@ -190,7 +190,7 @@ final class TransactionManager {
         scope: .transactions,
         message: message
       )
-      let trackedEvent = InternalSuperwallPlacement.Restore(
+      let trackedEvent = InternalSuperwallEvent.Restore(
         state: state,
         paywallInfo: paywallInfo
       )
@@ -332,7 +332,7 @@ final class TransactionManager {
     case .internal(let paywallViewController):
       let paywallInfo = await paywallViewController.info
 
-      let transactionRestore = InternalSuperwallPlacement.Transaction(
+      let transactionRestore = InternalSuperwallEvent.Transaction(
         state: .restore(restoreType),
         paywallInfo: paywallInfo,
         product: product,
@@ -349,7 +349,7 @@ final class TransactionManager {
         await Superwall.shared.dismiss(paywallViewController, result: .restored)
       }
     case .external:
-      let trackedEvent = InternalSuperwallPlacement.Transaction(
+      let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .restore(restoreType),
         paywallInfo: .empty(),
         product: product,
@@ -412,7 +412,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.info
       Task { [isObserved] in
-        let trackedEvent = InternalSuperwallPlacement.Transaction(
+        let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: paywallInfo,
           product: product,
@@ -437,7 +437,7 @@ final class TransactionManager {
       )
 
       Task { [isObserved] in
-        let trackedEvent = InternalSuperwallPlacement.Transaction(
+        let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .fail(.failure(error.safeLocalizedDescription, product)),
           paywallInfo: .empty(),
           product: product,
@@ -509,7 +509,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.info
 
-      let transactionStart = InternalSuperwallPlacement.Transaction(
+      let transactionStart = InternalSuperwallEvent.Transaction(
         state: .start(product),
         paywallInfo: paywallInfo,
         product: product,
@@ -541,7 +541,7 @@ final class TransactionManager {
       )
 
       if shouldTrackTransactionStart {
-        let trackedEvent = InternalSuperwallPlacement.Transaction(
+        let trackedEvent = InternalSuperwallEvent.Transaction(
           state: .start(product),
           paywallInfo: .empty(),
           product: product,
@@ -653,7 +653,7 @@ final class TransactionManager {
       )
 
       let paywallInfo = await paywallViewController.info
-      let transactionAbandon = InternalSuperwallPlacement.Transaction(
+      let transactionAbandon = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
@@ -678,7 +678,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let trackedEvent = InternalSuperwallPlacement.Transaction(
+      let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: .empty(),
         product: product,
@@ -714,7 +714,7 @@ final class TransactionManager {
 
       let paywallInfo = await paywallViewController.info
 
-      let transactionFail = InternalSuperwallPlacement.Transaction(
+      let transactionFail = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: paywallInfo,
         product: nil,
@@ -734,7 +734,7 @@ final class TransactionManager {
         error: nil
       )
 
-      let trackedEvent = InternalSuperwallPlacement.Transaction(
+      let trackedEvent = InternalSuperwallEvent.Transaction(
         state: .fail(.pending("Needs parental approval")),
         paywallInfo: .empty(),
         product: nil,
@@ -830,7 +830,7 @@ final class TransactionManager {
     }()
 
     let paywallInfo: PaywallInfo
-    let eventSource: InternalSuperwallPlacement.Transaction.Source
+    let eventSource: InternalSuperwallEvent.Transaction.Source
     switch source {
     case .internal(_, let paywallViewController):
       paywallInfo = await paywallViewController.info
@@ -842,7 +842,7 @@ final class TransactionManager {
       eventSource = .external
     }
 
-    let trackedTransactionEvent = InternalSuperwallPlacement.Transaction(
+    let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
       state: .complete(product, transaction, type),
       paywallInfo: paywallInfo,
       product: product,
@@ -857,7 +857,7 @@ final class TransactionManager {
     switch type {
     case .nonRecurringProductPurchase:
       await Superwall.shared.track(
-        InternalSuperwallPlacement.NonRecurringProductPurchase(
+        InternalSuperwallEvent.NonRecurringProductPurchase(
           paywallInfo: paywallInfo,
           product: product,
           transaction: transaction
@@ -865,7 +865,7 @@ final class TransactionManager {
       )
     case .freeTrialStart:
       await Superwall.shared.track(
-        InternalSuperwallPlacement.FreeTrialStart(
+        InternalSuperwallEvent.FreeTrialStart(
           paywallInfo: paywallInfo,
           product: product,
           transaction: transaction
@@ -877,7 +877,7 @@ final class TransactionManager {
       await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
     case .subscriptionStart:
       await Superwall.shared.track(
-        InternalSuperwallPlacement.SubscriptionStart(
+        InternalSuperwallEvent.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product,
           transaction: transaction

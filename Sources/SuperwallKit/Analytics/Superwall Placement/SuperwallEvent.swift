@@ -9,8 +9,13 @@ import Foundation
 
 /// Analytical placements that are automatically tracked by Superwall.
 ///
-/// These placement are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallPlacement(withInfo:)-pm3v``.
-public enum SuperwallPlacement {
+/// These placement are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallEvent(withInfo:)-50exd``.
+public typealias SuperwallPlacement = SuperwallEvent
+
+/// Analytical events that are automatically tracked by Superwall.
+///
+/// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallEvent(withInfo:)-50exd``.
+public enum SuperwallEvent {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
 
@@ -222,7 +227,7 @@ public enum SuperwallPlacement {
 }
 
 // MARK: - CustomStringConvertible
-extension SuperwallPlacement: CustomStringConvertible {
+extension SuperwallEvent: CustomStringConvertible {
   /// The string value of the placement name.
   public var description: String {
     return backingData.description
@@ -230,129 +235,129 @@ extension SuperwallPlacement: CustomStringConvertible {
 }
 
 // MARK: - Backing data
-extension SuperwallPlacement {
+extension SuperwallEvent {
   struct BackingData {
-    let objcPlacement: SuperwallPlacementObjc
+    let objcEvent: SuperwallEventObjc
     let description: String
 
-    init(objcPlacement: SuperwallPlacementObjc) {
-      self.objcPlacement = objcPlacement
-      self.description = objcPlacement.description
+    init(objcEvent: SuperwallEventObjc) {
+      self.objcEvent = objcEvent
+      self.description = objcEvent.description
     }
   }
 
   var backingData: BackingData {
     switch self {
     case .firstSeen:
-      return .init(objcPlacement: .firstSeen)
+      return .init(objcEvent: .firstSeen)
     case .appOpen:
-      return .init(objcPlacement: .appOpen)
+      return .init(objcEvent: .appOpen)
     case .identityAlias:
-      return .init(objcPlacement: .identityAlias)
+      return .init(objcEvent: .identityAlias)
     case .appLaunch:
-      return .init(objcPlacement: .appLaunch)
+      return .init(objcEvent: .appLaunch)
     case .appInstall:
-      return .init(objcPlacement: .appInstall)
+      return .init(objcEvent: .appInstall)
     case .sessionStart:
-      return .init(objcPlacement: .sessionStart)
+      return .init(objcEvent: .sessionStart)
     case .deviceAttributes:
-      return .init(objcPlacement: .deviceAttributes)
+      return .init(objcEvent: .deviceAttributes)
     case .subscriptionStatusDidChange:
-      return .init(objcPlacement: .subscriptionStatusDidChange)
+      return .init(objcEvent: .subscriptionStatusDidChange)
     case .appClose:
-      return .init(objcPlacement: .appClose)
+      return .init(objcEvent: .appClose)
     case .deepLink:
-      return .init(objcPlacement: .deepLink)
+      return .init(objcEvent: .deepLink)
     case .triggerFire:
-      return .init(objcPlacement: .triggerFire)
+      return .init(objcEvent: .triggerFire)
     case .paywallOpen:
-      return .init(objcPlacement: .paywallOpen)
+      return .init(objcEvent: .paywallOpen)
     case .paywallClose:
-      return .init(objcPlacement: .paywallClose)
+      return .init(objcEvent: .paywallClose)
     case .paywallDecline:
-      return .init(objcPlacement: .paywallDecline)
+      return .init(objcEvent: .paywallDecline)
     case .transactionStart:
-      return .init(objcPlacement: .transactionStart)
+      return .init(objcEvent: .transactionStart)
     case .transactionFail:
-      return .init(objcPlacement: .transactionFail)
+      return .init(objcEvent: .transactionFail)
     case .transactionAbandon:
-      return .init(objcPlacement: .transactionAbandon)
+      return .init(objcEvent: .transactionAbandon)
     case .transactionTimeout:
-      return .init(objcPlacement: .transactionTimeout)
+      return .init(objcEvent: .transactionTimeout)
     case .transactionComplete:
-      return .init(objcPlacement: .transactionComplete)
+      return .init(objcEvent: .transactionComplete)
     case .subscriptionStart:
-      return .init(objcPlacement: .subscriptionStart)
+      return .init(objcEvent: .subscriptionStart)
     case .freeTrialStart:
-      return .init(objcPlacement: .freeTrialStart)
+      return .init(objcEvent: .freeTrialStart)
     case .transactionRestore:
-      return .init(objcPlacement: .transactionRestore)
+      return .init(objcEvent: .transactionRestore)
     case .userAttributes:
-      return .init(objcPlacement: .userAttributes)
+      return .init(objcEvent: .userAttributes)
     case .nonRecurringProductPurchase:
-      return .init(objcPlacement: .nonRecurringProductPurchase)
+      return .init(objcEvent: .nonRecurringProductPurchase)
     case .paywallResponseLoadStart:
-      return .init(objcPlacement: .paywallResponseLoadStart)
+      return .init(objcEvent: .paywallResponseLoadStart)
     case .paywallResponseLoadNotFound:
-      return .init(objcPlacement: .paywallResponseLoadNotFound)
+      return .init(objcEvent: .paywallResponseLoadNotFound)
     case .paywallResponseLoadFail:
-      return .init(objcPlacement: .paywallResponseLoadFail)
+      return .init(objcEvent: .paywallResponseLoadFail)
     case .paywallResponseLoadComplete:
-      return .init(objcPlacement: .paywallResponseLoadComplete)
+      return .init(objcEvent: .paywallResponseLoadComplete)
     case .paywallWebviewLoadStart:
-      return .init(objcPlacement: .paywallWebviewLoadStart)
+      return .init(objcEvent: .paywallWebviewLoadStart)
     case .paywallWebviewLoadFail:
-      return .init(objcPlacement: .paywallWebviewLoadFail)
+      return .init(objcEvent: .paywallWebviewLoadFail)
     case .paywallWebviewLoadComplete:
-      return .init(objcPlacement: .paywallWebviewLoadComplete)
+      return .init(objcEvent: .paywallWebviewLoadComplete)
     case .paywallWebviewLoadTimeout:
-      return .init(objcPlacement: .paywallWebviewLoadTimeout)
+      return .init(objcEvent: .paywallWebviewLoadTimeout)
     case .paywallWebviewLoadFallback:
-      return .init(objcPlacement: .paywallWebviewLoadFallback)
+      return .init(objcEvent: .paywallWebviewLoadFallback)
     case .paywallProductsLoadStart:
-      return .init(objcPlacement: .paywallProductsLoadStart)
+      return .init(objcEvent: .paywallProductsLoadStart)
     case .paywallProductsLoadFail:
-      return .init(objcPlacement: .paywallProductsLoadFail)
+      return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadRetry:
-      return .init(objcPlacement: .paywallProductsLoadRetry)
+      return .init(objcEvent: .paywallProductsLoadRetry)
     case .paywallProductsLoadComplete:
-      return .init(objcPlacement: .paywallProductsLoadComplete)
+      return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
-      return .init(objcPlacement: .paywallPresentationRequest)
+      return .init(objcEvent: .paywallPresentationRequest)
     case .surveyResponse:
-      return .init(objcPlacement: .surveyResponse)
+      return .init(objcEvent: .surveyResponse)
     case .touchesBegan:
-      return .init(objcPlacement: .touchesBegan)
+      return .init(objcEvent: .touchesBegan)
     case .surveyClose:
-      return .init(objcPlacement: .surveyClose)
+      return .init(objcEvent: .surveyClose)
     case .reset:
-      return .init(objcPlacement: .reset)
+      return .init(objcEvent: .reset)
     case .restoreStart:
-      return .init(objcPlacement: .restoreStart)
+      return .init(objcEvent: .restoreStart)
     case .restoreFail:
-      return .init(objcPlacement: .restoreFail)
+      return .init(objcEvent: .restoreFail)
     case .restoreComplete:
-      return .init(objcPlacement: .restoreComplete)
+      return .init(objcEvent: .restoreComplete)
     case .configRefresh:
-      return .init(objcPlacement: .configRefresh)
+      return .init(objcEvent: .configRefresh)
     case .customPlacement:
-      return .init(objcPlacement: .customPlacement)
+      return .init(objcEvent: .customPlacement)
     case .configAttributes:
-      return .init(objcPlacement: .configAttributes)
+      return .init(objcEvent: .configAttributes)
     case .confirmAllAssignments:
-      return .init(objcPlacement: .confirmAllAssignments)
+      return .init(objcEvent: .confirmAllAssignments)
     case .configFail:
-      return .init(objcPlacement: .configFail)
+      return .init(objcEvent: .configFail)
     case .adServicesTokenRequestStart:
-      return .init(objcPlacement: .adServicesTokenRequestStart)
+      return .init(objcEvent: .adServicesTokenRequestStart)
     case .adServicesTokenRequestFail:
-      return .init(objcPlacement: .adServicesTokenRequestFail)
+      return .init(objcEvent: .adServicesTokenRequestFail)
     case .adServicesTokenRequestComplete:
-      return .init(objcPlacement: .adServicesTokenRequestComplete)
+      return .init(objcEvent: .adServicesTokenRequestComplete)
     case .shimmerViewStart:
-      return .init(objcPlacement: .shimmerViewStart)
+      return .init(objcEvent: .shimmerViewStart)
     case .shimmerViewComplete:
-      return .init(objcPlacement: .shimmerViewComplete)
+      return .init(objcEvent: .shimmerViewComplete)
     }
   }
 }
@@ -360,4 +365,4 @@ extension SuperwallPlacement {
 // Using this to silence warnings.
 // This is unchecked because of the use of `Any` in `[String: Any]` user attributes.
 // Also, PaywallInfo is not Sendable.
-extension SuperwallPlacement: @unchecked Sendable {}
+extension SuperwallEvent: @unchecked Sendable {}

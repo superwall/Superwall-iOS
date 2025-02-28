@@ -255,7 +255,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
-    let paywallOpen = await InternalSuperwallPlacement.PaywallOpen(paywallInfo: info)
+    let paywallOpen = await InternalSuperwallEvent.PaywallOpen(paywallInfo: info)
     await Superwall.shared.track(paywallOpen)
   }
 
@@ -263,7 +263,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     await MainActor.run {
       lastOpen = nil
     }
-    let paywallClose = await InternalSuperwallPlacement.PaywallClose(
+    let paywallClose = await InternalSuperwallEvent.PaywallClose(
       paywallInfo: info,
       surveyPresentationResult: surveyPresentationResult
     )
@@ -290,7 +290,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     Task(priority: .utility) {
-      let webviewLoad = InternalSuperwallPlacement.PaywallWebviewLoad(
+      let webviewLoad = InternalSuperwallEvent.PaywallWebviewLoad(
         state: .start,
         paywallInfo: self.info
       )
@@ -398,7 +398,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
                   return 0.0
                 }
               }
-              let shimmerComplete = await InternalSuperwallPlacement.ShimmerLoad(
+              let shimmerComplete = await InternalSuperwallEvent.ShimmerLoad(
                 state: .complete,
                 paywallId: self.paywall.identifier,
                 visibleDuration: visibleDuration
@@ -437,7 +437,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     Task {
       paywall.shimmerLoadingInfo.startAt = Date()
 
-      let shimmerStart = InternalSuperwallPlacement.ShimmerLoad(
+      let shimmerStart = InternalSuperwallEvent.ShimmerLoad(
         state: .start,
         paywallId: paywall.identifier
       )
@@ -497,7 +497,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.alpha = 0.0
 
         Task(priority: .utility) {
-          let webviewTimeout = await InternalSuperwallPlacement.PaywallWebviewLoad(
+          let webviewTimeout = await InternalSuperwallEvent.PaywallWebviewLoad(
             state: .timeout,
             paywallInfo: self.info
           )
@@ -864,7 +864,7 @@ extension PaywallViewController {
 
     func dismissView() async {
       if isDeclined, isManualClose {
-        let paywallDecline = InternalSuperwallPlacement.PaywallDecline(paywallInfo: info)
+        let paywallDecline = InternalSuperwallEvent.PaywallDecline(paywallInfo: info)
 
         let presentationResult = await Superwall.shared.internallyGetPresentationResult(
           forPlacement: paywallDecline,
@@ -872,11 +872,11 @@ extension PaywallViewController {
         )
         let presentingPlacement = info.presentedByPlacementWithName
         let presentedByPaywallDecline =
-          presentingPlacement == SuperwallPlacementObjc.paywallDecline.description
+          presentingPlacement == SuperwallEventObjc.paywallDecline.description
         let presentedByTransactionAbandon =
-          presentingPlacement == SuperwallPlacementObjc.transactionAbandon.description
+          presentingPlacement == SuperwallEventObjc.transactionAbandon.description
         let presentedByTransactionFail =
-          presentingPlacement == SuperwallPlacementObjc.transactionFail.description
+          presentingPlacement == SuperwallEventObjc.transactionFail.description
 
         await Superwall.shared.track(paywallDecline)
 

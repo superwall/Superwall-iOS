@@ -31,10 +31,10 @@ enum TrackingLogic {
     ]
 
     // Add a special property if it's a superwall placement
-    let isSuperwallPlacement = trackablePlacement is TrackableSuperwallPlacement
+    let isSuperwallEvent = trackablePlacement is TrackableSuperwallEvent
 
     var audienceFilterParams: [String: Any] = [
-      "$is_standard_event": isSuperwallPlacement,
+      "$is_standard_event": isSuperwallEvent,
       "$event_name": placementName,
       "event_name": placementName
     ]
@@ -95,11 +95,11 @@ enum TrackingLogic {
       return true
     }
 
-    if placement is InternalSuperwallPlacement.PresentationRequest {
+    if placement is InternalSuperwallEvent.PresentationRequest {
       return !disableVerbosePlacements
     }
 
-    if let placement = placement as? InternalSuperwallPlacement.PaywallLoad {
+    if let placement = placement as? InternalSuperwallEvent.PaywallLoad {
       switch placement.state {
       case .start, .complete:
         return !disableVerbosePlacements
@@ -108,11 +108,11 @@ enum TrackingLogic {
       }
     }
 
-    if placement is InternalSuperwallPlacement.ShimmerLoad {
+    if placement is InternalSuperwallEvent.ShimmerLoad {
       return !disableVerbosePlacements
     }
 
-    if let placement = placement as? InternalSuperwallPlacement.PaywallProductsLoad {
+    if let placement = placement as? InternalSuperwallEvent.PaywallProductsLoad {
       switch placement.state {
       case .start, .complete:
         return !disableVerbosePlacements
@@ -121,7 +121,7 @@ enum TrackingLogic {
       }
     }
 
-    if let placement = placement as? InternalSuperwallPlacement.PaywallWebviewLoad {
+    if let placement = placement as? InternalSuperwallEvent.PaywallWebviewLoad {
       switch placement.state {
       case .start, .complete:
         return !disableVerbosePlacements
@@ -158,20 +158,20 @@ enum TrackingLogic {
     }
   }
 
-  /// Checks whether the user is tracking a placement with the same name as a superwall placement.
-  static func checkNotSuperwallPlacement(_ placement: String) throws {
-    for superwallPlacement in SuperwallPlacementObjc.allCases
-    where superwallPlacement.description == placement {
+  /// Checks whether the user is registering a placement with the same name as a superwall event.
+  static func checkNotSuperwallEvent(_ event: String) throws {
+    for superwallEvent in SuperwallEventObjc.allCases
+    where superwallEvent.description == event {
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,
-        message: "Do not track a placement with the same name as a SuperwallPlacement",
-        info: ["placement": placement]
+        message: "Do not register a placement with the same name as a SuperwallEvent",
+        info: ["event": event]
       )
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
           "",
-          value: "Do not track a placement with the same name as a SuperwallPlacement",
+          value: "Do not register a placement with the same name as a SuperwallEvent",
           comment: ""
         )
       ]
@@ -185,26 +185,26 @@ enum TrackingLogic {
   }
 
   static func canTriggerPaywall(
-    _ placement: Trackable,
+    _ event: Trackable,
     triggers: Set<String>,
     paywallViewController: PaywallViewController?
   ) -> ImplicitTriggerOutcome {
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .deepLink = placement.superwallPlacement {
+    if let event = event as? TrackableSuperwallEvent,
+      case .deepLink = event.superwallEvent {
       return .deepLinkTrigger
     }
 
-    guard triggers.contains(placement.rawName) else {
+    guard triggers.contains(event.rawName) else {
       return .dontTriggerPaywall
     }
 
     // referring placements in this set are not able to trigger another
     // another paywall. prevents loops from occurring
     let notAllowedReferringPlacementNames: Set<String> = [
-      SuperwallPlacementObjc.transactionAbandon.description,
-      SuperwallPlacementObjc.transactionFail.description,
-      SuperwallPlacementObjc.paywallDecline.description,
-      SuperwallPlacementObjc.customPlacement.description
+      SuperwallEventObjc.transactionAbandon.description,
+      SuperwallEventObjc.transactionFail.description,
+      SuperwallEventObjc.paywallDecline.description,
+      SuperwallEventObjc.customPlacement.description
     ]
 
     if let referringPlacementName = paywallViewController?.info.presentedByPlacementWithName,
@@ -212,28 +212,28 @@ enum TrackingLogic {
       return .dontTriggerPaywall
     }
 
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionAbandon = placement.superwallPlacement {
+    if let placement = event as? TrackableSuperwallEvent,
+      case .transactionAbandon = placement.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .transactionFail = placement.superwallPlacement {
+    if let placement = event as? TrackableSuperwallEvent,
+      case .transactionFail = placement.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .paywallDecline = placement.superwallPlacement {
+    if let placement = event as? TrackableSuperwallEvent,
+      case .paywallDecline = placement.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .customPlacement = placement.superwallPlacement {
+    if let placement = event as? TrackableSuperwallEvent,
+      case .customPlacement = placement.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
-    if let placement = placement as? TrackableSuperwallPlacement,
-      case .surveyResponse = placement.superwallPlacement {
+    if let placement = event as? TrackableSuperwallEvent,
+      case .surveyResponse = placement.superwallEvent {
       return .closePaywallThenTriggerPaywall
     }
 
