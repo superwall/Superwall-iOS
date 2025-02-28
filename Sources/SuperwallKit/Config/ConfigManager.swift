@@ -112,7 +112,7 @@ class ConfigManager {
       await processConfig(newConfig, isFirstTime: false)
       configState.send(.retrieved(newConfig))
 
-      let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
+      let configRefresh = InternalSuperwallEvent.ConfigRefresh(
         buildId: newConfig.buildId,
         retryCount: configRetryCount,
         cacheStatus: .notCached,
@@ -196,10 +196,10 @@ class ConfigManager {
       let configFetchDuration = Date().timeIntervalSince(startAt)
       let isUsingCachedGeoInfo = await isUsingCachedGeo
 
-      let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus =
+      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus =
         isUsingCachedConfig ? .cached : .notCached
       Task {
-        let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
+        let configRefresh = InternalSuperwallEvent.ConfigRefresh(
           buildId: config.buildId,
           retryCount: configRetryCount,
           cacheStatus: cacheStatus,
@@ -210,7 +210,7 @@ class ConfigManager {
 
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
       await processConfig(config, isFirstTime: true)
@@ -233,7 +233,7 @@ class ConfigManager {
     } catch {
       configState.send(completion: .failure(error))
 
-      let configFallback = InternalSuperwallPlacement.ConfigFail(
+      let configFallback = InternalSuperwallEvent.ConfigFail(
         message: error.localizedDescription
       )
       await Superwall.shared.track(configFallback)
@@ -311,7 +311,7 @@ class ConfigManager {
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
   /// config's triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
-    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description }) {
+    if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
       await UIWindow.swizzleSendEvent()
     }
   }

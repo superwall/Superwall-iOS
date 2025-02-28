@@ -14,7 +14,7 @@ class AppManagerDelegateMock: DeviceHelperFactory, UserAttributesPlacementFactor
   }
   func makeIsSandbox() -> Bool { return true}
   func makeSessionDeviceAttributes() async -> [String : Any] { [:] }
-  func makeUserAttributesPlacement() -> InternalSuperwallPlacement.Attributes { 
-    return InternalSuperwallPlacement.Attributes(appInstalledAtString: "")
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes { 
+    return InternalSuperwallEvent.Attributes(appInstalledAtString: "")
   }
 }

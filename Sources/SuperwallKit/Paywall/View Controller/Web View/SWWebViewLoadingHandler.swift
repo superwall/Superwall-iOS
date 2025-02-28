@@ -108,7 +108,7 @@ final class SWWebViewLoadingHandler {
       return
     }
 
-    let webviewLoad = InternalSuperwallPlacement.PaywallWebviewLoad(
+    let webviewLoad = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .fail(error, urls),
       paywallInfo: paywallInfo
     )
@@ -122,7 +122,7 @@ final class SWWebViewLoadingHandler {
       return
     }
 
-    let webviewLoad = InternalSuperwallPlacement.PaywallWebviewLoad(
+    let webviewLoad = InternalSuperwallEvent.PaywallWebviewLoad(
       state: .fallback,
       paywallInfo: paywallInfo
     )

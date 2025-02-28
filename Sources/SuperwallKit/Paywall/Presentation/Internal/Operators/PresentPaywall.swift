@@ -30,7 +30,7 @@ extension Superwall {
     request: PresentationRequest,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>
   ) async throws {
-    let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+    let presentationRequest = InternalSuperwallEvent.PresentationRequest(
       placementData: request.presentationInfo.placementData,
       type: request.flags.type,
       status: .presentation,

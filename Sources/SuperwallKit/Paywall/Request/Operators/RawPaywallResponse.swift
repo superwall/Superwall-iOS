@@ -67,7 +67,7 @@ extension PaywallRequestManager {
     paywallId: String?,
     placement: PlacementData?
   ) async {
-    let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
+    let paywallLoad = InternalSuperwallEvent.PaywallLoad(
       state: .start,
       placementData: placement
     )
@@ -78,7 +78,7 @@ extension PaywallRequestManager {
     _ paywallInfo: PaywallInfo,
     placement: PlacementData?
   ) async {
-    let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
+    let paywallLoad = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: paywallInfo),
       placementData: placement
     )

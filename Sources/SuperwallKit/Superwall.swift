@@ -273,7 +273,7 @@ public final class Superwall: NSObject, ObservableObject {
       _ = await (fetchConfig, configureIdentity)
 
       await track(
-        InternalSuperwallPlacement.ConfigAttributes(
+        InternalSuperwallEvent.ConfigAttributes(
           options: dependencyContainer.configManager.options,
           hasExternalPurchaseController: purchaseController != nil,
           hasDelegate: delegate != nil
@@ -328,7 +328,7 @@ public final class Superwall: NSObject, ObservableObject {
 
           Task {
             await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(from: oldStatus, to: newStatus)
-            let event = InternalSuperwallPlacement.SubscriptionStatusDidChange(status: newStatus)
+            let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
             await Superwall.shared.track(event)
           }
         }
@@ -450,14 +450,14 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
   ///
   /// - Returns: An array of ``ConfirmedAssignment`` objects.
   public func confirmAllAssignments() async -> [ConfirmedAssignment] {
-    let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
+    let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
     await track(confirmAllAssignments)
 
     guard let triggers = dependencyContainer.configManager.config?.triggers else {
@@ -493,7 +493,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
@@ -624,7 +624,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(
+      let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
         deviceAttributes: deviceAttributes)
       await track(deviceAttributesPlacement)
     }
@@ -637,7 +637,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
     }
   }
@@ -656,7 +656,7 @@ public final class Superwall: NSObject, ObservableObject {
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
     Task {
-      await track(InternalSuperwallPlacement.DeepLink(url: url))
+      await track(InternalSuperwallEvent.DeepLink(url: url))
     }
     return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
@@ -693,7 +693,7 @@ public final class Superwall: NSObject, ObservableObject {
     presentationItems.reset()
     dependencyContainer.configManager.reset()
     Task {
-      await Superwall.shared.track(InternalSuperwallPlacement.Reset())
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)
         if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
@@ -987,7 +987,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case let .customPlacement(name: name, params: params):
       Task {
         let paramsDict = params.dictionaryValue
-        let customPlacement = InternalSuperwallPlacement.CustomPlacement(
+        let customPlacement = InternalSuperwallEvent.CustomPlacement(
           paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict

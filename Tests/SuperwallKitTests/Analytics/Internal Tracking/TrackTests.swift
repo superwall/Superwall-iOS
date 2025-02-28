@@ -26,7 +26,7 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_appOpen() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.AppOpen())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_open")
@@ -35,7 +35,7 @@ final class TrackingTests: XCTestCase {
   func test_appInstall() async {
     let appInstalledAtString = "now"
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.AppInstall(
+      InternalSuperwallEvent.AppInstall(
         appInstalledAtString: appInstalledAtString, hasExternalPurchaseController: true))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -47,7 +47,7 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_appLaunch() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.AppLaunch())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_launch")
@@ -56,7 +56,7 @@ final class TrackingTests: XCTestCase {
   func test_attributes() async {
     let appInstalledAtString = "now"
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Attributes(appInstalledAtString: appInstalledAtString))
+      InternalSuperwallEvent.Attributes(appInstalledAtString: appInstalledAtString))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -68,7 +68,7 @@ final class TrackingTests: XCTestCase {
 
   func test_deepLink() async {
     let url = URL(string: "http://superwall.com/test?query=value#fragment")!
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.DeepLink(url: url))
+    let result = await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
     // "$app_session_id": "B993FB6C-556D-47E0-ADFE-E2E43365D732", "$is_standard_event": false, "$event_name": ""
     print(result)
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -88,21 +88,21 @@ final class TrackingTests: XCTestCase {
   }
 
   func test_firstSeen() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.FirstSeen())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "first_seen")
   }
 
   func test_appClose() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.AppClose())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.AppClose())
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_close")
   }
 
   func test_sessionStart() async {
-    let result = await Superwall.shared.track(InternalSuperwallPlacement.SessionStart())
+    let result = await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -113,7 +113,7 @@ final class TrackingTests: XCTestCase {
     // Given
     let survey = Survey.stub()
     let paywallInfo = PaywallInfo.stub()
-    let event = InternalSuperwallPlacement.SurveyResponse(
+    let event = InternalSuperwallEvent.SurveyResponse(
       survey: survey,
       selectedOption: survey.options.first!,
       customResponse: nil,
@@ -271,7 +271,7 @@ final class TrackingTests: XCTestCase {
       createdAt: Date()
     )
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallLoad(state: .start, placementData: eventData))
+      InternalSuperwallEvent.PaywallLoad(state: .start, placementData: eventData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -288,7 +288,7 @@ final class TrackingTests: XCTestCase {
       createdAt: Date()
     )
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallLoad(state: .fail, placementData: eventData))
+      InternalSuperwallEvent.PaywallLoad(state: .fail, placementData: eventData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -305,7 +305,7 @@ final class TrackingTests: XCTestCase {
       createdAt: Date()
     )
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallLoad(state: .notFound, placementData: eventData))
+      InternalSuperwallEvent.PaywallLoad(state: .notFound, placementData: eventData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -324,7 +324,7 @@ final class TrackingTests: XCTestCase {
     )
     let paywallInfo = PaywallInfo.stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallLoad(
+      InternalSuperwallEvent.PaywallLoad(
         state: .complete(paywallInfo: paywallInfo), placementData: eventData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -423,7 +423,7 @@ final class TrackingTests: XCTestCase {
   func test_subscriptionStatusDidChange_hasOneEntitlement() async {
     let entitlements: Set<Entitlement> = [.stub()]
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.SubscriptionStatusDidChange(status: .active([.stub()])))
+      InternalSuperwallEvent.SubscriptionStatusDidChange(status: .active([.stub()])))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -438,7 +438,7 @@ final class TrackingTests: XCTestCase {
   func test_subscriptionStatusDidChange_hasTwoEntitlements() async {
     let entitlements: Set<Entitlement> = [.stub(), Entitlement(id: "test2", type: .serviceLevel)]
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.SubscriptionStatusDidChange(status: .active(entitlements)))
+      InternalSuperwallEvent.SubscriptionStatusDidChange(status: .active(entitlements)))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -452,7 +452,7 @@ final class TrackingTests: XCTestCase {
 
   func test_subscriptionStatusDidChange_noEntitlements() async {
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.SubscriptionStatusDidChange(status: .inactive))
+      InternalSuperwallEvent.SubscriptionStatusDidChange(status: .inactive))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -469,7 +469,7 @@ final class TrackingTests: XCTestCase {
       .init(source: .occurrence, experimentId: "2"),
     ]
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.TriggerFire(
+      InternalSuperwallEvent.TriggerFire(
         triggerResult: .noAudienceMatch(unmatchedRules), triggerName: triggerName))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -487,7 +487,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let experiment: Experiment = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.TriggerFire(
+      InternalSuperwallEvent.TriggerFire(
         triggerResult: .holdout(experiment), triggerName: triggerName))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -505,7 +505,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let experiment: Experiment = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.TriggerFire(
+      InternalSuperwallEvent.TriggerFire(
         triggerResult: .paywall(experiment), triggerName: triggerName))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -525,7 +525,7 @@ final class TrackingTests: XCTestCase {
   func test_triggerFire_eventNotFound() async {
     let triggerName = "My Trigger"
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.TriggerFire(
+      InternalSuperwallEvent.TriggerFire(
         triggerResult: .placementNotFound, triggerName: triggerName))
     print(result)
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -538,7 +538,7 @@ final class TrackingTests: XCTestCase {
     let triggerName = "My Trigger"
     let error = NSError(domain: "com.superwall", code: 400)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.TriggerFire(triggerResult: .error(error), triggerName: triggerName)
+      InternalSuperwallEvent.TriggerFire(triggerResult: .error(error), triggerName: triggerName)
     )
     print(result)
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -550,7 +550,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_eventNotFound() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -576,7 +576,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_noRuleMatch() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -605,7 +605,7 @@ final class TrackingTests: XCTestCase {
     dependencyContainer.configManager.configState.send(
       .retrieved(.stub().setting(\.featureFlags.enableExpressionParameters, to: true)))
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -632,7 +632,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_alreadyPresented() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -659,7 +659,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_debuggerLaunched() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -685,7 +685,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_noPresenter() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -711,7 +711,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_noPaywallViewController() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -738,7 +738,7 @@ final class TrackingTests: XCTestCase {
   func test_presentationRequest_holdout() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
-    let event = InternalSuperwallPlacement.PresentationRequest(
+    let event = InternalSuperwallEvent.PresentationRequest(
       placementData: placementData,
       type: .getPaywall(.stub()),
       status: .noPresentation,
@@ -763,7 +763,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallOpen() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallOpen(paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -862,7 +862,7 @@ final class TrackingTests: XCTestCase {
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallClose(
+      InternalSuperwallEvent.PaywallClose(
         paywallInfo: paywallInfo,
         surveyPresentationResult: .show
       )
@@ -966,7 +966,7 @@ final class TrackingTests: XCTestCase {
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallClose(
+      InternalSuperwallEvent.PaywallClose(
         paywallInfo: paywallInfo,
         surveyPresentationResult: .noShow
       )
@@ -1069,7 +1069,7 @@ final class TrackingTests: XCTestCase {
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallClose(
+      InternalSuperwallEvent.PaywallClose(
         paywallInfo: paywallInfo,
         surveyPresentationResult: .holdout
       )
@@ -1173,7 +1173,7 @@ final class TrackingTests: XCTestCase {
       .setting(\.surveys, to: [])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallClose(
+      InternalSuperwallEvent.PaywallClose(
         paywallInfo: paywallInfo,
         surveyPresentationResult: .noShow
       )
@@ -1274,7 +1274,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallDecline() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallDecline(paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -1378,7 +1378,7 @@ final class TrackingTests: XCTestCase {
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Transaction(
+      InternalSuperwallEvent.Transaction(
         state: .start(product), paywallInfo: paywallInfo, product: product,
         transaction: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit1)
     )
@@ -1524,7 +1524,7 @@ final class TrackingTests: XCTestCase {
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Transaction(
+      InternalSuperwallEvent.Transaction(
         state: .complete(product, transaction, .nonRecurringProductPurchase),
         paywallInfo: paywallInfo, product: product, transaction: transaction, source: .internal,
         isObserved: false, storeKitVersion: .storeKit1))
@@ -1673,7 +1673,7 @@ final class TrackingTests: XCTestCase {
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Transaction(
+      InternalSuperwallEvent.Transaction(
         state: .restore(RestoreType.viaPurchase(transaction)), paywallInfo: paywallInfo,
         product: product, transaction: transaction, source: .internal, isObserved: false,
         storeKitVersion: .storeKit2))
@@ -1820,7 +1820,7 @@ final class TrackingTests: XCTestCase {
     let skTransaction = MockSKPaymentTransaction(state: .purchased)
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Transaction(
+      InternalSuperwallEvent.Transaction(
         state: .timeout, paywallInfo: paywallInfo, product: product, transaction: transaction,
         source: .internal, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -1966,7 +1966,7 @@ final class TrackingTests: XCTestCase {
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let error = TransactionError.failure("failed mate", product)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.Transaction(
+      InternalSuperwallEvent.Transaction(
         state: .fail(error), paywallInfo: paywallInfo, product: product, transaction: transaction,
         source: .external, isObserved: false, storeKitVersion: .storeKit1))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
@@ -2108,7 +2108,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.SubscriptionStart(
+      InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -2243,7 +2243,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.FreeTrialStart(
+      InternalSuperwallEvent.FreeTrialStart(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -2378,7 +2378,7 @@ final class TrackingTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
     let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.NonRecurringProductPurchase(
+      InternalSuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -2507,7 +2507,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallWebviewLoad_start() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallWebviewLoad(state: .start, paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -2606,7 +2606,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallWebviewLoad_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallWebviewLoad(
+      InternalSuperwallEvent.PaywallWebviewLoad(
         state: .fail(NetworkError.unknown, []), paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -2706,7 +2706,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallWebviewLoad_complete() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallWebviewLoad(state: .complete, paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallWebviewLoad(state: .complete, paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -2807,7 +2807,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallWebviewLoad_timeout() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallWebviewLoad(state: .timeout, paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallWebviewLoad(state: .timeout, paywallInfo: paywallInfo))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(
@@ -2907,7 +2907,7 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallProductsLoad(
+      InternalSuperwallEvent.PaywallProductsLoad(
         state: .start, paywallInfo: paywallInfo, placementData: placementData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -3008,7 +3008,7 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallProductsLoad(
+      InternalSuperwallEvent.PaywallProductsLoad(
         state: .fail(NetworkError.unknown), paywallInfo: paywallInfo, placementData: placementData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
@@ -3109,7 +3109,7 @@ final class TrackingTests: XCTestCase {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallPlacement.PaywallProductsLoad(
+      InternalSuperwallEvent.PaywallProductsLoad(
         state: .complete, paywallInfo: paywallInfo, placementData: placementData))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)

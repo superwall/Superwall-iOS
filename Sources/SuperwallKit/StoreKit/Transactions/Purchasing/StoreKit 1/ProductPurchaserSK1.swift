@@ -283,7 +283,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
   }
 
   private func trackTimeout(paywallViewController: PaywallViewController? = nil) async {
-    var source: InternalSuperwallPlacement.Transaction.Source = .internal
+    var source: InternalSuperwallEvent.Transaction.Source = .internal
 
     var isObserved = false
     switch await coordinator.source {
@@ -296,7 +296,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       break
     }
 
-    let trackedEvent = await InternalSuperwallPlacement.Transaction(
+    let trackedEvent = await InternalSuperwallEvent.Transaction(
       state: .timeout,
       paywallInfo: paywallViewController?.info ?? .empty(),
       product: nil,

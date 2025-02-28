@@ -150,7 +150,7 @@ final class SurveyManager {
     if survey.includeCloseOption {
       let closeButton = UIAlertAction(title: "Close", style: .cancel) { _ in
         Task {
-          let surveyClose = InternalSuperwallPlacement.SurveyClose()
+          let surveyClose = InternalSuperwallEvent.SurveyClose()
           await Superwall.shared.track(surveyClose)
         }
         completion(.show)
@@ -174,7 +174,7 @@ final class SurveyManager {
     alertController.dismiss(animated: true) {
       // Always complete without tracking if debugger launched.
       Task {
-        let surveyResponse = InternalSuperwallPlacement.SurveyResponse(
+        let surveyResponse = InternalSuperwallEvent.SurveyResponse(
           survey: survey,
           selectedOption: option,
           customResponse: customResponse,

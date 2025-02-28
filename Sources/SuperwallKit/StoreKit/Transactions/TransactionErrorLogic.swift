@@ -57,7 +57,7 @@ enum TransactionErrorLogic {
       }
     }
 
-    let transactionFailExists = triggers.contains(SuperwallPlacementObjc.transactionFail.description)
+    let transactionFailExists = triggers.contains(SuperwallEventObjc.transactionFail.description)
 
     if shouldShowPurchaseFailureAlert,
       !transactionFailExists {

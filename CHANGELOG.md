@@ -2,6 +2,15 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.1
+
+### Fixes
+
+- Deprecates the naming of `handleSuperwallPlacement(withInfo:) back to `handleSuperwallEvent(withInfo:)`.
+- Deprecates `SuperwallPlacement` back to `SuperwallEvent`.
+- Deprecates `SuperwallPlacementInfo` back to `SuperwallEventInfo`.
+- Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
+
 ## 4.0.0
 
 ### Breaking Changes

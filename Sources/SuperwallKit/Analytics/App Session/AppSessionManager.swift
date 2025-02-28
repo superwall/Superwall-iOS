@@ -83,7 +83,7 @@ class AppSessionManager {
   @objc private func applicationWillResignActive() {
     storage.recordFirstSessionTracked()
     Task {
-      await Superwall.shared.track(InternalSuperwallPlacement.AppClose())
+      await Superwall.shared.track(InternalSuperwallEvent.AppClose())
     }
     lastAppClose = Date()
     appSession.endAt = Date()
@@ -95,7 +95,7 @@ class AppSessionManager {
 
   @objc private func applicationDidBecomeActive() {
     Task {
-      await Superwall.shared.track(InternalSuperwallPlacement.AppOpen())
+      await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
       await sessionCouldRefresh()
     }
   }
@@ -129,7 +129,7 @@ class AppSessionManager {
           return
         }
         group.addTask {
-          await Superwall.shared.track(InternalSuperwallPlacement.SessionStart())
+          await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
         }
 
         // Only track device attributes if we've already tracked app launch before.
@@ -138,7 +138,7 @@ class AppSessionManager {
         if self.didTrackAppLaunch {
           group.addTask {
             await Superwall.shared.track(
-              InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+              InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
             )
           }
 
@@ -160,7 +160,7 @@ class AppSessionManager {
     if didTrackAppLaunch {
       return
     }
-    await Superwall.shared.track(InternalSuperwallPlacement.AppLaunch())
+    await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     didTrackAppLaunch = true
   }
 }

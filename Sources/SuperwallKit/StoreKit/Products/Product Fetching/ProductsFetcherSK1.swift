@@ -286,7 +286,7 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
             guard let paywall = productRequest.paywall else {
               return
             }
-            let productLoadRetry = InternalSuperwallPlacement.PaywallProductsLoad(
+            let productLoadRetry = InternalSuperwallEvent.PaywallProductsLoad(
               state: .retry(retryCount),
               paywallInfo: paywall.getInfo(fromPlacement: productRequest.placement),
               placementData: productRequest.placement
