@@ -136,6 +136,6 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
   case let value as PassableValue:
     return value
   default:
-    return .null
+    return toPassableValue(from: JSON(anyValue))
   }
 }
