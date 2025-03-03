@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.1
+
+### Fixes
+
+- Fixes a bug where unsupported value types as user attributes or placement parameters would cause a `noAudienceMatch`
+
 ## 4.0.0
 
 ### Breaking Changes
