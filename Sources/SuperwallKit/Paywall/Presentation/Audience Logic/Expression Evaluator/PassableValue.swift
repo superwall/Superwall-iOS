@@ -75,6 +75,7 @@ indirect enum PassableValue: Codable {
       let timestampValue = try container.decode(Int64.self, forKey: .value)
       self = .timestamp(timestampValue)
     case "Null":
+      self = .null
     case "null":
       self = .null
     default:
