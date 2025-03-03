@@ -66,16 +66,22 @@ struct HomeView: View {
       SuperwallSubscriptionView()
 
       VStack(spacing: 20) {
-        BrandedButton(title: "Launch Non-Gated Feature") {
-          Superwall.shared.register(placement: "non_gated_pro") {
+        BrandedButton(title: "Button") {
+
+
+          let about: Decimal? = nil
+
+          Superwall.shared.setUserAttributes([
+
+            "activeDatabaseVersion": about,
+
+          ])
+
+          Superwall.shared.register(placement: "ai_furnisher_onboarding_finished", params: ["test": "null", "n": nil]) {
             page = .nonGated
           }
         }
-        BrandedButton(title: "Launch Gated Feature") {
-          Superwall.shared.register(placement: "gated_pro") {
-            page = .gated
-          }
-        }
+
       }
       .padding(.horizontal)
     }
