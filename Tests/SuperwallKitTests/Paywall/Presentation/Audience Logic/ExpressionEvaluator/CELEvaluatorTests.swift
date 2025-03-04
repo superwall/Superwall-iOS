@@ -186,4 +186,22 @@ final class CELEvaluatorTests: XCTestCase {
     )
     XCTAssertEqual(result, .match(audience: rule))
   }
+  func testEvaluateExpression_passingInDecimal() async {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.reset()
+    let evaluator = CELEvaluator(
+      storage: dependencyContainer.storage,
+      factory: dependencyContainer
+    )
+    let value = Decimal(1.0)
+    dependencyContainer.identityManager.mergeUserAttributes(["a": value])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "user.a == 1.0")
+    let result = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
+    )
+
+    XCTAssertEqual(result, .match(audience: rule))
+  }
 }
