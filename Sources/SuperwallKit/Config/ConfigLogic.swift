@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/07/2022.
 //
-// swiftlint:disable array_constructor type_body_length
+// swiftlint:disable array_constructor
 
 import Foundation
 
@@ -12,11 +12,6 @@ enum ConfigLogic {
   enum TriggerAudienceError: Error {
     case noVariantsFound
     case invalidState
-  }
-
-  struct AssignmentOutcome {
-    let confirmed: [Experiment.ID: Experiment.Variant]
-    let unconfirmed: [Experiment.ID: Experiment.Variant]
   }
 
   static func chooseVariant(
@@ -85,63 +80,47 @@ enum ConfigLogic {
     return uniqueTriggerAudiences
   }
 
+  /// Updates existing assignments by removing, replacing or inserting new
+  /// ones based on the given triggers.
   static func chooseAssignments(
     fromTriggers triggers: Set<Trigger>,
-    confirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> AssignmentOutcome {
-    var confirmedAssignments = confirmedAssignments
-    var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
-
+    assignments: Set<Assignment>
+  ) -> Set<Assignment> {
+    var assignments = assignments
     let groupedTriggerAudiences = getAudienceFiltersPerCampaign(from: triggers)
 
     // Loop through each trigger and each of its audiences.
     for audienceGroup in groupedTriggerAudiences {
       for audience in audienceGroup {
+        let experimentId = audience.experiment.id
         let availableVariantIds = Set(audience.experiment.variants.map { $0.id })
 
-        // Check whether we have already chosen a variant for the experiment on disk.
-        if let confirmedVariant = confirmedAssignments[audience.experiment.id] {
-          // If one exists, check it's still in the available variants of the experiment's audiences, otherwise reroll.
-          if !availableVariantIds.contains(confirmedVariant.id) {
-            // If we couldn't choose a variant, because of an invalid state, such as no variants available, delete the confirmed assignment.
-            guard let variant = try? Self.chooseVariant(from: audience.experiment.variants) else {
-              confirmedAssignments[audience.experiment.id] = nil
-              continue
-            }
-            unconfirmedAssignments[audience.experiment.id] = variant
-            confirmedAssignments[audience.experiment.id] = nil
-          }
-        } else {
-          // No variant found on disk so dice roll to choose a variant and store in memory as an unconfirmed assignment.
-          guard let variant = try? Self.chooseVariant(from: audience.experiment.variants) else {
+        // Check whether we already have an assignment for the experiment.
+        if let index = assignments.firstIndex(where: { $0.experimentId == experimentId }) {
+          let confirmedVariant = assignments[index].variant
+          // If the existing variant is still available, continue.
+          if availableVariantIds.contains(confirmedVariant.id) {
             continue
           }
-          unconfirmedAssignments[audience.experiment.id] = variant
+          // Remove the assignment with an invalid variant.
+          assignments.remove(at: index)
         }
+
+        // Choose a new variant for the experiment.
+        guard let newVariant = try? Self.chooseVariant(from: audience.experiment.variants) else {
+          continue
+        }
+        assignments.insert(
+          Assignment(
+            experimentId: experimentId,
+            variant: newVariant,
+            isSentToServer: false
+          )
+        )
       }
     }
 
-    return AssignmentOutcome(
-      confirmed: confirmedAssignments,
-      unconfirmed: unconfirmedAssignments
-    )
-  }
-
-  static func move(
-    _ newAssignment: ConfirmableAssignment,
-    from unconfirmedAssignments: [Experiment.ID: Experiment.Variant],
-    to confirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> AssignmentOutcome {
-    var confirmedAssignments = confirmedAssignments
-    confirmedAssignments[newAssignment.experimentId] = newAssignment.variant
-
-    var unconfirmedAssignments = unconfirmedAssignments
-    unconfirmedAssignments[newAssignment.experimentId] = nil
-
-    return ConfigLogic.AssignmentOutcome(
-      confirmed: confirmedAssignments,
-      unconfirmed: unconfirmedAssignments
-    )
+    return assignments
   }
 
   /// Removes any triggers whose preloading has been remotely disabled.
@@ -159,43 +138,44 @@ enum ConfigLogic {
   }
 
   /// Loops through assignments retrieved from the server to get variants by id.
-  /// Returns updated confirmed/unconfirmed assignments to save.
-  static func transferAssignmentsFromServerToDisk(
-    assignments: [Assignment],
-    triggers: Set<Trigger>,
-    confirmedAssignments: [Experiment.ID: Experiment.Variant],
-    unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
-  ) -> AssignmentOutcome {
-    var confirmedAssignments = confirmedAssignments
-    var unconfirmedAssignments = unconfirmedAssignments
+  /// Returns updated assignments.
+  static func transferAssignments(
+    fromServer serverAssignments: [PostbackAssignment],
+    toDisk localAssignments: Set<Assignment>,
+    triggers: Set<Trigger>
+  ) -> Set<Assignment> {
+    var localAssignments = localAssignments
 
-    for assignment in assignments {
+    for serverAssignment in serverAssignments {
       // Get the trigger with the matching experiment ID
       guard
         let trigger = triggers.first(
-          where: { $0.audiences.contains(where: { $0.experiment.id == assignment.experimentId }) }
+          where: { $0.audiences.contains(where: { $0.experiment.id == serverAssignment.experimentId }) }
         )
       else {
         continue
       }
-      // Get the variant with the matching variant ID
+      // Get the variant from the trigger with the matching variant ID
       guard
-        let variantOption = trigger.audiences.compactMap({
-          $0.experiment.variants.first { $0.id == assignment.variantId }
+        let triggerVariant = trigger.audiences.compactMap({
+          $0.experiment.variants.first { $0.id == serverAssignment.variantId }
         }).first
       else {
         continue
       }
 
-      // Save this to disk, remove any unconfirmed assignments with the same experiment ID.
-      confirmedAssignments[assignment.experimentId] = variantOption.toExperimentVariant()
-      unconfirmedAssignments[assignment.experimentId] = nil
+      // Insert or replace an assignment that has the same experiment ID
+      // with the new variant.
+      localAssignments.update(with:
+        Assignment(
+          experimentId: serverAssignment.experimentId,
+          variant: triggerVariant.toExperimentVariant(),
+          isSentToServer: true
+        )
+      )
     }
 
-    return .init(
-      confirmed: confirmedAssignments,
-      unconfirmed: unconfirmedAssignments
-    )
+    return localAssignments
   }
 
   static func getStaticPaywall(
@@ -231,86 +211,65 @@ enum ConfigLogic {
 
   static func getAllActiveTreatmentPaywallIds(
     fromTriggers triggers: Set<Trigger>,
-    confirmedAssignments: [Experiment.ID: Experiment.Variant],
-    unconfirmedAssignments: [Experiment.ID: Experiment.Variant],
+    assignments: Set<Assignment>,
     expressionEvaluator: ExpressionEvaluating
   ) async -> Set<String> {
-    var confirmedAssignments = confirmedAssignments
+    var assignments = assignments
 
-    let confirmedExperimentIds = Set(confirmedAssignments.keys)
-    let audienceFiltersPerCampaign = getAudienceFiltersPerCampaign(from: triggers)
+    let audienceFilters = getAudienceFiltersPerCampaign(from: triggers).flatMap { $0 }
 
-    // Loop through all the audiences and check their preloading behaviour.
-    // If they should never preload or set to ifTrue but don't match,
-    // skip the experiment.
-    var allExperimentIds: Set<String> = []
-    var skippedExperimentIds: Set<String> = []
+    // Collect all experiment IDs and determine which ones should be skipped.
+    var allExperimentIds = Set<String>()
+    var skippedExperimentIds = Set<String>()
 
-    for campaignAudienceFilters in audienceFiltersPerCampaign {
-      for audienceFilter in campaignAudienceFilters {
-        allExperimentIds.insert(audienceFilter.experiment.id)
+    for audienceFilter in audienceFilters {
+      let experimentId = audienceFilter.experiment.id
+      allExperimentIds.insert(experimentId)
 
-        switch audienceFilter.preload.behavior {
-        case .ifTrue:
-          let outcome = await expressionEvaluator.evaluateExpression(
-            fromAudienceFilter: audienceFilter,
-            placementData: nil
-          )
-          switch outcome {
-          case .noMatch:
-            skippedExperimentIds.insert(audienceFilter.experiment.id)
-          case .match:
-            continue
-          }
-        case .always:
-          continue
-        case .never:
-          skippedExperimentIds.insert(audienceFilter.experiment.id)
+      switch audienceFilter.preload.behavior {
+      case .ifTrue:
+        let outcome = await expressionEvaluator.evaluateExpression(
+          fromAudienceFilter: audienceFilter,
+          placementData: nil
+        )
+        if case .noMatch = outcome {
+          skippedExperimentIds.insert(experimentId)
         }
+      case .never:
+        skippedExperimentIds.insert(experimentId)
+      case .always:
+        break
       }
     }
 
-    // Remove any confirmed experiment IDs that are no
-    // longer part of a trigger. This could happen when a campaign
-    // has been archived.
-    let unusedExperimentIds = confirmedExperimentIds.subtracting(allExperimentIds)
-    for id in unusedExperimentIds {
-      confirmedAssignments.removeValue(forKey: id)
-    }
+    // Keep only assignments whose experiment IDs are in the active set and not marked as skipped.
+    assignments = Set(assignments.filter { assignment in
+      allExperimentIds.contains(assignment.experimentId) &&
+      !skippedExperimentIds.contains(assignment.experimentId)
+    })
 
-    // Remove any assignments whose variants we don't want to preload.
-    var mergedAssignments = confirmedAssignments + unconfirmedAssignments
-    for id in skippedExperimentIds {
-      mergedAssignments.removeValue(forKey: id)
-    }
-    let preloadableVariants = mergedAssignments.values
-
-    // Only select the variants that will result in a paywall rather
-    // than a holdout.
-    var identifiers = Set<String>()
-
-    for variant in preloadableVariants {
-      if variant.type == .treatment,
-        let paywallId = variant.paywallId {
-        identifiers.insert(paywallId)
+    // Extract and return paywall IDs from treatment variants.
+    let identifiers = Set(assignments.compactMap { assignment in
+      if assignment.variant.type == .treatment,
+        let paywallId = assignment.variant.paywallId {
+        return paywallId
       }
-    }
+      return nil
+    })
 
     return identifiers
   }
 
   static func getActiveTreatmentPaywallIds(
     forTriggers triggers: Set<Trigger>,
-    confirmedAssignments: [Experiment.ID: Experiment.Variant],
-    unconfirmedAssignments: [Experiment.ID: Experiment.Variant]
+    assignments: Set<Assignment>
   ) -> Set<String> {
-    let mergedAssignments = confirmedAssignments.merging(unconfirmedAssignments)
     let groupedTriggerAudiences = getAudienceFiltersPerCampaign(from: triggers)
     let triggerExperimentIds = groupedTriggerAudiences.flatMap { $0.map { $0.experiment.id } }
 
     var identifiers = Set<String>()
     for experimentId in triggerExperimentIds {
-      guard let variant = mergedAssignments[experimentId] else {
+      guard let variant = assignments.first(where: { $0.experimentId == experimentId })?.variant else {
         continue
       }
       if variant.type == .treatment,

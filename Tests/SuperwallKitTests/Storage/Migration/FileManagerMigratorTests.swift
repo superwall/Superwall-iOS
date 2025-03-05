@@ -10,7 +10,7 @@ import XCTest
 @testable import SuperwallKit
 
 final class FileManagerMigratorTests: XCTestCase {
-  func test_migrateFromV1ToV2() {
+  func test_migrateFromV1ToV3() {
     let cache = CacheMock()
 
     // Write all possible values to the cache.
@@ -19,11 +19,15 @@ final class FileManagerMigratorTests: XCTestCase {
     cache.write(["a": "b"], forType: UserAttributes.self, inDirectory: .cache)
     cache.write(true, forType: DidTrackAppInstall.self, inDirectory: .cache)
     cache.write("true", forType: LegacyDidTrackFirstSeen.self)
+
+    let experimentId = "abc"
+    let variant = Experiment.Variant(id: "1", type: .treatment, paywallId: "def")
+    cache.write([experimentId: variant], forType: LegacyConfirmedAssignments.self)
     cache.write([.stub()], forType: Transactions.self)
 
     // Check that they're in the cache and not in documents
     XCTAssertEqual(cache.internalCache.count, 6)
-    XCTAssertEqual(cache.internalUserDocuments.count, 0)
+    XCTAssertEqual(cache.internalUserDocuments.count, 1)
     XCTAssertEqual(cache.internalAppDocuments.count, 0)
 
     // Migrate
@@ -32,7 +36,7 @@ final class FileManagerMigratorTests: XCTestCase {
     // Check they're all in the documents, except transactions.
     XCTAssertEqual(cache.internalCache.count, 1)
     XCTAssertEqual(cache.internalAppDocuments.count, 2)
-    XCTAssertEqual(cache.internalUserDocuments.count, 4)
+    XCTAssertEqual(cache.internalUserDocuments.count, 5)
 
     // Check that the old firstseen has gone
     let legacyFirstSeen = cache.read(LegacyDidTrackFirstSeen.self)
@@ -42,8 +46,17 @@ final class FileManagerMigratorTests: XCTestCase {
     let newFirstSeen = cache.read(DidTrackFirstSeen.self)!
     XCTAssertTrue(newFirstSeen)
 
-    // Check the new version is v2
+    // Check that the old confirmed assignments has gone
+    let legacyAssignments = cache.read(LegacyConfirmedAssignments.self)
+    XCTAssertNil(legacyAssignments)
+
+    // Check new first seen exists and is a Bool
+    let newAssignments = cache.read(Assignments.self)!
+    XCTAssertEqual(newAssignments.first!.experimentId, experimentId)
+    XCTAssertEqual(newAssignments.first!.variant, variant)
+
+    // Check the new version is v3
     let version = cache.read(Version.self)
-    XCTAssertEqual(version, .v2)
+    XCTAssertEqual(version, .v3)
   }
 }

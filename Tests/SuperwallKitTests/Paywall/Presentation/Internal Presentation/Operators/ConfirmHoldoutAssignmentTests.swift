@@ -91,7 +91,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     dependencyContainer.configManager = configManager
 
     let input = AudienceFilterEvaluationOutcome(
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      assignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -122,7 +122,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     dependencyContainer.configManager = configManager
 
     let input = AudienceFilterEvaluationOutcome(
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      assignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -134,6 +134,37 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       dependencyContainer: dependencyContainer
     )
     XCTAssertTrue(configManager.confirmedAssignment)
+  }
+
+  func test_confirmHoldoutAssignment_holdout_alreadySentToServer() async {
+    let dependencyContainer = DependencyContainer()
+    let configManager = ConfigManagerMock(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      factory: dependencyContainer
+    )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+
+    dependencyContainer.configManager = configManager
+
+    let input = AudienceFilterEvaluationOutcome(
+      assignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: true),
+      triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
+    )
+
+    let request = PresentationRequest.stub()
+      .setting(\.flags.type, to: .getPresentationResult)
+    Superwall.shared.confirmHoldoutAssignment(
+      request: request,
+      from: input,
+      dependencyContainer: dependencyContainer
+    )
+    XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   func test_confirmHoldoutAssignment_holdout_handleImplicitTrigger() async {
@@ -153,7 +184,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     dependencyContainer.configManager = configManager
 
     let input = AudienceFilterEvaluationOutcome(
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      assignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
@@ -184,7 +215,7 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
     dependencyContainer.configManager = configManager
 
     let input = AudienceFilterEvaluationOutcome(
-      confirmableAssignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      assignment: .init(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       triggerResult: .holdout(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 

@@ -4,17 +4,11 @@
 //
 //  Created by Yusuf Tör on 09/08/2022.
 //
-// swiftlint:disable function_body_length
 
 import Foundation
 
-struct ConfirmableAssignment: Equatable {
-  let experimentId: Experiment.ID
-  let variant: Experiment.Variant
-}
-
 struct AudienceFilterEvaluationOutcome {
-  var confirmableAssignment: ConfirmableAssignment?
+  var assignment: Assignment?
   var unsavedOccurrence: TriggerAudienceOccurrence?
   var triggerResult: InternalTriggerResult
 }
@@ -34,57 +28,46 @@ struct AudienceLogic {
   ///
   /// This first finds a trigger for a given placement name. Then it determines whether any of the
   /// audiences of the triggers match for that placement.
-  /// It takes that audience filter and checks the disk for a confirmed variant assignment for the audience's
-  /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
+  /// It takes that audience filter and checks the disk for a paywall variant assignment for the audience's experiment ID.
   /// Then it returns the result of the placement given the assignment.
   ///
   /// - Parameters:
-  ///   - placement: The tracked placement
+  ///   - placement: The tracked placement.
   ///   - triggers: The triggers from config.
-  ///   - configManager: A `ConfigManager` object used for dependency injection.
-  ///   - storage: A `Storage` object used for dependency injection.
-  ///   - isPreemptive: A boolean that indicates whether the rule is being preemptively
-  ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
-  ///   in Core Data.
-  /// - Returns: An assignment to confirm, if available.
+  /// - Returns: The result of evaluating the audience filter.
   func evaluateAudienceFilters(
     forPlacement placement: PlacementData,
     triggers: [String: Trigger]
   ) async -> AudienceFilterEvaluationOutcome {
+    // Ensure the trigger exists for the placement.
     guard let trigger = triggers[placement.name] else {
-      return AudienceFilterEvaluationOutcome(triggerResult: .placementNotFound)
+      return AudienceFilterEvaluationOutcome(
+        triggerResult: .placementNotFound
+      )
     }
 
+    // Find a matching rule for the placement using the trigger.
     let ruleMatchOutcome = await findMatchingRule(
       for: placement,
       withTrigger: trigger
     )
 
     let matchedRuleItem: MatchedItem
-
     switch ruleMatchOutcome {
     case .matched(let item):
       matchedRuleItem = item
     case .noMatchingAudiences(let unmatchedAudiences):
-      return .init(triggerResult: .noAudienceMatch(unmatchedAudiences))
+      return AudienceFilterEvaluationOutcome(
+        triggerResult: .noAudienceMatch(unmatchedAudiences)
+      )
     }
 
-    let variant: Experiment.Variant
-    var confirmableAssignment: ConfirmableAssignment?
     let rule = matchedRuleItem.audience
-    // For a matching rule there will be an unconfirmed (in-memory) or confirmed (on disk) variant assignment.
-    // First check the disk, otherwise check memory.
-    let confirmedAssignments = storage.getConfirmedAssignments()
-    if let confirmedVariant = confirmedAssignments[rule.experiment.id] {
-      variant = confirmedVariant
-    } else if let unconfirmedVariant = configManager.unconfirmedAssignments[rule.experiment.id] {
-      confirmableAssignment = ConfirmableAssignment(
-        experimentId: rule.experiment.id,
-        variant: unconfirmedVariant
-      )
-      variant = unconfirmedVariant
-    } else {
-      // If no variant in memory or disk
+
+    guard let assignment = storage.getAssignments()
+      .first(where: { $0.experimentId == rule.experiment.id })
+    else {
+      // If no variant in memory or disk, return an error.
       let userInfo: [String: Any] = [
         NSLocalizedDescriptionKey: NSLocalizedString(
           "Not Found",
@@ -100,30 +83,26 @@ struct AudienceLogic {
       return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
     }
 
+    let variant = assignment.variant
+    let experiment = Experiment(
+      id: rule.experiment.id,
+      groupId: rule.experiment.groupId,
+      variant: variant
+    )
+
+    // Return the appropriate outcome based on the variant type.
     switch variant.type {
     case .holdout:
       return AudienceFilterEvaluationOutcome(
-        confirmableAssignment: confirmableAssignment,
+        assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .holdout(
-          Experiment(
-            id: rule.experiment.id,
-            groupId: rule.experiment.groupId,
-            variant: variant
-          )
-        )
+        triggerResult: .holdout(experiment)
       )
     case .treatment:
       return AudienceFilterEvaluationOutcome(
-        confirmableAssignment: confirmableAssignment,
+        assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
-        triggerResult: .paywall(
-          Experiment(
-            id: rule.experiment.id,
-            groupId: rule.experiment.groupId,
-            variant: variant
-          )
-        )
+        triggerResult: .paywall(experiment)
       )
     }
   }

@@ -29,8 +29,9 @@ extension Superwall {
     guard case .holdout = audienceOutcome.triggerResult else {
       return
     }
-    if let confirmableAssignment = audienceOutcome.confirmableAssignment {
-      dependencyContainer.configManager.confirmAssignment(confirmableAssignment)
+    if let assignment = audienceOutcome.assignment,
+      !assignment.isSentToServer {
+      dependencyContainer.configManager.postbackAssignment(assignment)
     }
   }
 }

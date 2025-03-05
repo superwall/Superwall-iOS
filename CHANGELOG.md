@@ -7,6 +7,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
+- Updates Superscript to 0.1.18.
+- Confirms all paywall assignments locally to reduce the amount of preloading of paywalls on each cold app open.
+- Migrates documents used for user and app data out of the documents folder and into the application support folder.
 
 ### Fixes
 
