@@ -5,7 +5,7 @@
 //  Created by Nguyen Cong Huy on 7/4/16.
 //  Copyright © 2016 Nguyen Cong Huy. All rights reserved.
 //
-// swiftlint:disable file_length large_tuple
+// swiftlint:disable file_length large_tuple type_body_length line_length
 
 import UIKit
 
@@ -68,9 +68,7 @@ class Cache {
   // MARK: - Migrate
   func moveDataFromDocumentsToApplicationSupport() {
     ioQueue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
+      guard let self = self else { return }
       guard
         let documentDirectory = self.fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
         let applicationSupportDirectory = self.fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
@@ -86,86 +84,27 @@ class Cache {
 
       do {
         // Create the destination directories if they don't exist.
-        if !self.fileManager.fileExists(atPath: userSpecificSupportUrl.path) {
-          try self.fileManager.createDirectory(
-            at: userSpecificSupportUrl,
-            withIntermediateDirectories: true,
-            attributes: nil
-          )
-        }
-        if !self.fileManager.fileExists(atPath: appSpecificSupportUrl.path) {
-          try self.fileManager.createDirectory(
-            at: appSpecificSupportUrl,
-            withIntermediateDirectories: true,
-            attributes: nil
-          )
-        }
+        try self.createDirectoryIfNeeded(at: userSpecificSupportUrl)
+        try self.createDirectoryIfNeeded(at: appSpecificSupportUrl)
 
         // Move user-specific data by enumerating individual items.
-        if self.fileManager.fileExists(atPath: userSpecificDocumentUrl.path) {
-          let userItems = try self.fileManager.contentsOfDirectory(atPath: userSpecificDocumentUrl.path)
-          for item in userItems {
-            let sourceURL = userSpecificDocumentUrl.appendingPathComponent(item)
-            let destinationURL = userSpecificSupportUrl.appendingPathComponent(item)
-            // Remove item if the file/directory already exists at the destination.
-            if self.fileManager.fileExists(atPath: destinationURL.path) {
-              try self.fileManager.removeItem(at: destinationURL)
-            }
-
-            try self.fileManager.moveItem(
-              at: sourceURL,
-              to: destinationURL
-            )
-          }
-        } else {
-          Logger.debug(
-            logLevel: .debug,
-            scope: .cache,
-            message: "No user-specific data found at \(userSpecificDocumentUrl.path)"
-          )
-        }
+        try self.moveItems(
+          from: userSpecificDocumentUrl,
+          to: userSpecificSupportUrl,
+          notFoundMessage: "No user-specific data found at \(userSpecificDocumentUrl.path)"
+        )
 
         // Remove the user-specific folder if empty
-        if let userSpecificFolder = try? fileManager.contentsOfDirectory(
-          at: userSpecificDocumentUrl,
-          includingPropertiesForKeys: nil,
-          options: []
-        ), userSpecificFolder.isEmpty {
-          try fileManager.removeItem(at: userSpecificDocumentUrl)
-        }
+        try self.removeDirectoryIfEmpty(userSpecificDocumentUrl)
 
         // Move app-specific data by enumerating individual items.
-        if self.fileManager.fileExists(atPath: appSpecificDocumentUrl.path) {
-          let appItems = try self.fileManager.contentsOfDirectory(atPath: appSpecificDocumentUrl.path)
-          for item in appItems {
-            let sourceURL = appSpecificDocumentUrl.appendingPathComponent(item)
-            let destinationURL = appSpecificSupportUrl.appendingPathComponent(item)
-            // Skip moving if the file/directory already exists at the destination.
-            if self.fileManager.fileExists(atPath: destinationURL.path) {
-              try self.fileManager.removeItem(at: destinationURL)
-            }
-
-            try self.fileManager.moveItem(
-              at: sourceURL,
-              to: destinationURL
-            )
-          }
-        } else {
-          Logger.debug(
-            logLevel: .debug,
-            scope: .cache,
-            message: "No app-specific data found at \(appSpecificDocumentUrl.path)"
-          )
-        }
+        try self.moveItems(
+          from: appSpecificDocumentUrl,
+          to: appSpecificSupportUrl,
+          notFoundMessage: "No app-specific data found at \(appSpecificDocumentUrl.path)")
 
         // Remove the app-specific folder if empty
-        if let appSpecificFolder = try? fileManager.contentsOfDirectory(
-          at: appSpecificDocumentUrl,
-          includingPropertiesForKeys: nil,
-          options: []
-        ), appSpecificFolder.isEmpty {
-          try fileManager.removeItem(at: appSpecificDocumentUrl)
-        }
+        try self.removeDirectoryIfEmpty(appSpecificDocumentUrl)
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -173,6 +112,50 @@ class Cache {
           message: "Migration of document data failed: \(error.localizedDescription)"
         )
       }
+    }
+  }
+
+  private func createDirectoryIfNeeded(at url: URL) throws {
+    if !self.fileManager.fileExists(atPath: url.path) {
+      try self.fileManager.createDirectory(
+        at: url,
+        withIntermediateDirectories: true,
+        attributes: nil
+      )
+    }
+  }
+
+  private func moveItems(from sourceDirectory: URL, to destinationDirectory: URL, notFoundMessage: String) throws {
+    if self.fileManager.fileExists(atPath: sourceDirectory.path) {
+      let items = try self.fileManager.contentsOfDirectory(atPath: sourceDirectory.path)
+      for item in items {
+        let sourceURL = sourceDirectory.appendingPathComponent(item)
+        let destinationURL = destinationDirectory.appendingPathComponent(item)
+        // Remove item if the file/directory already exists at the destination.
+        if self.fileManager.fileExists(atPath: destinationURL.path) {
+          try self.fileManager.removeItem(at: destinationURL)
+        }
+        try self.fileManager.moveItem(
+          at: sourceURL,
+          to: destinationURL
+        )
+      }
+    } else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .cache,
+        message: notFoundMessage
+      )
+    }
+  }
+
+  private func removeDirectoryIfEmpty(_ directory: URL) throws {
+    if let contents = try? self.fileManager.contentsOfDirectory(
+      at: directory,
+      includingPropertiesForKeys: nil,
+      options: []
+    ), contents.isEmpty {
+      try self.fileManager.removeItem(at: directory)
     }
   }
 

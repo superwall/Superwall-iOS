@@ -30,7 +30,7 @@ extension Superwall {
       return
     }
     if let assignment = audienceOutcome.assignment,
-       !assignment.isSentToServer {
+      !assignment.isSentToServer {
       dependencyContainer.configManager.postbackAssignment(assignment)
     }
   }

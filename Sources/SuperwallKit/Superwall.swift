@@ -310,8 +310,7 @@ public final class Superwall: NSObject, ObservableObject {
     $subscriptionStatus
       .removeDuplicates()
       .dropFirst()
-      .scan((previous: subscriptionStatus, current: subscriptionStatus)) {
-        previousPair, newStatus in
+      .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
         // Shift the current value to previous, and set the new status as the current value
         (previous: previousPair.current, current: newStatus)
       }

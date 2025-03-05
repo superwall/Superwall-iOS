@@ -4,7 +4,6 @@
 //
 //  Created by Yusuf Tör on 09/08/2022.
 //
-// swiftlint:disable function_body_length
 
 import Foundation
 
