@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
+- Updates Superscript to 0.1.18.
 
 ### Enhancements
 
