@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   run-tests:
-    runs-on: macos-latest
+    runs-on: macos-15
 
     steps:
       - name: Git Checkout
