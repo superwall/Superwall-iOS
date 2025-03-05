@@ -2,14 +2,23 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.0.1
+## 4.0.2
+
+### Enhancements
+
+- Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
 
 ### Fixes
 
 - Deprecates the naming of `handleSuperwallPlacement(withInfo:) back to `handleSuperwallEvent(withInfo:)`.
 - Deprecates `SuperwallPlacement` back to `SuperwallEvent`.
 - Deprecates `SuperwallPlacementInfo` back to `SuperwallEventInfo`.
-- Adds `$storekitVersion`, `$maxConfigRetryCount`, and `$shouldObservePurchases` to the `config_attributes` event.
+
+## 4.0.1
+
+### Fixes
+
+- Fixes a bug where unsupported value types as user attributes or placement parameters would cause a `noAudienceMatch`
 
 ## 4.0.0
 
