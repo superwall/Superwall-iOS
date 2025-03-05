@@ -80,15 +80,15 @@ extension Superwall {
         from: rulesOutcome
       )
 
-      let confirmedAssignment = rulesOutcome.assignment
+      let assignment = rulesOutcome.assignment
 
       confirmPaywallAssignment(
-        confirmedAssignment,
+        assignment,
         request: request,
         isDebuggerLaunched: request.flags.isDebuggerLaunched
       )
 
-      return confirmedAssignment
+      return assignment
     } catch {
       return nil
     }

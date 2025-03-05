@@ -138,7 +138,7 @@ enum ConfigLogic {
   }
 
   /// Loops through assignments retrieved from the server to get variants by id.
-  /// Returns updated confirmed/unconfirmed assignments to save.
+  /// Returns updated assignments.
   static func transferAssignments(
     fromServer serverAssignments: [PostbackAssignment],
     toDisk localAssignments: Set<Assignment>,

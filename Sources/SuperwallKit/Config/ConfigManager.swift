@@ -381,10 +381,10 @@ class ConfigManager {
     if preloadableTriggers.isEmpty {
       return []
     }
-    let confirmedAssignments = storage.getAssignments()
+    let assignments = storage.getAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: preloadableTriggers,
-      assignments: confirmedAssignments
+      assignments: assignments
     )
   }
 
@@ -418,10 +418,10 @@ class ConfigManager {
         config.triggers,
         removing: config.preloadingDisabled
       )
-      let confirmedAssignments = self.storage.getAssignments()
+      let assignments = self.storage.getAssignments()
       var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
         fromTriggers: triggers,
-        assignments: confirmedAssignments,
+        assignments: assignments,
         expressionEvaluator: expressionEvaluator
       )
       // Do not preload the presented paywall. This is because if config refreshes, we

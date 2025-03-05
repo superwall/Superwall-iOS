@@ -535,8 +535,6 @@ final class ConfigLogicTests: XCTestCase {
     let localAssignments = Set([
       Assignment(experimentId: "abc", variant: variant, isSentToServer: false)
     ])
-    let unconfirmedVariant: Experiment.Variant = .init(
-      id: "mno", type: .treatment, paywallId: "pqr")
     let result = ConfigLogic.transferAssignments(
       fromServer: [],
       toDisk: localAssignments,

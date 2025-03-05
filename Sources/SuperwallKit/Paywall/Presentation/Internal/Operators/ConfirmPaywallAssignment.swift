@@ -15,7 +15,7 @@ extension Superwall {
   /// at this point.
   ///
   /// - Parameters:
-  ///   - confirmedAssignment: The assignment to confirm.
+  ///   - assignment: The assignment to confirm.
   ///   - isDebuggerLaunched: A boolean that indicates whether the debugger is launched.
   ///   - dependendencyContainer: Used for tests only.
   func confirmPaywallAssignment(

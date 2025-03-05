@@ -28,19 +28,13 @@ struct AudienceLogic {
   ///
   /// This first finds a trigger for a given placement name. Then it determines whether any of the
   /// audiences of the triggers match for that placement.
-  /// It takes that audience filter and checks the disk for a confirmed variant assignment for the audience's
-  /// experiment ID. If there isn't one, it checks the unconfirmed assignments.
+  /// It takes that audience filter and checks the disk for a paywall variant assignment for the audience's experiment ID.
   /// Then it returns the result of the placement given the assignment.
   ///
   /// - Parameters:
-  ///   - placement: The tracked placement
+  ///   - placement: The tracked placement.
   ///   - triggers: The triggers from config.
-  ///   - configManager: A `ConfigManager` object used for dependency injection.
-  ///   - storage: A `Storage` object used for dependency injection.
-  ///   - isPreemptive: A boolean that indicates whether the rule is being preemptively
-  ///   evaluated. Setting this to `true` prevents the rule's occurrence count from being incremented
-  ///   in Core Data.
-  /// - Returns: An assignment to confirm, if available.
+  /// - Returns: The result of evaluating the audience filter.
   func evaluateAudienceFilters(
     forPlacement placement: PlacementData,
     triggers: [String: Trigger]
@@ -70,7 +64,7 @@ struct AudienceLogic {
 
     let rule = matchedRuleItem.audience
 
-    guard let confirmedAssignment = storage.getAssignments()
+    guard let assignment = storage.getAssignments()
       .first(where: { $0.experimentId == rule.experiment.id })
     else {
       // If no variant in memory or disk, return an error.
@@ -89,7 +83,7 @@ struct AudienceLogic {
       return AudienceFilterEvaluationOutcome(triggerResult: .error(error))
     }
 
-    let variant = confirmedAssignment.variant
+    let variant = assignment.variant
     let experiment = Experiment(
       id: rule.experiment.id,
       groupId: rule.experiment.groupId,
@@ -100,19 +94,18 @@ struct AudienceLogic {
     switch variant.type {
     case .holdout:
       return AudienceFilterEvaluationOutcome(
-        assignment: confirmedAssignment,
+        assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .holdout(experiment)
       )
     case .treatment:
       return AudienceFilterEvaluationOutcome(
-        assignment: confirmedAssignment,
+        assignment: assignment,
         unsavedOccurrence: matchedRuleItem.unsavedOccurrence,
         triggerResult: .paywall(experiment)
       )
     }
   }
-
 
   func findMatchingRule(
     for placement: PlacementData,
