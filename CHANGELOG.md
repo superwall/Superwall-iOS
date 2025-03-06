@@ -10,7 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Updates Superscript to 0.1.18.
 - Confirms all paywall assignments locally to reduce the amount of preloading of paywalls on each cold app open.
 - Migrates documents used for user and app data out of the documents folder and into the application support folder.
-- If the SDK is using StoreKit 2, a refunded purchase is no longer considered active and therefore does not give the user an active entitlement.
+- If the SDK is using StoreKit 2 and not using a purchase controller, a refunded purchase is no longer considered active and therefore does not give the user an active entitlement.
 
 ### Fixes
 
