@@ -8,6 +8,7 @@
 import Foundation
 
 /// Contains information about the internally tracked superwall placement.
+@available(*, deprecated, renamed: "SuperwallEventInfo")
 public typealias SuperwallPlacementInfo = SuperwallEventInfo
 
 /// Contains information about the internally tracked superwall event.
