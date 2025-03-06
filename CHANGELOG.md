@@ -14,7 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Deprecates the naming of `handleSuperwallPlacement(withInfo:) back to `handleSuperwallEvent(withInfo:)`.
+- Deprecates the naming of `handleSuperwallPlacement(withInfo:)` back to `handleSuperwallEvent(withInfo:)`.
 - Deprecates `SuperwallPlacement` back to `SuperwallEvent`.
 - Deprecates `SuperwallPlacementInfo` back to `SuperwallEventInfo`.
 
