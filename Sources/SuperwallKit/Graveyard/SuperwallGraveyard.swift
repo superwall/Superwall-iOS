@@ -141,12 +141,6 @@ extension Superwall {
   }
 }
 
-extension SuperwallDelegate {
-  @MainActor
-  @available(*, deprecated, renamed: "handleSuperwallEvent(withInfo:)")
-  func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {}
-}
-
 @available(*, unavailable, renamed: "ProductStore")
 public enum Store: Int {
   case appStore

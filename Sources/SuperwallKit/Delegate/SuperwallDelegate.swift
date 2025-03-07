@@ -131,6 +131,9 @@ extension SuperwallDelegate {
 
   public func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {}
 
+  @available(*, deprecated, renamed: "handleSuperwallEvent(withInfo:)")
+  public func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {}
+
   public func handleLog(
     level: String,
     scope: String,
