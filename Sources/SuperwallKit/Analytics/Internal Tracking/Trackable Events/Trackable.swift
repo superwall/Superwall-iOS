@@ -11,7 +11,7 @@ import Foundation
 protocol Trackable {
   /// The string representation of the name.
   ///
-  /// For  a `TrackableSuperwallPlacement`,  this is the raw value of an ``SuperwallPlacement`` assigned to it.
+  /// For  a `TrackableSuperwallEvent`,  this is the raw value of a ``SuperwallEvent`` assigned to it.
   var rawName: String { get }
   /// Parameters that can be used in audience filters. Do not include $ signs in parameter names as they will be dropped.
   var audienceFilterParams: [String: Any] { get }

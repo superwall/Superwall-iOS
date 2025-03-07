@@ -227,7 +227,7 @@ class IdentityManager {
       self._appUserId = userId
 
       Task {
-        let identityAlias = InternalSuperwallPlacement.IdentityAlias()
+        let identityAlias = InternalSuperwallEvent.IdentityAlias()
         await Superwall.shared.track(identityAlias)
       }
 
@@ -368,7 +368,7 @@ extension IdentityManager {
 
     if shouldTrackMerge {
       Task {
-        let attributes = InternalSuperwallPlacement.Attributes(
+        let attributes = InternalSuperwallEvent.Attributes(
           appInstalledAtString: deviceHelper.appInstalledAtString,
           audienceFilterParams: mergedAttributes
         )

@@ -77,7 +77,7 @@ extension Superwall {
       _ = try await subscriptionStatusTask.value
     } catch {
       Task {
-        let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+        let presentationRequest = InternalSuperwallEvent.PresentationRequest(
           placementData: request.presentationInfo.placementData,
           type: request.flags.type,
           status: .timeout,

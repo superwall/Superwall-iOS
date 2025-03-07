@@ -24,18 +24,18 @@ extension Superwall {
     )
 
     // For a trackable superwall placement, send params to delegate
-    if let trackedPlacement = placement as? TrackableSuperwallPlacement {
-      let info = SuperwallPlacementInfo(
-        placement: trackedPlacement.superwallPlacement,
+    if let trackedEvent = placement as? TrackableSuperwallEvent {
+      let info = SuperwallEventInfo(
+        event: trackedEvent.superwallEvent,
         params: parameters.delegateParams
       )
 
-      await dependencyContainer.delegateAdapter.handleSuperwallPlacement(withInfo: info)
+      await dependencyContainer.delegateAdapter.handleSuperwallEvent(withInfo: info)
 
       Logger.debug(
         logLevel: .debug,
         scope: .placements,
-        message: "Logged Placement",
+        message: "Logged Event",
         info: parameters.audienceFilterParams
       )
     }

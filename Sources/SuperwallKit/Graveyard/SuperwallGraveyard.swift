@@ -33,7 +33,7 @@ extension Superwall {
   @available(*, unavailable, message: "Set the SuperwallOption \"localeIdentifier\" instead.")
   @objc public func localizationOverride(localeIdentifier: String? = nil) {}
 
-  @available(*, unavailable, renamed: "SuperwallPlacement")
+  @available(*, unavailable, renamed: "SuperwallEvent")
   public enum EventName: String {
     case fakeCase = "fake"
   }
@@ -141,12 +141,10 @@ extension Superwall {
   }
 }
 
-@available(*, unavailable, renamed: "SuperwallPlacementInfo")
-public final class SuperwallEventInfo: NSObject {}
-
 extension SuperwallDelegate {
-  @available(*, unavailable, renamed: "handleSuperwallPlacement(withInfo:)")
-  public func handleSuperwallEvent(withInfo placementInfo: SuperwallEventInfo) {}
+  @MainActor
+  @available(*, deprecated, renamed: "handleSuperwallEvent(withInfo:)")
+  func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo) {}
 }
 
 @available(*, unavailable, renamed: "ProductStore")

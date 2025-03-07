@@ -14,7 +14,7 @@ import XCTest
 final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_noParams() async {
     // Given
-    let event = InternalSuperwallPlacement.AppLaunch()
+    let event = InternalSuperwallEvent.AppLaunch()
 
     // When
     let parameters = await TrackingLogic.processParameters(
@@ -88,7 +88,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_paywallLoad() async {
     // Given
     let eventName = "TestName"
-    let event = InternalSuperwallPlacement.PaywallLoad(
+    let event = InternalSuperwallEvent.PaywallLoad(
       state: .start,
       placementData:
         PlacementData
@@ -111,7 +111,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_attributes_withCustomParams() async {
     // Given
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": "hello",
@@ -137,7 +137,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containsDollar() async {
     // Given
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "$myCustomParam": "hello",
@@ -163,7 +163,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containArray() async {
     // Given
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": ["hello"],
@@ -189,7 +189,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containDictionary() async {
     // Given
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": ["one": "two"],
@@ -216,7 +216,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsDate() async {
     // Given
     let date = Date(timeIntervalSince1970: 1_650_534_735)
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": date,
@@ -243,7 +243,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsUrl() async {
     // Given
     let url = URL(string: "https://www.google.com")!
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": url,
@@ -269,7 +269,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_nilValue() async {
     // Given
-    let event = InternalSuperwallPlacement.Attributes(
+    let event = InternalSuperwallEvent.Attributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": nil,
@@ -320,7 +320,7 @@ final class TrackingLogicTests: XCTestCase {
     )
 
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallPlacement.AppInstall(
+      InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: Set(["app_install"]),
       paywallViewController: paywallVc
@@ -330,7 +330,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallPlacement.AppInstall(
+      InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: [],
       paywallViewController: nil
@@ -340,7 +340,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
     let outcome = TrackingLogic.canTriggerPaywall(
-      InternalSuperwallPlacement.AppInstall(
+      InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: ["app_install"],
       paywallViewController: nil
@@ -362,14 +362,14 @@ final class TrackingLogicTests: XCTestCase {
 
   func test_checkNotSuperwallEvent_isSuperwallEvent() {
     do {
-      try TrackingLogic.checkNotSuperwallPlacement("paywall_open")
+      try TrackingLogic.checkNotSuperwallEvent("paywall_open")
       XCTFail("Should have failed")
     } catch {}
   }
 
   func test_checkNotSuperwallEvent_isNotSuperwallEvent() {
     do {
-      try TrackingLogic.checkNotSuperwallPlacement("my_random_event")
+      try TrackingLogic.checkNotSuperwallEvent("my_random_event")
     } catch {
       XCTFail("Should have failed")
     }
@@ -379,7 +379,7 @@ final class TrackingLogicTests: XCTestCase {
 
   // This happens when config is null
   func test_isNotDisabledVerboseEvent_nullVerboseEvents() {
-    let event = InternalSuperwallPlacement.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: nil,
@@ -389,7 +389,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isSandbox_disabledEvents() {
-    let event = InternalSuperwallPlacement.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
@@ -399,7 +399,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_presentationReq() {
-    let placement = InternalSuperwallPlacement.PresentationRequest(
+    let placement = InternalSuperwallEvent.PresentationRequest(
       placementData: .stub(), type: .presentation, status: .presentation, statusReason: nil,
       factory: DependencyContainer())
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -411,7 +411,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_presentationReq() {
-    let placement = InternalSuperwallPlacement.PresentationRequest(
+    let placement = InternalSuperwallEvent.PresentationRequest(
       placementData: .stub(), type: .presentation, status: .presentation, statusReason: nil,
       factory: DependencyContainer())
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -423,7 +423,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallLoad(state: .start, placementData: nil)
+    let event = InternalSuperwallEvent.PaywallLoad(state: .start, placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
@@ -433,7 +433,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallLoad(state: .start, placementData: nil)
+    let event = InternalSuperwallEvent.PaywallLoad(state: .start, placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: false,
@@ -443,7 +443,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadComplete() {
-    let event = InternalSuperwallPlacement.PaywallLoad(
+    let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
@@ -454,7 +454,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadComplete() {
-    let event = InternalSuperwallPlacement.PaywallLoad(
+    let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
@@ -465,7 +465,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_productsLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallProductsLoad(
+    let event = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start, paywallInfo: .stub(), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
@@ -476,7 +476,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_productsLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallLoad(
+    let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
@@ -487,7 +487,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_webviewLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallWebviewLoad(state: .start, paywallInfo: .stub())
+    let event = InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: .stub())
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
@@ -497,7 +497,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_webviewLoadStart() {
-    let event = InternalSuperwallPlacement.PaywallLoad(
+    let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
@@ -508,7 +508,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_sessionStart() {
-    let event = InternalSuperwallPlacement.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: false,
@@ -518,7 +518,7 @@ final class TrackingLogicTests: XCTestCase {
   }
 
   func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_sessionStart() {
-    let event = InternalSuperwallPlacement.SessionStart()
+    let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,

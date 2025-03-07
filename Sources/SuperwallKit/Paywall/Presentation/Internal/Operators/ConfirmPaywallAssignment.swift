@@ -15,11 +15,11 @@ extension Superwall {
   /// at this point.
   ///
   /// - Parameters:
-  ///   - confirmableAssignment: The assignment to confirm.
+  ///   - assignment: The assignment to confirm.
   ///   - isDebuggerLaunched: A boolean that indicates whether the debugger is launched.
   ///   - dependendencyContainer: Used for tests only.
   func confirmPaywallAssignment(
-    _ confirmableAssignment: ConfirmableAssignment?,
+    _ assignment: Assignment?,
     request: PresentationRequest,
     isDebuggerLaunched: Bool,
     dependencyContainer: DependencyContainer? = nil
@@ -33,8 +33,9 @@ extension Superwall {
       return
     }
 
-    if let confirmableAssignment = confirmableAssignment {
-      dependencyContainer.configManager.confirmAssignment(confirmableAssignment)
+    if let assignment = assignment,
+      !assignment.isSentToServer {
+      dependencyContainer.configManager.postbackAssignment(assignment)
     }
   }
 }

@@ -227,6 +227,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
+    case storeKitVersion
+    case maxConfigRetryCount
+    case shouldObservePurchases
   }
 
   public override init() {
@@ -257,6 +260,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
+    try container.encode(storeKitVersion.description, forKey: .storeKitVersion)
+    try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
+    try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
   }
 
   func toDictionary() -> [String: Any] {

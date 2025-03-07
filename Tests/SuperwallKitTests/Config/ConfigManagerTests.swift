@@ -69,13 +69,15 @@ final class ConfigManagerTests: XCTestCase {
   }
 
   // MARK: - Confirm Assignments
+  @available(iOS 16.0, *)
   func test_confirmAssignment() async {
     let experimentId = "abc"
     let variantId = "def"
     let variant: Experiment.Variant = .init(id: variantId, type: .treatment, paywallId: "jkl")
-    let assignment = ConfirmableAssignment(
+    let assignment = Assignment(
       experimentId: experimentId,
-      variant: variant
+      variant: variant,
+      isSentToServer: false
     )
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
@@ -93,15 +95,46 @@ final class ConfigManagerTests: XCTestCase {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       factory: dependencyContainer
     )
-    configManager.confirmAssignment(assignment)
+    configManager.postbackAssignment(assignment)
 
-    let milliseconds = 200
-    let nanoseconds = UInt64(milliseconds * 1_000_000)
-    try? await Task.sleep(nanoseconds: nanoseconds)
+    try? await Task.sleep(for: .seconds(1))
 
     XCTAssertTrue(network.assignmentsConfirmed)
-    XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variant)
-    XCTAssertNil(configManager.unconfirmedAssignments[experimentId])
+    XCTAssertEqual(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant, variant)
+  }
+
+  @available(iOS 16.0, *)
+  func test_confirmAssignment_updateNewVariant() async {
+    let experimentId = "abc"
+    let variantId = "def"
+    let variant: Experiment.Variant = .init(id: variantId, type: .treatment, paywallId: "jkl")
+    let assignment = Assignment(
+      experimentId: experimentId,
+      variant: variant,
+      isSentToServer: false
+    )
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let storage = StorageMock()
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      factory: dependencyContainer
+    )
+    configManager.postbackAssignment(assignment)
+
+    try? await Task.sleep(for: .seconds(1))
+
+    XCTAssertTrue(network.assignmentsConfirmed)
+    XCTAssertEqual(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant, variant)
   }
 
   // MARK: - Load Assignments
@@ -133,8 +166,7 @@ final class ConfigManagerTests: XCTestCase {
 
     await fulfillment(of: [expectation], timeout: 1)
 
-    XCTAssertTrue(storage.getConfirmedAssignments().isEmpty)
-    XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)
+    XCTAssertTrue(storage.getAssignments().isEmpty)
   }
 
   func test_loadAssignments_noTriggers() async {
@@ -159,8 +191,7 @@ final class ConfigManagerTests: XCTestCase {
 
     try? await configManager.getAssignments()
 
-    XCTAssertTrue(storage.getConfirmedAssignments().isEmpty)
-    XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)
+    XCTAssertTrue(storage.getAssignments().isEmpty)
   }
 
   func test_loadAssignments_saveAssignmentsFromServer() async {
@@ -184,8 +215,8 @@ final class ConfigManagerTests: XCTestCase {
     let variantId = "variantId"
     let experimentId = "experimentId"
 
-    let assignments: [Assignment] = [
-      Assignment(experimentId: experimentId, variantId: variantId)
+    let assignments: [PostbackAssignment] = [
+      PostbackAssignment(experimentId: experimentId, variantId: variantId)
     ]
     network.assignments = assignments
 
@@ -208,7 +239,6 @@ final class ConfigManagerTests: XCTestCase {
 
     try? await Task.sleep(nanoseconds: 1_000_000)
 
-    XCTAssertEqual(storage.getConfirmedAssignments()[experimentId], variantOption.toExperimentVariant())
-    XCTAssertTrue(configManager.unconfirmedAssignments.isEmpty)
+    XCTAssertEqual(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant, variantOption.toExperimentVariant())
   }
 }

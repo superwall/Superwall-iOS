@@ -33,16 +33,10 @@ class ConfigManager {
   @DispatchQueueBacked
   var triggersByPlacementName: [String: Trigger] = [:]
 
-  /// A memory store of assignments that are yet to be confirmed.
-  ///
-  /// When the trigger is fired, the assignment is confirmed and stored to disk.
-  @DispatchQueueBacked
-  var unconfirmedAssignments: [Experiment.ID: Experiment.Variant] = [:]
-
   var configRetryCount = 0
 
   private unowned let storeKitManager: StoreKitManager
-  private unowned let storage: Storage
+  unowned let storage: Storage
   private unowned let network: Network
   private unowned let paywallManager: PaywallManager
   private unowned let deviceHelper: DeviceHelper
@@ -112,7 +106,7 @@ class ConfigManager {
       await processConfig(newConfig, isFirstTime: false)
       configState.send(.retrieved(newConfig))
 
-      let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
+      let configRefresh = InternalSuperwallEvent.ConfigRefresh(
         buildId: newConfig.buildId,
         retryCount: configRetryCount,
         cacheStatus: .notCached,
@@ -196,10 +190,10 @@ class ConfigManager {
       let configFetchDuration = Date().timeIntervalSince(startAt)
       let isUsingCachedGeoInfo = await isUsingCachedGeo
 
-      let cacheStatus: InternalSuperwallPlacement.ConfigCacheStatus =
+      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus =
         isUsingCachedConfig ? .cached : .notCached
       Task {
-        let configRefresh = InternalSuperwallPlacement.ConfigRefresh(
+        let configRefresh = InternalSuperwallEvent.ConfigRefresh(
           buildId: config.buildId,
           retryCount: configRetryCount,
           cacheStatus: cacheStatus,
@@ -210,7 +204,7 @@ class ConfigManager {
 
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
       await processConfig(config, isFirstTime: true)
@@ -233,7 +227,7 @@ class ConfigManager {
     } catch {
       configState.send(completion: .failure(error))
 
-      let configFallback = InternalSuperwallPlacement.ConfigFail(
+      let configFallback = InternalSuperwallEvent.ConfigFail(
         message: error.localizedDescription
       )
       await Superwall.shared.track(configFallback)
@@ -303,7 +297,6 @@ class ConfigManager {
     guard let config = configState.value.getConfig() else {
       return
     }
-    unconfirmedAssignments.removeAll()
     choosePaywallVariants(from: config.triggers)
     Task { await preloadPaywalls() }
   }
@@ -311,7 +304,7 @@ class ConfigManager {
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
   /// config's triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
-    if triggers.contains(where: { $0.placementName == SuperwallPlacement.touchesBegan.description }) {
+    if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
       await UIWindow.swizzleSendEvent()
     }
   }
@@ -319,12 +312,14 @@ class ConfigManager {
   // MARK: - Assignments
 
   private func choosePaywallVariants(from triggers: Set<Trigger>) {
-    updateAssignments { confirmedAssignments in
-      ConfigLogic.chooseAssignments(
-        fromTriggers: triggers,
-        confirmedAssignments: confirmedAssignments
-      )
-    }
+    var assignments = storage.getAssignments()
+
+    assignments = ConfigLogic.chooseAssignments(
+      fromTriggers: triggers,
+      assignments: assignments
+    )
+
+    storage.overwriteAssignments(assignments)
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.
@@ -341,16 +336,16 @@ class ConfigManager {
     }
 
     do {
-      let assignments = try await network.getAssignments()
+      let serverAssignments = try await network.getAssignments()
+      var localAssignments = storage.getAssignments()
 
-      updateAssignments { confirmedAssignments in
-        ConfigLogic.transferAssignmentsFromServerToDisk(
-          assignments: assignments,
-          triggers: triggers,
-          confirmedAssignments: confirmedAssignments,
-          unconfirmedAssignments: unconfirmedAssignments
-        )
-      }
+      localAssignments = ConfigLogic.transferAssignments(
+        fromServer: serverAssignments,
+        toDisk: localAssignments,
+        triggers: triggers
+      )
+
+      storage.overwriteAssignments(localAssignments)
 
       Task { await preloadPaywalls() }
     } catch {
@@ -363,35 +358,15 @@ class ConfigManager {
     }
   }
 
-  /// Sends an assignment confirmation to the server and updates on-device assignments.
-  func confirmAssignment(_ assignment: ConfirmableAssignment) {
-    let postback: AssignmentPostback = .create(from: assignment)
-    Task { await network.confirmAssignments(postback) }
-
-    updateAssignments { confirmedAssignments in
-      ConfigLogic.move(
-        assignment,
-        from: unconfirmedAssignments,
-        to: confirmedAssignments
-      )
+  /// Posts back an assignment to the server and updates on-device confirmed assignments.
+  func postbackAssignment(_ assignment: Assignment) {
+    Task { [weak self] in
+      guard let self = self else {
+        return
+      }
+      let confirmedAssignment = await self.network.confirmAssignment(assignment)
+      self.storage.updateAssignment(confirmedAssignment)
     }
-  }
-
-  /// Performs a given operation on the confirmed assignments, before updating both confirmed
-  /// and unconfirmed assignments.
-  ///
-  /// - Parameters:
-  ///   - operation: Provided logic that takes confirmed assignments by ID and returns updated assignments.
-  private func updateAssignments(
-    using operation: ([Experiment.ID: Experiment.Variant]) -> ConfigLogic.AssignmentOutcome
-  ) {
-    var confirmedAssignments = storage.getConfirmedAssignments()
-
-    let updatedAssignments = operation(confirmedAssignments)
-    unconfirmedAssignments = updatedAssignments.unconfirmed
-    confirmedAssignments = updatedAssignments.confirmed
-
-    storage.saveConfirmedAssignments(confirmedAssignments)
   }
 
   // MARK: - Preloading Paywalls
@@ -406,11 +381,10 @@ class ConfigManager {
     if preloadableTriggers.isEmpty {
       return []
     }
-    let confirmedAssignments = storage.getConfirmedAssignments()
+    let assignments = storage.getAssignments()
     return ConfigLogic.getActiveTreatmentPaywallIds(
       forTriggers: preloadableTriggers,
-      confirmedAssignments: confirmedAssignments,
-      unconfirmedAssignments: unconfirmedAssignments
+      assignments: assignments
     )
   }
 
@@ -444,11 +418,10 @@ class ConfigManager {
         config.triggers,
         removing: config.preloadingDisabled
       )
-      let confirmedAssignments = self.storage.getConfirmedAssignments()
+      let assignments = self.storage.getAssignments()
       var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
         fromTriggers: triggers,
-        confirmedAssignments: confirmedAssignments,
-        unconfirmedAssignments: self.unconfirmedAssignments,
+        assignments: assignments,
         expressionEvaluator: expressionEvaluator
       )
       // Do not preload the presented paywall. This is because if config refreshes, we

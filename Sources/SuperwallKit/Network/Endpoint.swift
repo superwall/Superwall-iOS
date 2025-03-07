@@ -226,7 +226,7 @@ extension Endpoint where
 // MARK: - ConfirmedAssignmentResponse
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == ConfirmedAssignmentResponse {
+  Response == PostbackAssignmentWrapper {
   static func assignments() -> Self {
     return Endpoint(
       components: Components(
@@ -238,9 +238,9 @@ extension Endpoint where
   }
 
   static func confirmAssignments(
-    _ confirmableAssignments: AssignmentPostback
+    _ assignments: PostbackAssignmentWrapper
   ) -> Self {
-    let bodyData = try? JSONEncoder.toSnakeCase.encode(confirmableAssignments)
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(assignments)
 
     return Endpoint(
       components: Components(

@@ -31,7 +31,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     let request = PresentationRequest.stub()
       .setting(\.flags.type, to: .presentation)
      Superwall.shared.confirmPaywallAssignment(
-      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")), request: request,
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false), request: request,
       isDebuggerLaunched: true,
       dependencyContainer: dependencyContainer
      )
@@ -89,12 +89,44 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     Superwall.shared.confirmPaywallAssignment(
-      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       request: request,
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
    XCTAssertTrue(configManager.confirmedAssignment)
+  }
+
+  @MainActor
+  func test_confirmPaywallAssignment_confirmAssignment_isSentToServer() async {
+    let dependencyContainer = DependencyContainer()
+    let configManager = ConfigManagerMock(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      factory: dependencyContainer
+    )
+    try? await Task.sleep(nanoseconds: 10_000_000)
+    dependencyContainer.configManager = configManager
+
+    let request = dependencyContainer.makePresentationRequest(
+      .explicitTrigger(.stub()),
+      isDebuggerLaunched: false,
+      isPaywallPresented: false,
+      type: .getPaywall(.stub())
+    )
+
+    Superwall.shared.confirmPaywallAssignment(
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: true),
+      request: request,
+      isDebuggerLaunched: false,
+      dependencyContainer: dependencyContainer
+     )
+   XCTAssertFalse(configManager.confirmedAssignment)
   }
 
   @MainActor
@@ -121,7 +153,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     Superwall.shared.confirmPaywallAssignment(
-      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       request: request,
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
@@ -153,7 +185,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     Superwall.shared.confirmPaywallAssignment(
-      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       request: request,
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
@@ -185,7 +217,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
     )
 
     Superwall.shared.confirmPaywallAssignment(
-      ConfirmableAssignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: "")),
+      Assignment(experimentId: "", variant: .init(id: "", type: .treatment, paywallId: ""), isSentToServer: false),
       request: request,
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer

@@ -273,7 +273,7 @@ public final class Superwall: NSObject, ObservableObject {
       _ = await (fetchConfig, configureIdentity)
 
       await track(
-        InternalSuperwallPlacement.ConfigAttributes(
+        InternalSuperwallEvent.ConfigAttributes(
           options: dependencyContainer.configManager.options,
           hasExternalPurchaseController: purchaseController != nil,
           hasDelegate: delegate != nil
@@ -315,24 +315,26 @@ public final class Superwall: NSObject, ObservableObject {
         (previous: previousPair.current, current: newStatus)
       }
       .receive(on: DispatchQueue.main)
-      .subscribe(Subscribers.Sink(
-        receiveCompletion: { _ in },
-        receiveValue: { [weak self] statusPair in
-          guard let self = self else {
-            return
-          }
-          let oldStatus = statusPair.previous
-          let newStatus = statusPair.current
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { [weak self] statusPair in
+            guard let self = self else {
+              return
+            }
+            let oldStatus = statusPair.previous
+            let newStatus = statusPair.current
 
-          self.dependencyContainer.storage.save(newStatus, forType: SubscriptionStatusKey.self)
+            self.dependencyContainer.storage.save(newStatus, forType: SubscriptionStatusKey.self)
 
-          Task {
-            await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(from: oldStatus, to: newStatus)
-            let event = InternalSuperwallPlacement.SubscriptionStatusDidChange(status: newStatus)
-            await Superwall.shared.track(event)
+            Task {
+              await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
+                from: oldStatus, to: newStatus)
+              let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
+              await Superwall.shared.track(event)
+            }
           }
-        }
-      ))
+        ))
   }
 
   /// Sets ``subscriptionStatus`` to an`unknown` state.
@@ -440,35 +442,29 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Gets an array of all confirmed experiment assignments.
   ///
-  /// - Returns: An array of ``ConfirmedAssignment`` objects.
-  public func getAssignments() -> [ConfirmedAssignment] {
-    let confirmedAssignments = dependencyContainer.storage.getConfirmedAssignments()
-    return confirmedAssignments.map {
-      ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
-    }
+  /// - Returns: An array of ``Assignment`` objects.
+  public func getAssignments() -> [Assignment] {
+    let assignments = dependencyContainer.storage.getAssignments()
+    return Array(assignments)
   }
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
   ///
-  /// - Returns: An array of ``ConfirmedAssignment`` objects.
-  public func confirmAllAssignments() async -> [ConfirmedAssignment] {
-    let confirmAllAssignments = InternalSuperwallPlacement.ConfirmAllAssignments()
+  /// - Returns: An array of ``Assignment`` objects.
+  public func confirmAllAssignments() async -> [Assignment] {
+    let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
     await track(confirmAllAssignments)
 
     guard let triggers = dependencyContainer.configManager.config?.triggers else {
       return []
     }
 
-    let storedAssignments = dependencyContainer.storage.getConfirmedAssignments()
-    var assignments = Set(
-      storedAssignments.map {
-        ConfirmedAssignment(experimentId: $0.key, variant: $0.value)
-      })
+    var assignments = dependencyContainer.storage.getAssignments()
 
     for trigger in triggers {
       let eventData = PlacementData(
@@ -485,7 +481,7 @@ public final class Superwall: NSObject, ObservableObject {
       )
 
       if let assignment = await confirmAssignments(presentationRequest) {
-        assignments.insert(assignment)
+        assignments.update(with: assignment)
       }
     }
     return Array(assignments)
@@ -493,13 +489,13 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Confirms all experiment assignments and returns them in an array.
   ///
-  /// This tracks ``SuperwallPlacement/confirmAllAssignments`` in the delegate.
+  /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
   /// in user, placement, or device parameters used in audience filters.
   ///
-  /// - Parameter completion: A completion block that accepts an array of ``ConfirmedAssignment`` objects.
-  public func confirmAllAssignments(completion: (([ConfirmedAssignment]) -> Void)? = nil) {
+  /// - Parameter completion: A completion block that accepts an array of ``Assignment`` objects.
+  public func confirmAllAssignments(completion: (([Assignment]) -> Void)? = nil) {
     Task {
       let result = await confirmAllAssignments()
       completion?(result)
@@ -624,7 +620,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-      let deviceAttributesPlacement = InternalSuperwallPlacement.DeviceAttributes(
+      let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
         deviceAttributes: deviceAttributes)
       await track(deviceAttributesPlacement)
     }
@@ -637,7 +633,7 @@ public final class Superwall: NSObject, ObservableObject {
     Task {
       let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
       await Superwall.shared.track(
-        InternalSuperwallPlacement.DeviceAttributes(deviceAttributes: deviceAttributes)
+        InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
     }
   }
@@ -656,7 +652,7 @@ public final class Superwall: NSObject, ObservableObject {
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
     Task {
-      await track(InternalSuperwallPlacement.DeepLink(url: url))
+      await track(InternalSuperwallEvent.DeepLink(url: url))
     }
     return dependencyContainer.debugManager.handle(deepLinkUrl: url)
   }
@@ -693,7 +689,7 @@ public final class Superwall: NSObject, ObservableObject {
     presentationItems.reset()
     dependencyContainer.configManager.reset()
     Task {
-      await Superwall.shared.track(InternalSuperwallPlacement.Reset())
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)
         if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
@@ -987,7 +983,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case let .customPlacement(name: name, params: params):
       Task {
         let paramsDict = params.dictionaryValue
-        let customPlacement = InternalSuperwallPlacement.CustomPlacement(
+        let customPlacement = InternalSuperwallEvent.CustomPlacement(
           paywallInfo: paywallViewController.info,
           name: name,
           params: paramsDict

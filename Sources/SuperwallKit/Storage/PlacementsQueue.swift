@@ -86,8 +86,8 @@ actor PlacementsQueue {
     if Superwall.shared.options.isExternalDataCollectionEnabled {
       return true
     }
-    if placement is InternalSuperwallPlacement.TriggerFire
-      || placement is InternalSuperwallPlacement.Attributes
+    if placement is InternalSuperwallEvent.TriggerFire
+      || placement is InternalSuperwallEvent.Attributes
       || placement is UserInitiatedPlacement.Track {
       return false
     }

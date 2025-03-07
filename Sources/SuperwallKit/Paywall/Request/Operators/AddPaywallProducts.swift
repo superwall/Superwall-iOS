@@ -73,7 +73,7 @@ extension PaywallRequestManager {
     var paywall = paywall
     paywall.productsLoadingInfo.startAt = Date()
     let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
-    let productsLoad = InternalSuperwallPlacement.PaywallProductsLoad(
+    let productsLoad = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start,
       paywallInfo: paywallInfo,
       placementData: request.placementData
@@ -88,7 +88,7 @@ extension PaywallRequestManager {
     placement: PlacementData?,
     error: Error
   ) async {
-    let productLoad = InternalSuperwallPlacement.PaywallProductsLoad(
+    let productLoad = InternalSuperwallEvent.PaywallProductsLoad(
       state: .fail(error),
       paywallInfo: paywallInfo,
       placementData: placement
@@ -103,7 +103,7 @@ extension PaywallRequestManager {
     var paywall = paywall
     paywall.productsLoadingInfo.endAt = Date()
     let paywallInfo = paywall.getInfo(fromPlacement: placement)
-    let productsLoad = InternalSuperwallPlacement.PaywallProductsLoad(
+    let productsLoad = InternalSuperwallEvent.PaywallProductsLoad(
       state: .complete,
       paywallInfo: paywallInfo,
       placementData: placement

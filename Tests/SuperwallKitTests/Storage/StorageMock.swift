@@ -12,7 +12,7 @@ import Foundation
 @available(iOS 14.0, *)
 final class StorageMock: Storage {
   var internalCachedTransactions: [StoreTransaction]
-  var internalConfirmedAssignments: [Experiment.ID: Experiment.Variant]
+  var internalConfirmedAssignments: Set<Assignment>?
   var internalSurveyAssignmentKey: String?
   var didClearCachedSessionEvents = false
   var didSave = false
@@ -39,7 +39,7 @@ final class StorageMock: Storage {
     internalCachedTransactions: [StoreTransaction] = [],
     internalSurveyAssignmentKey: String? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
-    confirmedAssignments: [Experiment.ID : Experiment.Variant] = [:],
+    confirmedAssignments: Set<Assignment>? = [],
     cache: Cache = Cache()
   ) {
     self.internalCachedTransactions = internalCachedTransactions
@@ -71,12 +71,16 @@ final class StorageMock: Storage {
     didClearCachedSessionEvents = true
   }
 
-  override func getConfirmedAssignments() -> [Experiment.ID: Experiment.Variant] {
-    return internalConfirmedAssignments
+  override func getAssignments() -> Set<Assignment> {
+    return internalConfirmedAssignments ?? []
   }
 
-  override func saveConfirmedAssignments(_ assignments: [String : Experiment.Variant]) {
-    internalConfirmedAssignments = assignments
+  override func overwriteAssignments(_ newAssignments: Set<Assignment>) {
+    internalConfirmedAssignments = newAssignments
+  }
+
+  override func updateAssignment(_ newAssignment: Assignment) {
+    internalConfirmedAssignments?.update(with: newAssignment)
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {

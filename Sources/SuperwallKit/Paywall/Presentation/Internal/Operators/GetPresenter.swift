@@ -13,7 +13,7 @@ struct PresentablePipelineOutput {
   let debugInfo: [String: Any]
   let paywallViewController: PaywallViewController
   let presenter: UIViewController
-  let confirmableAssignment: ConfirmableAssignment?
+  let assignment: Assignment?
 }
 
 extension Superwall {
@@ -111,7 +111,7 @@ extension Superwall {
       break
     }
 
-    let triggerFire = InternalSuperwallPlacement.TriggerFire(
+    let triggerFire = InternalSuperwallEvent.TriggerFire(
       triggerResult: triggerResult,
       triggerName: placementName
     )

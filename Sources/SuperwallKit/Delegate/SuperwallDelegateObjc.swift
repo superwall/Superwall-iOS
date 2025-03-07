@@ -62,9 +62,21 @@ public protocol SuperwallDelegateObjc: AnyObject {
   /// You can switch over `info.placement` for a list of possible cases. See
   /// [Superwall Placements](https://docs.superwall.com/docs/tracking-analytics) for more info.
   ///
-  /// - Parameter placementInfo: A ``SuperwallPlacementInfo`` object containing an `placement` and a `params` parameter.
+  /// - Parameter placementInfo: A ``SuperwallPlacementInfo`` object containing a `placement` and a `params` parameter.
   @MainActor
+  @available(*, deprecated, renamed: "handleSuperwallEvent(withInfo:)")
   @objc optional func handleSuperwallPlacement(withInfo placementInfo: SuperwallPlacementInfo)
+
+  /// Called whenever an internal event is tracked.
+  ///
+  /// Use this method when you want to track internal events in your own analytics.
+  ///
+  /// You can switch over `info.event` for a list of possible cases. See
+  /// [Superwall Placements](https://docs.superwall.com/docs/tracking-analytics) for more info.
+  ///
+  /// - Parameter eventInfo: A ``SuperwallEventInfo`` object containing an `event` and a `params` parameter.
+  @MainActor
+  @objc optional func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 
   /// Called when the ``Superwall/subscriptionStatusObjc`` changes.
   ///

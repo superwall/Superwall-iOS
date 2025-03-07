@@ -22,7 +22,7 @@ extension Superwall {
         return
       }
       if let reason = error as? PresentationPipelineError {
-        let presentationRequest = InternalSuperwallPlacement.PresentationRequest(
+        let presentationRequest = InternalSuperwallEvent.PresentationRequest(
           placementData: request.presentationInfo.placementData,
           type: request.flags.type,
           status: .noPresentation,

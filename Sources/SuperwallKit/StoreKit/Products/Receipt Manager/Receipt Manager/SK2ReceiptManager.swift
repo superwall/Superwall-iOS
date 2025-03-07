@@ -46,6 +46,18 @@ actor SK2ReceiptManager: ReceiptManagerType {
             continue
           }
         }
+        // If refunded/revoked, set as inactive
+        if transaction.revocationDate != nil {
+          purchases.insert(
+            Purchase(
+              id: transaction.productID,
+              isActive: false,
+              purchaseDate: transaction.purchaseDate
+            )
+          )
+          continue
+        }
+
         purchases.insert(
           Purchase(
             id: transaction.productID,

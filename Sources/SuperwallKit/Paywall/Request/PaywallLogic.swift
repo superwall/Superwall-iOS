@@ -45,7 +45,7 @@ enum PaywallLogic {
   ) -> NSError {
     if let error = error as? NetworkError,
       error == .notFound {
-      let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
+      let paywallLoad = InternalSuperwallEvent.PaywallLoad(
         state: .notFound,
         placementData: placement
       )
@@ -66,7 +66,7 @@ enum PaywallLogic {
       )
       return error
     } else {
-      let paywallLoad = InternalSuperwallPlacement.PaywallLoad(
+      let paywallLoad = InternalSuperwallEvent.PaywallLoad(
         state: .fail,
         placementData: placement
       )
