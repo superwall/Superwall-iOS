@@ -159,3 +159,9 @@ protocol ReceiptFactory {
 protocol ConfigAttributesFactory {
   func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes
 }
+
+protocol WebEntitlementFactory {
+  func makeDeviceId() -> String
+  func makeAppUserId() -> String?
+  func makeAliasId() -> String
+}

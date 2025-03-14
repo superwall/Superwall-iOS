@@ -216,3 +216,11 @@ enum SK2TransactionIds: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Set<UInt64>
 }
+
+enum LatestRedeemResponse: Storable {
+  static var key: String {
+    "store.latestRedeemResponse"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = RedeemResponse
+}

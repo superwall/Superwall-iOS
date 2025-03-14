@@ -369,6 +369,25 @@ extension Cache {
     cleanDiskCache()
   }
 
+  /// Cleans codes that are owned by the user.
+  func cleanUserCodes() {
+    var codes = read(Codes.self) ?? []
+
+    if let redeemResponse = read(LatestRedeemResponse.self) {
+      for code in redeemResponse.codes {
+        switch code {
+        case let .success(code, redemptionInfo):
+          if case .appUser = redemptionInfo.ownership {
+            codes.removeAll(where: { $0.code == code })
+          }
+        default:
+          break
+        }
+      }
+    }
+    write(codes, forType: Codes.self)
+  }
+
   private func cleanDiskCache() {
     ioQueue.async { [weak self] in
       guard let self = self else {

@@ -651,10 +651,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
+    // TODO: Should a deep link from here be able to be used for a paywall if using a code?
     Task {
       await track(InternalSuperwallEvent.DeepLink(url: url))
     }
-    return dependencyContainer.debugManager.handle(deepLinkUrl: url)
+    return dependencyContainer.deepLinkRouter.route(url: url)
   }
 
   // MARK: - Paywall Spinner

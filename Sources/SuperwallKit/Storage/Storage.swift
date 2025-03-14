@@ -128,6 +128,7 @@ class Storage {
   func reset() {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
+    cache.cleanUserCodes()
 
     queue.async { [weak self] in
       self?._assignments = nil

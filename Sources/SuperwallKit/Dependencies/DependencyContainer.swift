@@ -8,7 +8,6 @@
 
 import UIKit
 import Combine
-import SystemConfiguration
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -39,6 +38,8 @@ final class DependencyContainer {
   var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
   var attributionPoster: AttributionPoster!
+  var redeemer: WebEntitlementRedeemer!
+  var deepLinkRouter: DeepLinkRouter!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -62,6 +63,12 @@ final class DependencyContainer {
       factory: self
     )
 
+    redeemer = WebEntitlementRedeemer(
+      network: network,
+      storage: storage,
+      entitlementsInfo: entitlementsInfo,
+      factory: self
+    )
     storeKitManager = StoreKitManager(productsManager: productsManager)
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
@@ -101,6 +108,7 @@ final class DependencyContainer {
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
       entitlementsInfo: entitlementsInfo,
+      webEntitlementRedeemer: redeemer,
       factory: self
     )
 
@@ -133,7 +141,10 @@ final class DependencyContainer {
       storage: storage,
       factory: self
     )
-
+    deepLinkRouter = DeepLinkRouter(
+      webEntitlementRedeemer: redeemer,
+      debugManager: debugManager
+    )
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
@@ -528,5 +539,16 @@ extension DependencyContainer: ConfigAttributesFactory {
       hasExternalPurchaseController: purchaseController.isInternal == false,
       hasDelegate: hasSwiftDelegate || hasObjcDelegate
     )
+  }
+}
+
+// MARK: WebEntitlementFactory
+extension DependencyContainer: WebEntitlementFactory {
+  func makeDeviceId() -> String {
+    return "$SuperwallDevice:\(deviceHelper.vendorId)"
+  }
+
+  func makeAppUserId() -> String? {
+    return identityManager.appUserId
   }
 }

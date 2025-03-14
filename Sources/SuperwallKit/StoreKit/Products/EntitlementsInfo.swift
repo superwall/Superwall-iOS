@@ -98,6 +98,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   // MARK: - Private API
 
+  func mergeWebEntitlements(_ webEntitlements: Set<Entitlement>) {
+    let localWithWeb = active.union(webEntitlements)
+    Superwall.shared.subscriptionStatus = .active(localWithWeb)
+  }
+
   func subscriptionStatusDidSet(_ subscriptionStatus: SubscriptionStatus) {
     queue.async { [weak self] in
       guard let self = self else {

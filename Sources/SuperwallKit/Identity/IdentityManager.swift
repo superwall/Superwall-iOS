@@ -257,6 +257,10 @@ class IdentityManager {
       // Wait for assignments before setting identity. Otherwise,
       // get assignments in the background.
 
+      Task {
+        await self.configManager.checkForWebEntitlements()
+      }
+
       if let options = options {
         if options.restorePaywallAssignments {
           Task {

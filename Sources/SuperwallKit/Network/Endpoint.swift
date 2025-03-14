@@ -291,3 +291,35 @@ extension Endpoint where
     )
   }
 }
+
+// MARK: - Web2App
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == RedeemResponse {
+  static func redeem(request: RedeemRequest) -> Self {
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .base,
+        path: Api.version1 + "redeem",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == WebEntitlements {
+  static func redeem(appUserIdOrDeviceId: String) -> Self {
+    return Endpoint(
+      components: Components(
+        host: .base,
+        path: Api.version1 + "users/\(appUserIdOrDeviceId)/entitlements"
+      ),
+      method: .get
+    )
+  }
+}

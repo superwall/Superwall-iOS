@@ -13,18 +13,18 @@ extension Superwall {
   /// Tracks an analytical event by sending it to the server and, for internal Superwall placements, the delegate.
   ///
   /// - Parameters:
-  ///   - placement: The placement you want to track.
+  ///   - event: The event you want to track.
 	@discardableResult
-  func track(_ placement: Trackable) async -> TrackingResult {
-    // Get parameters to be sent to the delegate and stored in an placement.
-    let placementCreatedAt = Date()
+  func track(_ event: Trackable) async -> TrackingResult {
+    // Get parameters to be sent to the delegate and stored in an event.
+    let eventCreatedAt = Date()
     let parameters = await TrackingLogic.processParameters(
-      fromTrackablePlacement: placement,
+      fromTrackableEvent: event,
       appSessionId: dependencyContainer.appSessionManager.appSession.id
     )
 
-    // For a trackable superwall placement, send params to delegate
-    if let trackedEvent = placement as? TrackableSuperwallEvent {
+    // For a trackable superwall event, send params to delegate
+    if let trackedEvent = event as? TrackableSuperwallEvent {
       let info = SuperwallEventInfo(
         event: trackedEvent.superwallEvent,
         params: parameters.delegateParams
@@ -40,42 +40,42 @@ extension Superwall {
       )
     }
 
-    let placementData = PlacementData(
-      name: placement.rawName,
+    let eventData = PlacementData(
+      name: event.rawName,
       parameters: JSON(parameters.audienceFilterParams),
-      createdAt: placementCreatedAt
+      createdAt: eventCreatedAt
     )
 
     // If config doesn't exist yet we rely on previous saved feature flag
     // to determine whether to disable verbose placements.
-    let existingDisableVerbosePlacements = dependencyContainer.configManager.config?.featureFlags.disableVerbosePlacements
-    let previousDisableVerbosePlacements = dependencyContainer.storage.get(DisableVerbosePlacements.self)
+    let existingDisableVerboseEvents = dependencyContainer.configManager.config?.featureFlags.disableVerbosePlacements
+    let previousDisableVerboseEvents = dependencyContainer.storage.get(DisableVerbosePlacements.self)
 
-    let verbosePlacements = existingDisableVerbosePlacements ?? previousDisableVerbosePlacements
+    let verbosePlacements = existingDisableVerboseEvents ?? previousDisableVerboseEvents
 
     if TrackingLogic.isNotDisabledVerbosePlacement(
-      placement,
+      event,
       disableVerbosePlacements: verbosePlacements,
       isSandbox: dependencyContainer.makeIsSandbox()
     ) {
       await dependencyContainer.placementsQueue.enqueue(
-        data: placementData.jsonData,
-        from: placement
+        data: eventData.jsonData,
+        from: event
       )
     }
-    dependencyContainer.storage.coreDataManager.savePlacementData(placementData)
+    dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
 
-    if placement.canImplicitlyTriggerPaywall {
+    if event.canImplicitlyTriggerPaywall {
       Task.detached { [weak self] in
         await self?.handleImplicitTrigger(
-          forPlacement: placement,
-          withData: placementData
+          forPlacement: event,
+          withData: eventData
         )
       }
 		}
 
     let result = TrackingResult(
-      data: placementData,
+      data: eventData,
       parameters: parameters
     )
 		return result

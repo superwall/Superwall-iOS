@@ -41,6 +41,7 @@ class ConfigManager {
   private unowned let paywallManager: PaywallManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let entitlementsInfo: EntitlementsInfo
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   let expressionEvaluator: CELEvaluator
 
   /// A task that is non-`nil` when preloading all paywalls.
@@ -60,6 +61,7 @@ class ConfigManager {
     paywallManager: PaywallManager,
     deviceHelper: DeviceHelper,
     entitlementsInfo: EntitlementsInfo,
+    webEntitlementRedeemer: WebEntitlementRedeemer,
     factory: Factory
   ) {
     self.options = options
@@ -69,6 +71,7 @@ class ConfigManager {
     self.paywallManager = paywallManager
     self.deviceHelper = deviceHelper
     self.entitlementsInfo = entitlementsInfo
+    self.webEntitlementRedeemer = webEntitlementRedeemer
     self.factory = factory
     self.expressionEvaluator = CELEvaluator(
       storage: self.storage,
@@ -287,8 +290,35 @@ class ConfigManager {
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
     await factory.loadPurchasedProducts()
+    await checkForWebEntitlements()
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
+    }
+  }
+
+  func checkForWebEntitlements() async {
+    // Only continue if the active entitlmenets
+    // Check if there are any entitlements that aren't currently active
+    guard entitlementsInfo.all.count != entitlementsInfo.active.count else {
+      return
+    }
+    do {
+      // Attempt to fetch web entitlements for the current user
+      let webEntitlements = try await webEntitlementRedeemer.checkForWebEntitlements()
+
+      // If web entitlements exist, merge them with local active entitlements
+      if !webEntitlements.isEmpty {
+        entitlementsInfo.mergeWebEntitlements(webEntitlements)
+      }
+    } catch {
+      // Log an error if checking for web entitlements fails
+      Logger.debug(
+        logLevel: .error,
+        scope: .webEntitlements,
+        message: "Checking for web entitlements failed",
+        info: [:],
+        error: error
+      )
     }
   }
 
