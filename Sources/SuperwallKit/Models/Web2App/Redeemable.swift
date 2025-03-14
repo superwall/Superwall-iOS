@@ -5,7 +5,7 @@
 //  Created by Yusuf Tör on 13/03/2025.
 //
 
-struct Redeemable: Codable {
+struct Redeemable: Codable, Hashable {
   let code: String
   let isFirstRedemption: Bool
 

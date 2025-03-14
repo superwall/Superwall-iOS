@@ -29,9 +29,8 @@ final class DeepLinkRouter {
       // It's a web2app redemption link
       // TODO: Is this firstRedemption? What if they're trying to redeem a code that's already been redeemed?
       // TODO: Should we put in the existing codes here or somewhere else?
-      let redeemable = Redeemable(code: code, firstRedemption: true)
       Task {
-        await webEntitlementRedeemer.redeem(codes: [redeemable])
+        await webEntitlementRedeemer.redeem(code: code)
       }
       return true
     } else {

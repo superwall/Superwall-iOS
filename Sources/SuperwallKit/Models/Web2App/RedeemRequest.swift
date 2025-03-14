@@ -9,5 +9,5 @@ struct RedeemRequest: Codable {
   let deviceId: String
   let appUserId: String?
   let aliasId: String
-  let codes: [Redeemable]
+  let codes: Set<Redeemable>
 }

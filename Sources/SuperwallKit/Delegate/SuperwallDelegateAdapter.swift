@@ -132,4 +132,15 @@ final class SuperwallDelegateAdapter {
       )
     }
   }
+
+  @MainActor
+  func didRedeemCode(customerInfo: CustomerInfo, result: RedemptionResult) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.didRedeemCode(
+        customerInfo: customerInfo,
+        result: result
+      )
+    }
+    // TODO: Objective C version
+  }
 }

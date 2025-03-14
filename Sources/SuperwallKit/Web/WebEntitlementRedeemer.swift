@@ -12,16 +12,19 @@ final class WebEntitlementRedeemer {
   private let storage: Storage
   private let entitlementsInfo: EntitlementsInfo
   private let factory: WebEntitlementFactory
+  private let delegate: SuperwallDelegateAdapter
 
   init(
     network: Network,
     storage: Storage,
     entitlementsInfo: EntitlementsInfo,
+    delegate: SuperwallDelegateAdapter,
     factory: WebEntitlementFactory
   ) {
     self.network = network
     self.storage = storage
     self.entitlementsInfo = entitlementsInfo
+    self.delegate = delegate
     self.factory = factory
 
 //    Task {
@@ -40,28 +43,28 @@ final class WebEntitlementRedeemer {
 //  }
 
   func redeem(code: String) async {
+    var latestRedeemResponse = storage.get(LatestRedeemResponse.self)
+
     do {
-      // TODO: Moved away from having codes array and latest redeem response. Now just use latest redeem response. Need a way to get the array of codes there.
-      var codes = storage.get(LatestRedeemResponse.self)
+      var allCodes = latestRedeemResponse?.allCodes ?? []
       var isFirstRedemption = true
 
-      // If we have codes, isFirstRedemption is false if we already have the code
-      if !codes.isEmpty {
-        isFirstRedemption = !codes.contains(where: { $0.code == code })
+      if !allCodes.isEmpty {
+        // If we have codes, isFirstRedemption is false if we already have the code
+        isFirstRedemption = !allCodes.contains(where: { $0.code == code })
       }
 
-      // Save code to storage along with others
       let redeemable = Redeemable(
         code: code,
         isFirstRedemption: isFirstRedemption
       )
-      codes.append(redeemable)
+      allCodes.insert(redeemable)
 
       let request = RedeemRequest(
         deviceId: factory.makeDeviceId(),
         appUserId: factory.makeAppUserId(),
         aliasId: factory.makeAliasId(),
-        codes: codes
+        codes: allCodes
       )
 
       let startEvent = InternalSuperwallEvent.Redemption(state: .start)
@@ -75,13 +78,47 @@ final class WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
+      // Merge web entitlements with local
       let webEntitlements = response.entitlements
       if !webEntitlements.isEmpty {
         entitlementsInfo.mergeWebEntitlements(webEntitlements)
       }
+
+      // Call the delegate
+      if let codeResult = response.results.first(where: { $0.code == code }) {
+        let entitlements = Array(Superwall.shared.entitlements.active)
+        let customerInfo = CustomerInfo(
+          entitlements: entitlements,
+          redemptions: response.results
+        )
+
+        await delegate.didRedeemCode(
+          customerInfo: customerInfo,
+          result: codeResult
+        )
+      }
     } catch {
       let event = InternalSuperwallEvent.Redemption(state: .fail)
       await Superwall.shared.track(event)
+
+      let entitlements = Array(Superwall.shared.entitlements.active)
+
+      var redemptions = latestRedeemResponse?.results ?? []
+      let errorResult = RedemptionResult.error(
+        code: code,
+        error: RedemptionResult.ErrorInfo(message: error.localizedDescription)
+      )
+      redemptions.append(errorResult)
+
+      let customerInfo = CustomerInfo(
+        entitlements: entitlements,
+        redemptions: redemptions
+      )
+
+      await delegate.didRedeemCode(
+        customerInfo: customerInfo,
+        result: errorResult
+      )
 
       Logger.debug(
         logLevel: .error,
@@ -90,6 +127,8 @@ final class WebEntitlementRedeemer {
         info: [:]
       )
     }
+
+
 
     // TODO: Call delegate here
   }
