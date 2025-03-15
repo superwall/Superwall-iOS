@@ -62,16 +62,18 @@ final class DependencyContainer {
       options: options,
       factory: self
     )
+    storeKitManager = StoreKitManager(productsManager: productsManager)
+
+    purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
 
     redeemer = WebEntitlementRedeemer(
       network: network,
       storage: storage,
       entitlementsInfo: entitlementsInfo,
+      delegate: delegateAdapter,
+      purchaseController: purchaseController,
       factory: self
     )
-    storeKitManager = StoreKitManager(productsManager: productsManager)
-
-    purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
 
     receiptManager = ReceiptManager(
       storeKitVersion: options.storeKitVersion,
@@ -126,7 +128,8 @@ final class DependencyContainer {
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
-      configManager: configManager
+      configManager: configManager,
+      webEntitlementRedeemer: redeemer
     )
 
     // Must be after session events
@@ -550,5 +553,17 @@ extension DependencyContainer: WebEntitlementFactory {
 
   func makeAppUserId() -> String? {
     return identityManager.appUserId
+  }
+
+  func makeAliasId() -> String {
+    return identityManager.aliasId
+  }
+
+  func makeEntitlementsMaxAge() -> Milliseconds? {
+    return configManager.config?.web2appConfig?.entitlementsMaxAge
+  }
+
+  func makeHasConfig() -> Bool {
+    return configManager.config != nil
   }
 }

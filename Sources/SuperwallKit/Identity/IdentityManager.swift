@@ -17,6 +17,8 @@
 // all functions affecting the identity have finished.
 //
 // *******************************************************************
+//
+// swiftlint:disable function_body_length
 
 import Foundation
 import Combine
@@ -99,15 +101,18 @@ class IdentityManager {
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
   private unowned let configManager: ConfigManager
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
 
   init(
     deviceHelper: DeviceHelper,
     storage: Storage,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    webEntitlementRedeemer: WebEntitlementRedeemer
   ) {
     self.deviceHelper = deviceHelper
     self.storage = storage
     self.configManager = configManager
+    self.webEntitlementRedeemer = webEntitlementRedeemer
     self._appUserId = storage.get(AppUserId.self)
 
     var extraAttributes: [String: Any] = [:]
@@ -258,7 +263,7 @@ class IdentityManager {
       // get assignments in the background.
 
       Task {
-        await self.configManager.checkForWebEntitlements()
+        await self.webEntitlementRedeemer.redeem(.existingCodes)
       }
 
       if let options = options {

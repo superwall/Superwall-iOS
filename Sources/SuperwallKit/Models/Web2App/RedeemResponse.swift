@@ -7,9 +7,11 @@
 
 import Foundation
 
-public struct RedeemResponse: Codable {
+/// An object return from the server acting as a source of truth for the redeemed codes
+/// and web entitlements.
+struct RedeemResponse: Codable {
   let results: [RedemptionResult]
-  let entitlements: Set<Entitlement>
+  var entitlements: Set<Entitlement>
 
   private enum CodingKeys: String, CodingKey {
     case results = "codes"

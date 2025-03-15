@@ -149,6 +149,32 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// A `Set` of active ``Entitlement`` objects redeemed via the web.
+  public var webEntitlements: Set<Entitlement> {
+    let webEntitlements = dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+    return webEntitlements
+  }
+
+  /// Gets web entitlements and either merges them with local entitlements before
+  /// setting the status.
+  func internallySetSubscriptionStatus(to status: SubscriptionStatus) {
+    let webEntitlements = dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+
+    switch status {
+    case .active(let entitlements):
+      let mergedEntitlements = entitlements.union(webEntitlements)
+      Superwall.shared.subscriptionStatus = .active(mergedEntitlements)
+    case .inactive:
+      if webEntitlements.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active(webEntitlements)
+      }
+    case .unknown:
+      Superwall.shared.subscriptionStatus = .unknown
+    }
+  }
+
   /// Returns the subscription status of the user.
   ///
   /// Check the delegate function
@@ -651,10 +677,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
-    // TODO: Should a deep link from here be able to be used for a paywall if using a code?
-    Task {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
-    }
     return dependencyContainer.deepLinkRouter.route(url: url)
   }
 

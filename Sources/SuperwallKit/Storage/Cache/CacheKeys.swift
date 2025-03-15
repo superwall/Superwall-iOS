@@ -224,3 +224,11 @@ enum LatestRedeemResponse: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = RedeemResponse
 }
+
+enum LastWebEntitlementsFetchDate: Storable {
+  static var key: String {
+    "store.LastWebEntitlementsFetchDate"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Date
+}

@@ -5,11 +5,23 @@
 //  Created by Yusuf Tör on 14/03/2025.
 //
 
+import Foundation
+
+/// The result of redeeming a code via web checkout.
 public enum RedemptionResult: Codable {
+  /// The redemption succeeded.
   case success(code: String, redemptionInfo: RedemptionInfo)
+
+  /// The redemption failed.
   case error(code: String, error: ErrorInfo)
+
+  /// The code has expired.
   case codeExpired(code: String, expired: ExpiredInfo)
+
+  /// The code is invalid.
   case invalidCode(code: String)
+
+  /// The subscription that code redeems has expired.
   case expiredSubscription(code: String, redemptionInfo: RedemptionInfo)
 
   /// Convenience variable to extract the code
@@ -24,22 +36,39 @@ public enum RedemptionResult: Codable {
     }
   }
 
+  /// The error info.
   public struct ErrorInfo: Codable {
+    /// The message of the error.
     public let message: String
   }
 
+  /// Info about the expired code.
   public struct ExpiredInfo: Codable {
+    /// A boolean indicating whether the redemption email has been resent.
     public let resent: Bool
+
+    /// An optional `String` indicated the obfuscated email address that the
+    /// redemption email was sent to.
     public let obfuscatedEmail: String?
   }
 
+  /// Info about the redemption.
   public struct RedemptionInfo: Codable {
+    /// The ownership of the code.
     public let ownership: Ownership
+
+    /// Info about the purchaser.
     public let purchaserInfo: PurchaserInfo
+
+    /// Info about the paywall the purchase was made from.
     public let paywallInfo: PaywallInfo
 
+    /// Enum specifiying code ownership.
     public enum Ownership: Codable {
+      /// The code belongs to the identified user.
       case appUser(appUserId: String)
+
+      /// The code belongs to the device.
       case device(deviceId: String)
 
       private enum CodingKeys: String, CodingKey {
@@ -82,13 +111,23 @@ public enum RedemptionResult: Codable {
       }
     }
 
+    /// Info about the purchaser.
     public struct PurchaserInfo: Codable {
+      /// The app user ID of the purchaser.
       public let appUserId: String
+
+      /// The email address of the purchaser.
       public let email: String?
+
+      /// The identifiers of the store that was purchased from.
       public let storeIdentifiers: StoreIdentifiers
 
+      /// Identifiers of the store that was purchased from.
       public enum StoreIdentifiers: Codable {
+        /// The subscription was purchased via Stripe.
         case stripe(stripeSubscriptionId: String)
+
+        /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
 
         private enum CodingKeys: String, CodingKey, CaseIterable {
@@ -133,7 +172,7 @@ public enum RedemptionResult: Codable {
             try container.encode("STRIPE", forKey: .store)
             try container.encode(stripeSubscriptionId, forKey: .stripeSubscriptionId)
 
-          case .unknown(let store, let additionalInfo):
+          case let .unknown(store, additionalInfo):
             try container.encode(store, forKey: .store)
 
             // Create a dynamic coding container to encode arbitrary keys and values
@@ -145,22 +184,62 @@ public enum RedemptionResult: Codable {
               guard !CodingKeys.allCases.map({ $0.rawValue }).contains(key) else { continue }
 
               // Create a dynamic coding key from the current key string
-              let dynamicKey = DynamicCodingKey(stringValue: key)!
-
-              // Encode the JSON value associated with the dynamic key
-              try dynamicContainer.encode(value, forKey: dynamicKey)
+              if let dynamicKey = DynamicCodingKey(stringValue: key) {
+                // Encode the JSON value associated with the dynamic key
+                try dynamicContainer.encode(value, forKey: dynamicKey)
+              }
             }
           }
         }
       }
     }
 
+    /// Info about the paywall the purchase was made from.
     public struct PaywallInfo: Codable {
+      /// The identifier of the paywall.
       public let identifier: String
+
+      /// The name of the placement.
       public let placementName: String
-      public let placementParams: [String: String]
+
+      /// The params of the placement.
+      public let placementParams: [String: Any]
+
+      /// The ID of the paywall variant.
       public let variantId: String
+
+      /// The ID of the experiment that the paywall belongs to.
       public let experimentId: String
+
+      enum CodingKeys: String, CodingKey {
+        case identifier
+        case placementName
+        case placementParams
+        case variantId
+        case experimentId
+      }
+
+      public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        identifier = try container.decode(String.self, forKey: .identifier)
+        placementName = try container.decode(String.self, forKey: .placementName)
+        variantId = try container.decode(String.self, forKey: .variantId)
+        experimentId = try container.decode(String.self, forKey: .experimentId)
+
+        let paramsJSON = try container.decode(JSON.self, forKey: .placementParams)
+        placementParams = paramsJSON.dictionaryObject ?? [:]
+      }
+
+      public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(identifier, forKey: .identifier)
+        try container.encode(placementName, forKey: .placementName)
+        try container.encode(variantId, forKey: .variantId)
+        try container.encode(experimentId, forKey: .experimentId)
+
+        let jsonData = JSON(placementParams)
+        try container.encode(jsonData, forKey: .placementParams)
+      }
     }
   }
 
@@ -221,15 +300,15 @@ public enum RedemptionResult: Codable {
     var container = encoder.container(keyedBy: CodingKeys.self)
 
     switch self {
-    case .success(let code, let redemptionInfo):
+    case let .success(code, redemptionInfo):
       try container.encode(CodeStatus.success, forKey: .status)
       try container.encode(code, forKey: .code)
       try container.encode(redemptionInfo, forKey: .redemptionInfo)
-    case .error(let code, let error):
+    case let .error(code, error):
       try container.encode(CodeStatus.error, forKey: .status)
       try container.encode(code, forKey: .code)
       try container.encode(error, forKey: .error)
-    case .codeExpired(let code, let expired):
+    case let .codeExpired(code, expired):
       try container.encode(CodeStatus.codeExpired, forKey: .status)
       try container.encode(code, forKey: .code)
       try container.encode(expired.resent, forKey: .resent)

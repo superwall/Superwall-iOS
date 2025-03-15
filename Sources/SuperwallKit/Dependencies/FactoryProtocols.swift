@@ -164,4 +164,6 @@ protocol WebEntitlementFactory {
   func makeDeviceId() -> String
   func makeAppUserId() -> String?
   func makeAliasId() -> String
+  func makeEntitlementsMaxAge() -> Milliseconds?
+  func makeHasConfig() -> Bool
 }

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.1.0
+
+### Enhancements
+
+- Adds support for web checkout.
+
 ## 4.0.3
 
 ### Enhancements

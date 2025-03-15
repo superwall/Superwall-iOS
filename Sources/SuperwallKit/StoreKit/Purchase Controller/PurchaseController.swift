@@ -40,4 +40,11 @@ public protocol PurchaseController: AnyObject {
   /// **Note**: `restored` does not imply the user has an active subscription, it just mean the restore had no errors.
   @MainActor
   func restorePurchases() async -> RestorationResult
+
+  @MainActor
+  func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo)
+}
+
+extension PurchaseController {
+  public func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo) {}
 }

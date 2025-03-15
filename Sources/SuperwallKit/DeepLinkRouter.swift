@@ -26,16 +26,15 @@ final class DeepLinkRouter {
     if url.host == "superwall",
       url.path == "/redeem",
       let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
-      // It's a web2app redemption link
-      // TODO: Is this firstRedemption? What if they're trying to redeem a code that's already been redeemed?
-      // TODO: Should we put in the existing codes here or somewhere else?
       Task {
-        await webEntitlementRedeemer.redeem(code: code)
+        await webEntitlementRedeemer.redeem(.code(code))
       }
       return true
     } else {
+      Task {
+        await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
+      }
       return debugManager.handle(deepLinkUrl: url)
     }
   }
 }
-// TODO: when saving code, firstRedemptoin as false

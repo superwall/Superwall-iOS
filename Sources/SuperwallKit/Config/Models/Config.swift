@@ -19,11 +19,42 @@ struct Config: Codable, Equatable {
   var requestId: String?
   var attribution: Attribution?
   var products: [Product]
+  var web2appConfig: Web2AppConfig?
   var allComputedProperties: [ComputedPropertyRequest] {
     return triggers.flatMap {
       $0.audiences.flatMap {
         $0.computedPropertyRequests
       }
+    }
+  }
+
+  struct Web2AppConfig: Codable, Equatable {
+    let entitlementsMaxAge: Milliseconds
+    let restoreAccessURL: URL
+
+    enum CodingKeys: String, CodingKey {
+      case entitlementsMaxAge = "entitlementsMaxAgeMs"
+      case restoreAccessURL = "restoreAccessUrl"
+    }
+
+    init(from decoder: Decoder) throws {
+      let values = try decoder.container(keyedBy: CodingKeys.self)
+      entitlementsMaxAge = try values.decode(Milliseconds.self, forKey: .entitlementsMaxAge)
+
+      let restoreAccessURLString = try values.decode(String.self, forKey: .restoreAccessURL)
+      if let url = URL(string: restoreAccessURLString) {
+        restoreAccessURL = url
+      } else {
+        // Should never reach here but just incase.
+        // swiftlint:disable:next force_unwrapping
+        restoreAccessURL = URL(string: "https://superwall.com")!
+      }
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(entitlementsMaxAge, forKey: .entitlementsMaxAge)
+      try container.encode(restoreAccessURL.absoluteString, forKey: .restoreAccessURL)
     }
   }
 

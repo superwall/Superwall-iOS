@@ -290,35 +290,9 @@ class ConfigManager {
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
     await factory.loadPurchasedProducts()
-    await checkForWebEntitlements()
+    await webEntitlementRedeemer.pollWebEntitlements()
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
-    }
-  }
-
-  func checkForWebEntitlements() async {
-    // Only continue if the active entitlmenets
-    // Check if there are any entitlements that aren't currently active
-    guard entitlementsInfo.all.count != entitlementsInfo.active.count else {
-      return
-    }
-    do {
-      // Attempt to fetch web entitlements for the current user
-      let webEntitlements = try await webEntitlementRedeemer.checkForWebEntitlements()
-
-      // If web entitlements exist, merge them with local active entitlements
-      if !webEntitlements.isEmpty {
-        entitlementsInfo.mergeWebEntitlements(webEntitlements)
-      }
-    } catch {
-      // Log an error if checking for web entitlements fails
-      Logger.debug(
-        logLevel: .error,
-        scope: .webEntitlements,
-        message: "Checking for web entitlements failed",
-        info: [:],
-        error: error
-      )
     }
   }
 

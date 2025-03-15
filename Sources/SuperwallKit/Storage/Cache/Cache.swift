@@ -371,21 +371,26 @@ extension Cache {
 
   /// Cleans codes that are owned by the user.
   func cleanUserCodes() {
-    var codes = read(Codes.self) ?? []
-
-    if let redeemResponse = read(LatestRedeemResponse.self) {
-      for code in redeemResponse.codes {
-        switch code {
+    if var redeemResponse = read(LatestRedeemResponse.self) {
+      var deviceResults: [RedemptionResult] = []
+      for result in redeemResponse.results {
+        switch result {
         case let .success(code, redemptionInfo):
-          if case .appUser = redemptionInfo.ownership {
-            codes.removeAll(where: { $0.code == code })
+          if case .device = redemptionInfo.ownership {
+            deviceResults.append(result)
           }
         default:
           break
         }
       }
+
+      let newRedeemResponse = RedeemResponse(
+        results: deviceResults,
+        entitlements: redeemResponse.entitlements
+      )
+
+      write(newRedeemResponse, forType: LatestRedeemResponse.self)
     }
-    write(codes, forType: Codes.self)
   }
 
   private func cleanDiskCache() {
