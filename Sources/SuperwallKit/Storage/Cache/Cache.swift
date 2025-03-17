@@ -371,11 +371,15 @@ extension Cache {
 
   /// Cleans codes that are owned by the user.
   func cleanUserCodes() {
-    if var redeemResponse = read(LatestRedeemResponse.self) {
+    if let redeemResponse = read(LatestRedeemResponse.self) {
       var deviceResults: [RedemptionResult] = []
       for result in redeemResponse.results {
         switch result {
-        case let .success(code, redemptionInfo):
+        case let .success(_, redemptionInfo):
+          if case .device = redemptionInfo.ownership {
+            deviceResults.append(result)
+          }
+        case let .expiredSubscription(_, redemptionInfo):
           if case .device = redemptionInfo.ownership {
             deviceResults.append(result)
           }
@@ -384,6 +388,8 @@ extension Cache {
         }
       }
 
+      // TODO: What to do with user owned entitlements on reset?
+      // TODO: Only keeping results from success & expiredSubscription
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
         entitlements: redeemResponse.entitlements

@@ -21,7 +21,7 @@ public enum RedemptionResult: Codable {
   /// The code is invalid.
   case invalidCode(code: String)
 
-  /// The subscription that code redeems has expired.
+  /// The subscription that the code redeems has expired.
   case expiredSubscription(code: String, redemptionInfo: RedemptionInfo)
 
   /// Convenience variable to extract the code
@@ -61,7 +61,10 @@ public enum RedemptionResult: Codable {
     public let purchaserInfo: PurchaserInfo
 
     /// Info about the paywall the purchase was made from.
-    public let paywallInfo: PaywallInfo
+    public let paywallInfo: PaywallInfo?
+
+    /// The entitlements array
+    public let entitlements: [Entitlement]
 
     /// Enum specifiying code ownership.
     public enum Ownership: Codable {
