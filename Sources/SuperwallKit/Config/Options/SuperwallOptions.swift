@@ -134,6 +134,11 @@ public final class SuperwallOptions: NSObject, Encodable {
       "api-adservices.apple.com"
     }
 
+    // TODO: Change this to the prod one when it's available
+    var web2AppHost: String {
+      "stg.us-east-1.subscriptions-api.superwall-services.com"
+    }
+
     private enum CodingKeys: String, CodingKey {
       case networkEnvironment
       case customDomain

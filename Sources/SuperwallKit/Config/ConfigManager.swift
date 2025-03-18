@@ -290,7 +290,7 @@ class ConfigManager {
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
     await factory.loadPurchasedProducts()
-    await webEntitlementRedeemer.pollWebEntitlements()
+    await webEntitlementRedeemer.pollWebEntitlements(config: config)
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }

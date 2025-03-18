@@ -61,7 +61,7 @@ extension AutomaticPurchaseController: PurchaseController {
 
   @MainActor
   func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo) {
-    Superwall.shared.internallySetSubscriptionStatus(to: .active(entitlementsInfo.active))
+    Superwall.shared.internallySetSubscriptionStatus(to: .active(Set(customerInfo.entitlements)))
   }
 }
 

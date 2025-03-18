@@ -140,30 +140,34 @@ protocol TriggerFactory: AnyObject {
   func makeTriggers() -> Set<String>
 }
 
-protocol PurchasedTransactionsFactory {
+protocol PurchasedTransactionsFactory: AnyObject {
   func makePurchasingCoordinator() -> PurchasingCoordinator
   func purchase(product: StoreProduct) async -> PurchaseResult
   func restorePurchases() async -> RestorationResult
 }
 
-protocol UserAttributesPlacementFactory {
+protocol UserAttributesPlacementFactory: AnyObject {
   func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes
 }
 
-protocol ReceiptFactory {
+protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts() async
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
 
-protocol ConfigAttributesFactory {
+protocol ConfigAttributesFactory: AnyObject {
   func makeConfigAttributes() -> InternalSuperwallEvent.ConfigAttributes
 }
 
-protocol WebEntitlementFactory {
+protocol WebEntitlementFactory: AnyObject {
   func makeDeviceId() -> String
   func makeAppUserId() -> String?
   func makeAliasId() -> String
-  func makeEntitlementsMaxAge() -> Milliseconds?
+  func makeEntitlementsMaxAge() -> Seconds?
   func makeHasConfig() -> Bool
+}
+
+protocol RestoreAccessFactory: AnyObject {
+  func makeRestoreAccessURL() -> URL?
 }

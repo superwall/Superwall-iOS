@@ -81,7 +81,7 @@ public enum RedemptionResult: Codable {
       }
 
       enum OwnershipType: String, Codable {
-        case appUser
+        case appUser = "app_user"
         case device
       }
 

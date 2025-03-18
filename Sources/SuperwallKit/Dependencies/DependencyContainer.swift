@@ -392,7 +392,7 @@ extension DependencyContainer: ApiFactory {
   }
 
   func makeDefaultComponents(host: EndpointHost) -> ApiHostConfig {
-    return self.api.getConfig(host: host)
+    return api.getConfig(host: host)
   }
 }
 
@@ -559,11 +559,18 @@ extension DependencyContainer: WebEntitlementFactory {
     return identityManager.aliasId
   }
 
-  func makeEntitlementsMaxAge() -> Milliseconds? {
+  func makeEntitlementsMaxAge() -> Seconds? {
     return configManager.config?.web2appConfig?.entitlementsMaxAge
   }
 
   func makeHasConfig() -> Bool {
     return configManager.config != nil
+  }
+}
+
+// MARK: - RestoreAccessFactory
+extension DependencyContainer: RestoreAccessFactory {
+  func makeRestoreAccessURL() -> URL? {
+    return configManager.config?.web2appConfig?.restoreAccessURL
   }
 }

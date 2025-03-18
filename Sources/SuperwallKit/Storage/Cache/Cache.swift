@@ -387,9 +387,7 @@ extension Cache {
           break
         }
       }
-
-      // TODO: What to do with user owned entitlements on reset?
-      // TODO: Only keeping results from success & expiredSubscription
+      // TODO: Make sure that after resetting and clearing codes, the web entitlements are redeemed.
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
         entitlements: redeemResponse.entitlements

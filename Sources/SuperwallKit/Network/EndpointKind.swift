@@ -58,4 +58,26 @@ enum EndpointKinds {
       }
     }
   }
+
+  enum Web2App: EndpointKind {
+    static var jsonDecoder = JSONDecoder()
+
+    static func prepare(
+      _ request: inout URLRequest,
+      with data: SuperwallRequestData
+    ) async {
+      let headers = await data.factory.makeHeaders(
+        fromRequest: request,
+        isForDebugging: data.isForDebugging,
+        requestId: data.requestId
+      )
+
+      for header in headers {
+        request.setValue(
+          header.value,
+          forHTTPHeaderField: header.key
+        )
+      }
+    }
+  }
 }

@@ -163,7 +163,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private var lastOpen: Date?
 
-  private unowned let factory: TriggerFactory
+  private unowned let factory: TriggerFactory & RestoreAccessFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -176,7 +176,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerFactory,
+    factory: TriggerFactory & RestoreAccessFactory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -620,12 +620,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     guard presentedViewController == nil else {
       return
     }
+
+    var model: [Action] = []
+    if let actionTitle = actionTitle,
+      let action = action {
+      model = [Action(title: actionTitle, call: action)]
+    }
+
     let alertController = AlertControllerFactory.make(
       title: title,
       message: message,
-      actionTitle: actionTitle,
       closeActionTitle: closeActionTitle,
-      action: action,
+      actions: model,
       onClose: onClose,
       sourceView: self.view
     )
@@ -672,6 +678,49 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
+    switch paywallEvent {
+    case .initiateRestore:
+      if let restoreUrl = factory.makeRestoreAccessURL() {
+        let webRestoreAction = Action(
+          title: "Web Subscriptions",
+          call: {
+            UIApplication.shared.open(restoreUrl)
+          }
+        )
+
+        let appStoreRestoreAction = Action(
+          title: "App Store Subscriptions",
+          call: { [weak self] in
+            guard let self = self else {
+              return
+            }
+            Task {
+              await self.eventDelegate?.eventDidOccur(
+                paywallEvent,
+                on: self
+              )
+            }
+          }
+        )
+
+        let alertController = AlertControllerFactory.make(
+          title: "What would you like to restore?",
+          closeActionTitle: "Cancel",
+          actions: [webRestoreAction, appStoreRestoreAction],
+          sourceView: self.view
+        )
+
+        present(alertController, animated: true) { [weak self] in
+          self?.loadingState = .ready
+        }
+
+        return
+      }
+      // Get the web2config, if it exists, show option. When that's clicked then pass down the restore or redirect to web.
+    default:
+      break
+    }
+
     Task {
       await eventDelegate?.eventDidOccur(
         paywallEvent,

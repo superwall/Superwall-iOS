@@ -29,17 +29,18 @@ struct Config: Codable, Equatable {
   }
 
   struct Web2AppConfig: Codable, Equatable {
-    let entitlementsMaxAge: Milliseconds
+    let entitlementsMaxAge: Seconds
     let restoreAccessURL: URL
 
     enum CodingKeys: String, CodingKey {
-      case entitlementsMaxAge = "entitlementsMaxAgeMs"
+      case entitlementsMaxAgeMs = "entitlementsMaxAgeMs"
       case restoreAccessURL = "restoreAccessUrl"
     }
 
     init(from decoder: Decoder) throws {
       let values = try decoder.container(keyedBy: CodingKeys.self)
-      entitlementsMaxAge = try values.decode(Milliseconds.self, forKey: .entitlementsMaxAge)
+      let entitlementsMaxAgeMs = try values.decode(Milliseconds.self, forKey: .entitlementsMaxAgeMs)
+      entitlementsMaxAge = entitlementsMaxAgeMs / 1000
 
       let restoreAccessURLString = try values.decode(String.self, forKey: .restoreAccessURL)
       if let url = URL(string: restoreAccessURLString) {
@@ -53,7 +54,7 @@ struct Config: Codable, Equatable {
 
     func encode(to encoder: Encoder) throws {
       var container = encoder.container(keyedBy: CodingKeys.self)
-      try container.encode(entitlementsMaxAge, forKey: .entitlementsMaxAge)
+      try container.encode((entitlementsMaxAge * 1000), forKey: .entitlementsMaxAgeMs)
       try container.encode(restoreAccessURL.absoluteString, forKey: .restoreAccessURL)
     }
   }
@@ -70,6 +71,7 @@ struct Config: Codable, Equatable {
     case preloadingDisabled = "disablePreload"
     case attribution = "attributionOptions"
     case products = "products"
+    case web2appConfig
   }
 
   init(from decoder: Decoder) throws {
@@ -83,6 +85,7 @@ struct Config: Codable, Equatable {
     featureFlags = try FeatureFlags(from: decoder)
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
+    web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })

@@ -8,8 +8,8 @@
 import Foundation
 
 final class DeepLinkRouter {
-  private let webEntitlementRedeemer: WebEntitlementRedeemer
-  private let debugManager: DebugManager
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  private unowned let debugManager: DebugManager
 
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
@@ -27,8 +27,10 @@ final class DeepLinkRouter {
       url.path == "/redeem",
       let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
       Task {
-        await webEntitlementRedeemer.redeem(.code(code))
+        // TODO: Change when fixed on server
+        await webEntitlementRedeemer.redeem(.code("redemption_\(code)"))
       }
+      // TODO: Should be able to call depp link from cold app start
       return true
     } else {
       Task {

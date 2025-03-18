@@ -9,13 +9,14 @@
 import UIKit
 import Foundation
 
-final class WebEntitlementRedeemer {
-  private let network: Network
-  private let storage: Storage
-  private let entitlementsInfo: EntitlementsInfo
-  private let delegate: SuperwallDelegateAdapter
-  private let purchaseController: PurchaseController
-  private let factory: WebEntitlementFactory
+actor WebEntitlementRedeemer {
+  private unowned let network: Network
+  private unowned let storage: Storage
+  private unowned let entitlementsInfo: EntitlementsInfo
+  private unowned let delegate: SuperwallDelegateAdapter
+  private unowned let purchaseController: PurchaseController
+  private unowned let factory: WebEntitlementFactory
+  private var isProcessing = false
 
   enum RedeemType {
     case code(String)
@@ -92,9 +93,9 @@ final class WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      let entitlements = Array(Superwall.shared.entitlements.active)
+      let allEntitlements = Array(Superwall.shared.entitlements.active.union(response.entitlements))
       let customerInfo = CustomerInfo(
-        entitlements: entitlements,
+        entitlements: allEntitlements,
         redemptions: response.results
       )
 
@@ -154,35 +155,32 @@ final class WebEntitlementRedeemer {
   }
 
   @objc
-  private func handleAppForeground() {
+  nonisolated private func handleAppForeground() {
     Task {
       await pollWebEntitlements()
     }
   }
 
-  func pollWebEntitlements() async {
-    guard factory.makeHasConfig() else {
+  func pollWebEntitlements(config: Config? = nil) async {
+    guard config != nil || factory.makeHasConfig() else {
+      return
+    }
+    guard let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() else {
       return
     }
 
-    if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self),
-      let entitlementsMaxAge = factory.makeEntitlementsMaxAge() {
+    if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
       let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
       guard timeElapsed > entitlementsMaxAge else {
         return
       }
     }
 
-    let id: String
-
-    if let appUserId = factory.makeAppUserId() {
-      id = appUserId
-    } else {
-      id = factory.makeDeviceId()
-    }
-
     do {
-      let entitlements = try await network.redeemEntitlements(appUserIdOrDeviceId: id)
+      let entitlements = try await network.redeemEntitlements(
+        appUserId: factory.makeAppUserId(),
+        deviceId: factory.makeDeviceId()
+      )
       var redemptions: [RedemptionResult] = []
 
       // Update the latest redeem response with the entitlements.
@@ -194,8 +192,10 @@ final class WebEntitlementRedeemer {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
+      let allEntitlements = entitlements.union(entitlementsInfo.active)
+
       let customerInfo = CustomerInfo(
-        entitlements: Array(entitlements),
+        entitlements: Array(allEntitlements),
         redemptions: redemptions
       )
       await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)

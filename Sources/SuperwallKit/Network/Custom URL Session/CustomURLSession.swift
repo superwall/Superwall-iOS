@@ -51,7 +51,7 @@ class CustomURLSession {
     let auth = request.allHTTPHeaderFields?["Authorization"]
 
     Logger.debug(
-      logLevel: .debug,
+      logLevel: .error,
       scope: .network,
       message: "Request Started",
       info: [
@@ -89,6 +89,16 @@ class CustomURLSession {
         "request_duration": requestDuration
       ]
     )
+
+    Logger.debug(
+      logLevel: .error,
+      scope: .network,
+      message: "Raw Response Data",
+      info: [
+        "data": String(decoding: data, as: UTF8.self)
+      ]
+    )
+
     guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data
