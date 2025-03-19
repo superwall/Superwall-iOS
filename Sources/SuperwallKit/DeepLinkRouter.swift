@@ -27,8 +27,7 @@ final class DeepLinkRouter {
       url.path == "/redeem",
       let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
       Task {
-        // TODO: Change when fixed on server
-        await webEntitlementRedeemer.redeem(.code("redemption_\(code)"))
+        await webEntitlementRedeemer.redeem(.code(code))
       }
       // TODO: Should be able to call depp link from cold app start
       return true

@@ -30,11 +30,21 @@ final class RedeemResponseTests {
             }
           },
           "paywallInfo": null,
-          "entitlements": []
+          "entitlements": [
+            {
+              "identifier": "…",
+              "type": "SERVICE_LEVEL"
+            }
+          ]
         }
       }
     ],
-    "entitlements": []
+    "entitlements": [
+      {
+        "identifier": "…",
+        "type": "SERVICE_LEVEL"
+      }
+    ]
   }
   """.data(using: .utf8)!
 

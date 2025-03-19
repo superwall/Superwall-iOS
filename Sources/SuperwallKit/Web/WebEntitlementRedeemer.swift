@@ -15,7 +15,7 @@ actor WebEntitlementRedeemer {
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let delegate: SuperwallDelegateAdapter
   private unowned let purchaseController: PurchaseController
-  private unowned let factory: WebEntitlementFactory
+  private unowned let factory: WebEntitlementFactory & OptionsFactory
   private var isProcessing = false
 
   enum RedeemType {
@@ -29,7 +29,7 @@ actor WebEntitlementRedeemer {
     entitlementsInfo: EntitlementsInfo,
     delegate: SuperwallDelegateAdapter,
     purchaseController: PurchaseController,
-    factory: WebEntitlementFactory
+    factory: WebEntitlementFactory & OptionsFactory
   ) {
     self.network = network
     self.storage = storage
@@ -80,6 +80,14 @@ actor WebEntitlementRedeemer {
         codes: allCodes
       )
 
+      if let paywallVc = Superwall.shared.paywallViewController {
+        let trackedEvent = await InternalSuperwallEvent.Restore(
+          state: .start,
+          paywallInfo: paywallVc.info
+        )
+        await Superwall.shared.track(trackedEvent)
+      }
+
       let startEvent = InternalSuperwallEvent.Redemption(state: .start)
       await Superwall.shared.track(startEvent)
 
@@ -90,6 +98,30 @@ actor WebEntitlementRedeemer {
       // TODO: Maybe include status here
       let completeEvent = InternalSuperwallEvent.Redemption(state: .complete)
       await Superwall.shared.track(completeEvent)
+
+      if let paywallVc = Superwall.shared.paywallViewController {
+        if response.entitlements.isEmpty {
+          await paywallVc.presentAlert(
+            title: Superwall.shared.options.paywalls.restoreFailed.title,
+            message: Superwall.shared.options.paywalls.restoreFailed.message,
+            closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+          )
+        } else {
+          // TODO: - What if using getPaywall?
+          let trackedEvent = await InternalSuperwallEvent.Restore(
+            state: .complete,
+            paywallInfo: paywallVc.info
+          )
+          await Superwall.shared.track(trackedEvent)
+
+          await paywallVc.webView.messageHandler.handle(.transactionRestore)
+
+          let superwallOptions = factory.makeSuperwallOptions()
+          if superwallOptions.paywalls.automaticallyDismiss {
+            await Superwall.shared.dismiss(paywallVc, result: .restored)
+          }
+        }
+      }
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
