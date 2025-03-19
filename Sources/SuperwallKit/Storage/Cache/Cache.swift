@@ -387,7 +387,6 @@ extension Cache {
           break
         }
       }
-      // TODO: Make sure that after resetting and clearing codes, the web entitlements are redeemed.
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
         entitlements: redeemResponse.entitlements

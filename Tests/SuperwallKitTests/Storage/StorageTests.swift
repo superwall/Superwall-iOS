@@ -25,7 +25,7 @@ class StorageTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
 

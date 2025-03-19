@@ -302,7 +302,10 @@ class ConfigManager {
       return
     }
     choosePaywallVariants(from: config.triggers)
-    Task { await preloadPaywalls() }
+    Task {
+      await webEntitlementRedeemer.redeem(.existingCodes)
+      await preloadPaywalls()
+    }
   }
 
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if

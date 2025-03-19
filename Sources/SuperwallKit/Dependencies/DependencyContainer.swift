@@ -38,7 +38,7 @@ final class DependencyContainer {
   var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
   var attributionPoster: AttributionPoster!
-  var redeemer: WebEntitlementRedeemer!
+  var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
@@ -66,7 +66,7 @@ final class DependencyContainer {
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
 
-    redeemer = WebEntitlementRedeemer(
+    webEntitlementRedeemer = WebEntitlementRedeemer(
       network: network,
       storage: storage,
       entitlementsInfo: entitlementsInfo,
@@ -110,7 +110,7 @@ final class DependencyContainer {
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
       entitlementsInfo: entitlementsInfo,
-      webEntitlementRedeemer: redeemer,
+      webEntitlementRedeemer: webEntitlementRedeemer,
       factory: self
     )
 
@@ -129,7 +129,7 @@ final class DependencyContainer {
       deviceHelper: deviceHelper,
       storage: storage,
       configManager: configManager,
-      webEntitlementRedeemer: redeemer
+      webEntitlementRedeemer: webEntitlementRedeemer
     )
 
     // Must be after session events
@@ -145,7 +145,7 @@ final class DependencyContainer {
       factory: self
     )
     deepLinkRouter = DeepLinkRouter(
-      webEntitlementRedeemer: redeemer,
+      webEntitlementRedeemer: webEntitlementRedeemer,
       debugManager: debugManager
     )
     purchaseManager = PurchaseManager(

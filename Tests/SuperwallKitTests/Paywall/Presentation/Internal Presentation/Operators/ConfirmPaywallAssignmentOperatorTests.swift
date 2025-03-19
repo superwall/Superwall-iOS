@@ -23,7 +23,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -50,7 +50,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -78,7 +78,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -111,7 +111,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -144,7 +144,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -177,7 +177,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
@@ -210,7 +210,7 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.redeemer,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     try? await Task.sleep(nanoseconds: 10_000_000)
