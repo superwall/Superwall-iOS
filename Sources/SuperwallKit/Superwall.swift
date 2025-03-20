@@ -151,8 +151,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// A `Set` of active ``Entitlement`` objects redeemed via the web.
   public var webEntitlements: Set<Entitlement> {
-    let webEntitlements = dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
-    return webEntitlements
+    return dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
   }
 
   /// Gets web entitlements and either merges them with local entitlements before

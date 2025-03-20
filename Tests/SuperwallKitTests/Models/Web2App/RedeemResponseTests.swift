@@ -26,7 +26,7 @@ final class RedeemResponseTests {
             "email": "asdasd@sdfsdf.com",
             "storeIdentifiers": {
               "store": "STRIPE",
-              "stripeSubscriptionId": "sub_1R3awqBitwqMmwU0FEHl0ZJ6"
+              "stripeCustomerId": "cus_Ryex8C8944aFBa"
             }
           },
           "paywallInfo": null,
@@ -67,7 +67,7 @@ final class RedeemResponseTests {
 
     #expect(response.results.count == 1)
     #expect(response.results.first?.code == "redemption_8c7916a7-d48b-42c1-8eae-a58e0a57d37d")
-    #expect(response.entitlements.isEmpty)
+    #expect(!response.entitlements.isEmpty)
   }
 
   @Test("All codes extracts the codes")

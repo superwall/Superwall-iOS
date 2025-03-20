@@ -81,9 +81,8 @@ public enum RedemptionResult: Codable {
       }
 
       enum OwnershipType: String, Codable {
-        // TODO: This will be capitals:
-        case appUser = "app_user"
-        case device
+        case appUser = "APP_USER"
+        case device = "DEVICE"
       }
 
       public init(from decoder: Decoder) throws {
@@ -129,14 +128,14 @@ public enum RedemptionResult: Codable {
       /// Identifiers of the store that was purchased from.
       public enum StoreIdentifiers: Codable {
         /// The subscription was purchased via Stripe.
-        case stripe(stripeSubscriptionId: String)
+        case stripe(stripeCustomerId: String)
 
         /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
 
         private enum CodingKeys: String, CodingKey, CaseIterable {
           case store
-          case stripeSubscriptionId
+          case stripeCustomerId
         }
 
         struct DynamicCodingKey: CodingKey {
@@ -153,8 +152,8 @@ public enum RedemptionResult: Codable {
 
           switch store {
           case "STRIPE":
-            let stripeSubscriptionId = try container.decode(String.self, forKey: .stripeSubscriptionId)
-            self = .stripe(stripeSubscriptionId: stripeSubscriptionId)
+            let stripeCustomerId = try container.decode(String.self, forKey: .stripeCustomerId)
+            self = .stripe(stripeCustomerId: stripeCustomerId)
           default:
             // Decode entire JSON payload to capture additional fields
             let json = try JSON(from: decoder)
@@ -172,9 +171,9 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
-          case .stripe(let stripeSubscriptionId):
+          case .stripe(let stripeCustomerId):
             try container.encode("STRIPE", forKey: .store)
-            try container.encode(stripeSubscriptionId, forKey: .stripeSubscriptionId)
+            try container.encode(stripeCustomerId, forKey: .stripeCustomerId)
 
           case let .unknown(store, additionalInfo):
             try container.encode(store, forKey: .store)

@@ -134,15 +134,13 @@ public final class SuperwallOptions: NSObject, Encodable {
       "api-adservices.apple.com"
     }
 
-    // TODO: Change this to the prod one when it's available
     var web2AppHost: String {
-//      switch self {
-//      case .developer:
-//        return "subscriptions-api.superwall.dev"
-//      default:
-//        return "subscriptions-api.superwall.com"
-//      }
-      return "stg.us-east-1.subscriptions-api.superwall-services.com"
+      switch self {
+      case .developer:
+        return "subscriptions-api.superwall.dev"
+      default:
+        return "subscriptions-api.superwall.com"
+      }
     }
 
     private enum CodingKeys: String, CodingKey {
