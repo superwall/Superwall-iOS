@@ -125,7 +125,7 @@ actor WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      let allEntitlements = Array(Superwall.shared.entitlements.active.union(response.entitlements))
+      let allEntitlements = Array(Superwall.shared.entitlements.active.unionCombiningSources(response.entitlements))
       let customerInfo = CustomerInfo(
         entitlements: allEntitlements,
         redemptions: response.results
@@ -224,7 +224,7 @@ actor WebEntitlementRedeemer {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      let allEntitlements = entitlements.union(entitlementsInfo.active)
+      let allEntitlements = entitlements.unionCombiningSources(entitlementsInfo.active)
 
       let customerInfo = CustomerInfo(
         entitlements: Array(allEntitlements),

@@ -90,15 +90,6 @@ class CustomURLSession {
       ]
     )
 
-    Logger.debug(
-      logLevel: .error,
-      scope: .network,
-      message: "Raw Response Data",
-      info: [
-        "data": String(decoding: data, as: UTF8.self)
-      ]
-    )
-
     guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data
