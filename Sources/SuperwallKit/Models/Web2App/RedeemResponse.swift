@@ -23,4 +23,22 @@ struct RedeemResponse: Codable {
       Redeemable(code: $0.code, isFirstRedemption: false)
     })
   }
+
+  init(
+    results: [RedemptionResult],
+    entitlements: Set<Entitlement>
+  ) {
+    self.results = results
+    self.entitlements = entitlements
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.results = try container.decode([RedemptionResult].self, forKey: .results)
+
+    let rawEntitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
+    self.entitlements = Set(rawEntitlements.map {
+      Entitlement(id: $0.id, type: $0.type, source: [.web])
+    })
+  }
 }

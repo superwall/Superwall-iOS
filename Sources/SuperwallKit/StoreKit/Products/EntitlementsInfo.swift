@@ -120,4 +120,15 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       self.entitlementsByProductId = entitlementsByProductId
     }
   }
+
+  func clearAnyWebEntitlements() {
+    queue.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      self.backingActive = self.backingActive.filter {
+        $0.source.contains(.appStore) || $0.source.contains(.playStore)
+      }
+    }
+  }
 }

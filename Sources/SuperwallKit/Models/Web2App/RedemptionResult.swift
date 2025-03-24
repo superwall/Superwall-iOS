@@ -244,6 +244,18 @@ public enum RedemptionResult: Codable {
         try container.encode(jsonData, forKey: .placementParams)
       }
     }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      self.ownership = try container.decode(Ownership.self, forKey: .ownership)
+      self.purchaserInfo = try container.decode(PurchaserInfo.self, forKey: .purchaserInfo)
+      self.paywallInfo = try container.decodeIfPresent(PaywallInfo.self, forKey: .paywallInfo)
+
+      let rawEntitlements = try container.decode([Entitlement].self, forKey: .entitlements)
+      self.entitlements = rawEntitlements.map {
+        Entitlement(id: $0.id, type: $0.type, source: [.web])
+      }
+    }
   }
 
   private enum CodingKeys: String, CodingKey {

@@ -161,7 +161,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     switch status {
     case .active(let entitlements):
-      let mergedEntitlements = entitlements.union(webEntitlements)
+      let mergedEntitlements = entitlements.unionCombiningSources(webEntitlements)
       Superwall.shared.subscriptionStatus = .active(mergedEntitlements)
     case .inactive:
       if webEntitlements.isEmpty {
@@ -707,6 +707,9 @@ public final class Superwall: NSObject, ObservableObject {
   func reset(duringIdentify: Bool) {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     dependencyContainer.storage.reset()
+
+    dependencyContainer.entitlementsInfo.clearAnyWebEntitlements()
+
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()
