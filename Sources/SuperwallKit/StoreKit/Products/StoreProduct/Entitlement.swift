@@ -58,9 +58,10 @@ public final class Entitlement: NSObject, Codable, Sendable {
     /// The entitlement came from the web.
     case web
 
-    /// The entitlement was granted from iOS
+    /// The entitlement was granted from the iOS App Store
     case appStore
 
+    /// The entitlement was granted from the Google Play Store
     case playStore
   }
 
