@@ -72,7 +72,7 @@ final class RedeemResponseTests {
 
   @Test("All codes extracts the codes")
   func testAllCodesProperty() throws {
-    let decodeFixr = JSONDecoder()
+    let decoder = JSONDecoder()
     let response = try decoder.decode(RedeemResponse.self, from: successData)
 
     let expectedCode = Redeemable(code: "redemption_8c7916a7-d48b-42c1-8eae-a58e0a57d37d", isFirstRedemption: false)
