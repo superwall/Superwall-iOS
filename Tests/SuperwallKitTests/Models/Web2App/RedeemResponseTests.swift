@@ -18,7 +18,7 @@ final class RedeemResponseTests {
         "code": "redemption_8c7916a7-d48b-42c1-8eae-a58e0a57d37d",
         "redemptionInfo": {
           "ownership": {
-            "type": "device",
+            "type": "DEVICE",
             "deviceId": "$SuperwallDevice:24141E45-EDE8-4BD7-BCE9-A788228BCB0D"
           },
           "purchaserInfo": {
@@ -32,7 +32,7 @@ final class RedeemResponseTests {
           "paywallInfo": null,
           "entitlements": [
             {
-              "identifier": "…",
+              "identifier": "abc",
               "type": "SERVICE_LEVEL"
             }
           ]
@@ -41,7 +41,7 @@ final class RedeemResponseTests {
     ],
     "entitlements": [
       {
-        "identifier": "…",
+        "identifier": "abc",
         "type": "SERVICE_LEVEL"
       }
     ]
@@ -72,7 +72,7 @@ final class RedeemResponseTests {
 
   @Test("All codes extracts the codes")
   func testAllCodesProperty() throws {
-    let decoder = JSONDecoder()
+    let decodeFixr = JSONDecoder()
     let response = try decoder.decode(RedeemResponse.self, from: successData)
 
     let expectedCode = Redeemable(code: "redemption_8c7916a7-d48b-42c1-8eae-a58e0a57d37d", isFirstRedemption: false)
