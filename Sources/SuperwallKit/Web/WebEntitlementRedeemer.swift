@@ -95,7 +95,6 @@ actor WebEntitlementRedeemer {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      // TODO: Maybe include status here
       let completeEvent = InternalSuperwallEvent.Redemption(state: .complete)
       await Superwall.shared.track(completeEvent)
 
@@ -107,7 +106,6 @@ actor WebEntitlementRedeemer {
             closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
           )
         } else {
-          // TODO: - What if using getPaywall?
           let trackedEvent = await InternalSuperwallEvent.Restore(
             state: .complete,
             paywallInfo: paywallVc.info
@@ -135,8 +133,6 @@ actor WebEntitlementRedeemer {
       // automatic purchase controller or calls the external
       // purchase controller.
       await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)
-
-      // TODO: Could this intefere with an unknown status of local entitlements if this is set before device entitlements set?
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {

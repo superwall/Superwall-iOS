@@ -51,7 +51,7 @@ class CustomURLSession {
     let auth = request.allHTTPHeaderFields?["Authorization"]
 
     Logger.debug(
-      logLevel: .error,
+      logLevel: .debug,
       scope: .network,
       message: "Request Started",
       info: [

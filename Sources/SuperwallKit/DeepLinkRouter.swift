@@ -29,7 +29,6 @@ final class DeepLinkRouter {
       Task {
         await webEntitlementRedeemer.redeem(.code(code))
       }
-      // TODO: Should be able to call depp link from cold app start
       return true
     } else {
       Task {

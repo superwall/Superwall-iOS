@@ -678,49 +678,6 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
-    switch paywallEvent {
-    case .initiateRestore:
-      if let restoreUrl = factory.makeRestoreAccessURL() {
-        let webRestoreAction = Action(
-          title: "Web Subscriptions",
-          call: {
-            UIApplication.shared.open(restoreUrl)
-          }
-        )
-
-        let appStoreRestoreAction = Action(
-          title: "App Store Subscriptions",
-          call: { [weak self] in
-            guard let self = self else {
-              return
-            }
-            Task {
-              await self.eventDelegate?.eventDidOccur(
-                paywallEvent,
-                on: self
-              )
-            }
-          }
-        )
-
-        let alertController = AlertControllerFactory.make(
-          title: "What would you like to restore?",
-          closeActionTitle: "Cancel",
-          actions: [webRestoreAction, appStoreRestoreAction],
-          sourceView: self.view
-        )
-
-        present(alertController, animated: true) { [weak self] in
-          self?.loadingState = .ready
-        }
-
-        return
-      }
-      // Get the web2config, if it exists, show option. When that's clicked then pass down the restore or redirect to web.
-    default:
-      break
-    }
-
     Task {
       await eventDelegate?.eventDidOccur(
         paywallEvent,
