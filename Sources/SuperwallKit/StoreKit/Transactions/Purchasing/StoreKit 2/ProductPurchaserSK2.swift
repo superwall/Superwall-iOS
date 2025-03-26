@@ -99,9 +99,9 @@ final class ProductPurchaserSK2: Purchasing {
       guard let scene = await UIApplication.shared.connectedScenes.first else {
         return .cancelled
       }
-      result = try await product.purchase(confirmIn: scene)
+      result = try await product.purchase(options: options, confirmIn: scene)
       #else
-      result = try await product.purchase()
+      result = try await product.purchase(options: options)
       #endif
 
       switch result {

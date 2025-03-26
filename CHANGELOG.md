@@ -8,6 +8,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for web checkout.
 
+## 4.0.4
+
+### Fixes
+
+- Adds in missing `appAccountToken` for StoreKit 2 purchases.
+
 ## 4.0.3
 
 ### Enhancements
