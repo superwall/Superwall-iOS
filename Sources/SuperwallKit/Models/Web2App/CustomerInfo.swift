@@ -10,7 +10,7 @@ import Foundation
 /// Info about the customer such as active entitlements and redeemed codes.
 public struct CustomerInfo {
   /// The active entitlements.
-  public let entitlements: [Entitlement]
+  public let entitlements: Set<Entitlement>
 
   /// An `Array` of ``RedemptionResult`` objects, representing all the results of
   /// codes that were redeemed.

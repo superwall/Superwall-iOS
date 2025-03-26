@@ -16,7 +16,7 @@ extension Set where Element == Entitlement {
       entitlementMap[entitlement.id] = entitlement
     }
 
-    // Insert from other, prioritizing .device
+    // Insert from other merging sources
     for entitlement in other {
       let key = entitlement.id
       if let existing = entitlementMap[key] {

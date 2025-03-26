@@ -123,7 +123,7 @@ actor WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      let allEntitlements = Array(Superwall.shared.entitlements.active.unionCombiningSources(response.entitlements))
+      let allEntitlements = Superwall.shared.entitlements.active.unionCombiningSources(response.entitlements)
       let customerInfo = CustomerInfo(
         entitlements: allEntitlements,
         redemptions: response.results
@@ -149,7 +149,7 @@ actor WebEntitlementRedeemer {
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
-        let entitlements = Array(Superwall.shared.entitlements.active)
+        let entitlements = Superwall.shared.entitlements.active
 
         var redemptions = latestRedeemResponse?.results ?? []
         let errorResult = RedemptionResult.error(
@@ -223,7 +223,7 @@ actor WebEntitlementRedeemer {
       let allEntitlements = entitlements.unionCombiningSources(entitlementsInfo.active)
 
       let customerInfo = CustomerInfo(
-        entitlements: Array(allEntitlements),
+        entitlements: allEntitlements,
         redemptions: redemptions
       )
       await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)

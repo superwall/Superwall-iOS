@@ -41,6 +41,10 @@ public protocol PurchaseController: AnyObject {
   @MainActor
   func restorePurchases() async -> RestorationResult
 
+  /// Called when web entitlements changed.
+  ///
+  /// If you are using web paywalls, make sure to add this method. `customerInfo` contains
+  /// the existing active entitlements joined with the updated set of web entitlements. You must set the ``Superwall/subscriptionStatus`` using these entitlements.
   @MainActor
   func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo)
 }
