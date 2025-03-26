@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.4
+
+### Fixes
+
+- Adds in missing `appAccountToken` for StoreKit 2 purchases.
+
 ## 4.0.3
 
 ### Enhancements
