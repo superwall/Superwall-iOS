@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.5
+
+### Fixes
+
+- Fixes a visionOS build-time issue.
+
 ## 4.0.4
 
 ### Fixes
