@@ -23,7 +23,7 @@ final class TransactionManager {
     & PurchasedTransactionsFactory
     & StoreTransactionFactory
     & DeviceHelperFactory
-    & ExternalPurchaseControllerFactory
+    & HasExternalPurchaseControllerFactory
     & RestoreAccessFactory
   enum State {
     case observing

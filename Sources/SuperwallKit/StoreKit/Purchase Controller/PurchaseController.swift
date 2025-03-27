@@ -40,17 +40,4 @@ public protocol PurchaseController: AnyObject {
   /// **Note**: `restored` does not imply the user has an active subscription, it just mean the restore had no errors.
   @MainActor
   func restorePurchases() async -> RestorationResult
-
-  /// Called when web entitlements changed.
-  ///
-  /// If you are using web paywalls, make sure to add this method.
-  /// You must merge the entitlements returned here with your local entitlements and set the ``Superwall/subscriptionStatus``
-  /// with the merged set.
-  /// - Parameter entitlements: A `Set` of web ``Entitlement``s.
-  @MainActor
-  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async
-}
-
-extension PurchaseController {
-  public func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {}
 }

@@ -150,8 +150,11 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Gets web entitlements and merges them with device entitlements before
-  /// setting the status.
+  /// setting the status if no external purchase controller.
   func internallySetSubscriptionStatus(to status: SubscriptionStatus) {
+    if dependencyContainer.makeHasExternalPurchaseController() {
+      return
+    }
     let webEntitlements = dependencyContainer.entitlementsInfo.web
 
     switch status {

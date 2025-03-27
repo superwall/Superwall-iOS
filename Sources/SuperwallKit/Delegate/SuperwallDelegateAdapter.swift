@@ -134,12 +134,9 @@ final class SuperwallDelegateAdapter {
   }
 
   @MainActor
-  func didRedeemCode(customerInfo: CustomerInfo, result: RedemptionResult) {
+  func didRedeemCode(result: RedemptionResult) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didRedeemCode(
-        customerInfo: customerInfo,
-        result: result
-      )
+      swiftDelegate.didRedeemCode(result: result)
     }
     // TODO: Objective C version
   }

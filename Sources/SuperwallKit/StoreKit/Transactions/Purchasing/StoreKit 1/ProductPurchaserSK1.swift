@@ -32,7 +32,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   private let identityManager: IdentityManager
   private let storage: Storage
   private let factory:
-    ExternalPurchaseControllerFactory
+    HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
       & TransactionManagerFactory
@@ -48,7 +48,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     identityManager: IdentityManager,
     coordinator: PurchasingCoordinator,
     storage: Storage,
-    factory: ExternalPurchaseControllerFactory
+    factory: HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
       & TransactionManagerFactory

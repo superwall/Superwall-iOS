@@ -93,21 +93,4 @@ final class RCPurchaseController: PurchaseController {
       return .failed(error)
     }
   }
-
-  /// An optional function to use if you're using web paywalls. This merges the entitlements from RevenueCat with
-  /// the web entitlements and sets the ``Superwall/subscriptionStatus`` with the merged set.
-  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {
-    var allEntitlements: Set<Entitlement> = entitlements
-
-    if let customerInfo = try? await Purchases.shared.customerInfo() {
-      let revenueCatEntitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
-        Entitlement(id: $0)
-      })
-      allEntitlements.formUnion(revenueCatEntitlements)
-    }
-
-    await MainActor.run {
-      Superwall.shared.subscriptionStatus = .active(allEntitlements)
-    }
-  }
 }

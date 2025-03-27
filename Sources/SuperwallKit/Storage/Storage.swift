@@ -73,16 +73,16 @@ class Storage {
   /// The disk cache.
   private let cache: Cache
 
-  private unowned let factory: DeviceHelperFactory & ExternalPurchaseControllerFactory
+  private unowned let factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory
 
   // MARK: - Configuration
 
   init(
-    factory: DeviceHelperFactory & ExternalPurchaseControllerFactory,
-    cache: Cache? = nil,
+    factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory,
+    cache: Cache = Cache(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {
-    self.cache = cache ?? Cache(factory: factory)
+    self.cache = cache
     self.coreDataManager = coreDataManager
     self._didTrackFirstSeen = self.cache.read(DidTrackFirstSeen.self) == true
 

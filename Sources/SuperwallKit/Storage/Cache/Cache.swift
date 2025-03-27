@@ -21,7 +21,6 @@ class Cache {
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
-  private unowned let factory: ExternalPurchaseControllerFactory
 
   /// Life time of disk cache, in second. Default is a week
   private var maxCachePeriodInSecond = Cache.defaultMaxCachePeriodInSecond
@@ -32,10 +31,8 @@ class Cache {
   /// Specify distinct name param, it represents folder name for disk cache
   init(
     fileManager: FileManager = FileManager(),
-    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix),
-    factory: ExternalPurchaseControllerFactory
+    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)
   ) {
-    self.factory = factory
     self.fileManager = fileManager
     cacheUrl = fileManager
       .urls(for: .cachesDirectory, in: .userDomainMask)
@@ -377,14 +374,12 @@ extension Cache {
     if let redeemResponse = read(LatestRedeemResponse.self) {
       let existingWebEntitlements = redeemResponse.entitlements
       var deviceResults: [RedemptionResult] = []
-      var webEntitlementsToKeep: Set<Entitlement> = []
 
       for result in redeemResponse.results {
         switch result {
         case .success(_, let redemptionInfo):
           if case .device = redemptionInfo.ownership {
             deviceResults.append(result)
-            webEntitlementsToKeep.formUnion(redemptionInfo.entitlements)
           }
         case .expiredSubscription(_, let redemptionInfo):
           if case .device = redemptionInfo.ownership {
@@ -397,16 +392,14 @@ extension Cache {
 
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
-        entitlements: webEntitlementsToKeep
+        entitlements: []
       )
 
       write(newRedeemResponse, forType: LatestRedeemResponse.self)
 
-      if existingWebEntitlements != webEntitlementsToKeep {
-        Task {
-          let purchaseController = factory.makeExternalPurchaseController()
-          await purchaseController.offDeviceSubscriptionsDidChange(entitlements: webEntitlementsToKeep)
-        }
+      if !existingWebEntitlements.isEmpty {
+        let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
+        Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
       }
     }
   }

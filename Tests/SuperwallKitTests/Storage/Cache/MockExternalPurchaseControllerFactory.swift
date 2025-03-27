@@ -8,7 +8,7 @@
 import Foundation
 @testable import SuperwallKit
 
-final class MockExternalPurchaseControllerFactory: ExternalPurchaseControllerFactory {
+final class MockExternalPurchaseControllerFactory: HasExternalPurchaseControllerFactory {
   let purchaseController: PurchaseController
 
   init(purchaseController: PurchaseController) {

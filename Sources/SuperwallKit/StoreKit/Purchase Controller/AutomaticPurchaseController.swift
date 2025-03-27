@@ -60,14 +60,6 @@ extension AutomaticPurchaseController: PurchaseController {
 
     return result
   }
-
-  @MainActor
-  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {
-    let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-    let allEntitlements = deviceEntitlements.union(entitlements)
-
-    Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
-  }
 }
 
 // MARK: - InternalPurchaseController

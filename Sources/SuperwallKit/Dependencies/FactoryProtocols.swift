@@ -98,9 +98,8 @@ protocol DeviceHelperFactory: AnyObject {
   func makeSessionDeviceAttributes() async -> [String: Any]
 }
 
-protocol ExternalPurchaseControllerFactory: AnyObject {
+protocol HasExternalPurchaseControllerFactory: AnyObject {
   func makeHasExternalPurchaseController() -> Bool
-  func makeExternalPurchaseController() -> PurchaseController
 }
 
 struct DummyDecodable: Decodable {}

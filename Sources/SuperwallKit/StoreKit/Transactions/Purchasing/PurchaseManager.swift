@@ -16,7 +16,7 @@ final class PurchaseManager: Purchasing {
   let coordinator: PurchasingCoordinator
   let purchaser: Purchasing
   private unowned let factory: Factory
-  typealias Factory = ExternalPurchaseControllerFactory
+  typealias Factory = HasExternalPurchaseControllerFactory
     & StoreTransactionFactory
     & OptionsFactory
     & TransactionManagerFactory

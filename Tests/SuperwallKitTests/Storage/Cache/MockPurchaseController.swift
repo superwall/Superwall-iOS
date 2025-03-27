@@ -9,7 +9,6 @@ import Foundation
 @testable import SuperwallKit
 
 final class MockPurchaseController: PurchaseController {
-  var didCallOffDeviceSubscriptionsDidChange = false
 
   func purchase(product: SuperwallKit.StoreProduct) async -> SuperwallKit.PurchaseResult {
     return .purchased
@@ -17,9 +16,5 @@ final class MockPurchaseController: PurchaseController {
   
   func restorePurchases() async -> SuperwallKit.RestorationResult {
     return .restored
-  }
-
-  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {
-    didCallOffDeviceSubscriptionsDidChange = true
   }
 }

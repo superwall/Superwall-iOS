@@ -123,24 +123,16 @@ actor WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      // Either sets the subscription status internally using
-      // automatic purchase controller or calls the external
-      // purchase controller.
-      await purchaseController.offDeviceSubscriptionsDidChange(entitlements: response.entitlements)
+      // Sets the subscription status internally if no external PurchaseController
+      let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
+      let allEntitlements = deviceEntitlements.union(response.entitlements)
+
+      Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
         if let codeResult = response.results.first(where: { $0.code == code }) {
-          let allEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements.union(response.entitlements)
-          let customerInfo = CustomerInfo(
-            entitlements: allEntitlements,
-            redemptions: response.results
-          )
-
-          await delegate.didRedeemCode(
-            customerInfo: customerInfo,
-            result: codeResult
-          )
+          await delegate.didRedeemCode(result: codeResult)
         }
       }
     } catch {
@@ -160,15 +152,7 @@ actor WebEntitlementRedeemer {
         )
         redemptions.append(errorResult)
 
-        let customerInfo = CustomerInfo(
-          entitlements: entitlements,
-          redemptions: redemptions
-        )
-
-        await delegate.didRedeemCode(
-          customerInfo: customerInfo,
-          result: errorResult
-        )
+        await delegate.didRedeemCode(result: errorResult)
       }
 
       Logger.debug(
@@ -216,7 +200,11 @@ actor WebEntitlementRedeemer {
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
       if existingWebEntitlements != entitlements {
-        await purchaseController.offDeviceSubscriptionsDidChange(entitlements: entitlements)
+        // Sets the subscription status internally if no external PurchaseController
+        let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
+        let allEntitlements = deviceEntitlements.union(entitlements)
+
+        Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
       }
     } catch {
       Logger.debug(
