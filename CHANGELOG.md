@@ -8,6 +8,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for web checkout.
 
+## 4.0.5
+
+### Fixes
+
+- Fixes a visionOS build-time issue.
+
 ## 4.0.4
 
 ### Fixes
