@@ -12,7 +12,7 @@ import StoreKit
 actor SK2TransactionListener {
   private(set) var taskHandle: Task<Void, Never>?
   private let shouldFinishTransactions: Bool
-  private let factory: HasExternalPurchaseControllerFactory
+  private let factory: ExternalPurchaseControllerFactory
   private unowned let receiptManager: ReceiptManager
 
   deinit {
@@ -23,7 +23,7 @@ actor SK2TransactionListener {
   init(
     shouldFinishTransactions: Bool,
     receiptManager: ReceiptManager,
-    factory: HasExternalPurchaseControllerFactory
+    factory: ExternalPurchaseControllerFactory
   ) {
     self.shouldFinishTransactions = shouldFinishTransactions
     self.receiptManager = receiptManager

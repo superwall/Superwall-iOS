@@ -29,6 +29,8 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
+    entitlementsInfo.activeDeviceEntitlements = entitlements
+
     await MainActor.run { [entitlements] in
       if entitlements.isEmpty {
         Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
@@ -60,8 +62,11 @@ extension AutomaticPurchaseController: PurchaseController {
   }
 
   @MainActor
-  func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo) {
-    Superwall.shared.internallySetSubscriptionStatus(to: .active(Set(customerInfo.entitlements)))
+  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {
+    let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
+    let allEntitlements = deviceEntitlements.union(entitlements)
+
+    Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
   }
 }
 

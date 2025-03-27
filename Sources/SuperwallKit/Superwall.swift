@@ -149,20 +149,15 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// A `Set` of active ``Entitlement`` objects redeemed via the web.
-  public var webEntitlements: Set<Entitlement> {
-    return dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
-  }
-
-  /// Gets web entitlements and either merges them with local entitlements before
+  /// Gets web entitlements and merges them with device entitlements before
   /// setting the status.
   func internallySetSubscriptionStatus(to status: SubscriptionStatus) {
-    let webEntitlements = dependencyContainer.storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+    let webEntitlements = dependencyContainer.entitlementsInfo.web
 
     switch status {
     case .active(let entitlements):
-      let mergedEntitlements = entitlements.unionCombiningSources(webEntitlements)
-      Superwall.shared.subscriptionStatus = .active(mergedEntitlements)
+      let allEntitlements = entitlements.union(webEntitlements)
+      Superwall.shared.subscriptionStatus = .active(allEntitlements)
     case .inactive:
       if webEntitlements.isEmpty {
         Superwall.shared.subscriptionStatus = .inactive
@@ -708,7 +703,8 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     dependencyContainer.storage.reset()
 
-    dependencyContainer.entitlementsInfo.clearAnyWebEntitlements()
+    // Cleared the user-web entitlements. now need to update active ones based on that
+    dependencyContainer.entitlementsInfo
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

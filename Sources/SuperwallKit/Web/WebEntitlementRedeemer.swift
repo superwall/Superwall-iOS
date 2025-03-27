@@ -123,20 +123,20 @@ actor WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      let allEntitlements = Superwall.shared.entitlements.active.unionCombiningSources(response.entitlements)
-      let customerInfo = CustomerInfo(
-        entitlements: allEntitlements,
-        redemptions: response.results
-      )
-
       // Either sets the subscription status internally using
       // automatic purchase controller or calls the external
       // purchase controller.
-      await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)
+      await purchaseController.offDeviceSubscriptionsDidChange(entitlements: response.entitlements)
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
         if let codeResult = response.results.first(where: { $0.code == code }) {
+          let allEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements.union(response.entitlements)
+          let customerInfo = CustomerInfo(
+            entitlements: allEntitlements,
+            redemptions: response.results
+          )
+
           await delegate.didRedeemCode(
             customerInfo: customerInfo,
             result: codeResult
@@ -165,8 +165,6 @@ actor WebEntitlementRedeemer {
           redemptions: redemptions
         )
 
-        await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)
-
         await delegate.didRedeemCode(
           customerInfo: customerInfo,
           result: errorResult
@@ -190,9 +188,6 @@ actor WebEntitlementRedeemer {
   }
 
   func pollWebEntitlements(config: Config? = nil) async {
-    guard config != nil || factory.makeHasConfig() else {
-      return
-    }
     guard let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() else {
       return
     }
@@ -205,28 +200,24 @@ actor WebEntitlementRedeemer {
     }
 
     do {
+      let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+
       let entitlements = try await network.redeemEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()
       )
-      var redemptions: [RedemptionResult] = []
 
       // Update the latest redeem response with the entitlements.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
         latestRedeemResponse.entitlements = entitlements
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
-        redemptions = latestRedeemResponse.results
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      let allEntitlements = entitlements.unionCombiningSources(entitlementsInfo.active)
-
-      let customerInfo = CustomerInfo(
-        entitlements: allEntitlements,
-        redemptions: redemptions
-      )
-      await purchaseController.offDeviceSubscriptionsDidChange(customerInfo: customerInfo)
+      if existingWebEntitlements != entitlements {
+        await purchaseController.offDeviceSubscriptionsDidChange(entitlements: entitlements)
+      }
     } catch {
       Logger.debug(
         logLevel: .warn,

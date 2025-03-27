@@ -42,6 +42,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
+  /// A `Set` of active ``Entitlement`` objects redeemed via the web.
+  public var web: Set<Entitlement> {
+    return storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+  }
+
   // MARK: - Internal vars
   /// The entitlements that belong to each product ID.
   var entitlementsByProductId: [String: Set<Entitlement>] = [:] {
@@ -50,6 +55,10 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       self.all = Set(entitlementsByProductId.values.joined())
     }
   }
+
+  /// The active device entitlements - doesn't include the web ones like
+  /// ``EntitlementsInfo/active``.
+  var activeDeviceEntitlements: Set<Entitlement> = []
 
   // MARK: - Private vats
   /// The backing variable for ``EntitlementsInfo/active``.
@@ -118,17 +127,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
         return
       }
       self.entitlementsByProductId = entitlementsByProductId
-    }
-  }
-
-  func clearAnyWebEntitlements() {
-    queue.async { [weak self] in
-      guard let self = self else {
-        return
-      }
-      self.backingActive = self.backingActive.filter {
-        $0.source.contains(.appStore) || $0.source.contains(.playStore)
-      }
     }
   }
 }

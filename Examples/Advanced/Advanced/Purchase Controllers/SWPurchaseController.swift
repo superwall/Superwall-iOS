@@ -32,10 +32,12 @@ final class SWPurchaseController: PurchaseController {
     }
 
     let storeProducts = await Superwall.shared.products(for: products)
-    let entitlements = Set(storeProducts.flatMap { $0.entitlements })
+    let deviceEntitlements = Set(storeProducts.flatMap { $0.entitlements })
+    let webEntitlements = Superwall.shared.entitlements.web
+    let allEntitlements = deviceEntitlements.union(webEntitlements)
 
     await MainActor.run {
-      Superwall.shared.subscriptionStatus = .active(entitlements)
+      Superwall.shared.subscriptionStatus = .active(allEntitlements)
     }
   }
 
@@ -55,5 +57,12 @@ final class SWPurchaseController: PurchaseController {
     let result = await Superwall.shared.restorePurchases()
     await syncSubscriptionStatus()
     return result
+  }
+
+  /// An optional function to use if you're using web paywalls. This sets the `subscriptionStatus`
+  /// with the entitlements returned from `customerInfo`.
+  /// This consists of the existing active entitlements joined with the updated set of web entitlements.
+  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {
+    await syncSubscriptionStatus()
   }
 }

@@ -43,12 +43,14 @@ public protocol PurchaseController: AnyObject {
 
   /// Called when web entitlements changed.
   ///
-  /// If you are using web paywalls, make sure to add this method. `customerInfo` contains
-  /// the existing active entitlements joined with the updated set of web entitlements. You must set the ``Superwall/subscriptionStatus`` using these entitlements.
+  /// If you are using web paywalls, make sure to add this method.
+  /// You must merge the entitlements returned here with your local entitlements and set the ``Superwall/subscriptionStatus``
+  /// with the merged set.
+  /// - Parameter entitlements: A `Set` of web ``Entitlement``s.
   @MainActor
-  func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo)
+  func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async
 }
 
 extension PurchaseController {
-  public func offDeviceSubscriptionsDidChange(customerInfo: CustomerInfo) {}
+  public func offDeviceSubscriptionsDidChange(entitlements: Set<Entitlement>) async {}
 }

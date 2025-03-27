@@ -64,7 +64,7 @@ public enum RedemptionResult: Codable {
     public let paywallInfo: PaywallInfo?
 
     /// The entitlements array
-    public let entitlements: [Entitlement]
+    public let entitlements: Set<Entitlement>
 
     /// Enum specifiying code ownership.
     public enum Ownership: Codable {
@@ -250,11 +250,18 @@ public enum RedemptionResult: Codable {
       self.ownership = try container.decode(Ownership.self, forKey: .ownership)
       self.purchaserInfo = try container.decode(PurchaserInfo.self, forKey: .purchaserInfo)
       self.paywallInfo = try container.decodeIfPresent(PaywallInfo.self, forKey: .paywallInfo)
+      self.entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
+    }
 
-      let rawEntitlements = try container.decode([Entitlement].self, forKey: .entitlements)
-      self.entitlements = rawEntitlements.map {
-        Entitlement(id: $0.id, type: $0.type, source: [.web])
-      }
+    init(
+      ownership: Ownership,
+      purchaserInfo: PurchaserInfo,
+      entitlements: Set<Entitlement>
+    ) {
+      self.ownership = ownership
+      self.purchaserInfo = purchaserInfo
+      self.entitlements = entitlements
+      self.paywallInfo = nil
     }
   }
 

@@ -35,10 +35,6 @@ struct RedeemResponse: Codable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.results = try container.decode([RedemptionResult].self, forKey: .results)
-
-    let rawEntitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
-    self.entitlements = Set(rawEntitlements.map {
-      Entitlement(id: $0.id, type: $0.type, source: [.web])
-    })
+    self.entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
   }
 }

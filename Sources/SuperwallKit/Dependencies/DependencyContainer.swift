@@ -471,9 +471,13 @@ extension DependencyContainer: TriggerFactory {
 }
 
 // MARK: - Purchase Controller Factory
-extension DependencyContainer: HasExternalPurchaseControllerFactory {
+extension DependencyContainer: ExternalPurchaseControllerFactory {
   func makeHasExternalPurchaseController() -> Bool {
     return purchaseController.isInternal == false
+  }
+
+  func makeExternalPurchaseController() -> any PurchaseController {
+    return purchaseController
   }
 }
 

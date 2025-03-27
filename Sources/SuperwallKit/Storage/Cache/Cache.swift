@@ -21,6 +21,7 @@ class Cache {
   private let memCache = NSCache<AnyObject, AnyObject>()
   private let ioQueue: DispatchQueue
   private let fileManager: FileManager
+  private unowned let factory: ExternalPurchaseControllerFactory
 
   /// Life time of disk cache, in second. Default is a week
   private var maxCachePeriodInSecond = Cache.defaultMaxCachePeriodInSecond
@@ -28,11 +29,13 @@ class Cache {
   /// Size is allocated for disk cache, in byte. 0 mean no limit. Default is 0
   private var maxDiskCacheSize: UInt = 0
 
-  /// Specify distinc name param, it represents folder name for disk cache
+  /// Specify distinct name param, it represents folder name for disk cache
   init(
     fileManager: FileManager = FileManager(),
-    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)
+    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix),
+    factory: ExternalPurchaseControllerFactory
   ) {
+    self.factory = factory
     self.fileManager = fileManager
     cacheUrl = fileManager
       .urls(for: .cachesDirectory, in: .userDomainMask)
@@ -369,17 +372,21 @@ extension Cache {
     cleanDiskCache()
   }
 
-  /// Cleans codes that are owned by the user.
+  /// Cleans codes and entitlements that are owned by the user.
   func cleanUserCodes() {
     if let redeemResponse = read(LatestRedeemResponse.self) {
+      let existingWebEntitlements = redeemResponse.entitlements
       var deviceResults: [RedemptionResult] = []
+      var webEntitlementsToKeep: Set<Entitlement> = []
+
       for result in redeemResponse.results {
         switch result {
-        case let .success(_, redemptionInfo):
+        case .success(_, let redemptionInfo):
           if case .device = redemptionInfo.ownership {
             deviceResults.append(result)
+            webEntitlementsToKeep.formUnion(redemptionInfo.entitlements)
           }
-        case let .expiredSubscription(_, redemptionInfo):
+        case .expiredSubscription(_, let redemptionInfo):
           if case .device = redemptionInfo.ownership {
             deviceResults.append(result)
           }
@@ -387,12 +394,20 @@ extension Cache {
           break
         }
       }
+
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
-        entitlements: redeemResponse.entitlements
+        entitlements: webEntitlementsToKeep
       )
 
       write(newRedeemResponse, forType: LatestRedeemResponse.self)
+
+      if existingWebEntitlements != webEntitlementsToKeep {
+        Task {
+          let purchaseController = factory.makeExternalPurchaseController()
+          await purchaseController.offDeviceSubscriptionsDidChange(entitlements: webEntitlementsToKeep)
+        }
+      }
     }
   }
 

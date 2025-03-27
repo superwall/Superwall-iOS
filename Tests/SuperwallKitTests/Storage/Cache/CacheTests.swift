@@ -13,7 +13,7 @@ struct CacheTests {
   let testDocumentDirectory: URL
   let testApplicationSupportDirectory: URL
   var fileManager: TestFileManager
-  var dataMigrator: Cache
+  var cache: Cache
 
   init() throws {
     // Create unique temporary directories for testing.
@@ -34,14 +34,16 @@ struct CacheTests {
       testDocumentDirectory: testDocumentDirectory,
       testApplicationSupportDirectory: testApplicationSupportDirectory
     )
-    dataMigrator = Cache(
+    cache = Cache(
       fileManager: fileManager,
-      ioQueue: DispatchQueue(label: "ioQueue")
+      ioQueue: DispatchQueue(label: "ioQueue"),
+      factory: DependencyContainer()
     )
   }
 
   /// Test moving user-specific data.
-  @Test func testUserSpecificDataMigration() async throws {
+  @Test
+  func testUserSpecificDataMigration() async throws {
     // Create a user-specific folder in the document directory with a file.
     let userDocFolder = testDocumentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
     try fileManager.createDirectory(at: userDocFolder, withIntermediateDirectories: true, attributes: nil)
@@ -49,7 +51,7 @@ struct CacheTests {
     let fileContent = "User specific content"
     try fileContent.write(to: sourceFile, atomically: true, encoding: .utf8)
 
-    dataMigrator.moveDataFromDocumentsToApplicationSupport()
+    cache.moveDataFromDocumentsToApplicationSupport()
     // Allow the async migration to complete.
     try await Task.sleep(nanoseconds: 100_000_000)
 
@@ -68,7 +70,8 @@ struct CacheTests {
   }
 
   /// Test moving app-specific data.
-  @Test func testAppSpecificDataMigration() async throws {
+  @Test
+  func testAppSpecificDataMigration() async throws {
     // Create an app-specific folder in the document directory with a file.
     let appDocFolder = testDocumentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
     try fileManager.createDirectory(at: appDocFolder, withIntermediateDirectories: true, attributes: nil)
@@ -76,7 +79,7 @@ struct CacheTests {
     let fileContent = "App specific content"
     try fileContent.write(to: sourceFile, atomically: true, encoding: .utf8)
 
-    dataMigrator.moveDataFromDocumentsToApplicationSupport()
+    cache.moveDataFromDocumentsToApplicationSupport()
     try await Task.sleep(nanoseconds: 100_000_000)
 
     // Verify the file has been moved.
@@ -93,7 +96,8 @@ struct CacheTests {
   }
 
   /// Test that an existing file at the destination is overwritten.
-  @Test func testOverwriteDestination() async throws {
+  @Test
+  func testOverwriteDestination() async throws {
     let userDocFolder = testDocumentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
     try fileManager.createDirectory(at: userDocFolder, withIntermediateDirectories: true, attributes: nil)
     let sourceFile = userDocFolder.appendingPathComponent("overwrite.txt")
@@ -106,7 +110,7 @@ struct CacheTests {
     let destContent = "Old destination content"
     try destContent.write(to: destFile, atomically: true, encoding: .utf8)
 
-    dataMigrator.moveDataFromDocumentsToApplicationSupport()
+    cache.moveDataFromDocumentsToApplicationSupport()
     try await Task.sleep(nanoseconds: 100_000_000)
 
     let finalContent = try String(contentsOf: destFile, encoding: .utf8)
@@ -115,17 +119,155 @@ struct CacheTests {
   }
 
   /// Test that empty source folders are removed.
-  @Test func testEmptyFoldersRemoval() async throws {
+  @Test
+  func testEmptyFoldersRemoval() async throws {
     let userDocFolder = testDocumentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
     try fileManager.createDirectory(at: userDocFolder, withIntermediateDirectories: true, attributes: nil)
 
     let appDocFolder = testDocumentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
     try fileManager.createDirectory(at: appDocFolder, withIntermediateDirectories: true, attributes: nil)
 
-    dataMigrator.moveDataFromDocumentsToApplicationSupport()
+    cache.moveDataFromDocumentsToApplicationSupport()
     try await Task.sleep(nanoseconds: 100_000_000)
 
     #expect(!fileManager.fileExists(atPath: userDocFolder.path))
     #expect(!fileManager.fileExists(atPath: appDocFolder.path))
+  }
+
+  /// Test that cleanUserCodes correctly filters out non-device results and writes updated entitlements.
+  @Test("Filters out non-device results")
+  mutating func testCleanUserCodes_() async throws {
+    let mockPC = MockPurchaseController()
+    let mockFactory = MockExternalPurchaseControllerFactory(purchaseController: mockPC)
+    cache = Cache(factory: mockFactory)
+
+    let entitlement1 = Entitlement(id: "a")
+    let entitlement2 = Entitlement(id: "b")
+    let entitlement3 = Entitlement(id: "c")
+
+    let deviceSuccess = RedemptionResult.success(
+      code: "code1",
+      redemptionInfo: RedemptionResult.RedemptionInfo(
+        ownership: .device(deviceId: "deviceId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: "john@appleseed.com",
+          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+        ),
+        entitlements: [entitlement1]
+      )
+    )
+    let webSuccess = RedemptionResult.success(
+      code: "code2",
+      redemptionInfo: RedemptionResult.RedemptionInfo(
+        ownership: .appUser(appUserId: "appUserId2"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: "john@appleseed.com",
+          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+        ),
+        entitlements: [entitlement2]
+      )
+    )
+
+    let expiredDevice = RedemptionResult.expiredSubscription(
+      code: "code2",
+      redemptionInfo: RedemptionResult.RedemptionInfo(
+        ownership: .device(deviceId: "deviceId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: "john@appleseed.com",
+          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+        ),
+        entitlements: [entitlement3]
+      )
+    )
+
+    let invalidCode = RedemptionResult.invalidCode(code: "blah")
+
+    let errorCode = RedemptionResult.error(code: "error", error: RedemptionResult.ErrorInfo(message: "error occurred"))
+
+
+    let initialResponse = RedeemResponse(
+      results: [deviceSuccess, webSuccess, expiredDevice, invalidCode, errorCode],
+      entitlements: [entitlement1, entitlement2, entitlement3]
+    )
+
+    cache.write(initialResponse, forType: LatestRedeemResponse.self)
+
+    // Clean user codes
+    cache.cleanUserCodes()
+
+    // Wait briefly to allow async write and callback
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    guard let updatedResponse = cache.read(LatestRedeemResponse.self) else {
+      #expect(Bool(false), "Redeem response should not be nil")
+      return
+    }
+
+    // Should only contain the deviceSuccess and expiredDevice
+    #expect(updatedResponse.results.count == 2)
+    #expect(updatedResponse.entitlements == [entitlement1])
+    #expect(mockPC.didCallOffDeviceSubscriptionsDidChange == true)
+  }
+
+  /// Test that cleanUserCodes correctly filters out non-device results and writes updated entitlements.
+  @Test("Filters out non-device results")
+  mutating func testEntitlementsAreSame() async throws {
+    let mockPC = MockPurchaseController()
+    let mockFactory = MockExternalPurchaseControllerFactory(purchaseController: mockPC)
+    cache = Cache(factory: mockFactory)
+
+    let entitlement2 = Entitlement(id: "b")
+    let entitlement3 = Entitlement(id: "c")
+
+    let webSuccess = RedemptionResult.success(
+      code: "code2",
+      redemptionInfo: RedemptionResult.RedemptionInfo(
+        ownership: .appUser(appUserId: "appUserId2"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: "john@appleseed.com",
+          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+        ),
+        entitlements: [entitlement2]
+      )
+    )
+
+    let expiredDevice = RedemptionResult.expiredSubscription(
+      code: "code2",
+      redemptionInfo: RedemptionResult.RedemptionInfo(
+        ownership: .device(deviceId: "deviceId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: "john@appleseed.com",
+          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+        ),
+        entitlements: [entitlement3]
+      )
+    )
+
+    let emptyResponse = RedeemResponse(
+      results: [webSuccess, expiredDevice],
+      entitlements: []
+    )
+    cache.write(emptyResponse, forType: LatestRedeemResponse.self)
+
+    // Clean user codes
+    cache.cleanUserCodes()
+
+    // Wait briefly to allow async write and callback
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    guard let updatedResponse = cache.read(LatestRedeemResponse.self) else {
+      #expect(Bool(false), "Redeem response should not be nil")
+      return
+    }
+
+    // Should only contain the deviceSuccess and expiredDevice
+    #expect(updatedResponse.results.count == 1)
+    #expect(updatedResponse.entitlements.isEmpty)
+    #expect(mockPC.didCallOffDeviceSubscriptionsDidChange == false)
   }
 }

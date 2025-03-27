@@ -54,34 +54,17 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// The type of entitlement.
   public let type: EntitlementType
 
-  public enum Source: Sendable, Codable {
-    /// The entitlement came from the web.
-    case web
-
-    /// The entitlement was granted from the iOS App Store
-    case appStore
-
-    /// The entitlement was granted from the Google Play Store
-    case playStore
-  }
-
-  /// The source of the entitlement.
-  public let source: Set<Source>
-
   private enum CodingKeys: String, CodingKey {
     case id = "identifier"
     case type
-    case source
   }
 
   init(
     id: String,
-    type: EntitlementType = .serviceLevel,
-    source: Set<Source> = [.appStore]
+    type: EntitlementType = .serviceLevel
   ) {
     self.id = id
     self.type = type
-    self.source = source
   }
 
   static var `default`: Entitlement {
@@ -93,21 +76,18 @@ public final class Entitlement: NSObject, Codable, Sendable {
   ) {
     self.id = id
     self.type = .serviceLevel
-    self.source = [.appStore]
   }
 
   public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.id = try container.decode(String.self, forKey: .id)
     self.type = try container.decode(EntitlementType.self, forKey: .type)
-    self.source = try container.decodeIfPresent(Set<Source>.self, forKey: .source) ?? [.appStore]
   }
 
   public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(id, forKey: .id)
     try container.encode(type, forKey: .type)
-    try container.encode(source, forKey: .source)
   }
 
   // Override isEqual to define equality based on `id` and `type`
@@ -117,14 +97,12 @@ public final class Entitlement: NSObject, Codable, Sendable {
     }
     return self.id == other.id
       && self.type == other.type
-      && self.source == other.source
   }
 
   public override var hash: Int {
     var hasher = Hasher()
     hasher.combine(id)
     hasher.combine(type)
-    hasher.combine(source)
     return hasher.finalize()
   }
 }
