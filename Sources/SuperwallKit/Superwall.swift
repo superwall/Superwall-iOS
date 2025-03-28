@@ -331,10 +331,17 @@ public final class Superwall: NSObject, ObservableObject {
               await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
                 from: oldStatus, to: newStatus)
               let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
-              await Superwall.shared.track(event)
+              await self.track(event)
+            }
+            Task {
+              let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+              let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
+                deviceAttributes: deviceAttributes)
+              await self.track(deviceAttributesPlacement)
             }
           }
-        ))
+        )
+      )
   }
 
   /// Sets ``subscriptionStatus`` to an`unknown` state.
