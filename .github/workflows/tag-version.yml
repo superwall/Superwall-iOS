@@ -2,7 +2,7 @@ name: TagVersion
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, feature/web2app ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -68,4 +68,3 @@ jobs:
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
-  

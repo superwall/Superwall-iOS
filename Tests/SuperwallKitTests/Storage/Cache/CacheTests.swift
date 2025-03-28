@@ -36,8 +36,7 @@ struct CacheTests {
     )
     cache = Cache(
       fileManager: fileManager,
-      ioQueue: DispatchQueue(label: "ioQueue"),
-      factory: DependencyContainer()
+      ioQueue: DispatchQueue(label: "ioQueue")
     )
   }
 
@@ -134,13 +133,9 @@ struct CacheTests {
     #expect(!fileManager.fileExists(atPath: appDocFolder.path))
   }
 
-  /// Test that cleanUserCodes correctly filters out non-device results and writes updated entitlements.
+  /// Test that cleanUserCodes correctly filters out non-device results and clears entitlements.
   @Test("Filters out non-device results")
   mutating func testCleanUserCodes_() async throws {
-    let mockPC = MockPurchaseController()
-    let mockFactory = MockExternalPurchaseControllerFactory(purchaseController: mockPC)
-    cache = Cache(factory: mockFactory)
-
     let entitlement1 = Entitlement(id: "a")
     let entitlement2 = Entitlement(id: "b")
     let entitlement3 = Entitlement(id: "c")
@@ -208,17 +203,12 @@ struct CacheTests {
 
     // Should only contain the deviceSuccess and expiredDevice
     #expect(updatedResponse.results.count == 2)
-    #expect(updatedResponse.entitlements == [entitlement1])
-    #expect(mockPC.didCallOffDeviceSubscriptionsDidChange == true)
+    #expect(updatedResponse.entitlements.isEmpty)
   }
 
   /// Test that cleanUserCodes correctly filters out non-device results and writes updated entitlements.
   @Test("Filters out non-device results")
   mutating func testEntitlementsAreSame() async throws {
-    let mockPC = MockPurchaseController()
-    let mockFactory = MockExternalPurchaseControllerFactory(purchaseController: mockPC)
-    cache = Cache(factory: mockFactory)
-
     let entitlement2 = Entitlement(id: "b")
     let entitlement3 = Entitlement(id: "c")
 
@@ -268,6 +258,5 @@ struct CacheTests {
     // Should only contain the deviceSuccess and expiredDevice
     #expect(updatedResponse.results.count == 1)
     #expect(updatedResponse.entitlements.isEmpty)
-    #expect(mockPC.didCallOffDeviceSubscriptionsDidChange == false)
   }
 }

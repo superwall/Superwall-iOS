@@ -17,11 +17,7 @@ final class StorageMock: Storage {
   var didClearCachedSessionEvents = false
   var didSave = false
 
-  class DeviceInfoFactoryMock: DeviceHelperFactory, ExternalPurchaseControllerFactory {
-    func makeExternalPurchaseController() -> any SuperwallKit.PurchaseController {
-      DependencyContainer().purchaseController
-    }
-    
+  class DeviceInfoFactoryMock: DeviceHelperFactory, HasExternalPurchaseControllerFactory {
     func makeDeviceInfo() -> DeviceInfo {
       return DeviceInfo(appInstalledAtString: "a", locale: "b")
     }
@@ -44,13 +40,12 @@ final class StorageMock: Storage {
     internalSurveyAssignmentKey: String? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: Set<Assignment>? = [],
-    cache: Cache? = nil
+    cache: Cache = Cache()
   ) {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
     self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
-    let factory = DeviceInfoFactoryMock()
-    super.init(factory: DeviceInfoFactoryMock(), cache: cache ?? Cache(factory: factory), coreDataManager: coreDataManager)
+    super.init(factory: DeviceInfoFactoryMock(), cache: cache, coreDataManager: coreDataManager)
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable {

@@ -17,13 +17,11 @@ final class CacheMock: Cache {
   init(
     cacheInternalValue: [String: Data] = [:],
     userDocumentsInternalValue: [String: Data] = [:],
-    appDocumentsInternalValue: [String: Data] = [:],
-    factory: ExternalPurchaseControllerFactory = DependencyContainer()
+    appDocumentsInternalValue: [String: Data] = [:]
   ) {
     self.internalCache = cacheInternalValue
     self.internalUserDocuments = userDocumentsInternalValue
     self.internalAppDocuments = appDocumentsInternalValue
-    super.init(factory: factory)
   }
 
   override func read<Key>(
