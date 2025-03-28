@@ -45,7 +45,6 @@ final class StorageMock: Storage {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
     self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
-
     super.init(factory: DeviceInfoFactoryMock(), cache: cache, coreDataManager: coreDataManager)
   }
 

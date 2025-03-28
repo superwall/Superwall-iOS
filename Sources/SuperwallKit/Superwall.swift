@@ -149,6 +149,29 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Gets web entitlements and merges them with device entitlements before
+  /// setting the status if no external purchase controller.
+  func internallySetSubscriptionStatus(to status: SubscriptionStatus) {
+    if dependencyContainer.makeHasExternalPurchaseController() {
+      return
+    }
+    let webEntitlements = dependencyContainer.entitlementsInfo.web
+
+    switch status {
+    case .active(let entitlements):
+      let allEntitlements = entitlements.union(webEntitlements)
+      Superwall.shared.subscriptionStatus = .active(allEntitlements)
+    case .inactive:
+      if webEntitlements.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active(webEntitlements)
+      }
+    case .unknown:
+      Superwall.shared.subscriptionStatus = .unknown
+    }
+  }
+
   /// Returns the subscription status of the user.
   ///
   /// Check the delegate function
@@ -658,10 +681,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
-    Task {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
-    }
-    return dependencyContainer.debugManager.handle(deepLinkUrl: url)
+    return dependencyContainer.deepLinkRouter.route(url: url)
   }
 
   // MARK: - Paywall Spinner
@@ -692,6 +712,10 @@ public final class Superwall: NSObject, ObservableObject {
   func reset(duringIdentify: Bool) {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     dependencyContainer.storage.reset()
+
+    // Cleared the user-web entitlements. now need to update active ones based on that
+    dependencyContainer.entitlementsInfo
+
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()

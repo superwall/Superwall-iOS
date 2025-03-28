@@ -107,6 +107,9 @@ public protocol SuperwallDelegate: AnyObject {
     info: [String: Any]?,
     error: Swift.Error?
   )
+
+  @MainActor
+  func didRedeemCode(result: RedemptionResult)
 }
 
 extension SuperwallDelegate {
@@ -141,4 +144,6 @@ extension SuperwallDelegate {
     info: [String: Any]?,
     error: Swift.Error?
   ) {}
+
+  public func didRedeemCode(result: RedemptionResult) {}
 }

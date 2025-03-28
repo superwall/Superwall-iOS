@@ -40,14 +40,17 @@ final class RCPurchaseController: PurchaseController {
   func syncSubscriptionStatus() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
-
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        let superwallEntitlements = customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
+        let revenueCatEntitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
           Entitlement(id: $0)
-        }
-        await MainActor.run { [superwallEntitlements] in
-          Superwall.shared.subscriptionStatus = .active(Set(superwallEntitlements))
+        })
+
+        let webEntitlements = Superwall.shared.entitlements.web
+        let allEntitlements = revenueCatEntitlements.union(webEntitlements)
+
+        await MainActor.run {
+          Superwall.shared.subscriptionStatus = .active(allEntitlements)
         }
       }
     }

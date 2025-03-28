@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 06/08/2024.
 //
@@ -78,12 +78,25 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.type = .serviceLevel
   }
 
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    self.id = try container.decode(String.self, forKey: .id)
+    self.type = try container.decode(EntitlementType.self, forKey: .type)
+  }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(id, forKey: .id)
+    try container.encode(type, forKey: .type)
+  }
+
   // Override isEqual to define equality based on `id` and `type`
   public override func isEqual(_ object: Any?) -> Bool {
     guard let other = object as? Entitlement else {
       return false
     }
-    return self.id == other.id && self.type == other.type
+    return self.id == other.id
+      && self.type == other.type
   }
 
   public override var hash: Int {
