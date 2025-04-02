@@ -42,15 +42,12 @@ final class RCPurchaseController: PurchaseController {
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
-        let revenueCatEntitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
+        let entitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
           Entitlement(id: $0)
         })
 
-        let webEntitlements = Superwall.shared.entitlements.web
-        let allEntitlements = revenueCatEntitlements.union(webEntitlements)
-
         await MainActor.run {
-          Superwall.shared.subscriptionStatus = .active(allEntitlements)
+          Superwall.shared.subscriptionStatus = .active(entitlements)
         }
       }
     }

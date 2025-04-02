@@ -26,7 +26,8 @@ final class RedeemResponseTests {
             "email": "asdasd@sdfsdf.com",
             "storeIdentifiers": {
               "store": "STRIPE",
-              "stripeCustomerId": "cus_Ryex8C8944aFBa"
+              "stripeCustomerId": "cus_Ryex8C8944aFBa",
+              "stripeSubscriptionIds": ["sub_123"]
             }
           },
           "paywallInfo": null,

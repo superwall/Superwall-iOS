@@ -19,7 +19,7 @@ class PaywallManager {
     & DeviceHelperFactory
     & PaywallArchiveManagerFactory
 
-  private var cache: PaywallViewControllerCache {
+  var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
   }
   private var _cache: PaywallViewControllerCache?

@@ -60,7 +60,7 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// ``EntitlementsInfo/active``.
   var activeDeviceEntitlements: Set<Entitlement> = []
 
-  // MARK: - Private vats
+  // MARK: - Private vars
   /// The backing variable for ``EntitlementsInfo/active``.
   private var backingActive: Set<Entitlement> = []
 

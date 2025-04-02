@@ -13,9 +13,11 @@ import Foundation
 final class StorageMock: Storage {
   var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: Set<Assignment>?
+  var internalRedeemResponse: RedeemResponse?
   var internalSurveyAssignmentKey: String?
   var didClearCachedSessionEvents = false
   var didSave = false
+  var saveCount = 0
 
   class DeviceInfoFactoryMock: DeviceHelperFactory, HasExternalPurchaseControllerFactory {
     func makeDeviceInfo() -> DeviceInfo {
@@ -38,6 +40,7 @@ final class StorageMock: Storage {
   init(
     internalCachedTransactions: [StoreTransaction] = [],
     internalSurveyAssignmentKey: String? = nil,
+    internalRedeemResponse: RedeemResponse? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: Set<Assignment>? = [],
     cache: Cache = Cache()
@@ -45,7 +48,12 @@ final class StorageMock: Storage {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
     self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
-    super.init(factory: DeviceInfoFactoryMock(), cache: cache, coreDataManager: coreDataManager)
+    self.internalRedeemResponse = internalRedeemResponse
+    super.init(
+      factory: DeviceInfoFactoryMock(),
+      cache: cache,
+      coreDataManager: coreDataManager
+    )
   }
 
   override func get<Key>(_ keyType: Key.Type) -> Key.Value? where Key : Storable {
@@ -62,6 +70,8 @@ final class StorageMock: Storage {
       return internalCachedTransactions as? Key.Value
     } else if keyType == SurveyAssignmentKey.self {
       return internalSurveyAssignmentKey as? Key.Value
+    } else if keyType == LatestRedeemResponse.self {
+      return internalRedeemResponse as? Key.Value
     }
     return super.get(keyType)
   }
@@ -85,10 +95,12 @@ final class StorageMock: Storage {
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
     super.save(value, forType: keyType)
     didSave = true
+    saveCount += 1
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
     super.save(value, forType: keyType)
     didSave = true
+    saveCount += 1
   }
 }

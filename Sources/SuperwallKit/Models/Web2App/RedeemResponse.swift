@@ -10,7 +10,7 @@ import Foundation
 /// An object return from the server acting as a source of truth for the redeemed codes
 /// and web entitlements.
 struct RedeemResponse: Codable {
-  let results: [RedemptionResult]
+  var results: [RedemptionResult]
   var entitlements: Set<Entitlement>
 
   private enum CodingKeys: String, CodingKey {
@@ -36,5 +36,14 @@ struct RedeemResponse: Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.results = try container.decode([RedemptionResult].self, forKey: .results)
     self.entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
+  }
+}
+
+extension RedeemResponse: Stubbable {
+  static func stub() -> RedeemResponse {
+    return .init(
+      results: [],
+      entitlements: []
+    )
   }
 }

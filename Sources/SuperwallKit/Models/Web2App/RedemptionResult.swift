@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 14/03/2025.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 
@@ -16,13 +17,28 @@ public enum RedemptionResult: Codable {
   case error(code: String, error: ErrorInfo)
 
   /// The code has expired.
-  case codeExpired(code: String, expired: ExpiredInfo)
+  case codeExpired(code: String, expiredInfo: ExpiredInfo)
 
   /// The code is invalid.
   case invalidCode(code: String)
 
   /// The subscription that the code redeems has expired.
   case expiredSubscription(code: String, redemptionInfo: RedemptionInfo)
+
+  /// Convenience variable to get the stripe subscription IDs.
+  public var stripeSubscriptionIds: [String]? {
+    switch self {
+    case let .success(_, info):
+      switch info.purchaserInfo.storeIdentifiers {
+      case .stripe(_, let subscriptionIds):
+        return subscriptionIds
+      default:
+        return nil
+      }
+    default:
+      return nil
+    }
+  }
 
   /// Convenience variable to extract the code
   var code: String {
@@ -52,7 +68,7 @@ public enum RedemptionResult: Codable {
     public let obfuscatedEmail: String?
   }
 
-  /// Info about the redemption.
+  /// Information about the redemption.
   public struct RedemptionInfo: Codable {
     /// The ownership of the code.
     public let ownership: Ownership
@@ -128,7 +144,7 @@ public enum RedemptionResult: Codable {
       /// Identifiers of the store that was purchased from.
       public enum StoreIdentifiers: Codable {
         /// The subscription was purchased via Stripe.
-        case stripe(stripeCustomerId: String)
+        case stripe(customerId: String, subscriptionIds: [String])
 
         /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
@@ -136,6 +152,7 @@ public enum RedemptionResult: Codable {
         private enum CodingKeys: String, CodingKey, CaseIterable {
           case store
           case stripeCustomerId
+          case stripeSubscriptionIds
         }
 
         struct DynamicCodingKey: CodingKey {
@@ -153,7 +170,11 @@ public enum RedemptionResult: Codable {
           switch store {
           case "STRIPE":
             let stripeCustomerId = try container.decode(String.self, forKey: .stripeCustomerId)
-            self = .stripe(stripeCustomerId: stripeCustomerId)
+            let stripeSubscriptionIds = try container.decode([String].self, forKey: .stripeSubscriptionIds)
+            self = .stripe(
+              customerId: stripeCustomerId,
+              subscriptionIds: stripeSubscriptionIds
+            )
           default:
             // Decode entire JSON payload to capture additional fields
             let json = try JSON(from: decoder)
@@ -171,10 +192,10 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
-          case .stripe(let stripeCustomerId):
+          case let .stripe(customerId, subscriptionIds):
             try container.encode("STRIPE", forKey: .store)
-            try container.encode(stripeCustomerId, forKey: .stripeCustomerId)
-
+            try container.encode(customerId, forKey: .stripeCustomerId)
+            try container.encode(subscriptionIds, forKey: .stripeSubscriptionIds)
           case let .unknown(store, additionalInfo):
             try container.encode(store, forKey: .store)
 
@@ -302,7 +323,7 @@ public enum RedemptionResult: Codable {
       let obfuscatedEmail = try container.decodeIfPresent(String.self, forKey: .obfuscatedEmail)
       self = .codeExpired(
         code: code,
-        expired: ExpiredInfo(
+        expiredInfo: ExpiredInfo(
           resent: resent,
           obfuscatedEmail: obfuscatedEmail
         )

@@ -140,4 +140,12 @@ final class SuperwallDelegateAdapter {
     }
     // TODO: Objective C version
   }
+
+  @MainActor
+  func willRedeemCode() {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.willRedeemCode()
+    }
+    // TODO: Objective C version
+  }
 }

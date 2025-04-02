@@ -147,7 +147,7 @@ struct CacheTests {
         purchaserInfo: .init(
           appUserId: "appUserId",
           email: "john@appleseed.com",
-          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+          storeIdentifiers: .stripe(customerId: "customerId", subscriptionIds: ["subId"])
         ),
         entitlements: [entitlement1]
       )
@@ -159,7 +159,7 @@ struct CacheTests {
         purchaserInfo: .init(
           appUserId: "appUserId",
           email: "john@appleseed.com",
-          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+          storeIdentifiers: .stripe(customerId: "customerId", subscriptionIds: ["subId"])
         ),
         entitlements: [entitlement2]
       )
@@ -172,7 +172,7 @@ struct CacheTests {
         purchaserInfo: .init(
           appUserId: "appUserId",
           email: "john@appleseed.com",
-          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+          storeIdentifiers: .stripe(customerId: "customerId", subscriptionIds: ["subId"])
         ),
         entitlements: [entitlement3]
       )
@@ -219,7 +219,7 @@ struct CacheTests {
         purchaserInfo: .init(
           appUserId: "appUserId",
           email: "john@appleseed.com",
-          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+          storeIdentifiers: .stripe(customerId: "customerId", subscriptionIds: ["subscriptionId"])
         ),
         entitlements: [entitlement2]
       )
@@ -232,7 +232,7 @@ struct CacheTests {
         purchaserInfo: .init(
           appUserId: "appUserId",
           email: "john@appleseed.com",
-          storeIdentifiers: .stripe(stripeCustomerId: "customerId")
+          storeIdentifiers: .stripe(customerId: "customerId", subscriptionIds: ["subscriptionId"])
         ),
         entitlements: [entitlement3]
       )

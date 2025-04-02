@@ -23,6 +23,7 @@
 		888F48D727DBA6B6009C74A3 /* Rubik-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */; };
 		888F48DB27DBA8A9009C74A3 /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */; };
 		88A801D028EAE717004244CA /* SuperwallSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801CF28EAE717004244CA /* SuperwallSubscriptionView.swift */; };
+		88C49B712D9C2B2300DFE335 /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C49B702D9C2B2300DFE335 /* Delegate.swift */; };
 		88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */; };
 		88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F9F1E227E21718004FCE83 /* InfoView.swift */; };
 /* End PBXBuildFile section */
@@ -45,6 +46,7 @@
 		888F48D627DBA6B6009C74A3 /* Rubik-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Regular.ttf"; sourceTree = "<group>"; };
 		888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Bold.ttf"; sourceTree = "<group>"; };
 		88A801CF28EAE717004244CA /* SuperwallSubscriptionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallSubscriptionView.swift; sourceTree = "<group>"; };
+		88C49B702D9C2B2300DFE335 /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
 		88EE539127DF64BB00F1FFFB /* Superwall_Advanced-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_Advanced-Products.storekit"; sourceTree = "<group>"; };
 		88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		88F9F1E227E21718004FCE83 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
@@ -66,6 +68,7 @@
 		887A26722D11838B002B8E9B /* Purchase Controllers */ = {
 			isa = PBXGroup;
 			children = (
+				88C49B702D9C2B2300DFE335 /* Delegate.swift */,
 				887A266E2D11832A002B8E9B /* SWPurchaseController.swift */,
 				887A26702D118388002B8E9B /* RCPurchaseController.swift */,
 			);
@@ -256,6 +259,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				88C49B712D9C2B2300DFE335 /* Delegate.swift in Sources */,
 				888F48D327DBA662009C74A3 /* Styles.swift in Sources */,
 				887111582D0B027E00D737A4 /* Colors.swift in Sources */,
 				888F48CB27DBA55E009C74A3 /* BrandedButton.swift in Sources */,

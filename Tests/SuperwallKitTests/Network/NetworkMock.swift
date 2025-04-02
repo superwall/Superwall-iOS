@@ -15,6 +15,9 @@ final class NetworkMock: Network {
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
+  var redeemEntitlementsResponse: RedeemResponse?
+  var redeemError: Error?
+  var redeemRequest: RedeemRequest?
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
@@ -44,5 +47,15 @@ final class NetworkMock: Network {
 
   override func getAssignments() async throws -> [PostbackAssignment] {
     return assignments
+  }
+
+  override func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
+    redeemRequest = request
+    if let redeemEntitlementsResponse = redeemEntitlementsResponse {
+      return redeemEntitlementsResponse
+    } else if let redeemError = redeemError {
+      throw redeemError
+    }
+    throw NetworkError.unknown
   }
 }
