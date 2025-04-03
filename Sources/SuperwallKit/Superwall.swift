@@ -331,10 +331,17 @@ public final class Superwall: NSObject, ObservableObject {
               await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
                 from: oldStatus, to: newStatus)
               let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
-              await Superwall.shared.track(event)
+              await self.track(event)
+            }
+            Task {
+              let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+              let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
+                deviceAttributes: deviceAttributes)
+              await self.track(deviceAttributesPlacement)
             }
           }
-        ))
+        )
+      )
   }
 
   /// Sets ``subscriptionStatus`` to an`unknown` state.
@@ -701,7 +708,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   // MARK: - External Purchasing
 
-  /// Initiates a purchase of a `SKProduct`.
+  /// Initiates a purchase of a ``StoreProduct``.
   ///
   /// Use this function to purchase a ``StoreProduct``, regardless of whether you
   /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
@@ -712,7 +719,18 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  /// to `true`.
   public func purchase(_ product: StoreProduct) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(product))
   }
 
@@ -727,6 +745,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  /// to `true`.
   public func purchase(_ product: SKProduct) async -> PurchaseResult {
     if options.shouldObservePurchases {
       Logger.debug(
@@ -754,23 +774,34 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     let storeProduct = StoreProduct(sk2Product: product)
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
 
-  /// Initiates a purchase of a `SKProduct`.
+  /// Initiates a purchase of a ``StoreProduct``.
   ///
-  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// Use this function to purchase any ``StoreProduct``, regardless of whether you
   /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
   /// and return the ``PurchaseResult``. You'll see the data associated with the
   /// purchase on the Superwall dashboard.
   ///
   /// - Parameters:
-  ///   - product: The `SKProduct` you wish to purchase.
+  ///   - product: The ``StoreProduct`` you wish to purchase.
   ///   - completion: A completion block that is called when the purchase completes.
   ///   This accepts a ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  ///  to `true`.
   public func purchase(
     _ product: StoreProduct,
     completion: @escaping (PurchaseResult) -> Void
@@ -783,9 +814,9 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Initiates a purchase of a `SKProduct`.
+  /// Initiates a purchase of a StoreKit 2 `Product`.
   ///
-  /// Use this function to purchase any `SKProduct`, regardless of whether you
+  /// Use this function to purchase any `Product`, regardless of whether you
   /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
   /// and return the ``PurchaseResult``. You'll see the data associated with the
   /// purchase on the Superwall dashboard.
@@ -796,6 +827,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   This accepts a ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  /// to `true`.
   @available(iOS 15.0, *)
   public func purchase(
     _ product: StoreKit.Product,
@@ -822,6 +855,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   This accepts a ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  /// to `true`.
   public func purchase(
     _ product: SKProduct,
     completion: @escaping (PurchaseResult) -> Void
@@ -847,31 +882,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   This accepts a ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
-  @available(swift, obsoleted: 1.0)
-  @available(iOS 15.0, *)
-  public func purchase(
-    _ product: StoreKit.Product,
-    completion: @escaping (PurchaseResultObjc) -> Void
-  ) {
-    purchase(product) { result in
-      let objcResult = result.toObjc()
-      completion(objcResult)
-    }
-  }
-
-  /// Objective-C-only method. Initiates a purchase of a `SKProduct`.
-  ///
-  /// Use this function to purchase any `SKProduct`, regardless of whether you
-  /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
-  /// and return the ``PurchaseResult``. You'll see the data associated with the
-  /// purchase on the Superwall dashboard.
-  ///
-  /// - Parameters:
-  ///   - product: The `SKProduct` you wish to purchase.
-  ///   - completion: A completion block that is called when the purchase completes.
-  ///   This accepts a ``PurchaseResult``.
-  /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
-  /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
+  /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
+  /// to `true`.
   @available(swift, obsoleted: 1.0)
   public func purchase(
     _ product: SKProduct,

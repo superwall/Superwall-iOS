@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.0.6
+
+### Fixes
+
+- Prevents all `purchase(_:)` overrides from being able to be called when the `shouldObservePurchases` `SuperwallOption` is `true`.
+
 ## 4.0.5
 
 ### Fixes
