@@ -708,7 +708,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   // MARK: - External Purchasing
 
-  /// Initiates a purchase of a `SKProduct`.
+  /// Initiates a purchase of a `StoreProduct`.
   ///
   /// Use this function to purchase a ``StoreProduct``, regardless of whether you
   /// have a paywall or not. Superwall will handle the purchase with `StoreKit`
@@ -720,6 +720,15 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   public func purchase(_ product: StoreProduct) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(product))
   }
 
@@ -761,6 +770,15 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
+    if options.shouldObservePurchases {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "You cannot make purchases using Superwall.shared.purchase(_:) while the "
+          + "SuperwallOption shouldObservePurchases is set to true."
+      )
+      return .cancelled
+    }
     let storeProduct = StoreProduct(sk2Product: product)
     return await dependencyContainer.transactionManager.purchase(.purchaseFunc(storeProduct))
   }
