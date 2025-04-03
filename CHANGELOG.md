@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Prevents all `purchase(_:)` overrides from being able to be called when the `shouldObservePurchases` `SuperwallOption` is `true`.
+- Prevents all overloads of `Superwall.shared.purchase(_:)` from being called when the `shouldObservePurchases` `SuperwallOption` is set to `true`.
 
 ## 4.0.5
 
