@@ -2,6 +2,38 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.1.0-beta.3
+
+### Fixes
+
+- Updates the SuperwallDelegate `didRedeemCode(code:)` example code for RevenueCat web checkout.
+- Fixes decoding error for an expired code.
+- Prevents `willRedeem()` from being called on `identify`.
+- Makes sure `subscriptionStatus` is set on the main thread when redeeming codes.
+
+## 4.1.0-beta.2
+
+### Breaking Changes
+
+- Adds Stripe subscription IDs to the `stripe` `StoreIdentifier` case.
+- Changes `codeExpired(code: String, expired: ExpiredInfo)` `RedemptionResult` case to `codeExpired(code: String, expiredInfo: ExpiredInfo)`.
+
+### Enhancements
+
+- Adds `willRedeemCode` to the `SuperwallDelegate` to indicate that a code redemption is about to happen.
+- Adds `stripeSubscriptionIds` convenience variable to the `RedemptionResult` for quick access.
+
+### Fixes
+
+- Adjusts `RCPurchaseController` example and submits the stripe subscription ID from the `didRedeemCode(result:)` delegate method to the RevenueCat API.
+- Makes sure to present alert on web entitlement restoration failure.
+
+## 4.1.0-beta.1
+
+### Enhancements
+
+- Adds support for web checkout.
+
 ## 4.0.7
 
 ### Enhancements

@@ -6,6 +6,11 @@ import CoreMedia
 
 let response = #"""
 {
+  "web2app_config": 
+  {
+    "entitlements_max_age_ms": 86400000,
+    "restore_access_url": "https://web2app.localhost:3065/manage"
+  },
   "toggles": [
   {
     "key": "enable_session_events",
@@ -537,6 +542,8 @@ final class ConfigTypeTests: XCTestCase {
     let firstRule = trigger.audiences[0]
     XCTAssertNil(firstRule.expression)
     XCTAssertEqual(firstRule.experiment.id, "80")
+
+    XCTAssertEqual(parsedResponse.web2appConfig?.restoreAccessURL, URL(string: "https://web2app.localhost:3065/manage")!)
 
     switch firstRule.experiment.variants.first!.type {
     case .treatment:

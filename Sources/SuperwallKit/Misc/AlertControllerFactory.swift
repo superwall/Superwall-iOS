@@ -7,14 +7,18 @@
 
 import UIKit
 
+struct Action {
+  let title: String
+  let call: () -> Void
+}
+
 enum AlertControllerFactory {
   static func make(
     title: String? = nil,
     message: String? = nil,
-    actionTitle: String? = nil,
     closeActionTitle: String = "Done",
     closeActionStyle: UIAlertAction.Style = .cancel,
-    action: (() -> Void)? = nil,
+    actions: [Action] = [],
     onClose: (() -> Void)? = nil,
     sourceView: UIView
   ) -> UIAlertController {
@@ -24,12 +28,12 @@ enum AlertControllerFactory {
       preferredStyle: .alert
     )
 
-    if let actionTitle = actionTitle {
+    for action in actions {
       let alertAction = UIAlertAction(
-        title: actionTitle,
+        title: action.title,
         style: .default
       ) { _ in
-        action?()
+        action.call()
       }
       alertController.addAction(alertAction)
     }

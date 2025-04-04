@@ -89,6 +89,7 @@ class CustomURLSession {
         "request_duration": requestDuration
       ]
     )
+
     guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data

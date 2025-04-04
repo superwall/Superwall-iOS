@@ -163,7 +163,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private var lastOpen: Date?
 
-  private unowned let factory: TriggerFactory
+  private unowned let factory: TriggerFactory & RestoreAccessFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -176,7 +176,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerFactory,
+    factory: TriggerFactory & RestoreAccessFactory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -620,12 +620,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     guard presentedViewController == nil else {
       return
     }
+
+    var model: [Action] = []
+    if let actionTitle = actionTitle,
+      let action = action {
+      model = [Action(title: actionTitle, call: action)]
+    }
+
     let alertController = AlertControllerFactory.make(
       title: title,
       message: message,
-      actionTitle: actionTitle,
       closeActionTitle: closeActionTitle,
-      action: action,
+      actions: model,
       onClose: onClose,
       sourceView: self.view
     )

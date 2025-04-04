@@ -14,6 +14,7 @@ import RevenueCat
 struct SuperwallAdvancedApp: App {
   @State private var isLoggedIn = false
   private var isPreviouslyLoggedIn = CurrentValueSubject<Bool, Never>(false)
+  var delegate: Delegate?
 
   init() {
     #warning("For your own app you will need to use your own API key, available from the Superwall Dashboard")
@@ -33,7 +34,12 @@ struct SuperwallAdvancedApp: App {
       purchaseController: purchaseController
     )
 
-    // Step 3 - Sync Subscription Status
+    // Step 3 - Optionally create and set a SuperwallDelegate.
+    // Check out the Delegate class if you're using web paywalls.
+    delegate = Delegate(purchaseController: purchaseController)
+    Superwall.shared.delegate = delegate
+
+    // Step 4 - Sync Subscription Status
     Task {
       await purchaseController.syncSubscriptionStatus()
     }
@@ -52,14 +58,19 @@ struct SuperwallAdvancedApp: App {
       purchaseController: purchaseController
     )
 
-    // Step 3 – Configure RevenueCat
+     // Step 3 - Optionally create and set a SuperwallDelegate.
+     // Check out the Delegate class if you're using web paywalls.
+    delegate = Delegate()
+    Superwall.shared.delegate = delegate
+
+    // Step 4 – Configure RevenueCat
     /// Always configure RevenueCat after Superwall
     Purchases.configure(with:
       .builder(withAPIKey: "appl_PpUWCgFONlxwztRfNgEdvyGHiAG")
       .build()
     )
 
-    // Step 4 – Sync Subscription Status
+    // Step 5 – Sync Subscription Status
     /// Keep Superwall's subscription status up-to-date with RevenueCat's.
     purchaseController.syncSubscriptionStatus()
     */

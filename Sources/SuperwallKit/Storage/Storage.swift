@@ -84,13 +84,13 @@ class Storage {
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
-    self._didTrackFirstSeen = cache.read(DidTrackFirstSeen.self) == true
+    self._didTrackFirstSeen = self.cache.read(DidTrackFirstSeen.self) == true
 
     // If we've already tracked firstSeen, then it can't be the first session. Useful for those upgrading.
     if _didTrackFirstSeen {
       self._didTrackFirstSession = true
     } else {
-      self._didTrackFirstSession = cache.read(DidTrackFirstSession.self) == true
+      self._didTrackFirstSession = self.cache.read(DidTrackFirstSession.self) == true
     }
     self.factory = factory
   }
@@ -128,6 +128,7 @@ class Storage {
   func reset() {
     coreDataManager.deleteAllEntities()
     cache.cleanUserFiles()
+    cache.cleanUserCodes()
 
     queue.async { [weak self] in
       self?._assignments = nil

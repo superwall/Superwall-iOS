@@ -28,7 +28,7 @@ enum PurchaseSource {
   }
 }
 
-/// The source of the purchase initiation.
+/// The source of the restore initiation.
 enum RestoreSource: Equatable {
   /// Initiated internally by the SDK.
   case `internal`(PaywallViewController)

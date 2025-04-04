@@ -28,7 +28,7 @@ class Cache {
   /// Size is allocated for disk cache, in byte. 0 mean no limit. Default is 0
   private var maxDiskCacheSize: UInt = 0
 
-  /// Specify distinc name param, it represents folder name for disk cache
+  /// Specify distinct name param, it represents folder name for disk cache
   init(
     fileManager: FileManager = FileManager(),
     ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)
@@ -367,6 +367,43 @@ extension Cache {
   func cleanUserFiles() {
     memCache.removeAllObjects()
     cleanDiskCache()
+  }
+
+  /// Cleans codes and entitlements that are owned by the user.
+  func cleanUserCodes() {
+    if let redeemResponse = read(LatestRedeemResponse.self) {
+      let existingWebEntitlements = redeemResponse.entitlements
+      var deviceResults: [RedemptionResult] = []
+
+      for result in redeemResponse.results {
+        switch result {
+        case .success(_, let redemptionInfo):
+          if case .device = redemptionInfo.ownership {
+            deviceResults.append(result)
+          }
+        case .expiredSubscription(_, let redemptionInfo):
+          if case .device = redemptionInfo.ownership {
+            deviceResults.append(result)
+          }
+        default:
+          break
+        }
+      }
+
+      let newRedeemResponse = RedeemResponse(
+        results: deviceResults,
+        entitlements: []
+      )
+
+      write(newRedeemResponse, forType: LatestRedeemResponse.self)
+
+      if !existingWebEntitlements.isEmpty {
+        let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
+        Task {
+          await Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
+        }
+      }
+    }
   }
 
   private func cleanDiskCache() {

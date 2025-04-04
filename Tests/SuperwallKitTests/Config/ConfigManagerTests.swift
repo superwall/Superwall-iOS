@@ -29,6 +29,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
 
@@ -93,6 +94,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper, 
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     configManager.postbackAssignment(assignment)
@@ -127,6 +129,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     configManager.postbackAssignment(assignment)
@@ -154,6 +157,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
 
@@ -184,6 +188,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper, 
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
     configManager.configState.send(.retrieved(.stub()
@@ -209,6 +214,7 @@ final class ConfigManagerTests: XCTestCase {
       paywallManager: dependencyContainer.paywallManager,
       deviceHelper: dependencyContainer.deviceHelper,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
 
