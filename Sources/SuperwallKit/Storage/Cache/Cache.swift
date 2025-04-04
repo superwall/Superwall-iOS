@@ -399,7 +399,9 @@ extension Cache {
 
       if !existingWebEntitlements.isEmpty {
         let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
-        Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
+        Task {
+          await Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
+        }
       }
     }
   }

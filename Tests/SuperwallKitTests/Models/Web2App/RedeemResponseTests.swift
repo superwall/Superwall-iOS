@@ -61,6 +61,22 @@ final class RedeemResponseTests {
   }
   """.data(using: .utf8)!
 
+  let expiredCode = """
+  {
+    "codes":[
+      {
+        "status":"CODE_EXPIRED",
+        "code":"redemption_198a997f-ae38-45e8-9d7b-3e54be28fa08",
+        "expired": {
+          "resent":false,
+          "obfuscatedEmail":null
+        }
+      }
+    ],
+    "entitlements": []
+  }
+  """.data(using: .utf8)!
+
   @Test("Decodes success JSON")
   func testSuccessRedeemResponseDecoding() throws {
     let decoder = JSONDecoder()
@@ -87,6 +103,21 @@ final class RedeemResponseTests {
     switch response.results.first! {
     case .invalidCode(let code):
       #expect(code == "redemption_8c7916a7-d48bs-42c1-8eae-a58e0a57d37d")
+    default:
+      Issue.record("Incorrect result type")
+    }
+    #expect(response.entitlements.isEmpty)
+  }
+
+  @Test("Code is expired")
+  func testExpiredCode() throws {
+    let decoder = JSONDecoder()
+    let response = try decoder.decode(RedeemResponse.self, from: expiredCode)
+    switch response.results.first! {
+    case let .codeExpired(code, expiredInfo):
+      #expect(code == "redemption_198a997f-ae38-45e8-9d7b-3e54be28fa08")
+      #expect(expiredInfo.resent == false)
+      #expect(expiredInfo.obfuscatedEmail == nil)
     default:
       Issue.record("Incorrect result type")
     }

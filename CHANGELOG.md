@@ -2,6 +2,15 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.1.0-beta.3
+
+### Fixes
+
+- Updates the SuperwallDelegate `didRedeemCode(code:)` example code for RevenueCat web checkout.
+- Fixes decoding error for an expired code.
+- Prevents `willRedeem()` from being called on `identify`.
+- Makes sure `subscriptionStatus` is set on the main thread when redeeming codes.
+
 ## 4.1.0-beta.2
 
 ### Breaking Changes

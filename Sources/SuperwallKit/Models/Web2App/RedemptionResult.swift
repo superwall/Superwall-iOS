@@ -292,8 +292,6 @@ public enum RedemptionResult: Codable {
     case redemptionInfo
     case error
     case expired
-    case resent
-    case obfuscatedEmail
   }
 
   enum CodeStatus: String, Codable {
@@ -319,14 +317,10 @@ public enum RedemptionResult: Codable {
       self = .error(code: code, error: error)
     case .codeExpired:
       let code = try container.decode(String.self, forKey: .code)
-      let resent = try container.decode(Bool.self, forKey: .resent)
-      let obfuscatedEmail = try container.decodeIfPresent(String.self, forKey: .obfuscatedEmail)
+      let expiredInfo = try container.decode(ExpiredInfo.self, forKey: .expired)
       self = .codeExpired(
         code: code,
-        expiredInfo: ExpiredInfo(
-          resent: resent,
-          obfuscatedEmail: obfuscatedEmail
-        )
+        expiredInfo: expiredInfo
       )
     case .invalidCode:
       self = .invalidCode(code: code)
@@ -354,8 +348,7 @@ public enum RedemptionResult: Codable {
     case let .codeExpired(code, expired):
       try container.encode(CodeStatus.codeExpired, forKey: .status)
       try container.encode(code, forKey: .code)
-      try container.encode(expired.resent, forKey: .resent)
-      try container.encodeIfPresent(expired.obfuscatedEmail, forKey: .obfuscatedEmail)
+      try container.encode(expired, forKey: .expired)
     case .invalidCode(let code):
       try container.encode(code, forKey: .code)
       try container.encode(CodeStatus.invalidCode, forKey: .status)

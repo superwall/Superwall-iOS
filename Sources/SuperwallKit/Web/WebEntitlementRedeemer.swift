@@ -95,7 +95,12 @@ actor WebEntitlementRedeemer {
       let startEvent = InternalSuperwallEvent.Redemption(state: .start)
       await superwall.track(startEvent)
 
-      await delegate.willRedeemCode()
+      switch type {
+      case .code:
+        await delegate.willRedeemCode()
+      case .existingCodes:
+        break
+      }
 
       let response = try await network.redeemEntitlements(request: request)
 
@@ -133,7 +138,7 @@ actor WebEntitlementRedeemer {
       let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
       let allEntitlements = deviceEntitlements.union(response.entitlements)
 
-      superwall.internallySetSubscriptionStatus(
+      await superwall.internallySetSubscriptionStatus(
         to: .active(allEntitlements),
         superwall: superwall
       )
@@ -236,8 +241,7 @@ actor WebEntitlementRedeemer {
         // Sets the subscription status internally if no external PurchaseController
         let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
         let allEntitlements = deviceEntitlements.union(entitlements)
-
-        Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
+        await Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
       }
     } catch {
       Logger.debug(
