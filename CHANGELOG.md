@@ -25,6 +25,18 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for web checkout.
 
+## 4.0.7
+
+### Enhancements
+
+- Updates Superscript to 0.2.4.
+
+## 4.0.6
+
+### Fixes
+
+- Prevents all overloads of `Superwall.shared.purchase(_:)` from being called when the `shouldObservePurchases` `SuperwallOption` is set to `true`.
+
 ## 4.0.5
 
 ### Fixes
