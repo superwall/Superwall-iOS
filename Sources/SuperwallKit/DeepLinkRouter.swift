@@ -52,6 +52,7 @@ final class DeepLinkRouter {
             case .retrieved:
               if let deepLink = Self.pendingDeepLink {
                 self?.route(url: deepLink)
+                Self.pendingDeepLink = nil
               }
             default:
               break

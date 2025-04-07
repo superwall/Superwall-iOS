@@ -2,7 +2,7 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.1.0-beta.4
+## 4.1.0-beta.5
 
 ### Enhancements
 
