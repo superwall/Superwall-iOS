@@ -146,7 +146,8 @@ final class DependencyContainer {
     )
     deepLinkRouter = DeepLinkRouter(
       webEntitlementRedeemer: webEntitlementRedeemer,
-      debugManager: debugManager
+      debugManager: debugManager,
+      configManager: configManager
     )
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,

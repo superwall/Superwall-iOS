@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.1.0-beta.4
+
+### Enhancements
+
+- Adds the static method `Superwall.handleDeepLink(_:)` and deprecates the instance method `Superwall.shared.handleDeepLink(_:)`. Now if the deep link gets called before `configure` is called, we store the deep link and handle it after configuring.
+
 ## 4.1.0-beta.3
 
 ### Fixes

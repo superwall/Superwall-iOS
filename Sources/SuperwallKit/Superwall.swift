@@ -683,9 +683,28 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameters:
   ///   - url: The URL of the deep link.
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  @available(*, deprecated, message: "Use the static method Superwall.handleDeepLink(_:) instead.")
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
     return dependencyContainer.deepLinkRouter.route(url: url)
+  }
+
+  /// Handles a deep link sent to your app to open a preview of your paywall.
+  ///
+  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a
+  /// preview of a paywall you've configured on the Superwall dashboard on your device. See
+  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
+  /// more.
+  ///
+  /// - Parameters:
+  ///   - url: The URL of the deep link.
+  /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  @discardableResult
+  public static func handleDeepLink(_ url: URL) -> Bool {
+    if Superwall.isInitialized {
+      return Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+    }
+    return DeepLinkRouter.storeDeepLink(url)
   }
 
   // MARK: - Paywall Spinner
