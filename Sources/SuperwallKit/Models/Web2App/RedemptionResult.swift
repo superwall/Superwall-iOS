@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 14/03/2025.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import Foundation
 
@@ -238,12 +238,12 @@ public enum RedemptionResult: Codable {
 
         func toObjc() -> RedemptionResultObjc.StoreIdentifiers {
           switch self {
-          case .stripe(let customerId, let subscriptionIds):
+          case let .stripe(customerId, subscriptionIds):
             return RedemptionResultObjc.StoreIdentifiers(
               stripeWithCustomerId: customerId,
               subscriptionIds: subscriptionIds
             )
-          case .unknown(let store, let additionalInfo):
+          case let .unknown(store, additionalInfo):
             return RedemptionResultObjc.StoreIdentifiers(
               unknownStore: store,
               additionalInfo: additionalInfo
@@ -428,7 +428,7 @@ public enum RedemptionResult: Codable {
   /// Converts a Swift RedemptionResult to its ObjC-compatible representation.
   func toObjc() -> RedemptionResultObjc {
     switch self {
-    case .success(let code, let redemptionInfo):
+    case let .success(code, redemptionInfo):
       return RedemptionResultObjc(
         code: code,
         type: .success,
@@ -436,7 +436,7 @@ public enum RedemptionResult: Codable {
         errorInfo: nil,
         expiredInfo: nil
       )
-    case .error(let code, let errorInfo):
+    case let .error(code, errorInfo):
       return RedemptionResultObjc(
         code: code,
         type: .error,
@@ -444,7 +444,7 @@ public enum RedemptionResult: Codable {
         errorInfo: errorInfo.toObjc(),
         expiredInfo: nil
       )
-    case .expiredCode(let code, let info):
+    case let .expiredCode(code, info):
       return RedemptionResultObjc(
         code: code,
         type: .codeExpired,
@@ -460,7 +460,7 @@ public enum RedemptionResult: Codable {
         errorInfo: nil,
         expiredInfo: nil
       )
-    case .expiredSubscription(let code, let redemptionInfo):
+    case let .expiredSubscription(code, redemptionInfo):
       return RedemptionResultObjc(
         code: code,
         type: .expiredSubscription,

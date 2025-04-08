@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 13/03/2025.
 //
+// swiftlint:disable strict_fileprivate
 
 import Foundation
 import Combine
@@ -78,8 +79,7 @@ extension URL {
 
     if host == "superwall",
       path == "/redeem",
-      let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value
-    {
+      let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
       return code
     }
     return nil

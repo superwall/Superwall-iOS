@@ -66,7 +66,7 @@ public class RedemptionResultObjc: NSObject {
     self.expiredInfo = expiredInfo
     super.init()
   }
-  
+
   /// Convenience variable to get the stripe subscription IDs.
   public var stripeSubscriptionIds: [String]? {
     if type == .success,
