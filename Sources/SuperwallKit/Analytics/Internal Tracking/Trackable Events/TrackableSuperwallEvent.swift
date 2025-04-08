@@ -883,4 +883,26 @@ enum InternalSuperwallEvent {
       return params
     }
   }
+
+  struct Redemption: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete
+      case fail
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .redemptionStart
+      case .complete:
+        return .redemptionComplete
+      case .fail:
+        return .redemptionFail
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { return [:] }
+  }
 }
