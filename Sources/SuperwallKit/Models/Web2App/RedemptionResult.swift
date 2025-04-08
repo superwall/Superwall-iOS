@@ -17,7 +17,7 @@ public enum RedemptionResult: Codable {
   case error(code: String, error: ErrorInfo)
 
   /// The code has expired.
-  case codeExpired(code: String, expiredInfo: ExpiredInfo)
+  case expiredCode(code: String, info: ExpiredCodeInfo)
 
   /// The code is invalid.
   case invalidCode(code: String)
@@ -45,7 +45,7 @@ public enum RedemptionResult: Codable {
     switch self {
     case let .success(code, _),
       let .error(code, _),
-      let .codeExpired(code, _),
+      let .expiredCode(code, _),
       let .invalidCode(code),
       let .expiredSubscription(code, _):
       return code
@@ -56,16 +56,27 @@ public enum RedemptionResult: Codable {
   public struct ErrorInfo: Codable {
     /// The message of the error.
     public let message: String
+
+    func toObjc() -> RedemptionResultObjc.ErrorInfo {
+      return RedemptionResultObjc.ErrorInfo(message: self.message)
+    }
   }
 
   /// Info about the expired code.
-  public struct ExpiredInfo: Codable {
+  public struct ExpiredCodeInfo: Codable {
     /// A boolean indicating whether the redemption email has been resent.
     public let resent: Bool
 
     /// An optional `String` indicated the obfuscated email address that the
     /// redemption email was sent to.
     public let obfuscatedEmail: String?
+
+    public func toObjc() -> RedemptionResultObjc.ExpiredCodeInfo {
+      return RedemptionResultObjc.ExpiredCodeInfo(
+        resent: self.resent,
+        obfuscatedEmail: self.obfuscatedEmail
+      )
+    }
   }
 
   /// Information about the redemption.
@@ -126,6 +137,15 @@ public enum RedemptionResult: Codable {
         case .device(let deviceId):
           try container.encode(OwnershipType.device, forKey: .type)
           try container.encode(deviceId, forKey: .deviceId)
+        }
+      }
+
+      func toObjc() -> RedemptionResultObjc.Ownership {
+        switch self {
+        case .appUser(let appUserId):
+          return RedemptionResultObjc.Ownership(appUserId: appUserId)
+        case .device(let deviceId):
+          return RedemptionResultObjc.Ownership(deviceId: deviceId)
         }
       }
     }
@@ -215,6 +235,30 @@ public enum RedemptionResult: Codable {
             }
           }
         }
+
+        func toObjc() -> RedemptionResultObjc.StoreIdentifiers {
+          switch self {
+          case .stripe(let customerId, let subscriptionIds):
+            return RedemptionResultObjc.StoreIdentifiers(
+              stripeWithCustomerId: customerId,
+              subscriptionIds: subscriptionIds
+            )
+          case .unknown(let store, let additionalInfo):
+            return RedemptionResultObjc.StoreIdentifiers(
+              unknownStore: store,
+              additionalInfo: additionalInfo
+            )
+          }
+        }
+      }
+
+      public func toObjc() -> RedemptionResultObjc.PurchaserInfo {
+        let objcStoreIdentifiers = storeIdentifiers.toObjc()
+        return RedemptionResultObjc.PurchaserInfo(
+          appUserId: self.appUserId,
+          email: self.email,
+          storeIdentifiers: objcStoreIdentifiers
+        )
       }
     }
 
@@ -264,6 +308,16 @@ public enum RedemptionResult: Codable {
         let jsonData = JSON(placementParams)
         try container.encode(jsonData, forKey: .placementParams)
       }
+
+      func toObjc() -> RedemptionResultObjc.PaywallInfo {
+        return RedemptionResultObjc.PaywallInfo(
+          identifier: identifier,
+          placementName: placementName,
+          placementParams: placementParams,
+          variantId: variantId,
+          experimentId: experimentId
+        )
+      }
     }
 
     public init(from decoder: Decoder) throws {
@@ -283,6 +337,18 @@ public enum RedemptionResult: Codable {
       self.purchaserInfo = purchaserInfo
       self.entitlements = entitlements
       self.paywallInfo = nil
+    }
+
+    public func toObjc() -> RedemptionResultObjc.RedemptionInfo {
+      let objcOwnership = ownership.toObjc()
+      let objcPurchaserInfo = purchaserInfo.toObjc()
+      let objcPaywallInfo = paywallInfo?.toObjc()
+      return RedemptionResultObjc.RedemptionInfo(
+        ownership: objcOwnership,
+        purchaserInfo: objcPurchaserInfo,
+        paywallInfo: objcPaywallInfo,
+        entitlements: entitlements
+      )
     }
   }
 
@@ -317,10 +383,10 @@ public enum RedemptionResult: Codable {
       self = .error(code: code, error: error)
     case .codeExpired:
       let code = try container.decode(String.self, forKey: .code)
-      let expiredInfo = try container.decode(ExpiredInfo.self, forKey: .expired)
-      self = .codeExpired(
+      let expiredInfo = try container.decode(ExpiredCodeInfo.self, forKey: .expired)
+      self = .expiredCode(
         code: code,
-        expiredInfo: expiredInfo
+        info: expiredInfo
       )
     case .invalidCode:
       self = .invalidCode(code: code)
@@ -345,7 +411,7 @@ public enum RedemptionResult: Codable {
       try container.encode(CodeStatus.error, forKey: .status)
       try container.encode(code, forKey: .code)
       try container.encode(error, forKey: .error)
-    case let .codeExpired(code, expired):
+    case let .expiredCode(code, expired):
       try container.encode(CodeStatus.codeExpired, forKey: .status)
       try container.encode(code, forKey: .code)
       try container.encode(expired, forKey: .expired)
@@ -356,6 +422,52 @@ public enum RedemptionResult: Codable {
       try container.encode(code, forKey: .code)
       try container.encode(CodeStatus.expiredSubscription, forKey: .status)
       try container.encode(redemptionInfo, forKey: .redemptionInfo)
+    }
+  }
+
+  /// Converts a Swift RedemptionResult to its ObjC-compatible representation.
+  func toObjc() -> RedemptionResultObjc {
+    switch self {
+    case .success(let code, let redemptionInfo):
+      return RedemptionResultObjc(
+        code: code,
+        type: .success,
+        redemptionInfo: redemptionInfo.toObjc(),
+        errorInfo: nil,
+        expiredInfo: nil
+      )
+    case .error(let code, let errorInfo):
+      return RedemptionResultObjc(
+        code: code,
+        type: .error,
+        redemptionInfo: nil,
+        errorInfo: errorInfo.toObjc(),
+        expiredInfo: nil
+      )
+    case .expiredCode(let code, let info):
+      return RedemptionResultObjc(
+        code: code,
+        type: .codeExpired,
+        redemptionInfo: nil,
+        errorInfo: nil,
+        expiredInfo: info.toObjc()
+      )
+    case .invalidCode(let code):
+      return RedemptionResultObjc(
+        code: code,
+        type: .invalidCode,
+        redemptionInfo: nil,
+        errorInfo: nil,
+        expiredInfo: nil
+      )
+    case .expiredSubscription(let code, let redemptionInfo):
+      return RedemptionResultObjc(
+        code: code,
+        type: .expiredSubscription,
+        redemptionInfo: redemptionInfo.toObjc(),
+        errorInfo: nil,
+        expiredInfo: nil
+      )
     }
   }
 }

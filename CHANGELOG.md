@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.1.0-beta.6
+
+### Breaking Changes
+
+- Renames `ExpiredInfo` to `ExpiredCodeInfo` to be more explicit.
+- Renames `codeExpired` `RedemptionResult` case to `expiredCode`.
+
+### Enhancements
+
+- Adds Objective-C support for web checkout.
+
 ## 4.1.0-beta.5
 
 ### Enhancements
