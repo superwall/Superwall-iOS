@@ -21,6 +21,7 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   }
 
   var retryCount = 6
+  var timeout: Seconds?
   var retryInterval: Seconds?
   var components: Components?
   var url: URL?
@@ -259,12 +260,14 @@ extension Endpoint where
   Response == Enrichment {
   static func enrichment(
     request: EnrichmentRequest,
-    maxRetry: Int
+    maxRetry: Int,
+    timeout: Seconds?
   ) -> Self {
     let bodyData = try? JSONEncoder.toSnakeCase.encode(request)
 
     return Endpoint(
       retryCount: maxRetry,
+      timeout: timeout,
       components: Components(
         host: .enrichment,
         path: Api.version1 + "enrich",

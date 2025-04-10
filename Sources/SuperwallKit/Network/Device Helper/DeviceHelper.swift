@@ -543,7 +543,10 @@ class DeviceHelper {
   }
 
   @discardableResult
-  func getEnrichment(maxRetry: Int? = nil) async throws -> Enrichment? {
+  func getEnrichment(
+    maxRetry: Int? = nil,
+    timeout: Seconds? = nil
+  ) async throws -> Enrichment? {
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
     let request = EnrichmentRequest(
@@ -552,7 +555,8 @@ class DeviceHelper {
     )
     enrichment = try await network.getEnrichment(
       request: request,
-      maxRetry: maxRetry
+      maxRetry: maxRetry,
+      timeout: timeout
     )
 
     if let enrichment = enrichment {

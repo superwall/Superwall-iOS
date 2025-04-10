@@ -143,7 +143,8 @@ class Network {
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int? = nil,
-    isRetryingCallback: ((Int) -> Void)? = nil
+    isRetryingCallback: ((Int) -> Void)? = nil,
+    timeout: Seconds? = nil
   ) async throws -> Config {
     try await appInForeground(injectedApplicationStatePublisher)
 
@@ -190,7 +191,8 @@ class Network {
   func getEnrichment(
     request: EnrichmentRequest,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
-    maxRetry: Int?
+    maxRetry: Int?,
+    timeout: Seconds?
   ) async throws -> Enrichment {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
@@ -201,7 +203,8 @@ class Network {
       let response = try await urlSession.request(
         .enrichment(
           request: request,
-          maxRetry: maxRetry ?? options.maxConfigRetryCount
+          maxRetry: maxRetry ?? options.maxConfigRetryCount,
+          timeout: timeout
         ),
         data: SuperwallRequestData(factory: factory)
       )

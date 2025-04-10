@@ -146,10 +146,7 @@ class ConfigManager {
         if let cachedConfig = cachedConfig,
           enableConfigRefresh {
           do {
-            let result = try await self.fetchWithTimeout({
-              try await self.network.getConfig(maxRetry: 0)
-            },
-            timeout: timeout)
+            let result = try await self.network.getConfig(maxRetry: 0, timeout: timeout)
             return (result, false)
           } catch {
             // Return the cached config and set isUsingCached to true
@@ -173,11 +170,7 @@ class ConfigManager {
         if let cachedEnrichment = cachedEnrichment,
           enableConfigRefresh {
           do {
-            let start = Date()
-            let enrichment = try await self.fetchWithTimeout({
-              try await self.deviceHelper.getEnrichment(maxRetry: 0)
-            },
-            timeout: timeout)
+            let enrichment = try await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
             self.deviceHelper.enrichment = enrichment
             return false
           } catch {
@@ -243,35 +236,6 @@ class ConfigManager {
         info: nil,
         error: error
       )
-    }
-  }
-
-  private func fetchWithTimeout<T>(
-    _ task: @escaping () async throws -> T,
-    timeout: TimeInterval
-  ) async throws -> T {
-    try await withThrowingTaskGroup(of: T.self) { group in
-      group.addTask {
-        try await task()
-      }
-
-      group.addTask {
-        try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-        throw CancellationError()
-      }
-
-      do {
-        let result = try await group.next()
-        group.cancelAll()
-        if let result = result {
-          return result
-        } else {
-          throw CancellationError()
-        }
-      } catch {
-        group.cancelAll()
-        throw error
-      }
     }
   }
 
