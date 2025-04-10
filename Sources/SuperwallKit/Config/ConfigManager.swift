@@ -90,6 +90,9 @@ class ConfigManager {
     }
 
     do {
+      Task {
+        try? await deviceHelper.getEnrichment()
+      }
       let startAt = Date()
       let newConfig = try await network.getConfig { [weak self] attempt in
         self?.configRetryCount = attempt
