@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Updates Superscript to 0.2.4.
+- Adds the `params` passed in when presenting the paywall to `PaywallInfo`.
 
 ## 4.0.6
 

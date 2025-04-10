@@ -101,6 +101,9 @@ struct Paywall: Codable {
   /// user does not purchase.
   var featureGating: FeatureGatingBehavior
 
+  /// The parameters passed to present the paywall.
+  var params: JSON
+
   /// The local notifications for the paywall, e.g. to notify the user of free trial expiry.
   var localNotifications: [LocalNotification]
 
@@ -141,6 +144,7 @@ struct Paywall: Codable {
     case surveys
     case manifest
     case isScrollEnabled
+    case params
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -255,6 +259,9 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
+
+    // Not encoding/decoding because this can change whenever the paywall is presented.
+    params = [:]
   }
 
   func encode(to encoder: Encoder) throws {
@@ -345,7 +352,8 @@ struct Paywall: Codable {
     computedPropertyRequests: [ComputedPropertyRequest] = [],
     surveys: [Survey] = [],
     manifest: ArchiveManifest? = nil,
-    isScrollEnabled: Bool
+    isScrollEnabled: Bool,
+    params: JSON
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -378,6 +386,7 @@ struct Paywall: Codable {
     self.surveys = surveys
     self.manifest = manifest
     self.isScrollEnabled = isScrollEnabled
+    self.params = params
   }
 
   func getInfo(fromPlacement: PlacementData?) -> PaywallInfo {
@@ -412,7 +421,8 @@ struct Paywall: Codable {
       computedPropertyRequests: computedPropertyRequests,
       surveys: surveys,
       presentation: presentation,
-      isScrollEnabled: isScrollEnabled
+      isScrollEnabled: isScrollEnabled,
+      params: params.dictionaryValue
     )
   }
 
@@ -424,6 +434,7 @@ struct Paywall: Codable {
     presentationSourceType = paywall.presentationSourceType
     experiment = paywall.experiment
     featureGating = paywall.featureGating
+    params = paywall.params
   }
 }
 
@@ -463,7 +474,8 @@ extension Paywall: Stubbable {
       productsLoadingInfo: .init(),
       shimmerLoadingInfo: .init(),
       paywalljsVersion: "",
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      params: [:]
     )
   }
 }

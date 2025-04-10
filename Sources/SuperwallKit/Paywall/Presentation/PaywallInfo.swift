@@ -128,6 +128,11 @@ public final class PaywallInfo: NSObject {
   /// Indicates whether scrolling of the webview is enabled.
   public let isScrollEnabled: Bool
 
+  /// The parameters passed to ``Superwall/register(event:params:)`` or
+  /// ``Superwall/getPaywall(forEvent:params:paywallOverrides:delegate:)``
+  /// when presenting the paywall.
+  public let params: [String: Any]
+
   init(
     databaseId: String,
     identifier: String,
@@ -159,7 +164,8 @@ public final class PaywallInfo: NSObject {
     computedPropertyRequests: [ComputedPropertyRequest],
     surveys: [Survey],
     presentation: PaywallPresentationInfo,
-    isScrollEnabled: Bool
+    isScrollEnabled: Bool,
+    params: [String: Any]
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -181,6 +187,7 @@ public final class PaywallInfo: NSObject {
     self.computedPropertyRequests = computedPropertyRequests
     self.surveys = surveys
     self.presentation = presentation
+    self.params = params
 
     if placementData != nil {
       self.presentedBy = "placement"
@@ -260,6 +267,10 @@ public final class PaywallInfo: NSObject {
       "close_reason": closeReason.description,
       "is_scroll_enabled": isScrollEnabled as Any
     ]
+
+    for (key, value) in params {
+      output["params_\(key)"] = value
+    }
 
     var loadingVars: [String: Any] = [:]
     for key in output.keys {
@@ -368,7 +379,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         delay: 0
       ),
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      params: [:]
     )
   }
 
@@ -416,7 +428,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         delay: 0
       ),
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      params: [:]
     )
   }
 }

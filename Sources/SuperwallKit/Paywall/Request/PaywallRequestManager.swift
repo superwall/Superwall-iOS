@@ -105,6 +105,7 @@ actor PaywallRequestManager {
     if let featureGating = request.overrides.featureGatingBehavior {
       paywall.featureGating = featureGating
     }
+    paywall.params = request.placementData?.parameters ?? [:]
     return paywall
   }
 
