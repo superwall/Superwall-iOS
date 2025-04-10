@@ -3,7 +3,7 @@
 //
 //  Created by Jake Mor on 8/10/21.
 //
-// swiftlint:disable type_body_length file_length function_body_length
+// swiftlint:disable type_body_length file_length
 
 import UIKit
 import Foundation
@@ -25,7 +25,7 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
-  var geoInfo: GeoInfo?
+  var enrichment: Enrichment?
 
   let appInstalledAtString: String
 
@@ -502,26 +502,26 @@ class DeviceHelper {
       appBuildString: appBuildString,
       appBuildStringNumber: Int(appBuildString),
       interfaceStyleMode: interfaceStyleOverride == nil ? "automatic" : "manual",
-      ipRegion: geoInfo?.region,
-      ipRegionCode: geoInfo?.regionCode,
-      ipCountry: geoInfo?.country,
-      ipCity: geoInfo?.city,
-      ipContinent: geoInfo?.continent,
-      ipTimezone: geoInfo?.timezone,
       capabilities: capabilitiesConfig.namesCommaSeparated(),
       capabilitiesConfig: capabilitiesConfig.toJson(),
       platformWrapper: platformWrapper,
       platformWrapperVersion: platformWrapperVersion
     )
 
-    return template.toDictionary()
+    var deviceDictionary = template.toDictionary()
+    let enrichmentDict = enrichment?.device.dictionaryValue ?? [:]
+
+    // Merge in enrichment dictionary, giving priority to
+    // the existing values.
+    deviceDictionary.merge(enrichmentDict) { current, _ in current }
+    return deviceDictionary
   }
 
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: IdentityInfoFactory & LocaleIdentifierFactory
+  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
 
   init(
     api: Api,
@@ -529,7 +529,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityInfoFactory & LocaleIdentifierFactory
+    factory: IdentityFactory & LocaleIdentifierFactory
   ) {
     self.storage = storage
     self.network = network
@@ -542,10 +542,31 @@ class DeviceHelper {
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
   }
 
-  func getGeoInfo(maxRetry: Int? = nil) async {
-    geoInfo = try? await network.getGeoInfo(maxRetry: maxRetry)
-    if let geoInfo = geoInfo {
-      storage.save(geoInfo, forType: LatestGeoInfo.self)
+  @discardableResult
+  func getEnrichment(
+    maxRetry: Int? = nil,
+    timeout: Seconds? = nil
+  ) async throws -> Enrichment? {
+    let identityManager = factory.makeIdentityManager()
+    let deviceAttributes = await getTemplateDevice()
+    let request = EnrichmentRequest(
+      user: JSON(identityManager.userAttributes),
+      device: JSON(deviceAttributes)
+    )
+    enrichment = try await network.getEnrichment(
+      request: request,
+      maxRetry: maxRetry,
+      timeout: timeout
+    )
+
+    if let enrichment = enrichment {
+      storage.save(enrichment, forType: LatestEnrichment.self)
     }
+
+    if let attributes = enrichment?.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
+    }
+
+    return enrichment
   }
 }

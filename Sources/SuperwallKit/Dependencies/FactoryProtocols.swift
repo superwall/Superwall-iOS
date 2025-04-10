@@ -80,8 +80,9 @@ protocol ConfigManagerFactory: AnyObject {
   ) -> Paywall?
 }
 
-protocol IdentityInfoFactory: AnyObject {
+protocol IdentityFactory: AnyObject {
   func makeIdentityInfo() async -> IdentityInfo
+  func makeIdentityManager() -> IdentityManager
 }
 
 protocol TransactionManagerFactory: AnyObject {

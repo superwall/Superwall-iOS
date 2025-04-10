@@ -193,12 +193,12 @@ enum LatestConfig: Storable {
   typealias Value = Config
 }
 
-enum LatestGeoInfo: Storable {
+enum LatestEnrichment: Storable {
   static var key: String {
-    "store.geoInfo"
+    "store.enrichment"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = GeoInfo
+  typealias Value = Enrichment
 }
 
 enum AdServicesTokenStorage: Storable {

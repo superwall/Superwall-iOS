@@ -55,12 +55,6 @@ struct DeviceTemplate: Codable {
   var appBuildString: String
   var appBuildStringNumber: Int?
   var interfaceStyleMode: String
-  var ipRegion: String?
-  var ipRegionCode: String?
-  var ipCountry: String?
-  var ipCity: String?
-  var ipContinent: String?
-  var ipTimezone: String?
   var capabilities: String
   var capabilitiesConfig: JSON
   var platformWrapper: String?

@@ -207,6 +207,15 @@ public enum SuperwallEvent {
   /// When the shimmer view stops showing.
   case shimmerViewComplete
 
+  /// When the enrichment request starts.
+  case enrichmentStart
+
+  /// When the enrichment request completes.
+  case enrichmentComplete(userEnrichment: [String: Any]?, deviceEnrichment: [String: Any]?)
+
+  /// When the enrichment request fails.
+  case enrichmentFail
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -358,6 +367,12 @@ extension SuperwallEvent {
       return .init(objcEvent: .shimmerViewStart)
     case .shimmerViewComplete:
       return .init(objcEvent: .shimmerViewComplete)
+    case .enrichmentFail:
+      return .init(objcEvent: .enrichmentFail)
+    case .enrichmentStart:
+      return .init(objcEvent: .enrichmentStart)
+    case .enrichmentComplete:
+      return .init(objcEvent: .enrichmentComplete)
     }
   }
 }

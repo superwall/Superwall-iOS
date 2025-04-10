@@ -883,4 +883,44 @@ enum InternalSuperwallEvent {
       return params
     }
   }
+
+  struct EnrichmentLoad: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete(Enrichment)
+      case fail
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .enrichmentStart
+      case .complete(let enrichment):
+        return .enrichmentComplete(
+          userEnrichment: enrichment.user.dictionaryObject,
+          deviceEnrichment: enrichment.device.dictionaryObject
+        )
+      case .fail:
+        return .enrichmentFail
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var output: [String: Any] = [:]
+      switch state {
+      case .complete(let enrichment):
+        for (key, value) in enrichment.user {
+          output["user_\(key)"] = value
+        }
+        for (key, value) in enrichment.device {
+          output["device_\(key)"] = value
+        }
+        return output
+      default:
+        return [:]
+      }
+    }
+  }
 }
