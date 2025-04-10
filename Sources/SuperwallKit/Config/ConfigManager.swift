@@ -170,6 +170,7 @@ class ConfigManager {
         if let cachedEnrichment = cachedEnrichment,
           enableConfigRefresh {
           do {
+            let start = Date()
             let enrichment = try await self.fetchWithTimeout({
               try await self.deviceHelper.getEnrichment(maxRetry: 0)
             },

@@ -194,6 +194,10 @@ class Network {
   ) async throws -> Enrichment {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
+
+      let start = InternalSuperwallEvent.EnrichmentLoad(state: .start)
+      await Superwall.shared.track(start)
+
       let response = try await urlSession.request(
         .enrichment(
           request: request,
@@ -201,6 +205,12 @@ class Network {
         ),
         data: SuperwallRequestData(factory: factory)
       )
+
+      let complete = InternalSuperwallEvent.EnrichmentLoad(
+        state: .complete(response)
+      )
+      await Superwall.shared.track(complete)
+
       return response
     } catch {
       Logger.debug(
@@ -209,6 +219,10 @@ class Network {
         message: "Request Failed: /enrich",
         error: error
       )
+
+      let fail = InternalSuperwallEvent.EnrichmentLoad(state: .fail)
+      await Superwall.shared.track(fail)
+
       throw error
     }
   }
