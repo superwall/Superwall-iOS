@@ -550,7 +550,6 @@ class DeviceHelper {
       user: JSON(identityManager.userAttributes),
       device: JSON(deviceAttributes)
     )
-    let date = Date()
     enrichment = try await network.getEnrichment(
       request: request,
       maxRetry: maxRetry
