@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds `demandScore` and `demandTier` to device attributes. A user is assigned these based on a variety of factors to determine whether they're more or less likely to pay higher prices and can be used within audience filters.
 - Updates Superscript to 0.2.4.
 
 ## 4.0.6
