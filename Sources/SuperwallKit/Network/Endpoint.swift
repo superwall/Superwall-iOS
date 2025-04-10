@@ -253,23 +253,28 @@ extension Endpoint where
   }
 }
 
-// MARK: - GeoWrapper
+// MARK: - Enrichment
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == GeoWrapper {
-  static func geo(
+  Response == Enrichment {
+  static func enrichment(
+    request: EnrichmentRequest,
     maxRetry: Int
   ) -> Self {
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(request)
+
     return Endpoint(
       retryCount: maxRetry,
       components: Components(
-        host: .geo,
-        path: Api.version1 + "geo"
+        host: .enrichment,
+        path: Api.version1 + "enrich",
+        bodyData: bodyData
       ),
-      method: .get
+      method: .post
     )
   }
 }
+
 
 // MARK: - Ad Services
 extension Endpoint where

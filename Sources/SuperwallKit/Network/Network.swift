@@ -187,22 +187,26 @@ class Network {
       .throwableAsync()
   }
 
-  func getGeoInfo(
+  func getEnrichment(
+    request: EnrichmentRequest,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int?
-  ) async throws -> GeoInfo? {
+  ) async throws -> Enrichment {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
-      let geoWrapper = try await urlSession.request(
-        .geo(maxRetry: maxRetry ?? options.maxConfigRetryCount),
+      let response = try await urlSession.request(
+        .enrichment(
+          request: request,
+          maxRetry: maxRetry ?? options.maxConfigRetryCount
+        ),
         data: SuperwallRequestData(factory: factory)
       )
-      return geoWrapper.info
+      return response
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
-        message: "Request Failed: /geo",
+        message: "Request Failed: /enrich",
         error: error
       )
       throw error

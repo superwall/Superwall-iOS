@@ -161,34 +161,34 @@ class ConfigManager {
         }
       }()
 
-      async let isUsingCachedGeo: Bool = { [weak self] in
+      async let isUsingCachedEnrichment: Bool = { [weak self] in
         guard let self = self else {
           return false
         }
-        let cachedGeoInfo = self.storage.get(LatestGeoInfo.self)
+        let cachedEnrichment = self.storage.get(LatestEnrichment.self)
 
-        if let cachedGeoInfo = cachedGeoInfo,
+        if let cachedEnrichment = cachedEnrichment,
           enableConfigRefresh {
           do {
-            let geoInfo = try await self.fetchWithTimeout({
-              try await self.network.getGeoInfo(maxRetry: 0)
+            let enrichment = try await self.fetchWithTimeout({
+              try await self.deviceHelper.getEnrichment(maxRetry: 0)
             },
             timeout: timeout)
-            self.deviceHelper.geoInfo = geoInfo
+            self.deviceHelper.enrichment = enrichment
             return false
           } catch {
-            self.deviceHelper.geoInfo = cachedGeoInfo
+            self.deviceHelper.enrichment = cachedEnrichment
             return true
           }
         } else {
-          await self.deviceHelper.getGeoInfo()
+          _ = try? await self.deviceHelper.getEnrichment()
           return false
         }
       }()
 
       let (config, isUsingCachedConfig) = try await configResult
       let configFetchDuration = Date().timeIntervalSince(startAt)
-      let isUsingCachedGeoInfo = await isUsingCachedGeo
+      let usingCachedEnrichment = await isUsingCachedEnrichment
 
       let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus =
         isUsingCachedConfig ? .cached : .notCached
@@ -214,9 +214,9 @@ class ConfigManager {
       Task {
         await preloadPaywalls()
       }
-      if isUsingCachedGeoInfo {
+      if usingCachedEnrichment {
         Task {
-          await deviceHelper.getGeoInfo()
+          try? await deviceHelper.getEnrichment()
         }
       }
       if isUsingCachedConfig {
