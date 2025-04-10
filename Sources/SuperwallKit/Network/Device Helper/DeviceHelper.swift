@@ -3,7 +3,7 @@
 //
 //  Created by Jake Mor on 8/10/21.
 //
-// swiftlint:disable type_body_length file_length function_body_length
+// swiftlint:disable type_body_length file_length
 
 import UIKit
 import Foundation
@@ -555,7 +555,7 @@ class DeviceHelper {
       request: request,
       maxRetry: maxRetry
     )
-    print(date.timeIntervalSinceNow)
+
     if let enrichment = enrichment {
       storage.save(enrichment, forType: LatestEnrichment.self)
     }
