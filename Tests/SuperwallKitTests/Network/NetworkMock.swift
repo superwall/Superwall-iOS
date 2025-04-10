@@ -24,7 +24,8 @@ final class NetworkMock: Network {
   override func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int? = nil,
-    isRetryingCallback: ((Int) -> Void)? = nil
+    isRetryingCallback: ((Int) -> Void)? = nil,
+    timeout: Seconds? = nil
   ) async throws -> Config {
     getConfigCalled = true
 
