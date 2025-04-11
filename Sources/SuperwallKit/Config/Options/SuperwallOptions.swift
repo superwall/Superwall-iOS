@@ -127,7 +127,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     }
 
     var enrichmentHost: String {
-      "enrichment-api.superwall.com"
+      "enrichment-api.superwall.dev"
     }
 
     var adServicesHost: String {
