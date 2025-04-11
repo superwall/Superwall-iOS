@@ -216,6 +216,15 @@ public enum SuperwallEvent {
   /// When the redemption of a code fails.
   case redemptionFail
 
+  /// When the enrichment request starts.
+  case enrichmentStart
+
+  /// When the enrichment request completes.
+  case enrichmentComplete(userEnrichment: [String: Any]?, deviceEnrichment: [String: Any]?)
+
+  /// When the enrichment request fails.
+  case enrichmentFail
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -373,6 +382,12 @@ extension SuperwallEvent {
       return .init(objcEvent: .redemptionComplete)
     case .redemptionFail:
       return .init(objcEvent: .redemptionFail)
+    case .enrichmentFail:
+      return .init(objcEvent: .enrichmentFail)
+    case .enrichmentStart:
+      return .init(objcEvent: .enrichmentStart)
+    case .enrichmentComplete:
+      return .init(objcEvent: .enrichmentComplete)
     }
   }
 }

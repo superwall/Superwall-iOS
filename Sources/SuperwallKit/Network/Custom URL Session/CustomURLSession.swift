@@ -64,6 +64,7 @@ class CustomURLSession {
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
       retryInterval: endpoint.retryInterval,
+      timeout: endpoint.timeout,
       isRetryingCallback: isRetryingCallback
     ) {
       return try await self.urlSession.data(for: request)

@@ -10,7 +10,7 @@ import Foundation
 enum EndpointHost {
   case base
   case collector
-  case geo
+  case enrichment
   case adServices
   case web2app
 }
@@ -31,14 +31,14 @@ extension ApiHostConfig {
 struct Api {
   let base: Base
   let collector: Collector
-  let geo: Geo
+  let enrichment: Enrichment
   let adServices: AdServices
   let web2app: Web2App
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     base = Base(networkEnvironment: networkEnvironment)
     collector = Collector(networkEnvironment: networkEnvironment)
-    geo = Geo(networkEnvironment: networkEnvironment)
+    enrichment = Enrichment(networkEnvironment: networkEnvironment)
     adServices = AdServices(networkEnvironment: networkEnvironment)
     web2app = Web2App(networkEnvironment: networkEnvironment)
   }
@@ -49,8 +49,8 @@ struct Api {
       return base
     case .collector:
       return collector
-    case .geo:
-      return geo
+    case .enrichment:
+      return enrichment
     case .adServices:
       return adServices
     case .web2app:
@@ -78,9 +78,13 @@ struct Api {
     }
   }
 
-  struct Geo: ApiHostConfig {
-    let networkEnvironment: SuperwallOptions.NetworkEnvironment
-    var host: String { return networkEnvironment.geoHost }
+
+
+  struct Enrichment: ApiHostConfig {
+    internal let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var port: Int? { return networkEnvironment.port }
+    var scheme: String { return networkEnvironment.scheme }
+    var host: String { return networkEnvironment.enrichmentHost }
     var path: String { return "/api/v1/" }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
