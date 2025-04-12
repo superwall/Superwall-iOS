@@ -143,7 +143,8 @@ class Network {
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int? = nil,
-    isRetryingCallback: ((Int) -> Void)? = nil
+    isRetryingCallback: ((Int) -> Void)? = nil,
+    timeout: Seconds? = nil
   ) async throws -> Config {
     try await appInForeground(injectedApplicationStatePublisher)
 
@@ -187,24 +188,44 @@ class Network {
       .throwableAsync()
   }
 
-  func getGeoInfo(
+  func getEnrichment(
+    request: EnrichmentRequest,
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
-    maxRetry: Int?
-  ) async throws -> GeoInfo? {
+    maxRetry: Int?,
+    timeout: Seconds?
+  ) async throws -> Enrichment {
     do {
       try await appInForeground(injectedApplicationStatePublisher)
-      let geoWrapper = try await urlSession.request(
-        .geo(maxRetry: maxRetry ?? options.maxConfigRetryCount),
+
+      let start = InternalSuperwallEvent.EnrichmentLoad(state: .start)
+      await Superwall.shared.track(start)
+
+      let response = try await urlSession.request(
+        .enrichment(
+          request: request,
+          maxRetry: maxRetry ?? options.maxConfigRetryCount,
+          timeout: timeout
+        ),
         data: SuperwallRequestData(factory: factory)
       )
-      return geoWrapper.info
+
+      let complete = InternalSuperwallEvent.EnrichmentLoad(
+        state: .complete(response)
+      )
+      await Superwall.shared.track(complete)
+
+      return response
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
-        message: "Request Failed: /geo",
+        message: "Request Failed: /enrich",
         error: error
       )
+
+      let fail = InternalSuperwallEvent.EnrichmentLoad(state: .fail)
+      await Superwall.shared.track(fail)
+
       throw error
     }
   }
@@ -294,5 +315,22 @@ class Network {
       )
       return [:]
     }
+  }
+
+  func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
+    return try await urlSession.request(
+      .redeem(request: request),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
+
+  func redeemEntitlements(
+    appUserId: String?,
+    deviceId: String
+  ) async throws -> Set<Entitlement> {
+    return try await urlSession.request(
+      .redeem(appUserId: appUserId, deviceId: deviceId),
+      data: SuperwallRequestData(factory: factory)
+    ).entitlements
   }
 }

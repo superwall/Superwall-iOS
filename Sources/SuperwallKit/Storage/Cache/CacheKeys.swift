@@ -193,12 +193,12 @@ enum LatestConfig: Storable {
   typealias Value = Config
 }
 
-enum LatestGeoInfo: Storable {
+enum LatestEnrichment: Storable {
   static var key: String {
-    "store.geoInfo"
+    "store.enrichment"
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = GeoInfo
+  typealias Value = Enrichment
 }
 
 enum AdServicesTokenStorage: Storable {
@@ -215,4 +215,20 @@ enum SK2TransactionIds: Storable {
   }
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Set<UInt64>
+}
+
+enum LatestRedeemResponse: Storable {
+  static var key: String {
+    "store.latestRedeemResponse"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = RedeemResponse
+}
+
+enum LastWebEntitlementsFetchDate: Storable {
+  static var key: String {
+    "store.LastWebEntitlementsFetchDate"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Date
 }

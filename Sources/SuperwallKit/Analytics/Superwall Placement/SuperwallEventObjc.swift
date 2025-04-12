@@ -187,6 +187,24 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the shimmer view stops showing.
   case shimmerViewComplete
 
+  /// When the redemption of a code is initiated.
+  case redemptionStart
+
+  /// When the redemption of a code completes.
+  case redemptionComplete
+
+  /// When the redemption of a code fails.
+  case redemptionFail
+
+  /// When the enrichment request starts.
+  case enrichmentStart
+
+  /// When the enrichment request completes.
+  case enrichmentComplete
+
+  /// When the enrichment request fails.
+  case enrichmentFail
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -303,6 +321,19 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "shimmerView_start"
     case .shimmerViewComplete:
       return "shimmerView_complete"
+    case .redemptionStart:
+      return "redemption_start"
+    case .redemptionComplete:
+      return "redemption_complete"
+    case .redemptionFail:
+      return "redemption_fail"
+    case .enrichmentStart:
+      return "enrichment_start"
+    case .enrichmentFail:
+      return "enrichment_fail"
+    case .enrichmentComplete:
+      return "enrichment_complete"
+
     }
   }
 }

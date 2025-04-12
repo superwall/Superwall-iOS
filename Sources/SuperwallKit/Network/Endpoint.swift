@@ -21,6 +21,7 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   }
 
   var retryCount = 6
+  var timeout: Seconds?
   var retryInterval: Seconds?
   var components: Components?
   var url: URL?
@@ -39,7 +40,7 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
       component.host = defaultComponents.host
       component.port = defaultComponents.port
       component.queryItems = components.queryItems
-      component.path = components.path
+      component.path = defaultComponents.path + components.path
 
       // If either the path or the query items passed contained
       // invalid characters, we'll get a nil URL back:
@@ -75,7 +76,7 @@ extension Endpoint where
     return Endpoint(
       components: Components(
         host: .collector,
-        path: Api.version1 + "events",
+        path: "events",
         bodyData: bodyData
       ),
       method: .post
@@ -88,7 +89,7 @@ extension Endpoint where
     return Endpoint(
       components: Components(
         host: .collector,
-        path: Api.version1 + "session_events",
+        path: "session_events",
         bodyData: bodyData
       ),
       method: .post
@@ -131,7 +132,7 @@ extension Endpoint where
       retryCount: retryCount,
       components: Components(
         host: .base,
-        path: Api.version1 + "paywall",
+        path: "paywall",
         bodyData: bodyData
       ),
       method: .post
@@ -178,7 +179,7 @@ extension Endpoint where
       retryCount: retryCount,
       components: Components(
         host: .base,
-        path: Api.version1 + "paywall/\(identifier)",
+        path: "paywall/\(identifier)",
         queryItems: queryItems
       ),
       method: .get
@@ -194,7 +195,7 @@ extension Endpoint where
     return Endpoint(
       components: Components(
         host: .base,
-        path: Api.version1 + "paywalls"
+        path: "paywalls"
       ),
       method: .get
     )
@@ -215,7 +216,7 @@ extension Endpoint where
       retryCount: maxRetry,
       components: Components(
         host: .base,
-        path: Api.version1 + "static_config",
+        path: "static_config",
         queryItems: queryItems
       ),
       method: .get
@@ -231,7 +232,7 @@ extension Endpoint where
     return Endpoint(
       components: Components(
         host: .base,
-        path: Api.version1 + "assignments"
+        path: "assignments"
       ),
       method: .get
     )
@@ -245,7 +246,7 @@ extension Endpoint where
     return Endpoint(
       components: Components(
         host: .base,
-        path: Api.version1 + "confirm_assignments",
+        path: "confirm_assignments",
         bodyData: bodyData
       ),
       method: .post
@@ -253,23 +254,30 @@ extension Endpoint where
   }
 }
 
-// MARK: - GeoWrapper
+// MARK: - Enrichment
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == GeoWrapper {
-  static func geo(
-    maxRetry: Int
+  Response == Enrichment {
+  static func enrichment(
+    request: EnrichmentRequest,
+    maxRetry: Int,
+    timeout: Seconds?
   ) -> Self {
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(request)
+
     return Endpoint(
       retryCount: maxRetry,
+      timeout: timeout,
       components: Components(
-        host: .geo,
-        path: Api.version1 + "geo"
+        host: .enrichment,
+        path: "enrich",
+        bodyData: bodyData
       ),
-      method: .get
+      method: .post
     )
   }
 }
+
 
 // MARK: - Ad Services
 extension Endpoint where
@@ -284,10 +292,48 @@ extension Endpoint where
       retryInterval: 5,
       components: Components(
         host: .base,
-        path: Api.version1 + "apple-search-ads/token",
+        path: "apple-search-ads/token",
         bodyData: bodyData
       ),
       method: .post
+    )
+  }
+}
+
+// MARK: - Web2App
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
+  Response == RedeemResponse {
+  static func redeem(request: RedeemRequest) -> Self {
+    let bodyData = try? JSONEncoder().encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "redeem",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
+  Response == WebEntitlements {
+  static func redeem(
+    appUserId: String?,
+    deviceId: String
+  ) -> Self {
+    let queryItems = [URLQueryItem(name: "deviceId", value: deviceId)]
+
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "users/\(appUserId ?? deviceId)/entitlements",
+        queryItems: queryItems
+      ),
+      method: .get
     )
   }
 }
