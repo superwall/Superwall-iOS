@@ -41,6 +41,7 @@ class ConfigManager {
   private unowned let paywallManager: PaywallManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let entitlementsInfo: EntitlementsInfo
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   let expressionEvaluator: CELEvaluator
 
   /// A task that is non-`nil` when preloading all paywalls.
@@ -60,6 +61,7 @@ class ConfigManager {
     paywallManager: PaywallManager,
     deviceHelper: DeviceHelper,
     entitlementsInfo: EntitlementsInfo,
+    webEntitlementRedeemer: WebEntitlementRedeemer,
     factory: Factory
   ) {
     self.options = options
@@ -69,6 +71,7 @@ class ConfigManager {
     self.paywallManager = paywallManager
     self.deviceHelper = deviceHelper
     self.entitlementsInfo = entitlementsInfo
+    self.webEntitlementRedeemer = webEntitlementRedeemer
     self.factory = factory
     self.expressionEvaluator = CELEvaluator(
       storage: self.storage,
@@ -255,6 +258,7 @@ class ConfigManager {
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
     await factory.loadPurchasedProducts()
+    await webEntitlementRedeemer.pollWebEntitlements(config: config)
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }
@@ -266,7 +270,10 @@ class ConfigManager {
       return
     }
     choosePaywallVariants(from: config.triggers)
-    Task { await preloadPaywalls() }
+    Task {
+      await webEntitlementRedeemer.redeem(.existingCodes)
+      await preloadPaywalls()
+    }
   }
 
   /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if

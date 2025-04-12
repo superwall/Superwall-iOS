@@ -17,7 +17,7 @@ enum TrackingLogic {
   }
 
   static func processParameters(
-    fromTrackablePlacement trackablePlacement: Trackable,
+    fromTrackableEvent trackablePlacement: Trackable,
     appSessionId: String
   ) async -> TrackingParameters {
     var superwallParameters = await trackablePlacement.getSuperwallParameters()

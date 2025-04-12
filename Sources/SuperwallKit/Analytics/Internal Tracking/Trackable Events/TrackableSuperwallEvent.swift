@@ -40,7 +40,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       return [
         "application_installed_at": appInstalledAtString,
-        "using_purchase_controller": hasExternalPurchaseController
+        "using_purchase_controller": hasExternalPurchaseController,
       ]
     }
   }
@@ -70,7 +70,7 @@ enum InternalSuperwallEvent {
       let output = paywallInfo.audienceFilterParams()
       return output + [
         "survey_selected_option_title": selectedOption.title,
-        "survey_custom_response": customResponse as Any
+        "survey_custom_response": customResponse as Any,
       ]
     }
     let survey: Survey
@@ -82,7 +82,7 @@ enum InternalSuperwallEvent {
       let params: [String: Any] = [
         "survey_id": survey.id,
         "survey_assignment_key": survey.assignmentKey,
-        "survey_selected_option_id": selectedOption.id
+        "survey_selected_option_id": selectedOption.id,
       ]
 
       return await paywallInfo.placementParams(otherParams: params)
@@ -128,7 +128,7 @@ enum InternalSuperwallEvent {
         "lastPathComponent": url.lastPathComponent,
         "host": url.host ?? "",
         "query": url.query ?? "",
-        "fragment": url.fragment ?? ""
+        "fragment": url.fragment ?? "",
       ]
     }
 
@@ -207,7 +207,7 @@ enum InternalSuperwallEvent {
       var params = options.toDictionary()
       params += [
         "using_purchase_controller": hasExternalPurchaseController,
-        "has_delegate": hasDelegate
+        "has_delegate": hasDelegate,
       ]
       return params
     }
@@ -323,14 +323,14 @@ enum InternalSuperwallEvent {
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
-          "result": "holdout"
+          "result": "holdout",
         ]
       case let .paywall(experiment):
         return params + [
           "variant_id": experiment.variant.id as Any,
           "experiment_id": experiment.id as Any,
           "paywall_identifier": experiment.variant.paywallId as Any,
-          "result": "present"
+          "result": "present",
         ]
       case .placementNotFound:
         return params + [
@@ -364,11 +364,12 @@ enum InternalSuperwallEvent {
         "source_event_name": placementData?.name ?? "",
         "pipeline_type": type.description,
         "status": status.rawValue,
-        "status_reason": statusReason?.description ?? ""
+        "status_reason": statusReason?.description ?? "",
       ]
 
       if let featureFlags = factory.makeFeatureFlags(),
-        featureFlags.enableExpressionParameters {
+        featureFlags.enableExpressionParameters
+      {
         let computedPropertyRequests = factory.makeComputedPropertyRequests()
         let audienceFilters = await factory.makeAudienceFilterAttributes(
           forPlacement: placementData,
@@ -376,7 +377,8 @@ enum InternalSuperwallEvent {
         )
 
         if let jsonData = try? JSONSerialization.data(withJSONObject: audienceFilters),
-          let decoded = String(data: jsonData, encoding: .utf8) {
+          let decoded = String(data: jsonData, encoding: .utf8)
+        {
           params += [
             "expression_params": decoded
           ]
@@ -582,7 +584,7 @@ enum InternalSuperwallEvent {
       var placementParams: [String: Any] = [
         "store": "APP_STORE",
         "source": source.rawValue,
-        "storekit_version": storeKitVersion.description
+        "storekit_version": storeKitVersion.description,
       ]
 
       switch state {
@@ -597,9 +599,11 @@ enum InternalSuperwallEvent {
         placementParams += [
           "storefront_countryCode": storefrontCountryCode,
           "storefront_id": storefrontId,
-          "transaction_type": type.description
+          "transaction_type": type.description,
         ]
-        let appleSearchAttributes = Superwall.shared.userAttributes.filter { $0.key.hasPrefix("apple_search_ads_") }
+        let appleSearchAttributes = Superwall.shared.userAttributes.filter {
+          $0.key.hasPrefix("apple_search_ads_")
+        }
         placementParams += appleSearchAttributes
         fallthrough
       case .start,
@@ -801,7 +805,7 @@ enum InternalSuperwallEvent {
         "config_build_id": buildId,
         "retry_count": retryCount,
         "cache_status": cacheStatus.rawValue,
-        "fetch_duration": fetchDuration
+        "fetch_duration": fetchDuration,
       ]
     }
   }
@@ -884,6 +888,28 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct Redemption: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete
+      case fail
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .redemptionStart
+      case .complete:
+        return .redemptionComplete
+      case .fail:
+        return .redemptionFail
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { return [:] }
+  }
+
   struct EnrichmentLoad: TrackableSuperwallEvent {
     enum State {
       case start
@@ -894,15 +920,15 @@ enum InternalSuperwallEvent {
 
     var superwallEvent: SuperwallEvent {
       switch state {
-      case .start:
-        return .enrichmentStart
-      case .complete(let enrichment):
-        return .enrichmentComplete(
-          userEnrichment: enrichment.user.dictionaryObject,
-          deviceEnrichment: enrichment.device.dictionaryObject
-        )
-      case .fail:
-        return .enrichmentFail
+        case .start:
+          return .enrichmentStart
+        case .complete(let enrichment):
+          return .enrichmentComplete(
+            userEnrichment: enrichment.user.dictionaryObject,
+            deviceEnrichment: enrichment.device.dictionaryObject
+          )
+        case .fail:
+          return .enrichmentFail
       }
     }
     let audienceFilterParams: [String: Any] = [:]
@@ -910,16 +936,16 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       var output: [String: Any] = [:]
       switch state {
-      case .complete(let enrichment):
-        for (key, value) in enrichment.user {
-          output["user_\(key)"] = value
-        }
-        for (key, value) in enrichment.device {
-          output["device_\(key)"] = value
-        }
-        return output
-      default:
-        return [:]
+        case .complete(let enrichment):
+          for (key, value) in enrichment.user {
+            output["user_\(key)"] = value
+          }
+          for (key, value) in enrichment.device {
+            output["device_\(key)"] = value
+          }
+          return output
+        default:
+          return [:]
       }
     }
   }

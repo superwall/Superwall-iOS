@@ -2,12 +2,61 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.0.7
+## 4.2.0-beta.1
 
 ### Enhancements
 
-- Adds `demandScore` and `demandTier` to device attributes. A user is assigned these based on a variety of factors to determine whether they're more or less likely to pay higher prices and can be used within audience filters.
+- Adds `demandScore` and `demandTier` to device attributes using an off-device advanced machine learning model. A user is assigned these based on a variety of factors to determine whether they're more or less likely to convert and can be used within audience filters.
 - Updates Superscript to 0.2.4.
+
+## 4.1.0-beta.6
+
+### Breaking Changes
+
+- Renames `ExpiredInfo` to `ExpiredCodeInfo` to be more explicit.
+- Renames `codeExpired` `RedemptionResult` case to `expiredCode`.
+
+### Enhancements
+
+- Adds Objective-C support for web checkout.
+
+## 4.1.0-beta.5
+
+### Enhancements
+
+- Adds the static method `Superwall.handleDeepLink(_:)` and deprecates the instance method `Superwall.shared.handleDeepLink(_:)`. Now if the deep link gets called before `configure` is called, we store the deep link and handle it after configuring.
+
+## 4.1.0-beta.3
+
+### Fixes
+
+- Updates the SuperwallDelegate `didRedeemCode(code:)` example code for RevenueCat web checkout.
+- Fixes decoding error for an expired code.
+- Prevents `willRedeem()` from being called on `identify`.
+- Makes sure `subscriptionStatus` is set on the main thread when redeeming codes.
+
+## 4.1.0-beta.2
+
+### Breaking Changes
+
+- Adds Stripe subscription IDs to the `stripe` `StoreIdentifier` case.
+- Changes `codeExpired(code: String, expired: ExpiredInfo)` `RedemptionResult` case to `codeExpired(code: String, expiredInfo: ExpiredInfo)`.
+
+### Enhancements
+
+- Adds `willRedeemCode` to the `SuperwallDelegate` to indicate that a code redemption is about to happen.
+- Adds `stripeSubscriptionIds` convenience variable to the `RedemptionResult` for quick access.
+
+### Fixes
+
+- Adjusts `RCPurchaseController` example and submits the stripe subscription ID from the `didRedeemCode(result:)` delegate method to the RevenueCat API.
+- Makes sure to present alert on web entitlement restoration failure.
+
+## 4.1.0-beta.1
+
+### Enhancements
+
+- Adds support for web checkout.
 
 ## 4.0.6
 

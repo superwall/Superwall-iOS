@@ -32,10 +32,12 @@ final class SWPurchaseController: PurchaseController {
     }
 
     let storeProducts = await Superwall.shared.products(for: products)
-    let entitlements = Set(storeProducts.flatMap { $0.entitlements })
+    let deviceEntitlements = Set(storeProducts.flatMap { $0.entitlements })
+    let webEntitlements = Superwall.shared.entitlements.web
+    let allEntitlements = deviceEntitlements.union(webEntitlements)
 
     await MainActor.run {
-      Superwall.shared.subscriptionStatus = .active(entitlements)
+      Superwall.shared.subscriptionStatus = .active(allEntitlements)
     }
   }
 

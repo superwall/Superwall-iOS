@@ -14,6 +14,10 @@ final class DebugManager {
 
   private unowned let storage: Storage
   private unowned let factory: ViewControllerFactory
+  struct DeepLinkOutcome {
+    let debugKey: String
+    let paywallId: String?
+  }
 
   init(
     storage: Storage,
@@ -23,33 +27,38 @@ final class DebugManager {
     self.factory = factory
   }
 
-  func handle(deepLinkUrl: URL) -> Bool {
-    guard let launchDebugger = SWDebugManagerLogic.getQueryItemValue(
-      fromUrl: deepLinkUrl,
-      withName: .superwallDebug
-    ) else {
+  func handle(deepLinkUrl url: URL) -> Bool {
+    guard let outcome = Self.outcomeForDeepLink(url: url) else {
       return false
     }
-    guard Bool(launchDebugger) == true else {
-      return false
-    }
-    guard let debugKey = SWDebugManagerLogic.getQueryItemValue(
-      fromUrl: deepLinkUrl,
-      withName: .token
-    ) else {
-      return false
-    }
-
-    storage.debugKey = debugKey
-
-    let paywallId = SWDebugManagerLogic.getQueryItemValue(
-      fromUrl: deepLinkUrl,
-      withName: .paywallId
-    )
+    storage.debugKey = outcome.debugKey
     Task {
-      await self.launchDebugger(withPaywallId: paywallId)
+      await self.launchDebugger(withPaywallId: outcome.paywallId)
     }
     return true
+  }
+
+  static func outcomeForDeepLink(url: URL) -> DeepLinkOutcome? {
+    guard let launchDebugger = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: url,
+      withName: .superwallDebug
+    ) else {
+      return nil
+    }
+    guard Bool(launchDebugger) == true else {
+      return nil
+    }
+    guard let debugKey = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: url,
+      withName: .token
+    ) else {
+      return nil
+    }
+    let paywallId = SWDebugManagerLogic.getQueryItemValue(
+      fromUrl: url,
+      withName: .paywallId
+    )
+    return .init(debugKey: debugKey, paywallId: paywallId)
   }
 
 	/// Launches the debugger for you to preview paywalls.
