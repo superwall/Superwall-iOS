@@ -2,7 +2,7 @@ name: TagVersion
 
 on:
   push:
-    branches: [ master, feature/web2app ]
+    branches: [ master, feature/web2app, feature/enrichment ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
