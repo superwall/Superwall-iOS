@@ -18,7 +18,7 @@ final class Delegate: SuperwallDelegate {
     self.purchaseController = purchaseController
   }
 
-  func didRedeemCode(result: RedemptionResult) {
+  func didRedeemLink(result: RedemptionResult) {
     Task {
       await purchaseController.syncSubscriptionStatus()
     }
@@ -29,14 +29,14 @@ final class Delegate: SuperwallDelegate {
 /*
 final class Delegate: SuperwallDelegate {
   // The user tapped on a deep link to redeem a code
-  func willRedeemCode() {
-    print("[!] willRedeemCode")
+  func willRedeemLink() {
+    print("[!] willRedeemLink")
     // Optionally show a loading indicator here
   }
 
   // Superwall received a redemption result and validated the purchase with Stripe.
-  func didRedeemCode(result: RedemptionResult) {
-    print("[!] didRedeemCode", result)
+  func didRedeemLink(result: RedemptionResult) {
+    print("[!] didRedeemLink", result)
     // Send Stripe IDs to RevenueCat to link purchases to the customer
 
     // Get a list of subscription ids tied to the customer.
