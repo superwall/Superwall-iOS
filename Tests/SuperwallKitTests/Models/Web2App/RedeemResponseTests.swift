@@ -114,7 +114,7 @@ final class RedeemResponseTests {
     let decoder = JSONDecoder()
     let response = try decoder.decode(RedeemResponse.self, from: expiredCode)
     switch response.results.first! {
-    case let .codeExpired(code, expiredInfo):
+    case let .expiredCode(code, expiredInfo):
       #expect(code == "redemption_198a997f-ae38-45e8-9d7b-3e54be28fa08")
       #expect(expiredInfo.resent == false)
       #expect(expiredInfo.obfuscatedEmail == nil)

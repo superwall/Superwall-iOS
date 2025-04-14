@@ -21,6 +21,7 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
   }
 
   var retryCount = 6
+  var timeout: Seconds?
   var retryInterval: Seconds?
   var components: Components?
   var url: URL?
@@ -253,23 +254,30 @@ extension Endpoint where
   }
 }
 
-// MARK: - GeoWrapper
+// MARK: - Enrichment
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == GeoWrapper {
-  static func geo(
-    maxRetry: Int
+  Response == Enrichment {
+  static func enrichment(
+    request: EnrichmentRequest,
+    maxRetry: Int,
+    timeout: Seconds?
   ) -> Self {
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(request)
+
     return Endpoint(
       retryCount: maxRetry,
+      timeout: timeout,
       components: Components(
-        host: .geo,
-        path: "geo"
+        host: .enrichment,
+        path: "enrich",
+        bodyData: bodyData
       ),
-      method: .get
+      method: .post
     )
   }
 }
+
 
 // MARK: - Ad Services
 extension Endpoint where

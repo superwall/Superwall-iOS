@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.2.0-beta.1
+
+### Enhancements
+
+- Adds `demandScore` and `demandTier` to device attributes using an off-device advanced machine learning model. A user is assigned these based on a variety of factors to determine whether they're more or less likely to convert and can be used within audience filters.
+- Updates Superscript to 0.2.4.
+
 ## 4.1.0-beta.6
 
 ### Breaking Changes
@@ -50,12 +57,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for web checkout.
-
-## 4.0.7
-
-### Enhancements
-
-- Updates Superscript to 0.2.4.
 
 ## 4.0.6
 

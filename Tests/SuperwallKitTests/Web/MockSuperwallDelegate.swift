@@ -12,7 +12,7 @@ final class MockSuperwallDelegate: SuperwallDelegate {
   var receivedResult: RedemptionResult?
   var eventsReceived: [SuperwallEvent] = []
 
-  func didRedeemCode(result: RedemptionResult) {
+  func didRedeemLink(result: RedemptionResult) {
     receivedResult = result
   }
 

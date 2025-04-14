@@ -196,6 +196,15 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the redemption of a code fails.
   case redemptionFail
 
+  /// When the enrichment request starts.
+  case enrichmentStart
+
+  /// When the enrichment request completes.
+  case enrichmentComplete
+
+  /// When the enrichment request fails.
+  case enrichmentFail
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -318,6 +327,13 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "redemption_complete"
     case .redemptionFail:
       return "redemption_fail"
+    case .enrichmentStart:
+      return "enrichment_start"
+    case .enrichmentFail:
+      return "enrichment_fail"
+    case .enrichmentComplete:
+      return "enrichment_complete"
+
     }
   }
 }

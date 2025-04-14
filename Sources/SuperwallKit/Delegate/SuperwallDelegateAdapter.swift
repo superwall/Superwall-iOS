@@ -134,20 +134,20 @@ final class SuperwallDelegateAdapter {
   }
 
   @MainActor
-  func didRedeemCode(result: RedemptionResult) {
+  func didRedeemLink(result: RedemptionResult) {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.didRedeemCode(result: result)
+      swiftDelegate.didRedeemLink(result: result)
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.didRedeemCode?(result: result.toObjc())
+      objcDelegate.didRedeemLink?(result: result.toObjc())
     }
   }
 
   @MainActor
-  func willRedeemCode() {
+  func willRedeemLink() {
     if let swiftDelegate = swiftDelegate {
-      swiftDelegate.willRedeemCode()
+      swiftDelegate.willRedeemLink()
     } else if let objcDelegate = objcDelegate {
-      objcDelegate.willRedeemCode?()
+      objcDelegate.willRedeemLink?()
     }
   }
 }

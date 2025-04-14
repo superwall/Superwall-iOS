@@ -97,7 +97,7 @@ actor WebEntitlementRedeemer {
 
       switch type {
       case .code:
-        await delegate.willRedeemCode()
+        await delegate.willRedeemLink()
       case .existingCodes:
         break
       }
@@ -146,7 +146,7 @@ actor WebEntitlementRedeemer {
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
         if let codeResult = response.results.first(where: { $0.code == code }) {
-          await delegate.didRedeemCode(result: codeResult)
+          await delegate.didRedeemLink(result: codeResult)
         }
       }
     } catch {
@@ -172,7 +172,7 @@ actor WebEntitlementRedeemer {
         )
         redemptions.append(errorResult)
 
-        await delegate.didRedeemCode(result: errorResult)
+        await delegate.didRedeemLink(result: errorResult)
       }
 
       Logger.debug(

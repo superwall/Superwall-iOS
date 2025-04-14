@@ -170,13 +170,17 @@ final class DependencyContainer {
   }
 }
 
-// MARK: - IdentityInfoFactory
-extension DependencyContainer: IdentityInfoFactory {
+// MARK: - IdentityFactory
+extension DependencyContainer: IdentityFactory {
   func makeIdentityInfo() -> IdentityInfo {
     return IdentityInfo(
       aliasId: identityManager.aliasId,
       appUserId: identityManager.appUserId
     )
+  }
+
+  func makeIdentityManager() -> IdentityManager {
+    return identityManager
   }
 }
 
