@@ -10,6 +10,7 @@ import StoreKit
 
 protocol ReceiptManagerType: AnyObject {
   var purchases: Set<Purchase> { get async }
+  var transactionReceipts: [TransactionReceipt] { get async }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
   func loadPurchases() async -> Set<Purchase>
@@ -20,6 +21,7 @@ protocol ReceiptManagerType: AnyObject {
 actor SK2ReceiptManager: ReceiptManagerType {
   private var sk2IntroOfferEligibility: [String: Bool] = [:]
   var purchases: Set<Purchase> = []
+  var transactionReceipts: [TransactionReceipt] = []
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     for storeProduct in storeProducts {
@@ -30,9 +32,22 @@ actor SK2ReceiptManager: ReceiptManagerType {
   func loadPurchases() async -> Set<Purchase> {
     var purchases: Set<Purchase> = []
     // Iterate through the user's purchased products.
+    var originalTransactionIds: Set<UInt64> = []
+    transactionReceipts = []
+
     for await verificationResult in Transaction.all {
       switch verificationResult {
       case .verified(let transaction):
+        // Store the first transaction receipt for each original txn ID.
+        let originalTransactionId = verificationResult.underlyingTransaction.originalID
+        if originalTransactionId == transaction.id,
+          !originalTransactionIds.contains(originalTransactionId) {
+          transactionReceipts.append(
+            TransactionReceipt(jwsRepresentation: verificationResult.jwsRepresentation)
+          )
+          originalTransactionIds.insert(originalTransactionId)
+        }
+
         // If already expired, set as inactive
         if let expirationDate = transaction.expirationDate {
           if expirationDate < Date() {

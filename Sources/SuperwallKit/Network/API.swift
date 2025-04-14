@@ -78,8 +78,6 @@ struct Api {
     }
   }
 
-
-
   struct Enrichment: ApiHostConfig {
     internal let networkEnvironment: SuperwallOptions.NetworkEnvironment
     var port: Int? { return networkEnvironment.port }

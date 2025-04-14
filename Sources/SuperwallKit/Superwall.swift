@@ -701,7 +701,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
-    if Superwall.isInitialized {
+    if Superwall.isInitialized,
+      Superwall.shared.configurationStatus == .configured {
       return Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
     }
     return DeepLinkRouter.storeDeepLink(url)

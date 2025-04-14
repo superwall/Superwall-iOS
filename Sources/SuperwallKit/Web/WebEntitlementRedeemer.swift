@@ -15,6 +15,7 @@ actor WebEntitlementRedeemer {
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let delegate: SuperwallDelegateAdapter
   private unowned let purchaseController: PurchaseController
+  private unowned let receiptManager: ReceiptManager
   private unowned let factory: WebEntitlementFactory & OptionsFactory
   private var isProcessing = false
   private var superwall: Superwall?
@@ -30,6 +31,7 @@ actor WebEntitlementRedeemer {
     entitlementsInfo: EntitlementsInfo,
     delegate: SuperwallDelegateAdapter,
     purchaseController: PurchaseController,
+    receiptManager: ReceiptManager,
     factory: WebEntitlementFactory & OptionsFactory,
     superwall: Superwall? = nil
   ) {
@@ -40,6 +42,7 @@ actor WebEntitlementRedeemer {
     self.purchaseController = purchaseController
     self.factory = factory
     self.superwall = superwall
+    self.receiptManager = receiptManager
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -77,11 +80,12 @@ actor WebEntitlementRedeemer {
         break
       }
 
-      let request = RedeemRequest(
+      let request = await RedeemRequest(
         deviceId: factory.makeDeviceId(),
         appUserId: factory.makeAppUserId(),
         aliasId: factory.makeAliasId(),
-        codes: allCodes
+        codes: allCodes,
+        receipts: receiptManager.getTransactionReceipts()
       )
 
       if let paywallVc = superwall.paywallViewController {

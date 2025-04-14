@@ -66,19 +66,20 @@ final class DependencyContainer {
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
 
+    receiptManager = ReceiptManager(
+      storeKitVersion: options.storeKitVersion,
+      productsManager: productsManager,
+      receiptDelegate: purchaseController as? ReceiptDelegate
+    )
+
     webEntitlementRedeemer = WebEntitlementRedeemer(
       network: network,
       storage: storage,
       entitlementsInfo: entitlementsInfo,
       delegate: delegateAdapter,
       purchaseController: purchaseController,
+      receiptManager: receiptManager,
       factory: self
-    )
-
-    receiptManager = ReceiptManager(
-      storeKitVersion: options.storeKitVersion,
-      productsManager: productsManager,
-      receiptDelegate: purchaseController as? ReceiptDelegate
     )
 
     paywallRequestManager = PaywallRequestManager(

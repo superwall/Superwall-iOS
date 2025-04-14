@@ -333,7 +333,6 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "enrichment_fail"
     case .enrichmentComplete:
       return "enrichment_complete"
-
     }
   }
 }
