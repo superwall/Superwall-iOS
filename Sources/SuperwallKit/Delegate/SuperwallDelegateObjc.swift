@@ -111,12 +111,12 @@ public protocol SuperwallDelegateObjc: AnyObject {
 
   /// Called before the redemption of a code from a web paywall.
   @MainActor
-  @objc optional func willRedeemCode()
+  @objc optional func willRedeemLink()
 
   /// A code was redeemed from a web paywall.
   ///
   /// - Parameter result: A ``RedemptionResult`` enum containing information about
   /// the redeemed the code.
   @MainActor
-  @objc optional func didRedeemCode(result: RedemptionResultObjc)
+  @objc optional func didRedeemLink(result: RedemptionResultObjc)
 }
