@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.2.0
+
+### Enhancements
+
+- Adds `demandScore` and `demandTier` to device attributes using an off-device advanced machine learning model. A user is assigned these based on a variety of factors to determine whether they're more or less likely to convert and can be used within audience filters.
+- Adds the static method `Superwall.handleDeepLink(_:)` and deprecates the instance method `Superwall.shared.handleDeepLink(_:)`. Now if the deep link gets called before `configure` is called, we store the deep link and handle it after configuring.
+- Adds support for web checkout.
+- Updates Superscript to 0.2.4.
+
+### Fixes
+
+- Fixes a timeout issue for the loading of the Superwall config when the cached config feature flag is enabled.
+
 ## 4.2.0-beta.1
 
 ### Enhancements

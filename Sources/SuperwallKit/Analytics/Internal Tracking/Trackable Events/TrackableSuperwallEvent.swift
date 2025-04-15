@@ -563,8 +563,8 @@ enum InternalSuperwallEvent {
     let source: Source
     let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion
-    var demandScore: Int? = nil
-    var demandTier: String? = nil
+    var demandScore: Int?
+    var demandTier: String?
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
