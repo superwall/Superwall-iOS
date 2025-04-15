@@ -763,7 +763,7 @@ final class TrackingTests: XCTestCase {
   func test_paywallOpen() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo))
+      InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo, demandScore: 80, demandTier: "Platinum"))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -831,6 +831,8 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
       paywallInfo.isFreeTrialAvailable)
     XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_open")
+    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int, 80)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandTier"] as! String, "Platinum")
 
     // Custom parameters
     XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_open")
@@ -1526,8 +1528,16 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.Transaction(
         state: .complete(product, transaction, .nonRecurringProductPurchase),
-        paywallInfo: paywallInfo, product: product, transaction: transaction, source: .internal,
-        isObserved: false, storeKitVersion: .storeKit1))
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: transaction,
+        source: .internal,
+        isObserved: false,
+        storeKitVersion: .storeKit1,
+          demandScore: 80,
+          demandTier: "Platinum"
+        )
+    )
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
@@ -1598,6 +1608,8 @@ final class TrackingTests: XCTestCase {
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
       paywallInfo.isFreeTrialAvailable)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int, 80)
+    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandTier"] as! String, "Platinum")
     XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
     XCTAssertEqual(
       result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)

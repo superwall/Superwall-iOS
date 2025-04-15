@@ -38,6 +38,7 @@ struct WebEntitlementRedeemerTests {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       delegate: dependencyContainer.delegateAdapter,
       purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       superwall: superwall
     )
@@ -108,6 +109,7 @@ struct WebEntitlementRedeemerTests {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       delegate: dependencyContainer.delegateAdapter,
       purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       superwall: superwall
     )
@@ -199,6 +201,7 @@ struct WebEntitlementRedeemerTests {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       delegate: dependencyContainer.delegateAdapter,
       purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       superwall: superwall
     )
@@ -290,6 +293,7 @@ struct WebEntitlementRedeemerTests {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       delegate: dependencyContainer.delegateAdapter,
       purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       superwall: superwall
     )
