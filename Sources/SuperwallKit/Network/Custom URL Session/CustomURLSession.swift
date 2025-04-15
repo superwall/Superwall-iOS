@@ -64,6 +64,7 @@ class CustomURLSession {
     let (data, response) = try await Task.retrying(
       maxRetryCount: endpoint.retryCount,
       retryInterval: endpoint.retryInterval,
+      timeout: endpoint.timeout,
       isRetryingCallback: isRetryingCallback
     ) {
       return try await self.urlSession.data(for: request)
@@ -89,6 +90,7 @@ class CustomURLSession {
         "request_duration": requestDuration
       ]
     )
+
     guard let value = try? Kind.jsonDecoder.decode(
       Response.self,
       from: data

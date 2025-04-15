@@ -60,6 +60,10 @@ actor ReceiptManager: NSObject {
     }
   }
 
+  func getTransactionReceipts() async -> [TransactionReceipt] {
+    await manager.transactionReceipts
+  }
+
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
   /// purchases and active purchases.
   func loadPurchasedProducts() async {

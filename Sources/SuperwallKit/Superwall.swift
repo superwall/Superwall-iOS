@@ -149,6 +149,33 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Gets web entitlements and merges them with device entitlements before
+  /// setting the status if no external purchase controller.
+  @MainActor
+  func internallySetSubscriptionStatus(
+    to status: SubscriptionStatus,
+    superwall: Superwall? = nil
+  ) {
+    if dependencyContainer.makeHasExternalPurchaseController() {
+      return
+    }
+    let webEntitlements = dependencyContainer.entitlementsInfo.web
+    let superwall = superwall ?? Superwall.shared
+    switch status {
+    case .active(let entitlements):
+      let allEntitlements = entitlements.union(webEntitlements)
+      superwall.subscriptionStatus = .active(allEntitlements)
+    case .inactive:
+      if webEntitlements.isEmpty {
+        superwall.subscriptionStatus = .inactive
+      } else {
+        superwall.subscriptionStatus = .active(webEntitlements)
+      }
+    case .unknown:
+      superwall.subscriptionStatus = .unknown
+    }
+  }
+
   /// Returns the subscription status of the user.
   ///
   /// Check the delegate function
@@ -656,12 +683,29 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameters:
   ///   - url: The URL of the deep link.
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  @available(*, deprecated, message: "Use the static method Superwall.handleDeepLink(_:) instead.")
   @discardableResult
   public func handleDeepLink(_ url: URL) -> Bool {
-    Task {
-      await track(InternalSuperwallEvent.DeepLink(url: url))
+    return dependencyContainer.deepLinkRouter.route(url: url)
+  }
+
+  /// Handles a deep link sent to your app to open a preview of your paywall.
+  ///
+  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a
+  /// preview of a paywall you've configured on the Superwall dashboard on your device. See
+  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
+  /// more.
+  ///
+  /// - Parameters:
+  ///   - url: The URL of the deep link.
+  /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  @discardableResult
+  public static func handleDeepLink(_ url: URL) -> Bool {
+    if Superwall.isInitialized,
+      Superwall.shared.configurationStatus == .configured {
+      return Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
     }
-    return dependencyContainer.debugManager.handle(deepLinkUrl: url)
+    return DeepLinkRouter.storeDeepLink(url)
   }
 
   // MARK: - Paywall Spinner
@@ -692,6 +736,10 @@ public final class Superwall: NSObject, ObservableObject {
   func reset(duringIdentify: Bool) {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     dependencyContainer.storage.reset()
+
+    // Cleared the user-web entitlements. now need to update active ones based on that
+    dependencyContainer.entitlementsInfo
+
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()

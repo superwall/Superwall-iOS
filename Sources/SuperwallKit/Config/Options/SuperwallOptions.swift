@@ -126,12 +126,21 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
-    var geoHost: String {
-      "geo-api.superwall.com"
+    var enrichmentHost: String {
+      "enrichment-api.superwall.dev"
     }
 
     var adServicesHost: String {
       "api-adservices.apple.com"
+    }
+
+    var web2AppHost: String {
+      switch self {
+      case .developer:
+        return "subscriptions-api.superwall.dev"
+      default:
+        return "subscriptions-api.superwall.com"
+      }
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -163,11 +172,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// - Note: You cannot use ``Superwall/purchase(_:)`` while this is `true`.
   public var shouldObservePurchases = false
 
-  /// Enables the sending of non-Superwall tracked placements and properties back to the Superwall servers.
+  /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
   /// Set this to `false` to stop external data collection. This will not affect
-  /// your ability to create triggers based on properties.
+  /// your ability to create placements based on properties.
   public var isExternalDataCollectionEnabled = true
 
   /// Sets the device locale identifier to use when evaluating audience filters.

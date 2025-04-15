@@ -12,6 +12,9 @@ final class SK1ReceiptManager: ReceiptManagerType {
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
 
+  /// This is unused in SK1
+  let transactionReceipts: [TransactionReceipt] = []
+
   init(
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {

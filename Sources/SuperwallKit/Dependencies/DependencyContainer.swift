@@ -8,7 +8,6 @@
 
 import UIKit
 import Combine
-import SystemConfiguration
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -39,6 +38,8 @@ final class DependencyContainer {
   var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
   var attributionPoster: AttributionPoster!
+  var webEntitlementRedeemer: WebEntitlementRedeemer!
+  var deepLinkRouter: DeepLinkRouter!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -61,7 +62,6 @@ final class DependencyContainer {
       options: options,
       factory: self
     )
-
     storeKitManager = StoreKitManager(productsManager: productsManager)
 
     purchaseController = controller ?? AutomaticPurchaseController(factory: self, entitlementsInfo: entitlementsInfo)
@@ -70,6 +70,16 @@ final class DependencyContainer {
       storeKitVersion: options.storeKitVersion,
       productsManager: productsManager,
       receiptDelegate: purchaseController as? ReceiptDelegate
+    )
+
+    webEntitlementRedeemer = WebEntitlementRedeemer(
+      network: network,
+      storage: storage,
+      entitlementsInfo: entitlementsInfo,
+      delegate: delegateAdapter,
+      purchaseController: purchaseController,
+      receiptManager: receiptManager,
+      factory: self
     )
 
     paywallRequestManager = PaywallRequestManager(
@@ -101,6 +111,7 @@ final class DependencyContainer {
       paywallManager: paywallManager,
       deviceHelper: deviceHelper,
       entitlementsInfo: entitlementsInfo,
+      webEntitlementRedeemer: webEntitlementRedeemer,
       factory: self
     )
 
@@ -118,7 +129,8 @@ final class DependencyContainer {
     identityManager = IdentityManager(
       deviceHelper: deviceHelper,
       storage: storage,
-      configManager: configManager
+      configManager: configManager,
+      webEntitlementRedeemer: webEntitlementRedeemer
     )
 
     // Must be after session events
@@ -133,7 +145,11 @@ final class DependencyContainer {
       storage: storage,
       factory: self
     )
-
+    deepLinkRouter = DeepLinkRouter(
+      webEntitlementRedeemer: webEntitlementRedeemer,
+      debugManager: debugManager,
+      configManager: configManager
+    )
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
@@ -155,13 +171,17 @@ final class DependencyContainer {
   }
 }
 
-// MARK: - IdentityInfoFactory
-extension DependencyContainer: IdentityInfoFactory {
+// MARK: - IdentityFactory
+extension DependencyContainer: IdentityFactory {
   func makeIdentityInfo() -> IdentityInfo {
     return IdentityInfo(
       aliasId: identityManager.aliasId,
       appUserId: identityManager.appUserId
     )
+  }
+
+  func makeIdentityManager() -> IdentityManager {
+    return identityManager
   }
 }
 
@@ -378,7 +398,7 @@ extension DependencyContainer: ApiFactory {
   }
 
   func makeDefaultComponents(host: EndpointHost) -> ApiHostConfig {
-    return self.api.getConfig(host: host)
+    return api.getConfig(host: host)
   }
 }
 
@@ -461,6 +481,10 @@ extension DependencyContainer: HasExternalPurchaseControllerFactory {
   func makeHasExternalPurchaseController() -> Bool {
     return purchaseController.isInternal == false
   }
+
+  func makeExternalPurchaseController() -> any PurchaseController {
+    return purchaseController
+  }
 }
 
 // MARK: - Feature Flags Factory
@@ -528,5 +552,35 @@ extension DependencyContainer: ConfigAttributesFactory {
       hasExternalPurchaseController: purchaseController.isInternal == false,
       hasDelegate: hasSwiftDelegate || hasObjcDelegate
     )
+  }
+}
+
+// MARK: WebEntitlementFactory
+extension DependencyContainer: WebEntitlementFactory {
+  func makeDeviceId() -> String {
+    return "$SuperwallDevice:\(deviceHelper.vendorId)"
+  }
+
+  func makeAppUserId() -> String? {
+    return identityManager.appUserId
+  }
+
+  func makeAliasId() -> String {
+    return identityManager.aliasId
+  }
+
+  func makeEntitlementsMaxAge() -> Seconds? {
+    return configManager.config?.web2appConfig?.entitlementsMaxAge
+  }
+
+  func makeHasConfig() -> Bool {
+    return configManager.config != nil
+  }
+}
+
+// MARK: - RestoreAccessFactory
+extension DependencyContainer: RestoreAccessFactory {
+  func makeRestoreAccessURL() -> URL? {
+    return configManager.config?.web2appConfig?.restoreAccessURL
   }
 }

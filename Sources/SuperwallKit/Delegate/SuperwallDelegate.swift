@@ -107,6 +107,17 @@ public protocol SuperwallDelegate: AnyObject {
     info: [String: Any]?,
     error: Swift.Error?
   )
+
+  /// Called before the redemption of a code from a web paywall.
+  @MainActor
+  func willRedeemLink()
+
+  /// A code was redeemed from a web paywall.
+  ///
+  /// - Parameter result: A ``RedemptionResult`` enum containing information about
+  /// the redeemed the code.
+  @MainActor
+  func didRedeemLink(result: RedemptionResult)
 }
 
 extension SuperwallDelegate {
@@ -141,4 +152,8 @@ extension SuperwallDelegate {
     info: [String: Any]?,
     error: Swift.Error?
   ) {}
+
+  public func didRedeemLink(result: RedemptionResult) {}
+
+  public func willRedeemLink() {}
 }

@@ -24,6 +24,7 @@ final class TransactionManager {
     & StoreTransactionFactory
     & DeviceHelperFactory
     & HasExternalPurchaseControllerFactory
+    & RestoreAccessFactory
   enum State {
     case observing
     case purchasing(PurchaseSource)
@@ -197,12 +198,59 @@ final class TransactionManager {
       await Superwall.shared.track(trackedEvent)
     }
 
+    enum RestorationHandlerOutcome {
+      case success
+      case failure
+      case webRestore
+    }
+
     func handleRestoreResult(
       _ restorationResult: RestorationResult,
       paywallInfo: PaywallInfo,
       paywallViewController: PaywallViewController?
-    ) async -> Bool {
+    ) async -> RestorationHandlerOutcome {
       let hasRestored = restorationResult == .restored
+
+      // If web products available, treat restore differently.
+      if let restoreUrl = factory.makeRestoreAccessURL() {
+        if hasRestored,
+          let paywallViewController = paywallViewController {
+          // Get entitlements of products from paywall.
+          var paywallEntitlements: Set<Entitlement> = []
+          for id in paywallViewController.info.productIds {
+            paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+          }
+
+          // If the restored entitlements cover the paywall entitlements,
+          // track successful restore.
+          if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
+            await logAndTrack(
+              state: .complete,
+              message: "Transactions Restored",
+              paywallInfo: paywallInfo
+            )
+            await didRestore(restoreSource: restoreSource)
+            return .success
+          } else {
+            // Otherwise ask whether they'd like to try restoring from the web.
+            let hasEntitlements = !Superwall.shared.entitlements.active.isEmpty
+
+            let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
+            let noSubsText = "No App Store subscription found, would you like to check on the web?"
+
+            // swiftlint:disable:next trailing_closure
+            paywallViewController.presentAlert(
+              title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
+              message: hasEntitlements ? hasSubsText : noSubsText,
+              actionTitle: "Yes",
+              closeActionTitle: "Cancel",
+              action: { UIApplication.shared.open(restoreUrl) }
+            )
+            return .webRestore
+          }
+        }
+      }
+
       let hasActiveEntitlements = !Superwall.shared.entitlements.active.isEmpty
 
       if hasRestored && hasActiveEntitlements {
@@ -212,7 +260,7 @@ final class TransactionManager {
           paywallInfo: paywallInfo
         )
         await didRestore(restoreSource: restoreSource)
-        return true
+        return .success
       } else {
         var message = "Transactions Failed to Restore."
         if !hasActiveEntitlements && hasRestored {
@@ -231,7 +279,7 @@ final class TransactionManager {
         if let paywallViewController = paywallViewController {
           paywallViewController.webView.messageHandler.handle(.restoreFail(message))
         }
-        return false
+        return .failure
       }
     }
 
@@ -247,20 +295,24 @@ final class TransactionManager {
       paywallViewController.webView.messageHandler.handle(.restoreStart)
 
       let restorationResult = await purchaseController.restorePurchases()
-      let success = await handleRestoreResult(
+
+      let outcome = await handleRestoreResult(
         restorationResult,
         paywallInfo: paywallViewController.info,
         paywallViewController: paywallViewController
       )
 
-      if success {
+      switch outcome {
+      case .success:
         paywallViewController.webView.messageHandler.handle(.restoreComplete)
-      } else {
+      case .failure:
         paywallViewController.presentAlert(
           title: Superwall.shared.options.paywalls.restoreFailed.title,
           message: Superwall.shared.options.paywalls.restoreFailed.message,
           closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
         )
+      case .webRestore:
+        break
       }
       return restorationResult
     case .external:
@@ -280,13 +332,17 @@ final class TransactionManager {
       )
 
       let restorationResult = await factory.restorePurchases()
-      let success = await handleRestoreResult(
+      let outcome = await handleRestoreResult(
         restorationResult,
         paywallInfo: .empty(),
         paywallViewController: nil
       )
 
-      if !success {
+      switch outcome {
+      case .success,
+        .webRestore:
+        break
+      case .failure:
         await presentAlert(
           title: Superwall.shared.options.paywalls.restoreFailed.title,
           message: Superwall.shared.options.paywalls.restoreFailed.message,
@@ -842,6 +898,7 @@ final class TransactionManager {
       eventSource = .external
     }
 
+    let deviceAttributes = await factory.makeSessionDeviceAttributes()
     let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
       state: .complete(product, transaction, type),
       paywallInfo: paywallInfo,
@@ -849,7 +906,9 @@ final class TransactionManager {
       transaction: transaction,
       source: eventSource,
       isObserved: isObserved,
-      storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
+      storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1,
+      demandScore: deviceAttributes["demandScore"] as? Int,
+      demandTier: deviceAttributes["demandTier"] as? String
     )
     await Superwall.shared.track(trackedTransactionEvent)
     await placementsQueue.flushInternal()

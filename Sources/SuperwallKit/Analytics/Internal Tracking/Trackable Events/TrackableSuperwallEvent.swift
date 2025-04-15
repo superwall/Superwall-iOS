@@ -392,8 +392,18 @@ enum InternalSuperwallEvent {
       return .paywallOpen(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
+    let demandScore: Int?
+    let demandTier: String?
+
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.placementParams()
+      var params = await paywallInfo.placementParams()
+      if let demandScore = demandScore {
+        params["attr_demandScore"] = demandScore
+      }
+      if let demandTier = demandTier {
+        params["attr_demandTier"] = demandTier
+      }
+      return params
     }
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
@@ -553,6 +563,8 @@ enum InternalSuperwallEvent {
     let source: Source
     let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion
+    var demandScore: Int?
+    var demandTier: String?
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
@@ -599,7 +611,15 @@ enum InternalSuperwallEvent {
           "storefront_id": storefrontId,
           "transaction_type": type.description
         ]
-        let appleSearchAttributes = Superwall.shared.userAttributes.filter { $0.key.hasPrefix("apple_search_ads_") }
+        if let demandScore = demandScore {
+          placementParams["attr_demandScore"] = demandScore
+        }
+        if let demandTier = demandTier {
+          placementParams["attr_demandTier"] = demandTier
+        }
+        let appleSearchAttributes = Superwall.shared.userAttributes.filter {
+          $0.key.hasPrefix("apple_search_ads_")
+        }
         placementParams += appleSearchAttributes
         fallthrough
       case .start,
@@ -881,6 +901,68 @@ enum InternalSuperwallEvent {
         ]
       }
       return params
+    }
+  }
+
+  struct Redemption: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete
+      case fail
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .redemptionStart
+      case .complete:
+        return .redemptionComplete
+      case .fail:
+        return .redemptionFail
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { return [:] }
+  }
+
+  struct EnrichmentLoad: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case complete(Enrichment)
+      case fail
+    }
+    let state: State
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .enrichmentStart
+      case .complete(let enrichment):
+        return .enrichmentComplete(
+          userEnrichment: enrichment.user.dictionaryObject,
+          deviceEnrichment: enrichment.device.dictionaryObject
+        )
+      case .fail:
+        return .enrichmentFail
+      }
+    }
+    let audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var output: [String: Any] = [:]
+      switch state {
+      case .complete(let enrichment):
+        for (key, value) in enrichment.user {
+          output["user_\(key)"] = value
+        }
+        for (key, value) in enrichment.device {
+          output["device_\(key)"] = value
+        }
+        return output
+      default:
+        return [:]
+      }
     }
   }
 }
