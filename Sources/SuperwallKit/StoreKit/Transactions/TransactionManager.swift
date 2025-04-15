@@ -898,6 +898,7 @@ final class TransactionManager {
       eventSource = .external
     }
 
+    let deviceAttributes = await factory.makeSessionDeviceAttributes()
     let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
       state: .complete(product, transaction, type),
       paywallInfo: paywallInfo,
@@ -905,7 +906,9 @@ final class TransactionManager {
       transaction: transaction,
       source: eventSource,
       isObserved: isObserved,
-      storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
+      storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1,
+      demandScore: deviceAttributes["demandScore"] as? Int,
+      demandTier: deviceAttributes["demandTier"] as? String
     )
     await Superwall.shared.track(trackedTransactionEvent)
     await placementsQueue.flushInternal()

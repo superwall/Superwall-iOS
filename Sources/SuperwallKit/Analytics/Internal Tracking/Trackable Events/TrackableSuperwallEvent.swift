@@ -392,8 +392,18 @@ enum InternalSuperwallEvent {
       return .paywallOpen(paywallInfo: paywallInfo)
     }
     let paywallInfo: PaywallInfo
+    let demandScore: Int?
+    let demandTier: String?
+
     func getSuperwallParameters() async -> [String: Any] {
-      return await paywallInfo.placementParams()
+      var params = await paywallInfo.placementParams()
+      if let demandScore = demandScore {
+        params["attr_demandScore"] = demandScore
+      }
+      if let demandTier = demandTier {
+        params["attr_demandTier"] = demandTier
+      }
+      return params
     }
     var audienceFilterParams: [String: Any] {
       return paywallInfo.audienceFilterParams()
@@ -553,6 +563,8 @@ enum InternalSuperwallEvent {
     let source: Source
     let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion
+    var demandScore: Int? = nil
+    var demandTier: String? = nil
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
@@ -599,6 +611,12 @@ enum InternalSuperwallEvent {
           "storefront_id": storefrontId,
           "transaction_type": type.description
         ]
+        if let demandScore = demandScore {
+          placementParams["attr_demandScore"] = demandScore
+        }
+        if let demandTier = demandTier {
+          placementParams["attr_demandTier"] = demandTier
+        }
         let appleSearchAttributes = Superwall.shared.userAttributes.filter {
           $0.key.hasPrefix("apple_search_ads_")
         }
