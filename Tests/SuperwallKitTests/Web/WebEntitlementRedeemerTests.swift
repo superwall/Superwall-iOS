@@ -7,6 +7,7 @@
 
 import Testing
 @testable import SuperwallKit
+import Foundation
 
 struct WebEntitlementRedeemerTests {
   let dependencyContainer = DependencyContainer()
@@ -54,7 +55,17 @@ struct WebEntitlementRedeemerTests {
       .setting(\.entitlements, to: entitlements)
       .setting(\.results, to: [result])
 
-    await redeemer.redeem(.code("TESTCODE"))
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
 
     #expect(mockStorage.saveCount == 2)
     #expect(superwall.entitlements.active == entitlements)
@@ -125,7 +136,17 @@ struct WebEntitlementRedeemerTests {
       .setting(\.entitlements, to: entitlements)
       .setting(\.results, to: [result])
 
-    await redeemer.redeem(.code("TESTCODE"))
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
 
     #expect(mockStorage.saveCount == 2)
     #expect(superwall.entitlements.active == entitlements)
@@ -217,7 +238,17 @@ struct WebEntitlementRedeemerTests {
       .setting(\.entitlements, to: entitlements)
       .setting(\.results, to: [result])
 
-    await redeemer.redeem(.code("TESTCODE"))
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
 
     #expect(mockStorage.saveCount == 2)
     #expect(superwall.entitlements.active == entitlements)
@@ -307,7 +338,19 @@ struct WebEntitlementRedeemerTests {
     )
     let error = NetworkError.notAuthenticated
     mockNetwork.redeemError = error
-    await redeemer.redeem(.code("TESTCODE"))
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
+
     try? await Task.sleep(for: .milliseconds(300))
     #expect(mockStorage.saveCount == 0)
     #expect(superwall.entitlements.active.isEmpty)

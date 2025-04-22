@@ -737,9 +737,6 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     dependencyContainer.storage.reset()
 
-    // Cleared the user-web entitlements. now need to update active ones based on that
-    dependencyContainer.entitlementsInfo
-
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     dependencyContainer.configManager.reset()

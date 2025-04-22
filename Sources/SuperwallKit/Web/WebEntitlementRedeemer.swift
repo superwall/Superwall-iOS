@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length
+// swiftlint:disable function_body_length cyclomatic_complexity
 
 import UIKit
 import Foundation
@@ -16,9 +16,10 @@ actor WebEntitlementRedeemer {
   private unowned let delegate: SuperwallDelegateAdapter
   private unowned let purchaseController: PurchaseController
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: WebEntitlementFactory & OptionsFactory
+  private unowned let factory: Factory
   private var isProcessing = false
   private var superwall: Superwall?
+  typealias Factory = WebEntitlementFactory & OptionsFactory & ConfigStateFactory
 
   enum RedeemType {
     case code(String)
@@ -32,7 +33,7 @@ actor WebEntitlementRedeemer {
     delegate: SuperwallDelegateAdapter,
     purchaseController: PurchaseController,
     receiptManager: ReceiptManager,
-    factory: WebEntitlementFactory & OptionsFactory,
+    factory: Factory,
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -53,7 +54,27 @@ actor WebEntitlementRedeemer {
     )
   }
 
-  func redeem(_ type: RedeemType) async {
+  func redeem(
+    _ type: RedeemType,
+    injectedConfig: Config? = nil
+  ) async {
+    var config = injectedConfig
+
+    if config == nil {
+      let configState = factory.makeConfigState()
+      config = try? await configState
+        .compactMap { $0.getConfig() }
+        .throwableAsync()
+    }
+
+    guard let config = config else {
+      return
+    }
+    if config.web2appConfig == nil {
+      return
+    }
+
+
     let superwall = superwall ?? Superwall.shared
     let latestRedeemResponse = storage.get(LatestRedeemResponse.self)
 
@@ -76,6 +97,14 @@ actor WebEntitlementRedeemer {
           isFirstRedemption: isFirstRedemption
         )
         allCodes.insert(redeemable)
+
+        if let paywallVc = superwall.paywallViewController {
+          let trackedEvent = await InternalSuperwallEvent.Restore(
+            state: .start,
+            paywallInfo: paywallVc.info
+          )
+          await superwall.track(trackedEvent)
+        }
       case .existingCodes:
         break
       }
@@ -87,14 +116,6 @@ actor WebEntitlementRedeemer {
         codes: allCodes,
         receipts: receiptManager.getTransactionReceipts()
       )
-
-      if let paywallVc = superwall.paywallViewController {
-        let trackedEvent = await InternalSuperwallEvent.Restore(
-          state: .start,
-          paywallInfo: paywallVc.info
-        )
-        await superwall.track(trackedEvent)
-      }
 
       let startEvent = InternalSuperwallEvent.Redemption(state: .start)
       await superwall.track(startEvent)
@@ -113,14 +134,21 @@ actor WebEntitlementRedeemer {
       let completeEvent = InternalSuperwallEvent.Redemption(state: .complete)
       await superwall.track(completeEvent)
 
-      if let paywallVc = superwall.paywallViewController {
-        if response.entitlements.isEmpty {
-          await trackRestorationFailure(
-            paywallViewController: paywallVc,
-            message: "Failed to restore subscriptions from the web",
-            superwall: superwall
-          )
-        } else {
+      // Sets the subscription status internally if no external PurchaseController
+      let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
+      let allEntitlements = deviceEntitlements.union(response.entitlements)
+
+      if case .code = type,
+        let paywallVc = superwall.paywallViewController {
+        // Get entitlements of products from paywall.
+        var paywallEntitlements: Set<Entitlement> = []
+        for id in await paywallVc.info.productIds {
+          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+        }
+
+        // If the restored entitlements cover the paywall entitlements,
+        // track successful restore.
+        if paywallEntitlements.subtracting(allEntitlements).isEmpty {
           let trackedEvent = await InternalSuperwallEvent.Restore(
             state: .complete,
             paywallInfo: paywallVc.info
@@ -133,14 +161,16 @@ actor WebEntitlementRedeemer {
           if superwallOptions.paywalls.automaticallyDismiss {
             await superwall.dismiss(paywallVc, result: .restored)
           }
+        } else {
+          await trackRestorationFailure(
+            paywallViewController: paywallVc,
+            message: "Failed to restore subscriptions from the web",
+            superwall: superwall
+          )
         }
       }
 
       storage.save(response, forType: LatestRedeemResponse.self)
-
-      // Sets the subscription status internally if no external PurchaseController
-      let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-      let allEntitlements = deviceEntitlements.union(response.entitlements)
 
       await superwall.internallySetSubscriptionStatus(
         to: .active(allEntitlements),
@@ -157,16 +187,16 @@ actor WebEntitlementRedeemer {
       let event = InternalSuperwallEvent.Redemption(state: .fail)
       await superwall.track(event)
 
-      if let paywallVc = superwall.paywallViewController {
-        await trackRestorationFailure(
-          paywallViewController: paywallVc,
-          message: error.localizedDescription,
-          superwall: superwall
-        )
-      }
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
+        if let paywallVc = superwall.paywallViewController {
+          await trackRestorationFailure(
+            paywallViewController: paywallVc,
+            message: error.localizedDescription,
+            superwall: superwall
+          )
+        }
         var redemptions = latestRedeemResponse?.results ?? []
         let errorResult = RedemptionResult.error(
           code: code,
