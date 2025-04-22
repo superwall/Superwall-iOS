@@ -50,6 +50,10 @@ public final class PaywallOptions: NSObject, Encodable {
   /// Defines the messaging of the alert presented to the user when restoring a transaction fails.
   public var restoreFailed = RestoreFailed()
 
+  /// Shows an alert asking the user if they'd like to try to restore on the web, if you have added web checkout on the
+  /// Superwall dashboard. Defaults to `true`.
+  public var shouldShowWebRestorationAlert = true
+
   @objc(SWKNotificationPermissionsDenied)
   @objcMembers
   public final class NotificationPermissionsDenied: NSObject, Encodable {

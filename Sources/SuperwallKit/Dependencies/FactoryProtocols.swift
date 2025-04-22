@@ -172,3 +172,7 @@ protocol WebEntitlementFactory: AnyObject {
 protocol RestoreAccessFactory: AnyObject {
   func makeRestoreAccessURL() -> URL?
 }
+
+protocol ConfigStateFactory: AnyObject {
+  func makeConfigState() -> CurrentValueSubject<ConfigState, any Error>
+}

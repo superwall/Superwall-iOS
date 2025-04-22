@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.2.1
+
+### Enhancements
+
+- Adds the `PaywallOption` `shouldShowWebRestorationAlert`, which can be set to `false` to suppress the alert prompting users to restore their purchase via the web.
+
+### Fixes
+
+- Fixes issue where the redeeming of web entitlements may have been incorrectly counted as a restoration.
+- Fixes issue where the web checkout redemption endpoint was being called on identify even if you hadn't enabled web checkout.
+
 ## 4.2.0
 
 ### Enhancements

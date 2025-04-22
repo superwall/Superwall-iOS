@@ -37,6 +37,14 @@ struct Config: Codable, Equatable {
       case restoreAccessURL = "restoreAccessUrl"
     }
 
+    init(
+      entitlementsMaxAge: Seconds,
+      restoreAccessURL: URL
+    ) {
+      self.entitlementsMaxAge = entitlementsMaxAge
+      self.restoreAccessURL = restoreAccessURL
+    }
+
     init(from decoder: Decoder) throws {
       let values = try decoder.container(keyedBy: CodingKeys.self)
       let entitlementsMaxAgeMs = try values.decode(Milliseconds.self, forKey: .entitlementsMaxAgeMs)

@@ -584,3 +584,9 @@ extension DependencyContainer: RestoreAccessFactory {
     return configManager.config?.web2appConfig?.restoreAccessURL
   }
 }
+
+extension DependencyContainer: ConfigStateFactory {
+  func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
+    return configManager.configState
+  }
+}

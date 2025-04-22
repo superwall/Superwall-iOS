@@ -212,42 +212,42 @@ final class TransactionManager {
       let hasRestored = restorationResult == .restored
 
       // If web products available, treat restore differently.
-      if let restoreUrl = factory.makeRestoreAccessURL() {
-        if hasRestored,
-          let paywallViewController = paywallViewController {
-          // Get entitlements of products from paywall.
-          var paywallEntitlements: Set<Entitlement> = []
-          for id in paywallViewController.info.productIds {
-            paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
-          }
+      if let restoreUrl = factory.makeRestoreAccessURL(),
+        Superwall.shared.options.paywalls.shouldShowWebRestorationAlert,
+        hasRestored,
+        let paywallViewController = paywallViewController {
+        // Get entitlements of products from paywall.
+        var paywallEntitlements: Set<Entitlement> = []
+        for id in paywallViewController.info.productIds {
+          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+        }
 
-          // If the restored entitlements cover the paywall entitlements,
-          // track successful restore.
-          if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
-            await logAndTrack(
-              state: .complete,
-              message: "Transactions Restored",
-              paywallInfo: paywallInfo
-            )
-            await didRestore(restoreSource: restoreSource)
-            return .success
-          } else {
-            // Otherwise ask whether they'd like to try restoring from the web.
-            let hasEntitlements = !Superwall.shared.entitlements.active.isEmpty
+        // If the restored entitlements cover the paywall entitlements,
+        // track successful restore.
+        if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
+          await logAndTrack(
+            state: .complete,
+            message: "Transactions Restored",
+            paywallInfo: paywallInfo
+          )
+          await didRestore(restoreSource: restoreSource)
+          return .success
+        } else {
+          // Otherwise ask whether they'd like to try restoring from the web.
+          let hasEntitlements = !Superwall.shared.entitlements.active.isEmpty
 
-            let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
-            let noSubsText = "No App Store subscription found, would you like to check on the web?"
+          let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
+          let noSubsText = "No App Store subscription found, would you like to check on the web?"
 
-            // swiftlint:disable:next trailing_closure
-            paywallViewController.presentAlert(
-              title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
-              message: hasEntitlements ? hasSubsText : noSubsText,
-              actionTitle: "Yes",
-              closeActionTitle: "Cancel",
-              action: { UIApplication.shared.open(restoreUrl) }
-            )
-            return .webRestore
-          }
+          // swiftlint:disable:next trailing_closure
+          paywallViewController.presentAlert(
+            title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
+            message: hasEntitlements ? hasSubsText : noSubsText,
+            actionTitle: "Yes",
+            closeActionTitle: "Cancel",
+            action: { UIApplication.shared.open(restoreUrl) }
+          )
+          return .webRestore
         }
       }
 
