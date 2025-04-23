@@ -142,4 +142,20 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
       )
     }
   }
+
+  public func encode(to encoder: Encoder) throws {
+    var container = encoder.singleValueContainer()
+    switch self {
+    case .minutesSince:
+      try container.encode(CodingKeys.minutesSince.rawValue)
+    case .hoursSince:
+      try container.encode(CodingKeys.hoursSince.rawValue)
+    case .daysSince:
+      try container.encode(CodingKeys.daysSince.rawValue)
+    case .monthsSince:
+      try container.encode(CodingKeys.monthsSince.rawValue)
+    case .yearsSince:
+      try container.encode(CodingKeys.yearsSince.rawValue)
+    }
+  }
 }
