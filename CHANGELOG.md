@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.2.2
+
+### Fixes
+
+- Fixes an issue where computed properties used in audience filters (e.g. "minutes since") weren’t being properly encoded. This could lead to incorrect behavior when falling back to the cached config after a network issue.
+
 ## 4.2.1
 
 ### Enhancements

@@ -561,4 +561,38 @@ final class ConfigTypeTests: XCTestCase {
       XCTAssertEqual(secondVariant.id, "219")
     }
   }
+
+  func testEncodeThenDecode() throws {
+    let config = Config(
+      buildId: "abc",
+      triggers: [
+        Trigger(
+          placementName: "trigger1",
+          audiences: [
+            TriggerRule(
+              experiment: .stub(),
+              expression: "abc == true",
+              occurrence: .stub(),
+              computedPropertyRequests: [ComputedPropertyRequest(type: .hoursSince, placementName: "trigger1")],
+              preload: .init(behavior: .always)
+            )
+          ]
+        )
+      ],
+      paywalls: [.stub()],
+      logLevel: 1,
+      locales: ["en"],
+      appSessionTimeout: 5000,
+      featureFlags: .stub(),
+      preloadingDisabled: PreloadingDisabled(all: false, triggers: ["trigger1"]),
+      attribution: .init(appleSearchAds: .init(enabled: true)),
+      products: [.init(name: "prod1", type: .appStore(.init(id: "prod1")), entitlements: [.default])]
+    )
+
+    let data = try JSONEncoder().encode(config)
+
+    let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+    XCTAssertEqual(config, decoded)
+  }
 }
