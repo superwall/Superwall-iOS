@@ -40,11 +40,26 @@ public final class ComputedPropertyRequest: NSObject, Codable {
     placementName = try container.decode(String.self, forKey: .placementName)
     super.init()
   }
+
+  override public var hash: Int {
+    var hasher = Hasher()
+    hasher.combine(type)
+    hasher.combine(placementName)
+    return hasher.finalize()
+  }
+
+  public override func isEqual(_ object: Any?) -> Bool {
+    guard let other = object as? ComputedPropertyRequest else {
+      return false
+    }
+    return type == other.type
+    && placementName == other.placementName
+  }
 }
 
 /// The type of device property to compute.
 @objc(SWKComputedPropertyRequestType)
-public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, CaseIterable {
+public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, CaseIterable, Equatable {
   /// The number of minutes since the placement occurred.
   case minutesSince
 
