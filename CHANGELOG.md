@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.0
+
+### Enhancements
+
+- Adds a `SuperwallOption` named `enableExperimentalDeviceVariables`. When set to `true`, this enables additional device-level variables: `latestSubscriptionPeriodType`, `latestSubscriptionState`, and `latestSubscriptionWillAutoRenew`. These properties provide information about the most recent StoreKit 2 subscription on the device and can be used in audience filters. Note that due to their experimental nature, they are subject to change in future updates.
+
 ## 4.2.2
 
 ### Fixes

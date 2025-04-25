@@ -12,6 +12,11 @@ final class SK1ReceiptManager: ReceiptManagerType {
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
 
+  // Unused for now:
+  var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
+  var latestSubscriptionWillAutoRenew: Bool?
+  var latestSubscriptionState: LatestSubscription.State?
+
   /// This is unused in SK1
   let transactionReceipts: [TransactionReceipt] = []
 

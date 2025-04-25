@@ -199,6 +199,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Set this to `true` to forward events from the Game Controller to the Paywall via ``Superwall/gamepadValueChanged(gamepad:element:)``.
   public var isGameControllerEnabled = false
 
+  /// Enables experimental device variables. These are subject to change. Defaults to `false`.
+  public var enableExperimentalDeviceVariables = false
+
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
@@ -244,6 +247,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case storeKitVersion
     case maxConfigRetryCount
     case shouldObservePurchases
+    case enableExperimentalDeviceVariables
   }
 
   public override init() {
@@ -277,6 +281,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(storeKitVersion.description, forKey: .storeKitVersion)
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
+    try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
   }
 
   func toDictionary() -> [String: Any] {

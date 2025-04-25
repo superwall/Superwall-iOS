@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 24/03/2022.
 //
@@ -62,6 +62,29 @@ actor ReceiptManager: NSObject {
 
   func getTransactionReceipts() async -> [TransactionReceipt] {
     await manager.transactionReceipts
+  }
+
+  func getExperimentalDeviceProperties() async -> [String: Any] {
+    async let periodType = manager.latestSubscriptionPeriodType?.rawValue
+    async let state = manager.latestSubscriptionState?.rawValue
+    async let willAutoRenew = manager.latestSubscriptionWillAutoRenew
+
+    let (unwrappedPeriodType, unwrappedState, unwrappedWillAutoRenew) = await (periodType, state, willAutoRenew)
+
+    var values: [String: Any] = [:]
+
+    if let periodType = unwrappedPeriodType {
+      values["latestSubscriptionPeriodType"] = periodType
+    }
+
+    if let state = unwrappedState {
+      values["latestSubscriptionState"] = state
+    }
+
+    if let willAutoRenew = unwrappedWillAutoRenew {
+      values["latestSubscriptionWillAutoRenew"] = willAutoRenew
+    }
+    return values
   }
 
   /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
