@@ -3,7 +3,7 @@
 //
 //  Created by Jake Mor on 8/10/21.
 //
-// swiftlint:disable type_body_length file_length
+// swiftlint:disable type_body_length file_length function_body_length
 
 import UIKit
 import Foundation
@@ -509,11 +509,18 @@ class DeviceHelper {
     )
 
     var deviceDictionary = template.toDictionary()
-    let enrichmentDict = enrichment?.device.dictionaryValue ?? [:]
 
+    let enrichmentDict = enrichment?.device.dictionaryValue ?? [:]
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
+
+
+    if Superwall.shared.options.enableExperimentalDeviceVariables {
+      let properties = await receiptManager.getExperimentalDeviceProperties()
+      deviceDictionary.merge(properties) { current, _ in current }
+    }
+
     return deviceDictionary
   }
 
