@@ -549,11 +549,10 @@ class DeviceHelper {
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
   }
 
-  @discardableResult
   func getEnrichment(
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
-  ) async throws -> Enrichment? {
+  ) async throws {
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
     let request = EnrichmentRequest(
@@ -573,7 +572,5 @@ class DeviceHelper {
     if let attributes = enrichment?.user.dictionaryObject {
       Superwall.shared.setUserAttributes(attributes)
     }
-
-    return enrichment
   }
 }

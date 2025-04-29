@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.1
+
+### Fixes
+
+- Prevents the blocking of paywall presentation if the enrichment request fails.
+
 ## 4.3.0
 
 ### Enhancements
