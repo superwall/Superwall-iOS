@@ -178,6 +178,12 @@ class Network {
   private func appInForeground(
     _ injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
   ) async throws {
+    // Share extensions shouldn't need to wait for the app to be in the foreground to run.
+    let isShareExtension = Bundle.main.bundlePath.hasSuffix(".appex")
+    if isShareExtension {
+      return
+    }
+
     let existingApplicationStatePublisher = self.applicationStateSubject.eraseToAnyPublisher()
     let applicationStatePublisher = injectedApplicationStatePublisher ?? existingApplicationStatePublisher
 

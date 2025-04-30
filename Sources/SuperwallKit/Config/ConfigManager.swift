@@ -170,19 +170,24 @@ class ConfigManager {
         }
         let cachedEnrichment = self.storage.get(LatestEnrichment.self)
 
-        if let cachedEnrichment = cachedEnrichment,
-          enableConfigRefresh {
-          do {
-            let enrichment = try await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
-            self.deviceHelper.enrichment = enrichment
-            return false
-          } catch {
-            self.deviceHelper.enrichment = cachedEnrichment
-            return true
-          }
-        } else {
-          _ = try? await self.deviceHelper.getEnrichment()
+        // If there's no cached enrichment and config refresh is disabled,
+        // try to fetch with 1 sec timeout or fail.
+        guard
+          let cachedEnrichment = cachedEnrichment,
+          enableConfigRefresh
+        else {
+          try? await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
           return false
+        }
+
+        // Try fetching enrichment with 1 sec timeout. If it fails, fall
+        // back to cached version.
+        do {
+          try await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
+          return false
+        } catch {
+          self.deviceHelper.enrichment = cachedEnrichment
+          return true
         }
       }()
 
