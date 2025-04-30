@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Prevents the blocking of paywall presentation if the enrichment request fails.
 - Fixes an issue where an app extension accessing Superwall wouldn't work.
+- Sometimes transactions weren't being retrieved by our SDK after a purchase so we've made this process more robust.
 
 ## 4.3.0
 
