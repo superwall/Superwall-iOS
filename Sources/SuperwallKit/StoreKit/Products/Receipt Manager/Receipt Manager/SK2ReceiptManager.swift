@@ -67,9 +67,11 @@ actor SK2ReceiptManager: ReceiptManagerType {
         if transaction.productType == .autoRenewable {
           let status = await transaction.subscriptionStatus
           if case let .verified(renewalInfo) = status?.renewalInfo {
+            #if compiler(>=5.9.2)
             if #available(iOS 17.2, *) {
               updatePeriodType(from: transaction)
             }
+            #endif
             latestSubscriptionWillAutoRenew = renewalInfo.willAutoRenew == true
           }
 
