@@ -65,16 +65,23 @@ actor PurchasingCoordinator {
       return nil
     }
 
-    // If on iOS 15+, try and get latest transaction using SK2.
-    if #available(iOS 15.0, *) {
-      if let verificationResult = await Transaction.latest(
-        for: productId,
-        since: purchaseDate
-      ) {
-        // Skip verification step as this has already been done.
-        let transaction = verificationResult.unsafePayloadValue
-        return await factory.makeStoreTransaction(from: transaction)
+    func getLatestSK2Transaction() async -> StoreTransaction? {
+      // If on iOS 15+, try and get latest transaction using SK2.
+      if #available(iOS 15.0, *) {
+        if let verificationResult = await Transaction.latest(
+          for: productId,
+          since: purchaseDate
+        ) {
+          // Skip verification step as this has already been done.
+          let transaction = verificationResult.unsafePayloadValue
+          return await factory.makeStoreTransaction(from: transaction)
+        }
       }
+      return nil
+    }
+
+    if let transaction = await getLatestSK2Transaction() {
+      return transaction
     }
 
     // If no transaction retrieved, try to get last transaction if
@@ -104,6 +111,10 @@ actor PurchasingCoordinator {
     try? await Task.sleep(nanoseconds: 500_000_000)
 
     if let transaction = await getLastExternalStoreTransaction() {
+      return transaction
+    }
+
+    if let transaction = await getLatestSK2Transaction() {
       return transaction
     }
 
