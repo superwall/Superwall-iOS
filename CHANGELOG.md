@@ -2,13 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.3.1
+## 4.3.2
 
 ### Fixes
 
 - Prevents the blocking of paywall presentation if the enrichment request fails.
 - Fixes an issue where an app extension accessing Superwall wouldn't work.
 - Sometimes transactions weren't being retrieved by our SDK after a purchase so we've made this process more robust.
+- Fixes issue with compiler failing to build for CocoaPods on older Xcode versions.
 
 ## 4.3.0
 
