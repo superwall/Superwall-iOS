@@ -17,3 +17,11 @@ struct FreeTrialTemplate: Codable {
     case prefix
   }
 }
+
+struct ExperimentTemplate: Codable {
+  var eventName = "experiment"
+
+  var experimentId: String
+  var variantId: String
+  var campaignId: String
+}
