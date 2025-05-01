@@ -37,6 +37,13 @@ enum TemplateLogic {
       placement: placement
     )
 
+    let experimentTemplate = ExperimentTemplate(
+      eventName: "experiment",
+      experimentId: paywall.experiment?.id ?? "",
+      variantId: paywall.experiment?.variant.id ?? "",
+      campaignId: paywall.experiment?.groupId ?? ""
+    )
+
     let freeTrialTemplate = FreeTrialTemplate(
       eventName: "template_substitutions_prefix",
       prefix: paywall.isFreeTrialAvailable ? "freeTrial" : nil
@@ -45,7 +52,8 @@ enum TemplateLogic {
     let encodedTemplates = [
       utf8Encoded(productsTemplate),
       utf8Encoded(variablesTemplate),
-      utf8Encoded(freeTrialTemplate)
+      utf8Encoded(freeTrialTemplate),
+      utf8Encoded(experimentTemplate)
     ]
 
     let templatesString = "[" + encodedTemplates.joined(separator: ",") + "]"

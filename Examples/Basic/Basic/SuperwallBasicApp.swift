@@ -26,7 +26,7 @@ struct SuperwallBasicApp: App {
       WelcomeView(isLoggedIn: $isLoggedIn)
         .font(.rubik(.four))
         .onOpenURL { url in
-          Superwall.shared.handleDeepLink(url)
+          Superwall.handleDeepLink(url)
         }
         .onReceive(isPreviouslyLoggedIn) { isLoggedIn in
           self.isLoggedIn = isLoggedIn

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.4
+
+### Enhancements
+
+- Sends the campaign details to the paywall.
+
 ## 4.3.3
 
 ### Fixes
