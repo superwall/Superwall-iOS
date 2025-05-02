@@ -7,6 +7,7 @@
 
 import UIKit
 import Combine
+import SafariServices
 
 /// A CurrentValueSubject that emits `PresentationRequest` objects.
 typealias PresentationSubject = CurrentValueSubject<PresentationRequest, Error>
@@ -55,11 +56,25 @@ extension Superwall {
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-    paywallViewController.dismiss(
-      result: result,
-      closeReason: closeReason
-    ) {
-      completion?()
+    let dismissPaywall = {
+      paywallViewController.dismiss(
+        result: result,
+        closeReason: closeReason,
+        completion: completion
+      )
+    }
+
+    if paywallViewController.isSafariVCPresented,
+      let safariVC = paywallViewController.presentedViewController as? SFSafariViewController {
+      safariVC.dismiss(
+        animated: true,
+        completion: dismissPaywall
+      )
+      // Must set this maually because programmatically dismissing the SafariVC doesn't call its
+      // delegate method where we set this.
+      paywallViewController.isSafariVCPresented = false
+    } else {
+      dismissPaywall()
     }
   }
 }

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.5
+
+### Fixes
+
+- Fixes issue where `Superwall.shared.dismiss()` wouldn't work as expected if the in-app browser was open.
+
 ## 4.3.4
 
 ### Enhancements

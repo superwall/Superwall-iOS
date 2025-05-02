@@ -94,7 +94,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var showRefreshTimer: Timer?
 
   /// Defines when Safari is presenting in app.
-  private var isSafariVCPresented = false
+  var isSafariVCPresented = false
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
