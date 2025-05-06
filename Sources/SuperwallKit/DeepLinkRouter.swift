@@ -82,6 +82,14 @@ extension URL {
       let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
       return code
     }
+
+    if let host,
+      host.hasSuffix("superwall.app") || host.hasSuffix("superwallapp.dev"),
+      path == "/app-link/superwall/redeem",
+      let code = urlComponents?.queryItems?.first(where: { $0.name == "code" })?.value {
+      return code
+    }
+
     return nil
   }
 }
