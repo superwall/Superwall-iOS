@@ -18,7 +18,7 @@
 //
 // *******************************************************************
 //
-// swiftlint:disable function_body_length
+// swiftlint:disable function_body_length file_length
 
 import Foundation
 import Combine
@@ -33,8 +33,13 @@ class IdentityManager {
   }
 
   /// The identified userId or Superwall-assigned UUID used for purchasing.
-  var appAccountToken: String {
-    return appUserId ?? aliasIdWithoutPrefix
+  var appAccountToken: UUID? {
+    if let appUserId = appUserId,
+      let uuid = UUID(uuidString: appUserId) {
+      return uuid
+    } else {
+      return UUID(uuidString: aliasIdWithoutPrefix)
+    }
   }
 
   /// The userId passed to the SDK.

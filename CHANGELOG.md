@@ -2,11 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.3.6
+## 4.3.7
 
 ### Enhancements
 
-- Adds `storeFrontCountryCode` `storeFrontCurrency`, and `storeFrontId` to the device variables. These can be used to display web checkout paywalls exclusively to those in the USA.
+- Adds `storeFrontCountryCode`, `storeFrontCurrency`, and `storeFrontId` to the device variables. These can be used to display web checkout paywalls exclusively to those in the USA.
 - Adds support for redeeming a code via a universal link.
 - Adds `code` and `type` to redemption events to improve debugging.
 
