@@ -32,6 +32,11 @@ class IdentityManager {
     }
   }
 
+  /// The identified userId or Superwall-assigned UUID used for purchasing.
+  var appAccountToken: String {
+    return appUserId ?? aliasIdWithoutPrefix
+  }
+
   /// The userId passed to the SDK.
   var appUserId: String? {
     queue.sync {
@@ -57,6 +62,12 @@ class IdentityManager {
     queue.sync {
       _aliasId
     }
+  }
+  private var aliasIdWithoutPrefix: String {
+    return aliasId.replacingOccurrences(
+      of: IdentityLogic.superwallPrefix,
+      with: ""
+    )
   }
   private var _aliasId: String {
     didSet {

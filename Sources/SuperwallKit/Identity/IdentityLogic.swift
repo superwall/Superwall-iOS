@@ -13,8 +13,9 @@ enum IdentityLogic {
     case loadAssignments
   }
 
+  static let superwallPrefix = "$SuperwallAlias:"
   static func generateAlias() -> String {
-    return "$SuperwallAlias:\(UUID().uuidString)"
+    return "\(superwallPrefix)\(UUID().uuidString)"
   }
 
   static func generateSeed() -> Int {

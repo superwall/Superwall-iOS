@@ -88,9 +88,9 @@ final class ProductPurchaserSK2: Purchasing {
     }
     do {
       var options: Set<StoreKit.Product.PurchaseOption> = []
-      if let appUserId = identityManager.appUserId,
-        let uuid = UUID(uuidString: appUserId) {
-        options.insert(.appAccountToken(uuid))
+      let appAccountToken = identityManager.appAccountToken
+      if let uuidToken = UUID(uuidString: appAccountToken) {
+        options.insert(.appAccountToken(uuidToken))
       }
 
       let result: StoreKit.Product.PurchaseResult
