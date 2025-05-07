@@ -21,9 +21,27 @@ actor WebEntitlementRedeemer {
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory & OptionsFactory & ConfigStateFactory
 
-  enum RedeemType {
+  enum RedeemType: CustomStringConvertible {
     case code(String)
     case existingCodes
+
+    var description: String {
+      switch self {
+      case .code:
+        return "CODE"
+      case .existingCodes:
+        return "EXISTING_CODES"
+      }
+    }
+
+    var code: String? {
+      switch self {
+      case .code(let code):
+        return code
+      default:
+        return nil
+      }
+    }
   }
 
   init(
@@ -117,7 +135,10 @@ actor WebEntitlementRedeemer {
         receipts: receiptManager.getTransactionReceipts()
       )
 
-      let startEvent = InternalSuperwallEvent.Redemption(state: .start)
+      let startEvent = InternalSuperwallEvent.Redemption(
+        state: .start,
+        type: type
+      )
       await superwall.track(startEvent)
 
       switch type {
@@ -131,7 +152,10 @@ actor WebEntitlementRedeemer {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      let completeEvent = InternalSuperwallEvent.Redemption(state: .complete)
+      let completeEvent = InternalSuperwallEvent.Redemption(
+        state: .complete,
+        type: type
+      )
       await superwall.track(completeEvent)
 
       // Sets the subscription status internally if no external PurchaseController
@@ -184,7 +208,10 @@ actor WebEntitlementRedeemer {
         }
       }
     } catch {
-      let event = InternalSuperwallEvent.Redemption(state: .fail)
+      let event = InternalSuperwallEvent.Redemption(
+        state: .fail,
+        type: type
+      )
       await superwall.track(event)
 
 

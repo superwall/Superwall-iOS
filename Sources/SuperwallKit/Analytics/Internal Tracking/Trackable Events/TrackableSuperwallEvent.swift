@@ -911,6 +911,7 @@ enum InternalSuperwallEvent {
       case fail
     }
     let state: State
+    let type: WebEntitlementRedeemer.RedeemType
 
     var superwallEvent: SuperwallEvent {
       switch state {
@@ -923,7 +924,15 @@ enum InternalSuperwallEvent {
       }
     }
     let audienceFilterParams: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { return [:] }
+    func getSuperwallParameters() async -> [String: Any] {
+      var output: [String: Any] = [
+        "type": type.description
+      ]
+      if let code = type.code {
+        output["code"] = code
+      }
+      return output
+    }
   }
 
   struct EnrichmentLoad: TrackableSuperwallEvent {

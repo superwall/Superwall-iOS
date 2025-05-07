@@ -8,12 +8,15 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     env:
       PRODUCT_NAME: SuperwallKit
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+
+      - name: Select Xcode 16.2
+        run: sudo xcode-select -switch /Applications/Xcode_16.2.app
 
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.1.2

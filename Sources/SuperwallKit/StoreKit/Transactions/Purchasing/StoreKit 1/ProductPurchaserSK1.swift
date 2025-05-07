@@ -81,7 +81,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
       }
     }
     let payment = SKMutablePayment(product: product)
-    payment.applicationUsername = identityManager.appUserId
+    payment.applicationUsername = identityManager.appAccountToken
     SKPaymentQueue.default().add(payment)
 
     return await task.value
