@@ -571,9 +571,11 @@ class DeviceHelper {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
+      #if compiler(>=6.1)
       if #available(iOS 17.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
+      #endif
     }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {
