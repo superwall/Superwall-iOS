@@ -11,6 +11,7 @@ import SystemConfiguration
 #if canImport(CoreTelephony)
 import CoreTelephony
 #endif
+import StoreKit
 
 class DeviceHelper {
   var locale: String {
@@ -450,6 +451,56 @@ class DeviceHelper {
     ConfigCaching()
   ]
 
+  private unowned let network: Network
+  private unowned let storage: Storage
+  private unowned let entitlementsInfo: EntitlementsInfo
+  private unowned let receiptManager: ReceiptManager
+  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
+
+  init(
+    api: Api,
+    storage: Storage,
+    network: Network,
+    entitlementsInfo: EntitlementsInfo,
+    receiptManager: ReceiptManager,
+    factory: IdentityFactory & LocaleIdentifierFactory
+  ) {
+    self.storage = storage
+    self.network = network
+    self.entitlementsInfo = entitlementsInfo
+    self.appInstalledAtString = appInstallDate?.isoString ?? ""
+    self.receiptManager = receiptManager
+    self.factory = factory
+      reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
+    self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
+    self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+  }
+
+  func getEnrichment(
+    maxRetry: Int? = nil,
+    timeout: Seconds? = nil
+  ) async throws {
+    let identityManager = factory.makeIdentityManager()
+    let deviceAttributes = await getTemplateDevice()
+    let request = EnrichmentRequest(
+      user: JSON(identityManager.userAttributes),
+      device: JSON(deviceAttributes)
+    )
+    enrichment = try await network.getEnrichment(
+      request: request,
+      maxRetry: maxRetry,
+      timeout: timeout
+    )
+
+    if let enrichment = enrichment {
+      storage.save(enrichment, forType: LatestEnrichment.self)
+    }
+
+    if let attributes = enrichment?.user.dictionaryObject {
+      Superwall.shared.setUserAttributes(attributes)
+    }
+  }
+
   func getTemplateDevice() async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
@@ -515,6 +566,15 @@ class DeviceHelper {
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
 
+    if #available(iOS 15.0, *),
+      let storefront = await Storefront.current {
+      deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
+      deviceDictionary["storeFrontId"] = storefront.id
+
+      if #available(iOS 17.0, *) {
+        deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
+      }
+    }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {
       let properties = await receiptManager.getExperimentalDeviceProperties()
@@ -522,55 +582,5 @@ class DeviceHelper {
     }
 
     return deviceDictionary
-  }
-
-  private unowned let network: Network
-  private unowned let storage: Storage
-  private unowned let entitlementsInfo: EntitlementsInfo
-  private unowned let receiptManager: ReceiptManager
-  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
-
-  init(
-    api: Api,
-    storage: Storage,
-    network: Network,
-    entitlementsInfo: EntitlementsInfo,
-    receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory
-  ) {
-    self.storage = storage
-    self.network = network
-    self.entitlementsInfo = entitlementsInfo
-    self.appInstalledAtString = appInstallDate?.isoString ?? ""
-    self.receiptManager = receiptManager
-    self.factory = factory
-      reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
-    self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
-    self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
-  }
-
-  func getEnrichment(
-    maxRetry: Int? = nil,
-    timeout: Seconds? = nil
-  ) async throws {
-    let identityManager = factory.makeIdentityManager()
-    let deviceAttributes = await getTemplateDevice()
-    let request = EnrichmentRequest(
-      user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
-    )
-    enrichment = try await network.getEnrichment(
-      request: request,
-      maxRetry: maxRetry,
-      timeout: timeout
-    )
-
-    if let enrichment = enrichment {
-      storage.save(enrichment, forType: LatestEnrichment.self)
-    }
-
-    if let attributes = enrichment?.user.dictionaryObject {
-      Superwall.shared.setUserAttributes(attributes)
-    }
   }
 }
