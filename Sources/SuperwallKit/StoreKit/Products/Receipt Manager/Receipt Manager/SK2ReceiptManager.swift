@@ -68,7 +68,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
           let status = await transaction.subscriptionStatus
           if case let .verified(renewalInfo) = status?.renewalInfo {
             #if compiler(>=6.0)
-            if #available(iOS 17.2, *) {
+            if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
               updatePeriodType(from: transaction)
             }
             #endif
@@ -134,7 +134,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
     return purchases
   }
 
-  @available(iOS 17.2, *)
+  @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
   private func updatePeriodType(from transaction: Transaction) {
     switch transaction.offer?.type {
     case .introductory:
