@@ -164,7 +164,11 @@ public final class Superwall: NSObject, ObservableObject {
     switch status {
     case .active(let entitlements):
       let allEntitlements = entitlements.union(webEntitlements)
-      superwall.subscriptionStatus = .active(allEntitlements)
+      if allEntitlements.isEmpty {
+        superwall.subscriptionStatus = .inactive
+      } else {
+        superwall.subscriptionStatus = .active(allEntitlements)
+      }
     case .inactive:
       if webEntitlements.isEmpty {
         superwall.subscriptionStatus = .inactive

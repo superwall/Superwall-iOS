@@ -188,7 +188,7 @@ enum TrackingLogic {
     _ event: Trackable,
     triggers: Set<String>,
     paywallViewController: PaywallViewController?
-  ) -> ImplicitTriggerOutcome {
+  ) async -> ImplicitTriggerOutcome {
     if let event = event as? TrackableSuperwallEvent,
       case .deepLink = event.superwallEvent {
       return .deepLinkTrigger
@@ -207,34 +207,36 @@ enum TrackingLogic {
       SuperwallEventObjc.customPlacement.description
     ]
 
-    if let referringPlacementName = paywallViewController?.info.presentedByPlacementWithName,
+    if let referringPlacementName = await paywallViewController?.info.presentedByPlacementWithName,
       notAllowedReferringPlacementNames.contains(referringPlacementName) {
       return .dontTriggerPaywall
     }
 
-    if let placement = event as? TrackableSuperwallEvent,
-      case .transactionAbandon = placement.superwallEvent {
-      return .closePaywallThenTriggerPaywall
-    }
-
-    if let placement = event as? TrackableSuperwallEvent,
-      case .transactionFail = placement.superwallEvent {
-      return .closePaywallThenTriggerPaywall
-    }
-
-    if let placement = event as? TrackableSuperwallEvent,
-      case .paywallDecline = placement.superwallEvent {
-      return .closePaywallThenTriggerPaywall
-    }
-
-    if let placement = event as? TrackableSuperwallEvent,
-      case .customPlacement = placement.superwallEvent {
-      return .closePaywallThenTriggerPaywall
-    }
-
-    if let placement = event as? TrackableSuperwallEvent,
-      case .surveyResponse = placement.superwallEvent {
-      return .closePaywallThenTriggerPaywall
+    if let placement = event as? TrackableSuperwallEvent {
+      switch placement.superwallEvent {
+      case .transactionAbandon,
+        .transactionFail,
+        .paywallDecline,
+        .customPlacement,
+        .surveyResponse:
+        // Make sure the result of presenting will be a paywall, otherwise do not proceed.
+        // This is important to stop the paywall from being skipped and firing the feature
+        // block when it shouldn't. This has to be done only to those triggers that reassign
+        // the statePublisher. Others like app_launch are fine to skip and users are relying
+        // on paywallPresentationRequest for those.
+        // Also, we need this with surveyResponse because after a purchase it needs to know whether
+        // to show a paywall or not.
+        let presentationResult = await Superwall.shared.internallyGetPresentationResult(
+          forPlacement: placement,
+          requestType: .handleImplicitTrigger
+        )
+        guard case .paywall = presentationResult else {
+          return .dontTriggerPaywall
+        }
+        return .closePaywallThenTriggerPaywall
+      default:
+        break
+      }
     }
 
     if paywallViewController != nil {

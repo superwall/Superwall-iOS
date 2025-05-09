@@ -7,7 +7,7 @@
 
 struct Redeemable: Codable, Hashable {
   let code: String
-  let isFirstRedemption: Bool
+  let isFirstRedemption: Bool?
 
   private enum CodingKeys: String, CodingKey {
     case code
