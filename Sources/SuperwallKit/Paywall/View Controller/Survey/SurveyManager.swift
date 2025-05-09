@@ -182,7 +182,7 @@ final class SurveyManager {
         )
         await Superwall.shared.track(surveyResponse)
 
-        let outcome = TrackingLogic.canTriggerPaywall(
+        let outcome = await TrackingLogic.canTriggerPaywall(
           surveyResponse,
           triggers: factory.makeTriggers(),
           paywallViewController: paywallViewController

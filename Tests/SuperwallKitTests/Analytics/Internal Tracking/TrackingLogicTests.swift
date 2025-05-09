@@ -296,7 +296,7 @@ final class TrackingLogicTests: XCTestCase {
   // MARK: - didStartNewSession
 
   @MainActor
-  func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() {
+  func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
@@ -319,7 +319,7 @@ final class TrackingLogicTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    let outcome = TrackingLogic.canTriggerPaywall(
+    let outcome = await TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: Set(["app_install"]),
@@ -328,8 +328,8 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(outcome, .dontTriggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isntTrigger() {
-    let outcome = TrackingLogic.canTriggerPaywall(
+  func testDidStartNewSession_canTriggerPaywall_isntTrigger() async {
+    let outcome = await TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: [],
@@ -338,8 +338,8 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(outcome, .dontTriggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() {
-    let outcome = TrackingLogic.canTriggerPaywall(
+  func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() async {
+    let outcome = await TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: ["app_install"],
@@ -348,8 +348,8 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertEqual(outcome, .triggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() {
-    let outcome = TrackingLogic.canTriggerPaywall(
+  func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() async {
+    let outcome = await TrackingLogic.canTriggerPaywall(
       UserInitiatedPlacement.Track(
         rawName: "random_event", canImplicitlyTriggerPaywall: true, isFeatureGatable: false),
       triggers: ["random_event"],

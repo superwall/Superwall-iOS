@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.9
+
+### Fixes
+
+- Fixes issue with a paywall not closing if you had a survey attached to a paywall that fires after purchasing and a `survey_response` implicit trigger.
+
 ## 4.3.8
 
 ### Fixes
