@@ -60,22 +60,20 @@ actor SK2ReceiptManager: ReceiptManagerType {
     // Iterate through the user's purchased products.
     var originalTransactionIds: Set<UInt64> = []
     transactionReceipts = []
+    var latestSubscriptionTransaction: Transaction?
 
     for await verificationResult in Transaction.all {
       switch verificationResult {
       case .verified(let transaction):
+        // Track latest auto-renewable transaction
         if transaction.productType == .autoRenewable {
-          let status = await transaction.subscriptionStatus
-          if case let .verified(renewalInfo) = status?.renewalInfo {
-            #if compiler(>=6.0)
-            if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-              updatePeriodType(from: transaction)
+          if let latest = latestSubscriptionTransaction {
+            if transaction.purchaseDate > latest.purchaseDate {
+              latestSubscriptionTransaction = transaction
             }
-            #endif
-            latestSubscriptionWillAutoRenew = renewalInfo.willAutoRenew == true
+          } else {
+            latestSubscriptionTransaction = transaction
           }
-
-          updateLatestSubscriptionState(from: status)
         }
 
         // Store the first transaction receipt for each original txn ID.
@@ -128,6 +126,20 @@ actor SK2ReceiptManager: ReceiptManagerType {
             + "\(transaction.debugDescription). \(error.localizedDescription)"
         )
       }
+    }
+
+    // Only check subscription status on the latest subscription transaction
+    if let transaction = latestSubscriptionTransaction {
+      let status = await transaction.subscriptionStatus
+      if case let .verified(renewalInfo) = status?.renewalInfo {
+        #if compiler(>=6.0)
+        if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+          updatePeriodType(from: transaction)
+        }
+        #endif
+        latestSubscriptionWillAutoRenew = renewalInfo.willAutoRenew == true
+      }
+      updateLatestSubscriptionState(from: status)
     }
 
     self.purchases = purchases

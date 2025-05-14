@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.10
+
+### Fixes
+
+- Fixes issue where the configuration completion block could take a long time to complete if the user had a lot of transactions.
+
 ## 4.3.9
 
 ### Fixes
