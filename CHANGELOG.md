@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `networkDecoding_fail` event to help with debugging if a decoding error happens.
+- Adds `state` to the `PaywallInfo` object. This is set on dismiss of the paywall and can be used to access state variables set in the editor.
 
 ### Fixes
 

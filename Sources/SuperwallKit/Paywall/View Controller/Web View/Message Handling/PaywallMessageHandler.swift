@@ -212,6 +212,33 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
   }
 
+  func getState() async -> [String: Any] {
+    let messageScript = """
+    window.app.getAllState();
+    """
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallViewController,
+      message: "Getting state",
+      info: ["message": messageScript]
+    )
+
+    do {
+      let result = try await delegate?.webView.evaluateJavaScript(messageScript) as? [String: Any]
+      return result ?? [:]
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Error Evaluating JS",
+        info: ["message": messageScript],
+        error: error
+      )
+      return [:]
+    }
+  }
+
   /// Passes in the HTML substitutions, templates and other scripts to make the webview
   /// feel native.
   nonisolated private func didLoadWebView(

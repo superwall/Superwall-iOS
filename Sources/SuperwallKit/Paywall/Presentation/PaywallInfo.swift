@@ -128,6 +128,9 @@ public final class PaywallInfo: NSObject {
   /// Indicates whether scrolling of the webview is enabled.
   public let isScrollEnabled: Bool
 
+  /// The state of the paywall, updated on paywall did dismiss.
+  public let state: [String: Any]
+
   init(
     databaseId: String,
     identifier: String,
@@ -159,7 +162,8 @@ public final class PaywallInfo: NSObject {
     computedPropertyRequests: [ComputedPropertyRequest],
     surveys: [Survey],
     presentation: PaywallPresentationInfo,
-    isScrollEnabled: Bool
+    isScrollEnabled: Bool,
+    state: [String: Any]
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -226,6 +230,7 @@ public final class PaywallInfo: NSObject {
 
     self.closeReason = closeReason
     self.isScrollEnabled = isScrollEnabled
+    self.state = state
   }
 
   func placementParams(
@@ -368,7 +373,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         delay: 0
       ),
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      state: [:]
     )
   }
 
@@ -416,7 +422,8 @@ extension PaywallInfo: Stubbable {
         style: .none,
         delay: 0
       ),
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      state: [:]
     )
   }
 }

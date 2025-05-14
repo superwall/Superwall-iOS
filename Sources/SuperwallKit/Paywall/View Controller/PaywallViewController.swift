@@ -834,6 +834,7 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
+
     willDismiss()
   }
 
@@ -855,8 +856,9 @@ extension PaywallViewController {
     }
 
     resetPresentationPreparations()
-
-    didDismiss()
+    Task {
+      await didDismiss()
+    }
   }
 
   private func resetPresentationPreparations() {
@@ -939,12 +941,15 @@ extension PaywallViewController {
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: info)
   }
 
-  private func didDismiss() {
+  private func didDismiss() async {
     // Reset spinner
     let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
     if isShowingSpinner {
       self.loadingState = .ready
     }
+
+    let state = await webView.messageHandler.getState()
+    paywall.state = state
 
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
 

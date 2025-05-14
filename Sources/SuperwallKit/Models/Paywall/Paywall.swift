@@ -108,6 +108,9 @@ struct Paywall: Codable {
   /// paywall into a web archive.
   let manifest: ArchiveManifest?
 
+  /// The state of the paywall, updated on paywall did dismiss.
+  var state: [String: Any] = [:]
+
   /// Indicates whether the manifest should be used.
   var isUsingManifest: Bool {
     guard let manifest = manifest else {
@@ -412,7 +415,8 @@ struct Paywall: Codable {
       computedPropertyRequests: computedPropertyRequests,
       surveys: surveys,
       presentation: presentation,
-      isScrollEnabled: isScrollEnabled
+      isScrollEnabled: isScrollEnabled,
+      state: state
     )
   }
 
