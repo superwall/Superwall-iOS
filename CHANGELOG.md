@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where the configuration completion block could take a long time to complete if the user had a lot of transactions.
+- Fixes issue where `didDismissPaywall(withInfo:)` and the `onDismiss` paywall presentation handler would be called before the presenting window was destroyed.
 
 ## 4.3.9
 

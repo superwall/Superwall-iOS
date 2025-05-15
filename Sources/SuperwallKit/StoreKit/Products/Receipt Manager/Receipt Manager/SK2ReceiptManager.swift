@@ -61,12 +61,14 @@ actor SK2ReceiptManager: ReceiptManagerType {
     var originalTransactionIds: Set<UInt64> = []
     transactionReceipts = []
     var latestSubscriptionTransaction: Transaction?
+    let enableExperimentalDeviceVariables = Superwall.shared.options.enableExperimentalDeviceVariables
 
     for await verificationResult in Transaction.all {
       switch verificationResult {
       case .verified(let transaction):
         // Track latest auto-renewable transaction
-        if transaction.productType == .autoRenewable {
+        if enableExperimentalDeviceVariables,
+          transaction.productType == .autoRenewable {
           if let latest = latestSubscriptionTransaction {
             if transaction.purchaseDate > latest.purchaseDate {
               latestSubscriptionTransaction = transaction
@@ -129,7 +131,8 @@ actor SK2ReceiptManager: ReceiptManagerType {
     }
 
     // Only check subscription status on the latest subscription transaction
-    if let transaction = latestSubscriptionTransaction {
+    if enableExperimentalDeviceVariables,
+      let transaction = latestSubscriptionTransaction {
       let status = await transaction.subscriptionStatus
       if case let .verified(renewalInfo) = status?.renewalInfo {
         #if compiler(>=6.0)

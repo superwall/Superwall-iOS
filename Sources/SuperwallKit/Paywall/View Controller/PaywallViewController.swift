@@ -951,23 +951,7 @@ extension PaywallViewController {
     let state = await webView.messageHandler.getState()
     paywall.state = state
 
-    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
-
     let result = paywallResult ?? .declined
-    paywallStateSubject?.send(.dismissed(info, result))
-
-    if !didCallDelegate {
-      delegate?.didFinish(
-        paywall: self,
-        result: result,
-        shouldDismiss: false
-      )
-    }
-
-    if paywall.closeReason.stateShouldComplete {
-      paywallStateSubject?.send(completion: .finished)
-      paywallStateSubject = nil
-    }
 
     // Reset state
     Superwall.shared.destroyPresentingWindow()
@@ -985,6 +969,23 @@ extension PaywallViewController {
 
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
+
+    paywallStateSubject?.send(.dismissed(info, result))
+
+    if !didCallDelegate {
+      delegate?.didFinish(
+        paywall: self,
+        result: result,
+        shouldDismiss: false
+      )
+    }
+
+    if paywall.closeReason.stateShouldComplete {
+      paywallStateSubject?.send(completion: .finished)
+      paywallStateSubject = nil
+    }
+
+    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
   }
 }
 
