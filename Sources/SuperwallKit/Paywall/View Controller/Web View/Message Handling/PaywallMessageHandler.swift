@@ -229,7 +229,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       return result ?? [:]
     } catch {
       Logger.debug(
-        logLevel: .error,
+        logLevel: .debug,
         scope: .paywallViewController,
         message: "Error Evaluating JS",
         info: ["message": messageScript],
