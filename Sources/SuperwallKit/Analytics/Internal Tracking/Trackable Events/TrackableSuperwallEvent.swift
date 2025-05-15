@@ -974,4 +974,18 @@ enum InternalSuperwallEvent {
       }
     }
   }
+
+  struct NetworkDecodingFail: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .networkDecodingFail
+    let requestURLString: String
+    let responseString: String
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "request_url": requestURLString,
+        "response": responseString
+      ]
+    }
+  }
 }

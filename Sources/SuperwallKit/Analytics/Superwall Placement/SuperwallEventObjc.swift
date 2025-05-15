@@ -205,6 +205,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the enrichment request fails.
   case enrichmentFail
 
+  /// When a response from the network fails to decode.
+  case networkDecodingFail
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -333,6 +336,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "enrichment_fail"
     case .enrichmentComplete:
       return "enrichment_complete"
+    case .networkDecodingFail:
+      return "networkDecoding_fail"
     }
   }
 }

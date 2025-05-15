@@ -95,6 +95,11 @@ class CustomURLSession {
       Response.self,
       from: data
     ) else {
+      let networkDecodingFail = InternalSuperwallEvent.NetworkDecodingFail(
+        requestURLString: request.url?.absoluteString ?? "",
+        responseString: String(data: data, encoding: .utf8) ?? ""
+      )
+      await Superwall.shared.track(networkDecodingFail)
       Logger.debug(
         logLevel: .error,
         scope: .network,

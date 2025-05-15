@@ -834,6 +834,7 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
+
     willDismiss()
   }
 
@@ -855,8 +856,9 @@ extension PaywallViewController {
     }
 
     resetPresentationPreparations()
-
-    didDismiss()
+    Task {
+      await didDismiss()
+    }
   }
 
   private func resetPresentationPreparations() {
@@ -939,30 +941,17 @@ extension PaywallViewController {
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: info)
   }
 
-  private func didDismiss() {
+  private func didDismiss() async {
     // Reset spinner
     let isShowingSpinner = loadingState == .loadingPurchase || loadingState == .manualLoading
     if isShowingSpinner {
       self.loadingState = .ready
     }
 
-    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
+    let state = await webView.messageHandler.getState()
+    paywall.state = state
 
     let result = paywallResult ?? .declined
-    paywallStateSubject?.send(.dismissed(info, result))
-
-    if !didCallDelegate {
-      delegate?.didFinish(
-        paywall: self,
-        result: result,
-        shouldDismiss: false
-      )
-    }
-
-    if paywall.closeReason.stateShouldComplete {
-      paywallStateSubject?.send(completion: .finished)
-      paywallStateSubject = nil
-    }
 
     // Reset state
     Superwall.shared.destroyPresentingWindow()
@@ -980,6 +969,23 @@ extension PaywallViewController {
 
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
+
+    paywallStateSubject?.send(.dismissed(info, result))
+
+    if !didCallDelegate {
+      delegate?.didFinish(
+        paywall: self,
+        result: result,
+        shouldDismiss: false
+      )
+    }
+
+    if paywall.closeReason.stateShouldComplete {
+      paywallStateSubject?.send(completion: .finished)
+      paywallStateSubject = nil
+    }
+
+    Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
   }
 }
 

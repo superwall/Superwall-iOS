@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.10
+
+### Enhancements
+
+- Adds `networkDecoding_fail` event to help with debugging if a decoding error happens.
+- Adds `state` to the `PaywallInfo` object. This is set on dismiss of the paywall and can be used to access state variables set in the editor.
+
+### Fixes
+
+- Fixes issue where the configuration completion block could take a long time to complete if the user had a lot of transactions.
+- Fixes issue where `didDismissPaywall(withInfo:)` and the `onDismiss` paywall presentation handler would be called before the presenting window was destroyed.
+
 ## 4.3.9
 
 ### Fixes

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 21/04/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
 
@@ -225,6 +226,9 @@ public enum SuperwallEvent {
   /// When the enrichment request fails.
   case enrichmentFail
 
+  /// When a response from the network fails to decode.
+  case networkDecodingFail
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -388,6 +392,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .enrichmentStart)
     case .enrichmentComplete:
       return .init(objcEvent: .enrichmentComplete)
+    case .networkDecodingFail:
+      return .init(objcEvent: .networkDecodingFail)
     }
   }
 }
