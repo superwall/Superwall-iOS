@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.3.11
+
+### Fixes
+
+- Fixes an issue when serialising some device attributes in the flutter SDK.
+
 ## 4.3.10
 
 ### Enhancements
