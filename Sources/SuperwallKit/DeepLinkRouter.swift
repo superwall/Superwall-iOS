@@ -35,6 +35,15 @@ final class DeepLinkRouter {
         await webEntitlementRedeemer.redeem(.code(code))
       }
       return true
+    } else if url.isSuperwallDeepLink {
+      Task { @MainActor in
+        Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
+          url,
+          pathComponents: url.superwallDeepLinkPathComponents,
+          queryParameters: url.superwallDeepLinkQueryParameters
+        )
+      }
+      return true
     } else {
       Task {
         await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
@@ -91,5 +100,38 @@ extension URL {
     }
 
     return nil
+  }
+  
+  /// Returns true if the URL matches the expected Superwall Deep Link format.
+  var isSuperwallDeepLink: Bool {
+    guard let host = self.host,
+          host.hasSuffix("superwall.app") || host.hasSuffix("superwallapp.dev") else {
+      return false
+    }
+    return self.path.hasPrefix("/app-link/")
+  }
+  
+  /// Assumes the URL is already verified to match the expected Superwall Deep Link format.
+  fileprivate var superwallDeepLinkPathComponents: [String] {
+    let components = self.pathComponents
+    guard let appLinkIndex = components.firstIndex(of: "app-link") else {
+      return []
+    }
+    return Array(components[(appLinkIndex + 1)...])
+  }
+  
+  /// Assumes the URL is already verified to match the expected Superwall Deep Link format.
+  fileprivate var superwallDeepLinkQueryParameters: [String: String] {
+    guard let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
+          let items = components.queryItems else {
+      return [:]
+    }
+    var params: [String: String] = [:]
+    for item in items {
+      if let value = item.value {
+        params[item.name] = value
+      }
+    }
+    return params
   }
 }
