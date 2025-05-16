@@ -561,7 +561,7 @@ class DeviceHelper {
 
     var deviceDictionary = template.toDictionary()
 
-    let enrichmentDict = enrichment?.device.dictionaryValue ?? [:]
+    let enrichmentDict = enrichment?.device.dictionaryObject ?? [:]
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
