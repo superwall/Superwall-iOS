@@ -35,7 +35,12 @@ final class DeepLinkRouter {
         await webEntitlementRedeemer.redeem(.code(code))
       }
       return true
-    } else if url.isSuperwallDeepLink {
+    }
+    
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
+    }
+    if url.isSuperwallDeepLink {
       Task { @MainActor in
         Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
           url,
@@ -45,9 +50,6 @@ final class DeepLinkRouter {
       }
       return true
     } else {
-      Task {
-        await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
-      }
       return debugManager.handle(deepLinkUrl: url)
     }
   }
