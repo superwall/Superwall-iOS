@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length cyclomatic_complexity
+// swiftlint:disable function_body_length cyclomatic_complexity type_body_length
 
 import UIKit
 import Foundation
