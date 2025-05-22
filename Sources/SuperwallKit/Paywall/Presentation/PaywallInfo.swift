@@ -131,6 +131,10 @@ public final class PaywallInfo: NSObject {
   /// The state of the paywall, updated on paywall did dismiss.
   public let state: [String: Any]
 
+  /// Indicates how intro offer eligiblity should be treat on products. Defaults to
+  /// `.automatic`.
+  public let introOfferEligibility: IntroOfferEligibility
+
   init(
     databaseId: String,
     identifier: String,
@@ -163,7 +167,8 @@ public final class PaywallInfo: NSObject {
     surveys: [Survey],
     presentation: PaywallPresentationInfo,
     isScrollEnabled: Bool,
-    state: [String: Any]
+    state: [String: Any],
+    introOfferEligibility: IntroOfferEligibility
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -231,6 +236,7 @@ public final class PaywallInfo: NSObject {
     self.closeReason = closeReason
     self.isScrollEnabled = isScrollEnabled
     self.state = state
+    self.introOfferEligibility = introOfferEligibility
   }
 
   func placementParams(
@@ -263,7 +269,8 @@ public final class PaywallInfo: NSObject {
       "cache_key": cacheKey,
       "build_id": buildId,
       "close_reason": closeReason.description,
-      "is_scroll_enabled": isScrollEnabled as Any
+      "is_scroll_enabled": isScrollEnabled as Any,
+      "intro_offer_eligibility": introOfferEligibility.description
     ]
 
     var loadingVars: [String: Any] = [:]
@@ -374,7 +381,8 @@ extension PaywallInfo: Stubbable {
         delay: 0
       ),
       isScrollEnabled: true,
-      state: [:]
+      state: [:],
+      introOfferEligibility: .automatic
     )
   }
 
@@ -423,7 +431,8 @@ extension PaywallInfo: Stubbable {
         delay: 0
       ),
       isScrollEnabled: true,
-      state: [:]
+      state: [:],
+      introOfferEligibility: .automatic
     )
   }
 }

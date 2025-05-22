@@ -49,7 +49,14 @@ extension PaywallRequestManager {
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
         isFreeTrialAvailable: { [weak self] product in
           guard let self = self else { return false }
-          return await self.factory.isFreeTrialAvailable(for: product)
+          switch paywall.introOfferEligibility {
+          case .eligible:
+            return product.hasFreeTrial
+          case .ineligible:
+            return false
+          case .automatic:
+            return await self.factory.isFreeTrialAvailable(for: product)
+          }
         }
       )
       paywall.productVariables = outcome.productVariables

@@ -300,6 +300,34 @@ extension Endpoint where
   }
 }
 
+// MARK: - IntroOfferToken
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == IntroOfferTokenWrapper {
+  static func getIntroOfferToken(
+    eligible: Bool,
+    productIds: [String],
+    appTransactionId: String
+  ) -> Self {
+    let body = IntroOfferEligibilityRequest(
+      eligible: eligible,
+      productIds: productIds,
+      appTransactionId: appTransactionId
+    )
+    let bodyData = try? JSONEncoder.toSnakeCase.encode(body)
+
+    return Endpoint(
+      components: Components(
+        host: .base,
+        path: "introOfferEligibility/token",
+        bodyData: bodyData
+      ),
+      method: .get
+    )
+  }
+}
+
+
 // MARK: - Web2App
 extension Endpoint where
   Kind == EndpointKinds.Web2App,

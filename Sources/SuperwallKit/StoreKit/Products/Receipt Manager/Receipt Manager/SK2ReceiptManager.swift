@@ -15,6 +15,7 @@ protocol ReceiptManagerType: AnyObject {
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType? { get async }
   var latestSubscriptionWillAutoRenew: Bool? { get async }
   var latestSubscriptionState: LatestSubscription.State? { get async }
+  var appTransactionId: String? { get async }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
   func loadPurchases() async -> Set<Purchase>
@@ -48,6 +49,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
   var latestSubscriptionWillAutoRenew: Bool?
   var latestSubscriptionState: LatestSubscription.State?
+  var appTransactionId: String?
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     for storeProduct in storeProducts {
@@ -63,9 +65,22 @@ actor SK2ReceiptManager: ReceiptManagerType {
     var latestSubscriptionTransaction: Transaction?
     let enableExperimentalDeviceVariables = Superwall.shared.options.enableExperimentalDeviceVariables
 
+    #if compiler(>=6.1)
+    if #available(iOS 16.0, *) {
+      if let result = try? await AppTransaction.shared {
+        switch result {
+        case .verified(let transaction),
+          .unverified(let transaction, _):
+          self.appTransactionId = transaction.appTransactionID
+        }
+      }
+    }
+    #endif
+
     for await verificationResult in Transaction.all {
       switch verificationResult {
       case .verified(let transaction):
+        self.appTransactionId = transaction.appTransactionID
         // Track latest auto-renewable transaction
         if enableExperimentalDeviceVariables,
           transaction.productType == .autoRenewable {

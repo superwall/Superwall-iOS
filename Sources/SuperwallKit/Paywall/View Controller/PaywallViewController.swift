@@ -748,6 +748,11 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
+  // TODO: s
+  /*
+   On open, we send off the requrst for the token for intro offer eligiblity. And then if someone goes to purchase, we either use that or we await for the request to finish and then attach it before purchasing.
+   */
+
   /// Determines whether a survey will show.
   private var willShowSurvey: Bool {
     if paywall.surveys.isEmpty {
@@ -774,6 +779,20 @@ extension PaywallViewController {
     guard presentationWillPrepare else {
       return
     }
+
+    // TODO: This needs to be somewhere such that when a user goes ot purchase we add the product if available just in time
+    Task {
+      if paywall.introOfferEligibility != .automatic,
+        let productIds = paywall.productIdsWithIntroOffers,
+        let appTransactionId = await receiptManager.getAppTransactionId() {
+        let tokensByProductId = network.getIntroOfferToken(
+          eligible: paywall.introOfferEligibility == .eligible ? true : false,
+          productIds: productIds,
+          appTransactionId: appTransactionId
+        )
+      }
+    }
+
     if willShowSurvey {
       didDisableSwipeForSurvey = true
       presentationController?.delegate = self

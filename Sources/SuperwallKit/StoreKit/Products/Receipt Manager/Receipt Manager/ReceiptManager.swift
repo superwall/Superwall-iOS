@@ -64,6 +64,10 @@ actor ReceiptManager: NSObject {
     await manager.transactionReceipts
   }
 
+  func getAppTransactionId() async -> String? {
+    return await manager.appTransactionId
+  }
+
   func getExperimentalDeviceProperties() async -> [String: Any] {
     async let periodType = manager.latestSubscriptionPeriodType?.rawValue
     async let state = manager.latestSubscriptionState?.rawValue
