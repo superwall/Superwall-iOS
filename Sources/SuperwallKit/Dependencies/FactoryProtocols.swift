@@ -78,6 +78,8 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
+
+  func makeConfigManager() -> ConfigManager?
 }
 
 protocol IdentityFactory: AnyObject {

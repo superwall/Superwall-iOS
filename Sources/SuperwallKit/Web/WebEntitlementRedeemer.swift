@@ -19,7 +19,10 @@ actor WebEntitlementRedeemer {
   private unowned let factory: Factory
   private var isProcessing = false
   private var superwall: Superwall?
-  typealias Factory = WebEntitlementFactory & OptionsFactory & ConfigStateFactory
+  typealias Factory = WebEntitlementFactory
+    & OptionsFactory
+    & ConfigStateFactory
+    & ConfigManagerFactory
 
   enum RedeemType: CustomStringConvertible {
     case code(String)
@@ -266,6 +269,9 @@ actor WebEntitlementRedeemer {
   @objc
   nonisolated private func handleAppForeground() {
     Task {
+      if await factory.makeConfigManager() == nil {
+        return
+      }
       await pollWebEntitlements()
     }
   }

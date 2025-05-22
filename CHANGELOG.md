@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.4.1
+
+### Fixes
+
+- Fixes race condition when initialising the SDK that could result in a crash.
+
 ## 4.4.0
 
 ### Enhancements
