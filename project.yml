@@ -5,7 +5,7 @@ options:
 packages:
   Superscript:
     url: https://github.com/superwall/Superscript-iOS
-    exactVersion: "0.2.4"
+    exactVersion: "0.2.6"
 
 targets:
   SuperwallKit:
