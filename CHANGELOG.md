@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Updates Superscript to 0.2.6.
 
+### Fixes
+
+- Fix for old versions of Xcode not building due to not supporting `.winBack` transaction offer types.
+
 ## 4.4.1
 
 ### Fixes
