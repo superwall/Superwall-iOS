@@ -33,8 +33,8 @@ jobs:
       - name: Transform DocC Archive for static hosting
         run: |
           xcrun docc process-archive \
-            transform-for-static-hosting ... \
-            --output-path ./web \
+            transform-for-static-hosting ./docbuild/Build/Products/Debug-iphonesimulator/SuperwallKit.doccarchive \
+            --output-path ./web
             --hosting-base-path documentation/superwallkit
 
       - name: Push new documentation to gh-pages ⬆️
