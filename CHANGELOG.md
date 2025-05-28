@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Updates Superscript to 0.2.6.
+- Updates Superscript to 0.2.7.
 
 ### Fixes
 
