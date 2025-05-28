@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+        
+      - name: Remove Xcodeproj
+        run: |
+          rm -r SuperwallKit.xcodeproj
 
       - name: Build DocC Archive 📚
         run: |
