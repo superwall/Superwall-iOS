@@ -26,6 +26,10 @@ jobs:
         run: |
           rm -r SuperwallKit.xcodeproj
 
+      - name: Clean Derived Data
+        run: |
+          rm -rf ./docbuild
+
       - name: Build DocC Archive 📚
         run: |
           xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro'
