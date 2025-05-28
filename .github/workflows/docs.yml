@@ -34,7 +34,7 @@ jobs:
         run: |
           xcrun docc process-archive \
             transform-for-static-hosting ./docbuild/Build/Products/Debug-iphonesimulator/SuperwallKit.doccarchive \
-            --output-path ./web
+            --output-path ./web \
             --hosting-base-path documentation/superwallkit
 
       - name: Push new documentation to gh-pages ⬆️
