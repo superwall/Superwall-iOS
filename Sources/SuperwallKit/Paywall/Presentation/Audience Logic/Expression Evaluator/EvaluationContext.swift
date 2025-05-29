@@ -15,55 +15,65 @@ final class EvaluationContext: HostContext {
     self.storage = storage
   }
 
-  func computedProperty(name: String, args: String) async -> String {
-    guard
-      let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
-    else {
-      return ""
-    }
-    guard let argsData = args.data(using: .utf8) else {
-      return ""
-    }
+  func computedProperty(name: String, args: String, callback: ResultCallback) {
+    Task {
+      guard
+        let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
+      else {
+        callback.onResult(result: "")
+        return
+      }
+      guard let argsData = args.data(using: .utf8) else {
+        callback.onResult(result: "")
+        return
+      }
 
-    let decoder = JSONDecoder()
-    guard let passableValues = try? decoder.decode([PassableValue].self, from: argsData) else {
-      return ""
-    }
+      let decoder = JSONDecoder()
+      guard let passableValues = try? decoder.decode([PassableValue].self, from: argsData) else {
+        callback.onResult(result: "")
+        return
+      }
 
-    guard let firstPassableValue = passableValues.first else {
-      return ""
-    }
-    guard case let .string(name) = firstPassableValue else {
-      return ""
-    }
+      guard let firstPassableValue = passableValues.first else {
+        callback.onResult(result: "")
+        return
+      }
+      guard case let .string(name) = firstPassableValue else {
+        callback.onResult(result: "")
+        return
+      }
 
-    let request = ComputedPropertyRequest(
-      type: type,
-      placementName: name
-    )
+      let request = ComputedPropertyRequest(
+        type: type,
+        placementName: name
+      )
 
-    guard let number = await storage.coreDataManager.getComputedPropertySincePlacement(
-      PlacementData(
-        name: name,
-        parameters: [:],
-        createdAt: Date()
-      ),
-      request: request
-    ) else {
-      return ""
-    }
+      guard let number = await storage.coreDataManager.getComputedPropertySincePlacement(
+        PlacementData(
+          name: name,
+          parameters: [:],
+          createdAt: Date()
+        ),
+        request: request
+      ) else {
+        callback.onResult(result: "")
+        return
+      }
 
-    guard let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)) else {
-      return ""
+      guard let jsonData = try? JSONEncoder().encode(toPassableValue(from: number)) else {
+        callback.onResult(result: "")
+        return
+      }
+      guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+        callback.onResult(result: "")
+        return
+      }
+      callback.onResult(result: jsonString)
     }
-    guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-      return ""
-    }
-    return jsonString
   }
 
-  func deviceProperty(name: String, args: String) async -> String {
-    return ""
+  func deviceProperty(name: String, args: String, callback: ResultCallback) {
+    callback.onResult(result: "")
   }
 }
 
