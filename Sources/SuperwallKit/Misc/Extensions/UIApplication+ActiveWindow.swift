@@ -10,7 +10,11 @@ import UIKit
 
 extension UIApplication {
   var activeWindow: UIWindow? {
-    let windows = UIApplication.shared.connectedScenes.flatMap { ($0 as? UIWindowScene)?.windows ?? [] }
-    return windows.first { $0.isKeyWindow } ?? windows.first
+    guard let windowScene = UIApplication.shared.connectedScenes
+      .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
+        return nil
+    }
+
+    return windowScene.windows.first { $0.isKeyWindow } ?? windowScene.windows.first
   }
 }
