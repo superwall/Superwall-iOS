@@ -831,7 +831,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -868,7 +868,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -908,7 +908,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .noMatch(.stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -948,7 +948,7 @@ final class ConfigLogicTests: XCTestCase {
     let evaluator = ExpressionEvaluatorMock(outcome: .match(.stub()))
 
     
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -997,7 +997,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1030,7 +1030,7 @@ final class ConfigLogicTests: XCTestCase {
     ])
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1073,7 +1073,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1136,7 +1136,7 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1145,7 +1145,7 @@ final class ConfigLogicTests: XCTestCase {
   }
 
   // MARK: - getActiveTreatmentPaywallIds
-  func test_getActiveTreatmentPaywallIds() {
+  func test_getActiveTreatmentPaywallIds() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1176,14 +1176,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     XCTAssertEqual(ids, [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_holdout() {
+  func test_getActiveTreatmentPaywallIds_holdout() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1214,14 +1215,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     XCTAssertTrue(ids.isEmpty)
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() {
+  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1252,14 +1254,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: false
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     XCTAssertEqual(ids, [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() {
+  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1303,9 +1306,10 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     XCTAssertEqual(ids, [paywallId1])
   }

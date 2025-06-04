@@ -27,6 +27,7 @@ struct Config: Codable, Equatable {
       }
     }
   }
+  var preloading: PaywallPreloading?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -78,8 +79,9 @@ struct Config: Codable, Equatable {
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
     case attribution = "attributionOptions"
-    case products = "products"
+    case products
     case web2appConfig
+    case preloading
   }
 
   init(from decoder: Decoder) throws {
@@ -94,6 +96,7 @@ struct Config: Codable, Equatable {
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
+    preloading = try values.decodeIfPresent(PaywallPreloading.self, forKey: .preloading)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -116,6 +119,8 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
+    try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
+    try container.encodeIfPresent(preloading, forKey: .preloading)
 
     if !products.isEmpty {
       try container.encode(products, forKey: .products)

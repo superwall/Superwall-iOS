@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds ability to group paywalls into preloading stages.
 - Updates Superscript to 0.2.8.
 
 ### Fixes

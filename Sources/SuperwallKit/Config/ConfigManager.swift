@@ -52,7 +52,7 @@ class ConfigManager {
     & ReceiptFactory
     & DeviceHelperFactory
   private let factory: Factory
-
+  
   init(
     options: SuperwallOptions,
     storeKitManager: StoreKitManager,
@@ -350,7 +350,7 @@ class ConfigManager {
   }
 
   // MARK: - Preloading Paywalls
-  private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
+  private func getTreatmentPaywallIds(from triggers: Set<Trigger>) async -> Set<String> {
     guard let config = configState.value.getConfig() else {
       return []
     }
@@ -362,9 +362,10 @@ class ConfigManager {
       return []
     }
     let assignments = storage.getAssignments()
-    return ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: preloadableTriggers,
-      assignments: assignments
+    return await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: preloadableTriggers,
+      assignments: assignments,
+      expressionEvaluator: expressionEvaluator
     )
   }
 
@@ -394,22 +395,26 @@ class ConfigManager {
       else {
         return
       }
-      let triggers = ConfigLogic.filterTriggers(
-        config.triggers,
-        removing: config.preloadingDisabled
-      )
-      let assignments = self.storage.getAssignments()
-      var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
-        fromTriggers: triggers,
-        assignments: assignments,
-        expressionEvaluator: expressionEvaluator
-      )
-      // Do not preload the presented paywall. This is because if config refreshes, we
-      // don't want to refresh the presented paywall until it's dismissed and presented again.
-      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
-        paywallIds.remove(presentedPaywallId)
+
+      // If we have a preloading schedule, stagger the preloading based on placements.
+      if let preloading = config.preloading {
+        for step in preloading.schedule {
+          let placements = Set(step.placements.map { $0.placement })
+          // Need to double check whether the ifTrue stuff still happens here.
+          await preloadPaywalls(for: placements)
+          try? await Task.sleep(nanoseconds: UInt64(step.delay * 1_000_000))
+        }
+      } else {
+        // Otherwise preload all as normal.
+        var paywallIds = await getTreatmentPaywallIds(from: config.triggers)
+
+        // Do not preload the presented paywall. This is because if config refreshes, we
+        // don't want to refresh the presented paywall until it's dismissed and presented again.
+        if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+          paywallIds.remove(presentedPaywallId)
+        }
+        await self.preloadPaywalls(withIdentifiers: paywallIds)
       }
-      await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
   }
 
@@ -424,10 +429,8 @@ class ConfigManager {
       return
     }
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
-    let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    await preloadPaywalls(
-      withIdentifiers: triggerPaywallIdentifiers
-    )
+    let paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
+    await preloadPaywalls(withIdentifiers: paywallIds)
   }
 
   /// Preloads paywalls referenced by triggers.
