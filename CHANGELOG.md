@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.4.2
+
+### Enhancements
+
+- Updates Superscript to 0.2.8.
+
+### Fixes
+
+- Fix for old versions of Xcode not building due to not supporting `.winBack` transaction offer types.
+- Fixes an issue where the paywall could be presented from the wrong scene in multi-window apps.
+
 ## 4.4.1
 
 ### Fixes
