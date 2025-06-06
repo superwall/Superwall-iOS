@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fix for old versions of Xcode not building due to not supporting `.winBack` transaction offer types.
+- Fixes an issue where the paywall could be presented from the wrong scene in multi-window apps.
 
 ## 4.4.1
 
