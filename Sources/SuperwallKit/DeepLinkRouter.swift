@@ -37,21 +37,25 @@ final class DeepLinkRouter {
       return true
     }
     
-    Task {
-      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
-    }
+    let deepLinkUrl: URL
     if url.isSuperwallDeepLink {
+      deepLinkUrl = url.superwallDeepLinkMappedURL
+      
       Task { @MainActor in
         Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
           url,
-          pathComponents: url.superwallDeepLinkPathComponents,
-          queryParameters: url.superwallDeepLinkQueryParameters
+          pathComponents: deepLinkUrl.superwallDeepLinkPathComponents,
+          queryParameters: deepLinkUrl.queryParameters
         )
       }
-      return true
     } else {
-      return debugManager.handle(deepLinkUrl: url)
+      deepLinkUrl = url
     }
+    
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
+    }
+    return debugManager.handle(deepLinkUrl: url)
   }
 
   private func listenToConfig() {
@@ -107,7 +111,7 @@ extension URL {
   /// Returns true if the URL matches the expected Superwall Deep Link format.
   var isSuperwallDeepLink: Bool {
     guard let host = self.host,
-          host.hasSuffix("superwall.app") || host.hasSuffix("superwallapp.dev") else {
+          host.hasSuffix(".superwall.app") || host.hasSuffix(".superwallapp.dev") else {
       return false
     }
     return self.path.hasPrefix("/app-link/")
@@ -123,7 +127,34 @@ extension URL {
   }
   
   /// Assumes the URL is already verified to match the expected Superwall Deep Link format.
-  fileprivate var superwallDeepLinkQueryParameters: [String: String] {
+  /// returns the equivalent URL formatted for the deep link event, handling both Universal Link and URL Scheme
+  fileprivate var superwallDeepLinkMappedURL: URL {
+    let absoluteString: String = self.absoluteString
+    
+    guard let markerRange = absoluteString.range(of: "/app-link/") else {
+      return self
+    }
+    let tail: String = String(absoluteString[markerRange.upperBound...])
+    
+    let scheme: String
+    if let urlScheme = self.scheme,
+       urlScheme.lowercased() != "http",
+       urlScheme.lowercased() != "https" {
+      scheme = urlScheme
+    } else if let host = self.host,
+              let cut = host.range(of: ".superwall") ?? host.range(of: ".superwallapp") {
+      scheme = String(host[..<cut.lowerBound])
+    } else {
+      scheme = self.host ?? "superwall"
+    }
+    
+    let urlString: String = "\(scheme)://\(tail)"
+    
+    return URL(string: urlString) ?? self
+  }
+  
+  
+  fileprivate var queryParameters: [String: String] {
     guard let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
           let items = components.queryItems else {
       return [:]
