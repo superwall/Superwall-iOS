@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.4.3
+
+### Fixes
+
+- Fixes a race condition when identifying and then immediately getting user attributes.
+
 ## 4.4.2
 
 ### Enhancements
