@@ -44,8 +44,8 @@ final class DeepLinkRouter {
       Task { @MainActor in
         Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
           url,
-          pathComponents: deepLinkUrl.superwallDeepLinkPathComponents,
-          queryParameters: deepLinkUrl.queryParameters
+          pathComponents: url.superwallDeepLinkPathComponents,
+          queryParameters: url.queryParameters
         )
       }
     } else {
