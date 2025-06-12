@@ -327,7 +327,7 @@ class IdentityManager {
       newUserAttributes["appUserId"] = appUserId
     }
 
-    mergeUserAttributes(newUserAttributes)
+    _mergeUserAttributes(newUserAttributes)
   }
 }
 

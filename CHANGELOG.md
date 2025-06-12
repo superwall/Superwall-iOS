@@ -2,6 +2,36 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.4.3
+
+### Fixes
+
+- Fixes a race condition when identifying and then immediately getting user attributes.
+- Removes usage of private API `LSApplicationWorkspace`.
+
+## 4.4.2
+
+### Enhancements
+
+- Updates Superscript to 0.2.8.
+
+### Fixes
+
+- Fix for old versions of Xcode not building due to not supporting `.winBack` transaction offer types.
+- Fixes an issue where the paywall could be presented from the wrong scene in multi-window apps.
+
+## 4.4.1
+
+### Fixes
+
+- Fixes race condition when initialising the SDK that could result in a crash.
+
+## 4.4.0
+
+### Enhancements
+
+- Adds `Superwall.shared.getDeviceAttributes()`, which returns the device attributes that are used when evaluating audience filters.
+
 ## 4.3.11
 
 ### Fixes

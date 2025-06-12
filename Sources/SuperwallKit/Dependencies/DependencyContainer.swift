@@ -133,7 +133,6 @@ final class DependencyContainer {
       webEntitlementRedeemer: webEntitlementRedeemer
     )
 
-    // Must be after session events
     appSessionManager = AppSessionManager(
       configManager: configManager,
       identityManager: identityManager,
@@ -439,6 +438,10 @@ extension DependencyContainer: ConfigManagerFactory {
       config: configManager.config,
       deviceLocale: deviceInfo.locale
     )
+  }
+
+  func makeConfigManager() -> ConfigManager? {
+    return configManager
   }
 }
 

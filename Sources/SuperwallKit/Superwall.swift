@@ -149,6 +149,11 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Gets properties stored about the device that are used in audience filters.
+  public func getDeviceAttributes() async -> [String: Any] {
+    return await dependencyContainer.deviceHelper.getTemplateDevice()
+  }
+
   /// Gets web entitlements and merges them with device entitlements before
   /// setting the status if no external purchase controller.
   @MainActor

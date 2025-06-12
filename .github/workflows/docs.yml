@@ -8,8 +8,6 @@ on:
       - '**/*.swift'
       - '**/*.md'
       - '!Examples/**'
-
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 concurrency:
@@ -23,49 +21,32 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+        
       - name: Remove Xcodeproj
         run: |
           rm -r SuperwallKit.xcodeproj
-      - name: Cache DocC
-        uses: actions/cache@v3
-        id: cache-docc
-        env:
-          cache-name: cache-docc
-        with:
-          path: swift-docc
-          key: ${{ runner.os }}-build-${{ env.cache-name }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Build Doc Bundle 📗
+
+      - name: Clean Derived Data
         run: |
-          echo "🚀 Starting to build documentation"
-          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 14 Pro'
-      - name: Install DocC Renderer
+          rm -rf ./docbuild
+
+      - name: Build DocC Archive 📚
         run: |
-          git clone https://github.com/apple/swift-docc-render-artifact.git
-          echo "DOCC_HTML_DIR=${GITHUB_WORKSPACE}/swift-docc-render-artifact/dist" >> $GITHUB_ENV
-          echo "$DOCC_HTML_DIR"
-      - name: Install DocC
-        if: steps.cache-docc.outputs.cache-hit != 'true'
+          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=18.2,name=iPhone 16 Pro'
+
+      - name: Transform DocC Archive for static hosting
         run: |
-          git clone https://github.com/apple/swift-docc.git
-          cd swift-docc
-          swift build
-          swift run docc --help
-          cd ..
-      - name: Push new documentation to docs folder ⬆️
+          xcrun docc process-archive \
+            transform-for-static-hosting ./docbuild/Build/Products/Debug-iphonesimulator/SuperwallKit.doccarchive \
+            --output-path ./web
+
+      - name: Push new documentation to gh-pages ⬆️
         run: |
-          # we get the last commit message for this library and add current date
-          cd swift-docc
-          swift run docc process-archive transform-for-static-hosting ../docbuild/Build/Products/Debug-iphonesimulator/SuperwallKit.doccarchive --output-path ../web
-          cd ..
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
           git checkout --track origin/gh-pages
-          sed -i '' 's#<head>#<head><meta http-equiv = "refresh" content = "1; url = https://sdk.superwall.me/documentation/superwallkit/" />#' ./web/index.html
+          
           sed -i '' 's#<head>#<head><script type="text/javascript">\
           (function(f,b){if(!b.__SV){var e,g,i,h;window.mixpanel=b;b._i=[];b.init=function(e,f,c){function g(a,d){var b=d.split(".");2==b.length\&\&(a=a[b[0]],d=b[1]);a[d]=function(){a.push([d].concat(Array.prototype.slice.call(arguments,0)))}}var a=b;"undefined"!==typeof c?a=b[c]=[]:c="mixpanel";a.people=a.people||[];a.toString=function(a){var d="mixpanel";"mixpanel"!==c\&\&(d+="."+c);a||(d+=" (stub)");return d};a.people.toString=function(){return a.toString(1)+".people (stub)"};i="disable time_event track track_pageview track_links track_forms track_with_groups add_group set_group remove_group register register_once alias unregister identify name_tag set_config reset opt_in_tracking opt_out_tracking has_opted_in_tracking has_opted_out_tracking clear_opt_in_out_tracking start_batch_senders people.set people.set_once people.unset people.increment people.append people.union people.track_charge people.clear_charges people.delete_user people.remove".split(" ");\
           for(h=0;h<i.length;h++)g(a,i[h]);var j="set set_once union unset remove delete".split(" ");a.get_group=function(){function b(c){d[c]=function(){call2_args=arguments;call2=[c].concat(Array.prototype.slice.call(call2_args,0));a.push([e,call2])}}for(var d={},e=["get_group"].concat(Array.prototype.slice.call(arguments,0)),c=0;c<j.length;c++)b(j[c]);return d};b._i.push([e,f,c])};b.__SV=1.2;e=f.createElement("script");e.type="text/javascript";e.async=!0;e.src="undefined"!==typeof MIXPANEL_CUSTOM_LIB_URL?\
