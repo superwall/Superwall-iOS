@@ -36,11 +36,11 @@ final class DeepLinkRouter {
       }
       return true
     }
-    
+
     let deepLinkUrl: URL
     if url.isSuperwallDeepLink {
       deepLinkUrl = url.superwallDeepLinkMappedURL
-      
+
       Task { @MainActor in
         Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
           url,
@@ -51,7 +51,7 @@ final class DeepLinkRouter {
     } else {
       deepLinkUrl = url
     }
-    
+
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
     }
@@ -89,6 +89,7 @@ final class DeepLinkRouter {
 }
 
 extension URL {
+  /// The web checkout code to redeem given a Superwall deep link format.
   fileprivate var redeemableCode: String? {
     let urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)
 
@@ -107,56 +108,60 @@ extension URL {
 
     return nil
   }
-  
-  /// Returns true if the URL matches the expected Superwall Deep Link format.
+
+  /// Returns `true` if the `URL` matches the expected Superwall deep link format.
   var isSuperwallDeepLink: Bool {
-    guard let host = self.host,
-          host.hasSuffix(".superwall.app") || host.hasSuffix(".superwallapp.dev") else {
+    guard
+      let host = self.host,
+      host.hasSuffix(".superwall.app") || host.hasSuffix(".superwallapp.dev")
+    else {
       return false
     }
-    return self.path.hasPrefix("/app-link/")
+    return path.hasPrefix("/app-link/")
   }
-  
-  /// Assumes the URL is already verified to match the expected Superwall Deep Link format.
+
+  /// The path components after the `app-link` component in the URL.
+  ///
+  /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
   fileprivate var superwallDeepLinkPathComponents: [String] {
-    let components = self.pathComponents
-    guard let appLinkIndex = components.firstIndex(of: "app-link") else {
+    guard let appLinkIndex = pathComponents.firstIndex(of: "app-link") else {
       return []
     }
-    return Array(components[(appLinkIndex + 1)...])
+    return Array(pathComponents[(appLinkIndex + 1)...])
   }
-  
-  /// Assumes the URL is already verified to match the expected Superwall Deep Link format.
-  /// returns the equivalent URL formatted for the deep link event, handling both Universal Link and URL Scheme
+
+  /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
+  ///
+  /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
   fileprivate var superwallDeepLinkMappedURL: URL {
-    let absoluteString: String = self.absoluteString
-    
-    guard let markerRange = absoluteString.range(of: "/app-link/") else {
+    guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }
-    let tail: String = String(absoluteString[markerRange.upperBound...])
-    
+    let tail = String(absoluteString[appLinkRange.upperBound...])
+
     let scheme: String
     if let urlScheme = self.scheme,
-       urlScheme.lowercased() != "http",
-       urlScheme.lowercased() != "https" {
+      urlScheme.lowercased() != "http",
+      urlScheme.lowercased() != "https" {
       scheme = urlScheme
     } else if let host = self.host,
-              let cut = host.range(of: ".superwall") ?? host.range(of: ".superwallapp") {
-      scheme = String(host[..<cut.lowerBound])
+      let superwallHostRange = host.range(of: ".superwall") ?? host.range(of: ".superwallapp") {
+      scheme = String(host[..<superwallHostRange.lowerBound])
     } else {
       scheme = self.host ?? "superwall"
     }
-    
-    let urlString: String = "\(scheme)://\(tail)"
-    
+
+    let urlString = "\(scheme)://\(tail)"
+
     return URL(string: urlString) ?? self
   }
-  
-  
+
+  /// Returns the `URL` query params as a `[name: value]` dictionary.
   fileprivate var queryParameters: [String: String] {
-    guard let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
-          let items = components.queryItems else {
+    guard
+      let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
+      let items = components.queryItems
+    else {
       return [:]
     }
     var params: [String: String] = [:]

@@ -10,7 +10,7 @@ import SuperwallKit
 
 struct WelcomeView: View {
   @Binding var isLoggedIn: Bool
-  @State private var name: String = ""
+  @State private var name = ""
 
   var body: some View {
     NavigationStack {

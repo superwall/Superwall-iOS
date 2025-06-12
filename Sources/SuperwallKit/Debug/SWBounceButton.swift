@@ -16,7 +16,7 @@ final class SWBounceButton: UIButton {
   var toggleKey = "key"
   var isOn = false
   var canToggle = false
-  var oldTitle: String = ""
+  var oldTitle = ""
   var showLoading = false {
     didSet {
       if showLoading {
