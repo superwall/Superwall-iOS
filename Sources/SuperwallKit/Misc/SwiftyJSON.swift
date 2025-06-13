@@ -197,7 +197,7 @@ struct JSON {
   /// Private object
   fileprivate var rawArray: [Any] = []
   fileprivate var rawDictionary: [String: Any] = [:]
-  fileprivate var rawString: String = ""
+  fileprivate var rawString = ""
   fileprivate var rawNumber: NSNumber = 0
   fileprivate var rawNull = NSNull()
   fileprivate var rawBool = false

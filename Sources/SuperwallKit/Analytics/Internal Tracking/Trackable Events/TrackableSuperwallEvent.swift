@@ -119,9 +119,8 @@ enum InternalSuperwallEvent {
       .deepLink(url: url)
     }
     let url: URL
-
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
+    private var parameters: [String: Any] {
+      [
         "url": url.absoluteString,
         "path": url.path,
         "pathExtension": url.pathExtension,
@@ -132,20 +131,24 @@ enum InternalSuperwallEvent {
       ]
     }
 
+    func getSuperwallParameters() async -> [String: Any] {
+      return parameters
+    }
+
     var audienceFilterParams: [String: Any] {
+      var parameters: [String: Any] = parameters
       guard
         let urlComponents = URLComponents(
           url: url,
           resolvingAgainstBaseURL: false
         )
       else {
-        return [:]
+        return parameters
       }
       guard let queryItems = urlComponents.queryItems else {
-        return [:]
+        return parameters
       }
 
-      var queryStrings: [String: Any] = [:]
       for queryItem in queryItems {
         guard
           !queryItem.name.isEmpty,
@@ -157,18 +160,18 @@ enum InternalSuperwallEvent {
         let name = queryItem.name
         let lowerCaseValue = value.lowercased()
         if lowerCaseValue == "true" {
-          queryStrings[name] = true
+          parameters[name] = true
         } else if lowerCaseValue == "false" {
-          queryStrings[name] = false
+          parameters[name] = false
         } else if let int = Int(value) {
-          queryStrings[name] = int
+          parameters[name] = int
         } else if let double = Double(value) {
-          queryStrings[name] = double
+          parameters[name] = double
         } else {
-          queryStrings[name] = value
+          parameters[name] = value
         }
       }
-      return queryStrings
+      return parameters
     }
   }
 

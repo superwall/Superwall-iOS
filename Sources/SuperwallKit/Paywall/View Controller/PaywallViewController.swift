@@ -656,10 +656,6 @@ extension PaywallViewController: SWWebViewDelegate {
     handleWebViewFailure()
   }
 
-  func webViewDidFailProvisionalNavigation() {
-    handleWebViewFailure()
-  }
-
   private func handleWebViewFailure() {
     guard isActive else {
       return

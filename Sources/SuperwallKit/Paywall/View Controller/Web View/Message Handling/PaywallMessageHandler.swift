@@ -317,7 +317,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
-      let preventZoom: String =
+      let preventZoom =
         "var meta = document.createElement('meta');" + "meta.name = 'viewport';"
         + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';"
         + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"

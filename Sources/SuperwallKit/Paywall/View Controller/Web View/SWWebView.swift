@@ -11,7 +11,6 @@ import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
-  func webViewDidFailProvisionalNavigation()
   func webViewDidFail()
 }
 

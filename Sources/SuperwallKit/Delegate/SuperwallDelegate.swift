@@ -118,6 +118,26 @@ public protocol SuperwallDelegate: AnyObject {
   /// the redeemed the code.
   @MainActor
   func didRedeemLink(result: RedemptionResult)
+
+  /// Called after handling a Superwall deep link with the format `yoursubdomain.superwall.app/app-link/...`.
+  ///
+  /// These links may arrive as either universal links (`https://yoursubdomain.superwall.app/app-link/...`)
+  /// or custom URL schemes (`subdomain://yoursubdomain.superwall.app/app-link/...`).
+  ///
+  /// - Parameters:
+  ///   - fullURL: The original URL that triggered the handler. **Recommended for debugging or logging only.**
+  ///     For most use cases, use `pathComponents` and `queryParameters` to extract relevant data.
+  ///   - pathComponents: The array of path components after `/app-link/`. For example, for `/app-link/winter-promo/step1`, this would be `["winter-promo", "step1"]`.
+  ///   - queryParameters: Any query parameters in the URL. For example, `?ref=holiday` results in `["ref": "holiday"]`.
+  ///
+  /// - Note: Only URLs that match the expected format will trigger this method. Other deep links that do not match this pattern
+  /// will not be routed here and should be handled separately.
+  @MainActor
+  func handleSuperwallDeepLink(
+    _ fullURL: URL,
+    pathComponents: [String],
+    queryParameters: [String: String]
+  )
 }
 
 extension SuperwallDelegate {
@@ -156,4 +176,10 @@ extension SuperwallDelegate {
   public func didRedeemLink(result: RedemptionResult) {}
 
   public func willRedeemLink() {}
+
+  public func handleSuperwallDeepLink(
+    _ fullURL: URL,
+    pathComponents: [String],
+    queryParameters: [String: String]
+  ) {}
 }
