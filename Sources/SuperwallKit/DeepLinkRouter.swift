@@ -35,12 +35,27 @@ final class DeepLinkRouter {
         await webEntitlementRedeemer.redeem(.code(code))
       }
       return true
-    } else {
-      Task {
-        await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
-      }
-      return debugManager.handle(deepLinkUrl: url)
     }
+
+    let deepLinkUrl: URL
+    if url.isSuperwallDeepLink {
+      deepLinkUrl = url.superwallDeepLinkMappedURL
+
+      Task { @MainActor in
+        Superwall.shared.dependencyContainer.delegateAdapter.handleSuperwallDeepLink(
+          url,
+          pathComponents: url.superwallDeepLinkPathComponents,
+          queryParameters: url.queryParameters
+        )
+      }
+    } else {
+      deepLinkUrl = url
+    }
+
+    Task {
+      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
+    }
+    return debugManager.handle(deepLinkUrl: url)
   }
 
   private func listenToConfig() {
@@ -74,6 +89,7 @@ final class DeepLinkRouter {
 }
 
 extension URL {
+  /// The web checkout code to redeem given a Superwall deep link format.
   fileprivate var redeemableCode: String? {
     let urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)
 
@@ -91,5 +107,69 @@ extension URL {
     }
 
     return nil
+  }
+
+  /// Returns `true` if the `URL` matches the expected Superwall deep link format.
+  var isSuperwallDeepLink: Bool {
+    guard
+      let host = self.host,
+      host.hasSuffix(".superwall.app") || host.hasSuffix(".superwallapp.dev")
+    else {
+      return false
+    }
+    return path.hasPrefix("/app-link/")
+  }
+
+  /// The path components after the `app-link` component in the URL.
+  ///
+  /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
+  fileprivate var superwallDeepLinkPathComponents: [String] {
+    guard let appLinkIndex = pathComponents.firstIndex(of: "app-link") else {
+      return []
+    }
+    return Array(pathComponents[(appLinkIndex + 1)...])
+  }
+
+  /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
+  ///
+  /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
+  fileprivate var superwallDeepLinkMappedURL: URL {
+    guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
+      return self
+    }
+    let tail = String(absoluteString[appLinkRange.upperBound...])
+
+    let scheme: String
+    if let urlScheme = self.scheme,
+      urlScheme.lowercased() != "http",
+      urlScheme.lowercased() != "https" {
+      scheme = urlScheme
+    } else if let host = self.host,
+      let superwallHostRange = host.range(of: ".superwall") ?? host.range(of: ".superwallapp") {
+      scheme = String(host[..<superwallHostRange.lowerBound])
+    } else {
+      scheme = self.host ?? "superwall"
+    }
+
+    let urlString = "\(scheme)://\(tail)"
+
+    return URL(string: urlString) ?? self
+  }
+
+  /// Returns the `URL` query params as a `[name: value]` dictionary.
+  fileprivate var queryParameters: [String: String] {
+    guard
+      let components = URLComponents(url: self, resolvingAgainstBaseURL: false),
+      let items = components.queryItems
+    else {
+      return [:]
+    }
+    var params: [String: String] = [:]
+    for item in items {
+      if let value = item.value {
+        params[item.name] = value
+      }
+    }
+    return params
   }
 }

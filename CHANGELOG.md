@@ -2,7 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.4.3
+## 4.5.0
+
+### Enhancements
+
+- Adds `handleSuperwallDeepLink(_:pathComponents:queryParameters:)` to the `SuperwallDelegate`. This is called when all deep links from the web checkout are handled. This link may arrive as either a universal link (`https://yoursubdomain.superwall.app/app-link/...`) or a custom URL scheme (`subdomain://yoursubdomain.superwall.app/app-link/...`).
+- Adds `url`, `path`, `pathExtension`, `lastPathComponent`, `host`, `query`, and `fragment` to the `deepLink_open` event, which you can use in audience filters.
 
 ### Fixes
 
