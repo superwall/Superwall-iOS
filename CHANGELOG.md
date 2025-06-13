@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.5.1
+
+### Fixes
+
+- Fixes issue where `webViewLoad_fail` events weren't being tracked.
+
 ## 4.5.0
 
 ### Enhancements
