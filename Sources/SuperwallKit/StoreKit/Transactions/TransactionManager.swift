@@ -245,7 +245,11 @@ final class TransactionManager {
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
             closeActionTitle: "Cancel",
-            action: { UIApplication.shared.open(restoreUrl) }
+            action: {
+              guard let sharedApplication = UIApplication.sharedApplication else {
+                return
+              }
+              sharedApplication.open(restoreUrl) }
           )
           return .webRestore
         }
