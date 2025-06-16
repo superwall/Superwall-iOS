@@ -249,7 +249,8 @@ final class TransactionManager {
               guard let sharedApplication = UIApplication.sharedApplication else {
                 return
               }
-              sharedApplication.open(restoreUrl) }
+              sharedApplication.open(restoreUrl)
+            }
           )
           return .webRestore
         }
