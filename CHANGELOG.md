@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.5.2
+
+### Fixes
+
+- Replace `UIApplication.shared` with `sharedApplication` accessed via KVC so that SuperwallKit can be used in app extensions.
+
 ## 4.5.1
 
 ### Fixes
