@@ -11,6 +11,7 @@ struct RedeemRequest: Encodable {
   let aliasId: String
   let codes: Set<Redeemable>
   let receipts: [TransactionReceipt]
+  let appTransactionId: String?
 }
 
 struct TransactionReceipt: Encodable {

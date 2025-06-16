@@ -135,7 +135,8 @@ actor WebEntitlementRedeemer {
         appUserId: factory.makeAppUserId(),
         aliasId: factory.makeAliasId(),
         codes: allCodes,
-        receipts: receiptManager.getTransactionReceipts()
+        receipts: receiptManager.getTransactionReceipts(),
+        appTransactionId: receiptManager.appTransactionId
       )
 
       let startEvent = InternalSuperwallEvent.Redemption(

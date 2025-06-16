@@ -19,6 +19,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
 
   /// This is unused in SK1
   let transactionReceipts: [TransactionReceipt] = []
+  let appTransactionId: String? = nil
 
   init(
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData

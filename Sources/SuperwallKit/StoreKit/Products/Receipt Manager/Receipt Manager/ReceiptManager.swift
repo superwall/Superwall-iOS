@@ -18,12 +18,14 @@ struct Purchase: Hashable {
   let purchaseDate: Date
 }
 
-actor ReceiptManager: NSObject {
+actor ReceiptManager {
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let manager: ReceiptManagerType
+  private let delegateWrapper: ReceiptRefreshDelegateWrapper
+  var appTransactionId: String?
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -36,17 +38,19 @@ actor ReceiptManager: NSObject {
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
-      return
-    }
-
-    if #available(iOS 15.0, *),
+    } else if #available(iOS 15.0, *),
       storeKitVersion == .storeKit2 {
       self.manager = Self.versionedManager(storeKitVersion: storeKitVersion)
     } else {
       self.manager = SK1ReceiptManager()
     }
-
     self.receiptDelegate = receiptDelegate
+    self.delegateWrapper = ReceiptRefreshDelegateWrapper()
+    self.delegateWrapper.receiptManager = self
+
+    Task {
+      await setAppTransactionId()
+    }
   }
 
   static func versionedManager(
@@ -62,6 +66,20 @@ actor ReceiptManager: NSObject {
 
   func getTransactionReceipts() async -> [TransactionReceipt] {
     await manager.transactionReceipts
+  }
+
+  private func setAppTransactionId() async {
+    #if compiler(>=6.1)
+    if #available(iOS 16.0, *) {
+      if let result = try? await AppTransaction.shared {
+        switch result {
+        case .verified(let transaction),
+          .unverified(let transaction, _):
+          self.appTransactionId = transaction.appTransactionID
+        }
+      }
+    }
+    #endif
   }
 
   func getExperimentalDeviceProperties() async -> [String: Any] {
@@ -150,17 +168,15 @@ actor ReceiptManager: NSObject {
     // Don't need the result at the moment.
     _ = await withCheckedContinuation { continuation in
       let refresh = SKReceiptRefreshRequest()
-      refresh.delegate = self
+      refresh.delegate = delegateWrapper
       refresh.start()
       receiptRefreshCompletion = { completed in
         continuation.resume(returning: completed)
       }
     }
   }
-}
 
-extension ReceiptManager: SKRequestDelegate {
-  nonisolated func requestDidFinish(_ request: SKRequest) {
+  func receiptRefreshDidFinish(request: SKRequest) {
     guard request is SKReceiptRefreshRequest else {
       return
     }
@@ -170,13 +186,16 @@ extension ReceiptManager: SKRequestDelegate {
       message: "Receipt refresh request finished.",
       info: ["request": request]
     )
-    Task {
-      await receiptRefreshCompletion?(true)
-    }
+
+    receiptRefreshCompletion?(true)
+
     request.cancel()
   }
 
-  nonisolated func request(_ request: SKRequest, didFailWithError error: Error) {
+  func receiptRefreshDidFail(
+    request: SKRequest,
+    error: Error
+  ) {
     guard request is SKReceiptRefreshRequest else {
       return
     }
@@ -187,9 +206,27 @@ extension ReceiptManager: SKRequestDelegate {
       info: ["request": request],
       error: error
     )
-    Task {
-      await receiptRefreshCompletion?(false)
-    }
+    receiptRefreshCompletion?(false)
+
     request.cancel()
+  }
+}
+
+final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {
+  weak var receiptManager: ReceiptManager?
+
+  func requestDidFinish(_ request: SKRequest) {
+    Task {
+      await receiptManager?.receiptRefreshDidFinish(request: request)
+    }
+  }
+
+  func request(_ request: SKRequest, didFailWithError error: Error) {
+    Task {
+      await receiptManager?.receiptRefreshDidFail(
+        request: request,
+        error: error
+      )
+    }
   }
 }
