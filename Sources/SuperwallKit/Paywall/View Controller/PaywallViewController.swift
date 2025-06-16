@@ -691,7 +691,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func presentSafariInApp(_ url: URL) {
-    guard UIApplication.shared.canOpenURL(url) else {
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return
+    }
+    guard sharedApplication.canOpenURL(url) else {
       Logger.debug(
         logLevel: .warn,
         scope: .paywallViewController,
@@ -708,7 +711,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func presentSafariExternal(_ url: URL) {
-    UIApplication.shared.open(url)
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return
+    }
+    sharedApplication.open(url)
   }
 
   func openDeepLink(_ url: URL) {
@@ -717,7 +723,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       closeReason: .systemLogic
     ) { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
-      UIApplication.shared.open(url)
+      guard let sharedApplication = UIApplication.sharedApplication else {
+        return
+      }
+      sharedApplication.open(url)
     }
   }
 }
