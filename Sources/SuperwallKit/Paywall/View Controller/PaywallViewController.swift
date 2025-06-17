@@ -331,6 +331,23 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
   }
 
+  func closeSafari(completion: (() -> Void)? = nil) {
+    guard
+      isSafariVCPresented,
+      let safariVC = presentedViewController as? SFSafariViewController
+    else {
+      completion?()
+      return
+    }
+    safariVC.dismiss(
+      animated: true,
+      completion: completion
+    )
+    // Must set this maually because programmatically dismissing the SafariVC doesn't call its
+    // delegate method where we set this.
+    isSafariVCPresented = false
+  }
+
   private func loadWebViewFromArchive(url: URL) {
     webView.loadFileURL(url, allowingReadAccessTo: url)
   }
