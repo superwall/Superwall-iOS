@@ -50,7 +50,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
   var latestSubscriptionState: LatestSubscription.State?
 
   init(
-    sk2IntroOfferEligibility: [String : Bool] = [:],
+    sk2IntroOfferEligibility: [String: Bool] = [:],
     purchases: Set<Purchase> = [],
     transactionReceipts: [TransactionReceipt] = [],
     latestSubscriptionPeriodType: LatestSubscription.PeriodType? = nil,
