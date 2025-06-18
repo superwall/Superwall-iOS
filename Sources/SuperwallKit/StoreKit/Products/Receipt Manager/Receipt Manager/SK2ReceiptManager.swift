@@ -42,12 +42,28 @@ enum LatestSubscription {
 
 @available(iOS 15.0, *)
 actor SK2ReceiptManager: ReceiptManagerType {
-  private var sk2IntroOfferEligibility: [String: Bool] = [:]
-  var purchases: Set<Purchase> = []
-  var transactionReceipts: [TransactionReceipt] = []
+  private var sk2IntroOfferEligibility: [String: Bool]
+  var purchases: Set<Purchase>
+  var transactionReceipts: [TransactionReceipt]
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
   var latestSubscriptionWillAutoRenew: Bool?
   var latestSubscriptionState: LatestSubscription.State?
+
+  init(
+    sk2IntroOfferEligibility: [String: Bool] = [:],
+    purchases: Set<Purchase> = [],
+    transactionReceipts: [TransactionReceipt] = [],
+    latestSubscriptionPeriodType: LatestSubscription.PeriodType? = nil,
+    latestSubscriptionWillAutoRenew: Bool? = nil,
+    latestSubscriptionState: LatestSubscription.State? = nil
+  ) {
+    self.sk2IntroOfferEligibility = sk2IntroOfferEligibility
+    self.purchases = purchases
+    self.transactionReceipts = transactionReceipts
+    self.latestSubscriptionPeriodType = latestSubscriptionPeriodType
+    self.latestSubscriptionWillAutoRenew = latestSubscriptionWillAutoRenew
+    self.latestSubscriptionState = latestSubscriptionState
+  }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     for storeProduct in storeProducts {

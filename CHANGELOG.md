@@ -2,6 +2,14 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.5.2
+
+### Fixes
+
+- Replace `UIApplication.shared` with `sharedApplication` accessed via KVC so that SuperwallKit can be used in app extensions.
+- Fixes issue where the paywall debugger would crash when viewing template variables if products weren't loaded.
+- Fixes issue where an in-app web checkout wouldn't close Safari after purchase.
+
 ## 4.5.1
 
 ### Fixes

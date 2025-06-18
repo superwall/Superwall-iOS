@@ -135,7 +135,8 @@ actor WebEntitlementRedeemer {
         appUserId: factory.makeAppUserId(),
         aliasId: factory.makeAliasId(),
         codes: allCodes,
-        receipts: receiptManager.getTransactionReceipts()
+        receipts: receiptManager.getTransactionReceipts(),
+        appTransactionId: receiptManager.appTransactionId
       )
 
       let startEvent = InternalSuperwallEvent.Redemption(
@@ -146,6 +147,10 @@ actor WebEntitlementRedeemer {
 
       switch type {
       case .code:
+        await MainActor.run {
+          superwall.paywallViewController?.loadingState = .manualLoading
+          superwall.paywallViewController?.closeSafari()
+        }
         await delegate.willRedeemLink()
       case .existingCodes:
         break
@@ -207,6 +212,9 @@ actor WebEntitlementRedeemer {
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
         if let codeResult = response.results.first(where: { $0.code == code }) {
+          await MainActor.run {
+            superwall.paywallViewController?.loadingState = .ready
+          }
           await delegate.didRedeemLink(result: codeResult)
         }
       }
@@ -236,6 +244,9 @@ actor WebEntitlementRedeemer {
         )
         redemptions.append(errorResult)
 
+        await MainActor.run {
+          superwall.paywallViewController?.loadingState = .ready
+        }
         await delegate.didRedeemLink(result: errorResult)
       }
 
