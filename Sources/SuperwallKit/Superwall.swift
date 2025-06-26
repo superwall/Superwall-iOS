@@ -62,7 +62,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Specifies the detail of the logs returned from the SDK to the console.
-  public var overrideProductByName: [String: StoreProduct]? {
+  public var overrideProductsByName: [String: StoreProduct]? {
     get {
       return options.paywalls.overrideProductsByName
     }
