@@ -61,6 +61,16 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Specifies the detail of the logs returned from the SDK to the console.
+  public var overrideProductByName: [String: StoreProduct]? {
+    get {
+      return options.paywalls.overrideProductsByName
+    }
+    set {
+      options.paywalls.overrideProductsByName = newValue
+    }
+  }
+
   /// Sets the device locale identifier to use when evaluating audience filters and getting localized paywalls.
   ///
   /// This defaults to the `autoupdatingCurrent` locale identifier. However, you can set

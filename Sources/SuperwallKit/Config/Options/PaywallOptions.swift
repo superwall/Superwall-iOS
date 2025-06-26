@@ -107,6 +107,20 @@ public final class PaywallOptions: NSObject, Encodable {
   /// Set this to `false` to prevent the paywall from dismissing on purchase/restore.
   public var automaticallyDismiss = true
 
+  /// Defines the products to override on any paywall by product name.
+  ///
+  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on the paywall:
+  ///
+  /// ```
+  ///  overrideProductsByName: [
+  ///    "primary": firstProduct,
+  ///    "tertiary": thirdProduct
+  ///  ]
+  /// ```
+  ///
+  /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
+  public var overrideProductsByName: [String: StoreProduct]? = [:]
+
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
   @objc(SWKTransactionBackgroundView)
   public enum TransactionBackgroundView: Int, Encodable, CustomStringConvertible, Sendable {

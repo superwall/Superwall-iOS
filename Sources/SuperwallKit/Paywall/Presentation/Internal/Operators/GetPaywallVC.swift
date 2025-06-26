@@ -45,7 +45,7 @@ extension Superwall {
       placementData: request.presentationInfo.placementData,
       responseIdentifiers: responseIdentifiers,
       overrides: .init(
-        products: request.paywallOverrides?.productsByName,
+        products: request.paywallOverrides?.productsByName ?? options.paywalls.overrideProductsByName,
         isFreeTrial: request.presentationInfo.freeTrialOverride,
         featureGatingBehavior: request.paywallOverrides?.featureGatingBehavior
       ),

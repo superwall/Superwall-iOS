@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.6.0
+
+### Enhancements
+
+- Adds the `PaywallOption` `overrideProductsByName`, which can be used to globally override products on any paywall that have a given name. This can also be set after configure has been called by setting `Superwall.shared.overrideProductsByName`.
+
 ## 4.5.2
 
 ### Fixes
