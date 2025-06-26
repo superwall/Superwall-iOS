@@ -219,7 +219,6 @@ extension DependencyContainer: DeviceHelperFactory {
 
   func makeSessionDeviceAttributes() async -> [String: Any] {
     var attributes = await deviceHelper.getTemplateDevice()
-
     attributes["utcDate"] = nil
     attributes["localDate"] = nil
     attributes["localDate"] = nil

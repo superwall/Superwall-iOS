@@ -583,6 +583,8 @@ class DeviceHelper {
       deviceDictionary.merge(properties) { current, _ in current }
     }
 
+    deviceDictionary["appTransactionId"] = ReceiptManager.appTransactionId
+
     return deviceDictionary
   }
 }
