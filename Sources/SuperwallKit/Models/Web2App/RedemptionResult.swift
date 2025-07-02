@@ -279,12 +279,16 @@ public enum RedemptionResult: Codable {
       /// The ID of the experiment that the paywall belongs to.
       public let experimentId: String
 
+      /// The product identifier associated with the paywall.
+      public let productIdentifier: String?
+
       enum CodingKeys: String, CodingKey {
         case identifier
         case placementName
         case placementParams
         case variantId
         case experimentId
+        case productIdentifier
       }
 
       public init(from decoder: Decoder) throws {
@@ -293,6 +297,7 @@ public enum RedemptionResult: Codable {
         placementName = try container.decode(String.self, forKey: .placementName)
         variantId = try container.decode(String.self, forKey: .variantId)
         experimentId = try container.decode(String.self, forKey: .experimentId)
+        productIdentifier = try container.decodeIfPresent(String.self, forKey: .productIdentifier)
 
         let paramsJSON = try container.decode(JSON.self, forKey: .placementParams)
         placementParams = paramsJSON.dictionaryObject ?? [:]
@@ -304,6 +309,7 @@ public enum RedemptionResult: Codable {
         try container.encode(placementName, forKey: .placementName)
         try container.encode(variantId, forKey: .variantId)
         try container.encode(experimentId, forKey: .experimentId)
+        try container.encodeIfPresent(productIdentifier, forKey: .productIdentifier)
 
         let jsonData = JSON(placementParams)
         try container.encode(jsonData, forKey: .placementParams)
@@ -315,7 +321,8 @@ public enum RedemptionResult: Codable {
           placementName: placementName,
           placementParams: placementParams,
           variantId: variantId,
-          experimentId: experimentId
+          experimentId: experimentId,
+          productIdentifier: productIdentifier
         )
       }
     }

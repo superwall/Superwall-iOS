@@ -110,7 +110,7 @@ actor WebEntitlementRedeemer {
 
         if !allCodes.isEmpty {
           // If we have codes, isFirstRedemption is false if we already have the code
-          isFirstRedemption = !allCodes.contains(where: { $0.code == code })
+          isFirstRedemption = !allCodes.contains { $0.code == code }
         }
 
         let redeemable = Redeemable(

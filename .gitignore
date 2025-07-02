@@ -6,3 +6,4 @@ DerivedData/
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
 build/*
 Examples/UIKit-ObjC/
+.log/*
