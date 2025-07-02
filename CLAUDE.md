@@ -6,15 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Setup
 - Run `scripts/setup.sh` to initialize the development environment - installs SwiftLint and sets up git hooks
+- Install `xcodegen` if not already installed: `brew install xcodegen`
 - Pre-commit hooks automatically run `xcodegen` and update podspec version from Constants.swift
 
 ### Building and Testing
 - **Build**: 
   - Xcode: Open `SuperwallKit.xcodeproj` in Xcode (auto-generated from `project.yml`)
-  - Command Line: Use `scripts/build.sh` to build the framework via xcodebuild
+  - Command Line: Use `scripts/build.sh` to build the framework via xcodebuild (automatically runs xcodegen)
 - **Tests**: 
   - Xcode: Run tests using the `SuperwallKitTests` scheme in Xcode
-  - Command Line: Use `scripts/test.sh` to run tests via xcodebuild
+  - Command Line: Use `scripts/test.sh` to run tests via xcodebuild (automatically runs xcodegen)
 - **Linting**: Use `scripts/lint.sh` to run SwiftLint with configuration from `.swiftlint.yml`
 - **Project Generation**: Run `xcodegen` to regenerate Xcode project from `project.yml`
 

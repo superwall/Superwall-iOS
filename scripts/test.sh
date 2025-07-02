@@ -11,10 +11,20 @@ cd "$(dirname "$0")/.."
 
 echo "🧪 Running SuperwallKit tests..."
 
+# Generate Xcode project from project.yml
+echo "📋 Generating Xcode project..."
+if command -v xcodegen >/dev/null 2>&1; then
+    xcodegen
+else
+    echo "❌ xcodegen not found. Please install it with: brew install xcodegen"
+    exit 1
+fi
+
 mkdir -p .log
 
 # Run tests for iOS Simulator using xcodebuild with live output
 xcodebuild \
+  -project SuperwallKit.xcodeproj \
   -scheme SuperwallKit \
   -configuration Debug \
   -sdk iphonesimulator \

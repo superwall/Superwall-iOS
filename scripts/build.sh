@@ -11,17 +11,19 @@ cd "$(dirname "$0")/.."
 
 echo "🔨 Building SuperwallKit framework..."
 
-# Build for iOS Simulator using Swift Package Manager
-# xcodebuild \
-#   -scheme SuperwallKit \
-#   -configuration Release \
-#   -sdk iphonesimulator \
-#   -destination "platform=iOS Simulator,name=iPhone 16" \
-#   build
+# Generate Xcode project from project.yml
+echo "📋 Generating Xcode project..."
+if command -v xcodegen >/dev/null 2>&1; then
+    xcodegen
+else
+    echo "❌ xcodegen not found. Please install it with: brew install xcodegen"
+    exit 1
+fi
 
 mkdir -p .log
 
 xcodebuild \
+  -project SuperwallKit.xcodeproj \
   -scheme SuperwallKit \
   -configuration Debug \
   -sdk iphonesimulator \
