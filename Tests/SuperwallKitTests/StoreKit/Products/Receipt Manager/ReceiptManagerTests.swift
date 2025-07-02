@@ -38,10 +38,11 @@ class ReceiptManagerTests: XCTestCase {
       storeKitVersion: .storeKit1,
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
-      receiptDelegate: purchaseController
+      receiptDelegate: purchaseController,
+      factory: dependencyContainer
     )
 
-    await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts(config: .stub())
     let purchasedSubscriptionGroupIds = sk1ReceiptManager.purchasedSubscriptionGroupIds
     XCTAssertEqual(purchasedSubscriptionGroupIds, ["abc"])
   }
@@ -64,10 +65,11 @@ class ReceiptManagerTests: XCTestCase {
       storeKitVersion: .storeKit1,
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
-      receiptDelegate: purchaseController
+      receiptDelegate: purchaseController,
+      factory: dependencyContainer
     )
 
-    await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts(config: .stub())
     let purchasedSubscriptionGroupIds = sk1ReceiptManager.purchasedSubscriptionGroupIds
     XCTAssertNil(purchasedSubscriptionGroupIds)
   }

@@ -7,8 +7,6 @@
 
 import Foundation
 
-// TODO: Should we cache CustomerInfo, and make it async to update? A lot of transactions can result in a long time to update.
-
 /// An enum whose types specify the store which the product belongs to.
 @objc(SWKEntitlementType)
 public enum EntitlementType: Int, Codable, Sendable {
@@ -60,7 +58,6 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// Indicates whether there is any active, non-revoked, transaction for this entitlement.
   public let isActive: Bool
 
-  // TODO: If No Txn, SHould be here
   /// All product identifiers that map to the entitlement.
   public let productIds: Set<String>
 
@@ -183,7 +180,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
   public convenience init(
     id: String
   ) {
-    self.init(id: id)
+    self.init(id: id, type: .serviceLevel)
   }
 
   public init(from decoder: Decoder) throws {
