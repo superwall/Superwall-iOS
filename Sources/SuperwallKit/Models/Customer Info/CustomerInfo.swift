@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// A container for the most recent customer info returned from `Superwall`.
+/// A class that contains the latest subscription and entitlement info about the customer.
 /// These objects are non-mutable and do not update automatically.
 @objc(SWKCustomerInfo)
 @objcMembers

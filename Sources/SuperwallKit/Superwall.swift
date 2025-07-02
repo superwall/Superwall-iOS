@@ -159,7 +159,7 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// The most recent customer info.
+  /// Contains the latest information about all of the customer's purchase and subscription data.
   ///
   /// This is a published property, so you can subscribe to it to receive updates when it changes. Alternatively,
   /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
@@ -167,7 +167,7 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var customerInfo: CustomerInfo?
 
-  /// An `AsyncStream` of ``CustomerInfo`` changes, starting from the last known value.
+  /// An `AsyncStream` of ``customerInfo`` changes, starting from the last known value.
   ///
   /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
   /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
