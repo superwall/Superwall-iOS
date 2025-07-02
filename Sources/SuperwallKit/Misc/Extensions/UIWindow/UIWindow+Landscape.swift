@@ -9,7 +9,9 @@ import UIKit
 
 extension UIWindow {
   static var isLandscape: Bool {
-    let sharedApplication = UIApplication.shared
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return false
+    }
     return sharedApplication.windows
       .first?
       .windowScene?

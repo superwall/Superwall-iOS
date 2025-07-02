@@ -246,7 +246,9 @@ final class TransactionManager {
             actionTitle: "Yes",
             closeActionTitle: "Cancel",
             action: {
-              let sharedApplication = UIApplication.shared
+              guard let sharedApplication = UIApplication.sharedApplication else {
+                return
+              }
               sharedApplication.open(restoreUrl)
             }
           )

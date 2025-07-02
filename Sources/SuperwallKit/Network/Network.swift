@@ -46,7 +46,9 @@ class Network {
   @objc
   @MainActor
   private func applicationStateDidChange() {
-    let sharedApplication = UIApplication.shared
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return
+    }
     applicationStateSubject.send(sharedApplication.applicationState)
   }
 
