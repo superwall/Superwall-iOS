@@ -154,7 +154,7 @@ protocol UserAttributesPlacementFactory: AnyObject {
 }
 
 protocol ReceiptFactory: AnyObject {
-  func loadPurchasedProducts() async
+  func loadPurchasedProducts(config: Config?) async
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }

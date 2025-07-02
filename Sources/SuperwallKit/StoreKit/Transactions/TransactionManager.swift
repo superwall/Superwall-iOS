@@ -654,7 +654,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
@@ -682,7 +682,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
 
       await trackTransactionDidSucceed(transaction)
     }

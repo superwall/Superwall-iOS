@@ -296,6 +296,12 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct CustomerInfoDidChange: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .customerInfoDidChange
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: InternalTriggerResult
     var superwallEvent: SuperwallEvent {
