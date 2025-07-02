@@ -431,6 +431,7 @@
 		F61541FC6670E0667A96FE44 /* ArchiveManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25D8461640AE665CF5A54016 /* ArchiveManifest.swift */; };
 		F75F5E1D503B9391ADD812EC /* PKCS7.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30C2B369C690AAB9C085E2E9 /* PKCS7.swift */; };
 		F79C378E19116B9312AE5873 /* ASN1Decoder+Unboxing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70FC86C1189200C486627EAD /* ASN1Decoder+Unboxing.swift */; };
+		F7CDAF5068A17C1BFC254041 /* UIApplication+Shared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52E4503C39D6B4BFEB0FE624 /* UIApplication+Shared.swift */; };
 		F8E799A3A83A2758D6EAA385 /* Array+Guarded.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40D9BA2449503F4B7F5B7A6 /* Array+Guarded.swift */; };
 		F958219E873CEF2A14079E22 /* GCControllerElement+buttonName.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2243C6BF6BE477794F568ED /* GCControllerElement+buttonName.swift */; };
 		FA907E1BC8B68F238C791867 /* SuperwallDelegateAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E441343EAC43B2ECF35F929 /* SuperwallDelegateAdapter.swift */; };
@@ -591,6 +592,7 @@
 		51407421A3CBF7AF0FC76E60 /* Bundle+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Helpers.swift"; sourceTree = "<group>"; };
 		51445FD3A0C38C2B502EAF1D /* ComputedPropertyRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputedPropertyRequest.swift; sourceTree = "<group>"; };
 		5283BA49E380740C34D78856 /* OnDeviceCaching.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceCaching.swift; sourceTree = "<group>"; };
+		52E4503C39D6B4BFEB0FE624 /* UIApplication+Shared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIApplication+Shared.swift"; sourceTree = "<group>"; };
 		532AB25EB4DA9BAA5E3FA530 /* OpacityAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpacityAnimation.swift; sourceTree = "<group>"; };
 		5383FA48A6E9EF8F30683C9B /* DebugManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugManager.swift; sourceTree = "<group>"; };
 		53F7B4D9230BF922AE19A830 /* ConfirmPaywallAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmPaywallAssignment.swift; sourceTree = "<group>"; };
@@ -1297,6 +1299,7 @@
 				AD23BBF9EA198ED8798A8F62 /* SystemInfo+NotificationName.swift */,
 				938EB5121B1D9EA6B2EAE9EC /* Task+Retrying.swift */,
 				74DFC04FC0F3498D1EBE4B6A /* UIApplication+ActiveWindow.swift */,
+				52E4503C39D6B4BFEB0FE624 /* UIApplication+Shared.swift */,
 				2888B05A273E9EB6E9382332 /* UIColor+Hex.swift */,
 				750CC308DD48F4CE615DFC89 /* UIDevice+ModelName.swift */,
 				F636156244B674A56ADC461C /* UIView+SpringAnimation.swift */,
@@ -2570,6 +2573,8 @@
 				8F41784FB73AC60BED81E582 /* PBXTargetDependency */,
 			);
 			name = SuperwallKitTests;
+			packageProductDependencies = (
+			);
 			productName = SuperwallKitTests;
 			productReference = 92001AC11F099F7B03AF338A /* SuperwallKitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -2594,9 +2599,11 @@
 				en,
 			);
 			mainGroup = 5CE8CEF97A892FFF3D0D8F06;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "Superscript-iOS" */,
 			);
+			preferredProjectObjectVersion = 54;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -3036,6 +3043,7 @@
 				4FE19D26711ECB7B2EE8806D /* TriggerRule.swift in Sources */,
 				0CC202CBE097714F963E0E3B /* Typealiases.swift in Sources */,
 				020D985745B77C21039115AC /* UIApplication+ActiveWindow.swift in Sources */,
+				F7CDAF5068A17C1BFC254041 /* UIApplication+Shared.swift in Sources */,
 				8AEB577682D9AB9354CB8EE9 /* UIColor+Hex.swift in Sources */,
 				DEB255607E961730B4A5761B /* UIDevice+ModelName.swift in Sources */,
 				3BCCE08DF16DC2D16F9AB490 /* UIView+SpringAnimation.swift in Sources */,
