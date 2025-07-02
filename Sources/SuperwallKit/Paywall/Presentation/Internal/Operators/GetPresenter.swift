@@ -123,9 +123,7 @@ extension Superwall {
     guard presentationItems.window == nil else {
       return
     }
-    guard let sharedApplication = UIApplication.sharedApplication else {
-      return
-    }
+    let sharedApplication = UIApplication.shared
     let activeWindow = sharedApplication.activeWindow
     var presentingWindow: UIWindow?
 

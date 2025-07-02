@@ -10,9 +10,7 @@ import UIKit
 
 extension UIApplication {
   var activeWindow: UIWindow? {
-    guard let sharedApplication = UIApplication.sharedApplication else {
-      return nil
-    }
+    let sharedApplication = UIApplication.shared
     // First, try to find a key window in the foreground active scene
     if let windowScene = sharedApplication.connectedScenes
       .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {

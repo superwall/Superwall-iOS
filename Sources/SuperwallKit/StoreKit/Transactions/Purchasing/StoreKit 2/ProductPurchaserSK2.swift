@@ -96,9 +96,7 @@ final class ProductPurchaserSK2: Purchasing {
       let result: StoreKit.Product.PurchaseResult
 
       #if os(visionOS)
-      guard let sharedApplication = UIApplication.sharedApplication else {
-        return .cancelled
-      }
+      let sharedApplication = UIApplication.shared
       guard let scene = await sharedApplication.connectedScenes.first else {
         return .cancelled
       }

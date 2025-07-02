@@ -48,9 +48,7 @@ enum NotificationScheduler {
               closeActionTitle: notificationPermissionsDenied.closeButtonTitle,
               action: {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
-                  guard let sharedApplication = UIApplication.sharedApplication else {
-                    return continuation.resume()
-                  }
+                  let sharedApplication = UIApplication.shared
                   sharedApplication.open(url)
                 }
                 continuation.resume()

@@ -9,9 +9,7 @@ import UIKit
 
 extension UIViewController {
   static var topMostViewController: UIViewController? {
-    guard let sharedApplication = UIApplication.sharedApplication else {
-      return nil
-    }
+    let sharedApplication = UIApplication.shared
     var topViewController: UIViewController? = sharedApplication.activeWindow?.rootViewController
     while let presentedViewController = topViewController?.presentedViewController {
       topViewController = presentedViewController
