@@ -9,8 +9,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Pre-commit hooks automatically run `xcodegen` and update podspec version from Constants.swift
 
 ### Building and Testing
-- **Build**: Open `SuperwallKit.xcodeproj` in Xcode (auto-generated from `project.yml`)
-- **Tests**: Run tests using the `SuperwallKitTests` scheme in Xcode
+- **Build**: 
+  - Xcode: Open `SuperwallKit.xcodeproj` in Xcode (auto-generated from `project.yml`)
+  - Command Line: Use `scripts/build.sh` to build the framework via xcodebuild
+- **Tests**: 
+  - Xcode: Run tests using the `SuperwallKitTests` scheme in Xcode
+  - Command Line: Use `scripts/test.sh` to run tests via xcodebuild
 - **Linting**: Use `scripts/lint.sh` to run SwiftLint with configuration from `.swiftlint.yml`
 - **Project Generation**: Run `xcodegen` to regenerate Xcode project from `project.yml`
 

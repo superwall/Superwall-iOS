@@ -221,7 +221,7 @@ enum InternalSuperwallEvent {
       return .deviceAttributes(attributes: deviceAttributes)
     }
     let deviceAttributes: [String: Any]
-    
+
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       return deviceAttributes
