@@ -622,9 +622,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         if #available(iOS 16.0, *),
           UIDevice.current.userInterfaceIdiom == .phone {
           sheetPresentationController?.detents = [
-            .custom(resolver: { context in
+            .custom { context in
               return 0.7 * context.maximumDetentValue
-            })
+            }
           ]
         }
       #endif

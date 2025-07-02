@@ -272,18 +272,23 @@ public class RedemptionResultObjc: NSObject {
     /// The ID of the experiment that the paywall belongs to.
     public let experimentId: String
 
+    /// The product identifier associated with the paywall.
+    public let productIdentifier: String?
+
     public init(
       identifier: String,
       placementName: String,
       placementParams: [String: Any],
       variantId: String,
-      experimentId: String
+      experimentId: String,
+      productIdentifier: String? = nil
     ) {
       self.identifier = identifier
       self.placementName = placementName
       self.placementParams = placementParams
       self.variantId = variantId
       self.experimentId = experimentId
+      self.productIdentifier = productIdentifier
       super.init()
     }
   }
