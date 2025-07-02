@@ -159,20 +159,18 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  // TODO: Add comments
+  /// The most recent customer info.
+  ///
+  /// This is a published property, so you can subscribe to it to receive updates when it changes. Alternatively,
+  /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
+  /// or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
   @Published
-  public var customerInfo: CustomerInfo? {
-    didSet {
-      // only call if we have both an old and a new non-optional CustomerInfo
-      Task { @MainActor in
-        if let old = oldValue,
-          let new = customerInfo {
-          dependencyContainer.delegateAdapter.customerInfoDidChange(from: old, to: new)
-        }
-      }
-    }
-  }
+  public var customerInfo: CustomerInfo?
 
+  /// An `AsyncStream` of ``CustomerInfo`` changes, starting from the last known value.
+  ///
+  /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
+  /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
   @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
@@ -183,6 +181,7 @@ public final class Superwall: NSObject, ObservableObject {
 
       // Subscribe to all future non-nil updates
       let cancellable = $customerInfo
+        .removeDuplicates()
         .compactMap { $0 }
         .sink { newInfo in
           continuation.yield(newInfo)
@@ -422,6 +421,42 @@ public final class Superwall: NSObject, ObservableObject {
               let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
                 deviceAttributes: deviceAttributes)
               await self.track(deviceAttributesPlacement)
+            }
+          }
+        )
+      )
+
+    $customerInfo
+      .removeDuplicates()
+      .dropFirst()
+      .scan((previous: customerInfo, current: customerInfo)) { previousPair, newStatus in
+        // Shift the current value to previous, and set the new status as the current value
+        (previous: previousPair.current, current: newStatus)
+      }
+      .receive(on: DispatchQueue.main)
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { [weak self] statusPair in
+            guard let self = self else {
+              return
+            }
+            let oldValue = statusPair.previous
+            let newValue = statusPair.current
+
+            if let newValue = newValue {
+              self.dependencyContainer.storage.save(newValue, forType: LatestCustomerInfo.self)
+            }
+
+            Task {
+              if let oldValue = oldValue,
+                let newValue = newValue {
+                await self.dependencyContainer.delegateAdapter.customerInfoDidChange(
+                  from: oldValue, to: newValue)
+
+                let event = InternalSuperwallEvent.CustomerInfoDidChange()
+                await self.track(event)
+              }
             }
           }
         )

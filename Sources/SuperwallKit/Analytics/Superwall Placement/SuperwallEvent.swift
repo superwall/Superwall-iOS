@@ -229,6 +229,9 @@ public enum SuperwallEvent {
   /// When a response from the network fails to decode.
   case networkDecodingFail
 
+  /// When the customer info did change.
+  case customerInfoDidChange
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -394,6 +397,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .enrichmentComplete)
     case .networkDecodingFail:
       return .init(objcEvent: .networkDecodingFail)
+    case .customerInfoDidChange:
+      return .init(objcEvent: .customerInfoDidChange)
     }
   }
 }

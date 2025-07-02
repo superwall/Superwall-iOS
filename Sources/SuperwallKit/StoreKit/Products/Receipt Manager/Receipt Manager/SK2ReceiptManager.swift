@@ -81,7 +81,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
   }
 
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
-
     var purchases: Set<Purchase> = []
     var originalTransactionIds: Set<UInt64> = []
     transactionReceipts = []

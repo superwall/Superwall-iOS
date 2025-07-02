@@ -133,15 +133,17 @@ actor ReceiptManager {
     let serverEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
     let snapshot = await manager.loadPurchases(serverEntitlementsByProductId: serverEntitlementsByProductId)
 
-    Superwall.shared.customerInfo = CustomerInfo(
-      activeSubscriptions: snapshot.activeSubscriptions,
-      nonSubscriptions: snapshot.nonSubscriptions,
-      userId: Superwall.shared.userId,
-      entitlements: snapshot.entitlementsByProductId.values
-        .flatMap { $0 }
-    )
+    await MainActor.run {
+      Superwall.shared.customerInfo = CustomerInfo(
+        activeSubscriptions: snapshot.activeSubscriptions,
+        nonSubscriptions: snapshot.nonSubscriptions,
+        userId: Superwall.shared.userId,
+        entitlements: snapshot.entitlementsByProductId.values
+          .flatMap { $0 }
+          .sorted { $0.id < $1.id }
+      )
+    }
 
-    print(Superwall.shared.customerInfo)
     Superwall.shared.entitlements.setEntitlementsFromConfig(snapshot.entitlementsByProductId)
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: snapshot.purchases)

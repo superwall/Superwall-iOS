@@ -38,10 +38,13 @@ final class SK1ReceiptManager: ReceiptManagerType {
   }
 
   func loadPurchases(serverEntitlementsByProductId: [String : Set<Entitlement>]) async -> PurchaseSnapshot {
+    // TODO: SK1 Stuff
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
       return PurchaseSnapshot(
         purchases: [],
-        entitlementsByProductId: serverEntitlementsByProductId
+        entitlementsByProductId: serverEntitlementsByProductId,
+        nonSubscriptions: [],
+        activeSubscriptions: []
       )
     }
     purchases = Set(payload.purchases.map {
@@ -53,7 +56,9 @@ final class SK1ReceiptManager: ReceiptManagerType {
     })
     return PurchaseSnapshot(
       purchases: purchases,
-      entitlementsByProductId: serverEntitlementsByProductId
+      entitlementsByProductId: serverEntitlementsByProductId,
+      nonSubscriptions: [],
+      activeSubscriptions: []
     )
   }
 

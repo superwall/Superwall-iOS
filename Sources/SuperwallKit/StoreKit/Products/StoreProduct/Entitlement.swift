@@ -9,36 +9,6 @@ import Foundation
 
 // TODO: Should we cache CustomerInfo, and make it async to update? A lot of transactions can result in a long time to update.
 
-
-@objc(SWKCustomerInfo)
-@objcMembers
-public final class CustomerInfo: NSObject {
-  /// All subscription product identifiers with expiration dates in the future.
-  public let activeSubscriptions: Set<String>
-
-  /// The non-subscription transactions the user has made. The purchases are
-  /// ordered by purchase date in ascending order.
-  public let nonSubscriptions: [NonSubscriptionTransaction]
-
-  /// The userId of the user. Equivalent to ``Superwall/userId``.
-  public let userId: String
-
-  /// All entitlements available to the user with each detailing its state.
-  let entitlements: [Entitlement]
-
-  init(
-    activeSubscriptions: Set<String>,
-    nonSubscriptions: [NonSubscriptionTransaction],
-    userId: String,
-    entitlements: [Entitlement]
-  ) {
-    self.activeSubscriptions = activeSubscriptions
-    self.nonSubscriptions = nonSubscriptions
-    self.userId = userId
-    self.entitlements = entitlements
-  }
-}
-
 /// An enum whose types specify the store which the product belongs to.
 @objc(SWKEntitlementType)
 public enum EntitlementType: Int, Codable, Sendable {
