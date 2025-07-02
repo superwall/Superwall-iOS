@@ -37,9 +37,12 @@ final class SK1ReceiptManager: ReceiptManagerType {
     self.purchasedSubscriptionGroupIds = purchasedSubscriptionGroupIds
   }
 
-  func loadPurchases() async -> Set<Purchase> {
+  func loadPurchases(serverEntitlementsByProductId: [String : Set<Entitlement>]) async -> PurchaseSnapshot {
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
-      return []
+      return PurchaseSnapshot(
+        purchases: [],
+        entitlementsByProductId: serverEntitlementsByProductId
+      )
     }
     purchases = Set(payload.purchases.map {
       Purchase(
@@ -48,7 +51,10 @@ final class SK1ReceiptManager: ReceiptManagerType {
         purchaseDate: $0.purchaseDate
       )
     })
-    return purchases
+    return PurchaseSnapshot(
+      purchases: purchases,
+      entitlementsByProductId: serverEntitlementsByProductId
+    )
   }
 
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {

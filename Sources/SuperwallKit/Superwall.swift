@@ -159,6 +159,42 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  // TODO: Add comments
+  @Published
+  public var customerInfo: CustomerInfo? {
+    didSet {
+      // only call if we have both an old and a new non-optional CustomerInfo
+      Task { @MainActor in
+        if let old = oldValue,
+          let new = customerInfo {
+          dependencyContainer.delegateAdapter.customerInfoDidChange(from: old, to: new)
+        }
+      }
+    }
+  }
+
+  @available(iOS 15.0, *)
+  public var customerInfoStream: AsyncStream<CustomerInfo> {
+    AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
+      // Immediately yield the current value if non-nil
+      if let current = self.customerInfo {
+        continuation.yield(current)
+      }
+
+      // Subscribe to all future non-nil updates
+      let cancellable = $customerInfo
+        .compactMap { $0 }
+        .sink { newInfo in
+          continuation.yield(newInfo)
+        }
+
+      // Clean up when the stream finishes/cancels
+      continuation.onTermination = { @Sendable _ in
+        cancellable.cancel()
+      }
+    }
+  }
+
   /// Gets properties stored about the device that are used in audience filters.
   public func getDeviceAttributes() async -> [String: Any] {
     return await dependencyContainer.deviceHelper.getTemplateDevice()
@@ -291,6 +327,8 @@ public final class Superwall: NSObject, ObservableObject {
       options: options
     )
     self.init(dependencyContainer: dependencyContainer)
+
+    customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self)
 
     subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)

@@ -316,6 +316,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     ) == nil {
       return
     }
-    await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts(config: nil)
   }
 }

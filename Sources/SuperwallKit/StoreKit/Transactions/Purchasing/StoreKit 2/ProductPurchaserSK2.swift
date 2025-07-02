@@ -110,7 +110,7 @@ final class ProductPurchaserSK2: Purchasing {
       switch result {
       case let .success(.verified(transaction)):
         await transaction.finish()
-        await receiptManager.loadPurchasedProducts()
+        await receiptManager.loadPurchasedProducts(config: nil)
         let result = PurchaseResult.purchased
         await coordinator.storeTransaction(transaction, result: result)
         return result

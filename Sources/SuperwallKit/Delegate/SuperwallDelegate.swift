@@ -138,6 +138,13 @@ public protocol SuperwallDelegate: AnyObject {
     pathComponents: [String],
     queryParameters: [String: String]
   )
+
+  // TODO: Commetns
+  @MainActor
+  func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
+  )
 }
 
 extension SuperwallDelegate {
@@ -181,5 +188,10 @@ extension SuperwallDelegate {
     _ fullURL: URL,
     pathComponents: [String],
     queryParameters: [String: String]
+  ) {}
+
+  public func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
   ) {}
 }

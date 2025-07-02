@@ -40,6 +40,7 @@ final class RCPurchaseController: PurchaseController {
   func syncSubscriptionStatus() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
     Task {
+
       for await customerInfo in Purchases.shared.customerInfoStream {
         // Gets called whenever new CustomerInfo is available
         let entitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {

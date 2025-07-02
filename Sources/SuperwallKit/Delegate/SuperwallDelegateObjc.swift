@@ -139,4 +139,11 @@ public protocol SuperwallDelegateObjc: AnyObject {
     pathComponents: [String],
     queryParameters: [String: String]
   )
+
+  // TODO: Commetns
+  @MainActor
+  @objc optional func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
+  )
 }

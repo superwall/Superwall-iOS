@@ -25,16 +25,19 @@ actor ReceiptManager {
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
+  private unowned let factory: ConfigStateFactory
   static var appTransactionId: String?
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
-    receiptDelegate: ReceiptDelegate?
+    receiptDelegate: ReceiptDelegate?,
+    factory: ConfigStateFactory
   ) {
     self.storeKitVersion = storeKitVersion
     self.productsManager = productsManager
+    self.factory = factory
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -105,14 +108,45 @@ actor ReceiptManager {
     return values
   }
 
-  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
-  /// purchases and active purchases.
-  func loadPurchasedProducts() async {
-    let purchases = await manager.loadPurchases()
+  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers, purchases and active purchases.
+  func loadPurchasedProducts(config: Config?) async {
+    let resolvedConfig: Config?
 
-    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
+    if let config = config {
+      resolvedConfig = config
+    } else {
+      let configState = factory.makeConfigState()
+      do {
+        resolvedConfig = try await configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        return
+      }
+    }
 
-    let purchasedProductIds = Set(purchases.map { $0.id })
+    guard let config = resolvedConfig else {
+      // Neither input config nor config from state is available
+      return
+    }
+
+    let serverEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
+    let snapshot = await manager.loadPurchases(serverEntitlementsByProductId: serverEntitlementsByProductId)
+
+    Superwall.shared.customerInfo = CustomerInfo(
+      activeSubscriptions: snapshot.activeSubscriptions,
+      nonSubscriptions: snapshot.nonSubscriptions,
+      userId: Superwall.shared.userId,
+      entitlements: snapshot.entitlementsByProductId.values
+        .flatMap { $0 }
+    )
+
+    print(Superwall.shared.customerInfo)
+    Superwall.shared.entitlements.setEntitlementsFromConfig(snapshot.entitlementsByProductId)
+
+    await receiptDelegate?.syncSubscriptionStatus(purchases: snapshot.purchases)
+
+    let purchasedProductIds = Set(snapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
       identifiers: purchasedProductIds,
