@@ -717,7 +717,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Parameters:
   ///   - url: The URL of the deep link.
-  /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  /// - Returns: A `Bool` that is `true` if the deep link was handled. If called before ``Superwall/configure(apiKey:purchaseController:options:completion:)`` completes then it'll always return `true`.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
     if Superwall.isInitialized,

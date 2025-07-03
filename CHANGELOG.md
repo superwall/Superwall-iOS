@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the `PaywallOption` `overrideProductsByName`, which can be used to globally override products on any paywall that have a given name. This can also be set after configure has been called by setting `Superwall.shared.overrideProductsByName`.
 
+### Fixes
+
+- Fixes issue where deep links passed to the SDK before configure completes aren’t handled after configure finishes.
+
 ## 4.5.2
 
 ### Fixes

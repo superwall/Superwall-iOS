@@ -52,10 +52,11 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
+
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
+      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
-    return debugManager.handle(deepLinkUrl: url)
+    return debugManager.handle(deepLinkUrl: deepLinkUrl)
   }
 
   private func listenToConfig() {
@@ -80,11 +81,8 @@ final class DeepLinkRouter {
 
   /// Stores the deep link until it can be handled.
   static func storeDeepLink(_ url: URL) -> Bool {
-    if url.redeemableCode != nil || DebugManager.outcomeForDeepLink(url: url) != nil {
-      pendingDeepLink = url
-      return true
-    }
-    return false
+    pendingDeepLink = url
+    return true
   }
 }
 
