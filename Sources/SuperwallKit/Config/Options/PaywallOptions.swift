@@ -109,17 +109,17 @@ public final class PaywallOptions: NSObject, Encodable {
 
   /// Defines the products to override on any paywall by product name.
   ///
-  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on the paywall:
+  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on a paywall:
   ///
   /// ```
   ///  overrideProductsByName: [
-  ///    "primary": firstProduct,
-  ///    "tertiary": thirdProduct
+  ///    "primary": "firstProductId",
+  ///    "tertiary": thirdProductId
   ///  ]
   /// ```
   ///
   /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
-  public var overrideProductsByName: [String: StoreProduct]? = [:]
+  public var overrideProductsByName: [String: String]? = [:]
 
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
   @objc(SWKTransactionBackgroundView)

@@ -12,7 +12,7 @@ import Combine
 struct PaywallRequest {
   struct Overrides {
     /// The products to substitute into the response.
-    var products: [String: StoreProduct]?
+    var products: [String: ProductOverride]?
 
     /// Whether to override the displaying of a free trial.
     var isFreeTrial: Bool?

@@ -23,7 +23,7 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let entitlements: Set<Entitlement> = [.stub()]
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary, entitlements: entitlements)
+      "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: entitlements))
     ]
 
     do {
@@ -52,8 +52,8 @@ class StoreKitManagerTests: XCTestCase {
 
     let tertiary = MockSkProduct(productIdentifier: "def")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary, entitlements: primaryEntitlements),
-      "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
+      "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: primaryEntitlements)),
+      "tertiary": ProductOverride.byProduct(StoreProduct(sk1Product: tertiary, entitlements: []))
     ]
 
     do {
@@ -88,7 +88,7 @@ class StoreKitManagerTests: XCTestCase {
       "primary": StoreProduct(sk1Product: primary, entitlements: []),
       "secondary": StoreProduct(sk1Product: secondary, entitlements: []),
       "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
-    ]
+    ].mapValues(ProductOverride.byProduct)
 
     do {
       let (productsById, products) = try await manager.getProducts(
@@ -132,7 +132,7 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
       "primary": StoreProduct(sk1Product: primary, entitlements: [])
-    ]
+    ].mapValues(ProductOverride.byProduct)
 
     do {
       let (productsById, products) = try await manager.getProducts(
@@ -169,7 +169,7 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
       "primary": StoreProduct(sk1Product: primary, entitlements: [])
-    ]
+    ].mapValues(ProductOverride.byProduct)
 
     do {
       let (productsById, products) = try await manager.getProducts(
