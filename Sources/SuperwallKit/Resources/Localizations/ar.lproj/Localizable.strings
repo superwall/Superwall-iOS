@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "تم الإعداد.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "تمت عملية الشراء بنجاح.";
+
+/* Alert action button */
+"purchase_success_action_title" = "حسناً";

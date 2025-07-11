@@ -121,6 +121,9 @@ public final class PaywallOptions: NSObject, Encodable {
   /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
   public var overrideProductsByName: [String: String]? = [:]
 
+  /// Shows an alert confirming a successful purchase via web checkout. Defaults to `true`.
+  public var shouldShowWebPurchaseConfirmationAlert = true
+
   /// Defines the different types of views that can appear behind Apple's payment sheet during a transaction.
   @objc(SWKTransactionBackgroundView)
   public enum TransactionBackgroundView: Int, Encodable, CustomStringConvertible, Sendable {
@@ -161,6 +164,8 @@ public final class PaywallOptions: NSObject, Encodable {
     case shouldPreload
     case automaticallyDismiss
     case transactionBackgroundView
+    case overrideProductsByName
+    case shouldShowWebPurchaseConfirmationAlert
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -171,5 +176,7 @@ public final class PaywallOptions: NSObject, Encodable {
     try container.encode(shouldShowPurchaseFailureAlert, forKey: .shouldShowPurchaseFailureAlert)
     try container.encode(shouldPreload, forKey: .shouldPreload)
     try container.encode(automaticallyDismiss, forKey: .automaticallyDismiss)
+    try container.encode(overrideProductsByName, forKey: .overrideProductsByName)
+    try container.encode(shouldShowWebPurchaseConfirmationAlert, forKey: .shouldShowWebPurchaseConfirmationAlert)
   }
 }

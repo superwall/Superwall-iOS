@@ -26,8 +26,13 @@ struct WebEntitlementRedeemerTests {
 
     // No existing redeem response, so is first redemption of code.
     let mockStorage = StorageMock(internalRedeemResponse: nil)
+
+    // Disable the popup
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
     let mockNetwork = NetworkMock(
-      options: dependencyContainer.makeSuperwallOptions(),
+      options: options,
       factory: dependencyContainer
     )
 
@@ -102,8 +107,13 @@ struct WebEntitlementRedeemerTests {
 
     // No existing redeem response, so is first redemption of code.
     let mockStorage = StorageMock(internalRedeemResponse: existingResponse)
+
+    // Disable the popup
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
     let mockNetwork = NetworkMock(
-      options: dependencyContainer.makeSuperwallOptions(),
+      options: options,
       factory: dependencyContainer
     )
     let mockDelegate = MockSuperwallDelegate()
@@ -204,8 +214,12 @@ struct WebEntitlementRedeemerTests {
 
     // No existing redeem response, so is first redemption of code.
     let mockStorage = StorageMock(internalRedeemResponse: existingResponse)
+    // Disable the popup
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
     let mockNetwork = NetworkMock(
-      options: dependencyContainer.makeSuperwallOptions(),
+      options: options,
       factory: dependencyContainer
     )
     let mockDelegate = MockSuperwallDelegate()

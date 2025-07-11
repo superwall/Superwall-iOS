@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the `PaywallOption` `overrideProductsByName`, which can be used to globally override products on any paywall that have a given name. This can also be set after configure has been called by setting `Superwall.shared.overrideProductsByName`.
+- Adds the `PaywallOption` `shouldShowWebPurchaseConfirmationAlert`, which shows a localized alert confirming a successful purchase via web checkout. Defaults to `true`.
 
 ### Fixes
 
