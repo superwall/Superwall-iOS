@@ -390,6 +390,12 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Listens to config.
   private func addListeners() {
+    listenToConfig()
+    listenToSubscriptionStatus()
+    listenToCustomerInfo()
+  }
+
+  private func listenToConfig() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
       .subscribe(
@@ -408,7 +414,9 @@ public final class Superwall: NSObject, ObservableObject {
             }
           }
         ))
+  }
 
+  private func listenToSubscriptionStatus() {
     $subscriptionStatus
       .removeDuplicates()
       .dropFirst()
@@ -444,7 +452,9 @@ public final class Superwall: NSObject, ObservableObject {
           }
         )
       )
+  }
 
+  private func listenToCustomerInfo() {
     $customerInfo
       .removeDuplicates()
       .dropFirst()
@@ -1102,6 +1112,40 @@ public final class Superwall: NSObject, ObservableObject {
   public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
     restorePurchases { result in
       completion(result.toObjc())
+    }
+  }
+
+  // MARK: - CustomerInfo
+
+  /// Gets the latest ``CustomerInfo``.
+  ///
+  /// - Returns: A ``CustomerInfo`` object.
+  public func getCustomerInfo() async -> CustomerInfo {
+    // If we already have a value, return it immediately
+    if let customerInfo = customerInfo {
+      return customerInfo
+    }
+
+    // Otherwise, await the first non-nil emission from the publisher
+    return await withCheckedContinuation { continuation in
+      var cancellable: AnyCancellable?
+      cancellable = $customerInfo
+        .removeDuplicates()
+        .compactMap { $0 }
+        .sink { newInfo in
+          continuation.resume(returning: newInfo)
+          cancellable?.cancel()
+        }
+    }
+  }
+
+  /// Gets the latest ``CustomerInfo``.
+  ///
+  /// - Parameter completion: A ``CustomerInfo`` object.
+  public func getCustomerInfo(completion: @escaping (CustomerInfo) -> Void) {
+    Task {
+      let customerInfo = await getCustomerInfo()
+      completion(customerInfo)
     }
   }
 }

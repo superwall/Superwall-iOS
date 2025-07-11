@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 19/09/2024.
 //
-// swiftlint:disable function_body_length cyclomatic_complexity
+// swiftlint:disable function_body_length cyclomatic_complexity type_body_length file_length
 
 import Foundation
 import StoreKit
@@ -156,11 +156,12 @@ actor SK2ReceiptManager: ReceiptManagerType {
             purchaseDate: transaction.purchaseDate
           )
         )
-      case .unverified(let transaction, let error):
+      case let .unverified(transaction, error):
         Logger.debug(
           logLevel: .warn,
           scope: .transactions,
-          message: "The purchased transactions contain an unverified transaction: \(transaction.debugDescription). \(error.localizedDescription)"
+          message: "The purchased transactions contain an unverified transaction"
+            + ": \(transaction.debugDescription). \(error.localizedDescription)"
         )
       }
     }
@@ -178,14 +179,14 @@ actor SK2ReceiptManager: ReceiptManagerType {
       // Can't be done in the next loop
       let startsAt = transactions.last?.originalPurchaseDate
       var isLifetime = false
-      if let lifetimeProduct = transactions.filter({
+      if let lifetimeProduct = transactions.first(where: {
         $0.productType == .nonConsumable &&
         $0.revocationDate == nil
-      }).first {
+      }) {
         isLifetime = true
         latestProductId = lifetimeProduct.productID
       }
-      
+
       // single scan of this entitlement's txns
       for txn in transactions {
         // any non-revoked, unexpired
@@ -214,10 +215,14 @@ actor SK2ReceiptManager: ReceiptManagerType {
 
         // latest expiration for non-lifetime
         if !isLifetime,
-          (txn.productType == .autoRenewable || txn.productType == .nonRenewable),
+          txn.productType == .autoRenewable || txn.productType == .nonRenewable,
           txn.revocationDate == nil,
           let exp = txn.expirationDate {
-          if expiresAt == nil || exp > expiresAt! {
+          if let currentExpiry = expiresAt {
+            if exp > currentExpiry {
+              expiresAt = exp
+            }
+          } else {
             expiresAt = exp
           }
         }

@@ -37,7 +37,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
     self.purchasedSubscriptionGroupIds = purchasedSubscriptionGroupIds
   }
 
-  func loadPurchases(serverEntitlementsByProductId: [String : Set<Entitlement>]) async -> PurchaseSnapshot {
+  func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     // TODO: SK1 Stuff
     guard let payload = ReceiptLogic.getPayload(using: receiptData) else {
       return PurchaseSnapshot(

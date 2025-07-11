@@ -139,7 +139,7 @@ public protocol SuperwallDelegateObjc: AnyObject {
     pathComponents: [String],
     queryParameters: [String: String]
   )
-  
+
   /// Called when the ``Superwall/customerInfo`` changes.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can

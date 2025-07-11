@@ -22,7 +22,7 @@ struct SuperwallAdvancedApp: App {
 
     // MARK: - Option 1: Let Superwall handle everything
     Superwall.configure(apiKey: apiKey)
-
+    
     // MARK: - Option 2: Use a Purchase Controller with StoreKit
     /*
     // Step 1 - Create your Purchase Controller
