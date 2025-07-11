@@ -94,7 +94,7 @@ class Network {
           appUserId: factory.identityManager.userId,
           apiKey: factory.storage.apiKey,
           config: factory.configManager.config,
-          locale: factory.deviceHelper.locale
+          locale: factory.deviceHelper.localeIdentifier
         ),
         data: SuperwallRequestData(factory: factory)
       )

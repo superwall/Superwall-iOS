@@ -186,7 +186,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.paywallArchiveManager = paywallArchiveManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
-      locale: deviceHelper.locale
+      locale: deviceHelper.localeIdentifier
     )
     self.deviceHelper = deviceHelper
     self.eventDelegate = eventDelegate

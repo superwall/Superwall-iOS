@@ -23,12 +23,13 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let entitlements: Set<Entitlement> = [.stub()]
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary, entitlements: entitlements)
+      "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: entitlements))
     ]
-
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [.init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: [])])
     do {
       let (productsById, products) = try await manager.getProducts(
-        forPaywall: .stub(),
+        forPaywall: paywall,
         placement: nil,
         substituting: substituteProducts
       )
@@ -52,13 +53,19 @@ class StoreKitManagerTests: XCTestCase {
 
     let tertiary = MockSkProduct(productIdentifier: "def")
     let substituteProducts = [
-      "primary": StoreProduct(sk1Product: primary, entitlements: primaryEntitlements),
-      "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
+      "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: primaryEntitlements)),
+      "tertiary": ProductOverride.byProduct(StoreProduct(sk1Product: tertiary, entitlements: []))
     ]
+
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [
+        .init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: []),
+        .init(name: "tertiary", type: .appStore(.init(id: "ghi")), entitlements: [.stub()]),
+      ])
 
     do {
       let (productsById, products) = try await manager.getProducts(
-        forPaywall: .stub(),
+        forPaywall: paywall,
         placement: nil,
         substituting: substituteProducts
       )
@@ -88,11 +95,16 @@ class StoreKitManagerTests: XCTestCase {
       "primary": StoreProduct(sk1Product: primary, entitlements: []),
       "secondary": StoreProduct(sk1Product: secondary, entitlements: []),
       "tertiary": StoreProduct(sk1Product: tertiary, entitlements: [])
-    ]
-
+    ].mapValues(ProductOverride.byProduct)
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [
+        .init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: []),
+        .init(name: "secondary", type: .appStore(.init(id: "123")), entitlements: []),
+        .init(name: "tertiary", type: .appStore(.init(id: "uiu")), entitlements: [.stub()]),
+      ])
     do {
       let (productsById, products) = try await manager.getProducts(
-        forPaywall: .stub(),
+        forPaywall: paywall,
         placement: nil,
         substituting: substituteProducts
       )
@@ -132,12 +144,14 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
       "primary": StoreProduct(sk1Product: primary, entitlements: [])
-    ]
-
+    ].mapValues(ProductOverride.byProduct)
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [
+        .init(name: "primary", type: .appStore(.init(id: "1")), entitlements: [])
+      ])
     do {
       let (productsById, products) = try await manager.getProducts(
-        forPaywall: .stub()
-          .setting(\.productIds, to: ["1"]),
+        forPaywall: paywall,
         placement: nil,
         substituting: substituteProducts
       )
@@ -169,18 +183,23 @@ class StoreKitManagerTests: XCTestCase {
     let primary = MockSkProduct(productIdentifier: "abc")
     let substituteProducts = [
       "primary": StoreProduct(sk1Product: primary, entitlements: [])
-    ]
+    ].mapValues(ProductOverride.byProduct)
+
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [
+        .init(name: "primary", type: .appStore(.init(id: "1")), entitlements: []),
+        .init(name: "secondary", type: .appStore(.init(id: "2")), entitlements: [])
+      ])
 
     do {
       let (productsById, products) = try await manager.getProducts(
-        forPaywall: .stub()
-          .setting(\.productIds, to: ["1", "2"]),
+        forPaywall: paywall,
         placement: nil,
         substituting: substituteProducts
       )
       XCTAssertEqual(productsById.count, 2)
       XCTAssertEqual(productsById[primary.productIdentifier]?.sk1Product, primary)
-      XCTAssertEqual(products.count, 1)
+      XCTAssertEqual(products.count, 2)
       XCTAssertTrue(products.contains { $0.id == primary.productIdentifier })
       XCTAssertTrue(products.contains { $0.name == "primary" })
       XCTAssertEqual(productsById["2"]?.sk1Product, responseProduct2)

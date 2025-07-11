@@ -61,13 +61,32 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Specifies the detail of the logs returned from the SDK to the console.
-  public var overrideProductsByName: [String: StoreProduct]? {
+  /// Defines the products to override on any paywall by product name.
+  ///
+  /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on a paywall:
+  ///
+  /// ```
+  ///  overrideProductsByName: [
+  ///    "primary": "firstProductId",
+  ///    "tertiary": thirdProductId
+  ///  ]
+  /// ```
+  ///
+  /// This assumes that your products have the names "primary" and "tertiary" in the Paywall Editor.
+  public var overrideProductsByName: [String: String]? {
     get {
       return options.paywalls.overrideProductsByName
     }
     set {
       options.paywalls.overrideProductsByName = newValue
+
+      Task {
+        let overrides = newValue?
+          .map { ProductOverride.byId($0.value) }
+        if let overrides = overrides {
+          await dependencyContainer.storeKitManager.preloadOverrides(overrides)
+        }
+      }
     }
   }
 
@@ -790,7 +809,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Parameters:
   ///   - url: The URL of the deep link.
-  /// - Returns: A `Bool` that is `true` if the deep link was handled.
+  /// - Returns: A `Bool` that is `true` if the deep link was handled. If called before ``Superwall/configure(apiKey:purchaseController:options:completion:)`` completes then it'll always return `true`.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
     if Superwall.isInitialized,

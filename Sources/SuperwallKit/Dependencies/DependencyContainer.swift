@@ -194,7 +194,7 @@ extension DependencyContainer: TransactionManagerFactory {
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
-    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.locale)
+    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.localeIdentifier)
   }
 }
 
@@ -210,7 +210,7 @@ extension DependencyContainer: DeviceHelperFactory {
   func makeDeviceInfo() -> DeviceInfo {
     return DeviceInfo(
       appInstalledAtString: deviceHelper.appInstalledAtString,
-      locale: deviceHelper.locale
+      locale: deviceHelper.localeIdentifier
     )
   }
 
@@ -374,7 +374,7 @@ extension DependencyContainer: ApiFactory {
       "X-App-Version": deviceHelper.appVersion,
       "X-OS-Version": deviceHelper.osVersion,
       "X-Device-Model": deviceHelper.model,
-      "X-Device-Locale": deviceHelper.locale,
+      "X-Device-Locale": deviceHelper.localeIdentifier,
       "X-Device-Language-Code": deviceHelper.languageCode,
       "X-Device-Currency-Code": deviceHelper.currencyCode,
       "X-Device-Currency-Symbol": deviceHelper.currencySymbol,

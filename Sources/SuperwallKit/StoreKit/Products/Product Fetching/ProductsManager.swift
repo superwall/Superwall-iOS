@@ -7,6 +7,11 @@
 
 import Foundation
 
+enum ProductOverride {
+  case byId(String)
+  case byProduct(StoreProduct)
+}
+
 protocol ProductFetchable: AnyObject {
   func products(
     identifiers: Set<String>,
