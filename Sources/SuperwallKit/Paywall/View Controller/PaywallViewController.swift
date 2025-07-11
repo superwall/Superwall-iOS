@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length type_body_length disable_print
 
 import Combine
 import SafariServices
@@ -186,7 +186,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.paywallArchiveManager = paywallArchiveManager
     self.cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
-      locale: deviceHelper.locale
+      locale: deviceHelper.localeIdentifier
     )
     self.deviceHelper = deviceHelper
     self.eventDelegate = eventDelegate

@@ -15,7 +15,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
   func testSaveAndRetrievePaywall() throws {
     // Given
     let dependencyContainer = DependencyContainer()
-    let locale = dependencyContainer.deviceHelper.locale
+    let locale = dependencyContainer.deviceHelper.localeIdentifier
     let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let id = "myid"
     let key = PaywallCacheLogic.key(identifier: id, locale: locale)
@@ -40,7 +40,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
   func testSaveAndRemovePaywall_withId() {
     // Given
     let dependencyContainer = DependencyContainer()
-    let locale = dependencyContainer.deviceHelper.locale
+    let locale = dependencyContainer.deviceHelper.localeIdentifier
     let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let id = "myid"
     let key = PaywallCacheLogic.key(identifier: id, locale: locale)
@@ -71,7 +71,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
   func testClearCache() {
     // Given
     let dependencyContainer = DependencyContainer()
-    let locale = dependencyContainer.deviceHelper.locale
+    let locale = dependencyContainer.deviceHelper.localeIdentifier
     let paywallCache = PaywallViewControllerCache(deviceLocaleString: locale)
     let paywallId1 = "id1"
     let key1 = PaywallCacheLogic.key(identifier: paywallId1, locale: locale)

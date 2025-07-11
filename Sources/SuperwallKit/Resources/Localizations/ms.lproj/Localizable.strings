@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "Segala-galanya sudah siap.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "Pembelian anda berjaya.";
+
+/* Alert action button */
+"purchase_success_action_title" = "OK";

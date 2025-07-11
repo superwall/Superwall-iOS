@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
   name: "SuperwallKit",
+  defaultLocalization: "en",
   platforms: [
     .iOS(.v13),
     .macOS(.v10_12),
@@ -31,6 +32,7 @@ let package = Package(
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
         .process("Resources/Certificates"),
+        .process("Resources/Localizations"),
         .copy("Resources/PrivacyInfo.xcprivacy")
       ]
     ),

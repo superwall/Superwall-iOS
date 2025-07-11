@@ -11,7 +11,7 @@ import Foundation
 final class DeviceHelperMock: DeviceHelper {
   var internalLocale: String?
 
-  override var locale: String {
-    return internalLocale ?? super.locale
+  override var localeIdentifier: String {
+    return internalLocale ?? super.localeIdentifier
   }
 }
