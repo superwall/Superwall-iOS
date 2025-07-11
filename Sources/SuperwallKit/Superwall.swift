@@ -178,6 +178,41 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Contains the latest information about all of the customer's purchase and subscription data.
+  ///
+  /// This is a published property, so you can subscribe to it to receive updates when it changes. Alternatively,
+  /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
+  /// or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
+  @Published
+  public var customerInfo: CustomerInfo?
+
+  /// An `AsyncStream` of ``customerInfo`` changes, starting from the last known value.
+  ///
+  /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
+  /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
+  @available(iOS 15.0, *)
+  public var customerInfoStream: AsyncStream<CustomerInfo> {
+    AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
+      // Immediately yield the current value if non-nil
+      if let current = self.customerInfo {
+        continuation.yield(current)
+      }
+
+      // Subscribe to all future non-nil updates
+      let cancellable = $customerInfo
+        .removeDuplicates()
+        .compactMap { $0 }
+        .sink { newInfo in
+          continuation.yield(newInfo)
+        }
+
+      // Clean up when the stream finishes/cancels
+      continuation.onTermination = { @Sendable _ in
+        cancellable.cancel()
+      }
+    }
+  }
+
   /// Gets properties stored about the device that are used in audience filters.
   public func getDeviceAttributes() async -> [String: Any] {
     return await dependencyContainer.deviceHelper.getTemplateDevice()
@@ -311,6 +346,8 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
+    customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self)
+
     subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
 
@@ -353,6 +390,12 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Listens to config.
   private func addListeners() {
+    listenToConfig()
+    listenToSubscriptionStatus()
+    listenToCustomerInfo()
+  }
+
+  private func listenToConfig() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
       .subscribe(
@@ -371,7 +414,9 @@ public final class Superwall: NSObject, ObservableObject {
             }
           }
         ))
+  }
 
+  private func listenToSubscriptionStatus() {
     $subscriptionStatus
       .removeDuplicates()
       .dropFirst()
@@ -403,6 +448,44 @@ public final class Superwall: NSObject, ObservableObject {
               let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
                 deviceAttributes: deviceAttributes)
               await self.track(deviceAttributesPlacement)
+            }
+          }
+        )
+      )
+  }
+
+  private func listenToCustomerInfo() {
+    $customerInfo
+      .removeDuplicates()
+      .dropFirst()
+      .scan((previous: customerInfo, current: customerInfo)) { previousPair, newStatus in
+        // Shift the current value to previous, and set the new status as the current value
+        (previous: previousPair.current, current: newStatus)
+      }
+      .receive(on: DispatchQueue.main)
+      .subscribe(
+        Subscribers.Sink(
+          receiveCompletion: { _ in },
+          receiveValue: { [weak self] statusPair in
+            guard let self = self else {
+              return
+            }
+            let oldValue = statusPair.previous
+            let newValue = statusPair.current
+
+            if let newValue = newValue {
+              self.dependencyContainer.storage.save(newValue, forType: LatestCustomerInfo.self)
+            }
+
+            Task {
+              if let oldValue = oldValue,
+                let newValue = newValue {
+                await self.dependencyContainer.delegateAdapter.customerInfoDidChange(
+                  from: oldValue, to: newValue)
+
+                let event = InternalSuperwallEvent.CustomerInfoDidChange()
+                await self.track(event)
+              }
             }
           }
         )
@@ -1029,6 +1112,40 @@ public final class Superwall: NSObject, ObservableObject {
   public func restorePurchases(completion: @escaping (RestorationResultObjc) -> Void) {
     restorePurchases { result in
       completion(result.toObjc())
+    }
+  }
+
+  // MARK: - CustomerInfo
+
+  /// Gets the latest ``CustomerInfo``.
+  ///
+  /// - Returns: A ``CustomerInfo`` object.
+  public func getCustomerInfo() async -> CustomerInfo {
+    // If we already have a value, return it immediately
+    if let customerInfo = customerInfo {
+      return customerInfo
+    }
+
+    // Otherwise, await the first non-nil emission from the publisher
+    return await withCheckedContinuation { continuation in
+      var cancellable: AnyCancellable?
+      cancellable = $customerInfo
+        .removeDuplicates()
+        .compactMap { $0 }
+        .sink { newInfo in
+          continuation.resume(returning: newInfo)
+          cancellable?.cancel()
+        }
+    }
+  }
+
+  /// Gets the latest ``CustomerInfo``.
+  ///
+  /// - Parameter completion: A ``CustomerInfo`` object.
+  public func getCustomerInfo(completion: @escaping (CustomerInfo) -> Void) {
+    Task {
+      let customerInfo = await getCustomerInfo()
+      completion(customerInfo)
     }
   }
 }
