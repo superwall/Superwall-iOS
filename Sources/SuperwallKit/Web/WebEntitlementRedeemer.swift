@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length cyclomatic_complexity type_body_length
+// swiftlint:disable function_body_length cyclomatic_complexity type_body_length trailing_closure
 
 import UIKit
 import Foundation
@@ -192,7 +192,6 @@ actor WebEntitlementRedeemer {
           await superwall.track(trackedEvent)
 
           await paywallVc.webView.messageHandler.handle(.restoreComplete)
-
         } else {
           await trackRestorationFailure(
             paywallViewController: paywallVc,
@@ -213,13 +212,12 @@ actor WebEntitlementRedeemer {
       // then close the paywall.
       if case let .code(code) = type {
         if let codeResult = response.results.first(where: { $0.code == code }) {
-
           let superwallOptions = factory.makeSuperwallOptions()
           let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
 
           func afterRedeem() async {
             if let paywallVc = superwall.paywallViewController,
-               paywallEntitlements.subtracting(allEntitlements).isEmpty {
+              paywallEntitlements.subtracting(allEntitlements).isEmpty {
               if superwallOptions.paywalls.automaticallyDismiss {
                 await superwall.dismiss(paywallVc, result: .restored)
               }
