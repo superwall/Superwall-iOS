@@ -108,6 +108,19 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let willRenew: Bool?
 
+  /// The `Date` at which the subscription renews, if at all.
+  ///
+  /// This is `nil` if it won't renew or isn't active.
+  public var renewsAt: Date? {
+    guard isActive else {
+      return nil
+    }
+    guard willRenew == true else {
+      return nil
+    }
+    return expiresAt
+  }
+
   /// Indicates whether the last subscription transaction associated with this
   /// entitlement is in a billing grace period state.
   ///
@@ -230,9 +243,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
       && self.expiresAt == other.expiresAt
       && self.isLifetime == other.isLifetime
       && self.willRenew == other.willRenew
-      && self.isInGracePeriod == other.isInGracePeriod
       && self.willRenew == other.willRenew
-      && self.isRevoked == other.isRevoked
       && self.state == other.state
       && self.offerType == other.offerType
   }
@@ -249,9 +260,6 @@ public final class Entitlement: NSObject, Codable, Sendable {
     hasher.combine(expiresAt)
     hasher.combine(isLifetime)
     hasher.combine(willRenew)
-    hasher.combine(isInGracePeriod)
-    hasher.combine(willRenew)
-    hasher.combine(isRevoked)
     hasher.combine(state)
     hasher.combine(offerType)
     return hasher.finalize()
