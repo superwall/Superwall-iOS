@@ -153,7 +153,15 @@ class CoreDataManager {
     for audienceOccurrence: TriggerAudienceOccurrence
   ) async -> Int {
     let fetchRequest = ManagedTriggerRuleOccurrence.fetchRequest()
-    fetchRequest.fetchLimit = audienceOccurrence.maxCount
+
+
+    let fetchLimit: Int
+    switch audienceOccurrence.count {
+    case .max(let count),
+      .min(let count):
+      fetchLimit = count
+    }
+    fetchRequest.fetchLimit = fetchLimit
 
     switch audienceOccurrence.interval {
     case .minutes(let minutes):
@@ -167,8 +175,13 @@ class CoreDataManager {
           scope: .coreData,
           message: "Calendar couldn't calculate date by adding \(minutes) minutes and returned nil."
         )
-        // Return maxCount so that it won't fire the trigger.
-        return audienceOccurrence.maxCount
+        // Return such that it won't fire the trigger.
+        switch audienceOccurrence.count {
+        case .max(let maxCount):
+          return maxCount
+        case .min(let minCount):
+          return minCount - 1
+        }
       }
       fetchRequest.predicate = NSPredicate(
         format: "createdAt >= %@ AND occurrenceKey == %@",

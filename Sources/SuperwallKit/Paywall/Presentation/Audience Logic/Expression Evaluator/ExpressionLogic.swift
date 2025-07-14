@@ -25,12 +25,19 @@ struct ExpressionLogic {
         return .match(audience: audience)
       }
 
+      // Add one for the event we just fired.
       let count = await storage
         .coreDataManager
         .countAudienceOccurrences(
           for: occurrence
         ) + 1
-      let shouldFire = count <= occurrence.maxCount
+      let shouldFire: Bool
+      switch occurrence.count {
+      case .min(let minCount):
+        shouldFire = count > minCount
+      case .max(let maxCount):
+        shouldFire = count <= maxCount
+      }
       var unsavedOccurrence: TriggerAudienceOccurrence?
 
       if shouldFire {
