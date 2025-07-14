@@ -114,7 +114,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
 
     var nonSubscriptions: [NonSubscriptionTransaction] = []
     var activeSubscriptions: Set<String> = []
-
     // 1️⃣ FIRST PASS: collect txns & receipts & purchases
     for await verificationResult in Transaction.all {
       switch verificationResult {
