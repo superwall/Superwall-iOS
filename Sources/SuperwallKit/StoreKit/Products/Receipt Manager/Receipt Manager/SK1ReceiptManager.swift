@@ -44,7 +44,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
         purchases: [],
         entitlementsByProductId: serverEntitlementsByProductId,
         nonSubscriptions: [],
-        activeSubscriptions: []
+        subscriptions: []
       )
     }
     purchases = Set(payload.purchases.map {
@@ -58,7 +58,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
       purchases: purchases,
       entitlementsByProductId: serverEntitlementsByProductId,
       nonSubscriptions: [],
-      activeSubscriptions: []
+      subscriptions: []
     )
   }
 

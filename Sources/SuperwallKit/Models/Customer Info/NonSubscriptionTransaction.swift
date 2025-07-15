@@ -19,14 +19,24 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
   /// The date that the App Store charged the user’s account.
   public let purchaseDate: Date
 
+  /// Indicates whether it's a consumable in-app purchase.
+  public let isConsumable: Bool
+
+  /// Indicates whether the transaction has been revoked.
+  public let isRevoked: Bool
+
   init(
     transactionId: UInt64,
     productId: String,
-    purchaseDate: Date
+    purchaseDate: Date,
+    isConsumable: Bool,
+    isRevoked: Bool
   ) {
     self.transactionId = transactionId
     self.productId = productId
     self.purchaseDate = purchaseDate
+    self.isConsumable = isConsumable
+    self.isRevoked = isRevoked
   }
 
   override public func isEqual(_ object: Any?) -> Bool {
@@ -35,7 +45,9 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     }
     return self.transactionId == other.transactionId &&
       self.productId == other.productId &&
-      self.purchaseDate == other.purchaseDate
+      self.purchaseDate == other.purchaseDate &&
+      self.isConsumable == other.isConsumable &&
+      self.isRevoked == other.isRevoked
   }
 
   override public var hash: Int {
@@ -43,11 +55,17 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     hasher.combine(transactionId)
     hasher.combine(productId)
     hasher.combine(purchaseDate)
+    hasher.combine(isConsumable)
+    hasher.combine(isRevoked)
     return hasher.finalize()
   }
 
   private enum CodingKeys: String, CodingKey {
-    case transactionId, productId, purchaseDate
+    case transactionId
+    case productId
+    case purchaseDate
+    case isConsumable
+    case isRevoked
   }
 
   public required init(from decoder: Decoder) throws {
@@ -55,6 +73,8 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     transactionId = try container.decode(UInt64.self, forKey: .transactionId)
     productId = try container.decode(String.self, forKey: .productId)
     purchaseDate = try container.decode(Date.self, forKey: .purchaseDate)
+    isConsumable = try container.decode(Bool.self, forKey: .isConsumable)
+    isRevoked = try container.decode(Bool.self, forKey: .isRevoked)
     super.init()
   }
 
@@ -63,5 +83,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     try container.encode(transactionId, forKey: .transactionId)
     try container.encode(productId, forKey: .productId)
     try container.encode(purchaseDate, forKey: .purchaseDate)
+    try container.encode(isConsumable, forKey: .isConsumable)
+    try container.encode(isRevoked, forKey: .isRevoked)
   }
 }

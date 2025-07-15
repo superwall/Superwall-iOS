@@ -25,7 +25,7 @@ struct PurchaseSnapshot {
   let purchases: Set<Purchase>
   let entitlementsByProductId: [String: Set<Entitlement>]
   let nonSubscriptions: [NonSubscriptionTransaction]
-  let activeSubscriptions: Set<String>
+  let subscriptions: [SubscriptionTransaction]
 }
 
 /// The latest subscription on device.
@@ -113,32 +113,52 @@ actor SK2ReceiptManager: ReceiptManagerType {
     }
 
     var nonSubscriptions: [NonSubscriptionTransaction] = []
-    var activeSubscriptions: Set<String> = []
+    var subscriptions: [SubscriptionTransaction] = []
+
     // 1️⃣ FIRST PASS: collect txns & receipts & purchases
     for await verificationResult in Transaction.all {
       switch verificationResult {
-      case .verified(let transaction):
-        if transaction.productType != .nonConsumable {
+      case .verified(let txn):
+        let isActive = isAnyTransactionActive([txn])
+
+        if txn.productType == .consumable ||
+          txn.productType == .nonConsumable {
           nonSubscriptions.append(
             NonSubscriptionTransaction(
-              transactionId: transaction.id,
-              productId: transaction.productID,
-              purchaseDate: transaction.purchaseDate
+              transactionId: txn.id,
+              productId: txn.productID,
+              purchaseDate: txn.purchaseDate,
+              isConsumable: txn.productType == .consumable,
+              isRevoked: txn.revocationDate != nil
+            )
+          )
+        } else {
+          subscriptions.append(
+            SubscriptionTransaction(
+              transactionId: txn.id,
+              productId: txn.productID,
+              purchaseDate: txn.purchaseDate,
+              willRenew: false,
+              isRevoked: txn.revocationDate != nil,
+              isInGracePeriod: false,
+              isInBillingRetryPeriod: false,
+              isActive: isActive,
+              expirationDate: txn.expirationDate
             )
           )
         }
 
         // Get the entitlements for a purchased product.
-        if let serverEntitlements = serverEntitlementsByProductId[transaction.productID] {
+        if let serverEntitlements = serverEntitlementsByProductId[txn.productID] {
           // Map transactions and their product IDs to each entitlement.
           for entitlement in serverEntitlements {
-            txnsPerEntitlement[entitlement.id, default: []].append(transaction)
+            txnsPerEntitlement[entitlement.id, default: []].append(txn)
           }
         }
 
         // first receipt per original txn
         let originalTxnId = verificationResult.underlyingTransaction.originalID
-        if originalTxnId == transaction.id,
+        if originalTxnId == txn.id,
           !originalTransactionIds.contains(originalTxnId) {
           transactionReceipts.append(
             TransactionReceipt(jwsRepresentation: verificationResult.jwsRepresentation)
@@ -147,20 +167,19 @@ actor SK2ReceiptManager: ReceiptManagerType {
         }
 
         // record purchase
-        let isActive = isAnyTransactionActive([transaction])
         purchases.insert(
           Purchase(
-            id: transaction.productID,
+            id: txn.productID,
             isActive: isActive,
-            purchaseDate: transaction.purchaseDate
+            purchaseDate: txn.purchaseDate
           )
         )
-      case let .unverified(transaction, error):
+      case let .unverified(txn, error):
         Logger.debug(
           logLevel: .warn,
           scope: .transactions,
           message: "The purchased transactions contain an unverified transaction"
-            + ": \(transaction.debugDescription). \(error.localizedDescription)"
+            + ": \(txn.debugDescription). \(error.localizedDescription)"
         )
       }
     }
@@ -192,7 +211,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
         if txn.revocationDate == nil,
           let exp = txn.expirationDate,
           exp > now {
-          activeSubscriptions.insert(txn.productID)
           isActive = true
         }
 
@@ -238,18 +256,33 @@ actor SK2ReceiptManager: ReceiptManagerType {
       var state: LatestSubscription.State?
       var offerType: LatestSubscription.OfferType?
 
+      let subscriptionTxnIndex = subscriptions.firstIndex {
+        $0.transactionId == mostRecentRenewable?.id
+      }
+
       if !isLifetime,
         let renewable = mostRecentRenewable {
         let status = await renewable.subscriptionStatus
 
         if case let .verified(info) = status?.renewalInfo {
           willRenew = info.willAutoRenew
+
+          if let index = subscriptionTxnIndex {
+            subscriptions[index].willRenew = info.willAutoRenew
+          }
+
           if enableExperimentalDeviceVariables {
             latestSubscriptionWillAutoRenew = info.willAutoRenew
           }
         }
 
         state = getLatestSubscriptionState(from: status)
+
+        if let index = subscriptionTxnIndex {
+          subscriptions[index].isInGracePeriod = state == .inGracePeriod
+          subscriptions[index].isInBillingRetryPeriod = state == .inBillingRetryPeriod
+        }
+
         if enableExperimentalDeviceVariables {
           latestSubscriptionState = state
         }
@@ -303,7 +336,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
       purchases: purchases,
       entitlementsByProductId: entitlementsByProductId,
       nonSubscriptions: nonSubscriptions.reversed(),
-      activeSubscriptions: activeSubscriptions
+      subscriptions: subscriptions.reversed()
     )
   }
 

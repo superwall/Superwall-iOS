@@ -135,7 +135,7 @@ actor ReceiptManager {
 
     await MainActor.run {
       Superwall.shared.customerInfo = CustomerInfo(
-        activeSubscriptions: snapshot.activeSubscriptions,
+        subscriptions: snapshot.subscriptions,
         nonSubscriptions: snapshot.nonSubscriptions,
         userId: Superwall.shared.userId,
         entitlements: snapshot.entitlementsByProductId.values
