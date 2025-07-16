@@ -18,6 +18,13 @@ class CoreDataManagerTests: XCTestCase {
     super.setUp()
     coreDataStack = CoreDataStackMock()
     coreDataManager = CoreDataManagerMock(coreDataStack: coreDataStack)
+    
+    // Clear any existing data before each test
+    let expectation = expectation(description: "Clear data")
+    coreDataManager.deleteAllEntities {
+      expectation.fulfill()
+    }
+    wait(for: [expectation], timeout: 2.0)
   }
 
   override func tearDown() {
@@ -25,6 +32,7 @@ class CoreDataManagerTests: XCTestCase {
     coreDataManager = nil
     coreDataStack = nil
   }
+
 
   func test_savePlacementData_withParams() {
     let eventName = "abc"
@@ -202,7 +210,6 @@ class CoreDataManagerTests: XCTestCase {
       }
       wait(for: [exp], timeout: 15.0)
     }
-
   }
 
   /*
@@ -268,4 +275,352 @@ class CoreDataManagerTests: XCTestCase {
 
     XCTAssertEqual(count, 10)
   }*/
+
+  // MARK: - Count Placement Tests
+  func test_countPlacement_withMinutesInterval_noEvents() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 0)
+  }
+
+  func test_countPlacement_withInfinityInterval_noEvents() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 0)
+  }
+
+  func test_countPlacement_withMinutesInterval_singleEvent() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    
+    // Save a placement event
+    let placementData = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date())
+    
+    let expectation = expectation(description: "Saved placement")
+    coreDataManager.savePlacementData(placementData) { _ in
+      expectation.fulfill()
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 1)
+  }
+
+  func test_countPlacement_withInfinityInterval_singleEvent() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    // Save a placement event
+    let placementData = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date())
+    
+    let expectation = expectation(description: "Saved placement")
+    coreDataManager.savePlacementData(placementData) { _ in
+      expectation.fulfill()
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 1)
+  }
+
+  func test_countPlacement_withMinutesInterval_multipleEvents() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    
+    // Save multiple placement events
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 3
+    
+    for i in 0..<3 {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: placementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(TimeInterval(i)))
+      
+      coreDataManager.savePlacementData(placementData) { _ in
+        expectation.fulfill()
+      }
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 3)
+  }
+
+  func test_countPlacement_withInfinityInterval_multipleEvents() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    // Save multiple placement events
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 5
+    
+    for i in 0..<5 {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: placementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(TimeInterval(i)))
+      
+      coreDataManager.savePlacementData(placementData) { _ in
+        expectation.fulfill()
+      }
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 5)
+  }
+
+  func test_countPlacement_withMinutesInterval_onlyCountsEventsWithinInterval() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(30)
+    
+    // Save events: one within interval, one outside
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 2
+    
+    // Event within interval (10 minutes ago)
+    let recentEvent = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date().addingTimeInterval(-10 * 60))
+    
+    // Event outside interval (45 minutes ago)
+    let oldEvent = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date().addingTimeInterval(-45 * 60))
+    
+    coreDataManager.savePlacementData(recentEvent) { _ in
+      expectation.fulfill()
+    }
+    coreDataManager.savePlacementData(oldEvent) { _ in
+      expectation.fulfill()
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 1)
+  }
+
+  func test_countPlacement_withMinutesInterval_onlyCountsMatchingPlacementName() async {
+        
+    let targetPlacementName = "target_placement"
+    let otherPlacementName = "other_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    
+    // Save events with different names
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 3
+    
+    // Target placement events
+    for i in 0..<2 {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: targetPlacementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(TimeInterval(i)))
+      
+      coreDataManager.savePlacementData(placementData) { _ in
+        expectation.fulfill()
+      }
+    }
+    
+    // Other placement event (should not be counted)
+    let otherPlacementData = PlacementData.stub()
+      .setting(\.name, to: otherPlacementName)
+      .setting(\.createdAt, to: Date())
+    
+    coreDataManager.savePlacementData(otherPlacementData) { _ in
+      expectation.fulfill()
+    }
+    
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(targetPlacementName, interval: interval)
+    
+    XCTAssertEqual(count, 2)
+  }
+
+  func test_countPlacement_withInfinityInterval_onlyCountsMatchingPlacementName() async {
+        
+    let targetPlacementName = "target_placement"
+    let otherPlacementName = "other_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    // Save events with different names
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 4
+    
+    // Target placement events
+    for i in 0..<3 {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: targetPlacementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(TimeInterval(i)))
+      
+      coreDataManager.savePlacementData(placementData) { _ in
+        expectation.fulfill()
+      }
+    }
+    
+    // Other placement event (should not be counted)
+    let otherPlacementData = PlacementData.stub()
+      .setting(\.name, to: otherPlacementName)
+      .setting(\.createdAt, to: Date())
+    
+    coreDataManager.savePlacementData(otherPlacementData) { _ in
+      expectation.fulfill()
+    }
+    
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(targetPlacementName, interval: interval)
+    
+    XCTAssertEqual(count, 3)
+  }
+
+  func test_countPlacement_withMinutesInterval_boundaryConditions() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    
+    // Save events: one safely inside boundary, one just inside, one just outside
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 3
+    
+    let now = Date()
+    
+    // Event safely inside boundary (58 minutes ago - well within range)
+    let safeEvent = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: now.addingTimeInterval(-58 * 60))
+    
+    // Event just inside boundary (30 minutes ago)
+    let insideEvent = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: now.addingTimeInterval(-30 * 60))
+    
+    // Event just outside boundary (65 minutes ago - well outside)
+    let outsideEvent = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: now.addingTimeInterval(-65 * 60))
+    
+    coreDataManager.savePlacementData(safeEvent) { _ in
+      expectation.fulfill()
+    }
+    coreDataManager.savePlacementData(insideEvent) { _ in
+      expectation.fulfill()
+    }
+    coreDataManager.savePlacementData(outsideEvent) { _ in
+      expectation.fulfill()
+    }
+    
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 2)
+  }
+
+  func test_countPlacement_withZeroMinutesInterval() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(0)
+    
+    // Save a placement event - with zero minutes interval, no events should be counted
+    let placementData = PlacementData.stub()
+      .setting(\.name, to: placementName)
+      .setting(\.createdAt, to: Date())
+    
+    let expectation = expectation(description: "Saved placement")
+    coreDataManager.savePlacementData(placementData) { _ in
+      expectation.fulfill()
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    // Zero minutes interval means "within the last 0 minutes" which should return 0
+    XCTAssertEqual(count, 0)
+  }
+
+  func test_countPlacement_withLargeNumberOfEvents() async {
+        
+    let placementName = "test_placement"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    let eventCount = 50
+    
+    // Use batch insert for performance
+    let expectation = expectation(description: "Saved placements")
+    coreDataStack.batchInsertPlacementData(
+      eventName: placementName,
+      count: eventCount
+    ) {
+      expectation.fulfill()
+    }
+    await fulfillment(of: [expectation], timeout: 5.0)
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, eventCount)
+  }
+
+  func test_countPlacement_withEmptyPlacementName() async {
+        
+    let placementName = ""
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    let count = await coreDataManager.countPlacement(placementName, interval: interval)
+    
+    XCTAssertEqual(count, 0)
+  }
+
+  func test_countPlacement_concurrent_access() async {
+        
+    let placementName = "concurrent_test"
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    
+    // Save some initial data
+    let expectation = expectation(description: "Saved placements")
+    expectation.expectedFulfillmentCount = 5
+    
+    for i in 0..<5 {
+      let placementData = PlacementData.stub()
+        .setting(\.name, to: placementName)
+        .setting(\.createdAt, to: Date().addingTimeInterval(TimeInterval(i)))
+      
+      coreDataManager.savePlacementData(placementData) { _ in
+        expectation.fulfill()
+      }
+    }
+    await fulfillment(of: [expectation], timeout: 2.0)
+    
+    // Perform multiple concurrent counts
+    async let count1 = coreDataManager.countPlacement(placementName, interval: interval)
+    async let count2 = coreDataManager.countPlacement(placementName, interval: interval)
+    async let count3 = coreDataManager.countPlacement(placementName, interval: interval)
+    
+    let results = await [count1, count2, count3]
+    
+    // All concurrent operations should return the same count
+    XCTAssertEqual(results[0], 5)
+    XCTAssertEqual(results[1], 5)
+    XCTAssertEqual(results[2], 5)
+  }
 }
