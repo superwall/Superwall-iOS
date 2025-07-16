@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "Sve je spremno.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "Kupnja je bila uspješna.";
+
+/* Alert action button */
+"purchase_success_action_title" = "U redu";

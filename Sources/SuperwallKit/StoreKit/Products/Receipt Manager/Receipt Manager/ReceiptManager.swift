@@ -25,7 +25,7 @@ actor ReceiptManager {
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
-  var appTransactionId: String?
+  static var appTransactionId: String?
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -75,7 +75,7 @@ actor ReceiptManager {
         switch result {
         case .verified(let transaction),
           .unverified(let transaction, _):
-          self.appTransactionId = transaction.appTransactionID
+          Self.appTransactionId = transaction.appTransactionID
         }
       }
     }

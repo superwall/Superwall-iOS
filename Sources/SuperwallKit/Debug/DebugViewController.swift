@@ -225,7 +225,7 @@ final class DebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first(where: { $0.databaseId == paywallDatabaseId })?.identifier
+			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
 			paywallIdentifier = paywallId
     } else {
       return
