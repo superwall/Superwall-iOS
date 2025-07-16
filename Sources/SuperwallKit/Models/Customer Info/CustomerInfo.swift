@@ -12,6 +12,10 @@ import Foundation
 @objc(SWKCustomerInfo)
 @objcMembers
 public final class CustomerInfo: NSObject, Codable {
+  /// A `Set` of the product identifiers for the active subscriptions.
+  public var activeSubscriptionProductIds: Set<String> {
+    return Set(subscriptions.filter({ $0.isActive }).map((\.productId)))
+  }
   /// The subscription transactions the user has made. The transactions are
   /// ordered by purchase date in ascending order.
   public let subscriptions: [SubscriptionTransaction]
