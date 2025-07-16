@@ -79,6 +79,7 @@ struct CELEvaluator: ExpressionEvaluating {
       return noMatch
     }
 
+    evaluationContext.triggeringPlacementName = placementData?.name
     guard
       let resultData = evaluateWithContext(
         definition: jsonString,

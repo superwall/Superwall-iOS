@@ -10,6 +10,7 @@ import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage
+  var triggeringPlacementName: String?
 
   init(storage: Storage) {
     self.storage = storage
@@ -48,14 +49,42 @@ final class EvaluationContext: HostContext {
         placementName: name
       )
 
-      guard let number = await storage.coreDataManager.getComputedPropertySincePlacement(
-        PlacementData(
-          name: name,
-          parameters: [:],
-          createdAt: Date()
-        ),
-        request: request
-      ) else {
+      let number: Int?
+      if type.isPlacementCount {
+        let interval: TriggerAudienceOccurrence.Interval
+        switch type {
+        case .placementsInHour:
+          interval = .minutes(60)
+        case .placementsInDay:
+          interval = .minutes(60 * 24)
+        case .placementsInWeek:
+          interval = .minutes(60 * 24 * 7)
+        case .placementsInMonth:
+          interval = .minutes(60 * 24 * 7 * 30)
+        case .placementsSinceInstall:
+          interval = .infinity
+        default:
+          interval = .minutes(0)
+        }
+
+        var triggeringPlacementOffset = 0
+        if name == triggeringPlacementName {
+          triggeringPlacementOffset = 1
+        }
+
+        number = await storage.coreDataManager.countPlacement(name, interval: interval) + triggeringPlacementOffset
+      } else {
+        number = await storage.coreDataManager.getComputedPropertySincePlacement(
+          PlacementData(
+            name: name,
+            parameters: [:],
+            createdAt: Date()
+          ),
+          request: request
+        )
+      }
+
+      guard let number = number else {
         callback.onResult(result: "")
         return
       }
