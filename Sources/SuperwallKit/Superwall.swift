@@ -184,7 +184,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
   /// or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
   @Published
-  public var customerInfo: CustomerInfo?
+  public var customerInfo: CustomerInfo = .blank()
 
   /// An `AsyncStream` of ``customerInfo`` changes, starting from the last known value.
   ///
@@ -193,15 +193,13 @@ public final class Superwall: NSObject, ObservableObject {
   @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
-      // Immediately yield the current value if non-nil
-      if let current = self.customerInfo {
-        continuation.yield(current)
+      if !customerInfo.isBlank {
+        continuation.yield(customerInfo)
       }
 
       // Subscribe to all future non-nil updates
       let cancellable = $customerInfo
         .removeDuplicates()
-        .compactMap { $0 }
         .sink { newInfo in
           continuation.yield(newInfo)
         }
@@ -346,7 +344,7 @@ public final class Superwall: NSObject, ObservableObject {
     )
     self.init(dependencyContainer: dependencyContainer)
 
-    customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self)
+    customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
     subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
@@ -473,19 +471,16 @@ public final class Superwall: NSObject, ObservableObject {
             let oldValue = statusPair.previous
             let newValue = statusPair.current
 
-            if let newValue = newValue {
-              self.dependencyContainer.storage.save(newValue, forType: LatestCustomerInfo.self)
-            }
+            self.dependencyContainer.storage.save(newValue, forType: LatestCustomerInfo.self)
 
             Task {
-              if let oldValue = oldValue,
-                let newValue = newValue {
-                await self.dependencyContainer.delegateAdapter.customerInfoDidChange(
-                  from: oldValue, to: newValue)
+              await self.dependencyContainer.delegateAdapter.customerInfoDidChange(
+                from: oldValue,
+                to: newValue
+              )
 
-                let event = InternalSuperwallEvent.CustomerInfoDidChange()
-                await self.track(event)
-              }
+              let event = InternalSuperwallEvent.CustomerInfoDidChange()
+              await self.track(event)
             }
           }
         )
@@ -1121,8 +1116,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: A ``CustomerInfo`` object.
   public func getCustomerInfo() async -> CustomerInfo {
-    // If we already have a value, return it immediately
-    if let customerInfo = customerInfo {
+    // If we already have a non-blank customerInfo, return it immediately
+    if !customerInfo.isBlank {
       return customerInfo
     }
 
@@ -1131,7 +1126,7 @@ public final class Superwall: NSObject, ObservableObject {
       var cancellable: AnyCancellable?
       cancellable = $customerInfo
         .removeDuplicates()
-        .compactMap { $0 }
+        .filter { !$0.isBlank }
         .sink { newInfo in
           continuation.resume(returning: newInfo)
           cancellable?.cancel()

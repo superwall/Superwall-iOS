@@ -257,8 +257,6 @@ class ConfigManager {
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
 
-    // Load the products after entitlementsInfo is set because we need to map
-    // purchased products to entitlements.
     await factory.loadPurchasedProducts(config: config)
     await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
     if isFirstTime {

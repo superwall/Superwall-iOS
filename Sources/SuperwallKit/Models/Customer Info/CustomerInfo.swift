@@ -14,7 +14,11 @@ import Foundation
 public final class CustomerInfo: NSObject, Codable {
   /// A `Set` of the product identifiers for the active subscriptions.
   public var activeSubscriptionProductIds: Set<String> {
-    return Set(subscriptions.filter({ $0.isActive }).map((\.productId)))
+    return Set(
+      subscriptions
+        .filter { $0.isActive }
+        .map((\.productId))
+    )
   }
   /// The subscription transactions the user has made. The transactions are
   /// ordered by purchase date in ascending order.
@@ -30,16 +34,21 @@ public final class CustomerInfo: NSObject, Codable {
   /// All entitlements available to the user.
   public let entitlements: [Entitlement]
 
+  /// Internally set to `true` on first ever load of CustomerInfo`.
+  let isBlank: Bool
+
   init(
     subscriptions: [SubscriptionTransaction],
     nonSubscriptions: [NonSubscriptionTransaction],
     userId: String,
-    entitlements: [Entitlement]
+    entitlements: [Entitlement],
+    isBlank: Bool = false
   ) {
     self.subscriptions = subscriptions
     self.nonSubscriptions = nonSubscriptions
     self.userId = userId
     self.entitlements = entitlements
+    self.isBlank = isBlank
   }
 
   override public func isEqual(_ object: Any?) -> Bool {
@@ -50,7 +59,8 @@ public final class CustomerInfo: NSObject, Codable {
     return self.subscriptions == other.subscriptions &&
       self.nonSubscriptions == other.nonSubscriptions &&
       self.userId == other.userId &&
-      self.entitlements == other.entitlements
+      self.entitlements == other.entitlements &&
+      self.isBlank == other.isBlank
   }
 
   override public var hash: Int {
@@ -59,6 +69,7 @@ public final class CustomerInfo: NSObject, Codable {
     hasher.combine(nonSubscriptions)
     hasher.combine(userId)
     hasher.combine(entitlements)
+    hasher.combine(isBlank)
     return hasher.finalize()
   }
 
@@ -67,6 +78,7 @@ public final class CustomerInfo: NSObject, Codable {
     case nonSubscriptions
     case userId
     case entitlements
+    case isBlank
   }
 
   public required init(from decoder: Decoder) throws {
@@ -75,6 +87,7 @@ public final class CustomerInfo: NSObject, Codable {
     nonSubscriptions = try container.decode([NonSubscriptionTransaction].self, forKey: .nonSubscriptions)
     userId = try container.decode(String.self, forKey: .userId)
     entitlements = try container.decode([Entitlement].self, forKey: .entitlements)
+    isBlank = try container.decode(Bool.self, forKey: .isBlank)
     super.init()
   }
 
@@ -84,5 +97,16 @@ public final class CustomerInfo: NSObject, Codable {
     try container.encode(nonSubscriptions, forKey: .nonSubscriptions)
     try container.encode(userId, forKey: .userId)
     try container.encode(entitlements, forKey: .entitlements)
+    try container.encode(isBlank, forKey: .isBlank)
+  }
+
+  static func blank() -> CustomerInfo {
+    return CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      userId: "",
+      entitlements: [],
+      isBlank: true
+    )
   }
 }
