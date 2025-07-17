@@ -190,4 +190,46 @@ class CoreDataManager {
       }
     }
   }
+
+  func countPlacement(
+    _ placementName: String,
+    interval: TriggerAudienceOccurrence.Interval
+  ) async -> Int {
+    let fetchRequest = ManagedEventData.fetchRequest()
+
+    switch interval {
+    case .minutes(let minutes):
+      guard let date = Calendar.current.date(
+        byAdding: .minute,
+        value: -minutes,
+        to: Date()
+      ) else {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Calendar couldn't calculate date by adding \(minutes) minutes and returned nil."
+        )
+        // Return maxCount so that it won't fire the trigger.
+        return 0
+      }
+      fetchRequest.predicate = NSPredicate(
+        format: "createdAt >= %@ AND name == %@",
+        date as NSDate,
+        placementName
+      )
+
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
+    case .infinity:
+      fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
+      return await withCheckedContinuation { continuation in
+        coreDataStack.count(for: fetchRequest) { count in
+          continuation.resume(returning: count)
+        }
+      }
+    }
+  }
 }
