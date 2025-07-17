@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.7.0
+
+### Enhancements
+
+- Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
+
+### Fixes
+
+- Makes sure web entitlements are always redeemed the first time the app loads from a cold start.
+
 ## 4.6.0
 
 ### Enhancements

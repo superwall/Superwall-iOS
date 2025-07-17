@@ -335,12 +335,16 @@ actor WebEntitlementRedeemer {
     }
   }
 
-  func pollWebEntitlements(config: Config? = nil) async {
+  func pollWebEntitlements(
+    config: Config? = nil,
+    isFirstTime: Bool = false
+  ) async {
     guard let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() else {
       return
     }
 
-    if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+    if !isFirstTime,
+      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
       let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
       guard timeElapsed > entitlementsMaxAge else {
         return
