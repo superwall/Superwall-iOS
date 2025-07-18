@@ -90,16 +90,14 @@ actor SK2ReceiptManager: ReceiptManagerType {
     var entitlementsByProductId: [String: Set<Entitlement>] = [:]
     var productIdsByEntitlementId: [String: Set<String>] = [:]
     var txnsPerEntitlement: [String: [Transaction]] = [:]
+    var nonSubscriptions: [NonSubscriptionTransaction] = []
+    var subscriptions: [SubscriptionTransaction] = []
 
     for (productId, serverEntitlements) in serverEntitlementsByProductId {
       for entitlement in serverEntitlements {
         // Collect all productIds for this entitlement ID
         productIdsByEntitlementId[entitlement.id, default: []].insert(productId)
-      }
-    }
 
-    for (productId, serverEntitlements) in serverEntitlementsByProductId {
-      for entitlement in serverEntitlements {
         let allProductIds = productIdsByEntitlementId[entitlement.id] ?? [productId]
 
         entitlementsByProductId[productId, default: []].insert(
@@ -111,9 +109,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
         )
       }
     }
-
-    var nonSubscriptions: [NonSubscriptionTransaction] = []
-    var subscriptions: [SubscriptionTransaction] = []
 
     // 1️⃣ FIRST PASS: collect txns & receipts & purchases
     for await verificationResult in Transaction.all {
@@ -203,6 +198,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
       }) {
         isLifetime = true
         latestProductId = lifetimeProduct.productID
+        isActive = true
       }
 
       // single scan of this entitlement's txns
@@ -263,10 +259,10 @@ actor SK2ReceiptManager: ReceiptManagerType {
       if !isLifetime,
         let renewable = mostRecentRenewable {
         let status = await renewable.subscriptionStatus
-
+        
         if case let .verified(info) = status?.renewalInfo {
           willRenew = info.willAutoRenew
-
+          
           if let index = subscriptionTxnIndex {
             subscriptions[index].willRenew = info.willAutoRenew
           }
