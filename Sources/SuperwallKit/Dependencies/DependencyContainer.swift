@@ -262,6 +262,7 @@ extension DependencyContainer: ViewControllerFactory {
       eventDelegate: Superwall.shared,
       delegate: delegate,
       deviceHelper: deviceHelper,
+      
       factory: self,
       storage: storage,
       webView: webView,

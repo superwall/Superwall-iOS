@@ -320,6 +320,20 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
+  Response == CheckoutStatusResponse {
+  static func checkoutStatus(sessionId: String) -> Self {
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "checkout/status/\(sessionId)"
+      ),
+      method: .get
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
   Response == WebEntitlements {
   static func redeem(
     appUserId: String?,

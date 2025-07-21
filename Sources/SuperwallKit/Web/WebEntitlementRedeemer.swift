@@ -19,6 +19,7 @@ actor WebEntitlementRedeemer {
   private unowned let factory: Factory
   private var isProcessing = false
   private var superwall: Superwall?
+  private var webCheckoutSessionId: String?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
@@ -73,6 +74,10 @@ actor WebEntitlementRedeemer {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+  }
+
+  func startWebCheckoutSession(withId sessionId: String) {
+    webCheckoutSessionId = sessionId
   }
 
   func redeem(
@@ -328,10 +333,47 @@ actor WebEntitlementRedeemer {
   @objc
   nonisolated private func handleAppForeground() {
     Task {
+      await checkForWebCheckoutCompletion()
+    }
+    Task {
       if await factory.makeConfigManager() == nil {
         return
       }
       await pollWebEntitlements()
+    }
+  }
+
+  private func checkForWebCheckoutCompletion() async {
+    guard let sessionId = webCheckoutSessionId else {
+      return
+    }
+    do {
+      let response = try await network.getWebCheckoutStatus(sessionId: sessionId)
+      switch response.status {
+      case .abandoned(let abandoned):
+        // Need more product info to construct the abandon,
+        break
+//        if let paywallViewController = Superwall.shared.paywallViewController {
+//          let product = StoreProduct
+//          let transactionAbandon = InternalSuperwallEvent.Transaction(
+//            state: .abandon(product),
+//            paywallInfo: paywallViewController.info,
+//            product: product,
+//            transaction: nil,
+//            source: .internal,
+//            isObserved: false,
+//            storeKitVersion: nil
+//          )
+//          await Superwall.shared.track(transactionAbandon)
+//          await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
+//        }
+      case .completed(let redemptionCodes):
+        redeem(.code(rede))
+      case .pending:
+        // TODO: Retry with exponential backoff?
+      }
+    } catch {
+
     }
   }
 

@@ -4,6 +4,7 @@
 //
 //  Created by brian on 7/27/21.
 //
+// swiftlint:disable enum_case_associated_values_count
 
 import Foundation
 
@@ -46,6 +47,7 @@ enum PaywallMessage: Decodable, Equatable {
   case purchase(productId: String)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
+  case initiateWebCheckout(sessionId: String)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -72,6 +74,7 @@ enum PaywallMessage: Decodable, Equatable {
     case purchase
     case custom
     case customPlacement = "custom_placement"
+    case initiateWebCheckout = "initiate_web_checkout"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -84,6 +87,11 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
+    case checkoutSessionId
+    case paywallId
+    case variantId = "experimentVariantId"
+    case presentedByEventName
+    case store
   }
 
   enum PaywallMessageError: Error {
@@ -137,6 +145,10 @@ enum PaywallMessage: Decodable, Equatable {
           let params = try? values.decode(JSON.self, forKey: .params) {
           self = .customPlacement(name: name, params: params)
           return
+        }
+      case .initiateWebCheckout:
+        if let sessionId = try? values.decode(String.self, forKey: .checkoutSessionId) {
+          self = .initiateWebCheckout(sessionId: sessionId)
         }
       }
     }

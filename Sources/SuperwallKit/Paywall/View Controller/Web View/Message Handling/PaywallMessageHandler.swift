@@ -21,6 +21,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func openDeepLink(_ url: URL)
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
+  func startCheckoutSession(id sessionId: String)
 }
 
 @MainActor
@@ -56,6 +57,12 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
 
     switch message {
+    case .initiateWebCheckout(let sessionId):
+      /*
+       Pass this to the paywall. When it reopens, call endpoint.
+       */
+      print(sessionId)
+      delegate?.startCheckoutSession(id: sessionId)
     case .templateParamsAndUserAttributes:
       Task {
         await self.passTemplatesToWebView(from: paywall)

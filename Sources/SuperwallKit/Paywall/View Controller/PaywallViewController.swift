@@ -166,6 +166,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let factory: TriggerFactory & RestoreAccessFactory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private weak var cache: PaywallViewControllerCache?
   private weak var paywallArchiveManager: PaywallArchiveManager?
 
@@ -176,6 +177,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
+    webEntitlementRedeemer: WebEntitlementRedeemer,
     factory: TriggerFactory & RestoreAccessFactory,
     storage: Storage,
     webView: SWWebView,
@@ -191,7 +193,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.deviceHelper = deviceHelper
     self.eventDelegate = eventDelegate
     self.delegate = delegate
-
+    self.webEntitlementRedeemer = webEntitlementRedeemer
     self.factory = factory
     self.storage = storage
     self.paywall = paywall
@@ -698,6 +700,12 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
+  func startCheckoutSession(id sessionId: String) {
+    Task {
+      await webEntitlementRedeemer.startWebCheckoutSession(withId: sessionId)
+    }
+  }
+  
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
     Task {
       await eventDelegate?.eventDidOccur(
@@ -753,6 +761,12 @@ extension PaywallViewController {
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     cache?.activePaywallVcKey = cacheKey
+
+    /*
+     Somewhere here, we need to call the checkout status endpoint to get the status
+     then either continue the redeem or log the transaction abandon. If pending, then keep retrying
+     with exponential backoff
+     */
 
     if isSafariVCPresented {
       return
