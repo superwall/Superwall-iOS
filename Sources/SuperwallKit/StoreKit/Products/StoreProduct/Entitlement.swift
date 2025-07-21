@@ -243,7 +243,6 @@ public final class Entitlement: NSObject, Codable, Sendable {
       && self.expiresAt == other.expiresAt
       && self.isLifetime == other.isLifetime
       && self.willRenew == other.willRenew
-      && self.willRenew == other.willRenew
       && self.state == other.state
       && self.offerType == other.offerType
   }
