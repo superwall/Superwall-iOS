@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Makes sure web entitlements are always redeemed the first time the app loads from a cold start.
+- Fixes issue where the Superwall config wasn't timing out and falling back to the cached config after 1 second.
 
 ## 4.6.0
 
