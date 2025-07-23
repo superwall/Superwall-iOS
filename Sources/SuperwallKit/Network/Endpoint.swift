@@ -208,12 +208,14 @@ extension Endpoint where
   Response == Config {
   static func config(
     maxRetry: Int,
-    apiKey: String
+    apiKey: String,
+    timeout: Seconds?
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: apiKey)]
 
     return Endpoint(
       retryCount: maxRetry,
+      timeout: timeout,
       components: Components(
         host: .base,
         path: "static_config",

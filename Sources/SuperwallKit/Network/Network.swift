@@ -156,7 +156,8 @@ class Network {
       var config = try await urlSession.request(
         .config(
           maxRetry: maxRetry ?? options.maxConfigRetryCount,
-          apiKey: factory.storage.apiKey
+          apiKey: factory.storage.apiKey,
+          timeout: timeout
         ),
         data: SuperwallRequestData(
           factory: factory,

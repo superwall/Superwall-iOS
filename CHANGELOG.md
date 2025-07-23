@@ -7,10 +7,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
+- Updates Superscript version to 1.0.1. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.1).
 
 ### Fixes
 
 - Makes sure web entitlements are always redeemed the first time the app loads from a cold start.
+- Fixes issue where the Superwall config wasn't timing out and falling back to the cached config after 1 second.
 
 ## 4.6.0
 
