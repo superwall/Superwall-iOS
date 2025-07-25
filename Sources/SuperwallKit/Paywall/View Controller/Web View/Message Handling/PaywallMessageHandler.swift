@@ -58,10 +58,6 @@ final class PaywallMessageHandler: WebEventDelegate {
 
     switch message {
     case .initiateWebCheckout(let sessionId):
-      /*
-       Pass this to the paywall. When it reopens, call endpoint.
-       */
-      print(sessionId)
       delegate?.startCheckoutSession(id: sessionId)
     case .templateParamsAndUserAttributes:
       Task {

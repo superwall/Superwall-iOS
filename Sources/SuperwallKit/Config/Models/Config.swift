@@ -99,11 +99,11 @@ struct Config: Codable, Equatable {
     locales = Set(localization.locales.map { $0.locale })
     requestId = try values.decodeIfPresent(String.self, forKey: .requestId)
 
-    let appStoreProductItems = try values.decodeIfPresent(
+    let products = try values.decodeIfPresent(
       [Throwable<Product>].self,
       forKey: .products
     ) ?? []
-    products = appStoreProductItems.compactMap { try? $0.result.get() }
+    self.products = products.compactMap { try? $0.result.get() }
   }
 
   func encode(to encoder: Encoder) throws {

@@ -368,8 +368,10 @@ actor WebEntitlementRedeemer {
 //          await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 //        }
       case .completed(let redemptionCodes):
-        redeem(.code(rede))
+        break
+       // redeem(.code(rede))
       case .pending:
+        break
         // TODO: Retry with exponential backoff?
       }
     } catch {

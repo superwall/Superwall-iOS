@@ -30,7 +30,7 @@ actor StoreKitManager {
     var productAttributes: [ProductVariable] = []
 
     // Add the StoreProduct attributes for each product at its corresponding index
-    paywall.products.forEach { productItem in
+    paywall.appStoreProducts.forEach { productItem in
       guard let storeProduct = output.productsById[productItem.id] else {
         return
       }
@@ -57,7 +57,7 @@ actor StoreKitManager {
     productItems: [Product]
   ) {
     // 1. Compute fetch IDs = paywall IDs - byProduct IDs + byId IDs
-    let paywallIDs = Set(paywall?.productIds ?? [])
+    let paywallIDs = Set(paywall?.appStoreProductIds ?? [])
     let byIdIDs: Set<String> = Set(substituteProductsByLabel?.values.compactMap {
       if case .byId(let id) = $0 {
         return id
