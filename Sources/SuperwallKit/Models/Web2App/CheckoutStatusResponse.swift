@@ -50,6 +50,10 @@ struct CheckoutStatusResponse: Decodable {
     
     private enum SubscriptionIntroOfferCodingKeys: String, CodingKey {
       case period
+      case periodCount
+      case price
+      case rawPrice
+      case paymentMethod
     }
 
     init(from decoder: Decoder) throws {
@@ -93,7 +97,13 @@ struct CheckoutStatusResponse: Decodable {
             unit: try periodContainer.decode(StripeProductType.StripeSubscriptionPeriod.Unit.self, forKey: .unit),
             value: try periodContainer.decode(Int.self, forKey: .value)
           )
-          subscriptionIntroOffer = StripeProductType.SubscriptionIntroductoryOffer(period: period)
+          subscriptionIntroOffer = StripeProductType.SubscriptionIntroductoryOffer(
+            period: period,
+            localizedPrice: try subscriptionIntroOfferContainer.decode(String.self, forKey: .price),
+            price: try subscriptionIntroOfferContainer.decode(Decimal.self, forKey: .rawPrice),
+            periodCount: try subscriptionIntroOfferContainer.decode(Int.self, forKey: .periodCount),
+            paymentMethod: try subscriptionIntroOfferContainer.decode(StripeProductType.SubscriptionIntroductoryOffer.PaymentMethod.self, forKey: .paymentMethod)
+          )
         } else {
           subscriptionIntroOffer = nil
         }

@@ -4,13 +4,13 @@
 //
 //  Created by Yusuf Tör on 24/07/2025.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
 
 struct StripeProductType: StoreProductType {
   let id: String
-  // TODO: IS price supposed to be with the symbol? double check
   let price: Decimal
   let localizedPrice: String
   let currencyCode: String?
@@ -45,6 +45,16 @@ struct StripeProductType: StoreProductType {
 
   struct SubscriptionIntroductoryOffer: Equatable, Hashable {
     let period: StripeSubscriptionPeriod
+    let localizedPrice: String
+    let price: Decimal
+    let periodCount: Int
+
+    enum PaymentMethod: String, Equatable, Decodable {
+      case payAsYouGo
+      case payUpFront
+      case freeTrial
+    }
+    let paymentMethod: PaymentMethod
   }
 
   var productIdentifier: String {
@@ -300,7 +310,7 @@ struct StripeProductType: StoreProductType {
   }
 
   var weeklyPrice: String {
-    if rawPrice == 0.00 {
+    if price == 0.00 {
       return "$0.00"
     }
 
@@ -369,7 +379,7 @@ struct StripeProductType: StoreProductType {
   }
 
   var yearlyPrice: String {
-    if rawPrice == 0.00 {
+    if price == 0.00 {
       return "$0.00"
     }
 
@@ -624,7 +634,7 @@ struct StripeProductType: StoreProductType {
   let discounts: [StoreProductDiscount] = []
 
   var trialPeriodPrice: Decimal {
-    subscriptionIntroOffer.price ?? 0.00
+    subscriptionIntroOffer?.price ?? 0.00
   }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
@@ -641,7 +651,7 @@ struct StripeProductType: StoreProductType {
   }
 
   var localizedTrialPeriodPrice: String {
-    guard let price = subscriptionIntroOffer?.rawPrice else {
+    guard let price = subscriptionIntroOffer?.price else {
       return priceFormatter?.string(from: 0.00) ?? "$0.00"
     }
     return priceFormatter?.string(from: price as NSDecimalNumber) ?? "$0.00"

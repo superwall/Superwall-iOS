@@ -37,7 +37,7 @@ struct StripeStoreProductDiscount: StoreProductDiscountType {
     currencyCode: String?
   ) {
     guard
-      let paymentMode = StoreProductDiscount.PaymentMode(subscriptionOfferPaymentMode: stripeOffer.paymentMode),
+      let paymentMode = StoreProductDiscount.PaymentMode(subscriptionOfferPaymentMode: stripeOffer.paymentMethod),
       let subscriptionPeriod = SubscriptionPeriod.from(stripeSubscriptionPeriod: stripeOffer.period)
     else {
       return nil
@@ -45,19 +45,19 @@ struct StripeStoreProductDiscount: StoreProductDiscountType {
 
     self.offerIdentifier = nil
     self.currencyCode = currencyCode
-    self.price = stripeOffer.rawPrice
+    self.price = stripeOffer.price
     self.paymentMode = paymentMode
     self.subscriptionPeriod = subscriptionPeriod
     self.numberOfPeriods = stripeOffer.periodCount
     self.type = .introductory
-    self.localizedPriceString = stripeOffer.price
+    self.localizedPriceString = stripeOffer.localizedPrice
   }
 }
 
 // MARK: - Private
 
 private extension StoreProductDiscount.PaymentMode {
-  init?(subscriptionOfferPaymentMode paymentMode: StripeProductType.SubscriptionIntroductoryOffer.PaymentMode) {
+  init?(subscriptionOfferPaymentMode paymentMode: StripeProductType.SubscriptionIntroductoryOffer.PaymentMethod) {
     switch paymentMode {
     case .payUpFront:
       self = .payUpFront
@@ -65,8 +65,6 @@ private extension StoreProductDiscount.PaymentMode {
       self = .payAsYouGo
     case .freeTrial:
       self = .freeTrial
-    default:
-      return nil
     }
   }
 }

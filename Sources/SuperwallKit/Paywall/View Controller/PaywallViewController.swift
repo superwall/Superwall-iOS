@@ -763,7 +763,7 @@ extension PaywallViewController {
     cache?.activePaywallVcKey = cacheKey
 
     /*
-     Somewhere here, we need to call the checkout status endpoint to get the status
+     TODO: Somewhere here, we need to call the checkout status endpoint to get the status
      then either continue the redeem or log the transaction abandon. If pending, then keep retrying
      with exponential backoff
      */

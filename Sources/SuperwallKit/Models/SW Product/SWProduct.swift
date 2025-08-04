@@ -90,7 +90,7 @@ struct SWProduct: Codable {
   init(product: StripeProductType) {
     localizedDescription = "" //product.description
     localizedTitle = "" //product.displayName
-    price = product.rawPrice
+    price = product.price
     priceLocale = product.priceLocale.identifier
     productIdentifier = product.productIdentifier
     isDownloadable = false
@@ -100,8 +100,8 @@ struct SWProduct: Codable {
 
     isFamilyShareable = product.isFamilyShareable
 
-    discounts = product.subscription?.promotionalOffers.map { offer in
-      SWProductDiscount(offer: offer, fromProduct: product)
+    if let offer = product.subscriptionIntroOffer {
+      discounts = [SWProductDiscount(offer: offer, fromProduct: product)]
     }
 
     subscriptionGroupIdentifier = product.subscriptionGroupIdentifier
