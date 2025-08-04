@@ -333,9 +333,9 @@ actor WebEntitlementRedeemer {
 
   @objc
   nonisolated private func handleAppForeground() {
-    Task {
+    Task.retrying(maxRetryCount: 6) { [weak self] in
       // TODO: Change this so that now only is it on app foreground, but also when the person pops back from
-      await checkForWebCheckoutCompletion()
+      try await self?.checkForWebCheckoutCompletion()
     }
     Task {
       if await factory.makeConfigManager() == nil {
@@ -345,7 +345,9 @@ actor WebEntitlementRedeemer {
     }
   }
 
-  private func checkForWebCheckoutCompletion() async {
+  struct PendingWebCheckoutError: Error {}
+
+  private func checkForWebCheckoutCompletion() async throws {
     guard let sessionId = webCheckoutSessionId else {
       return
     }
@@ -426,10 +428,15 @@ actor WebEntitlementRedeemer {
           await redeem(.code(code))
         }
       case .pending:
-        break
+        throw PendingWebCheckoutError()
       }
+    } catch let error as PendingWebCheckoutError {
+      // Throwing this forces a refresh with the encapsulating Task.
+      throw error
+      // TODO: Log pending
     } catch {
-
+      // TODO: Log other errors.
+      // Some other error occurred.
     }
   }
 
