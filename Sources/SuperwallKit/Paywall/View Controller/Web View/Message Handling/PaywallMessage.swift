@@ -149,6 +149,7 @@ enum PaywallMessage: Decodable, Equatable {
       case .initiateWebCheckout:
         if let sessionId = try? values.decode(String.self, forKey: .checkoutSessionId) {
           self = .initiateWebCheckout(sessionId: sessionId)
+          return
         }
       }
     }
