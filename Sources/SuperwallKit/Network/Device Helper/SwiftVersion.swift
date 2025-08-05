@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 05/08/2025.
 //
+// swiftlint:disable function_body_length
 
 extension DeviceHelper {
   func currentSwiftVersion() -> String {
