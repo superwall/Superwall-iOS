@@ -701,6 +701,9 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func startCheckoutSession(id sessionId: String) {
+    webView.messageHandler.handle(.transactionStart)
+    loadingState = .loadingPurchase
+
     Task {
       await webEntitlementRedeemer.startWebCheckoutSession(withId: sessionId)
     }
@@ -835,6 +838,9 @@ extension PaywallViewController {
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     presentationDidFinish()
+    Task {
+      await webEntitlementRedeemer.onPaywallAppear()
+    }
   }
 
   /// Lets the view controller know that presentation has finished. Only called once per presentation.

@@ -20,6 +20,7 @@ actor WebEntitlementRedeemer {
   private var isProcessing = false
   private var superwall: Superwall?
   private var webCheckoutSessionId: String?
+  private var isCheckingWebCheckout = false
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
@@ -79,6 +80,35 @@ actor WebEntitlementRedeemer {
 
   func startWebCheckoutSession(withId sessionId: String) {
     webCheckoutSessionId = sessionId
+  }
+
+  func onPaywallAppear() {
+    startWebCheckoutCompletionCheck()
+  }
+
+  private func startWebCheckoutCompletionCheck() {
+    if webCheckoutSessionId == nil {
+      return
+    }
+    if isCheckingWebCheckout {
+      return
+    }
+    setCheckingWebCheckout(true)
+    Task {
+      defer {
+        Task { [weak self] in
+          await self?.setCheckingWebCheckout(false)
+        }
+      }
+
+      _ = try await Task.retrying(maxRetryCount: 6) { [weak self] in
+        try await self?.checkForWebCheckoutCompletion()
+      }.value
+    }
+  }
+
+  private func setCheckingWebCheckout(_ value: Bool) {
+    isCheckingWebCheckout = value
   }
 
   func redeem(
@@ -333,9 +363,8 @@ actor WebEntitlementRedeemer {
 
   @objc
   nonisolated private func handleAppForeground() {
-    Task.retrying(maxRetryCount: 6) { [weak self] in
-      // TODO: Change this so that now only is it on app foreground, but also when the person pops back from
-      try await self?.checkForWebCheckoutCompletion()
+    Task { [weak self] in
+      await self?.startWebCheckoutCompletionCheck()
     }
     Task {
       if await factory.makeConfigManager() == nil {
@@ -369,64 +398,25 @@ actor WebEntitlementRedeemer {
           await Superwall.shared.track(transactionAbandon)
           await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
         }
-      case .completed(let redemptionCodes):
-//        Task {
-//          if let paywallViewController = Superwall.shared.paywallViewController {
-//            let product = StoreProduct.from(product: abandoned.stripeProduct)
-//            let deviceAttributes = await factory.makeSessionDeviceAttributes()
-//            let trackedTransactionEvent = InternalSuperwallEvent.Transaction(
-//              state: .complete(product, nil, type),
-//              paywallInfo: paywallViewController.info,
-//              product: product,
-//              transaction: nil,
-//              source: .internal,
-//              isObserved: false,
-//              storeKitVersion: nil,
-//              demandScore: deviceAttributes["demandScore"] as? Int,
-//              demandTier: deviceAttributes["demandTier"] as? String
-//            )
-//            await Superwall.shared.track(trackedTransactionEvent)
-//          }
-        // TODO: Should we add in factory to generate placementsQueue and flush the queue?
-//        }
+        webCheckoutSessionId = nil
+        isCheckingWebCheckout = false
+      case let .completed(redemptionCodes, product):
         if let paywallViewController = Superwall.shared.paywallViewController {
           await paywallViewController.webView.messageHandler.handle(.transactionComplete)
+
+          if let offer = product.subscriptionIntroOffer,
+            offer.paymentMethod == .freeTrial {
+            let notifications = await paywallViewController.info.localNotifications.filter {
+              $0.type == .trialStarted
+            }
+            await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+          }
         }
-        /*
-         switch type {
-         case .nonRecurringProductPurchase:
-           await Superwall.shared.track(
-             InternalSuperwallEvent.NonRecurringProductPurchase(
-               paywallInfo: paywallInfo,
-               product: product,
-               transaction: transaction
-             )
-           )
-         case .freeTrialStart:
-           await Superwall.shared.track(
-             InternalSuperwallEvent.FreeTrialStart(
-               paywallInfo: paywallInfo,
-               product: product,
-               transaction: transaction
-             )
-           )
-           let notifications = paywallInfo.localNotifications.filter {
-             $0.type == .trialStarted
-           }
-           await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
-         case .subscriptionStart:
-           await Superwall.shared.track(
-             InternalSuperwallEvent.SubscriptionStart(
-               paywallInfo: paywallInfo,
-               product: product,
-               transaction: transaction
-             )
-           )
-         }
-         */
         if let code = redemptionCodes.first {
           await redeem(.code(code))
         }
+        webCheckoutSessionId = nil
+        isCheckingWebCheckout = false
       case .pending:
         throw PendingWebCheckoutError()
       }
