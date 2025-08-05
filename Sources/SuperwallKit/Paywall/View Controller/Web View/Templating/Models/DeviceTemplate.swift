@@ -59,6 +59,8 @@ struct DeviceTemplate: Codable {
   var capabilitiesConfig: JSON
   var platformWrapper: String?
   var platformWrapperVersion: String?
+  var swiftVersion: String
+  var compilerVersion: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {
