@@ -18,6 +18,14 @@ final class EvaluationContext: HostContext {
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  func deviceProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  private func evaluateProperty(name: String, args: String, callback: ResultCallback) {
     Task {
       guard
         let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
@@ -100,10 +108,6 @@ final class EvaluationContext: HostContext {
       }
       callback.onResult(result: jsonString)
     }
-  }
-
-  func deviceProperty(name: String, args: String, callback: ResultCallback) {
-    callback.onResult(result: "")
   }
 }
 
