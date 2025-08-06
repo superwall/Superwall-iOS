@@ -48,22 +48,22 @@ struct CELEvaluator: ExpressionEvaluating {
       withComputedProperties: audience.computedPropertyRequests
     )
 
-    var computedProperties: [String: [PassableValue]] = [:]
-    for computedPropertyRequest in audience.computedPropertyRequests {
-      let description = computedPropertyRequest.type.description
-      let placementName = computedPropertyRequest.placementName
-      computedProperties[description] = [toPassableValue(from: placementName)]
-    }
-
     let attributesPassableValue = toPassableValue(from: attributes)
     var variablesMap: [String: PassableValue] = [:]
     if case let PassableValue.map(dictionary) = attributesPassableValue {
       variablesMap = dictionary
     }
+
+    let computedProperties = Dictionary(uniqueKeysWithValues:
+      ComputedPropertyRequestType.allCases.map {
+        ($0.description, [PassableValue.string("event_name")])
+      }
+    )
+
     let executionContext = ExecutionContext(
       variables: PassableMap(map: variablesMap),
       computed: computedProperties,
-      device: [:],
+      device: computedProperties,
       expression: expression
     )
 
@@ -79,7 +79,6 @@ struct CELEvaluator: ExpressionEvaluating {
       return noMatch
     }
 
-    evaluationContext.triggeringPlacementName = placementData?.name
     guard
       let resultData = evaluateWithContext(
         definition: jsonString,

@@ -11,13 +11,20 @@ import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage
-  var triggeringPlacementName: String?
 
   init(storage: Storage) {
     self.storage = storage
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  func deviceProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  private func evaluateProperty(name: String, args: String, callback: ResultCallback) {
     Task {
       guard
         let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
@@ -68,12 +75,9 @@ final class EvaluationContext: HostContext {
           interval = .minutes(0)
         }
 
-        var triggeringPlacementOffset = 0
-        if name == triggeringPlacementName {
-          triggeringPlacementOffset = 1
-        }
-
-        number = await storage.coreDataManager.countPlacement(name, interval: interval) + triggeringPlacementOffset
+        // We don't add one here because the placement data is saved before
+        // we do the count.
+        number = await storage.coreDataManager.countPlacement(name, interval: interval)
       } else {
         number = await storage.coreDataManager.getComputedPropertySincePlacement(
           PlacementData(
@@ -100,10 +104,6 @@ final class EvaluationContext: HostContext {
       }
       callback.onResult(result: jsonString)
     }
-  }
-
-  func deviceProperty(name: String, args: String, callback: ResultCallback) {
-    callback.onResult(result: "")
   }
 }
 
