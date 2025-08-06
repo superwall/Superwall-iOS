@@ -324,12 +324,17 @@ extension Endpoint where
   Kind == EndpointKinds.Web2App,
   Response == CheckoutStatusResponse {
   static func checkoutStatus(sessionId: String) -> Self {
+    let bodyData = try? JSONEncoder().encode([
+      "checkoutId": sessionId
+    ])
+
     return Endpoint(
       components: Components(
         host: .web2app,
-        path: "checkout/status/\(sessionId)"
+        path: "checkout/status/\(sessionId)",
+        bodyData: bodyData
       ),
-      method: .get
+      method: .post
     )
   }
 }

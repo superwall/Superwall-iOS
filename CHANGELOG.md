@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.8.0
+
+### Enhancements
+
+- Adds `transaction_abandon` to web checkout.
+
 ## 4.7.0
 
 ### Enhancements
