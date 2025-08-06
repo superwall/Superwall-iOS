@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
-- Updates Superscript version to 1.0.1. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.1).
+- Updates Superscript version to 1.0.2. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.2).
 - Adds `swiftVersion` and `compilerVersion` to the device attributes.
 
 ### Fixes
