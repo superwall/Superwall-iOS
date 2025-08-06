@@ -11,7 +11,6 @@ import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage
-  var triggeringPlacementName: String?
 
   init(storage: Storage) {
     self.storage = storage
@@ -76,12 +75,9 @@ final class EvaluationContext: HostContext {
           interval = .minutes(0)
         }
 
-        var triggeringPlacementOffset = 0
-        if name == triggeringPlacementName {
-          triggeringPlacementOffset = 1
-        }
-
-        number = await storage.coreDataManager.countPlacement(name, interval: interval) + triggeringPlacementOffset
+        // We don't add one here because the placement data is saved before
+        // we do the count.
+        number = await storage.coreDataManager.countPlacement(name, interval: interval)
       } else {
         number = await storage.coreDataManager.getComputedPropertySincePlacement(
           PlacementData(
