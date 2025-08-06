@@ -242,7 +242,7 @@ class DeviceHelper {
 
   private let appInstallDate: Date? = {
     guard let urlToDocumentsFolder = FileManager.default.urls(
-      for: .documentDirectory,
+      for: .applicationSupportDirectory,
       in: .userDomainMask
     ).last else {
       return nil
@@ -556,7 +556,9 @@ class DeviceHelper {
       capabilities: capabilitiesConfig.namesCommaSeparated(),
       capabilitiesConfig: capabilitiesConfig.toJson(),
       platformWrapper: platformWrapper,
-      platformWrapperVersion: platformWrapperVersion
+      platformWrapperVersion: platformWrapperVersion,
+      swiftVersion: currentSwiftVersion(),
+      compilerVersion: currentCompilerVersion()
     )
 
     var deviceDictionary = template.toDictionary()

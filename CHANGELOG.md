@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.7.0
+
+### Enhancements
+
+- Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
+- Updates Superscript version to 1.0.2. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.2).
+- Adds `swiftVersion` and `compilerVersion` to the device attributes.
+
+### Fixes
+
+- Makes sure web entitlements are always redeemed the first time the app loads from a cold start.
+- Fixes issue where the Superwall config wasn't timing out and falling back to the cached config after 1 second.
+
 ## 4.6.0
 
 ### Enhancements

@@ -29,34 +29,37 @@ final class CoreDataStackMock: CoreDataStack {
     count: Int,
     completion: @escaping () -> Void
   ) {
-    var index = 0
-
-    let batchInsert = NSBatchInsertRequest(
-      entity: ManagedEventData.entity()
-    ) { (managedObject: NSManagedObject) -> Bool in
-      guard index < count else {
-        return true
-      }
-
-      if let eventData = managedObject as? ManagedEventData {
+    guard let backgroundContext = backgroundContext else {
+      completion()
+      return
+    }
+    
+    backgroundContext.perform {
+      for _ in 0..<count {
         let stub = PlacementData.stub()
           .setting(\.name, to: eventName)
-        eventData.createdAt = stub.createdAt
-        eventData.id = stub.id
-        eventData.name = stub.name
-        let params = try! JSONEncoder().encode(stub.parameters)
-        eventData.parameters = params
+        let data = try? JSONEncoder().encode(stub.parameters)
+        _ = ManagedEventData(
+          context: backgroundContext,
+          id: stub.id,
+          createdAt: stub.createdAt,
+          name: stub.name,
+          parameters: data ?? Data()
+        )
       }
-      index += 1
-      return false
-    }
-
-    persistentContainer!.performBackgroundTask { context in
+      
       do {
-        try context.execute(batchInsert)
-        completion()
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
+        DispatchQueue.main.async {
+          completion()
+        }
       } catch {
-        print("ERROR!", error)
+        print("ERROR saving placement data!", error)
+        DispatchQueue.main.async {
+          completion()
+        }
       }
     }
   }
@@ -66,29 +69,32 @@ final class CoreDataStackMock: CoreDataStack {
     count: Int,
     completion: @escaping () -> Void
   ) {
-    var index = 0
-
-    let batchInsert = NSBatchInsertRequest(
-      entity: ManagedTriggerRuleOccurrence.entity()
-    ) { (managedObject: NSManagedObject) -> Bool in
-      guard index < count else {
-        return true
-      }
-
-      if let occurrence = managedObject as? ManagedTriggerRuleOccurrence {
-        occurrence.createdAt = Date()
-        occurrence.occurrenceKey = key
-      }
-      index += 1
-      return false
+    guard let backgroundContext = backgroundContext else {
+      completion()
+      return
     }
-
-    persistentContainer!.performBackgroundTask { context in
+    
+    backgroundContext.perform {
+      for _ in 0..<count {
+        _ = ManagedTriggerRuleOccurrence(
+          context: backgroundContext,
+          createdAt: Date(),
+          occurrenceKey: key
+        )
+      }
+      
       do {
-        try context.execute(batchInsert)
-        completion()
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
+        DispatchQueue.main.async {
+          completion()
+        }
       } catch {
-        print("ERROR!", error)
+        print("ERROR saving trigger occurrences!", error)
+        DispatchQueue.main.async {
+          completion()
+        }
       }
     }
   }

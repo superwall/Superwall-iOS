@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 06/09/2024.
 //
+// swiftlint:disable function_body_length
 
 import Foundation
 import Superscript
@@ -16,6 +17,14 @@ final class EvaluationContext: HostContext {
   }
 
   func computedProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  func deviceProperty(name: String, args: String, callback: ResultCallback) {
+    evaluateProperty(name: name, args: args, callback: callback)
+  }
+
+  private func evaluateProperty(name: String, args: String, callback: ResultCallback) {
     Task {
       guard
         let type = ComputedPropertyRequestType.allCases.first(where: { $0.description == name })
@@ -48,14 +57,39 @@ final class EvaluationContext: HostContext {
         placementName: name
       )
 
-      guard let number = await storage.coreDataManager.getComputedPropertySincePlacement(
-        PlacementData(
-          name: name,
-          parameters: [:],
-          createdAt: Date()
-        ),
-        request: request
-      ) else {
+      let number: Int?
+      if type.isPlacementCount {
+        let interval: TriggerAudienceOccurrence.Interval
+        switch type {
+        case .placementsInHour:
+          interval = .minutes(60)
+        case .placementsInDay:
+          interval = .minutes(60 * 24)
+        case .placementsInWeek:
+          interval = .minutes(60 * 24 * 7)
+        case .placementsInMonth:
+          interval = .minutes(60 * 24 * 7 * 30)
+        case .placementsSinceInstall:
+          interval = .infinity
+        default:
+          interval = .minutes(0)
+        }
+
+        // We don't add one here because the placement data is saved before
+        // we do the count.
+        number = await storage.coreDataManager.countPlacement(name, interval: interval)
+      } else {
+        number = await storage.coreDataManager.getComputedPropertySincePlacement(
+          PlacementData(
+            name: name,
+            parameters: [:],
+            createdAt: Date()
+          ),
+          request: request
+        )
+      }
+
+      guard let number = number else {
         callback.onResult(result: "")
         return
       }
@@ -70,10 +104,6 @@ final class EvaluationContext: HostContext {
       }
       callback.onResult(result: jsonString)
     }
-  }
-
-  func deviceProperty(name: String, args: String, callback: ResultCallback) {
-    callback.onResult(result: "")
   }
 }
 

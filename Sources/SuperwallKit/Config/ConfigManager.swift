@@ -138,7 +138,14 @@ class ConfigManager {
       // Retrieve cached config and determine if refresh is enabled
       let cachedConfig = storage.get(LatestConfig.self)
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
-      let timeout: TimeInterval = 1
+
+      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
+      let timeout: TimeInterval
+      if case .active = cachedSubsStatus {
+        timeout = 0.5
+      } else {
+        timeout = 1
+      }
 
       // Prepare tasks for fetching config and geoInfo concurrently
       // Return a tuple including the `isUsingCached` flag
@@ -263,7 +270,7 @@ class ConfigManager {
     // Load the products after entitlementsInfo is set because we need to map
     // purchased products to entitlements.
     await factory.loadPurchasedProducts()
-    await webEntitlementRedeemer.pollWebEntitlements(config: config)
+    await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }
