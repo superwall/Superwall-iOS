@@ -91,7 +91,7 @@ enum PopupTransitionLogic {
   ) -> UIViewImplicitlyAnimating? {
     // Check if this is a PaywallViewController with custom background dismissal
     if let paywallVC = fromVC as? PaywallViewController,
-       paywallVC.isCustomBackgroundDismissal {
+      paywallVC.isCustomBackgroundDismissal {
       // Skip the transition animation - the custom animation is already in progress
       let animator = UIViewPropertyAnimator(duration: 0, curve: .linear) { }
       animator.addCompletion { _ in
@@ -99,7 +99,7 @@ enum PopupTransitionLogic {
       }
       return animator
     }
-    
+
     // iOS alert-style dismissal: scale popup content, fade background separately
     let animator = UIViewPropertyAnimator(
       duration: duration,
@@ -108,11 +108,11 @@ enum PopupTransitionLogic {
     ) {
       // Find the popup container and background views
       if let paywallVC = fromVC as? PaywallViewController,
-         let popupContainer = paywallVC.popupContainerView {
+        let popupContainer = paywallVC.popupContainerView {
         // Scale down only the popup container (foreground content)
         popupContainer.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
         popupContainer.alpha = 0.0
-        
+
         // Find and fade out the background separately
         let backgroundView = fromView.subviews.first { subview in
           subview.backgroundColor == UIColor.black.withAlphaComponent(0.4)
