@@ -98,6 +98,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
+  
+  /// Constraints for popup content sizing
+  private var popupWidthConstraint: NSLayoutConstraint?
+  private var popupHeightConstraint: NSLayoutConstraint?
+  internal var popupContainerView: UIView?
+  
+  // Internal property for transition logic
+  internal var isCustomBackgroundDismissal = false
 
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
@@ -140,6 +148,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The push presentation animation transition delegate.
   private let transitionDelegate = PushTransitionDelegate()
+  /// The popup presentation animation transition delegate.
+  private let popupTransitionDelegate = PopupTransitionDelegate()
 
   /// Defines whether the refresh alert view controller has been created.
   private var hasRefreshAlertController = false
@@ -216,10 +226,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     #if !os(visionOS)
       setNeedsStatusBarAppearanceUpdate()
     #endif
-    view.backgroundColor = backgroundColor
+    // Don't set background color for popup - it will be transparent
+    if presentationStyle != .popup {
+      view.backgroundColor = backgroundColor
+    }
 
-    view.addSubview(webView)
-    webView.alpha = 0.0
 
     let loadingColor = backgroundColor.readableOverlayColor
     view.addSubview(refreshPaywallButton)
@@ -228,12 +239,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     view.addSubview(exitButton)
     exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
-    NSLayoutConstraint.activate([
-      webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      webView.topAnchor.constraint(equalTo: view.topAnchor),
-      webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
+    if presentationStyle != .popup {
+      view.addSubview(webView)
+      webView.alpha = 0.0
+      NSLayoutConstraint.activate([
+        webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        webView.topAnchor.constraint(equalTo: view.topAnchor),
+        webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      ])
+    }
 
+    NSLayoutConstraint.activate([
       refreshPaywallButton.topAnchor.constraint(
         equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
       refreshPaywallButton.trailingAnchor.constraint(
@@ -406,6 +423,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           completion: { _ in
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
+
+            // Resize popup to content after shimmer is removed
+            if self.presentationStyle == .popup {
+              self.sizePopupToContent()
+            }
             Task.detached { [weak self] in
               guard let self = self else {
                 return
@@ -451,12 +473,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       tintColor: backgroundColor.readableOverlayColor,
       isLightBackground: !backgroundColor.isDarkColor
     )
-    view.insertSubview(shimmerView, belowSubview: webView)
+    let shimmerSuperview: UIView = presentationStyle == .popup
+      ? (popupContainerView ?? view)
+      : view
+
+    shimmerSuperview.insertSubview(shimmerView, belowSubview: webView)
+
     NSLayoutConstraint.activate([
-      shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      shimmerView.leadingAnchor.constraint(equalTo: shimmerSuperview.leadingAnchor),
+      shimmerView.trailingAnchor.constraint(equalTo: shimmerSuperview.trailingAnchor),
+      shimmerView.topAnchor.constraint(equalTo: shimmerSuperview.topAnchor),
+      shimmerView.bottomAnchor.constraint(equalTo: shimmerSuperview.bottomAnchor)
     ])
     self.shimmerView = shimmerView
     Task {
@@ -628,9 +655,242 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           ]
         }
       #endif
+    case .popup:
+      modalPresentationStyle = .custom
+      transitioningDelegate = popupTransitionDelegate
+      setupPopupBackground()
+
+      // If content is already loaded (preloaded case), size to content immediately
+      if loadingState == .ready && shimmerView == nil {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+          self.sizePopupToContent()
+        }
+      }
     case .none:
       break
     }
+  }
+
+  private func setupPopupBackground() {
+    // Set transparent background for the main view
+    view.backgroundColor = .clear
+    
+    // Create a semi-transparent background view matching iOS alert style
+    let backgroundView = UIView()
+    backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+    backgroundView.translatesAutoresizingMaskIntoConstraints = false
+    backgroundView.alpha = 0.0 // Start transparent for animation
+    view.insertSubview(backgroundView, at: 0)
+    
+    NSLayoutConstraint.activate([
+      backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
+      backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+    ])
+    
+    // Add tap gesture to dismiss on background tap
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+    backgroundView.addGestureRecognizer(tapGesture)
+    
+    // Animate background to visible
+    UIView.animate(withDuration: 0.3) {
+      backgroundView.alpha = 1.0
+    }
+    
+    // Style webview like an iOS alert - ensure no background conflicts
+    webView.backgroundColor = .clear
+    webView.isOpaque = false
+    webView.layer.cornerRadius = 12
+    webView.layer.shadowColor = UIColor.black.cgColor
+    webView.layer.shadowOffset = CGSize(width: 0, height: 2)
+    webView.layer.shadowRadius = 10
+    webView.layer.shadowOpacity = 0.3
+    webView.layer.masksToBounds = false
+    
+    // Create container view for the webview to handle centering
+    let containerView = UIView()
+    containerView.translatesAutoresizingMaskIntoConstraints = false
+    containerView.backgroundColor = .clear
+    view.addSubview(containerView)
+    popupContainerView = containerView
+
+    // Move webview to container
+    containerView.addSubview(webView)
+
+    // Set up size constraints for popup, preserving previous values if they exist
+    let previousWidth = popupWidthConstraint?.constant ?? 300
+    let previousHeight = popupHeightConstraint?.constant ?? 400
+    
+    popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: previousWidth)
+    popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: previousHeight)
+    popupWidthConstraint?.priority = UILayoutPriority(999)
+    popupHeightConstraint?.priority = UILayoutPriority(999)
+
+    // Center container in view with maximum size constraints
+    NSLayoutConstraint.activate([
+      containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      containerView.leadingAnchor.constraint(
+        greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor,
+        constant: 20
+      ),
+      containerView.trailingAnchor.constraint(
+        lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor,
+        constant: -20
+      ),
+      containerView.topAnchor.constraint(
+        greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor,
+        constant: 20
+      ),
+      containerView.bottomAnchor.constraint(
+        lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor,
+        constant: -20
+      ),
+      popupWidthConstraint!,
+      popupHeightConstraint!
+    ])
+    
+    // Set webview constraints within container - fill the container exactly
+    webView.translatesAutoresizingMaskIntoConstraints = false
+    
+    // Enable content size calculation for webview
+    webView.scrollView.isScrollEnabled = true
+    webView.scrollView.bounces = false
+    webView.scrollView.showsVerticalScrollIndicator = false
+    webView.scrollView.showsHorizontalScrollIndicator = false
+    
+    NSLayoutConstraint.activate([
+      webView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+      webView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+      webView.topAnchor.constraint(equalTo: containerView.topAnchor),
+      webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+    ])
+    
+  }
+  
+//  private func resetPopupSize() {
+//    // Reset to reasonable initial size when popup is presented again
+//    let initialWidth = min(view.bounds.width * 0.8, 600)
+//    let initialHeight = min(view.bounds.height * 0.6, 600)
+//    
+//    popupWidthConstraint?.constant = initialWidth
+//    popupHeightConstraint?.constant = initialHeight
+//    
+//    // Always size to content after a brief delay to ensure webview is ready
+//    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+//      self.sizePopupToContent()
+//    }
+//  }
+  
+  private func sizePopupToContent() {
+    let maxWidth: CGFloat = view.bounds.width * 0.9
+    let maxHeight: CGFloat = view.bounds.height * 0.9
+    
+    // Reset scroll position to top
+    webView.scrollView.contentOffset = CGPoint.zero
+    
+    // Wait for the webview to load and then size to content
+    webView.evaluateJavaScript("""
+      // Reset scroll to top and wait for layout
+      window.scrollTo(0, 0);
+      
+      // Force layout recalculation
+      document.body.offsetHeight;
+      
+      function getContentSize() {
+        const body = document.body;
+        
+        // Get the actual content height by checking scroll height
+        // This is more reliable for measuring actual content
+        const height = body.scrollHeight;
+        const width = body.scrollWidth;
+        
+        return { 
+          width: Math.ceil(width), 
+          height: Math.ceil(height),
+          scrollHeight: body.scrollHeight,
+          offsetHeight: body.offsetHeight,
+          clientHeight: body.clientHeight,
+          bodyRect: body.getBoundingClientRect().height,
+          documentRect: document.documentElement.getBoundingClientRect().height
+        };
+      }
+      getContentSize();
+    """) { [weak self] result, error in
+      guard
+        let self = self,
+        let result = result as? [String: Any],
+        let contentWidth = result["width"] as? Double,
+        let contentHeight = result["height"] as? Double
+      else {
+        return
+      }
+
+      DispatchQueue.main.async {
+        // Apply content size with max constraints (90% of screen)
+        let maxWidth = self.view.bounds.width * 0.9
+        let maxHeight = self.view.bounds.height * 0.9
+        let finalWidth = min(CGFloat(contentWidth), maxWidth)
+        let finalHeight = min(CGFloat(contentHeight), maxHeight)
+
+        // Update container size constraints to match content
+        self.popupWidthConstraint?.constant = finalWidth
+        self.popupHeightConstraint?.constant = finalHeight
+
+        // Animate the size change and ensure proper centering
+        UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut) {
+          // Force layout update to recalculate center constraints
+          self.view.setNeedsUpdateConstraints()
+          self.view.updateConstraintsIfNeeded()
+          self.view.layoutIfNeeded()
+        }
+      }
+    }
+  }
+  
+  @objc private func backgroundTapped() {
+    // Custom animation for popup dismissal on background tap
+    if presentationStyle == .popup {
+      isCustomBackgroundDismissal = true
+      animatePopupDismissal {
+        self.dismiss(result: .declined, closeReason: .manualClose)
+      }
+    } else {
+      dismiss(result: .declined, closeReason: .manualClose)
+    }
+  }
+
+  private func animatePopupDismissal(completion: @escaping () -> Void) {
+    guard let containerView = popupContainerView else {
+      completion()
+      return
+    }
+
+    // Find the background view
+    let backgroundView = view.subviews.first { subview in
+      subview.backgroundColor == UIColor.black.withAlphaComponent(0.4)
+    }
+
+    // Animate popup scale down and background fade out simultaneously
+    UIView.animate(
+      withDuration: 0.25,
+      delay: 0,
+      options: [.curveEaseInOut, .beginFromCurrentState],
+      animations: {
+        // Scale down the popup container (foreground)
+        containerView.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+        containerView.alpha = 0.0
+        
+        // Fade out the background
+        backgroundView?.alpha = 0.0
+      },
+      completion: { _ in
+        // Reset the flag after custom animation completes
+        self.isCustomBackgroundDismissal = false
+        completion()
+      }
+    )
   }
 
   @MainActor

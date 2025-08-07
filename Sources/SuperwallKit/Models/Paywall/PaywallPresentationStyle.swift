@@ -12,16 +12,24 @@ import Foundation
 public enum PaywallPresentationStyle: Int, Codable, Sendable {
   /// A view presentation style that uses the modal presentation style `.pageSheet`.
   case modal
+
   /// A view presentation style in which the presented paywall slides up to cover the screen.
   case fullscreen
+
   /// A view presentation style in which the presented paywall covers the screen without animation.
   case fullscreenNoAnimation
+
   /// A view presentation style in which the presented paywall pushes on screen, as if pushed on to a navigation stack.
   case push
+
   /// A view presentation style in which the presented paywall slides up to cover 62% of the screen.
   case drawer
+
   /// Indicates that the presentation style to be used is the one set on the dashboard.
   case none
+
+  /// A view presentation style in which the presented paywall pops over the top of the view.
+  case popup
 
   enum InternalPresentationStyle: String {
     case modal = "MODAL"
@@ -30,6 +38,7 @@ public enum PaywallPresentationStyle: Int, Codable, Sendable {
     case push = "PUSH"
     case drawer = "DRAWER"
     case none = "NONE"
+    case popup = "POPUP"
   }
 
   public init(from decoder: Decoder) throws {
@@ -51,6 +60,8 @@ public enum PaywallPresentationStyle: Int, Codable, Sendable {
       presentationStyle = .drawer
     case .none:
       presentationStyle = .none
+    case .popup:
+      presentationStyle = .popup
     }
     self = presentationStyle
   }
@@ -72,6 +83,8 @@ public enum PaywallPresentationStyle: Int, Codable, Sendable {
       internalPresentationStyle = .drawer
     case .none:
       internalPresentationStyle = .none
+    case .popup:
+      internalPresentationStyle = .popup
     }
 
     try container.encode(internalPresentationStyle.rawValue)
