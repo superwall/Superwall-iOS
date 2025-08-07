@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.7.1
+
+### Fixes
+
+- Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
+
 ## 4.7.0
 
 ### Enhancements

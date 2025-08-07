@@ -256,8 +256,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
 
-    let demandScore = await deviceHelper.enrichment?.device["demandScore"] as? Int
-    let demandTier = await deviceHelper.enrichment?.device["demandTier"] as? String
+    let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
+    let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
 
     let paywallOpen = await InternalSuperwallEvent.PaywallOpen(
       paywallInfo: info,
