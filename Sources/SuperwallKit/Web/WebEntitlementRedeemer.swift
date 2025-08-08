@@ -19,7 +19,7 @@ actor WebEntitlementRedeemer {
   private unowned let factory: Factory
   private var isProcessing = false
   private var superwall: Superwall?
-  private var webCheckoutSessionId: String?
+  private var webCheckoutId: String?
   private var isCheckingWebCheckout = false
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
@@ -78,8 +78,8 @@ actor WebEntitlementRedeemer {
     )
   }
 
-  func startWebCheckoutSession(withId sessionId: String) {
-    webCheckoutSessionId = sessionId
+  func startWebCheckoutSession(withId checkoutId: String) {
+    webCheckoutId = checkoutId
   }
 
   func onPaywallAppear() {
@@ -87,7 +87,7 @@ actor WebEntitlementRedeemer {
   }
 
   private func startWebCheckoutCompletionCheck() {
-    if webCheckoutSessionId == nil {
+    if webCheckoutId == nil {
       return
     }
     if isCheckingWebCheckout {
@@ -377,11 +377,11 @@ actor WebEntitlementRedeemer {
   struct PendingWebCheckoutError: Error {}
 
   private func checkForWebCheckoutCompletion() async throws {
-    guard let sessionId = webCheckoutSessionId else {
+    guard let checkoutId = webCheckoutId else {
       return
     }
     do {
-      let response = try await network.getWebCheckoutStatus(sessionId: sessionId)
+      let response = try await network.getWebCheckoutStatus(checkoutId: checkoutId)
       switch response.status {
       case .abandoned(let abandoned):
         if let paywallViewController = Superwall.shared.paywallViewController {
@@ -398,7 +398,7 @@ actor WebEntitlementRedeemer {
           await Superwall.shared.track(transactionAbandon)
           await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
         }
-        webCheckoutSessionId = nil
+        webCheckoutId = nil
         isCheckingWebCheckout = false
       case let .completed(redemptionCodes, product):
         if let paywallViewController = Superwall.shared.paywallViewController {
@@ -415,7 +415,7 @@ actor WebEntitlementRedeemer {
         if let code = redemptionCodes.first {
           await redeem(.code(code))
         }
-        webCheckoutSessionId = nil
+        webCheckoutId = nil
         isCheckingWebCheckout = false
       case .pending:
         throw PendingWebCheckoutError()

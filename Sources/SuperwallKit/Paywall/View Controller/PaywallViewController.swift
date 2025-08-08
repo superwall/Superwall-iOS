@@ -700,12 +700,12 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
-  func startCheckoutSession(id sessionId: String) {
+  func startCheckoutSession(id checkoutId: String) {
     webView.messageHandler.handle(.transactionStart)
     loadingState = .loadingPurchase
 
     Task {
-      await webEntitlementRedeemer.startWebCheckoutSession(withId: sessionId)
+      await webEntitlementRedeemer.startWebCheckoutSession(withId: checkoutId)
     }
   }
   

@@ -344,9 +344,9 @@ class Network {
     ).entitlements
   }
 
-  func getWebCheckoutStatus(sessionId: String) async throws -> CheckoutStatusResponse {
+  func getWebCheckoutStatus(checkoutId: String) async throws -> CheckoutStatusResponse {
     return try await urlSession.request(
-      .checkoutStatus(sessionId: sessionId),
+      .checkoutStatus(checkoutId: checkoutId),
       data: SuperwallRequestData(factory: factory)
     )
   }

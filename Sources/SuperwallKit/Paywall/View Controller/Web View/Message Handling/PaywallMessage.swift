@@ -47,7 +47,7 @@ enum PaywallMessage: Decodable, Equatable {
   case purchase(productId: String)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
-  case initiateWebCheckout(sessionId: String)
+  case initiateWebCheckout(checkoutId: String)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -87,7 +87,7 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
-    case checkoutSessionId
+    case checkoutContextId
     case paywallId
     case variantId = "experimentVariantId"
     case presentedByEventName
@@ -147,8 +147,8 @@ enum PaywallMessage: Decodable, Equatable {
           return
         }
       case .initiateWebCheckout:
-        if let sessionId = try? values.decode(String.self, forKey: .checkoutSessionId) {
-          self = .initiateWebCheckout(sessionId: sessionId)
+        if let checkoutId = try? values.decode(String.self, forKey: .checkoutContextId) {
+          self = .initiateWebCheckout(checkoutId: checkoutId)
           return
         }
       }
