@@ -138,7 +138,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
 public enum PaywallPresentationStyleObjc: Int, Codable, Sendable {
   /// A view presentation style that uses the modal presentation style `.pageSheet`.
   case modal
-  
+
   /// A view presentation style in which the presented paywall slides up to cover the screen.
   case fullscreen
 
