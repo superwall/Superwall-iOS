@@ -131,7 +131,7 @@ struct Paywall: Codable {
     case url
     case urlConfig
     case htmlSubstitutions = "paywalljsEvent"
-    case presentationStyle = "presentationStyleV2"
+    case presentationStyle = "presentationStyleV3"
     case presentationCondition
     case presentationDelay
     case backgroundColorHex

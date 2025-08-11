@@ -616,16 +616,20 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       transitioningDelegate = transitionDelegate
     case .fullscreenNoAnimation:
       modalPresentationStyle = .overFullScreen
-    case .drawer:
+    case let .drawer(height, cornerRadius):
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
         if #available(iOS 16.0, *),
           UIDevice.current.userInterfaceIdiom == .phone {
+          let heightRatio = height ?? 0.7
           sheetPresentationController?.detents = [
             .custom { context in
-              return 0.7 * context.maximumDetentValue
+              return heightRatio * context.maximumDetentValue
             }
           ]
+          if let cornerRadius = cornerRadius {
+            sheetPresentationController?.preferredCornerRadius = cornerRadius
+          }
         }
       #endif
     case .none:

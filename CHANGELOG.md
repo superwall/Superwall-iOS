@@ -2,7 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.7.1
+## 4.8.0
+
+### Enhancements
+
+- Adds ability to specify a custom height and corner radius for the drawer presentation style.
 
 ### Fixes
 
