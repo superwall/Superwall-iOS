@@ -18,7 +18,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
+    presentationStyleOverride: PaywallPresentationStyleObjc = .none,
     onSkip: ((NSError?) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
