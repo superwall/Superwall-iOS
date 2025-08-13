@@ -150,7 +150,7 @@ protocol PurchasedTransactionsFactory: AnyObject {
 }
 
 protocol UserAttributesPlacementFactory: AnyObject {
-  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.UserAttributes
 }
 
 protocol ReceiptFactory: AnyObject {

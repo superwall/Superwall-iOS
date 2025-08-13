@@ -393,7 +393,7 @@ extension IdentityManager {
 
     if shouldTrackMerge {
       Task {
-        let attributes = InternalSuperwallEvent.Attributes(
+        let attributes = InternalSuperwallEvent.UserAttributes(
           appInstalledAtString: deviceHelper.appInstalledAtString,
           audienceFilterParams: mergedAttributes
         )

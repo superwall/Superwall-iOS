@@ -117,6 +117,11 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.userAttributes
   }
 
+  /// Attribution properties set using ``setAttributionProps(_:)``.
+  public var attributionProps: [String: Any] {
+    return dependencyContainer.attributionFetcher.attributionProps
+  }
+
   /// The current user's id.
   ///
   /// If you haven't called ``identify(userId:options:)``,
@@ -292,6 +297,10 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Used to serially execute register calls.
   var previousRegisterTask: Task<Void, Never>?
+
+  /// The attribution props to be stored and sent to the server when
+  /// `appTransactionId` is available.
+  var enqueuedAttribution: [AttributionProvider: Any?]?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -707,6 +716,34 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
+    }
+  }
+
+  /// Sets properties for third-party attribution providers.
+  ///
+  /// - Parameter props: A dictionary keyed by ``AttributionProvider`` specifying
+  /// properties to associate with the user or events for the given provider.
+  public func setAttributionProps(_ props: [AttributionProvider: Any?]) {
+    guard let appTransactionId = ReceiptManager.appTransactionId else {
+      enqueuedAttribution = props
+      return
+    }
+    enqueuedAttribution = nil
+
+    let props = props.reduce(into: [String: Any?]()) { result, pair in
+      result[pair.key.description] = pair.value
+    }
+
+    dependencyContainer.attributionFetcher.mergeAttributionProps(
+      props: props,
+      appTransactionId: appTransactionId
+    )
+    setUserAttributes(props)
+  }
+
+  func dequeueAttributionProps() {
+    if let enqueuedAttribution = enqueuedAttribution {
+      setAttributionProps(enqueuedAttribution)
     }
   }
 
