@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds ability to grant an entitlement to anyone.
-- Adds `setAttributionProps(_:)` which allows you to set properties for third-party attribution providers.
+- Adds `Superwall.shared.setAttributionProps(_:)` which allows you to set properties for third-party attribution providers and `Superwall.shared.attributionProps` to get the properties you've set.
 
 ### Fixes
 

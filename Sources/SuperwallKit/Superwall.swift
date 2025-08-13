@@ -117,6 +117,11 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.userAttributes
   }
 
+  /// Attribution properties set using ``setAttributionProps(_:)``.
+  public var attributionProps: [String: Any] {
+    return dependencyContainer.attributionFetcher.attributionProps
+  }
+
   /// The current user's id.
   ///
   /// If you haven't called ``identify(userId:options:)``,

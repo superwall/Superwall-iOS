@@ -11,6 +11,11 @@ import AdServices
 #endif
 
 final class AttributionFetcher {
+  var attributionProps: [String: Any] {
+    queue.sync {
+      _attributionProps
+    }
+  }
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
   private var _attributionProps: [String: Any] = [:]
   private unowned let storage: Storage
@@ -139,8 +144,6 @@ final class AttributionFetcher {
     storage.save(mergedProps, forType: AttributionProps.self)
     _attributionProps = mergedProps
 
-    // TODO: Delete if contains nil, but should send that to the server.
-    // We wanna see nil in the data to server
     Task {
       try? await network.sendAttributionProps(mergedProps)
     }
