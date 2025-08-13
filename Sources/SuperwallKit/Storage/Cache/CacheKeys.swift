@@ -232,3 +232,11 @@ enum LastWebEntitlementsFetchDate: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Date
 }
+
+enum AttributionProps: Storable {
+  static var key: String {
+    "store.AttributionProps"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = [String: Any]
+}

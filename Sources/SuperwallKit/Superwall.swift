@@ -293,6 +293,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// Used to serially execute register calls.
   var previousRegisterTask: Task<Void, Never>?
 
+  /// The attribution props to be stored and sent to the server when
+  /// `appTransactionId` is available.
+  var enqueuedAttribution: [AttributionProvider: Any?]?
+
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
     self.dependencyContainer = dependencyContainer
@@ -707,6 +711,31 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
+    }
+  }
+
+  /// Sets properties for third-party attribution providers.
+  ///
+  /// - Parameter props: A dictionary keyed by ``AttributionProvider`` specifying
+  /// properties to associate with the user or events for the given provider.
+  public func setAttributionProps(_ props: [AttributionProvider: Any?]) {
+    guard ReceiptManager.appTransactionId != nil else {
+      enqueuedAttribution = props
+      return
+    }
+    enqueuedAttribution = nil
+
+    let props = props.reduce(into: [String: Any?]()) { result, pair in
+      result[pair.key.description] = pair.value
+    }
+
+    dependencyContainer.attributionFetcher.mergeAttributionProps(props)
+    setUserAttributes(props)
+  }
+
+  func dequeueAttributionProps() {
+    if let enqueuedAttribution = enqueuedAttribution {
+      setAttributionProps(enqueuedAttribution)
     }
   }
 

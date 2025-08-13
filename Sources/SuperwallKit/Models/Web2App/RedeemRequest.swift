@@ -14,6 +14,11 @@ struct RedeemRequest: Encodable {
   let appTransactionId: String?
 }
 
+struct AttributionRequest: Encodable {
+  let attributes: JSON
+  let appTransactionId: String?
+}
+
 struct TransactionReceipt: Encodable {
   let type = "IOS"
   let jwsRepresentation: String

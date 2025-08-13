@@ -56,7 +56,7 @@ final class TrackingTests: XCTestCase {
   func test_attributes() async {
     let appInstalledAtString = "now"
     let result = await Superwall.shared.track(
-      InternalSuperwallEvent.Attributes(appInstalledAtString: appInstalledAtString))
+      InternalSuperwallEvent.UserAttributes(appInstalledAtString: appInstalledAtString))
     XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
     XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(

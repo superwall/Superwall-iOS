@@ -343,4 +343,15 @@ class Network {
       data: SuperwallRequestData(factory: factory)
     ).entitlements
   }
+
+  func sendAttributionProps(_ props: [String: Any]) async throws {
+    let request = AttributionRequest(
+      attributes: JSON(props),
+      appTransactionId: ReceiptManager.appTransactionId
+    )
+    try await urlSession.request(
+      .attribute(request: request),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
 }

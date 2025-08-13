@@ -322,6 +322,23 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
+  Response == RedeemResponse {
+  static func attribute(request: AttributionRequest) -> Self {
+    let bodyData = try? JSONEncoder().encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "redeem",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
   Response == WebEntitlements {
   static func redeem(
     appUserId: String?,
