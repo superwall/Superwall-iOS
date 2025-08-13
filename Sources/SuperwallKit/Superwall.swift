@@ -724,7 +724,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter props: A dictionary keyed by ``AttributionProvider`` specifying
   /// properties to associate with the user or events for the given provider.
   public func setAttributionProps(_ props: [AttributionProvider: Any?]) {
-    guard ReceiptManager.appTransactionId != nil else {
+    guard let appTransactionId = ReceiptManager.appTransactionId else {
       enqueuedAttribution = props
       return
     }
@@ -734,7 +734,10 @@ public final class Superwall: NSObject, ObservableObject {
       result[pair.key.description] = pair.value
     }
 
-    dependencyContainer.attributionFetcher.mergeAttributionProps(props)
+    dependencyContainer.attributionFetcher.mergeAttributionProps(
+      props: props,
+      appTransactionId: appTransactionId
+    )
     setUserAttributes(props)
   }
 

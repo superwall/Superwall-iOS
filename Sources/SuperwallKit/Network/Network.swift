@@ -344,10 +344,13 @@ class Network {
     ).entitlements
   }
 
-  func sendAttributionProps(_ props: [String: Any]) async throws {
+  func sendAttributionProps(
+    _ props: [String: Any],
+    appTransactionId: String
+  ) async throws {
     let request = AttributionRequest(
       attributes: JSON(props),
-      appTransactionId: ReceiptManager.appTransactionId
+      appTransactionId: appTransactionId
     )
     try await urlSession.request(
       .attribute(request: request),

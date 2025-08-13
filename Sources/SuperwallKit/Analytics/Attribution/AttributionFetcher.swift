@@ -112,13 +112,22 @@ final class AttributionFetcher {
     self._attributionProps = storage.get(AttributionProps.self) ?? [:]
   }
 
-  func mergeAttributionProps(_ props: [String: Any?]) {
+  func mergeAttributionProps(
+    props: [String: Any?],
+    appTransactionId: String
+  ) {
     queue.async { [weak self] in
-      self?._mergeAttributionProps(props)
+      self?._mergeAttributionProps(
+        props: props,
+        appTransactionId: appTransactionId
+      )
     }
   }
 
-  private func _mergeAttributionProps(_ newProps: [String: Any?]) {
+  private func _mergeAttributionProps(
+    props newProps: [String: Any?],
+    appTransactionId: String
+  ) {
     var mergedProps = _attributionProps
 
     mergedProps["idfa"] = identifierForAdvertisers
@@ -145,7 +154,10 @@ final class AttributionFetcher {
     _attributionProps = mergedProps
 
     Task {
-      try? await network.sendAttributionProps(mergedProps)
+      try await network.sendAttributionProps(
+        mergedProps,
+        appTransactionId: appTransactionId
+      )
     }
   }
 }

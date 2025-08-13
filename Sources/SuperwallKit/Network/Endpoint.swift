@@ -318,11 +318,7 @@ extension Endpoint where
       method: .post
     )
   }
-}
 
-extension Endpoint where
-  Kind == EndpointKinds.Web2App,
-  Response == RedeemResponse {
   static func attribute(request: AttributionRequest) -> Self {
     let bodyData = try? JSONEncoder().encode(request)
 

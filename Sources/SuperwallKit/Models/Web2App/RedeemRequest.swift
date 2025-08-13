@@ -16,7 +16,7 @@ struct RedeemRequest: Encodable {
 
 struct AttributionRequest: Encodable {
   let attributes: JSON
-  let appTransactionId: String?
+  let appTransactionId: String
 }
 
 struct TransactionReceipt: Encodable {
