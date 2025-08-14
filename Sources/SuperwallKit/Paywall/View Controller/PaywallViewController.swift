@@ -10,6 +10,7 @@ import Combine
 import SafariServices
 import UIKit
 import WebKit
+import StoreKit
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, LoadingDelegate {
@@ -744,6 +745,25 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         return
       }
       sharedApplication.open(url)
+    }
+  }
+
+  func requestReview(type: ReviewType) {
+    switch type {
+    case .inApp:
+      if let scene = view.window?.windowScene {
+        if #available(iOS 16.0, *) {
+          AppStore.requestReview(in: scene)
+        } else if #available(iOS 14.0, *) {
+          SKStoreReviewController.requestReview(in: scene)
+        } else {
+          SKStoreReviewController.requestReview()
+        }
+      } else {
+        SKStoreReviewController.requestReview()
+      }
+    case .external:
+
     }
   }
 }
