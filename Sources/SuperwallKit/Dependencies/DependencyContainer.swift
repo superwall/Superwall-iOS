@@ -119,7 +119,7 @@ final class DependencyContainer {
     attributionFetcher = AttributionFetcher(
       storage: storage,
       deviceHelper: deviceHelper,
-      network: network
+      webEntitlementRedeemer: webEntitlementRedeemer
     )
 
     attributionPoster = AttributionPoster(

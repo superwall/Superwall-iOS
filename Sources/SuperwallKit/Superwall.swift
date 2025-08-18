@@ -117,9 +117,9 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.userAttributes
   }
 
-  /// Attribution properties set using ``setAttributionProps(_:)``.
-  public var attributionProps: [String: Any] {
-    return dependencyContainer.attributionFetcher.attributionProps
+  /// Attribution properties set using ``setIntegrationAttributes(_:)``.
+  public var integrationAttributes: [String: Any] {
+    return dependencyContainer.attributionFetcher.integrationAttributes
   }
 
   /// The current user's id.
@@ -298,9 +298,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// Used to serially execute register calls.
   var previousRegisterTask: Task<Void, Never>?
 
-  /// The attribution props to be stored and sent to the server when
-  /// `appTransactionId` is available.
-  var enqueuedAttribution: [AttributionProvider: Any?]?
+  /// The integration attributes to send to the server when `appTransactionId`
+  /// is available.
+  var enqueuedIntegrationAttributes: [IntegrationAttribute: Any?]?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -719,31 +719,31 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Sets properties for third-party attribution providers.
+  /// Sets attributes for third-party integrations.
   ///
-  /// - Parameter props: A dictionary keyed by ``AttributionProvider`` specifying
+  /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
-  public func setAttributionProps(_ props: [AttributionProvider: Any?]) {
+  public func setIntegrationAttributes(_ props: [IntegrationAttribute: Any?]) {
     guard let appTransactionId = ReceiptManager.appTransactionId else {
-      enqueuedAttribution = props
+      enqueuedIntegrationAttributes = props
       return
     }
-    enqueuedAttribution = nil
+    enqueuedIntegrationAttributes = nil
 
     let props = props.reduce(into: [String: Any?]()) { result, pair in
       result[pair.key.description] = pair.value
     }
 
-    dependencyContainer.attributionFetcher.mergeAttributionProps(
-      props: props,
+    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(
+      attributes: props,
       appTransactionId: appTransactionId
     )
     setUserAttributes(props)
   }
 
-  func dequeueAttributionProps() {
-    if let enqueuedAttribution = enqueuedAttribution {
-      setAttributionProps(enqueuedAttribution)
+  func dequeueIntegrationAttributes() {
+    if let enqueuedAttribution = enqueuedIntegrationAttributes {
+      setIntegrationAttributes(enqueuedAttribution)
     }
   }
 

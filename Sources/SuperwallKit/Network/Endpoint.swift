@@ -318,19 +318,6 @@ extension Endpoint where
       method: .post
     )
   }
-
-  static func attribute(request: AttributionRequest) -> Self {
-    let bodyData = try? JSONEncoder().encode(request)
-
-    return Endpoint(
-      components: Components(
-        host: .web2app,
-        path: "redeem",
-        bodyData: bodyData
-      ),
-      method: .post
-    )
-  }
 }
 
 extension Endpoint where

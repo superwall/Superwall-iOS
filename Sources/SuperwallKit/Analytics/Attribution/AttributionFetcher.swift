@@ -11,15 +11,15 @@ import AdServices
 #endif
 
 final class AttributionFetcher {
-  var attributionProps: [String: Any] {
+  var integrationAttributes: [String: Any] {
     queue.sync {
-      _attributionProps
+      _integrationAttributes
     }
   }
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
-  private var _attributionProps: [String: Any] = [:]
+  private var _integrationAttributes: [String: Any] = [:]
   private unowned let storage: Storage
-  private unowned let network: Network
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
 
   var identifierForAdvertisers: String? {
@@ -104,60 +104,57 @@ final class AttributionFetcher {
   init(
     storage: Storage,
     deviceHelper: DeviceHelper,
-    network: Network
+    webEntitlementRedeemer: WebEntitlementRedeemer
   ) {
     self.storage = storage
     self.deviceHelper = deviceHelper
-    self.network = network
-    self._attributionProps = storage.get(AttributionProps.self) ?? [:]
+    self.webEntitlementRedeemer = webEntitlementRedeemer
+    self._integrationAttributes = storage.get(IntegrationAttributes.self) ?? [:]
   }
 
-  func mergeAttributionProps(
-    props: [String: Any?],
+  func mergeIntegrationAttributes(
+    attributes: [String: Any?],
     appTransactionId: String
   ) {
     queue.async { [weak self] in
-      self?._mergeAttributionProps(
-        props: props,
+      self?._mergeIntegrationAttributes(
+        attributes: attributes,
         appTransactionId: appTransactionId
       )
     }
   }
 
-  private func _mergeAttributionProps(
-    props newProps: [String: Any?],
+  private func _mergeIntegrationAttributes(
+    attributes: [String: Any?],
     appTransactionId: String
   ) {
-    var mergedProps = _attributionProps
+    var mergedAttributes = _integrationAttributes
 
-    mergedProps["idfa"] = identifierForAdvertisers
+    mergedAttributes["idfa"] = identifierForAdvertisers
 
     let identifierForVendor = deviceHelper.vendorId
-    mergedProps["idfv"] = identifierForVendor
+    mergedAttributes["idfv"] = identifierForVendor
 
-    for key in newProps.keys {
-      if let value = newProps[key] {
-        mergedProps[key] = value
+    for key in attributes.keys {
+      if let value = attributes[key] {
+        mergedAttributes[key] = value
       } else {
-        mergedProps[key] = nil
+        mergedAttributes[key] = nil
       }
     }
 
     Task {
-      let attributes = InternalSuperwallEvent.AttributionProps(
-        audienceFilterParams: mergedProps
+      let attributes = InternalSuperwallEvent.IntegrationAttributes(
+        audienceFilterParams: mergedAttributes
       )
       await Superwall.shared.track(attributes)
     }
 
-    storage.save(mergedProps, forType: AttributionProps.self)
-    _attributionProps = mergedProps
+    storage.save(mergedAttributes, forType: IntegrationAttributes.self)
+    _integrationAttributes = mergedAttributes
 
     Task {
-      try await network.sendAttributionProps(
-        mergedProps,
-        appTransactionId: appTransactionId
-      )
+      await webEntitlementRedeemer.redeem(.integrationAttributes)
     }
   }
 }

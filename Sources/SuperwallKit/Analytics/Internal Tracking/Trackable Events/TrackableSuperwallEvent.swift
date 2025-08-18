@@ -108,9 +108,9 @@ enum InternalSuperwallEvent {
     var audienceFilterParams: [String: Any] = [:]
   }
 
-  struct AttributionProps: TrackableSuperwallEvent {
+  struct IntegrationAttributes: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
-      return .attributionProps(audienceFilterParams)
+      return .integrationAttributes(audienceFilterParams)
     }
     func getSuperwallParameters() async -> [String: Any] {
       return [:]

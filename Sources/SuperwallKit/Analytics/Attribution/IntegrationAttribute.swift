@@ -1,15 +1,13 @@
 //
-//  AttributionProvider.swift
+//  IntegrationAttribute.swift
 //  SuperwallKit
 //
 //  Created by Yusuf Tör on 13/08/2025.
 //
 
-/// An enum that represents the available third-party attribution providers that Superwall can integrate with.
-/// These providers are used to track user attribution data and link it to
-/// paywall events and purchases.
-@objc(SWKAttributionProvider)
-public enum AttributionProvider: Int {
+/// An enum that represents attributes for third-party integrations with Superwall.
+@objc(SWKIntegrationAttribute)
+public enum IntegrationAttribute: Int {
   /// The unique Adjust identifier for the user.
   case adjustId
 
@@ -72,7 +70,7 @@ public enum AttributionProvider: Int {
 }
 
 // MARK: - CustomStringConvertible
-extension AttributionProvider: CustomStringConvertible {
+extension IntegrationAttribute: CustomStringConvertible {
   public var description: String {
     switch self {
     case .adjustId:
