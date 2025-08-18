@@ -102,8 +102,8 @@ public final class PaywallOverrides: NSObject, Sendable {
     self._drawerHeight = nil
     self._drawerCornerRadius = nil
     self.presentationStyle = presentationStyleOverride.toSwift(
-      height: nil,
-      cornerRadius: nil
+      height: 70,
+      cornerRadius: 15
     )
     self.featureGatingBehavior = nil
   }

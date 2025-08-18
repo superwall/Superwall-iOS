@@ -24,7 +24,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   /// A view presentation style in which the presented paywall slides up to cover a portion of the screen.
   ///
   /// If no height is specified, it will default to 70% of the screen.
-  case drawer(height: Double?, cornerRadius: Double?)
+  case drawer(height: Double, cornerRadius: Double)
 
   /// Indicates that the presentation style to be used is the one set on the dashboard.
   case none
@@ -41,7 +41,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case type
     case height
-    case cornerRadius = "corner_radius"
+    case cornerRadius
   }
 
   public init(from decoder: Decoder) throws {
@@ -59,8 +59,8 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
     case .push:
       self = .push
     case .drawer:
-      let height = try container.decodeIfPresent(Double.self, forKey: .height)
-      let cornerRadius = try container.decodeIfPresent(Double.self, forKey: .cornerRadius)
+      let height = try container.decode(Double.self, forKey: .height)
+      let cornerRadius = try container.decode(Double.self, forKey: .cornerRadius)
       self = .drawer(height: height, cornerRadius: cornerRadius)
     case .none:
       self = .none
@@ -109,9 +109,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   /// Extract drawer height if present
   var drawerHeight: NSNumber? {
     if case .drawer(let height, _) = self {
-      if let height = height {
-        return NSNumber(value: height)
-      }
+      return NSNumber(value: height)
     }
     return nil
   }
@@ -119,9 +117,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   /// Extract drawer corner radius if present
   var drawerCornerRadius: NSNumber? {
     if case .drawer(_, let cornerRadius) = self {
-      if let cornerRadius = cornerRadius {
-        return NSNumber(value: cornerRadius)
-      }
+      return NSNumber(value: cornerRadius)
     }
     return nil
   }
@@ -129,7 +125,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   // Added for backwards compatibility.
   // Remove in v5
   public static var drawer: PaywallPresentationStyle {
-    return .drawer(height: nil, cornerRadius: nil)
+    return .drawer(height: 70, cornerRadius: 15)
   }
 }
 
@@ -171,8 +167,8 @@ public enum PaywallPresentationStyleObjc: Int, Codable, Sendable {
       return .push
     case .drawer:
       return .drawer(
-        height: height?.doubleValue,
-        cornerRadius: cornerRadius?.doubleValue
+        height: height?.doubleValue ?? 70,
+        cornerRadius: cornerRadius?.doubleValue ?? 15
       )
     case .none:
       return .none

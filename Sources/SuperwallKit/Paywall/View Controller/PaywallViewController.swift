@@ -626,15 +626,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       #if !os(visionOS)
         if #available(iOS 16.0, *),
           UIDevice.current.userInterfaceIdiom == .phone {
-          let heightRatio = height ?? 0.7
+          let heightRatio = height / 100
           sheetPresentationController?.detents = [
             .custom { context in
               return heightRatio * context.maximumDetentValue
             }
           ]
-          if let cornerRadius = cornerRadius {
-            sheetPresentationController?.preferredCornerRadius = cornerRadius
-          }
+          sheetPresentationController?.preferredCornerRadius = cornerRadius
         }
       #endif
     case .none:
