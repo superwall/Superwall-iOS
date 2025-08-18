@@ -121,7 +121,7 @@ actor WebEntitlementRedeemer {
 
     // Create request to redeem
     let request = await RedeemRequest(
-      attributes: JSON(attributes),
+      metadata: JSON(attributes),
       deviceId: factory.makeDeviceId(),
       appUserId: factory.makeAppUserId(),
       aliasId: factory.makeAliasId(),
@@ -347,11 +347,17 @@ actor WebEntitlementRedeemer {
     config: Config? = nil,
     isFirstTime: Bool = false
   ) async {
-    if !isFirstTime,
-      let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge(),
-      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
-      let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
-      guard timeElapsed > entitlementsMaxAge else {
+    if !isFirstTime {
+      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() {
+        if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+          let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
+          // Only proceed if a certain amount of time has elapsed
+          guard timeElapsed > entitlementsMaxAge else {
+            return
+          }
+        }
+      } else {
+        // Don't proceed at all if there's no web2app config
         return
       }
     }

@@ -6,7 +6,7 @@
 //
 
 struct RedeemRequest: Encodable {
-  let attributes: JSON
+  let metadata: JSON
   let deviceId: String
   let appUserId: String?
   let aliasId: String
