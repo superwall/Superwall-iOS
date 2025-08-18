@@ -35,14 +35,9 @@ struct PayloadMessages: Decodable {
   }
 }
 
-enum ReviewType: Decodable {
-  case inApp
+enum ReviewType: String, Decodable {
+  case inApp = "in-app"
   case external
-
-  private enum CodingKeys: String, CodingKey {
-    case inApp = "in_app"
-    case external
-  }
 }
 
 enum PaywallMessage: Decodable, Equatable {
@@ -96,7 +91,7 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
-    case reviewType
+    case reviewType = "reviewType"
   }
 
   enum PaywallMessageError: Error {

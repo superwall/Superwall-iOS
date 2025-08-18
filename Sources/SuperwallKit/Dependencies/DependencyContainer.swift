@@ -595,8 +595,16 @@ extension DependencyContainer: RestoreAccessFactory {
   }
 }
 
+// MARK: - ConfigStateFactory
 extension DependencyContainer: ConfigStateFactory {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
     return configManager.configState
+  }
+}
+
+// MARK: - AppIdFactory
+extension DependencyContainer: AppIdFactory {
+  func makeAppId() -> String? {
+    return configManager.config?.iosAppId
   }
 }
