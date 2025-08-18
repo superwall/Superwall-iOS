@@ -178,3 +178,7 @@ protocol RestoreAccessFactory: AnyObject {
 protocol ConfigStateFactory: AnyObject {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error>
 }
+
+protocol AppIdFactory: AnyObject {
+  func makeAppId() -> String?
+}
