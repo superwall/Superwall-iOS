@@ -10,6 +10,7 @@ import Combine
 import SafariServices
 import UIKit
 import WebKit
+import StoreKit
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, LoadingDelegate {
@@ -71,6 +72,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   var delegate: PaywallViewControllerDelegateAdapter?
+
+  typealias Factory = TriggerFactory
+    & RestoreAccessFactory
+    & AppIdFactory
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
@@ -163,7 +168,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private var lastOpen: Date?
 
-  private unowned let factory: TriggerFactory & RestoreAccessFactory
+  private unowned let factory: Factory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -176,7 +181,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerFactory & RestoreAccessFactory,
+    factory: Factory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -748,6 +753,36 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         return
       }
       sharedApplication.open(url)
+    }
+  }
+
+  func requestReview(type: ReviewType) {
+    switch type {
+    case .inApp:
+      if let scene = view.window?.windowScene {
+        if #available(iOS 16.0, *) {
+          AppStore.requestReview(in: scene)
+        } else if #available(iOS 14.0, *) {
+          SKStoreReviewController.requestReview(in: scene)
+        } else {
+          SKStoreReviewController.requestReview()
+        }
+      } else {
+        SKStoreReviewController.requestReview()
+      }
+    case .external:
+      guard let appId = factory.makeAppId() else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .superwallCore,
+          message: "Unable to open external review URL. Please enter your Apple App ID on the Superwall dashboard."
+        )
+        return
+      }
+
+      if let url = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review") {
+        UIApplication.shared.open(url)
+      }
     }
   }
 }
