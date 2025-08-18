@@ -87,7 +87,7 @@ actor PlacementsQueue {
       return true
     }
     if placement is InternalSuperwallEvent.TriggerFire
-      || placement is InternalSuperwallEvent.Attributes
+      || placement is InternalSuperwallEvent.UserAttributes
       || placement is UserInitiatedPlacement.Track {
       return false
     }

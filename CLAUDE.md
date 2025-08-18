@@ -78,6 +78,11 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 - Core Data testing uses in-memory store
 
 
+### Testing
+
+- This project uses Swift's Testing framework (not XCTest) for all unit tests.
+- Always use the Testing framework when writing new tests.
+
 ### Workflows
 
 - When making changes to the SDK, always write a unit test for the new

@@ -229,6 +229,9 @@ public enum SuperwallEvent {
   /// When a response from the network fails to decode.
   case networkDecodingFail
 
+  /// When the integration attributes are set.
+  case integrationAttributes(_ attributes: [String: Any])
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -394,6 +397,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .enrichmentComplete)
     case .networkDecodingFail:
       return .init(objcEvent: .networkDecodingFail)
+    case .integrationAttributes:
+      return .init(objcEvent: .integrationAttributes)
     }
   }
 }

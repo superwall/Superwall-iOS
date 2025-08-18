@@ -208,6 +208,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a response from the network fails to decode.
   case networkDecodingFail
 
+  /// When the integration attributes are set.
+  case integrationAttributes
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -338,6 +341,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "enrichment_complete"
     case .networkDecodingFail:
       return "networkDecoding_fail"
+    case .integrationAttributes:
+      return "integration_attributes"
     }
   }
 }
