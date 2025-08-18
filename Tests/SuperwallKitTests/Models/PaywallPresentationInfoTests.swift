@@ -33,25 +33,6 @@ struct PaywallPresentationInfoTests {
     #expect(presentationInfo.delay == 200)
   }
   
-  @Test("Codable backward compatibility")
-  func codableBackwardCompatibility() throws {
-    // Test decoding drawer style from JSON with type only
-    let jsonData = """
-    {
-      "style": {
-        "type": "DRAWER"
-      },
-      "delay": 150
-    }
-    """.data(using: .utf8)!
-    
-    let decoder = JSONDecoder()
-    let presentationInfo = try decoder.decode(PaywallPresentationInfo.self, from: jsonData)
-    
-    #expect(presentationInfo.style == .drawer(height: nil, cornerRadius: nil))
-    #expect(presentationInfo.delay == 150)
-  }
-  
   @Test("Codable with drawer parameters")
   func codableWithDrawerParameters() throws {
     // Test decoding drawer style from JSON with height and corner radius
@@ -60,7 +41,7 @@ struct PaywallPresentationInfoTests {
       "style": {
         "type": "DRAWER",
         "height": 400.5,
-        "corner_radius": 25.0
+        "cornerRadius": 25.0
       },
       "delay": 250
     }
@@ -90,33 +71,33 @@ struct PaywallPresentationInfoTests {
     #expect(decodedInfo.delay == 300)
   }
   
-  @Test("Drawer with nil parameters")
-  func drawerWithNilParameters() {
+  @Test("Drawer with default parameters")
+  func drawerWithDefaultParameters() {
     let presentationInfo = PaywallPresentationInfo(
-      style: .drawer(height: nil, cornerRadius: nil),
+      style: .drawer(height: 70, cornerRadius: 15),
       delay: 100
     )
     
-    #expect(presentationInfo.style == .drawer(height: nil, cornerRadius: nil))
+    #expect(presentationInfo.style == .drawer(height: 70, cornerRadius: 15))
     #expect(presentationInfo.delay == 100)
   }
   
-  @Test("Drawer with mixed parameters")
-  func drawerWithMixedParameters() {
-    // Test with only height specified
-    let heightOnly = PaywallPresentationInfo(
-      style: .drawer(height: 500.0, cornerRadius: nil),
+  @Test("Drawer with custom parameters")
+  func drawerWithCustomParameters() {
+    // Test with custom height and default corner radius
+    let customHeight = PaywallPresentationInfo(
+      style: .drawer(height: 500.0, cornerRadius: 15.0),
       delay: 100
     )
     
-    #expect(heightOnly.style == .drawer(height: 500.0, cornerRadius: nil))
+    #expect(customHeight.style == .drawer(height: 500.0, cornerRadius: 15.0))
     
-    // Test with only corner radius specified
-    let cornerRadiusOnly = PaywallPresentationInfo(
-      style: .drawer(height: nil, cornerRadius: 12.0),
+    // Test with default height and custom corner radius
+    let customCornerRadius = PaywallPresentationInfo(
+      style: .drawer(height: 70.0, cornerRadius: 12.0),
       delay: 100
     )
     
-    #expect(cornerRadiusOnly.style == .drawer(height: nil, cornerRadius: 12.0))
+    #expect(customCornerRadius.style == .drawer(height: 70.0, cornerRadius: 12.0))
   }
 }

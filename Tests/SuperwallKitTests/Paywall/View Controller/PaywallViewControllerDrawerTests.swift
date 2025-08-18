@@ -12,14 +12,14 @@ import Foundation
 struct PaywallViewControllerDrawerTests {
   @Test("Drawer presentation info with default values")
   func drawerPresentationInfoDefaultValues() {
-    // Create presentation info with drawer style but no custom height/corner radius
+    // Create presentation info with drawer style using default values
     let presentation = PaywallPresentationInfo(
-      style: .drawer(height: nil, cornerRadius: nil),
+      style: .drawer(height: 70, cornerRadius: 15),
       delay: 0
     )
     
-    // Verify defaults are used (nil values)
-    #expect(presentation.style == .drawer(height: nil, cornerRadius: nil))
+    // Verify default values are used
+    #expect(presentation.style == .drawer(height: 70, cornerRadius: 15))
   }
   
   @Test("Drawer presentation info with custom values")
@@ -53,23 +53,23 @@ struct PaywallViewControllerDrawerTests {
     #expect(maxPresentation.style == .drawer(height: 1000.0, cornerRadius: 50.0))
   }
   
-  @Test("Drawer presentation info with partial values")
-  func drawerPresentationInfoPartialValues() {
-    // Test with only height specified
-    let heightOnly = PaywallPresentationInfo(
-      style: .drawer(height: 300.0, cornerRadius: nil),
+  @Test("Drawer presentation info with mixed values")
+  func drawerPresentationInfoMixedValues() {
+    // Test with custom height and default corner radius
+    let customHeight = PaywallPresentationInfo(
+      style: .drawer(height: 300.0, cornerRadius: 15.0),
       delay: 0
     )
     
-    #expect(heightOnly.style == .drawer(height: 300.0, cornerRadius: nil))
+    #expect(customHeight.style == .drawer(height: 300.0, cornerRadius: 15.0))
     
-    // Test with only corner radius specified
-    let cornerRadiusOnly = PaywallPresentationInfo(
-      style: .drawer(height: nil, cornerRadius: 15.0),
+    // Test with default height and custom corner radius
+    let customCornerRadius = PaywallPresentationInfo(
+      style: .drawer(height: 70.0, cornerRadius: 25.0),
       delay: 0
     )
     
-    #expect(cornerRadiusOnly.style == .drawer(height: nil, cornerRadius: 15.0))
+    #expect(customCornerRadius.style == .drawer(height: 70.0, cornerRadius: 25.0))
   }
   
   @Test("PaywallPresentationStyle to Objective-C conversion")
@@ -95,10 +95,10 @@ struct PaywallViewControllerDrawerTests {
     #expect(drawer.drawerHeight?.doubleValue == 500.0)
     #expect(drawer.drawerCornerRadius?.doubleValue == 25.0)
     
-    // Test with nil values
-    let nilDrawer = PaywallPresentationStyle.drawer(height: nil, cornerRadius: nil)
-    #expect(nilDrawer.drawerHeight == nil)
-    #expect(nilDrawer.drawerCornerRadius == nil)
+    // Test with zero values
+    let zeroDrawer = PaywallPresentationStyle.drawer(height: 0.0, cornerRadius: 0.0)
+    #expect(zeroDrawer.drawerHeight?.doubleValue == 0.0)
+    #expect(zeroDrawer.drawerCornerRadius?.doubleValue == 0.0)
     
     // Test with non-drawer style
     let modal = PaywallPresentationStyle.modal
@@ -117,9 +117,9 @@ struct PaywallViewControllerDrawerTests {
     
     #expect(swiftStyle == .drawer(height: 300.0, cornerRadius: 15.0))
     
-    // Test without parameters
-    let swiftStyleNil = objcDrawer.toSwift()
-    #expect(swiftStyleNil == .drawer(height: nil, cornerRadius: nil))
+    // Test without parameters (uses defaults)
+    let swiftStyleDefaults = objcDrawer.toSwift()
+    #expect(swiftStyleDefaults == .drawer(height: 70.0, cornerRadius: 15.0))
     
     // Test other styles
     #expect(PaywallPresentationStyleObjc.modal.toSwift() == .modal)
