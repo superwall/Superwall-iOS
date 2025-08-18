@@ -355,7 +355,7 @@ actor WebEntitlementRedeemer {
         return
       }
     }
-return
+
     do {
       let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
 
