@@ -10,8 +10,13 @@ import XCTest
 @testable import SuperwallKit
 
 class AppSessionManagerTests: XCTestCase {
-  lazy var dependencyContainer: DependencyContainer = {
-    let dependencyContainer = DependencyContainer()
+  var dependencyContainer: DependencyContainer!
+  var appSessionManager: AppSessionManager!
+  let delegate = AppManagerDelegateMock()
+
+  override func setUp() {
+    // Create fresh instances for each test to ensure isolation
+    dependencyContainer = DependencyContainer()
     appSessionManager = AppSessionManager(
       configManager: dependencyContainer.configManager,
       identityManager: dependencyContainer.identityManager,
@@ -19,13 +24,11 @@ class AppSessionManagerTests: XCTestCase {
       delegate: delegate
     )
     dependencyContainer.appSessionManager = appSessionManager
-    return dependencyContainer
-  }()
-  var appSessionManager: AppSessionManager!
-  let delegate = AppManagerDelegateMock()
-
-  override func setUp() {
-    _ = dependencyContainer
+  }
+  
+  override func tearDown() {
+    appSessionManager = nil
+    dependencyContainer = nil
   }
 
   func testAppWillResignActive() async {
