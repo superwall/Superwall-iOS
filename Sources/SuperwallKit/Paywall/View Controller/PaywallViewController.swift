@@ -107,10 +107,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Constraints for popup content sizing
   private var popupWidthConstraint: NSLayoutConstraint?
   private var popupHeightConstraint: NSLayoutConstraint?
-  internal var popupContainerView: UIView?
+  var popupContainerView: UIView?
 
-  // Internal property for transition logic
-  internal var isCustomBackgroundDismissal = false
+  /// Internal property for transition logic
+  var isCustomBackgroundDismissal = false
 
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
@@ -177,6 +177,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var unsavedOccurrence: TriggerAudienceOccurrence?
 
   private var lastOpen: Date?
+
+  private struct PopupDimensions {
+    let width: CGFloat
+    let height: CGFloat
+    let cornerRadius: CGFloat
+  }
 
   private unowned let factory: Factory
   private unowned let storage: Storage
@@ -490,10 +496,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     case .popup:
       // For popup style, use the popup container (should exist after setupPopupBackground)
       shimmerSuperview = popupContainerView ?? view
-      
+
       // Apply the same corner radius as the popup to the shimmer view
-      if let (_, _, cornerRadius) = getPopupDimensions() {
-        shimmerView.layer.cornerRadius = cornerRadius
+      if let dimensions = getPopupDimensions() {
+        shimmerView.layer.cornerRadius = dimensions.cornerRadius
         shimmerView.layer.masksToBounds = true
       }
     default:
@@ -696,7 +702,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  private func getPopupDimensions() -> (width: CGFloat, height: CGFloat, cornerRadius: CGFloat)? {
+  private func getPopupDimensions() -> PopupDimensions? {
     guard case .popup(let height, let width, let cornerRadius) = presentationStyle else {
       return nil
     }
@@ -708,7 +714,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     let calculatedWidth = screenWidth * CGFloat(width / 100.0)
     let calculatedHeight = screenHeight * CGFloat(height / 100.0)
 
-    return (calculatedWidth, calculatedHeight, CGFloat(cornerRadius))
+    return PopupDimensions(
+      width: calculatedWidth,
+      height: calculatedHeight,
+      cornerRadius: CGFloat(cornerRadius)
+    )
   }
 
   private func setupPopupBackground() {
@@ -739,7 +749,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     // Extract popup dimensions and corner radius from presentation style
-    guard let (popupWidth, popupHeight, cornerRadius) = getPopupDimensions() else {
+    guard let dimensions = getPopupDimensions() else {
       return
     }
 
@@ -751,7 +761,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     popupContainerView = containerView
 
     // Style container view with corner radius and shadow
-    containerView.layer.cornerRadius = cornerRadius
+    containerView.layer.cornerRadius = dimensions.cornerRadius
     containerView.layer.shadowColor = UIColor.black.cgColor
     containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
     containerView.layer.shadowRadius = 10
@@ -761,16 +771,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     // Style webview - ensure no background conflicts and clip to container bounds
     webView.backgroundColor = .clear
     webView.isOpaque = false
-    webView.layer.cornerRadius = cornerRadius
+    webView.layer.cornerRadius = dimensions.cornerRadius
     webView.layer.masksToBounds = true
 
     // Move webview to container
     containerView.addSubview(webView)
 
     // Set up size constraints for popup using presentation style dimensions
-    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: popupWidth)
+    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: dimensions.width)
     self.popupWidthConstraint = popupWidthConstraint
-    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: popupHeight)
+    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: dimensions.height)
     self.popupHeightConstraint = popupHeightConstraint
     popupWidthConstraint.priority = UILayoutPriority(999)
     popupHeightConstraint.priority = UILayoutPriority(999)
@@ -819,16 +829,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private func sizePopupToContent() {
     // Reset scroll position to top
     webView.scrollView.contentOffset = .zero
-    
+
     // For popup presentation style, we want to respect the exact dimensions
     // specified in the presentation style, not resize based on content
-    guard let (popupWidth, popupHeight, _) = getPopupDimensions() else {
+    guard let dimensions = getPopupDimensions() else {
       return
     }
-    
+
     // Update container size constraints to match presentation style dimensions
-    popupWidthConstraint?.constant = popupWidth
-    popupHeightConstraint?.constant = popupHeight
+    popupWidthConstraint?.constant = dimensions.width
+    popupHeightConstraint?.constant = dimensions.height
 
     // Animate the size change to ensure proper layout
     UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut) {
@@ -876,9 +886,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         // Fade out the background
         backgroundView?.alpha = 0.0
       },
-      completion: { _ in
+      completion: { [weak self] _ in
         // Reset the flag after custom animation completes
-        self.isCustomBackgroundDismissal = false
+        self?.isCustomBackgroundDismissal = false
         completion()
       }
     )
