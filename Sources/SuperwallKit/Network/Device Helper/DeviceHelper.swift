@@ -557,7 +557,9 @@ class DeviceHelper {
       capabilities: capabilitiesConfig.namesCommaSeparated(),
       capabilitiesConfig: capabilitiesConfig.toJson(),
       platformWrapper: platformWrapper,
-      platformWrapperVersion: platformWrapperVersion
+      platformWrapperVersion: platformWrapperVersion,
+      swiftVersion: currentSwiftVersion(),
+      compilerVersion: currentCompilerVersion()
     )
 
     var deviceDictionary = template.toDictionary()

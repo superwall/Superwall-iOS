@@ -40,6 +40,7 @@ final class DependencyContainer {
   var attributionPoster: AttributionPoster!
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
+  var attributionFetcher: AttributionFetcher!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -116,10 +117,17 @@ final class DependencyContainer {
       factory: self
     )
 
+    attributionFetcher = AttributionFetcher(
+      storage: storage,
+      deviceHelper: deviceHelper,
+      webEntitlementRedeemer: webEntitlementRedeemer
+    )
+
     attributionPoster = AttributionPoster(
       storage: storage,
       network: network,
-      configManager: configManager
+      configManager: configManager,
+      attributionFetcher: attributionFetcher
     )
 
     placementsQueue = PlacementsQueue(
@@ -521,8 +529,8 @@ extension DependencyContainer: PurchasedTransactionsFactory {
 
 // MARK: - User Attributes Placement Factory
 extension DependencyContainer: UserAttributesPlacementFactory {
-  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes {
-    return InternalSuperwallEvent.Attributes(
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.UserAttributes {
+    return InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       audienceFilterParams: identityManager.userAttributes
     )
@@ -588,8 +596,16 @@ extension DependencyContainer: RestoreAccessFactory {
   }
 }
 
+// MARK: - ConfigStateFactory
 extension DependencyContainer: ConfigStateFactory {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
     return configManager.configState
+  }
+}
+
+// MARK: - AppIdFactory
+extension DependencyContainer: AppIdFactory {
+  func makeAppId() -> String? {
+    return configManager.config?.iosAppId
   }
 }

@@ -232,6 +232,9 @@ public enum SuperwallEvent {
   /// When the customer info did change.
   case customerInfoDidChange
 
+  /// When the integration attributes are set.
+  case integrationAttributes(_ attributes: [String: Any])
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -399,6 +402,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .networkDecodingFail)
     case .customerInfoDidChange:
       return .init(objcEvent: .customerInfoDidChange)
+    case .integrationAttributes:
+      return .init(objcEvent: .integrationAttributes)
     }
   }
 }

@@ -2,12 +2,26 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.8.0
+
+### Enhancements
+
+- Adds ability to specify a custom height and corner radius for the drawer presentation style.
+- Adds ability to grant an entitlement to anyone.
+- Adds `Superwall.shared.setIntegrationAttributes(_:)` which allows you to set attributes for third-party integrations `Superwall.shared.integrationAttributes` to get the attributes you've set.
+- Adds the ability to ask for an App Store review from a paywall tap action.
+
+### Fixes
+
+- Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
+
 ## 4.7.0
 
 ### Enhancements
 
 - Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
 - Updates Superscript version to 1.0.2. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.2).
+- Adds `swiftVersion` and `compilerVersion` to the device attributes.
 
 ### Fixes
 

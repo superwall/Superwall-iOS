@@ -240,3 +240,11 @@ enum LatestCustomerInfo: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = CustomerInfo
 }
+
+enum IntegrationAttributes: Storable {
+  static var key: String {
+    "store.IntegrationAttributes"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = [String: Any]
+}

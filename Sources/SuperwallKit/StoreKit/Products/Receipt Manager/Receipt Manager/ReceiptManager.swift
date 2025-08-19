@@ -79,6 +79,9 @@ actor ReceiptManager {
         case .verified(let transaction),
           .unverified(let transaction, _):
           Self.appTransactionId = transaction.appTransactionID
+          if Superwall.isInitialized {
+            Superwall.shared.dequeueIntegrationAttributes()
+          }
         }
       }
     }

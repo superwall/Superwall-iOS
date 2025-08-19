@@ -460,6 +460,11 @@ let response = #"""
     "presentation_delay": 0,
     "presentation_style": "FULLSCREEN",
     "presentation_style_v2": "FULLSCREEN",
+    "presentation_style_v3": {
+      "type": "DRAWER",
+      "height": 250,
+      "corner_radius": 25
+    },
     "launch_option": "EXPLICIT",
     "dismissal_option": "NORMAL",
     "background_color_hex": "#000000"

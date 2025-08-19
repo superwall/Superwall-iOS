@@ -150,7 +150,7 @@ protocol PurchasedTransactionsFactory: AnyObject {
 }
 
 protocol UserAttributesPlacementFactory: AnyObject {
-  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.UserAttributes
 }
 
 protocol ReceiptFactory: AnyObject {
@@ -177,4 +177,8 @@ protocol RestoreAccessFactory: AnyObject {
 
 protocol ConfigStateFactory: AnyObject {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error>
+}
+
+protocol AppIdFactory: AnyObject {
+  func makeAppId() -> String?
 }

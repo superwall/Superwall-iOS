@@ -211,6 +211,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the customer info did change.
   case customerInfoDidChange
 
+  /// When the integration attributes are set.
+  case integrationAttributes
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -343,6 +346,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "networkDecoding_fail"
     case .customerInfoDidChange:
       return "customerInfo_didChange"
+    case .integrationAttributes:
+      return "integration_attributes"
     }
   }
 }

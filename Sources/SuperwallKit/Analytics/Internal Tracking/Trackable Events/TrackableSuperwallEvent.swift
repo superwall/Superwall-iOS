@@ -95,7 +95,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct Attributes: TrackableSuperwallEvent {
+  struct UserAttributes: TrackableSuperwallEvent {
     let appInstalledAtString: String
     var superwallEvent: SuperwallEvent {
       return .userAttributes(audienceFilterParams)
@@ -104,6 +104,16 @@ enum InternalSuperwallEvent {
       return [
         "application_installed_at": appInstalledAtString
       ]
+    }
+    var audienceFilterParams: [String: Any] = [:]
+  }
+
+  struct IntegrationAttributes: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .integrationAttributes(audienceFilterParams)
+    }
+    func getSuperwallParameters() async -> [String: Any] {
+      return [:]
     }
     var audienceFilterParams: [String: Any] = [:]
   }
