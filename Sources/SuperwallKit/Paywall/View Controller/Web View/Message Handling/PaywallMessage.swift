@@ -35,6 +35,11 @@ struct PayloadMessages: Decodable {
   }
 }
 
+enum ReviewType: String, Decodable {
+  case inApp = "in-app"
+  case external
+}
+
 enum PaywallMessage: Decodable, Equatable {
   case onReady(paywallJsVersion: String)
 	case templateParamsAndUserAttributes
@@ -46,6 +51,7 @@ enum PaywallMessage: Decodable, Equatable {
   case purchase(productId: String)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
+  case requestStoreReview(ReviewType)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -72,6 +78,7 @@ enum PaywallMessage: Decodable, Equatable {
     case purchase
     case custom
     case customPlacement = "custom_placement"
+    case requestStoreReview = "request_store_review"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -84,6 +91,7 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
+    case reviewType = "reviewType"
   }
 
   enum PaywallMessageError: Error {
@@ -136,6 +144,11 @@ enum PaywallMessage: Decodable, Equatable {
         if let name = try? values.decode(String.self, forKey: .name),
           let params = try? values.decode(JSON.self, forKey: .params) {
           self = .customPlacement(name: name, params: params)
+          return
+        }
+      case .requestStoreReview:
+        if let reviewType = try? values.decode(ReviewType.self, forKey: .reviewType) {
+          self = .requestStoreReview(reviewType)
           return
         }
       }

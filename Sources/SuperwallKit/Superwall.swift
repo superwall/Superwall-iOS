@@ -117,6 +117,11 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.userAttributes
   }
 
+  /// Attribution properties set using ``setIntegrationAttributes(_:)``.
+  public var integrationAttributes: [String: Any] {
+    return dependencyContainer.attributionFetcher.integrationAttributes
+  }
+
   /// The current user's id.
   ///
   /// If you haven't called ``identify(userId:options:)``,
@@ -292,6 +297,10 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Used to serially execute register calls.
   var previousRegisterTask: Task<Void, Never>?
+
+  /// The integration attributes to send to the server when `appTransactionId`
+  /// is available.
+  var enqueuedIntegrationAttributes: [IntegrationAttribute: Any?]?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -707,6 +716,34 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
+    }
+  }
+
+  /// Sets attributes for third-party integrations.
+  ///
+  /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
+  /// properties to associate with the user or events for the given provider.
+  public func setIntegrationAttributes(_ props: [IntegrationAttribute: Any?]) {
+    guard let appTransactionId = ReceiptManager.appTransactionId else {
+      enqueuedIntegrationAttributes = props
+      return
+    }
+    enqueuedIntegrationAttributes = nil
+
+    let props = props.reduce(into: [String: Any?]()) { result, pair in
+      result[pair.key.description] = pair.value
+    }
+
+    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(
+      attributes: props,
+      appTransactionId: appTransactionId
+    )
+    setUserAttributes(props)
+  }
+
+  func dequeueIntegrationAttributes() {
+    if let enqueuedAttribution = enqueuedIntegrationAttributes {
+      setIntegrationAttributes(enqueuedAttribution)
     }
   }
 

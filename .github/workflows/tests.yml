@@ -20,8 +20,8 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: Select Xcode 16.2
-        run: sudo xcode-select -switch /Applications/Xcode_16.2.app
+      - name: Select Xcode 16.4
+        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.2.3
       - name: Run Tests
