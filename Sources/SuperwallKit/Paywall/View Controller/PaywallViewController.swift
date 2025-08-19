@@ -232,19 +232,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       setNeedsStatusBarAppearanceUpdate()
     #endif
     // Don't set background color for popup - it will be transparent
-    if presentationStyle != .popup {
+    switch presentationStyle {
+    case .popup:
+      break
+    default:
       view.backgroundColor = backgroundColor
-    }
-
-
-    let loadingColor = backgroundColor.readableOverlayColor
-    view.addSubview(refreshPaywallButton)
-    refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-
-    view.addSubview(exitButton)
-    exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-
-    if presentationStyle != .popup {
       view.addSubview(webView)
       webView.alpha = 0.0
       NSLayoutConstraint.activate([
@@ -254,6 +246,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
       ])
     }
+
+    let loadingColor = backgroundColor.readableOverlayColor
+    view.addSubview(refreshPaywallButton)
+    refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
+
+    view.addSubview(exitButton)
+    exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
     NSLayoutConstraint.activate([
       refreshPaywallButton.topAnchor.constraint(
@@ -425,14 +424,21 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
             self.webView.alpha = 1.0
             self.webView.transform = .identity
           },
-          completion: { _ in
+          completion: { [weak self] _ in
+            guard let self = self else {
+              return
+            }
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
 
-            // Resize popup to content after shimmer is removed
-            if self.presentationStyle == .popup {
+            switch self.presentationStyle {
+            case .popup:
+              // Resize popup to content after shimmer is removed
               self.sizePopupToContent()
+            default:
+              break
             }
+
             Task.detached { [weak self] in
               guard let self = self else {
                 return
@@ -478,9 +484,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       tintColor: backgroundColor.readableOverlayColor,
       isLightBackground: !backgroundColor.isDarkColor
     )
-    let shimmerSuperview: UIView = presentationStyle == .popup
-      ? (popupContainerView ?? view)
-      : view
+
+    let shimmerSuperview: UIView
+    switch presentationStyle {
+    case .popup:
+      shimmerSuperview = popupContainerView ?? view
+    default:
+      shimmerSuperview = view
+    }
 
     shimmerSuperview.insertSubview(shimmerView, belowSubview: webView)
 
@@ -837,12 +848,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   @objc private func backgroundTapped() {
     // Custom animation for popup dismissal on background tap
-    if presentationStyle == .popup {
+    switch presentationStyle {
+    case .popup:
       isCustomBackgroundDismissal = true
       animatePopupDismissal {
         self.dismiss(result: .declined, closeReason: .manualClose)
       }
-    } else {
+    default:
       dismiss(result: .declined, closeReason: .manualClose)
     }
   }

@@ -22,7 +22,11 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   case push
 
   /// A view presentation style in which the presented paywall pops over the top of the view.
-  case popup
+  case popup(
+    height: Double,
+    width: Double,
+    cornerRadius: Double
+  )
 
   /// A view presentation style in which the presented paywall slides up to cover a portion of the screen.
   ///
@@ -45,6 +49,7 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case type
     case height
+    case width
     case cornerRadius
   }
 
@@ -67,7 +72,14 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
       let cornerRadius = try container.decode(Double.self, forKey: .cornerRadius)
       self = .drawer(height: height, cornerRadius: cornerRadius)
     case .popup:
-      self = .popup
+      let height = try container.decode(Double.self, forKey: .height)
+      let width = try container.decode(Double.self, forKey: .width)
+      let cornerRadius = try container.decode(Double.self, forKey: .cornerRadius)
+      self = .popup(
+        height: height,
+        width: width,
+        cornerRadius: cornerRadius
+      )
     case .none:
       self = .none
     }
@@ -109,6 +121,8 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
       return .push
     case .drawer:
       return .drawer
+    case .popup:
+      return .popup
     case .none:
       return .none
     }
@@ -156,12 +170,16 @@ public enum PaywallPresentationStyleObjc: Int, Codable, Sendable {
   /// The height and corner radius can be customized via the PaywallPresentationInfo properties.
   case drawer
 
+  /// A view presentation style in which the presented paywall pops over the top of the view.
+  case popup
+
   /// Indicates that the presentation style to be used is the one set on the dashboard.
   case none
 
   /// Convert to Swift enum with associated values
   func toSwift(
     height: NSNumber? = nil,
+    width: NSNumber? = nil,
     cornerRadius: NSNumber? = nil
   ) -> PaywallPresentationStyle {
     switch self {
@@ -176,6 +194,12 @@ public enum PaywallPresentationStyleObjc: Int, Codable, Sendable {
     case .drawer:
       return .drawer(
         height: height?.doubleValue ?? 70,
+        cornerRadius: cornerRadius?.doubleValue ?? 15
+      )
+    case .popup:
+      return .popup(
+        height: height?.doubleValue ?? 60,
+        width: width?.doubleValue ?? 80,
         cornerRadius: cornerRadius?.doubleValue ?? 15
       )
     case .none:
