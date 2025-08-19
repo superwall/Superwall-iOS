@@ -22,6 +22,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
   func startCheckoutSession(id checkoutId: String)
+  func requestReview(type: ReviewType)
 }
 
 @MainActor
@@ -157,6 +158,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
       handleCustomPlacement(name: name, params: params)
+    case .requestStoreReview(let reviewType):
+      requestReview(type: reviewType)
     }
   }
 
@@ -370,6 +373,10 @@ final class PaywallMessageHandler: WebEventDelegate {
     )
     hapticFeedback()
     delegate?.openDeepLink(url)
+  }
+
+  private func requestReview(type: ReviewType) {
+    delegate?.requestReview(type: type)
   }
 
   private func restorePurchases() {

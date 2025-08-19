@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length cyclomatic_complexity type_body_length trailing_closure
+// swiftlint:disable function_body_length type_body_length trailing_closure
 
 import UIKit
 import Foundation
@@ -30,6 +30,7 @@ actor WebEntitlementRedeemer {
   enum RedeemType: CustomStringConvertible {
     case code(String)
     case existingCodes
+    case integrationAttributes
 
     var description: String {
       switch self {
@@ -37,6 +38,8 @@ actor WebEntitlementRedeemer {
         return "CODE"
       case .existingCodes:
         return "EXISTING_CODES"
+      case .integrationAttributes:
+        return "INTEGRATION_ATTRIBUTES"
       }
     }
 
@@ -115,24 +118,6 @@ actor WebEntitlementRedeemer {
     _ type: RedeemType,
     injectedConfig: Config? = nil
   ) async {
-    // Await for config or use injected config.
-    var config = injectedConfig
-
-    if config == nil {
-      let configState = factory.makeConfigState()
-      config = try? await configState
-        .compactMap { $0.getConfig() }
-        .throwableAsync()
-    }
-
-    guard let config = config else {
-      return
-    }
-    // Make sure web2app is enabled
-    if config.web2appConfig == nil {
-      return
-    }
-
     // Prepare data to redeem
     let superwall = superwall ?? Superwall.shared
     let latestRedeemResponse = storage.get(LatestRedeemResponse.self)
@@ -163,12 +148,16 @@ actor WebEntitlementRedeemer {
         )
         await superwall.track(trackedEvent)
       }
-    case .existingCodes:
+    case .existingCodes,
+      .integrationAttributes:
       break
     }
 
+    let attributes = storage.get(IntegrationAttributes.self) ?? [:]
+
     // Create request to redeem
     let request = await RedeemRequest(
+      metadata: JSON(attributes),
       deviceId: factory.makeDeviceId(),
       appUserId: factory.makeAppUserId(),
       aliasId: factory.makeAliasId(),
@@ -177,11 +166,17 @@ actor WebEntitlementRedeemer {
       appTransactionId: ReceiptManager.appTransactionId
     )
 
-    let startEvent = InternalSuperwallEvent.Redemption(
-      state: .start,
-      type: type
-    )
-    await superwall.track(startEvent)
+    switch type {
+    case .code,
+      .existingCodes:
+      let startEvent = InternalSuperwallEvent.Redemption(
+        state: .start,
+        type: type
+      )
+      await superwall.track(startEvent)
+    case .integrationAttributes:
+      break
+    }
 
     // Close safari if open and show spinner, then call delegate
     switch type {
@@ -191,7 +186,8 @@ actor WebEntitlementRedeemer {
         superwall.paywallViewController?.closeSafari()
       }
       await delegate.willRedeemLink()
-    case .existingCodes:
+    case .existingCodes,
+      .integrationAttributes:
       break
     }
 
@@ -201,11 +197,17 @@ actor WebEntitlementRedeemer {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      let completeEvent = InternalSuperwallEvent.Redemption(
-        state: .complete,
-        type: type
-      )
-      await superwall.track(completeEvent)
+      switch type {
+      case .code,
+        .existingCodes:
+        let completeEvent = InternalSuperwallEvent.Redemption(
+          state: .complete,
+          type: type
+        )
+        await superwall.track(completeEvent)
+      case .integrationAttributes:
+        break
+      }
 
       let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
       let allEntitlements = deviceEntitlements.union(response.entitlements)
@@ -304,11 +306,17 @@ actor WebEntitlementRedeemer {
         }
       }
     } catch {
-      let event = InternalSuperwallEvent.Redemption(
-        state: .fail,
-        type: type
-      )
-      await superwall.track(event)
+      switch type {
+      case .code,
+        .existingCodes:
+        let event = InternalSuperwallEvent.Redemption(
+          state: .fail,
+          type: type
+        )
+        await superwall.track(event)
+      case .integrationAttributes:
+        break
+      }
 
       // Call the delegate if user try to redeem a code
       if case let .code(code) = type {
@@ -337,7 +345,7 @@ actor WebEntitlementRedeemer {
       Logger.debug(
         logLevel: .error,
         scope: .webEntitlements,
-        message: "Failed to redeem purchase token",
+        message: "Failed to redeem",
         info: [:]
       )
     }
@@ -434,14 +442,17 @@ actor WebEntitlementRedeemer {
     config: Config? = nil,
     isFirstTime: Bool = false
   ) async {
-    guard let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() else {
-      return
-    }
-
-    if !isFirstTime,
-      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
-      let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
-      guard timeElapsed > entitlementsMaxAge else {
+    if !isFirstTime {
+      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() {
+        if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+          let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
+          // Only proceed if a certain amount of time has elapsed
+          guard timeElapsed > entitlementsMaxAge else {
+            return
+          }
+        }
+      } else {
+        // Don't proceed at all if there's no web2app config
         return
       }
     }
