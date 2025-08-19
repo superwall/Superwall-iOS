@@ -488,7 +488,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     let shimmerSuperview: UIView
     switch presentationStyle {
     case .popup:
+      // For popup style, use the popup container (should exist after setupPopupBackground)
       shimmerSuperview = popupContainerView ?? view
+      
+      // Apply the same corner radius as the popup to the shimmer view
+      if let (_, _, cornerRadius) = getPopupDimensions() {
+        shimmerView.layer.cornerRadius = cornerRadius
+        shimmerView.layer.masksToBounds = true
+      }
     default:
       shimmerSuperview = view
     }
@@ -689,6 +696,21 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
+  private func getPopupDimensions() -> (width: CGFloat, height: CGFloat, cornerRadius: CGFloat)? {
+    guard case .popup(let height, let width, let cornerRadius) = presentationStyle else {
+      return nil
+    }
+
+    // Width and height are percentages, cornerRadius is in pixels
+    let screenWidth = view.bounds.width
+    let screenHeight = view.bounds.height
+
+    let calculatedWidth = screenWidth * CGFloat(width / 100.0)
+    let calculatedHeight = screenHeight * CGFloat(height / 100.0)
+
+    return (calculatedWidth, calculatedHeight, CGFloat(cornerRadius))
+  }
+
   private func setupPopupBackground() {
     // Set transparent background for the main view
     view.backgroundColor = .clear
@@ -716,15 +738,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       backgroundView.alpha = 1.0
     }
 
-    // Style webview like an iOS alert - ensure no background conflicts
-    webView.backgroundColor = .clear
-    webView.isOpaque = false
-    webView.layer.cornerRadius = 12
-    webView.layer.shadowColor = UIColor.black.cgColor
-    webView.layer.shadowOffset = CGSize(width: 0, height: 2)
-    webView.layer.shadowRadius = 10
-    webView.layer.shadowOpacity = 0.3
-    webView.layer.masksToBounds = false
+    // Extract popup dimensions and corner radius from presentation style
+    guard let (popupWidth, popupHeight, cornerRadius) = getPopupDimensions() else {
+      return
+    }
 
     // Create container view for the webview to handle centering
     let containerView = UIView()
@@ -733,16 +750,27 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     view.addSubview(containerView)
     popupContainerView = containerView
 
+    // Style container view with corner radius and shadow
+    containerView.layer.cornerRadius = cornerRadius
+    containerView.layer.shadowColor = UIColor.black.cgColor
+    containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+    containerView.layer.shadowRadius = 10
+    containerView.layer.shadowOpacity = 0.3
+    containerView.layer.masksToBounds = false
+
+    // Style webview - ensure no background conflicts and clip to container bounds
+    webView.backgroundColor = .clear
+    webView.isOpaque = false
+    webView.layer.cornerRadius = cornerRadius
+    webView.layer.masksToBounds = true
+
     // Move webview to container
     containerView.addSubview(webView)
 
-    // Set up size constraints for popup, preserving previous values if they exist
-    let previousWidth = popupWidthConstraint?.constant ?? 300
-    let previousHeight = popupHeightConstraint?.constant ?? 400
-
-    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: previousWidth)
+    // Set up size constraints for popup using presentation style dimensions
+    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: popupWidth)
     self.popupWidthConstraint = popupWidthConstraint
-    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: previousHeight)
+    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: popupHeight)
     self.popupHeightConstraint = popupHeightConstraint
     popupWidthConstraint.priority = UILayoutPriority(999)
     popupHeightConstraint.priority = UILayoutPriority(999)
@@ -791,58 +819,23 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private func sizePopupToContent() {
     // Reset scroll position to top
     webView.scrollView.contentOffset = .zero
+    
+    // For popup presentation style, we want to respect the exact dimensions
+    // specified in the presentation style, not resize based on content
+    guard let (popupWidth, popupHeight, _) = getPopupDimensions() else {
+      return
+    }
+    
+    // Update container size constraints to match presentation style dimensions
+    popupWidthConstraint?.constant = popupWidth
+    popupHeightConstraint?.constant = popupHeight
 
-    // Wait for the webview to load and then size to content
-    webView.evaluateJavaScript("""
-      // Reset scroll to top and wait for layout
-      window.scrollTo(0, 0);
-
-      // Force layout recalculation
-      document.body.offsetHeight;
-
-      function getContentSize() {
-        const body = document.body;
-
-        // Get the actual content height by checking scroll height
-        // This is more reliable for measuring actual content
-        const height = body.scrollHeight;
-        const width = body.scrollWidth;
-
-        return {
-          width: Math.ceil(width),
-          height: Math.ceil(height)
-        };
-      }
-      getContentSize();
-    """) { [weak self] result, _ in
-      guard
-        let self = self,
-        let result = result as? [String: Any],
-        let contentWidth = result["width"] as? Double,
-        let contentHeight = result["height"] as? Double
-      else {
-        return
-      }
-
-      DispatchQueue.main.async {
-        // Apply content size with max constraints (90% of screen)
-        let maxWidth = self.view.bounds.width * 0.9
-        let maxHeight = self.view.bounds.height * 0.9
-        let finalWidth = min(CGFloat(contentWidth), maxWidth)
-        let finalHeight = min(CGFloat(contentHeight), maxHeight)
-
-        // Update container size constraints to match content
-        self.popupWidthConstraint?.constant = finalWidth
-        self.popupHeightConstraint?.constant = finalHeight
-
-        // Animate the size change and ensure proper centering
-        UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut) {
-          // Force layout update to recalculate center constraints
-          self.view.setNeedsUpdateConstraints()
-          self.view.updateConstraintsIfNeeded()
-          self.view.layoutIfNeeded()
-        }
-      }
+    // Animate the size change to ensure proper layout
+    UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut) {
+      // Force layout update to recalculate center constraints
+      self.view.setNeedsUpdateConstraints()
+      self.view.updateConstraintsIfNeeded()
+      self.view.layoutIfNeeded()
     }
   }
 

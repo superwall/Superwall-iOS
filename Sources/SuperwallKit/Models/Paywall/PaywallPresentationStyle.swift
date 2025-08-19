@@ -101,8 +101,11 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
       try container.encode(InternalPresentationStyle.drawer.rawValue, forKey: .type)
       try container.encodeIfPresent(height, forKey: .height)
       try container.encodeIfPresent(cornerRadius, forKey: .cornerRadius)
-    case .popup:
+    case let .popup(height, width, cornerRadius):
       try container.encode(InternalPresentationStyle.popup.rawValue, forKey: .type)
+      try container.encodeIfPresent(height, forKey: .height)
+      try container.encodeIfPresent(width, forKey: .width)
+      try container.encodeIfPresent(cornerRadius, forKey: .cornerRadius)
     case .none:
       try container.encode(InternalPresentationStyle.none.rawValue, forKey: .type)
     }
@@ -139,6 +142,30 @@ public enum PaywallPresentationStyle: Codable, Sendable, Equatable {
   /// Extract drawer corner radius if present
   var drawerCornerRadius: NSNumber? {
     if case .drawer(_, let cornerRadius) = self {
+      return NSNumber(value: cornerRadius)
+    }
+    return nil
+  }
+
+  /// Extract popup height if present
+  var popupHeight: NSNumber? {
+    if case .popup(let height, _, _) = self {
+      return NSNumber(value: height)
+    }
+    return nil
+  }
+
+  /// Extract popup width if present
+  var popupWidth: NSNumber? {
+    if case .popup(_, let width, _) = self {
+      return NSNumber(value: width)
+    }
+    return nil
+  }
+
+  /// Extract popup corner radius if present
+  var popupCornerRadius: NSNumber? {
+    if case .popup(_, _, let cornerRadius) = self {
       return NSNumber(value: cornerRadius)
     }
     return nil
