@@ -437,14 +437,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
 
-            switch self.presentationStyle {
-            case .popup:
-              // Resize popup to content after shimmer is removed
-              self.sizePopupToContent()
-            default:
-              break
-            }
-
             Task.detached { [weak self] in
               guard let self = self else {
                 return
@@ -690,13 +682,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       modalPresentationStyle = .custom
       transitioningDelegate = popupTransitionDelegate
       setupPopupBackground()
-
-      // If content is already loaded (preloaded case), size to content immediately
-      if loadingState == .ready && shimmerView == nil {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-          self.sizePopupToContent()
-        }
-      }
     case .none:
       break
     }
@@ -826,28 +811,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     ])
   }
 
-  private func sizePopupToContent() {
-    // Reset scroll position to top
-    webView.scrollView.contentOffset = .zero
-
-    // For popup presentation style, we want to respect the exact dimensions
-    // specified in the presentation style, not resize based on content
-    guard let dimensions = getPopupDimensions() else {
-      return
-    }
-
-    // Update container size constraints to match presentation style dimensions
-    popupWidthConstraint?.constant = dimensions.width
-    popupHeightConstraint?.constant = dimensions.height
-
-    // Animate the size change to ensure proper layout
-    UIView.animate(withDuration: 0.3, delay: 0.1, options: .curveEaseInOut) {
-      // Force layout update to recalculate center constraints
-      self.view.setNeedsUpdateConstraints()
-      self.view.updateConstraintsIfNeeded()
-      self.view.layoutIfNeeded()
-    }
-  }
 
   @objc private func backgroundTapped() {
     // Custom animation for popup dismissal on background tap
