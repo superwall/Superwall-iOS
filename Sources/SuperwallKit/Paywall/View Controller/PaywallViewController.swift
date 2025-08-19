@@ -486,7 +486,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     let shimmerSuperview: UIView
     switch presentationStyle {
     case .popup:
-      // For popup style, use the popup container (should exist after setupPopupBackground)
+      // For popup style, use the popup container
       shimmerSuperview = popupContainerView ?? view
 
       // Apply the same corner radius as the popup to the shimmer view
@@ -770,26 +770,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     popupWidthConstraint.priority = UILayoutPriority(999)
     popupHeightConstraint.priority = UILayoutPriority(999)
 
-    // Center container in view with maximum size constraints
+    // Center container in view
     NSLayoutConstraint.activate([
       containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-      containerView.leadingAnchor.constraint(
-        greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor,
-        constant: 20
-      ),
-      containerView.trailingAnchor.constraint(
-        lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor,
-        constant: -20
-      ),
-      containerView.topAnchor.constraint(
-        greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor,
-        constant: 20
-      ),
-      containerView.bottomAnchor.constraint(
-        lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor,
-        constant: -20
-      ),
       popupWidthConstraint,
       popupHeightConstraint
     ])
@@ -814,14 +798,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   @objc private func backgroundTapped() {
     // Custom animation for popup dismissal on background tap
-    switch presentationStyle {
-    case .popup:
-      isCustomBackgroundDismissal = true
-      animatePopupDismissal {
-        self.dismiss(result: .declined, closeReason: .manualClose)
-      }
-    default:
-      dismiss(result: .declined, closeReason: .manualClose)
+    isCustomBackgroundDismissal = true
+    animatePopupDismissal {
+      self.dismiss(result: .declined, closeReason: .manualClose)
     }
   }
 
