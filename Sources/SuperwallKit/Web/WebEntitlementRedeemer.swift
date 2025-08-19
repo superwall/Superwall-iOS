@@ -365,6 +365,13 @@ actor WebEntitlementRedeemer {
     do {
       let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
 
+      /*
+       1. Add info to web entitlements and poll, same after renew is called
+       2. Update the customer info, similar to load purchases, split into subscriptions/nonSubscriptions,
+       3. Merge web entitlements in loadPurchasedProducts
+       4. Merge off_platform_products with root products object for entitlementsByProductId
+       */
+
       let entitlements = try await network.redeemEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()

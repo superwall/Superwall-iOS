@@ -133,25 +133,28 @@ actor ReceiptManager {
       return
     }
 
-    let serverEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
-    let snapshot = await manager.loadPurchases(serverEntitlementsByProductId: serverEntitlementsByProductId)
+    let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
+
+    // TODO: Need to merge in the web entitlements, this should take into account the web entitlements when returning the snapshot:
+    let purchaseSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+
 
     await MainActor.run {
       Superwall.shared.customerInfo = CustomerInfo(
-        subscriptions: snapshot.subscriptions,
-        nonSubscriptions: snapshot.nonSubscriptions,
+        subscriptions: purchaseSnapshot.subscriptions,
+        nonSubscriptions: purchaseSnapshot.nonSubscriptions,
         userId: Superwall.shared.userId,
-        entitlements: snapshot.entitlementsByProductId.values
+        entitlements: purchaseSnapshot.entitlementsByProductId.values
           .flatMap { $0 }
           .sorted { $0.id < $1.id }
       )
     }
 
-    Superwall.shared.entitlements.setEntitlementsFromConfig(snapshot.entitlementsByProductId)
+    Superwall.shared.entitlements.setEntitlementsFromConfig(purchaseSnapshot.entitlementsByProductId)
 
-    await receiptDelegate?.syncSubscriptionStatus(purchases: snapshot.purchases)
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchaseSnapshot.purchases)
 
-    let purchasedProductIds = Set(snapshot.purchases.map { $0.id })
+    let purchasedProductIds = Set(purchaseSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
       identifiers: purchasedProductIds,
