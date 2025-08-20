@@ -965,7 +965,12 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         SKStoreReviewController.requestReview()
       }
     case .external:
-      guard let appId = factory.makeAppId() else {
+      let appId: String
+      if let iosAppId = factory.makeAppId() {
+        appId = iosAppId
+      } else if let iosAppId = ReceiptManager.appId {
+        appId = "\(iosAppId)"
+      } else {
         Logger.debug(
           logLevel: .warn,
           scope: .superwallCore,

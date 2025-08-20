@@ -26,6 +26,7 @@ actor ReceiptManager {
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   static var appTransactionId: String?
+  static var appId: UInt64?
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -76,6 +77,7 @@ actor ReceiptManager {
         case .verified(let transaction),
           .unverified(let transaction, _):
           Self.appTransactionId = transaction.appTransactionID
+          Self.appId = transaction.appID
           if Superwall.isInitialized {
             Superwall.shared.dequeueIntegrationAttributes()
           }
