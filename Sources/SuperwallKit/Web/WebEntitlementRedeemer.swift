@@ -156,6 +156,7 @@ actor WebEntitlementRedeemer {
     }
 
     do {
+      // TODO: We need the same full txn list here and then we will update the entitlements too before merging/saving.
       // Redeem
       let response = try await network.redeemEntitlements(request: request)
 
