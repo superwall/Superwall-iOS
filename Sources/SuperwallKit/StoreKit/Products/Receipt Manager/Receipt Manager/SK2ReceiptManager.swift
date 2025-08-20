@@ -259,10 +259,10 @@ actor SK2ReceiptManager: ReceiptManagerType {
       if !isLifetime,
         let renewable = mostRecentRenewable {
         let status = await renewable.subscriptionStatus
-        
+
         if case let .verified(info) = status?.renewalInfo {
           willRenew = info.willAutoRenew
-          
+
           if let index = subscriptionTxnIndex {
             subscriptions[index].willRenew = info.willAutoRenew
           }
