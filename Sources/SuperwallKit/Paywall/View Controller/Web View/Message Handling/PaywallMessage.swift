@@ -157,6 +157,8 @@ enum PaywallMessage: Decodable, Equatable {
       case .initiateWebCheckout:
         if let checkoutId = try? values.decode(String.self, forKey: .checkoutContextId) {
           self = .initiateWebCheckout(checkoutId: checkoutId)
+          return
+        }
       case .requestStoreReview:
         if let reviewType = try? values.decode(ReviewType.self, forKey: .reviewType) {
           self = .requestStoreReview(reviewType)
