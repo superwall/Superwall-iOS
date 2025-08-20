@@ -22,4 +22,8 @@ final class PaywallViewControllerMock: PaywallViewController {
   ) {
     completion(shouldPresent)
   }
+  
+  func setPresentationStyleForTesting(_ style: PaywallPresentationStyle) {
+    setValue(style, forKey: "presentationStyle")
+  }
 }
