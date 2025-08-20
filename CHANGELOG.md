@@ -11,6 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds ability to grant an entitlement to anyone.
 - Adds `Superwall.shared.setIntegrationAttributes(_:)` which allows you to set attributes for third-party integrations `Superwall.shared.integrationAttributes` to get the attributes you've set.
 - Adds the ability to ask for an App Store review from a paywall tap action.
+- Adds a popup presentation style.
 
 ### Fixes
 
