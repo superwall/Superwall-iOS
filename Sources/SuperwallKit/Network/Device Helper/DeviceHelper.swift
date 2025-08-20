@@ -545,6 +545,7 @@ class DeviceHelper {
       isSandbox: isSandbox,
       activeEntitlements: Set(entitlementsInfo.active.map { $0.id }),
       activeEntitlementObjects: entitlementsInfo.active,
+      customerInfo: Superwall.shared.customerInfo,
       activeProducts: await receiptManager.getActiveProductIds(),
       subscriptionStatus: Superwall.shared.subscriptionStatus.description,
       isFirstAppOpen: isFirstAppOpen,

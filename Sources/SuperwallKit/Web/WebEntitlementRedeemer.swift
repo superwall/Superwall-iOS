@@ -156,6 +156,7 @@ actor WebEntitlementRedeemer {
     }
 
     do {
+      // TODO: We need the same full txn list here and then we will update the entitlements too before merging/saving.
       // Redeem
       let response = try await network.redeemEntitlements(request: request)
 
@@ -364,6 +365,13 @@ actor WebEntitlementRedeemer {
 
     do {
       let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+
+      /*
+       1. Add info to web entitlements and poll, same after renew is called
+       2. Update the customer info, similar to load purchases, split into subscriptions/nonSubscriptions,
+       3. Merge web entitlements in loadPurchasedProducts
+       4. Merge off_platform_products with root products object for entitlementsByProductId
+       */
 
       let entitlements = try await network.redeemEntitlements(
         appUserId: factory.makeAppUserId(),
