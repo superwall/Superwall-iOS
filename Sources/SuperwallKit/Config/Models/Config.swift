@@ -79,7 +79,7 @@ struct Config: Codable, Equatable {
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
     case attribution = "attributionOptions"
-    case products = "products"
+    case products = "productsV3"
     case web2appConfig
     case iosAppId
   }

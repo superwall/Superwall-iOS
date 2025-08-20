@@ -193,6 +193,7 @@ struct WebEntitlementRedeemerTests {
     let paywallVc = await PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
@@ -299,6 +300,7 @@ struct WebEntitlementRedeemerTests {
     let paywallVc = await PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,

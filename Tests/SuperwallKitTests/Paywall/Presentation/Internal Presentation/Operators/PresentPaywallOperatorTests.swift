@@ -44,6 +44,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
@@ -110,6 +111,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
     let paywallVc = PaywallViewControllerMock(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
