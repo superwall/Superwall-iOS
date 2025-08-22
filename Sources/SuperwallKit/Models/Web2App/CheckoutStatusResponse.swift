@@ -35,19 +35,19 @@ struct CheckoutStatusResponse: Decodable {
       case subscriptionPeriod
       case subscriptionIntroductoryOffer
     }
-    
+
     private enum PriceLocaleCodingKeys: String, CodingKey {
       case identifier
       case languageCode
       case currencyCode
       case currencySymbol
     }
-    
+
     private enum SubscriptionPeriodCodingKeys: String, CodingKey {
       case unit
       case value
     }
-    
+
     private enum SubscriptionIntroOfferCodingKeys: String, CodingKey {
       case period
       case periodCount
