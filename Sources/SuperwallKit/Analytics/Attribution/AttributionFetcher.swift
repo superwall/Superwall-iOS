@@ -11,13 +11,13 @@ import AdServices
 #endif
 
 final class AttributionFetcher {
-  var integrationAttributes: [String: Any] {
+  var integrationAttributes: [String: String] {
     queue.sync {
       _integrationAttributes
     }
   }
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
-  private var _integrationAttributes: [String: Any] = [:]
+  private var _integrationAttributes: [String: String] = [:]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -113,7 +113,7 @@ final class AttributionFetcher {
   }
 
   func mergeIntegrationAttributes(
-    attributes: [String: Any?],
+    attributes: [String: String?],
     appTransactionId: String
   ) {
     queue.async { [weak self] in
@@ -125,7 +125,7 @@ final class AttributionFetcher {
   }
 
   private func _mergeIntegrationAttributes(
-    attributes: [String: Any?],
+    attributes: [String: String?],
     appTransactionId: String
   ) {
     var mergedAttributes = _integrationAttributes

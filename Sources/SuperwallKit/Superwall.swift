@@ -118,7 +118,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Attribution properties set using ``setIntegrationAttributes(_:)``.
-  public var integrationAttributes: [String: Any] {
+  public var integrationAttributes: [String: String] {
     return dependencyContainer.attributionFetcher.integrationAttributes
   }
 
@@ -300,7 +300,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// The integration attributes to send to the server when `appTransactionId`
   /// is available.
-  var enqueuedIntegrationAttributes: [IntegrationAttribute: Any?]?
+  var enqueuedIntegrationAttributes: [IntegrationAttribute: String?]?
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -723,14 +723,14 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
-  public func setIntegrationAttributes(_ props: [IntegrationAttribute: Any?]) {
+  public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
     guard let appTransactionId = ReceiptManager.appTransactionId else {
       enqueuedIntegrationAttributes = props
       return
     }
     enqueuedIntegrationAttributes = nil
 
-    let props = props.reduce(into: [String: Any?]()) { result, pair in
+    let props = props.reduce(into: [String: String?]()) { result, pair in
       result[pair.key.description] = pair.value
     }
 

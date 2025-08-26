@@ -238,5 +238,5 @@ enum IntegrationAttributes: Storable {
     "store.IntegrationAttributes"
   }
   static var directory: SearchPathDirectory = .userSpecificDocuments
-  typealias Value = [String: Any]
+  typealias Value = [String: String]
 }
