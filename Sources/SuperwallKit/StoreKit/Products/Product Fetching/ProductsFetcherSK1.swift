@@ -30,7 +30,7 @@ class ProductsFetcherSK1: NSObject, ProductFetchable {
   private var paywallNameByRequest: [SKRequest: String] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
-  private static let numberOfRetries: Int = 10
+  private static let numberOfRetries = 10
   private unowned let entitlementsInfo: EntitlementsInfo
 
   init(entitlementsInfo: EntitlementsInfo) {
