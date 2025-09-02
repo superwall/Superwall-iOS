@@ -741,6 +741,26 @@ public final class Superwall: NSObject, ObservableObject {
     setUserAttributes(props)
   }
 
+  /// Sets a single attribute for third-party integrations.
+  ///
+  /// - Parameters:
+  ///   - attribute: The ``IntegrationAttribute`` key specifying the integration provider.
+  ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
+  public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
+    guard let appTransactionId = ReceiptManager.appTransactionId else {
+      enqueuedIntegrationAttributes = [attribute: value]
+      return
+    }
+    enqueuedIntegrationAttributes = nil
+
+    dependencyContainer.attributionFetcher.setIntegrationAttribute(
+      attribute: attribute,
+      value: value,
+      appTransactionId: appTransactionId
+    )
+    setUserAttributes([attribute.description: value])
+  }
+
   func dequeueIntegrationAttributes() {
     if let enqueuedAttribution = enqueuedIntegrationAttributes {
       setIntegrationAttributes(enqueuedAttribution)

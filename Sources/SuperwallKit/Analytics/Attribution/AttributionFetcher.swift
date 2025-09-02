@@ -22,6 +22,9 @@ final class AttributionFetcher {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
 
+  // Debouncing mechanism for redeem calls
+  private var debounceTimer: Timer?
+
   var identifierForAdvertisers: String? {
     // should match available platforms here:
     // https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier
@@ -112,23 +115,75 @@ final class AttributionFetcher {
     self._integrationAttributes = storage.get(IntegrationAttributes.self) ?? [:]
   }
 
+  func setIntegrationAttribute(
+    attribute: IntegrationAttribute,
+    value: String?,
+    appTransactionId: String
+  ) {
+    let attributes = [attribute.description: value]
+    mergeIntegrationAttributes(attributes: attributes, appTransactionId: appTransactionId)
+  }
+
   func mergeIntegrationAttributes(
     attributes: [String: String?],
     appTransactionId: String
   ) {
     queue.async { [weak self] in
-      self?._mergeIntegrationAttributes(
+      guard let self = self else { return }
+
+      // Check if any values have actually changed
+      var hasChanges = false
+      for (key, newValue) in attributes {
+        let currentValue = self._integrationAttributes[key]
+        if currentValue != newValue {
+          hasChanges = true
+          break
+        }
+      }
+
+      // If no changes, don't proceed
+      guard hasChanges else {
+        return
+      }
+
+      // Update attributes immediately
+      self._mergeIntegrationAttributes(
         attributes: attributes,
-        appTransactionId: appTransactionId
+        appTransactionId: appTransactionId,
+        shouldRedeem: false // Don't redeem immediately
       )
+
+      // Debounce only the redeem call
+      self._debouncedRedeem()
+    }
+  }
+
+  private func _debouncedRedeem() {
+    // Cancel existing timer and start new one (debouncing)
+    self.debounceTimer?.invalidate()
+    self.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+      self?.queue.async {
+        Task {
+          await self?.webEntitlementRedeemer.redeem(.integrationAttributes)
+        }
+      }
+    }
+  }
+  
+  func cancelPendingOperations() {
+    queue.async {
+      self.debounceTimer?.invalidate()
+      self.debounceTimer = nil
     }
   }
 
   private func _mergeIntegrationAttributes(
     attributes: [String: String?],
-    appTransactionId: String
+    appTransactionId: String,
+    shouldRedeem: Bool = true
   ) {
     var mergedAttributes = _integrationAttributes
+    var hasChanges = false
 
     mergedAttributes["idfa"] = identifierForAdvertisers
 
@@ -136,11 +191,22 @@ final class AttributionFetcher {
     mergedAttributes["idfv"] = identifierForVendor
 
     for key in attributes.keys {
-      if let value = attributes[key] {
-        mergedAttributes[key] = value
-      } else {
-        mergedAttributes[key] = nil
+      let newValue = attributes[key]
+      let currentValue = _integrationAttributes[key]
+
+      if currentValue != newValue {
+        hasChanges = true
+        if let value = newValue {
+          mergedAttributes[key] = value
+        } else {
+          mergedAttributes.removeValue(forKey: key)
+        }
       }
+    }
+
+    // Only proceed if there are actual changes
+    guard hasChanges else {
+      return
     }
 
     Task {
@@ -153,8 +219,10 @@ final class AttributionFetcher {
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
 
-    Task {
-      await webEntitlementRedeemer.redeem(.integrationAttributes)
+    if shouldRedeem {
+      Task {
+        await webEntitlementRedeemer.redeem(.integrationAttributes)
+      }
     }
   }
 }
