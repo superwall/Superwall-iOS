@@ -26,6 +26,7 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
+  @DispatchQueueBacked
   var enrichment: Enrichment?
 
   let appInstalledAtString: String
@@ -492,12 +493,16 @@ class DeviceHelper {
       timeout: timeout
     )
 
-    if let enrichment = enrichment {
-      storage.save(enrichment, forType: LatestEnrichment.self)
+    $enrichment.withSnapshot { enrichment in
+      if let enrichment = enrichment {
+        storage.save(enrichment, forType: LatestEnrichment.self)
+      }
     }
 
-    if let attributes = enrichment?.user.dictionaryObject {
-      Superwall.shared.setUserAttributes(attributes)
+    $enrichment.withSnapshot { enrichment in
+      if let attributes = enrichment?.user.dictionaryObject {
+        Superwall.shared.setUserAttributes(attributes)
+      }
     }
   }
 
@@ -563,7 +568,9 @@ class DeviceHelper {
 
     var deviceDictionary = template.toDictionary()
 
-    let enrichmentDict = enrichment?.device.dictionaryObject ?? [:]
+    let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
+      enrichment?.device.dictionaryObject ?? [:]
+    }
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }

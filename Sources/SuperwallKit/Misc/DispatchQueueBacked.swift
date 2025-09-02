@@ -31,4 +31,14 @@ public final class DispatchQueueBacked<T>: @unchecked Sendable {
       }
     }
   }
+
+  public var projectedValue: DispatchQueueBacked<T> { self }
+
+  /// Produce a derived snapshot without exposing internal references.
+  @discardableResult
+  public func withSnapshot<R>(_ body: (T) throws -> R) rethrows -> R {
+    try queue.sync {
+      try body(value)
+    }
+  }
 }
