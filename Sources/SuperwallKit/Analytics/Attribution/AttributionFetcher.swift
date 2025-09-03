@@ -17,13 +17,12 @@ final class AttributionFetcher {
     }
   }
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
+  private let timerQueue = DispatchQueue(label: "com.superwall.attributionfetcher.timer")
+  private var redeemTimer: DispatchSourceTimer?
   private var _integrationAttributes: [String: String] = [:]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
-
-  // Debouncing mechanism for redeem calls
-  private var debounceTimer: Timer?
 
   var identifierForAdvertisers: String? {
     // should match available platforms here:
@@ -159,21 +158,38 @@ final class AttributionFetcher {
   }
 
   private func _debouncedRedeem() {
-    // Cancel existing timer and start new one (debouncing)
-    self.debounceTimer?.invalidate()
-    self.debounceTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
-      self?.queue.async {
-        Task {
-          await self?.webEntitlementRedeemer.redeem(.integrationAttributes)
-        }
+    // Must be called from self.queue
+    // Cancel previous timer (safe to call from any queue)
+    redeemTimer?.setEventHandler {}   // break retain cycles
+    redeemTimer?.cancel()
+    redeemTimer = nil
+
+    // Create timer on separate timerQueue for better timing accuracy
+    let timer = DispatchSource.makeTimerSource(queue: timerQueue)
+    timer.schedule(deadline: .now() + .milliseconds(500), repeating: .never)
+    timer.setEventHandler { [weak self] in
+      guard let self else { return }
+      // We're on timerQueue, need to sync with main queue for cleanup
+      Task {
+        await self.webEntitlementRedeemer.redeem(.integrationAttributes)
+      }
+      // Clean up timer - safe to do from timerQueue
+      self.queue.async {
+        self.redeemTimer?.setEventHandler {}
+        self.redeemTimer?.cancel()
+        self.redeemTimer = nil
       }
     }
+    redeemTimer = timer
+    timer.resume()
   }
-  
+
   func cancelPendingOperations() {
+    // Timer operations are thread-safe, but we synchronize timer reference access
     queue.async {
-      self.debounceTimer?.invalidate()
-      self.debounceTimer = nil
+      self.redeemTimer?.setEventHandler {}
+      self.redeemTimer?.cancel()
+      self.redeemTimer = nil
     }
   }
 

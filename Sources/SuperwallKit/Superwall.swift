@@ -299,8 +299,31 @@ public final class Superwall: NSObject, ObservableObject {
   var previousRegisterTask: Task<Void, Never>?
 
   /// The integration attributes to send to the server when `appTransactionId`
-  /// is available.
-  var enqueuedIntegrationAttributes: [IntegrationAttribute: String?]?
+  /// is available. Protected by a queue for thread safety.
+  private var _enqueuedIntegrationAttributes: [IntegrationAttribute: String?]?
+  private let enqueuedAttributesQueue = DispatchQueue(label: "com.superwall.enqueuedIntegrationAttributes")
+  
+  var enqueuedIntegrationAttributes: [IntegrationAttribute: String?]? {
+    get {
+      enqueuedAttributesQueue.sync { _enqueuedIntegrationAttributes }
+    }
+    set {
+      enqueuedAttributesQueue.async { [weak self] in
+        self?._enqueuedIntegrationAttributes = newValue
+      }
+    }
+  }
+  
+  /// Atomically merges new attributes with existing enqueued attributes.
+  private func mergeEnqueuedAttributes(_ newAttributes: [IntegrationAttribute: String?]) {
+    enqueuedAttributesQueue.async { [weak self] in
+      if self?._enqueuedIntegrationAttributes == nil {
+        self?._enqueuedIntegrationAttributes = newAttributes
+      } else {
+        self?._enqueuedIntegrationAttributes?.merge(newAttributes) { _, new in new }
+      }
+    }
+  }
 
   // MARK: - Private Functions
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
@@ -725,7 +748,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// properties to associate with the user or events for the given provider.
   public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
     guard let appTransactionId = ReceiptManager.appTransactionId else {
-      enqueuedIntegrationAttributes = props
+      // Atomically merge with existing enqueued attributes
+      mergeEnqueuedAttributes(props)
       return
     }
     enqueuedIntegrationAttributes = nil
@@ -748,7 +772,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
   public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
     guard let appTransactionId = ReceiptManager.appTransactionId else {
-      enqueuedIntegrationAttributes = [attribute: value]
+      // Atomically merge with existing enqueued attributes
+      mergeEnqueuedAttributes([attribute: value])
       return
     }
     enqueuedIntegrationAttributes = nil
@@ -762,8 +787,15 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   func dequeueIntegrationAttributes() {
-    if let enqueuedAttribution = enqueuedIntegrationAttributes {
-      setIntegrationAttributes(enqueuedAttribution)
+    // Atomically get and clear the enqueued attributes
+    let attributesToProcess = enqueuedAttributesQueue.sync {
+      let attrs = _enqueuedIntegrationAttributes
+      _enqueuedIntegrationAttributes = nil
+      return attrs
+    }
+    
+    if let attributesToProcess = attributesToProcess {
+      setIntegrationAttributes(attributesToProcess)
     }
   }
 
