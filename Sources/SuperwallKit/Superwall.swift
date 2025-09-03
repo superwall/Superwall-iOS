@@ -302,7 +302,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// is available. Protected by a queue for thread safety.
   private var _enqueuedIntegrationAttributes: [IntegrationAttribute: String?]?
   private let enqueuedAttributesQueue = DispatchQueue(label: "com.superwall.enqueuedIntegrationAttributes")
-  
+
   var enqueuedIntegrationAttributes: [IntegrationAttribute: String?]? {
     get {
       enqueuedAttributesQueue.sync { _enqueuedIntegrationAttributes }
@@ -313,7 +313,7 @@ public final class Superwall: NSObject, ObservableObject {
       }
     }
   }
-  
+
   /// Atomically merges new attributes with existing enqueued attributes.
   private func mergeEnqueuedAttributes(_ newAttributes: [IntegrationAttribute: String?]) {
     enqueuedAttributesQueue.async { [weak self] in
@@ -793,7 +793,7 @@ public final class Superwall: NSObject, ObservableObject {
       _enqueuedIntegrationAttributes = nil
       return attrs
     }
-    
+
     if let attributesToProcess = attributesToProcess {
       setIntegrationAttributes(attributesToProcess)
     }
