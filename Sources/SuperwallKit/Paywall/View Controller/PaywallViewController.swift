@@ -187,7 +187,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let factory: Factory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
-  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private weak var cache: PaywallViewControllerCache?
   private weak var paywallArchiveManager: PaywallArchiveManager?
 
@@ -198,7 +197,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    webEntitlementRedeemer: WebEntitlementRedeemer,
     factory: Factory,
     storage: Storage,
     webView: SWWebView,
@@ -214,7 +212,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.deviceHelper = deviceHelper
     self.eventDelegate = eventDelegate
     self.delegate = delegate
-    self.webEntitlementRedeemer = webEntitlementRedeemer
     self.factory = factory
     self.storage = storage
     self.paywall = paywall
@@ -904,12 +901,8 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func startCheckoutSession(id checkoutId: String) {
-    webView.messageHandler.handle(.transactionStart)
+    // TODO: Change this to suit the new sheet web checkout.
     loadingState = .loadingPurchase
-
-    Task {
-      await webEntitlementRedeemer.startWebCheckoutSession(withId: checkoutId)
-    }
   }
   
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
@@ -1003,12 +996,6 @@ extension PaywallViewController {
     super.viewWillAppear(animated)
     cache?.activePaywallVcKey = cacheKey
 
-    /*
-     TODO: Somewhere here, we need to call the checkout status endpoint to get the status
-     then either continue the redeem or log the transaction abandon. If pending, then keep retrying
-     with exponential backoff
-     */
-
     if isSafariVCPresented {
       return
     }
@@ -1076,9 +1063,6 @@ extension PaywallViewController {
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     presentationDidFinish()
-    Task {
-      await webEntitlementRedeemer.onPaywallAppear()
-    }
   }
 
   /// Lets the view controller know that presentation has finished. Only called once per presentation.

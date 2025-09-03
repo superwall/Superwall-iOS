@@ -6,7 +6,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `transaction_abandon` to web checkout.
 - Adds ability to specify a custom height and corner radius for the drawer presentation style.
 - Adds ability to grant an entitlement to anyone.
 - Adds `Superwall.shared.setIntegrationAttributes(_:)` which allows you to set attributes for third-party integrations.

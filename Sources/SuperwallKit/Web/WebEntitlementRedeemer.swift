@@ -19,13 +19,10 @@ actor WebEntitlementRedeemer {
   private unowned let factory: Factory
   private var isProcessing = false
   private var superwall: Superwall?
-  private var webCheckoutId: String?
-  private var isCheckingWebCheckout = false
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
     & ConfigManagerFactory
-    & DeviceHelperFactory
 
   enum RedeemType: CustomStringConvertible {
     case code(String)
@@ -79,39 +76,6 @@ actor WebEntitlementRedeemer {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
-  }
-
-  func startWebCheckoutSession(withId checkoutId: String) {
-    webCheckoutId = checkoutId
-  }
-
-  func onPaywallAppear() {
-    startWebCheckoutCompletionCheck()
-  }
-
-  private func startWebCheckoutCompletionCheck() {
-    if webCheckoutId == nil {
-      return
-    }
-    if isCheckingWebCheckout {
-      return
-    }
-    setCheckingWebCheckout(true)
-    Task {
-      defer {
-        Task { [weak self] in
-          await self?.setCheckingWebCheckout(false)
-        }
-      }
-
-      _ = try await Task.retrying(maxRetryCount: 6) { [weak self] in
-        try await self?.checkForWebCheckoutCompletion()
-      }.value
-    }
-  }
-
-  private func setCheckingWebCheckout(_ value: Bool) {
-    isCheckingWebCheckout = value
   }
 
   func redeem(
@@ -371,70 +335,11 @@ actor WebEntitlementRedeemer {
 
   @objc
   nonisolated private func handleAppForeground() {
-    Task { [weak self] in
-      await self?.startWebCheckoutCompletionCheck()
-    }
     Task {
       if await factory.makeConfigManager() == nil {
         return
       }
       await pollWebEntitlements()
-    }
-  }
-
-  struct PendingWebCheckoutError: Error {}
-
-  private func checkForWebCheckoutCompletion() async throws {
-    guard let checkoutId = webCheckoutId else {
-      return
-    }
-    do {
-      let response = try await network.getWebCheckoutStatus(checkoutId: checkoutId)
-      switch response.status {
-      case .abandoned(let abandoned):
-        if let paywallViewController = Superwall.shared.paywallViewController {
-          let product = StoreProduct.from(product: abandoned.stripeProduct)
-          let transactionAbandon = await InternalSuperwallEvent.Transaction(
-            state: .abandon(product),
-            paywallInfo: paywallViewController.info,
-            product: product,
-            transaction: nil,
-            source: .internal,
-            isObserved: false,
-            storeKitVersion: nil
-          )
-          await Superwall.shared.track(transactionAbandon)
-          await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
-        }
-        webCheckoutId = nil
-        isCheckingWebCheckout = false
-      case let .completed(redemptionCodes, product):
-        if let paywallViewController = Superwall.shared.paywallViewController {
-          await paywallViewController.webView.messageHandler.handle(.transactionComplete)
-
-          if let offer = product.subscriptionIntroOffer,
-            offer.paymentMethod == .freeTrial {
-            let notifications = await paywallViewController.info.localNotifications.filter {
-              $0.type == .trialStarted
-            }
-            await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
-          }
-        }
-        if let code = redemptionCodes.first {
-          await redeem(.code(code))
-        }
-        webCheckoutId = nil
-        isCheckingWebCheckout = false
-      case .pending:
-        throw PendingWebCheckoutError()
-      }
-    } catch let error as PendingWebCheckoutError {
-      // Throwing this forces a refresh with the encapsulating Task.
-      throw error
-      // TODO: Log pending
-    } catch {
-      // TODO: Log other errors.
-      // Some other error occurred.
     }
   }
 

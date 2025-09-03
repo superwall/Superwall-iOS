@@ -575,10 +575,9 @@ enum InternalSuperwallEvent {
     let transaction: StoreTransaction?
     let source: Source
     let isObserved: Bool
-    let storeKitVersion: SuperwallOptions.StoreKitVersion?
+    let storeKitVersion: SuperwallOptions.StoreKitVersion
     var demandScore: Int?
     var demandTier: String?
-    var store = "APP_STORE"
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
@@ -606,12 +605,10 @@ enum InternalSuperwallEvent {
         storefrontId = await Storefront.current?.id ?? ""
       }
       var placementParams: [String: Any] = [
-        "store": store,
-        "source": source.rawValue
+        "store": "APP_STORE",
+        "source": source.rawValue,
+        "storekit_version": storeKitVersion.description
       ]
-      if let storeKitVersion = storeKitVersion {
-        placementParams["storekit_version"] = storeKitVersion.description
-      }
 
       switch state {
       case .restore:

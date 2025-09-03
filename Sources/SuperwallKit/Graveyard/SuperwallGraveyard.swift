@@ -91,7 +91,6 @@ extension Superwall {
     return PaywallViewController(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
-      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: SWWebView(
