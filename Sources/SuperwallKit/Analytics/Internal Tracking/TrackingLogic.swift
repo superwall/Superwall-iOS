@@ -26,9 +26,13 @@ enum TrackingLogic {
     let uncleanPlacementAudienceFilterParams = trackablePlacement.audienceFilterParams
     let placementName = trackablePlacement.rawName
 
+    // Pre-calculate expected capacity to avoid expensive dictionary resizing
+    let expectedSize = superwallParameters.count + uncleanPlacementAudienceFilterParams.count + 5
+
     var delegateParams: [String: Any] = [
       "is_superwall": true
     ]
+    delegateParams.reserveCapacity(expectedSize)
 
     // Add a special property if it's a superwall placement
     let isSuperwallEvent = trackablePlacement is TrackableSuperwallEvent
@@ -38,6 +42,8 @@ enum TrackingLogic {
       "$event_name": placementName,
       "event_name": placementName
     ]
+    // Reserve extra capacity since this dictionary gets both original and $-prefixed keys
+    audienceFilterParams.reserveCapacity(expectedSize * 2)
 
     // Filter then assign Superwall parameters
     for key in superwallParameters.keys {
