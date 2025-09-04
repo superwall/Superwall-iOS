@@ -456,7 +456,9 @@ class DeviceHelper {
   private unowned let storage: Storage
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
+  private unowned let factory: IdentityFactory
+    & LocaleIdentifierFactory
+    & WebEntitlementFactory
 
   init(
     api: Api,
@@ -464,7 +466,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
   ) {
     self.storage = storage
     self.network = network
@@ -563,7 +565,8 @@ class DeviceHelper {
       platformWrapper: platformWrapper,
       platformWrapperVersion: platformWrapperVersion,
       swiftVersion: currentSwiftVersion(),
-      compilerVersion: currentCompilerVersion()
+      compilerVersion: currentCompilerVersion(),
+      deviceId: factory.makeDeviceId()
     )
 
     var deviceDictionary = template.toDictionary()
