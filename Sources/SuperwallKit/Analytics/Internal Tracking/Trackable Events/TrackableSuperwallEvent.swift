@@ -416,7 +416,7 @@ enum InternalSuperwallEvent {
       if let demandTier = demandTier {
         params["attr_demandTier"] = demandTier
       }
-      params += Superwall.shared.userAttributes
+      params["user_attributes"] = Superwall.shared.userAttributes
       return params
     }
     var audienceFilterParams: [String: Any] {
@@ -631,7 +631,7 @@ enum InternalSuperwallEvent {
         if let demandTier = demandTier {
           placementParams["attr_demandTier"] = demandTier
         }
-        placementParams += Superwall.shared.userAttributes
+        placementParams["user_attributes"] = Superwall.shared.userAttributes
         fallthrough
       case .start,
         .abandon,

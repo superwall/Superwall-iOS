@@ -147,7 +147,7 @@ enum TrackingLogic {
     if input is NSArray {
       return nil
     } else if input is NSDictionary {
-      return nil
+      return input
     } else {
       let json = JSON(input)
       if json.error == nil {
