@@ -901,10 +901,39 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func startCheckoutSession(id checkoutId: String) {
-    // TODO: Change this to suit the new sheet web checkout.
+    // Construct the checkout URL using the checkoutId
+    guard let url = URL(string: "https://superwall.com/checkout/\(checkoutId)") else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Invalid checkout URL for checkoutId: \(checkoutId)"
+      )
+      return
+    }
+    // Create the Safari view controller
+
+    let checkoutVC = CheckoutWebViewController(url: url)
+    checkoutVC.onDismiss = { [weak self] in
+      self?.isSafariVCPresented = false
+      self?.loadingState = .ready
+    }
+
+    // Configure for sheet presentation with medium and large detents
+    if #available(iOS 15.0, *) {
+      if let sheet = checkoutVC.sheetPresentationController {
+        sheet.detents = [.medium(), .large()]
+        sheet.prefersGrabberVisible = true
+        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        sheet.prefersEdgeAttachedInCompactHeight = true
+        sheet.preferredCornerRadius = 62
+      }
+    }
+    checkoutVC.modalPresentationStyle = .pageSheet
+    self.isSafariVCPresented = true
     loadingState = .loadingPurchase
+    present(checkoutVC, animated: true)
   }
-  
+
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
     Task {
       await eventDelegate?.eventDidOccur(
@@ -1254,12 +1283,12 @@ extension PaywallViewController {
 }
 
 #if !os(visionOS)
-  // MARK: - SFSafariViewControllerDelegate
-  extension PaywallViewController: SFSafariViewControllerDelegate {
-    public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-      isSafariVCPresented = false
-    }
+// MARK: - SFSafariViewControllerDelegate
+extension PaywallViewController: SFSafariViewControllerDelegate {
+  public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+    isSafariVCPresented = false
   }
+}
 #endif
 
 // MARK: - GameControllerDelegate

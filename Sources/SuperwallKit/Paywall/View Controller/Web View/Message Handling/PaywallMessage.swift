@@ -4,7 +4,6 @@
 //
 //  Created by brian on 7/27/21.
 //
-// swiftlint:disable enum_case_associated_values_count
 
 import Foundation
 

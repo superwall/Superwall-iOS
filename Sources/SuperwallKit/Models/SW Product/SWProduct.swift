@@ -88,8 +88,8 @@ struct SWProduct: Codable {
   }
 
   init(product: StripeProductType) {
-    localizedDescription = "" //product.description
-    localizedTitle = "" //product.displayName
+    localizedDescription = "" // product.description
+    localizedTitle = "" // product.displayName
     price = product.price
     priceLocale = product.priceLocale.identifier
     productIdentifier = product.productIdentifier

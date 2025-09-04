@@ -22,6 +22,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
   func requestReview(type: ReviewType)
+  func startCheckoutSession(id checkoutId: String)
 }
 
 @MainActor

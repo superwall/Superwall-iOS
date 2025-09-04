@@ -70,7 +70,6 @@ extension Task where Failure == Error {
       }
     }
   }
-
 }
 
 extension Task where Success == Void, Failure == Error {
