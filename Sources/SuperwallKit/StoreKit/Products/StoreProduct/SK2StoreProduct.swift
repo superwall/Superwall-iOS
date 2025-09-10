@@ -296,11 +296,11 @@ struct SK2StoreProduct: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .week {
-      periods = Decimal(numberOfUnits) / Decimal(7)
+      periods = Decimal(7 * numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .day {
-      periods = Decimal(numberOfUnits) / Decimal(1)
+      periods = Decimal(numberOfUnits)
     }
 
     return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
@@ -332,7 +332,7 @@ struct SK2StoreProduct: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .week {
-      periods = Decimal(numberOfUnits) / Decimal(1)
+      periods = Decimal(numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .day {

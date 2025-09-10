@@ -20,6 +20,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
 - Fixes a rare crash due to memory allocation issues.
 - Fixes a rare crash due to a race condition during data processing.
+- Fixes issue where weekly StoreKit 2 products might have the wrong daily price.
 
 ## 4.7.0
 
