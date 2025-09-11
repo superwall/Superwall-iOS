@@ -26,6 +26,7 @@ class DeviceHelper {
     return Locale(identifier: preferredIdentifier).identifier
   }
 
+  @DispatchQueueBacked
   var enrichment: Enrichment?
 
   let appInstalledAtString: String
@@ -455,7 +456,9 @@ class DeviceHelper {
   private unowned let storage: Storage
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
+  private unowned let factory: IdentityFactory
+    & LocaleIdentifierFactory
+    & WebEntitlementFactory
 
   init(
     api: Api,
@@ -463,7 +466,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
   ) {
     self.storage = storage
     self.network = network
@@ -492,12 +495,16 @@ class DeviceHelper {
       timeout: timeout
     )
 
-    if let enrichment = enrichment {
-      storage.save(enrichment, forType: LatestEnrichment.self)
+    $enrichment.withSnapshot { enrichment in
+      if let enrichment = enrichment {
+        storage.save(enrichment, forType: LatestEnrichment.self)
+      }
     }
 
-    if let attributes = enrichment?.user.dictionaryObject {
-      Superwall.shared.setUserAttributes(attributes)
+    $enrichment.withSnapshot { enrichment in
+      if let attributes = enrichment?.user.dictionaryObject {
+        Superwall.shared.setUserAttributes(attributes)
+      }
     }
   }
 
@@ -559,12 +566,15 @@ class DeviceHelper {
       platformWrapper: platformWrapper,
       platformWrapperVersion: platformWrapperVersion,
       swiftVersion: currentSwiftVersion(),
-      compilerVersion: currentCompilerVersion()
+      compilerVersion: currentCompilerVersion(),
+      deviceId: factory.makeDeviceId()
     )
 
     var deviceDictionary = template.toDictionary()
 
-    let enrichmentDict = enrichment?.device.dictionaryObject ?? [:]
+    let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
+      enrichment?.device.dictionaryObject ?? [:]
+    }
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }

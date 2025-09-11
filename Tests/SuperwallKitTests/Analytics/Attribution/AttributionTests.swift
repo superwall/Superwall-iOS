@@ -9,6 +9,7 @@ import Testing
 import Foundation
 @testable import SuperwallKit
 
+@Suite(.serialized)
 struct AttributionTests {
   let superwall: Superwall
   let dependencyContainer: DependencyContainer
@@ -16,6 +17,10 @@ struct AttributionTests {
   init() {
     dependencyContainer = DependencyContainer()
     superwall = Superwall(dependencyContainer: dependencyContainer)
+  }
+  
+  private func cleanupTimers() {
+    dependencyContainer.attributionFetcher.cancelPendingOperations()
   }
 
   // MARK: - Helper Methods
@@ -27,11 +32,25 @@ struct AttributionTests {
     return try body()
   }
   
+  func withMockAppTransactionId<T>(_ body: () async throws -> T) async rethrows -> T {
+    let original = ReceiptManager.appTransactionId
+    ReceiptManager.appTransactionId = "mock-app-transaction-id"
+    defer { ReceiptManager.appTransactionId = original }
+    return try await body()
+  }
+  
   func withoutAppTransactionId<T>(_ body: () throws -> T) rethrows -> T {
     let original = ReceiptManager.appTransactionId
     ReceiptManager.appTransactionId = nil
     defer { ReceiptManager.appTransactionId = original }
     return try body()
+  }
+  
+  func withoutAppTransactionId<T>(_ body: () async throws -> T) async rethrows -> T {
+    let original = ReceiptManager.appTransactionId
+    ReceiptManager.appTransactionId = nil
+    defer { ReceiptManager.appTransactionId = original }
+    return try await body()
   }
 
   // MARK: - setIntegrationAttributes Tests (with appTransactionId available)
@@ -41,8 +60,8 @@ struct AttributionTests {
     withMockAppTransactionId {
       // Given
       let testValue = "test-adjust-id"
-      let props: [IntegrationAttribute: Any?] = [.adjustId: testValue]
-      
+      let props: [IntegrationAttribute: String?] = [.adjustId: testValue]
+
       // When
       superwall.setIntegrationAttributes(props)
       
@@ -61,7 +80,7 @@ struct AttributionTests {
       let adjustId = "test-adjust-id"
       let amplitudeId = "test-amplitude-device-id"
       let brazeAlias = "test-braze-alias"
-      let props: [IntegrationAttribute: Any?] = [
+      let props: [IntegrationAttribute: String?] = [
         .adjustId: adjustId,
         .amplitudeDeviceId: amplitudeId,
         .brazeAliasName: brazeAlias
@@ -83,11 +102,11 @@ struct AttributionTests {
   func setIntegrationAttributes_nilValue_withAppTransactionId() {
     withMockAppTransactionId {
       // Given - set initial value
-      let initialProps: [IntegrationAttribute: Any?] = [.adjustId: "initial-value"]
+      let initialProps: [IntegrationAttribute: String?] = [.adjustId: "initial-value"]
       superwall.setIntegrationAttributes(initialProps)
       
       // When - set to nil
-      let nilProps: [IntegrationAttribute: Any?] = [.adjustId: nil]
+      let nilProps: [IntegrationAttribute: String?] = [.adjustId: nil]
       superwall.setIntegrationAttributes(nilProps)
       
       // Then
@@ -102,43 +121,16 @@ struct AttributionTests {
       // Given
       let initialValue = "initial-adjust-id"
       let newValue = "new-adjust-id"
-      let initialProps: [IntegrationAttribute: Any?] = [.adjustId: initialValue]
+      let initialProps: [IntegrationAttribute: String?] = [.adjustId: initialValue]
       superwall.setIntegrationAttributes(initialProps)
       
       // When
-      let newProps: [IntegrationAttribute: Any?] = [.adjustId: newValue]
+      let newProps: [IntegrationAttribute: String?] = [.adjustId: newValue]
       superwall.setIntegrationAttributes(newProps)
       
       // Then
       let storedProps = superwall.integrationAttributes
       #expect(storedProps["adjustId"] as? String == newValue)
-    }
-  }
-
-  @Test
-  func setIntegrationAttributes_differentDataTypes_withAppTransactionId() {
-    withMockAppTransactionId {
-      // Given
-      let stringValue = "test-string"
-      let intValue = 123
-      let doubleValue = 45.67
-      let boolValue = true
-      let props: [IntegrationAttribute: Any?] = [
-        .adjustId: stringValue,
-        .amplitudeDeviceId: intValue,
-        .appsflyerId: doubleValue,
-        .brazeAliasName: boolValue
-      ]
-      
-      // When
-      superwall.setIntegrationAttributes(props)
-      
-      // Then
-      let storedProps = superwall.integrationAttributes
-      #expect(storedProps["adjustId"] as? String == stringValue)
-      #expect(storedProps["amplitudeDeviceId"] as? Int == intValue)
-      #expect(storedProps["appsflyerId"] as? Double == doubleValue)
-      #expect(storedProps["brazeAliasName"] as? Bool == boolValue)
     }
   }
 
@@ -149,8 +141,8 @@ struct AttributionTests {
     withoutAppTransactionId {
       // Given
       let testValue = "test-adjust-id"
-      let props: [IntegrationAttribute: Any?] = [.adjustId: testValue]
-      
+      let props: [IntegrationAttribute: String?] = [.adjustId: testValue]
+
       // When
       superwall.setIntegrationAttributes(props)
       
@@ -168,7 +160,7 @@ struct AttributionTests {
     
     // Given - start without appTransactionId
     withoutAppTransactionId {
-      let props: [IntegrationAttribute: Any?] = [.adjustId: testValue]
+      let props: [IntegrationAttribute: String?] = [.adjustId: testValue]
       superwall.setIntegrationAttributes(props)
       
       // Verify it's enqueued
@@ -194,11 +186,11 @@ struct AttributionTests {
       let newValue = "new-adjust-id"
       
       // When - set initial value (gets enqueued)
-      let initialProps: [IntegrationAttribute: Any?] = [.adjustId: initialValue]
+      let initialProps: [IntegrationAttribute: String?] = [.adjustId: initialValue]
       superwall.setIntegrationAttributes(initialProps)
       
       // Then set new value (should overwrite enqueued)
-      let newProps: [IntegrationAttribute: Any?] = [.adjustId: newValue]
+      let newProps: [IntegrationAttribute: String?] = [.adjustId: newValue]
       superwall.setIntegrationAttributes(newProps)
       
       // Then
@@ -226,7 +218,7 @@ struct AttributionTests {
   func integrationAttributes_returnsSetValues() {
     withMockAppTransactionId {
       // Given
-      let testProps: [IntegrationAttribute: Any?] = [
+      let testProps: [IntegrationAttribute: String?] = [
         .adjustId: "test-adjust-id",
         .amplitudeDeviceId: "test-amplitude-id"
       ]
@@ -245,7 +237,7 @@ struct AttributionTests {
   func integrationAttributes_immutableCopy() {
     withMockAppTransactionId {
       // Given
-      let testProps: [IntegrationAttribute: Any?] = [.adjustId: "test-adjust-id"]
+      let testProps: [IntegrationAttribute: String?] = [.adjustId: "test-adjust-id"]
       superwall.setIntegrationAttributes(testProps)
       
       // When
@@ -264,26 +256,32 @@ struct AttributionTests {
     let original = ReceiptManager.appTransactionId
     ReceiptManager.appTransactionId = "mock-app-transaction-id"
     defer { ReceiptManager.appTransactionId = original }
-    
+
     let iterations = 50
-    
+
     // When - perform many concurrent reads and writes
     await withTaskGroup(of: Void.self) { group in
       for i in 0..<iterations {
         group.addTask {
-          let props: [IntegrationAttribute: Any?] = [.adjustId: "value-\(i)"]
+          let props: [IntegrationAttribute: String?] = [.adjustId: "value-\(i)"]
           self.superwall.setIntegrationAttributes(props)
         }
-        
+
         group.addTask {
           _ = self.superwall.integrationAttributes
         }
       }
     }
+
+    // Wait for any pending operations
+    try? await Task.sleep(nanoseconds: 600_000_000)
     
     // Then - no crashes should occur (test passes if no crash)
     let finalProps = superwall.integrationAttributes
     #expect(finalProps != nil)
+    
+    // Cleanup
+    cleanupTimers()
   }
 
   // MARK: - Integration Tests
@@ -292,8 +290,8 @@ struct AttributionTests {
   func setIntegrationAttributes_updatesUserAttributes() {
     withMockAppTransactionId {
       // Given
-      let testProps: [IntegrationAttribute: Any?] = [.adjustId: "test-adjust-id"]
-      
+      let testProps: [IntegrationAttribute: String?] = [.adjustId: "test-adjust-id"]
+
       // When
       superwall.setIntegrationAttributes(testProps)
       
@@ -307,7 +305,7 @@ struct AttributionTests {
   func attribution_persistsAcrossMethods() {
     withMockAppTransactionId {
       // Given
-      let testProps: [IntegrationAttribute: Any?] = [
+      let testProps: [IntegrationAttribute: String?] = [
         .adjustId: "test-adjust-id",
         .amplitudeDeviceId: "test-amplitude-id"
       ]
@@ -328,7 +326,7 @@ struct AttributionTests {
   func setIntegrationAttributes_allIntegrationAttributes() {
     withMockAppTransactionId {
       // Given - test all available attribution providers
-      let props: [IntegrationAttribute: Any?] = [
+      let props: [IntegrationAttribute: String?] = [
         .adjustId: "adjust-id",
         .amplitudeDeviceId: "amplitude-device-id",
         .amplitudeUserId: "amplitude-user-id",
@@ -385,7 +383,7 @@ struct AttributionTests {
   func setIntegrationAttributes_transitionFromEnqueuedToImmediate() {
     // Given - start without appTransactionId
     withoutAppTransactionId {
-      let initialProps: [IntegrationAttribute: Any?] = [.adjustId: "enqueued-value"]
+      let initialProps: [IntegrationAttribute: String?] = [.adjustId: "enqueued-value"]
       superwall.setIntegrationAttributes(initialProps)
       
       // Verify it's enqueued
@@ -394,7 +392,7 @@ struct AttributionTests {
     
     // When appTransactionId becomes available and we set new props
     withMockAppTransactionId {
-      let newProps: [IntegrationAttribute: Any?] = [.amplitudeDeviceId: "immediate-value"]
+      let newProps: [IntegrationAttribute: String?] = [.amplitudeDeviceId: "immediate-value"]
       superwall.setIntegrationAttributes(newProps)
       
       // Then
@@ -415,6 +413,199 @@ struct AttributionTests {
       
       // Then - should not crash and nothing should change
       #expect(superwall.enqueuedIntegrationAttributes == nil)
+    }
+  }
+  
+  // MARK: - setIntegrationAttribute (single attribute) Tests
+
+  @Test
+  func setIntegrationAttribute_singleAttribute_withAppTransactionId() {
+    withMockAppTransactionId {
+      // Given
+      let testValue = "test-adjust-id"
+
+      // When
+      superwall.setIntegrationAttribute(.adjustId, testValue)
+      
+      // Then - attributes are updated immediately, only redeem is debounced
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] as? String == testValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_nilValue_removesAttribute() {
+    withMockAppTransactionId {
+      // Given - first set a value
+      superwall.setIntegrationAttribute(.adjustId, "test-value")
+      #expect(superwall.integrationAttributes["adjustId"] as? String == "test-value")
+
+      // When - set to nil
+      superwall.setIntegrationAttribute(.adjustId, nil)
+      
+      // Then - should be removed completely from dictionary
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] == nil)
+      #expect(storedProps.keys.contains("adjustId") == false) // Verify key is actually removed
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_withoutAppTransactionId_enqueues() {
+    withoutAppTransactionId {
+      // Given
+      let testValue = "test-adjust-id"
+
+      // When
+      superwall.setIntegrationAttribute(.adjustId, testValue)
+      
+      // Then
+      let enqueuedProps = superwall.enqueuedIntegrationAttributes
+      #expect(enqueuedProps?[.adjustId] as? String == testValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_updatesUserAttributes() {
+    withMockAppTransactionId {
+      // Given
+      let testValue = "test-adjust-id"
+
+      // When
+      superwall.setIntegrationAttribute(.adjustId, testValue)
+      
+      // Then - should also be set as user attributes (immediate update)
+      let userAttributes = superwall.userAttributes
+      #expect(userAttributes["adjustId"] as? String == testValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_multipleAttributes_independentlyManaged() {
+    withMockAppTransactionId {
+      // Given
+      let adjustValue = "test-adjust-id"
+      let amplitudeValue = "test-amplitude-id"
+
+      // When - set multiple attributes independently (attributes updated immediately)
+      superwall.setIntegrationAttribute(.adjustId, adjustValue)
+      superwall.setIntegrationAttribute(.amplitudeDeviceId, amplitudeValue)
+      
+      // Then - both should be stored immediately
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] as? String == adjustValue)
+      #expect(storedProps["amplitudeDeviceId"] as? String == amplitudeValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_overwriteExistingValue() {
+    withMockAppTransactionId {
+      // Given - set initial value
+      let initialValue = "initial-adjust-id"
+      let newValue = "new-adjust-id"
+      superwall.setIntegrationAttribute(.adjustId, initialValue)
+      #expect(superwall.integrationAttributes["adjustId"] as? String == initialValue)
+
+      // When - overwrite with new value
+      superwall.setIntegrationAttribute(.adjustId, newValue)
+      
+      // Then - value updated immediately
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] as? String == newValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_mixedWithSetIntegrationAttributes() {
+    withMockAppTransactionId {
+      // Given - use both methods
+      let adjustValue = "test-adjust-id"
+      let amplitudeValue = "test-amplitude-id"
+      
+      // When - mix single and batch methods (attributes updated immediately)
+      superwall.setIntegrationAttribute(.adjustId, adjustValue)
+      superwall.setIntegrationAttributes([.amplitudeDeviceId: amplitudeValue])
+      
+      // Then - both should be stored immediately
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] as? String == adjustValue)
+      #expect(storedProps["amplitudeDeviceId"] as? String == amplitudeValue)
+    }
+  }
+
+  // MARK: - Debouncing and Change Detection Tests
+
+  @Test
+  func setIntegrationAttribute_sameValue_noChanges() {
+    withMockAppTransactionId {
+      // Given - set initial value
+      let testValue = "test-adjust-id"
+      superwall.setIntegrationAttribute(.adjustId, testValue)
+      let initialValue = superwall.integrationAttributes["adjustId"] as? String
+
+      // When - set same value again (should not trigger changes due to change detection)
+      superwall.setIntegrationAttribute(.adjustId, testValue)
+      
+      // Then - value should remain the same (change detection working)
+      let finalValue = superwall.integrationAttributes["adjustId"] as? String
+      #expect(finalValue == initialValue)
+      #expect(finalValue == testValue)
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_debouncing_multipleQuickCalls() async {
+    await withMockAppTransactionId {
+      // Given
+      let baseValue = "test-adjust-id"
+      
+      // When - make multiple quick calls (within debounce window)
+      superwall.setIntegrationAttribute(.adjustId, "\(baseValue)-1")
+      superwall.setIntegrationAttribute(.adjustId, "\(baseValue)-2") 
+      superwall.setIntegrationAttribute(.adjustId, "\(baseValue)-3")
+      superwall.setIntegrationAttribute(.adjustId, "\(baseValue)-final")
+      
+      // Wait for debounce to complete
+      try? await Task.sleep(nanoseconds: 600_000_000) // 600ms
+      
+      // Then - should only have final value
+      let storedProps = superwall.integrationAttributes
+      #expect(storedProps["adjustId"] as? String == "\(baseValue)-final")
+      
+      // Cleanup
+      cleanupTimers()
+    }
+  }
+
+  @Test
+  func setIntegrationAttribute_threadSafety_singleAttribute() async {
+    await withMockAppTransactionId {
+      // Given
+      let iterations = 50
+      
+      // When - perform many concurrent single attribute updates
+      await withTaskGroup(of: Void.self) { group in
+        for i in 0..<iterations {
+          group.addTask {
+            self.superwall.setIntegrationAttribute(.adjustId, "value-\(i)")
+          }
+          
+          group.addTask {
+            _ = self.superwall.integrationAttributes
+          }
+        }
+      }
+      
+      // Wait for any pending operations
+      try? await Task.sleep(nanoseconds: 600_000_000)
+      
+      // Then - no crashes should occur and should have some value
+      let finalProps = superwall.integrationAttributes
+      #expect(finalProps["adjustId"] != nil)
+      
+      // Cleanup
+      cleanupTimers()
     }
   }
 }

@@ -11,13 +11,15 @@ import AdServices
 #endif
 
 final class AttributionFetcher {
-  var integrationAttributes: [String: Any] {
+  var integrationAttributes: [String: String] {
     queue.sync {
       _integrationAttributes
     }
   }
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
-  private var _integrationAttributes: [String: Any] = [:]
+  private let timerQueue = DispatchQueue(label: "com.superwall.attributionfetcher.timer")
+  private var redeemTimer: DispatchSourceTimer?
+  private var _integrationAttributes: [String: String] = [:]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -112,23 +114,92 @@ final class AttributionFetcher {
     self._integrationAttributes = storage.get(IntegrationAttributes.self) ?? [:]
   }
 
+  func setIntegrationAttribute(
+    attribute: IntegrationAttribute,
+    value: String?,
+    appTransactionId: String
+  ) {
+    let attributes = [attribute.description: value]
+    mergeIntegrationAttributes(attributes: attributes, appTransactionId: appTransactionId)
+  }
+
   func mergeIntegrationAttributes(
-    attributes: [String: Any?],
+    attributes: [String: String?],
     appTransactionId: String
   ) {
     queue.async { [weak self] in
-      self?._mergeIntegrationAttributes(
+      guard let self = self else { return }
+
+      // Check if any values have actually changed
+      var hasChanges = false
+      for (key, newValue) in attributes {
+        let currentValue = self._integrationAttributes[key]
+        if currentValue != newValue {
+          hasChanges = true
+          break
+        }
+      }
+
+      // If no changes, don't proceed
+      guard hasChanges else {
+        return
+      }
+
+      // Update attributes immediately
+      self._mergeIntegrationAttributes(
         attributes: attributes,
-        appTransactionId: appTransactionId
+        appTransactionId: appTransactionId,
+        shouldRedeem: false // Don't redeem immediately
       )
+
+      // Debounce only the redeem call
+      self._debouncedRedeem()
+    }
+  }
+
+  private func _debouncedRedeem() {
+    // Must be called from self.queue
+    // Cancel previous timer (safe to call from any queue)
+    redeemTimer?.setEventHandler {}   // break retain cycles
+    redeemTimer?.cancel()
+    redeemTimer = nil
+
+    // Create timer on separate timerQueue for better timing accuracy
+    let timer = DispatchSource.makeTimerSource(queue: timerQueue)
+    timer.schedule(deadline: .now() + .milliseconds(500), repeating: .never)
+    timer.setEventHandler { [weak self] in
+      guard let self else { return }
+      // We're on timerQueue, need to sync with main queue for cleanup
+      Task {
+        await self.webEntitlementRedeemer.redeem(.integrationAttributes)
+      }
+      // Clean up timer - safe to do from timerQueue
+      self.queue.async {
+        self.redeemTimer?.setEventHandler {}
+        self.redeemTimer?.cancel()
+        self.redeemTimer = nil
+      }
+    }
+    redeemTimer = timer
+    timer.resume()
+  }
+
+  func cancelPendingOperations() {
+    // Timer operations are thread-safe, but we synchronize timer reference access
+    queue.async {
+      self.redeemTimer?.setEventHandler {}
+      self.redeemTimer?.cancel()
+      self.redeemTimer = nil
     }
   }
 
   private func _mergeIntegrationAttributes(
-    attributes: [String: Any?],
-    appTransactionId: String
+    attributes: [String: String?],
+    appTransactionId: String,
+    shouldRedeem: Bool = true
   ) {
     var mergedAttributes = _integrationAttributes
+    var hasChanges = false
 
     mergedAttributes["idfa"] = identifierForAdvertisers
 
@@ -136,11 +207,22 @@ final class AttributionFetcher {
     mergedAttributes["idfv"] = identifierForVendor
 
     for key in attributes.keys {
-      if let value = attributes[key] {
-        mergedAttributes[key] = value
-      } else {
-        mergedAttributes[key] = nil
+      let newValue = attributes[key]
+      let currentValue = _integrationAttributes[key]
+
+      if currentValue != newValue {
+        hasChanges = true
+        if let value = newValue {
+          mergedAttributes[key] = value
+        } else {
+          mergedAttributes.removeValue(forKey: key)
+        }
       }
+    }
+
+    // Only proceed if there are actual changes
+    guard hasChanges else {
+      return
     }
 
     Task {
@@ -153,8 +235,10 @@ final class AttributionFetcher {
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
 
-    Task {
-      await webEntitlementRedeemer.redeem(.integrationAttributes)
+    if shouldRedeem {
+      Task {
+        await webEntitlementRedeemer.redeem(.integrationAttributes)
+      }
     }
   }
 }

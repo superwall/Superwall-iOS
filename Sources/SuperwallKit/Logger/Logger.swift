@@ -72,6 +72,22 @@ enum Logger: Loggable {
     error: Swift.Error? = nil
   ) {
     Task.detached(priority: .utility) {
+      // Call delegate first to avoid unnecessary string processing
+      if Superwall.isInitialized {
+        await Superwall.shared.dependencyContainer.delegateAdapter.handleLog(
+          level: logLevel.description,
+          scope: scope.description,
+          message: message,
+          info: info,
+          error: error
+        )
+      }
+
+      guard shouldPrint(logLevel: logLevel, scope: scope) else {
+        return
+      }
+
+      // Only create expensive debug strings if we're actually going to print
       var output: [String] = []
       var dumping: [String: Any] = [:]
 
@@ -87,20 +103,6 @@ enum Logger: Loggable {
       if let error = error {
         output.append(error.safeLocalizedDescription)
         dumping["error"] = error
-      }
-
-      if Superwall.isInitialized {
-        await Superwall.shared.dependencyContainer.delegateAdapter.handleLog(
-          level: logLevel.description,
-          scope: scope.description,
-          message: message,
-          info: info,
-          error: error
-        )
-      }
-
-      guard shouldPrint(logLevel: logLevel, scope: scope) else {
-        return
       }
 
       var name = "\(Date().isoString) \(logLevel.descriptionEmoji) [Superwall] [\(scope.description)] - \(logLevel.description)"
