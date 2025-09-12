@@ -109,6 +109,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var popupHeightConstraint: NSLayoutConstraint?
   var popupContainerView: UIView?
 
+  /// Internal property for transition logic testing
+  var isCustomBackgroundDismissal = false
+
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
     #if os(visionOS)
@@ -795,6 +798,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   @objc private func backgroundTapped() {
     // Custom animation for popup dismissal on background tap
+    isCustomBackgroundDismissal = true
     animatePopupDismissal {
       self.dismiss(result: .declined, closeReason: .manualClose)
     }
@@ -824,7 +828,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         // Fade out the background
         backgroundView?.alpha = 0.0
       },
-      completion: { _ in
+      completion: { [weak self] _ in
+        // Reset the flag after custom animation completes
+        self?.isCustomBackgroundDismissal = false
         completion()
       }
     )
