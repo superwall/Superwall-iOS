@@ -59,12 +59,22 @@ extension PaywallRequestManager {
     } catch {
       paywall.productsLoadingInfo.failAt = Date()
       let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
-      await trackProductLoadFail(
-        paywallInfo: paywallInfo,
-        placement: request.placementData,
-        error: error
-      )
-      throw error
+
+      if let productFetchingError = error as? ProductFetchingError,
+        case .noProductsFound(let identifiers) = productFetchingError {
+        await trackProductLoadMissingProducts(
+          paywallInfo: paywallInfo,
+          placement: request.placementData,
+          identifiers: identifiers
+        )
+      } else {
+        await trackProductLoadFail(
+          paywallInfo: paywallInfo,
+          placement: request.placementData,
+          error: error
+        )
+      }
+      return paywall
     }
   }
 
@@ -90,6 +100,19 @@ extension PaywallRequestManager {
   ) async {
     let productLoad = InternalSuperwallEvent.PaywallProductsLoad(
       state: .fail(error),
+      paywallInfo: paywallInfo,
+      placementData: placement
+    )
+    await Superwall.shared.track(productLoad)
+  }
+
+  private func trackProductLoadMissingProducts(
+    paywallInfo: PaywallInfo,
+    placement: PlacementData?,
+    identifiers: Set<String>
+  ) async {
+    let productLoad = InternalSuperwallEvent.PaywallProductsLoad(
+      state: .missingProducts(identifiers),
       paywallInfo: paywallInfo,
       placementData: placement
     )

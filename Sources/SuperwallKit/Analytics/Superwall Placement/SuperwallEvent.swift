@@ -144,6 +144,10 @@ public enum SuperwallEvent {
   case paywallProductsLoadRetry(
     triggeredPlacementName: String?, paywallInfo: PaywallInfo, attempt: Int)
 
+  /// When the paywall's products are missing from the App Store.
+  case paywallProductsLoadMissingProducts(
+    triggeredPlacementName: String?, paywallInfo: PaywallInfo, identifiers: Set<String>)
+
   /// When the response to a paywall survey is recorded.
   case surveyResponse(
     survey: Survey,
@@ -345,6 +349,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadRetry:
       return .init(objcEvent: .paywallProductsLoadRetry)
+    case .paywallProductsLoadMissingProducts:
+      return .init(objcEvent: .paywallProductsLoadMissingProducts)
     case .paywallProductsLoadComplete:
       return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
