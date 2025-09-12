@@ -17,11 +17,24 @@ class StoreKitManagerTests: XCTestCase {
   }()
 
   func test_getProducts_primaryProduct() async {
-    let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager!
-
     let primary = MockSkProduct(productIdentifier: "abc")
     let entitlements: Set<Entitlement> = [.stub()]
+    
+    // Mock the products fetcher to return empty set since we're substituting all products
+    let productsResult: Result<Set<StoreProduct>, Error> = .success([])
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: productsResult,
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
+      productsFetcher: productsFetcher
+    )
+    let manager = StoreKitManager(
+      productsManager: productsManager
+    )
+    
     let substituteProducts = [
       "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: entitlements))
     ]
@@ -45,13 +58,25 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primaryAndTertiaryProduct() async {
-    let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager!
-
     let primary = MockSkProduct(productIdentifier: "abc")
     let primaryEntitlements: Set<Entitlement> = [.stub()]
-
     let tertiary = MockSkProduct(productIdentifier: "def")
+    
+    // Mock the products fetcher to return empty set since we're substituting all products
+    let productsResult: Result<Set<StoreProduct>, Error> = .success([])
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: productsResult,
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
+      productsFetcher: productsFetcher
+    )
+    let manager = StoreKitManager(
+      productsManager: productsManager
+    )
+
     let substituteProducts = [
       "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: primaryEntitlements)),
       "tertiary": ProductOverride.byProduct(StoreProduct(sk1Product: tertiary, entitlements: []))
@@ -85,12 +110,25 @@ class StoreKitManagerTests: XCTestCase {
   }
 
   func test_getProducts_primarySecondaryTertiaryProduct() async {
-    let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.storeKitManager!
-
     let primary = MockSkProduct(productIdentifier: "abc")
     let secondary = MockSkProduct(productIdentifier: "def")
     let tertiary = MockSkProduct(productIdentifier: "ghi")
+    
+    // Mock the products fetcher to return empty set since we're substituting all products
+    let productsResult: Result<Set<StoreProduct>, Error> = .success([])
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: productsResult,
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
+      productsFetcher: productsFetcher
+    )
+    let manager = StoreKitManager(
+      productsManager: productsManager
+    )
+    
     let substituteProducts = [
       "primary": StoreProduct(sk1Product: primary, entitlements: []),
       "secondary": StoreProduct(sk1Product: secondary, entitlements: []),

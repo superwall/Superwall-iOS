@@ -4,12 +4,13 @@
 //
 //  Created by brian on 7/21/21.
 //
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length type_body_length function_body_length
 
 import Combine
 import SafariServices
 import UIKit
 import WebKit
+import StoreKit
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, LoadingDelegate {
@@ -72,6 +73,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   var delegate: PaywallViewControllerDelegateAdapter?
 
+  typealias Factory = TriggerFactory
+    & RestoreAccessFactory
+    & AppIdFactory
+
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
   /// the caller of ``Superwall/register(placement:params:handler:feature:)``
@@ -98,6 +103,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
+
+  /// Constraints for popup content sizing
+  private var popupWidthConstraint: NSLayoutConstraint?
+  private var popupHeightConstraint: NSLayoutConstraint?
+  var popupContainerView: UIView?
 
   /// The background color of the paywall, depending on whether the device is in dark mode.
   private var backgroundColor: UIColor {
@@ -140,6 +150,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// The push presentation animation transition delegate.
   private let transitionDelegate = PushTransitionDelegate()
+  /// The popup presentation animation transition delegate.
+  private let popupTransitionDelegate = PopupTransitionDelegate()
 
   /// Defines whether the refresh alert view controller has been created.
   private var hasRefreshAlertController = false
@@ -163,7 +175,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private var lastOpen: Date?
 
-  private unowned let factory: TriggerFactory & RestoreAccessFactory
+  private struct PopupDimensions {
+    let width: CGFloat
+    let height: CGFloat
+    let cornerRadius: CGFloat
+  }
+
+  private unowned let factory: Factory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private weak var cache: PaywallViewControllerCache?
@@ -176,7 +194,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     eventDelegate: PaywallViewControllerEventDelegate? = nil,
     delegate: PaywallViewControllerDelegateAdapter? = nil,
     deviceHelper: DeviceHelper,
-    factory: TriggerFactory & RestoreAccessFactory,
+    factory: Factory,
     storage: Storage,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
@@ -216,10 +234,21 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     #if !os(visionOS)
       setNeedsStatusBarAppearanceUpdate()
     #endif
-    view.backgroundColor = backgroundColor
-
-    view.addSubview(webView)
-    webView.alpha = 0.0
+    // Don't set background color for popup - it will be transparent
+    switch presentationStyle {
+    case .popup:
+      break
+    default:
+      view.backgroundColor = backgroundColor
+      view.addSubview(webView)
+      webView.alpha = 0.0
+      NSLayoutConstraint.activate([
+        webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        webView.topAnchor.constraint(equalTo: view.topAnchor),
+        webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      ])
+    }
 
     let loadingColor = backgroundColor.readableOverlayColor
     view.addSubview(refreshPaywallButton)
@@ -229,11 +258,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
 
     NSLayoutConstraint.activate([
-      webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      webView.topAnchor.constraint(equalTo: view.topAnchor),
-      webView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: 0),
-
       refreshPaywallButton.topAnchor.constraint(
         equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
       refreshPaywallButton.trailingAnchor.constraint(
@@ -256,8 +280,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
 
-    let demandScore = await deviceHelper.enrichment?.device["demandScore"] as? Int
-    let demandTier = await deviceHelper.enrichment?.device["demandTier"] as? String
+    let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
+    let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
 
     let paywallOpen = await InternalSuperwallEvent.PaywallOpen(
       paywallInfo: info,
@@ -403,9 +427,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
             self.webView.alpha = 1.0
             self.webView.transform = .identity
           },
-          completion: { _ in
+          completion: { [weak self] _ in
+            guard let self = self else {
+              return
+            }
             self.shimmerView?.removeFromSuperview()
             self.shimmerView = nil
+
             Task.detached { [weak self] in
               guard let self = self else {
                 return
@@ -451,12 +479,29 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       tintColor: backgroundColor.readableOverlayColor,
       isLightBackground: !backgroundColor.isDarkColor
     )
-    view.insertSubview(shimmerView, belowSubview: webView)
+
+    let shimmerSuperview: UIView
+    switch presentationStyle {
+    case .popup:
+      // For popup style, use the popup container
+      shimmerSuperview = popupContainerView ?? view
+
+      // Apply the same corner radius as the popup to the shimmer view
+      if let dimensions = getPopupDimensions() {
+        shimmerView.layer.cornerRadius = dimensions.cornerRadius
+        shimmerView.layer.masksToBounds = true
+      }
+    default:
+      shimmerSuperview = view
+    }
+
+    shimmerSuperview.insertSubview(shimmerView, belowSubview: webView)
+
     NSLayoutConstraint.activate([
-      shimmerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-      shimmerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      shimmerView.topAnchor.constraint(equalTo: view.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      shimmerView.leadingAnchor.constraint(equalTo: shimmerSuperview.leadingAnchor),
+      shimmerView.trailingAnchor.constraint(equalTo: shimmerSuperview.trailingAnchor),
+      shimmerView.topAnchor.constraint(equalTo: shimmerSuperview.topAnchor),
+      shimmerView.bottomAnchor.constraint(equalTo: shimmerSuperview.bottomAnchor)
     ])
     self.shimmerView = shimmerView
     Task {
@@ -616,21 +661,173 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       transitioningDelegate = transitionDelegate
     case .fullscreenNoAnimation:
       modalPresentationStyle = .overFullScreen
-    case .drawer:
+    case let .drawer(height, cornerRadius):
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
         if #available(iOS 16.0, *),
           UIDevice.current.userInterfaceIdiom == .phone {
+          let heightRatio = height / 100
           sheetPresentationController?.detents = [
             .custom { context in
-              return 0.7 * context.maximumDetentValue
+              return heightRatio * context.maximumDetentValue
             }
           ]
+          sheetPresentationController?.preferredCornerRadius = cornerRadius
         }
       #endif
+    case .popup:
+      modalPresentationStyle = .custom
+      transitioningDelegate = popupTransitionDelegate
+      setupPopupBackground()
     case .none:
       break
     }
+  }
+
+  private func getPopupDimensions() -> PopupDimensions? {
+    guard case .popup(let height, let width, let cornerRadius) = presentationStyle else {
+      return nil
+    }
+
+    // Width and height are percentages, cornerRadius is in pixels
+    let screenWidth = view.bounds.width
+    let screenHeight = view.bounds.height
+
+    let calculatedWidth = screenWidth * CGFloat(width / 100.0)
+    let calculatedHeight = screenHeight * CGFloat(height / 100.0)
+
+    return PopupDimensions(
+      width: calculatedWidth,
+      height: calculatedHeight,
+      cornerRadius: CGFloat(cornerRadius)
+    )
+  }
+
+  private func setupPopupBackground() {
+    // Set transparent background for the main view
+    view.backgroundColor = .clear
+
+    // Create a semi-transparent background view matching iOS alert style
+    let backgroundView = UIView()
+    backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.4)
+    backgroundView.translatesAutoresizingMaskIntoConstraints = false
+    backgroundView.alpha = 0.0 // Start transparent for animation
+    view.insertSubview(backgroundView, at: 0)
+
+    NSLayoutConstraint.activate([
+      backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
+      backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+    ])
+
+    // Add tap gesture to dismiss on background tap
+    let tapGesture = UITapGestureRecognizer(target: self, action: #selector(backgroundTapped))
+    backgroundView.addGestureRecognizer(tapGesture)
+
+    // Animate background to visible
+    UIView.animate(withDuration: 0.3) {
+      backgroundView.alpha = 1.0
+    }
+
+    // Extract popup dimensions and corner radius from presentation style
+    guard let dimensions = getPopupDimensions() else {
+      return
+    }
+
+    // Create container view for the webview to handle centering
+    let containerView = UIView()
+    containerView.translatesAutoresizingMaskIntoConstraints = false
+    containerView.backgroundColor = .clear
+    view.addSubview(containerView)
+    popupContainerView = containerView
+
+    // Style container view with corner radius and shadow
+    containerView.layer.cornerRadius = dimensions.cornerRadius
+    containerView.layer.shadowColor = UIColor.black.cgColor
+    containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
+    containerView.layer.shadowRadius = 10
+    containerView.layer.shadowOpacity = 0.3
+    containerView.layer.masksToBounds = false
+
+    // Style webview - ensure no background conflicts and clip to container bounds
+    webView.backgroundColor = .clear
+    webView.isOpaque = false
+    webView.layer.cornerRadius = dimensions.cornerRadius
+    webView.layer.masksToBounds = true
+
+    // Move webview to container
+    containerView.addSubview(webView)
+
+    // Set up size constraints for popup using presentation style dimensions
+    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: dimensions.width)
+    self.popupWidthConstraint = popupWidthConstraint
+    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: dimensions.height)
+    self.popupHeightConstraint = popupHeightConstraint
+    popupWidthConstraint.priority = UILayoutPriority(999)
+    popupHeightConstraint.priority = UILayoutPriority(999)
+
+    // Center container in view
+    NSLayoutConstraint.activate([
+      containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      popupWidthConstraint,
+      popupHeightConstraint
+    ])
+
+    // Set webview constraints within container - fill the container exactly
+    webView.translatesAutoresizingMaskIntoConstraints = false
+
+    // Enable content size calculation for webview
+    webView.scrollView.isScrollEnabled = true
+    webView.scrollView.bounces = false
+    webView.scrollView.showsVerticalScrollIndicator = false
+    webView.scrollView.showsHorizontalScrollIndicator = false
+
+    NSLayoutConstraint.activate([
+      webView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+      webView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+      webView.topAnchor.constraint(equalTo: containerView.topAnchor),
+      webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+    ])
+  }
+
+
+  @objc private func backgroundTapped() {
+    // Custom animation for popup dismissal on background tap
+    animatePopupDismissal {
+      self.dismiss(result: .declined, closeReason: .manualClose)
+    }
+  }
+
+  private func animatePopupDismissal(completion: @escaping () -> Void) {
+    guard let containerView = popupContainerView else {
+      completion()
+      return
+    }
+
+    // Find the background view
+    let backgroundView = view.subviews.first { subview in
+      subview.backgroundColor == UIColor.black.withAlphaComponent(0.4)
+    }
+
+    // Animate popup scale down and background fade out simultaneously
+    UIView.animate(
+      withDuration: 0.25,
+      delay: 0,
+      options: [.curveEaseInOut, .beginFromCurrentState],
+      animations: {
+        // Scale down the popup container (foreground)
+        containerView.transform = CGAffineTransform(scaleX: 0.9, y: 0.9)
+        containerView.alpha = 0.0
+
+        // Fade out the background
+        backgroundView?.alpha = 0.0
+      },
+      completion: { _ in
+        completion()
+      }
+    )
   }
 
   @MainActor
@@ -744,6 +941,41 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         return
       }
       sharedApplication.open(url)
+    }
+  }
+
+  func requestReview(type: ReviewType) {
+    switch type {
+    case .inApp:
+      if let scene = view.window?.windowScene {
+        if #available(iOS 16.0, *) {
+          AppStore.requestReview(in: scene)
+        } else if #available(iOS 14.0, *) {
+          SKStoreReviewController.requestReview(in: scene)
+        } else {
+          SKStoreReviewController.requestReview()
+        }
+      } else {
+        SKStoreReviewController.requestReview()
+      }
+    case .external:
+      let appId: String
+      if let iosAppId = factory.makeAppId() {
+        appId = iosAppId
+      } else if let iosAppId = ReceiptManager.appId {
+        appId = "\(iosAppId)"
+      } else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .superwallCore,
+          message: "Unable to open external review URL. Please enter your Apple App ID on the Superwall dashboard."
+        )
+        return
+      }
+
+      if let url = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review") {
+        UIApplication.shared.open(url)
+      }
     }
   }
 }

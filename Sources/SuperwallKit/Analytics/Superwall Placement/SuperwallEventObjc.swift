@@ -131,6 +131,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the request to load the paywall's products has failed and is being retried.
   case paywallProductsLoadRetry
 
+  /// When the paywall's products are missing from the App Store.
+  case paywallProductsLoadMissingProducts
+
   /// Information about a paywall presentation request
   case paywallPresentationRequest
 
@@ -207,6 +210,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When a response from the network fails to decode.
   case networkDecodingFail
+
+  /// When the integration attributes are set.
+  case integrationAttributes
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
@@ -286,6 +292,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallProductsLoad_fail"
     case .paywallProductsLoadRetry:
       return "paywallProductsLoad_retry"
+    case .paywallProductsLoadMissingProducts:
+      return "paywallProductsLoad_missingProducts"
     case .paywallProductsLoadComplete:
       return "paywallProductsLoad_complete"
     case .paywallPresentationRequest:
@@ -338,6 +346,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "enrichment_complete"
     case .networkDecodingFail:
       return "networkDecoding_fail"
+    case .integrationAttributes:
+      return "integration_attributes"
     }
   }
 }

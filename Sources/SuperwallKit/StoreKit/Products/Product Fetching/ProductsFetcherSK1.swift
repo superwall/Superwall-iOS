@@ -30,7 +30,7 @@ class ProductsFetcherSK1: NSObject, ProductFetchable {
   private var paywallNameByRequest: [SKRequest: String] = [:]
   typealias ProductRequestCompletionBlock = (Result<Set<SKProduct>, Error>) -> Void
 	private var completionHandlers: [Set<String>: [ProductRequestCompletionBlock]] = [:]
-  private static let numberOfRetries: Int = 10
+  private static let numberOfRetries = 10
   private unowned let entitlementsInfo: EntitlementsInfo
 
   init(entitlementsInfo: EntitlementsInfo) {
@@ -127,7 +127,7 @@ class ProductsFetcherSK1: NSObject, ProductFetchable {
 		}
 	}
 
-  // Note: this isn't thread-safe and must therefore be used inside of `queue` only.
+  /// - Note: this isn't thread-safe and must therefore be used inside of `queue` only.
   private func startRequest(
     forIdentifiers identifiers: Set<String>,
     paywall: Paywall?,
@@ -213,6 +213,14 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
           info: ["product_ids": requestProducts.identifiers.description]
         )
+
+        for completion in completionBlocks {
+          DispatchQueue.main.async {
+            completion(.failure(ProductFetchingError.noProductsFound(requestProducts.identifiers)))
+          }
+        }
+        self.paywallNameByRequest.removeValue(forKey: request)
+        return
       }
       self.cacheProducts(response.products)
 

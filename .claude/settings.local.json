@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swiftlint:*)",
+      "Bash(scripts/test.sh:*)",
+      "Bash(xcodebuild test:*)",
+      "Bash(xcodegen:*)",
+      "Bash(xcodebuild build:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

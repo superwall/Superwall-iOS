@@ -2,6 +2,27 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.8.0
+
+### Enhancements
+
+- Adds ability to specify a custom height and corner radius for the drawer presentation style.
+- Adds ability to grant an entitlement to anyone.
+- Adds `Superwall.shared.setIntegrationAttributes(_:)` which allows you to set attributes for third-party integrations.
+- Adds `Superwall.shared.setIntegrationAttribute(_:_:)` for setting individual integration attributes.
+- Adds `Superwall.shared.integrationAttributes` to get the attributes you've set.
+- Adds the ability to ask for an App Store review from a paywall tap action.
+- Adds a popup presentation style.
+- Adds product retrying if StoreKit 2 encounters an error while fetching products.
+- Tracks a `paywallProductsLoad_missingProducts` event if the products were missing.
+
+### Fixes
+
+- Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
+- Fixes a rare crash due to memory allocation issues.
+- Fixes a rare crash due to a race condition during data processing.
+- Fixes issue where weekly StoreKit 2 products might have the wrong daily price.
+
 ## 4.7.0
 
 ### Enhancements
