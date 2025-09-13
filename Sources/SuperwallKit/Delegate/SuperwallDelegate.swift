@@ -138,6 +138,21 @@ public protocol SuperwallDelegate: AnyObject {
     pathComponents: [String],
     queryParameters: [String: String]
   )
+
+  /// Called when the ``Superwall/customerInfo`` changes.
+  ///
+  /// You can use this function to update the state of your application. Alternatively, you can
+  /// use the published property ``Superwall/customerInfo`` to react to
+  /// changes as they happen or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
+  ///
+  /// - Parameters:
+  ///   - oldValue: The old value of the ``Superwall/customerInfo``.
+  ///   - newValue: The new value of the ``Superwall/customerInfo``.
+  @MainActor
+  func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
+  )
 }
 
 extension SuperwallDelegate {
@@ -181,5 +196,10 @@ extension SuperwallDelegate {
     _ fullURL: URL,
     pathComponents: [String],
     queryParameters: [String: String]
+  ) {}
+
+  public func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
   ) {}
 }

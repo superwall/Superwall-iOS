@@ -25,6 +25,7 @@ actor ReceiptManager {
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
+  private unowned let factory: ConfigStateFactory
   static var appTransactionId: String?
   static var appId: UInt64?
 
@@ -32,10 +33,12 @@ actor ReceiptManager {
     storeKitVersion: SuperwallOptions.StoreKitVersion,
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
-    receiptDelegate: ReceiptDelegate?
+    receiptDelegate: ReceiptDelegate?,
+    factory: ConfigStateFactory
   ) {
     self.storeKitVersion = storeKitVersion
     self.productsManager = productsManager
+    self.factory = factory
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -110,14 +113,50 @@ actor ReceiptManager {
     return values
   }
 
-  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
-  /// purchases and active purchases.
-  func loadPurchasedProducts() async {
-    let purchases = await manager.loadPurchases()
+  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers, purchases and active purchases.
+  func loadPurchasedProducts(config: Config?) async {
+    let resolvedConfig: Config?
 
-    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
+    if let config = config {
+      resolvedConfig = config
+    } else {
+      let configState = factory.makeConfigState()
+      do {
+        resolvedConfig = try await configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        return
+      }
+    }
 
-    let purchasedProductIds = Set(purchases.map { $0.id })
+    guard let config = resolvedConfig else {
+      // Neither input config nor config from state is available
+      return
+    }
+
+    let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
+
+    // TODO: Need to merge in the web entitlements, this should take into account the web entitlements when returning the snapshot:
+    let purchaseSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+
+
+    await MainActor.run {
+      Superwall.shared.customerInfo = CustomerInfo(
+        subscriptions: purchaseSnapshot.subscriptions,
+        nonSubscriptions: purchaseSnapshot.nonSubscriptions,
+        userId: Superwall.shared.userId,
+        entitlements: purchaseSnapshot.entitlementsByProductId.values
+          .flatMap { $0 }
+          .sorted { $0.id < $1.id }
+      )
+    }
+
+    Superwall.shared.entitlements.setEntitlementsFromConfig(purchaseSnapshot.entitlementsByProductId)
+
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchaseSnapshot.purchases)
+
+    let purchasedProductIds = Set(purchaseSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
       identifiers: purchasedProductIds,

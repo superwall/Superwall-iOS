@@ -251,7 +251,7 @@ class Storage {
     return cache.delete(keyType)
   }
 
-  func save<Key: Storable>(_ keyType: Key.Type) where Key.Value: Encodable {
+  func delete<Key: Storable>(_ keyType: Key.Type) where Key.Value: Encodable {
     return cache.delete(keyType)
   }
 }

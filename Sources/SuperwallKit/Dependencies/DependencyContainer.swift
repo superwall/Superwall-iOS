@@ -70,7 +70,8 @@ final class DependencyContainer {
     receiptManager = ReceiptManager(
       storeKitVersion: options.storeKitVersion,
       productsManager: productsManager,
-      receiptDelegate: purchaseController as? ReceiptDelegate
+      receiptDelegate: purchaseController as? ReceiptDelegate,
+      factory: self
     )
 
     webEntitlementRedeemer = WebEntitlementRedeemer(
@@ -538,8 +539,8 @@ extension DependencyContainer: UserAttributesPlacementFactory {
 
 // MARK: - Receipt Factory
 extension DependencyContainer: ReceiptFactory {
-  func loadPurchasedProducts() async {
-    await receiptManager.loadPurchasedProducts()
+  func loadPurchasedProducts(config: Config? = nil) async {
+    await receiptManager.loadPurchasedProducts(config: config)
   }
 
   func refreshSK1Receipt() async {
