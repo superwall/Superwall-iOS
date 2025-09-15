@@ -964,6 +964,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       } else {
         SKStoreReviewController.requestReview()
       }
+      trackReviewRequest(type: .inApp)
     case .external:
       let appId: String
       if let iosAppId = factory.makeAppId() {
@@ -981,7 +982,19 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
       if let url = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review") {
         UIApplication.shared.open(url)
+        trackReviewRequest(type: .external)
       }
+    }
+  }
+
+  private func trackReviewRequest(type: ReviewType) {
+    Task {
+      let count = await deviceHelper.reviewRequestsTotal() + 1
+      let reviewRequestEvent = InternalSuperwallEvent.ReviewRequested(
+        count: count,
+        type: type
+      )
+      await Superwall.shared.track(reviewRequestEvent)
     }
   }
 }

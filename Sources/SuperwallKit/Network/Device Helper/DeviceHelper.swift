@@ -365,6 +365,13 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
+  func reviewRequestsTotal() async -> Int {
+    return await storage.coreDataManager.countPlacement(
+      SuperwallEventObjc.reviewRequested.description,
+      interval: .infinity
+    )
+  }
+
   func getDeviceAttributes(
     since placement: PlacementData?,
     computedPropertyRequests: [ComputedPropertyRequest]
@@ -543,6 +550,7 @@ class DeviceHelper {
       daysSinceLastPaywallView: daysSinceLastPaywallView,
       minutesSinceLastPaywallView: minutesSinceLastPaywallView,
       totalPaywallViews: totalPaywallViews,
+      totalReviewRequests: await reviewRequestsTotal(),
       utcDate: utcDateString,
       localDate: localDateString,
       utcTime: utcTimeString,
