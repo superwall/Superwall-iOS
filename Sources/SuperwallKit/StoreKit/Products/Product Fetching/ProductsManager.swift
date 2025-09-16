@@ -12,6 +12,17 @@ enum ProductOverride {
   case byProduct(StoreProduct)
 }
 
+enum ProductFetchingError: LocalizedError {
+  case noProductsFound(Set<String>)
+
+  var errorDescription: String? {
+    switch self {
+    case .noProductsFound(let identifiers):
+      return "Could not load products with identifiers: \(identifiers)"
+    }
+  }
+}
+
 protocol ProductFetchable: AnyObject {
   func products(
     identifiers: Set<String>,

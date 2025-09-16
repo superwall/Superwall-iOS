@@ -144,6 +144,10 @@ public enum SuperwallEvent {
   case paywallProductsLoadRetry(
     triggeredPlacementName: String?, paywallInfo: PaywallInfo, attempt: Int)
 
+  /// When the paywall's products are missing from the App Store.
+  case paywallProductsLoadMissingProducts(
+    triggeredPlacementName: String?, paywallInfo: PaywallInfo, identifiers: Set<String>)
+
   /// When the response to a paywall survey is recorded.
   case surveyResponse(
     survey: Survey,
@@ -231,6 +235,9 @@ public enum SuperwallEvent {
 
   /// When the integration attributes are set.
   case integrationAttributes(_ attributes: [String: Any])
+
+  /// When a review is requested from the user.
+  case reviewRequested(count: Int)
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -345,6 +352,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadRetry:
       return .init(objcEvent: .paywallProductsLoadRetry)
+    case .paywallProductsLoadMissingProducts:
+      return .init(objcEvent: .paywallProductsLoadMissingProducts)
     case .paywallProductsLoadComplete:
       return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
@@ -399,6 +408,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .networkDecodingFail)
     case .integrationAttributes:
       return .init(objcEvent: .integrationAttributes)
+    case .reviewRequested:
+      return .init(objcEvent: .reviewRequested)
     }
   }
 }

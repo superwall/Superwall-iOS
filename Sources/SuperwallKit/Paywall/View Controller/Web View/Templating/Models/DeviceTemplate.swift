@@ -38,6 +38,7 @@ struct DeviceTemplate: Codable {
   var daysSinceLastPaywallView: Int?
   var minutesSinceLastPaywallView: Int?
   var totalPaywallViews: Int
+  var totalReviewRequests: Int
   var utcDate: String
   var localDate: String
   var utcTime: String
@@ -61,6 +62,7 @@ struct DeviceTemplate: Codable {
   var platformWrapperVersion: String?
   var swiftVersion: String
   var compilerVersion: String
+  var deviceId: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

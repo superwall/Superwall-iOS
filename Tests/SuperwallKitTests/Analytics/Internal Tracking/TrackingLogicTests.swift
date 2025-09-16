@@ -205,11 +205,11 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
     XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertNil(parameters.audienceFilterParams["myCustomParam"])
+    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! [String: String], ["one": "two"])
     XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
     XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertNil(parameters.delegateParams["myCustomParam"])
+    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! [String: String], ["one": "two"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 

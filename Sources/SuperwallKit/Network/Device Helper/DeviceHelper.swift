@@ -365,6 +365,13 @@ class DeviceHelper {
     return storage.get(TotalPaywallViews.self) ?? 0
   }
 
+  func reviewRequestsTotal() async -> Int {
+    return await storage.coreDataManager.countPlacement(
+      SuperwallEventObjc.reviewRequested.description,
+      interval: .infinity
+    )
+  }
+
   func getDeviceAttributes(
     since placement: PlacementData?,
     computedPropertyRequests: [ComputedPropertyRequest]
@@ -456,7 +463,9 @@ class DeviceHelper {
   private unowned let storage: Storage
   private unowned let entitlementsInfo: EntitlementsInfo
   private unowned let receiptManager: ReceiptManager
-  private unowned let factory: IdentityFactory & LocaleIdentifierFactory
+  private unowned let factory: IdentityFactory
+    & LocaleIdentifierFactory
+    & WebEntitlementFactory
 
   init(
     api: Api,
@@ -464,7 +473,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
   ) {
     self.storage = storage
     self.network = network
@@ -541,6 +550,7 @@ class DeviceHelper {
       daysSinceLastPaywallView: daysSinceLastPaywallView,
       minutesSinceLastPaywallView: minutesSinceLastPaywallView,
       totalPaywallViews: totalPaywallViews,
+      totalReviewRequests: await reviewRequestsTotal(),
       utcDate: utcDateString,
       localDate: localDateString,
       utcTime: utcTimeString,
@@ -563,7 +573,8 @@ class DeviceHelper {
       platformWrapper: platformWrapper,
       platformWrapperVersion: platformWrapperVersion,
       swiftVersion: currentSwiftVersion(),
-      compilerVersion: currentCompilerVersion()
+      compilerVersion: currentCompilerVersion(),
+      deviceId: factory.makeDeviceId()
     )
 
     var deviceDictionary = template.toDictionary()

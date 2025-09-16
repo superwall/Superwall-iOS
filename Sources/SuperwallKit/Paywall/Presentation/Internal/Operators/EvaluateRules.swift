@@ -24,7 +24,10 @@ extension Superwall {
       )
       return await audienceLogic.evaluateAudienceFilters(
         forPlacement: placementData,
-        triggers: dependencyContainer.configManager.triggersByPlacementName
+        triggers: Dictionary(
+          uniqueKeysWithValues: dependencyContainer.configManager.triggersByPlacementName
+            .map { ($0.key, $0.value) }
+        )
       )
     } else {
       // Called if the debugger is shown.

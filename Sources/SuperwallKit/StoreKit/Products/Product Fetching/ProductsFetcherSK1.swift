@@ -127,7 +127,7 @@ class ProductsFetcherSK1: NSObject, ProductFetchable {
 		}
 	}
 
-  // Note: this isn't thread-safe and must therefore be used inside of `queue` only.
+  /// - Note: this isn't thread-safe and must therefore be used inside of `queue` only.
   private func startRequest(
     forIdentifiers identifiers: Set<String>,
     paywall: Paywall?,
@@ -213,6 +213,14 @@ extension ProductsFetcherSK1: SKProductsRequestDelegate {
           message: "\(errorMessage). Visit https://superwall.com/l/missing-products to diagnose.",
           info: ["product_ids": requestProducts.identifiers.description]
         )
+
+        for completion in completionBlocks {
+          DispatchQueue.main.async {
+            completion(.failure(ProductFetchingError.noProductsFound(requestProducts.identifiers)))
+          }
+        }
+        self.paywallNameByRequest.removeValue(forKey: request)
+        return
       }
       self.cacheProducts(response.products)
 

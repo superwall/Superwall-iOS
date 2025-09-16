@@ -2,7 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.8.0
+## 4.8.2
+
+### Enhancements
+
+- Adds `review_requested` event when a review is requested.
+
+### Fixes
+
+- Fixes rare crash caused by a concurrency issue.
+
+## 4.8.1
 
 ### Enhancements
 
@@ -13,13 +23,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `Superwall.shared.integrationAttributes` to get the attributes you've set.
 - Adds the ability to ask for an App Store review from a paywall tap action.
 - Adds a popup presentation style.
-- Adds product retrying if StoreKit 2 products fail to fetch.
+- Adds product retrying if StoreKit 2 encounters an error while fetching products.
+- Tracks a `paywallProductsLoad_missingProducts` event if the products were missing.
 
 ### Fixes
 
 - Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
 - Fixes a rare crash due to memory allocation issues.
 - Fixes a rare crash due to a race condition during data processing.
+- Fixes issue where weekly StoreKit 2 products might have the wrong daily price.
 
 ## 4.7.0
 
