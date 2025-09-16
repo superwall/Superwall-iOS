@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `review_requested` event when a review is requested.
 
+### Fixes
+
+- Fixes rare crash caused by a concurrency issue.
+
 ## 4.8.1
 
 ### Enhancements
