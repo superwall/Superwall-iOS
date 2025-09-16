@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `review_requested` event when a review is requested.
+- Adds ability to open the web checkout page in a payment sheet style web view.
 
 ### Fixes
 
