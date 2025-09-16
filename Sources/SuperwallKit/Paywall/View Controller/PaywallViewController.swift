@@ -900,18 +900,7 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
-  func startCheckoutSession(id checkoutId: String) {
-    // Construct the checkout URL using the checkoutId
-    guard let url = URL(string: "https://superwall.com/checkout/\(checkoutId)") else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Invalid checkout URL for checkoutId: \(checkoutId)"
-      )
-      return
-    }
-    // Create the Safari view controller
-
+  func openPaymentSheet(_ url: URL) {
     let checkoutVC = CheckoutWebViewController(url: url)
     checkoutVC.onDismiss = { [weak self] in
       self?.isSafariVCPresented = false

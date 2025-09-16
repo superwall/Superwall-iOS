@@ -47,6 +47,7 @@ enum PaywallMessage: Decodable, Equatable {
   case restore
   case openUrl(_ url: URL)
   case openUrlInSafari(_ url: URL)
+  case openPaymentSheet(_ url: URL)
   case openDeepLink(url: URL)
   case purchase(productId: String)
   case custom(data: String)
@@ -74,6 +75,7 @@ enum PaywallMessage: Decodable, Equatable {
     case restore
     case openUrl = "open_url"
     case openUrlInSafari = "open_url_external"
+    case openPaymentSheet = "open_payment_sheet"
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
@@ -127,6 +129,12 @@ enum PaywallMessage: Decodable, Equatable {
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
           self = .openUrlInSafari(url)
+          return
+        }
+      case .openPaymentSheet:
+        if let urlString = try? values.decode(String.self, forKey: .url),
+          let url = URL(string: urlString) {
+          self = .openPaymentSheet(url)
           return
         }
       case .openDeepLink:
