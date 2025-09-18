@@ -17,7 +17,8 @@ import Foundation
 
 {
   "event_name": "open_url",
-  "url": "https://example.com"
+  "url": "https://example.com",
+  "browser_type": "payment_sheet" // optional
 }
 
 */
@@ -75,7 +76,6 @@ enum PaywallMessage: Decodable, Equatable {
     case restore
     case openUrl = "open_url"
     case openUrlInSafari = "open_url_external"
-    case openPaymentSheet = "open_payment_sheet"
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
@@ -93,7 +93,8 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
-    case reviewType = "reviewType"
+    case reviewType
+    case browserType
   }
 
   enum PaywallMessageError: Error {
@@ -122,19 +123,14 @@ enum PaywallMessage: Decodable, Equatable {
       case .openUrl:
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
-          self = .openUrl(url)
+          let browserType = try? values.decode(String.self, forKey: .browserType)
+          self = browserType == "payment_sheet" ? .openPaymentSheet(url) : .openUrl(url)
           return
         }
       case .openUrlInSafari:
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
           self = .openUrlInSafari(url)
-          return
-        }
-      case .openPaymentSheet:
-        if let urlString = try? values.decode(String.self, forKey: .url),
-          let url = URL(string: urlString) {
-          self = .openPaymentSheet(url)
           return
         }
       case .openDeepLink:
