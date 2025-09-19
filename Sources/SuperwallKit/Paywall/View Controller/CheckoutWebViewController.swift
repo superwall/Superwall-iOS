@@ -155,6 +155,33 @@ final class CheckoutWebViewController: UIViewController {
 
 // MARK: - WKNavigationDelegate
 extension CheckoutWebViewController: WKNavigationDelegate {
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction
+  ) async -> WKNavigationActionPolicy {
+    guard let url = navigationAction.request.url else {
+      return .allow
+    }
+
+    // Check if this should be opened externally (deep links or universal links)
+    if let scheme = url.scheme {
+      // Custom schemes (deep links) - always open in app
+      if !scheme.hasPrefix("http") && UIApplication.shared.canOpenURL(url) {
+        await UIApplication.shared.open(url)
+        return .cancel
+      }
+
+      // Superwall deep links (universal links) - use existing system
+      if url.isSuperwallDeepLink {
+        await UIApplication.shared.open(url)
+        return .cancel
+      }
+    }
+
+    // Allow all other navigation types for payment flows and SSO authentication
+    return .allow
+  }
+
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     // Hide loading indicator if needed
     // Initial scroll state update after page loads

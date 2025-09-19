@@ -358,19 +358,28 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
-    guard
-      isSafariVCPresented,
-      let safariVC = presentedViewController as? SFSafariViewController
-    else {
+    guard isSafariVCPresented else {
       completion?()
       return
     }
-    safariVC.dismiss(
-      animated: true,
-      completion: completion
-    )
-    // Must set this maually because programmatically dismissing the SafariVC doesn't call its
-    // delegate method where we set this.
+
+    // Check if it's a Safari VC or Checkout Web VC
+    if let safariVC = presentedViewController as? SFSafariViewController {
+      safariVC.dismiss(
+        animated: true,
+        completion: completion
+      )
+    } else if let checkoutVC = presentedViewController as? CheckoutWebViewController {
+      checkoutVC.dismiss(
+        animated: true,
+        completion: completion
+      )
+    } else {
+      completion?()
+    }
+
+    // Must set this manually because programmatically dismissing doesn't call
+    // delegate methods where we set this.
     isSafariVCPresented = false
   }
 
