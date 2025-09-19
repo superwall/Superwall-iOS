@@ -164,18 +164,11 @@ extension CheckoutWebViewController: WKNavigationDelegate {
     }
 
     // Check if this should be opened externally (deep links or universal links)
-    if let scheme = url.scheme {
-      // Custom schemes (deep links) - always open in app
-      if !scheme.hasPrefix("http") && UIApplication.shared.canOpenURL(url) {
-        await UIApplication.shared.open(url)
-        return .cancel
+    if url.isSuperwallDeepLink {
+      Task { @MainActor in
+        Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
       }
-
-      // Superwall deep links (universal links) - use existing system
-      if url.isSuperwallDeepLink {
-        await UIApplication.shared.open(url)
-        return .cancel
-      }
+      return .cancel
     }
 
     // Allow all other navigation types for payment flows and SSO authentication
