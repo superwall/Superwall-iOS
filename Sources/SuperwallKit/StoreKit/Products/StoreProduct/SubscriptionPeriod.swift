@@ -92,6 +92,15 @@ public final class SubscriptionPeriod: NSObject, Sendable {
       .normalized()
   }
 
+  static func from(stripeSubscriptionPeriod: StripeProductType.StripeSubscriptionPeriod) -> SubscriptionPeriod? {
+    guard let unit = SubscriptionPeriod.Unit.from(stripePeriodUnit: stripeSubscriptionPeriod.unit) else {
+      return nil
+    }
+
+    return .init(value: stripeSubscriptionPeriod.value, unit: unit)
+      .normalized()
+  }
+
   /// This function simplifies large numbers of days into months and large numbers
   /// of months into years if there are no leftover units after the conversion.
   ///
@@ -202,6 +211,16 @@ private extension SubscriptionPeriod.Unit {
   @available(iOS 15.0, tvOS 15.0, watchOS 8, *)
   static func from(sk2PeriodUnit: StoreKit.Product.SubscriptionPeriod.Unit) -> Self? {
     switch sk2PeriodUnit {
+    case .day: return .day
+    case .week: return .week
+    case .month: return .month
+    case .year: return .year
+    @unknown default: return nil
+    }
+  }
+
+  static func from(stripePeriodUnit: StripeProductType.StripeSubscriptionPeriod.Unit) -> Self? {
+    switch stripePeriodUnit {
     case .day: return .day
     case .week: return .week
     case .month: return .month

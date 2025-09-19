@@ -94,4 +94,29 @@ struct SWProductDiscount: Codable {
       self.type = .unknown
     }
   }
+
+  init(
+    offer: StripeProductType.SubscriptionIntroductoryOffer,
+    fromProduct product: StripeProductType
+  ) {
+    price = offer.price
+    priceLocale = product.priceLocale.identifier
+    identifier = nil
+    subscriptionPeriod = SWProductSubscriptionPeriod(
+      period: offer.period,
+      numberOfPeriods: 1
+    )
+    numberOfPeriods = offer.periodCount
+
+    switch offer.paymentMethod {
+    case .freeTrial:
+      self.paymentMode = .freeTrial
+    case .payAsYouGo:
+      self.paymentMode = .payAsYouGo
+    case .payUpFront:
+      self.paymentMode = .payUpFront
+    }
+
+    type = .introductory
+  }
 }

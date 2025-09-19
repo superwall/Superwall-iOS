@@ -28,6 +28,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var didOpenDeepLink = false
   var didPresentSafariExternal = false
   var didRequestReview = false
+  var didOpenPaymentSheet = false
 
   var request: PresentationRequest?
 
@@ -67,5 +68,9 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func requestReview(type: ReviewType) {
     didRequestReview = true
+  }
+
+  func openPaymentSheet(_ url: URL) {
+    didOpenPaymentSheet = true
   }
 }
