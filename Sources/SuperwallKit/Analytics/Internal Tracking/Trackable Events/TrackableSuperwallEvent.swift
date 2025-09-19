@@ -1009,4 +1009,20 @@ enum InternalSuperwallEvent {
       ]
     }
   }
+
+  struct ReviewRequested: TrackableSuperwallEvent {
+    let count: Int
+    let type: ReviewType
+    var superwallEvent: SuperwallEvent {
+      return .reviewRequested(count: count)
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "count": count,
+        "type": type.rawValue
+      ]
+    }
+  }
 }
