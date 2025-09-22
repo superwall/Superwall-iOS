@@ -16,6 +16,7 @@ final class CheckoutWebViewController: UIViewController {
 
   deinit {
     NotificationCenter.default.removeObserver(self)
+    webView.configuration.userContentController.removeScriptMessageHandler(forName: "fieldFocus")
   }
 
   init(url: URL) {
@@ -61,6 +62,9 @@ final class CheckoutWebViewController: UIViewController {
 
     // Add keyboard observers to detect when keyboard causes detent changes
     setupKeyboardObservers()
+
+    // Configure script message handler for field focus detection
+    webView.configuration.userContentController.add(self, name: "fieldFocus")
   }
 
   private func setupKeyboardObservers() {
@@ -151,6 +155,52 @@ final class CheckoutWebViewController: UIViewController {
       webView.evaluateJavaScript(enableScrollScript)
     }
   }
+
+  private func injectFieldFocusDetection() {
+    let fieldFocusScript = """
+      (function() {
+        function expandToLargeDetent() {
+          window.webkit.messageHandlers.fieldFocus.postMessage('focus');
+        }
+
+        // Listen for focus events on input fields
+        document.addEventListener('focusin', function(event) {
+          const target = event.target;
+          const isFormField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' || target.contentEditable === 'true';
+          if (isFormField) {
+            expandToLargeDetent();
+          }
+        });
+
+        // Also listen for click events on input fields as a backup
+        document.addEventListener('click', function(event) {
+          const target = event.target;
+          const isFormField = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' ||
+            target.tagName === 'SELECT' || target.contentEditable === 'true';
+          if (isFormField) {
+            expandToLargeDetent();
+          }
+        });
+      })();
+    """
+
+    webView.evaluateJavaScript(fieldFocusScript)
+  }
+
+  @available(iOS 15.0, *)
+  private func expandToLargeDetent() {
+    guard let sheetController = sheetPresentationController else {
+      return
+    }
+
+    // Animate to large detent if not already there
+    if sheetController.selectedDetentIdentifier != .large {
+      sheetController.animateChanges {
+        sheetController.selectedDetentIdentifier = .large
+      }
+    }
+  }
 }
 
 // MARK: - WKNavigationDelegate
@@ -181,6 +231,9 @@ extension CheckoutWebViewController: WKNavigationDelegate {
     if #available(iOS 15.0, *) {
       updateScrollingForDetent()
     }
+
+    // Inject JavaScript to detect field focus events
+    injectFieldFocusDetection()
   }
 }
 
@@ -191,5 +244,19 @@ extension CheckoutWebViewController: UISheetPresentationControllerDelegate {
     _ sheetPresentationController: UISheetPresentationController
   ) {
     updateScrollingForDetent()
+  }
+}
+
+// MARK: - WKScriptMessageHandler
+extension CheckoutWebViewController: WKScriptMessageHandler {
+  func userContentController(
+    _ userContentController: WKUserContentController,
+    didReceive message: WKScriptMessage
+  ) {
+    if message.name == "fieldFocus" {
+      if #available(iOS 15.0, *) {
+        expandToLargeDetent()
+      }
+    }
   }
 }
