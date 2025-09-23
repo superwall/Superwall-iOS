@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.8.3
+
+### Enhancements
+
+- Adds support for redeeming web entitlements with Paddle.
+
 ## 4.8.2
 
 ### Enhancements

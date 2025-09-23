@@ -166,6 +166,9 @@ public enum RedemptionResult: Codable {
         /// The subscription was purchased via Stripe.
         case stripe(customerId: String, subscriptionIds: [String])
 
+        /// The subscription was purchased via Paddle.
+        case paddle(customerId: String, subscriptionIds: [String])
+
         /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
 
@@ -173,6 +176,8 @@ public enum RedemptionResult: Codable {
           case store
           case stripeCustomerId
           case stripeSubscriptionIds
+          case paddleCustomerId
+          case paddleSubscriptionIds
         }
 
         struct DynamicCodingKey: CodingKey {
@@ -195,6 +200,13 @@ public enum RedemptionResult: Codable {
               customerId: stripeCustomerId,
               subscriptionIds: stripeSubscriptionIds
             )
+          case "PADDLE":
+            let paddleCustomerId = try container.decode(String.self, forKey: .paddleCustomerId)
+            let paddleSubscriptionIds = try container.decode([String].self, forKey: .paddleSubscriptionIds)
+            self = .paddle(
+              customerId: paddleCustomerId,
+              subscriptionIds: paddleSubscriptionIds
+            )
           default:
             // Decode entire JSON payload to capture additional fields
             let json = try JSON(from: decoder)
@@ -212,6 +224,10 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
+          case let .paddle(customerId, subscriptionIds):
+            try container.encode("PADDLE", forKey: .store)
+            try container.encode(customerId, forKey: .paddleCustomerId)
+            try container.encode(subscriptionIds, forKey: .paddleSubscriptionIds)
           case let .stripe(customerId, subscriptionIds):
             try container.encode("STRIPE", forKey: .store)
             try container.encode(customerId, forKey: .stripeCustomerId)
@@ -241,6 +257,11 @@ public enum RedemptionResult: Codable {
           case let .stripe(customerId, subscriptionIds):
             return RedemptionResultObjc.StoreIdentifiers(
               stripeWithCustomerId: customerId,
+              subscriptionIds: subscriptionIds
+            )
+          case let .paddle(customerId, subscriptionIds):
+            return RedemptionResultObjc.StoreIdentifiers(
+              paddleWithCustomerId: customerId,
               subscriptionIds: subscriptionIds
             )
           case let .unknown(store, additionalInfo):
