@@ -12,6 +12,7 @@ import SystemConfiguration
 import CoreTelephony
 #endif
 import StoreKit
+import PassKit
 
 class DeviceHelper {
   var localeIdentifier: String {
@@ -170,6 +171,10 @@ class DeviceHelper {
 
   var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
+  }
+
+  var isApplePayAvailable: Bool {
+    return PKPaymentAuthorizationViewController.canMakePayments()
   }
 
   let bundleId: String = {
@@ -542,6 +547,7 @@ class DeviceHelper {
       radioType: radioType,
       interfaceStyle: interfaceStyle,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
+      isApplePayAvailable: isApplePayAvailable,
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,
       isMac: isMac,

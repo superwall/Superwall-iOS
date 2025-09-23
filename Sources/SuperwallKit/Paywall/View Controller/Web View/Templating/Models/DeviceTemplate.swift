@@ -30,6 +30,7 @@ struct DeviceTemplate: Codable {
   var radioType: String
   var interfaceStyle: String
   var isLowPowerModeEnabled: Bool
+  var isApplePayAvailable: Bool
   var bundleId: String
   var appInstallDate: String
   var isMac: Bool
