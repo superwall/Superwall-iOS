@@ -231,17 +231,17 @@ public class RedemptionResultObjc: NSObject {
       self.additionalInfo = nil
       super.init()
     }
-    
+
     public init(
-        paddleWithCustomerId customerId: String,
-        subscriptionIds: [String]
+      paddleWithCustomerId customerId: String,
+      subscriptionIds: [String]
     ) {
-        self.type = .paddle
-        self.customerId = customerId
-        self.subscriptionIds = subscriptionIds
-        self.store = nil
-        self.additionalInfo = nil
-        super.init()
+      self.type = .paddle
+      self.customerId = customerId
+      self.subscriptionIds = subscriptionIds
+      self.store = nil
+      self.additionalInfo = nil
+      super.init()
     }
 
     /// Initializer for unknown store identifiers.
@@ -257,9 +257,17 @@ public class RedemptionResultObjc: NSObject {
       super.init()
     }
 
-    /// Convenience variable to get the stripe subscription IDs.
+    /// Convenience variable to get the Stripe subscription IDs.
     public var stripeSubscriptionIds: [String]? {
       if type == .stripe {
+        return subscriptionIds
+      }
+      return nil
+    }
+
+    /// Convenience variable to get the Paddle subscription IDs.
+    public var paddleSubscriptionIds: [String]? {
+      if type == .paddle {
         return subscriptionIds
       }
       return nil

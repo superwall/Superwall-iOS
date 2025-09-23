@@ -224,10 +224,10 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
-          case let  .paddle(customerId, subscriptionIds):
-              try container.encode("STRIPE", forKey: .store)
-              try container.encode(customerId, forKey: .paddleCustomerId)
-              try container.encode(subscriptionIds, forKey: .paddleSubscriptionIds)
+          case let .paddle(customerId, subscriptionIds):
+            try container.encode("PADDLE", forKey: .store)
+            try container.encode(customerId, forKey: .paddleCustomerId)
+            try container.encode(subscriptionIds, forKey: .paddleSubscriptionIds)
           case let .stripe(customerId, subscriptionIds):
             try container.encode("STRIPE", forKey: .store)
             try container.encode(customerId, forKey: .stripeCustomerId)
@@ -261,9 +261,9 @@ public enum RedemptionResult: Codable {
             )
           case let .paddle(customerId, subscriptionIds):
             return RedemptionResultObjc.StoreIdentifiers(
-                paddleWithCustomerId: customerId,
-                subscriptionIds: subscriptionIds
-              )
+              paddleWithCustomerId: customerId,
+              subscriptionIds: subscriptionIds
+            )
           case let .unknown(store, additionalInfo):
             return RedemptionResultObjc.StoreIdentifiers(
               unknownStore: store,
