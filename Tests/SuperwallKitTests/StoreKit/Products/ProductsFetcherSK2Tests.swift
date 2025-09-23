@@ -21,10 +21,10 @@ struct ProductsFetcherSK2Tests {
   
   // MARK: - Test Cases
   
-  @Test("ProductsFetcherSK2Error should provide proper error descriptions")
+  @Test("ProductFetchingError should provide proper error descriptions")
   func testErrorDescriptions() {
     let identifiers: Set<String> = ["product1", "product2"]
-    let error = ProductsFetcherSK2Error.noProductsFound(identifiers)
+    let error = ProductFetchingError.noProductsFound(identifiers)
     
     #expect(error.errorDescription != nil)
     #expect(error.errorDescription!.contains("Could not load products"))
@@ -74,14 +74,14 @@ struct ProductsFetcherSK2Tests {
         placement: nil
       )
       #expect(Bool(false), "Expected error to be thrown for non-existent products")
-    } catch let error as ProductsFetcherSK2Error {
+    } catch let error as ProductFetchingError {
       #expect(error.errorDescription != nil)
       switch error {
       case .noProductsFound(let identifiers):
         #expect(identifiers.contains("definitely_non_existent_product_id_12345"))
       }
     } catch {
-      #expect(Bool(false), "Expected ProductsFetcherSK2Error, but got: \(error)")
+      #expect(Bool(false), "Expected ProductFetchingError, but got: \(error)")
     }
   }
   

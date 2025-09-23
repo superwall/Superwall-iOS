@@ -780,6 +780,7 @@ enum InternalSuperwallEvent {
       case fail(Error)
       case complete
       case retry(Int)
+      case missingProducts(Set<String>)
     }
     let state: State
     var audienceFilterParams: [String: Any] {
@@ -802,6 +803,12 @@ enum InternalSuperwallEvent {
           paywallInfo: paywallInfo,
           attempt: attempt
         )
+      case .missingProducts(let identifiers):
+        return .paywallProductsLoadMissingProducts(
+          triggeredPlacementName: placementData?.name,
+          paywallInfo: paywallInfo,
+          identifiers: identifiers
+        )
       }
     }
     let paywallInfo: PaywallInfo
@@ -814,6 +821,9 @@ enum InternalSuperwallEvent {
       ]
       if case .fail(let error) = state {
         params["error_message"] = error.safeLocalizedDescription
+      }
+      if case .missingProducts(let identifiers) = state {
+        params["missing_products"] = Array(identifiers).joined(separator: ",")
       }
       params += await paywallInfo.placementParams()
       return params
@@ -1002,6 +1012,22 @@ enum InternalSuperwallEvent {
       return [
         "request_url": requestURLString,
         "response": responseString
+      ]
+    }
+  }
+
+  struct ReviewRequested: TrackableSuperwallEvent {
+    let count: Int
+    let type: ReviewType
+    var superwallEvent: SuperwallEvent {
+      return .reviewRequested(count: count)
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "count": count,
+        "type": type.rawValue
       ]
     }
   }

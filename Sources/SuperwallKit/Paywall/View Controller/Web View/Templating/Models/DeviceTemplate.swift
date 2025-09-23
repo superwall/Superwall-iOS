@@ -38,6 +38,7 @@ struct DeviceTemplate: Codable {
   var daysSinceLastPaywallView: Int?
   var minutesSinceLastPaywallView: Int?
   var totalPaywallViews: Int
+  var totalReviewRequests: Int
   var utcDate: String
   var localDate: String
   var utcTime: String
