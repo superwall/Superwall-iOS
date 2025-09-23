@@ -196,6 +196,7 @@ public class RedemptionResultObjc: NSObject {
   @objc(SWKStoreIdentifierType)
   public enum StoreIdentifierType: Int {
     case stripe
+    case paddle
     case unknown
   }
 
@@ -231,6 +232,18 @@ public class RedemptionResultObjc: NSObject {
       super.init()
     }
 
+    public init(
+      paddleWithCustomerId customerId: String,
+      subscriptionIds: [String]
+    ) {
+      self.type = .paddle
+      self.customerId = customerId
+      self.subscriptionIds = subscriptionIds
+      self.store = nil
+      self.additionalInfo = nil
+      super.init()
+    }
+
     /// Initializer for unknown store identifiers.
     public init(
       unknownStore store: String,
@@ -244,9 +257,17 @@ public class RedemptionResultObjc: NSObject {
       super.init()
     }
 
-    /// Convenience variable to get the stripe subscription IDs.
+    /// Convenience variable to get the Stripe subscription IDs.
     public var stripeSubscriptionIds: [String]? {
       if type == .stripe {
+        return subscriptionIds
+      }
+      return nil
+    }
+
+    /// Convenience variable to get the Paddle subscription IDs.
+    public var paddleSubscriptionIds: [String]? {
+      if type == .paddle {
         return subscriptionIds
       }
       return nil
