@@ -8,6 +8,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds ability to open the web checkout page in a payment sheet style web view.
 
+## 4.8.3
+
+### Enhancements
+
+- Adds support for redeeming web entitlements with Paddle.
+
 ## 4.8.2
 
 ### Enhancements
