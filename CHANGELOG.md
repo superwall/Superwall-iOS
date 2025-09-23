@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds support for redeeming web entitlements from Paddle.
+- Adds support for redeeming web entitlements with Paddle.
 
 ## 4.8.2
 
