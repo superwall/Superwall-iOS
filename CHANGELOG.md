@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
 
+### Fixes
+
+- Changes "With/Without Free Trial" to "With/Without Intro Offer" in the debugger.
+
 ## 4.8.3
 
 ### Enhancements
