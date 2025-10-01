@@ -20,6 +20,18 @@ public final class CustomerInfo: NSObject, Codable {
         .map((\.productId))
     )
   }
+
+  /// A dictionary mapping product IDs to their associated entitlements.
+  var entitlementsByProductId: [String: Set<Entitlement>] {
+    var result: [String: Set<Entitlement>] = [:]
+    for entitlement in entitlements {
+      for productId in entitlement.productIds {
+        result[productId, default: []].insert(entitlement)
+      }
+    }
+    return result
+  }
+
   /// The subscription transactions the user has made. The transactions are
   /// ordered by purchase date in ascending order.
   public let subscriptions: [SubscriptionTransaction]
@@ -28,11 +40,12 @@ public final class CustomerInfo: NSObject, Codable {
   /// ordered by purchase date in ascending order.
   public let nonSubscriptions: [NonSubscriptionTransaction]
 
+  // TODO: Check this is reset on cleanUserCodes
   /// The ID of the user. Equivalent to ``Superwall/userId``.
   public let userId: String
 
   /// All entitlements available to the user.
-  public let entitlements: [Entitlement]
+  public internal(set) var entitlements: [Entitlement]
 
   /// Internally set to `true` on first ever load of CustomerInfo`.
   let isBlank: Bool
@@ -40,14 +53,17 @@ public final class CustomerInfo: NSObject, Codable {
   init(
     subscriptions: [SubscriptionTransaction],
     nonSubscriptions: [NonSubscriptionTransaction],
-    userId: String,
     entitlements: [Entitlement],
     isBlank: Bool = false
   ) {
     self.subscriptions = subscriptions
     self.nonSubscriptions = nonSubscriptions
-    self.userId = userId
     self.entitlements = entitlements
+    if Superwall.isInitialized {
+      self.userId = Superwall.shared.userId
+    } else {
+      self.userId = ""
+    }
     self.isBlank = isBlank
   }
 
@@ -85,9 +101,15 @@ public final class CustomerInfo: NSObject, Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     subscriptions = try container.decode([SubscriptionTransaction].self, forKey: .subscriptions)
     nonSubscriptions = try container.decode([NonSubscriptionTransaction].self, forKey: .nonSubscriptions)
-    userId = try container.decode(String.self, forKey: .userId)
+
+    // TODO: Check this
+    if Superwall.isInitialized {
+      userId = Superwall.shared.userId
+    } else {
+      userId = ""
+    }
     entitlements = try container.decode([Entitlement].self, forKey: .entitlements)
-    isBlank = try container.decode(Bool.self, forKey: .isBlank)
+    isBlank = try container.decodeIfPresent(Bool.self, forKey: .isBlank) ?? false
     super.init()
   }
 
@@ -95,7 +117,6 @@ public final class CustomerInfo: NSObject, Codable {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(subscriptions, forKey: .subscriptions)
     try container.encode(nonSubscriptions, forKey: .nonSubscriptions)
-    try container.encode(userId, forKey: .userId)
     try container.encode(entitlements, forKey: .entitlements)
     try container.encode(isBlank, forKey: .isBlank)
   }
@@ -104,9 +125,62 @@ public final class CustomerInfo: NSObject, Codable {
     return CustomerInfo(
       subscriptions: [],
       nonSubscriptions: [],
-      userId: "",
       entitlements: [],
       isBlank: true
     )
+  }
+
+  /// Merges this CustomerInfo (device) with web CustomerInfo, deduplicating transactions by transaction ID.
+  ///
+  /// This method combines transaction history and entitlements from both on-device purchases
+  /// and web-based purchases/redemptions. It ensures:
+  /// - No duplicate transactions (keyed by `transactionId`)
+  /// - Web entitlements take precedence over device entitlements when IDs match
+  /// - All transactions are sorted by purchase date
+  ///
+  /// - Parameter webCustomerInfo: The CustomerInfo from web2app endpoints containing web purchases/redemptions
+  /// - Returns: A new CustomerInfo with merged data from both sources
+  func merging(with webCustomerInfo: CustomerInfo) -> CustomerInfo {
+    // Merge non-subscription transactions (consumables, non-consumables)
+    // Start with device transactions, then add web transactions that don't already exist
+    var mergedNonSubscriptions = self.nonSubscriptions
+    for webNonSub in webCustomerInfo.nonSubscriptions where !mergedNonSubscriptions.contains(
+      where: { $0.transactionId == webNonSub.transactionId }
+    ) {
+      mergedNonSubscriptions.append(webNonSub)
+    }
+
+    // Merge subscription transactions
+    // Start with device subscriptions, then add web subscriptions that don't already exist
+    // This prevents showing duplicate subscription history when a user has both native and
+    // web purchases
+    var mergedSubscriptions = self.subscriptions
+    for webSub in webCustomerInfo.subscriptions where !mergedSubscriptions.contains(
+      where: { $0.transactionId == webSub.transactionId }
+    ) {
+      mergedSubscriptions.append(webSub)
+    }
+
+    // Merge entitlements using priority-based merging
+    // This uses `Entitlement.mergePrioritized` which intelligently selects the highest
+    // priority entitlement for each ID based on:
+    // - Active status (active > inactive)
+    // - Latest expiration date
+    // - Other priority criteria defined in `shouldTakePriorityOver`
+    let combinedEntitlements = self.entitlements + webCustomerInfo.entitlements
+    let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+
+    // Return merged CustomerInfo with sorted transactions and entitlements
+    return CustomerInfo(
+      subscriptions: mergedSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
+      nonSubscriptions: mergedNonSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id }
+    )
+  }
+}
+
+extension CustomerInfo: Stubbable {
+  static func stub() -> CustomerInfo {
+    return blank()
   }
 }

@@ -11,7 +11,7 @@ import Foundation
 @objcMembers
 public final class NonSubscriptionTransaction: NSObject, Codable {
   /// The unique identifier for the transaction.
-  public let transactionId: UInt64
+  public let transactionId: String
 
   /// The product identifier of the in-app purchase.
   public let productId: String
@@ -26,7 +26,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
   public let isRevoked: Bool
 
   init(
-    transactionId: UInt64,
+    transactionId: String,
     productId: String,
     purchaseDate: Date,
     isConsumable: Bool,
@@ -70,7 +70,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
 
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    transactionId = try container.decode(UInt64.self, forKey: .transactionId)
+    transactionId = try container.decode(String.self, forKey: .transactionId)
     productId = try container.decode(String.self, forKey: .productId)
     purchaseDate = try container.decode(Date.self, forKey: .purchaseDate)
     isConsumable = try container.decode(Bool.self, forKey: .isConsumable)

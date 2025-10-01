@@ -185,7 +185,11 @@ struct CacheTests {
 
     let initialResponse = RedeemResponse(
       results: [deviceSuccess, webSuccess, expiredDevice, invalidCode, errorCode],
-      entitlements: [entitlement1, entitlement2, entitlement3]
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [entitlement1, entitlement2, entitlement3]
+      )
     )
 
     cache.write(initialResponse, forType: LatestRedeemResponse.self)
@@ -203,7 +207,7 @@ struct CacheTests {
 
     // Should only contain the deviceSuccess and expiredDevice
     #expect(updatedResponse.results.count == 2)
-    #expect(updatedResponse.entitlements.isEmpty)
+    #expect(updatedResponse.customerInfo.entitlements.isEmpty)
   }
 
   /// Test that cleanUserCodes correctly filters out non-device results and writes updated entitlements.
@@ -240,7 +244,11 @@ struct CacheTests {
 
     let emptyResponse = RedeemResponse(
       results: [webSuccess, expiredDevice],
-      entitlements: []
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: []
+      )
     )
     cache.write(emptyResponse, forType: LatestRedeemResponse.self)
 
@@ -257,6 +265,6 @@ struct CacheTests {
 
     // Should only contain the deviceSuccess and expiredDevice
     #expect(updatedResponse.results.count == 1)
-    #expect(updatedResponse.entitlements.isEmpty)
+    #expect(updatedResponse.customerInfo.entitlements.isEmpty)
   }
 }

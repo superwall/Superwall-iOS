@@ -56,8 +56,8 @@ struct WebEntitlementRedeemerTests {
       code: code,
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
     )
-    mockNetwork.redeemEntitlementsResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: entitlements)
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
       .setting(\.results, to: [result])
 
     let config = Config
@@ -102,7 +102,7 @@ struct WebEntitlementRedeemerTests {
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: existingEntitlements)
     )
    let existingResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: existingEntitlements)
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(existingEntitlements)))
       .setting(\.results, to: [existingResult])
 
     // No existing redeem response, so is first redemption of code.
@@ -142,8 +142,8 @@ struct WebEntitlementRedeemerTests {
       code: code,
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
     )
-    mockNetwork.redeemEntitlementsResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: entitlements)
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
       .setting(\.results, to: [result])
 
     let config = Config
@@ -209,7 +209,7 @@ struct WebEntitlementRedeemerTests {
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: existingEntitlements)
     )
     let existingResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: existingEntitlements)
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(existingEntitlements)))
       .setting(\.results, to: [existingResult])
 
     // No existing redeem response, so is first redemption of code.
@@ -248,8 +248,8 @@ struct WebEntitlementRedeemerTests {
       code: code,
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
     )
-    mockNetwork.redeemEntitlementsResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: entitlements)
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
       .setting(\.results, to: [result])
 
     let config = Config
@@ -315,7 +315,7 @@ struct WebEntitlementRedeemerTests {
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: existingEntitlements)
     )
     let existingResponse = RedeemResponse.stub()
-      .setting(\.entitlements, to: existingEntitlements)
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(existingEntitlements)))
       .setting(\.results, to: [existingResult])
 
     // No existing redeem response, so is first redemption of code.
@@ -403,7 +403,7 @@ struct WebEntitlementRedeemerTests {
 //      factory: mockFactory
 //    )
 //
-//    mockNetwork.redeemEntitlementsResponse = RedeemResponse.mock()
+//    mockNetwork.getWebEntitlementsResponse = RedeemResponse.mock()
 //
 //    await redeemer.redeem(.existingCodes)
 //

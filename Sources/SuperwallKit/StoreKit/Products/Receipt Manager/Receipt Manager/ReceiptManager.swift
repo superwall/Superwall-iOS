@@ -26,6 +26,7 @@ actor ReceiptManager {
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   private unowned let factory: ConfigStateFactory
+  private unowned let storage: Storage
   static var appTransactionId: String?
   static var appId: UInt64?
 
@@ -34,11 +35,13 @@ actor ReceiptManager {
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
     receiptDelegate: ReceiptDelegate?,
-    factory: ConfigStateFactory
+    factory: ConfigStateFactory,
+    storage: Storage
   ) {
     self.storeKitVersion = storeKitVersion
     self.productsManager = productsManager
     self.factory = factory
+    self.storage = storage
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -135,28 +138,29 @@ actor ReceiptManager {
       return
     }
 
+    // Each product id has a set of entitlements
     let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
 
-    // TODO: Need to merge in the web entitlements, this should take into account the web entitlements when returning the snapshot:
-    let purchaseSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+    // Merge web entitlements transaction history with native purchases
+    let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
 
-
-    await MainActor.run {
-      Superwall.shared.customerInfo = CustomerInfo(
-        subscriptions: purchaseSnapshot.subscriptions,
-        nonSubscriptions: purchaseSnapshot.nonSubscriptions,
-        userId: Superwall.shared.userId,
-        entitlements: purchaseSnapshot.entitlementsByProductId.values
-          .flatMap { $0 }
-          .sorted { $0.id < $1.id }
-      )
+    // Merge with web customer info if available
+    let mergedCustomerInfo: CustomerInfo
+    if let latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
+      mergedCustomerInfo = onDeviceSnapshot.customerInfo.merging(with: latestRedeemResponse.customerInfo)
+    } else {
+      mergedCustomerInfo = onDeviceSnapshot.customerInfo
     }
 
-    Superwall.shared.entitlements.setEntitlementsFromConfig(purchaseSnapshot.entitlementsByProductId)
+    await MainActor.run {
+      Superwall.shared.customerInfo = mergedCustomerInfo
+    }
 
-    await receiptDelegate?.syncSubscriptionStatus(purchases: purchaseSnapshot.purchases)
+    Superwall.shared.entitlements.setEntitlementsFromConfig(mergedCustomerInfo.entitlementsByProductId)
 
-    let purchasedProductIds = Set(purchaseSnapshot.purchases.map { $0.id })
+    await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
+
+    let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
       identifiers: purchasedProductIds,

@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length type_body_length trailing_closure
+// swiftlint:disable function_body_length type_body_length trailing_closure file_length
 
 import UIKit
 import Foundation
@@ -175,9 +175,11 @@ actor WebEntitlementRedeemer {
       }
 
       let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-      let allEntitlements = deviceEntitlements.union(response.entitlements)
 
-      // Get entitlements of products from paywall.
+      // Merge web and device entitlements with prioritization
+      let combinedEntitlements = Array(deviceEntitlements) + Array(response.customerInfo.entitlements)
+      let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+
       var paywallEntitlements: Set<Entitlement> = []
       if case .code = type,
         let paywallVc = superwall.paywallViewController {
@@ -364,33 +366,34 @@ actor WebEntitlementRedeemer {
     }
 
     do {
-      let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+      let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
-      /*
-       1. Add info to web entitlements and poll, same after renew is called
-       2. Update the customer info, similar to load purchases, split into subscriptions/nonSubscriptions,
-       3. Merge web entitlements in loadPurchasedProducts
-       4. Merge off_platform_products with root products object for entitlementsByProductId
-       */
+      // TODO: Need products_v3 to work
 
-      let entitlements = try await network.redeemEntitlements(
+      let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()
       )
 
-      // Update the latest redeem response with the entitlements.
+      // Update the latest redeem response with the entitlements and customer info from the response.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
-        latestRedeemResponse.entitlements = entitlements
+        latestRedeemResponse.customerInfo = response.customerInfo
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      if existingWebEntitlements != entitlements {
+      let webEntitlements = Set(response.customerInfo.entitlements)
+      if existingWebEntitlements != webEntitlements {
         // Sets the subscription status internally if no external PurchaseController
         let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-        let allEntitlements = deviceEntitlements.union(entitlements)
-        await Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
+
+        // Merge web and device entitlements with prioritization
+        // This ensures the highest priority entitlement is kept for each ID
+        let combinedEntitlements = Array(deviceEntitlements) + Array(webEntitlements)
+        let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+
+        await Superwall.shared.internallySetSubscriptionStatus(to: .active(mergedEntitlements))
       }
     } catch {
       Logger.debug(

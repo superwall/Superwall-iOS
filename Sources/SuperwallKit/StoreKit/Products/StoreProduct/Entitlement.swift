@@ -265,6 +265,96 @@ public final class Entitlement: NSObject, Codable, Sendable {
   }
 }
 
+// MARK: - Entitlement Merging
+extension Entitlement {
+  /// Determines which entitlement should take priority when merging entitlements with the same ID.
+  /// Returns `true` if this entitlement should be prioritized over the other.
+  ///
+  /// Priority order (highest to lowest):
+  /// 1. Lifetime entitlements (isLifetime = true)
+  /// 2. Active entitlements (isActive = true)
+  /// 3. Non-revoked entitlements (isRevoked = false)
+  /// 4. Latest expiry time (furthest future expiresAt)
+  /// 5. Will renew vs won't renew (willRenew = true)
+  /// 6. Not in grace period vs in grace period (isInGracePeriod = false)
+  func shouldTakePriorityOver(_ other: Entitlement) -> Bool {
+    // Both must have same ID to be compared
+    guard self.id == other.id else { return false }
+
+    // 1. Lifetime takes absolute priority
+    let selfIsLifetime = self.isLifetime ?? false
+    let otherIsLifetime = other.isLifetime ?? false
+
+    if selfIsLifetime != otherIsLifetime {
+      return selfIsLifetime
+    }
+
+    // 2. Active vs inactive
+    if self.isActive != other.isActive {
+      return self.isActive
+    }
+
+    // 3. Non-revoked vs revoked
+    let selfIsRevoked = self.isRevoked ?? false
+    let otherIsRevoked = other.isRevoked ?? false
+
+    if selfIsRevoked != otherIsRevoked {
+      return !selfIsRevoked
+    }
+
+    // 4. Latest expiry time (only compare if both have expiry dates)
+    if let selfExpiry = self.expiresAt, let otherExpiry = other.expiresAt {
+      if selfExpiry != otherExpiry {
+        return selfExpiry > otherExpiry
+      }
+    } else if self.expiresAt != nil || other.expiresAt != nil {
+      // If only one has expiry, prioritize the one with expiry (means it's not lifetime)
+      // But this case shouldn't happen if lifetime check passed
+      return self.expiresAt != nil
+    }
+
+    // 5. Will renew vs won't renew
+    let selfWillRenew = self.willRenew ?? false
+    let otherWillRenew = other.willRenew ?? false
+
+    if selfWillRenew != otherWillRenew {
+      return selfWillRenew
+    }
+
+    // 6. Not in grace period vs in grace period
+    let selfInGracePeriod = self.isInGracePeriod ?? false
+    let otherInGracePeriod = other.isInGracePeriod ?? false
+
+    if selfInGracePeriod != otherInGracePeriod {
+      return !selfInGracePeriod
+    }
+
+    // If all criteria are equal, return false (no preference)
+    return false
+  }
+
+  /// Merges a collection of entitlements, keeping the highest priority one for each unique ID.
+  ///
+  /// - Parameter entitlements: A collection of entitlements to merge
+  /// - Returns: A set containing the highest priority entitlement for each unique ID
+  static func mergePrioritized<T: Collection>(_ entitlements: T) -> Set<Entitlement> where T.Element == Entitlement {
+    var mergedEntitlements: [String: Entitlement] = [:]
+
+    for entitlement in entitlements {
+      if let existing = mergedEntitlements[entitlement.id] {
+        // Keep the higher priority entitlement
+        if entitlement.shouldTakePriorityOver(existing) {
+          mergedEntitlements[entitlement.id] = entitlement
+        }
+      } else {
+        mergedEntitlements[entitlement.id] = entitlement
+      }
+    }
+
+    return Set(mergedEntitlements.values)
+  }
+}
+
 // MARK: - Stubbable
 extension Entitlement: Stubbable {
   static func stub() -> Entitlement {

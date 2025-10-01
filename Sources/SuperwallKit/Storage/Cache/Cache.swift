@@ -371,8 +371,9 @@ extension Cache {
 
   /// Cleans codes and entitlements that are owned by the user.
   func cleanUserCodes() {
+    // TODO: Review this once customerinfo merged
     if let redeemResponse = read(LatestRedeemResponse.self) {
-      let existingWebEntitlements = redeemResponse.entitlements
+      let existingWebEntitlements = redeemResponse.customerInfo.entitlements
       var deviceResults: [RedemptionResult] = []
 
       for result in redeemResponse.results {
@@ -390,9 +391,15 @@ extension Cache {
         }
       }
 
+      let clearedCustomerInfo = CustomerInfo(
+        subscriptions: redeemResponse.customerInfo.subscriptions,
+        nonSubscriptions: redeemResponse.customerInfo.nonSubscriptions,
+        entitlements: []
+      )
+
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
-        entitlements: []
+        customerInfo: clearedCustomerInfo
       )
 
       write(newRedeemResponse, forType: LatestRedeemResponse.self)

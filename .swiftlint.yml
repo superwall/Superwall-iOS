@@ -2,6 +2,7 @@ excluded:
   - ${PWD}/Carthage
   - ${PWD}/Pods
   - ${PWD}/DerivedData
+  - ${PWD}/.build
   - ${PWD}/Examples
   - ${PWD}/Tests
   - ${PWD}/Sources/SuperwallKit/StoreKit/Products/Receipt Manager/ASN1Swift

@@ -334,13 +334,13 @@ class Network {
     )
   }
 
-  func redeemEntitlements(
+  func getEntitlements(
     appUserId: String?,
     deviceId: String
-  ) async throws -> Set<Entitlement> {
+  ) async throws -> EntitlementsResponse {
     return try await urlSession.request(
-      .redeem(appUserId: appUserId, deviceId: deviceId),
+      .entitlements(appUserId: appUserId, deviceId: deviceId),
       data: SuperwallRequestData(factory: factory)
-    ).entitlements
+    )
   }
 }

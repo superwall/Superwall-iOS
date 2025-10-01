@@ -39,7 +39,8 @@ class ReceiptManagerTests: XCTestCase {
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
       receiptDelegate: purchaseController,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage
     )
 
     await receiptManager.loadPurchasedProducts(config: .stub())
@@ -66,7 +67,8 @@ class ReceiptManagerTests: XCTestCase {
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
       receiptDelegate: purchaseController,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage
     )
 
     await receiptManager.loadPurchasedProducts(config: .stub())

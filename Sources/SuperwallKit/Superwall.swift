@@ -235,11 +235,14 @@ public final class Superwall: NSObject, ObservableObject {
     let superwall = superwall ?? Superwall.shared
     switch status {
     case .active(let entitlements):
-      let allEntitlements = entitlements.union(webEntitlements)
-      if allEntitlements.isEmpty {
+      // Use mergePrioritized to intelligently merge device and web entitlements
+      // This ensures the highest priority version is kept for each entitlement ID
+      let combinedEntitlements = Array(entitlements) + Array(webEntitlements)
+      let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+      if mergedEntitlements.isEmpty {
         superwall.subscriptionStatus = .inactive
       } else {
-        superwall.subscriptionStatus = .active(allEntitlements)
+        superwall.subscriptionStatus = .active(mergedEntitlements)
       }
     case .inactive:
       if webEntitlements.isEmpty {

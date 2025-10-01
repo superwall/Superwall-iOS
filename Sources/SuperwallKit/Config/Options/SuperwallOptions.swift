@@ -50,6 +50,8 @@ public final class SuperwallOptions: NSObject, Encodable {
     case releaseCandidate
     /// **WARNING**: Uses the nightly build environment. This is not meant for a production environment.
     case developer
+    /// **WARNING**: Uses a local development environment. This is not meant for a production environment.
+    case local
     /// **WARNING**: Uses a custom environment. This is not meant for a production environment.
     case custom(String)
 
@@ -59,6 +61,8 @@ public final class SuperwallOptions: NSObject, Encodable {
         return "release"
       case .developer:
         return "developer"
+      case .local:
+        return "local"
       case .custom:
         return "custom"
       case .releaseCandidate:
@@ -68,6 +72,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var scheme: String {
       switch self {
+      case .local:
+        return "http"
       case .custom(let domain):
         if let url = URL(string: domain) {
           return url.scheme ?? "https"
@@ -80,6 +86,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var port: Int? {
       switch self {
+      case .local:
+        return nil
       case .custom(let domain):
         if let url = URL(string: domain) {
           return url.port
@@ -98,6 +106,8 @@ public final class SuperwallOptions: NSObject, Encodable {
         return "superwallcanary.com"
       case .developer:
         return "superwall.dev"
+      case .local:
+        return "localhost"
       case .custom(let domain):
         if let url = URL(string: domain) {
           if let host = url.host {
@@ -110,6 +120,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var baseHost: String {
       switch self {
+      case .local:
+        return "localhost:3000"
       case .custom:
         return hostDomain
       default:
@@ -119,6 +131,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var collectorHost: String {
       switch self {
+      case .local:
+        return "localhost:3000"
       case .custom:
         return hostDomain
       default:
@@ -130,19 +144,23 @@ public final class SuperwallOptions: NSObject, Encodable {
       switch self {
       case .developer:
         return "enrichment-api.superwall.dev"
+      case .local:
+        return "localhost:5999"
       default:
         return "enrichment-api.superwall.com"
       }
     }
 
     var adServicesHost: String {
-      "api-adservices.apple.com"
+      return "api-adservices.apple.com"
     }
 
     var web2AppHost: String {
       switch self {
       case .developer:
         return "subscriptions-api.superwall.dev"
+      case .local:
+        return "localhost:3045"
       default:
         return "subscriptions-api.superwall.com"
       }

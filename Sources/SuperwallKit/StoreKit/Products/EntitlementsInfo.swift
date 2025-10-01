@@ -44,7 +44,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   /// A `Set` of active ``Entitlement`` objects redeemed via the web.
   public var web: Set<Entitlement> {
-    return storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+    let entitlements = storage.get(LatestRedeemResponse.self)?
+      .customerInfo
+      .entitlements
+      .filter { $0.isActive } ?? []
+    return Set(entitlements)
   }
 
   // MARK: - Internal vars

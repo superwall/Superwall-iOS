@@ -71,7 +71,8 @@ final class DependencyContainer {
       storeKitVersion: options.storeKitVersion,
       productsManager: productsManager,
       receiptDelegate: purchaseController as? ReceiptDelegate,
-      factory: self
+      factory: self,
+      storage: storage
     )
 
     webEntitlementRedeemer = WebEntitlementRedeemer(

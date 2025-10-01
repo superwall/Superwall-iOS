@@ -11,7 +11,7 @@ import Foundation
 @objcMembers
 public final class SubscriptionTransaction: NSObject, Codable {
   /// The unique identifier for the transaction.
-  public let transactionId: UInt64
+  public let transactionId: String
 
   /// The product identifier of the subscription.
   public let productId: String
@@ -40,7 +40,7 @@ public final class SubscriptionTransaction: NSObject, Codable {
   public let expirationDate: Date?
 
   init(
-    transactionId: UInt64,
+    transactionId: String,
     productId: String,
     purchaseDate: Date,
     willRenew: Bool,
@@ -104,7 +104,7 @@ public final class SubscriptionTransaction: NSObject, Codable {
 
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    transactionId = try container.decode(UInt64.self, forKey: .transactionId)
+    transactionId = try container.decode(String.self, forKey: .transactionId)
     productId = try container.decode(String.self, forKey: .productId)
     purchaseDate = try container.decode(Date.self, forKey: .purchaseDate)
     willRenew = try container.decode(Bool.self, forKey: .willRenew)
