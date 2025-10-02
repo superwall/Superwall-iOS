@@ -208,10 +208,20 @@ actor WebEntitlementRedeemer {
 
       storage.save(response, forType: LatestRedeemResponse.self)
 
-      await superwall.internallySetSubscriptionStatus(
-        to: .active(allEntitlements),
-        superwall: superwall
-      )
+      // Filter to only active entitlements
+      let activeEntitlements = allEntitlements.filter { $0.isActive }
+
+      if activeEntitlements.isEmpty {
+        await superwall.internallySetSubscriptionStatus(
+          to: .inactive,
+          superwall: superwall
+        )
+      } else {
+        await superwall.internallySetSubscriptionStatus(
+          to: .active(activeEntitlements),
+          superwall: superwall
+        )
+      }
 
       // Call the delegate if user try to redeem a code,
       // then close the paywall.
@@ -393,7 +403,14 @@ actor WebEntitlementRedeemer {
         let combinedEntitlements = Array(deviceEntitlements) + Array(webEntitlements)
         let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
-        await Superwall.shared.internallySetSubscriptionStatus(to: .active(mergedEntitlements))
+        // Filter to only active entitlements
+        let activeEntitlements = mergedEntitlements.filter { $0.isActive }
+
+        if activeEntitlements.isEmpty {
+          await Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
+        } else {
+          await Superwall.shared.internallySetSubscriptionStatus(to: .active(activeEntitlements))
+        }
       }
     } catch {
       Logger.debug(

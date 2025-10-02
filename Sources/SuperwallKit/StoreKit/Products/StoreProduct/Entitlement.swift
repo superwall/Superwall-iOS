@@ -360,7 +360,8 @@ extension Entitlement: Stubbable {
   static func stub() -> Entitlement {
     return Entitlement(
       id: "test",
-      type: .serviceLevel
+      type: .serviceLevel,
+      isActive: true
     )
   }
 }

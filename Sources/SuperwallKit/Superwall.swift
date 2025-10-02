@@ -231,13 +231,13 @@ public final class Superwall: NSObject, ObservableObject {
     if dependencyContainer.makeHasExternalPurchaseController() {
       return
     }
-    let webEntitlements = dependencyContainer.entitlementsInfo.web
+    let activeWebEntitlements = dependencyContainer.entitlementsInfo.web
     let superwall = superwall ?? Superwall.shared
     switch status {
     case .active(let entitlements):
       // Use mergePrioritized to intelligently merge device and web entitlements
       // This ensures the highest priority version is kept for each entitlement ID
-      let combinedEntitlements = Array(entitlements) + Array(webEntitlements)
+      let combinedEntitlements = Array(entitlements) + Array(activeWebEntitlements)
       let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
       if mergedEntitlements.isEmpty {
         superwall.subscriptionStatus = .inactive
@@ -245,10 +245,10 @@ public final class Superwall: NSObject, ObservableObject {
         superwall.subscriptionStatus = .active(mergedEntitlements)
       }
     case .inactive:
-      if webEntitlements.isEmpty {
+      if activeWebEntitlements.isEmpty {
         superwall.subscriptionStatus = .inactive
       } else {
-        superwall.subscriptionStatus = .active(webEntitlements)
+        superwall.subscriptionStatus = .active(activeWebEntitlements)
       }
     case .unknown:
       superwall.subscriptionStatus = .unknown
