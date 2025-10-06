@@ -14,6 +14,9 @@ public final class PaywallPresentationHandler: NSObject {
   /// A block called when the paywall did present.
   var onPresentHandler: ((PaywallInfo) -> Void)?
 
+  /// A block called when the paywall will dismiss.
+  var onWillDismissHandler: ((PaywallInfo, PaywallResult) -> Void)?
+
   /// A block called when the paywall did dismiss.
   var onDismissHandler: ((PaywallInfo, PaywallResult) -> Void)?
 
@@ -45,6 +48,14 @@ public final class PaywallPresentationHandler: NSObject {
   /// the dismissed paywall.
   public func onDismiss(_ handler: @escaping (PaywallInfo, PaywallResult) -> Void) {
     self.onDismissHandler = handler
+  }
+
+  /// Sets the handler that will be called when the paywall will be dismissed.
+  ///
+  /// - Parameter handler: A block that accepts a ``PaywallInfo`` and ``PaywallResult`` object associated with
+  /// the dismissing paywall.
+  public func onWillDismiss(_ handler: @escaping (PaywallInfo, PaywallResult) -> Void) {
+    self.onWillDismissHandler = handler
   }
 
   /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.

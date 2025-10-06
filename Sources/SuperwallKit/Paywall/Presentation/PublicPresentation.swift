@@ -131,6 +131,8 @@ extension Superwall {
             switch state {
             case .presented(let paywallInfo):
               handler?.onPresentHandler?(paywallInfo)
+            case let .willDismiss(paywallInfo, paywallResult):
+                handler?.onWillDismissHandler?(paywallInfo, paywallResult)
             case let .dismissed(paywallInfo, paywallResult):
               if let handler = handler?.onDismissHandler {
                 handler(paywallInfo, paywallResult)

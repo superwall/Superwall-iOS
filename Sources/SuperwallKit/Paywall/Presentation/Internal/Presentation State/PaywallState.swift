@@ -59,6 +59,9 @@ public enum PaywallState {
   /// A paywall may have been configured to show, but did not due to an `Error`.
   case presentationError(Error)
 
+  /// The paywall will be dismissed. Contains a ``PaywallInfo`` object with more information about the presented paywall and a ``PaywallResult`` object containing the paywall dismissal reason.
+  case willDismiss(PaywallInfo, PaywallResult)
+
   /// The paywall was dismissed. Contains a ``PaywallInfo`` object with more information about the presented paywall and a ``PaywallResult`` object containing the paywall dismissal reason.
   case dismissed(PaywallInfo, PaywallResult)
 
