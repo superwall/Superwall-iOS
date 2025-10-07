@@ -474,7 +474,8 @@ final class DebugViewController: UIViewController {
           let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
-        case .dismissed, .willDismiss:
+        case .dismissed,
+          .willDismiss:
           break
         case .presentationError(let error):
           Logger.debug(

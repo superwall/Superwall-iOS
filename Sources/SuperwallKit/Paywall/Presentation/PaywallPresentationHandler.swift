@@ -17,6 +17,11 @@ public final class PaywallPresentationHandler: NSObject {
   /// A block called when the paywall will dismiss.
   var onWillDismissHandler: ((PaywallInfo, PaywallResult) -> Void)?
 
+  /// A block called when the paywall will dismiss.
+  ///
+  /// Note the ``StoreProduct`` is only non-nil when ``PaywallResultObjc`` is ``PaywallResultObjc/purchased``.
+  var onWillDismissHandlerObjc: ((PaywallInfo, PaywallResultObjc, StoreProduct?) -> Void)?
+
   /// A block called when the paywall did dismiss.
   var onDismissHandler: ((PaywallInfo, PaywallResult) -> Void)?
 
@@ -42,14 +47,6 @@ public final class PaywallPresentationHandler: NSObject {
     self.onPresentHandler = handler
   }
 
-  /// Sets the handler that will be called when the paywall did dismissed.
-  ///
-  /// - Parameter handler: A block that accepts a ``PaywallInfo`` and ``PaywallResult`` object associated with
-  /// the dismissed paywall.
-  public func onDismiss(_ handler: @escaping (PaywallInfo, PaywallResult) -> Void) {
-    self.onDismissHandler = handler
-  }
-
   /// Sets the handler that will be called when the paywall will be dismissed.
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` and ``PaywallResult`` object associated with
@@ -58,10 +55,31 @@ public final class PaywallPresentationHandler: NSObject {
     self.onWillDismissHandler = handler
   }
 
-  /// Sets the handler that will be called when a paywall is skipped, but no error has occurred.
+  /// Sets the handler that will be called when the paywall will be dismissed.
   ///
-  /// - Parameter handler: A block that accepts a ``PaywallSkippedReasonObjc`` indicating why the paywall
-  /// was skipped.
+  /// - Parameter handler: A block that accepts a ``PaywallInfo``, a ``PaywallResult`` object associated with
+  /// the dismissing paywall and an optional ``StoreProduct`` for when the paywall result is
+  /// ``PaywallResultObjc/purchased``.
+  @available(swift, obsoleted: 1.0)
+  public func onWillDismiss(
+    _ handler: @escaping (PaywallInfo, PaywallResultObjc, StoreProduct?) -> Void
+  ) {
+    self.onWillDismissHandlerObjc = handler
+  }
+
+  /// Sets the handler that will be called when the paywall did dismiss.
+  ///
+  /// - Parameter handler: A block that accepts a ``PaywallInfo`` and ``PaywallResult`` object associated with
+  /// the dismissed paywall.
+  public func onDismiss(_ handler: @escaping (PaywallInfo, PaywallResult) -> Void) {
+    self.onDismissHandler = handler
+  }
+
+  /// Sets the handler that will be called when the paywall did dismiss.
+  ///
+  /// - Parameter handler: A block that accepts a ``PaywallInfo``, a ``PaywallResult`` object associated with
+  /// the dismissed paywall and an optional ``StoreProduct`` for when the paywall result is
+  /// ``PaywallResultObjc/purchased``.
   @available(swift, obsoleted: 1.0)
   public func onDismiss(
     _ handler: @escaping (PaywallInfo, PaywallResultObjc, StoreProduct?) -> Void
