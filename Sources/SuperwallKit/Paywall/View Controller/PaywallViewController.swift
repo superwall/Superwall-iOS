@@ -1210,6 +1210,9 @@ extension PaywallViewController {
   }
 
   private func willDismiss() {
+    let result = paywallResult ?? .declined
+    paywallStateSubject?.send(.willDismiss(info, result))
+
     Superwall.shared.presentationItems.paywallInfo = info
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: info)
   }
