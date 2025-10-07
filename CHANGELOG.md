@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Changes "With/Without Free Trial" to "With/Without Intro Offer" in the debugger.
+- Fixes rare crash caused by a concurrency issue.
 
 ## 4.8.3
 
@@ -19,10 +20,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `review_requested` event when a review is requested.
-
-### Fixes
-
-- Fixes rare crash caused by a concurrency issue.
 
 ## 4.8.1
 
