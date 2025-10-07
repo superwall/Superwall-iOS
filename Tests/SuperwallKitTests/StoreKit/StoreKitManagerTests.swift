@@ -39,7 +39,7 @@ class StoreKitManagerTests: XCTestCase {
       "primary": ProductOverride.byProduct(StoreProduct(sk1Product: primary, entitlements: entitlements))
     ]
     let paywall = Paywall.stub()
-      .setting(\.products, to: [.init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: [])])
+      .setting(\.products, to: [.init(name: "primary", type: .appStore(.init(id: "xyz")), id: "xyz", entitlements: [])])
     do {
       let (productsById, products) = try await manager.getProducts(
         forPaywall: paywall,
@@ -84,8 +84,8 @@ class StoreKitManagerTests: XCTestCase {
 
     let paywall = Paywall.stub()
       .setting(\.products, to: [
-        .init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: []),
-        .init(name: "tertiary", type: .appStore(.init(id: "ghi")), entitlements: [.stub()]),
+        .init(name: "primary", type: .appStore(.init(id: "xyz")), id: "xyz", entitlements: []),
+        .init(name: "tertiary", type: .appStore(.init(id: "ghi")), id: "ghi", entitlements: [.stub()]),
       ])
 
     do {
@@ -136,9 +136,9 @@ class StoreKitManagerTests: XCTestCase {
     ].mapValues(ProductOverride.byProduct)
     let paywall = Paywall.stub()
       .setting(\.products, to: [
-        .init(name: "primary", type: .appStore(.init(id: "xyz")), entitlements: []),
-        .init(name: "secondary", type: .appStore(.init(id: "123")), entitlements: []),
-        .init(name: "tertiary", type: .appStore(.init(id: "uiu")), entitlements: [.stub()]),
+        .init(name: "primary", type: .appStore(.init(id: "xyz")), id: "xyz", entitlements: []),
+        .init(name: "secondary", type: .appStore(.init(id: "123")), id: "123", entitlements: []),
+        .init(name: "tertiary", type: .appStore(.init(id: "uiu")), id: "uiu", entitlements: [.stub()]),
       ])
     do {
       let (productsById, products) = try await manager.getProducts(
@@ -185,7 +185,7 @@ class StoreKitManagerTests: XCTestCase {
     ].mapValues(ProductOverride.byProduct)
     let paywall = Paywall.stub()
       .setting(\.products, to: [
-        .init(name: "primary", type: .appStore(.init(id: "1")), entitlements: [])
+        .init(name: "primary", type: .appStore(.init(id: "1")), id: "1", entitlements: [])
       ])
     do {
       let (productsById, products) = try await manager.getProducts(
@@ -225,8 +225,8 @@ class StoreKitManagerTests: XCTestCase {
 
     let paywall = Paywall.stub()
       .setting(\.products, to: [
-        .init(name: "primary", type: .appStore(.init(id: "1")), entitlements: []),
-        .init(name: "secondary", type: .appStore(.init(id: "2")), entitlements: [])
+        .init(name: "primary", type: .appStore(.init(id: "1")), id: "1", entitlements: []),
+        .init(name: "secondary", type: .appStore(.init(id: "2")), id: "2", entitlements: [])
       ])
 
     do {

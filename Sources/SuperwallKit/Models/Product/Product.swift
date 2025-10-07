@@ -20,6 +20,7 @@ public final class Product: NSObject, Codable, Sendable {
   private enum CodingKeys: String, CodingKey {
     case name = "referenceName"
     case storeProduct
+    case swCompositeProductId
     case entitlements
   }
 
@@ -32,15 +33,8 @@ public final class Product: NSObject, Codable, Sendable {
   /// The type of product
   public let type: StoreProductType
 
-  /// Convenience variable that accesses the product's identifier.
-  public var id: String {
-    switch type {
-    case .appStore(let product):
-      return product.id
-    case .stripe(let product):
-      return product.id
-    }
-  }
+  /// The product's identifier.
+  public let id: String
 
   /// The entitlement associated with the product.
   public let entitlements: Set<Entitlement>
@@ -52,10 +46,12 @@ public final class Product: NSObject, Codable, Sendable {
   init(
     name: String?,
     type: StoreProductType,
+    id: String,
     entitlements: Set<Entitlement>
   ) {
     self.name = name
     self.type = type
+    self.id = id
     self.entitlements = entitlements
 
     switch type {
@@ -80,6 +76,7 @@ public final class Product: NSObject, Codable, Sendable {
     try container.encodeIfPresent(name, forKey: .name)
 
     try container.encode(entitlements, forKey: .entitlements)
+    try container.encode(id, forKey: .swCompositeProductId)
 
     switch type {
     case .appStore(let product):
@@ -106,6 +103,12 @@ public final class Product: NSObject, Codable, Sendable {
         appStoreProduct: appStoreProduct,
         stripeProduct: nil
       )
+      // Try to decode from swCompositeProductId, fallback to computing from type
+      if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+        id = decodedId
+      } else {
+        id = appStoreProduct.id
+      }
     } catch {
       let stripeProduct = try container.decode(StripeProduct.self, forKey: .storeProduct)
       type = .stripe(stripeProduct)
@@ -114,6 +117,12 @@ public final class Product: NSObject, Codable, Sendable {
         appStoreProduct: nil,
         stripeProduct: stripeProduct
       )
+      // Try to decode from swCompositeProductId, fallback to computing from type
+      if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+        id = decodedId
+      } else {
+        id = stripeProduct.id
+      }
     }
   }
 

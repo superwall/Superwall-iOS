@@ -610,7 +610,7 @@ final class ConfigTypeTests: XCTestCase {
       featureFlags: .stub(),
       preloadingDisabled: PreloadingDisabled(all: false, triggers: ["trigger1"]),
       attribution: .init(appleSearchAds: .init(enabled: true)),
-      products: [.init(name: "prod1", type: .appStore(.init(id: "prod1")), entitlements: [.default])]
+      products: [.init(name: "prod1", type: .appStore(.init(id: "prod1")), id: "prod1", entitlements: [.default])]
     )
 
     let data = try JSONEncoder().encode(config)

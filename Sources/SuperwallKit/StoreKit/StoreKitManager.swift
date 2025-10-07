@@ -111,6 +111,7 @@ actor StoreKitManager {
               Product(
                 name: name,
                 type: .appStore(.init(id: id)),
+                id: id,
                 entitlements: product.entitlements
               )
             )
@@ -123,6 +124,7 @@ actor StoreKitManager {
             Product(
               name: name,
               type: .appStore(.init(id: id)),
+              id: id,
               entitlements: product.entitlements
             )
           )
