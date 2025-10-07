@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds ability to open the web checkout page in a payment sheet style web view.
+- Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
 
 ### Fixes
 

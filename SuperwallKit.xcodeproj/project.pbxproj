@@ -3556,7 +3556,7 @@
 			repositoryURL = "https://github.com/superwall/Superscript-iOS";
 			requirement = {
 				kind = exactVersion;
-				version = 1.0.2;
+				version = 1.0.4;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
