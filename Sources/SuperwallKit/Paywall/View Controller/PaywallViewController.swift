@@ -212,7 +212,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.deviceHelper = deviceHelper
     self.eventDelegate = eventDelegate
     self.delegate = delegate
-
     self.factory = factory
     self.storage = storage
     self.paywall = paywall
@@ -359,19 +358,28 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
-    guard
-      isSafariVCPresented,
-      let safariVC = presentedViewController as? SFSafariViewController
-    else {
+    guard isSafariVCPresented else {
       completion?()
       return
     }
-    safariVC.dismiss(
-      animated: true,
-      completion: completion
-    )
-    // Must set this maually because programmatically dismissing the SafariVC doesn't call its
-    // delegate method where we set this.
+
+    // Check if it's a Safari VC or Checkout Web VC
+    if let safariVC = presentedViewController as? SFSafariViewController {
+      safariVC.dismiss(
+        animated: true,
+        completion: completion
+      )
+    } else if let checkoutVC = presentedViewController as? CheckoutWebViewController {
+      checkoutVC.dismiss(
+        animated: true,
+        completion: completion
+      )
+    } else {
+      completion?()
+    }
+
+    // Must set this manually because programmatically dismissing doesn't call
+    // delegate methods where we set this.
     isSafariVCPresented = false
   }
 
@@ -901,6 +909,29 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
+  func openPaymentSheet(_ url: URL) {
+    let checkoutVC = CheckoutWebViewController(url: url)
+    checkoutVC.onDismiss = { [weak self] in
+      self?.isSafariVCPresented = false
+      self?.loadingState = .ready
+    }
+
+    // Configure for sheet presentation with medium and large detents
+    if #available(iOS 15.0, *) {
+      if let sheet = checkoutVC.sheetPresentationController {
+        sheet.detents = [.medium(), .large()]
+        sheet.prefersGrabberVisible = true
+        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        sheet.prefersEdgeAttachedInCompactHeight = true
+        sheet.preferredCornerRadius = 62
+      }
+    }
+    checkoutVC.modalPresentationStyle = .pageSheet
+    self.isSafariVCPresented = true
+    loadingState = .loadingPurchase
+    present(checkoutVC, animated: true)
+  }
+
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
     Task {
       await eventDelegate?.eventDidOccur(
@@ -1210,6 +1241,9 @@ extension PaywallViewController {
   }
 
   private func willDismiss() {
+    let result = paywallResult ?? .declined
+    paywallStateSubject?.send(.willDismiss(info, result))
+
     Superwall.shared.presentationItems.paywallInfo = info
     Superwall.shared.dependencyContainer.delegateAdapter.willDismissPaywall(withInfo: info)
   }
@@ -1263,12 +1297,12 @@ extension PaywallViewController {
 }
 
 #if !os(visionOS)
-  // MARK: - SFSafariViewControllerDelegate
-  extension PaywallViewController: SFSafariViewControllerDelegate {
-    public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-      isSafariVCPresented = false
-    }
+// MARK: - SFSafariViewControllerDelegate
+extension PaywallViewController: SFSafariViewControllerDelegate {
+  public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+    isSafariVCPresented = false
   }
+}
 #endif
 
 // MARK: - GameControllerDelegate

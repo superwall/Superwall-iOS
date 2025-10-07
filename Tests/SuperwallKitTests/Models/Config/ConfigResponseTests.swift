@@ -490,7 +490,7 @@ let response = #"""
     "all": false,
     "triggers": []
   },
-  "products": [
+  "products_v3": [
     {
       "store_product": {
         "store": "APP_STORE",
@@ -523,6 +523,25 @@ let response = #"""
       "entitlements": [
         {
           "identifier": "default",
+          "type": "SERVICE_LEVEL"
+        }
+      ]
+    },
+    {
+      "sw_composite_product_id": "test:price_1R4AhCBitwqMmwU0jvsd3blk:no-trial",
+      "store_product": {
+        "store": "STRIPE",
+        "environment": "test",
+        "product_identifier": "price_1R4AhCBitwqMmwU0jvsd3blk",
+        "trial_days": null
+      },
+      "entitlements": [
+        {
+          "identifier": "Pro",
+          "type": "SERVICE_LEVEL"
+        },
+        {
+          "identifier": "Pro",
           "type": "SERVICE_LEVEL"
         }
       ]
@@ -591,7 +610,7 @@ final class ConfigTypeTests: XCTestCase {
       featureFlags: .stub(),
       preloadingDisabled: PreloadingDisabled(all: false, triggers: ["trigger1"]),
       attribution: .init(appleSearchAds: .init(enabled: true)),
-      products: [.init(name: "prod1", type: .appStore(.init(id: "prod1")), entitlements: [.stub()])]
+      products: [.init(name: "prod1", type: .appStore(.init(id: "prod1")), id: "prod1", entitlements: [.default])]
     )
 
     let data = try JSONEncoder().encode(config)

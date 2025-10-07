@@ -207,6 +207,19 @@ extension StoreProductDiscount {
     self.init(discount)
   }
 
+  convenience init?(
+    stripeOffer: StripeProductType.SubscriptionIntroductoryOffer,
+    currencyCode: String?
+  ) {
+    guard let discount = StripeStoreProductDiscount(
+      stripeOffer: stripeOffer,
+      currencyCode: currencyCode
+    ) else {
+      return nil
+    }
+    self.init(discount)
+  }
+
   /// Returns the `SK1ProductDiscount` if this `StoreProductDiscount` represents a `SKProductDiscount`.
   public var sk1Discount: SK1ProductDiscount? {
     return (self.discount as? SK1StoreProductDiscount)?.underlyingSK1Discount
