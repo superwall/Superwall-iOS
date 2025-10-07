@@ -2,7 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.8.4
+## 4.9.0
+
+### Enhancements
+
+- Adds ability to open the web checkout page in a payment sheet style web view.
 
 ### Fixes
 

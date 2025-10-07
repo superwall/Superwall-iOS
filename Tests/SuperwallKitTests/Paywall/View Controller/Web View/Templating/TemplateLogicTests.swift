@@ -44,6 +44,7 @@ final class TemplateLogicTests: XCTestCase {
       Product(
         name: "primary",
         type: .appStore(.init(id: "123")),
+        id: "123",
         entitlements: [.stub()]
       )
     ]
@@ -105,6 +106,7 @@ final class TemplateLogicTests: XCTestCase {
       Product(
         name: "primary",
         type: .appStore(.init(id: "123")),
+        id: "123",
         entitlements: [.stub()]
       )
     ]
@@ -167,16 +169,19 @@ final class TemplateLogicTests: XCTestCase {
       Product(
         name: "primary",
         type: .appStore(.init(id: "123")),
+        id: "123",
         entitlements: [.stub()]
       ),
       Product(
         name: "secondary",
         type: .appStore(.init(id: "456")),
+        id: "456",
         entitlements: [.stub()]
       ),
       Product(
         name: "tertiary",
         type: .appStore(.init(id: "789")),
+        id: "789",
         entitlements: [.stub()]
       ),
     ]
@@ -252,16 +257,19 @@ final class TemplateLogicTests: XCTestCase {
       Product(
         name: "primary",
         type: .appStore(.init(id: "123")),
+        id: "123",
         entitlements: [.stub()]
       ),
       Product(
         name: "secondary",
         type: .appStore(.init(id: "456")),
+        id: "456",
         entitlements: [.stub()]
       ),
       Product(
         name: "tertiary",
         type: .appStore(.init(id: "789")),
+        id: "789",
         entitlements: [.stub()]
       ),
     ]

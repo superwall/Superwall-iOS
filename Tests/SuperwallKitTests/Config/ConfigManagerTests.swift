@@ -46,7 +46,7 @@ final class ConfigManagerTests: XCTestCase {
     let dependencyContainer = DependencyContainer()
 
     let paywall = Paywall.stub()
-      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(store: .appStore, id: "abc")), entitlements: [.stub()])])
+      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(id: "abc")), id: "abc", entitlements: [.stub()])])
     let config: Config = Config(
       buildId: "buildId",
       triggers: [

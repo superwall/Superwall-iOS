@@ -1473,6 +1473,7 @@ final class ConfigLogicTests: XCTestCase {
         .init(
           name: "test",
           type: .appStore(.init(id: productId)),
+          id: productId,
           entitlements: [entitlement]
         )
       ]
