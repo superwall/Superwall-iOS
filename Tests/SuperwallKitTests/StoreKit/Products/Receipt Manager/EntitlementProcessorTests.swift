@@ -917,7 +917,7 @@ struct EntitlementProcessorTests {
 struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
   var mockWillAutoRenew: Bool = true
   var mockState: LatestSubscription.State? = .subscribed
-  var mockOfferType: LatestSubscription.OfferType? = .standard
+  var mockOfferType: LatestSubscription.OfferType?
 
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
     return nil // Simplified for testing
