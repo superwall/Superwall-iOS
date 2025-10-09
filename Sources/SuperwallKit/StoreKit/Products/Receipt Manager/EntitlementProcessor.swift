@@ -17,7 +17,6 @@ public enum LatestSubscription: Sendable {
     case code
     case promotional
     case winback
-    case standard
   }
   public typealias PeriodType = OfferType
 
