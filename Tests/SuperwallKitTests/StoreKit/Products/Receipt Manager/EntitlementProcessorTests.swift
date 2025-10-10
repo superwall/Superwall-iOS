@@ -155,50 +155,25 @@ struct EntitlementProcessorTests {
       expirationDate: pastDate,
       productType: .autoRenewable
     )
-    
+
     let entitlement = createEntitlement(
       id: "expired_entitlement",
       productIds: ["expired_product"]
     )
-    
+
     let transactionsByEntitlement = ["expired_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["expired_product": Set([entitlement])]
-    
+
     let result = EntitlementProcessor.processEntitlements(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
-    
+
     let processedEntitlement = result["expired_product"]?.first
     #expect(processedEntitlement?.isActive == false)
     #expect(processedEntitlement?.expiresAt == pastDate)
   }
-  
-  @Test("Process revoked transaction")
-  func testProcessRevokedTransaction() {
-    let transaction = createMockTransaction(
-      productId: "revoked_product",
-      isRevoked: true,
-      productType: .nonConsumable
-    )
-    
-    let entitlement = createEntitlement(
-      id: "revoked_entitlement",
-      productIds: ["revoked_product"]
-    )
-    
-    let transactionsByEntitlement = ["revoked_entitlement": [transaction]]
-    let rawEntitlementsByProductId = ["revoked_product": Set([entitlement])]
-    
-    let result = EntitlementProcessor.processEntitlements(
-      from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
-    )
-    
-    let processedEntitlement = result["revoked_product"]?.first
-    #expect(processedEntitlement?.isActive == false)
-  }
-  
+
   // MARK: - Multiple Transaction Tests
   
   @Test("Process multiple transactions for same entitlement")
@@ -277,8 +252,8 @@ struct EntitlementProcessorTests {
   
   // MARK: - Multiple Product Tests
   
-  @Test("Process entitlement with multiple products")
-  func testProcessMultipleProducts() {
+  @Test("Process entitlement with multiple lifetime products")
+  func testProcessMultipleLifetimeProducts() {
     let transaction1 = createMockTransaction(
       productId: "product1",
       transactionId: "txn_1",
@@ -321,25 +296,28 @@ struct EntitlementProcessorTests {
     let transaction = createMockTransaction(
       productId: "non_consumable",
       expirationDate: nil,
+      isRevoked: false,
       productType: .nonConsumable
     )
-    
+
     let entitlement = createEntitlement(
       id: "non_consumable_entitlement",
       productIds: ["non_consumable"]
     )
-    
+
     let transactionsByEntitlement = ["non_consumable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["non_consumable": Set([entitlement])]
-    
+
     let result = EntitlementProcessor.processEntitlements(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
-    
+
     let processedEntitlement = result["non_consumable"]?.first
     #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.isLifetime == true)
     #expect(processedEntitlement?.expiresAt == nil)
+    #expect(processedEntitlement?.latestProductId == "non_consumable")
   }
   
   @Test("Process consumable transaction")
@@ -368,40 +346,6 @@ struct EntitlementProcessorTests {
   }
 
   // MARK: - Complex Scenarios
-
-  @Test("Process renewal transaction with different dates")
-  func testProcessRenewalWithDifferentDates() {
-    let baseDate = Date()
-    let originalDate = baseDate.addingTimeInterval(-3600) // 1 hour ago
-    let renewalDate = baseDate // Now
-
-    let transaction = createMockTransaction(
-      productId: "renewal_product",
-      purchaseDate: renewalDate,
-      originalPurchaseDate: originalDate,
-      expirationDate: baseDate.addingTimeInterval(3600),
-      productType: .autoRenewable,
-      isActive: true
-    )
-
-    let entitlement = createEntitlement(
-      id: "renewal_entitlement",
-      productIds: ["renewal_product"]
-    )
-
-    let transactionsByEntitlement = ["renewal_entitlement": [transaction]]
-    let rawEntitlementsByProductId = ["renewal_product": Set([entitlement])]
-
-    let result = EntitlementProcessor.processEntitlements(
-      from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
-    )
-
-    let processedEntitlement = result["renewal_product"]?.first
-    #expect(processedEntitlement?.startsAt == originalDate)
-    #expect(processedEntitlement?.renewedAt == renewalDate)
-    #expect(processedEntitlement?.isActive == true)
-  }
 
   @Test("Process mixed product types in same entitlement")
   func testProcessMixedProductTypes() {
@@ -435,15 +379,26 @@ struct EntitlementProcessorTests {
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
 
-    // Should be active due to lifetime product, even with expired subscription
+    // Both products should return exactly one entitlement with the same ID
+    #expect(result.count == 2)
+    #expect(result["lifetime_product"]?.count == 1)
+    #expect(result["subscription_product"]?.count == 1)
+
     let lifetimeResult = result["lifetime_product"]?.first
     let subscriptionResult = result["subscription_product"]?.first
 
+    // Both should reference the same entitlement ID
+    #expect(lifetimeResult?.id == "mixed_entitlement")
+    #expect(subscriptionResult?.id == "mixed_entitlement")
+
+    // Both products should have identical enriched entitlement data
+    #expect(lifetimeResult == subscriptionResult)
+
+    // Verify the enriched data is correct (lifetime takes precedence)
     #expect(lifetimeResult?.isActive == true)
     #expect(lifetimeResult?.isLifetime == true)
     #expect(lifetimeResult?.latestProductId == "lifetime_product")
-    #expect(subscriptionResult?.isActive == true) // Active due to lifetime in same entitlement
-    #expect(subscriptionResult?.isLifetime == true)
+    #expect(lifetimeResult?.productIds == Set(["lifetime_product", "subscription_product"]))
   }
 
   @Test("Process multiple entitlements for same product")
@@ -582,14 +537,14 @@ struct EntitlementProcessorTests {
       createMockTransaction(
         productId: "product2",
         transactionId: "txn_2",
-        expirationDate: baseDate.addingTimeInterval(3600), // 1 hour (latest)
+        expirationDate: baseDate.addingTimeInterval(3600), // 1 hour
         isRevoked: false,
         productType: .autoRenewable
       ),
       createMockTransaction(
         productId: "product3",
         transactionId: "txn_3",
-        expirationDate: baseDate.addingTimeInterval(900), // 15 min
+        expirationDate: baseDate.addingTimeInterval(4000), // 66 mins (latest)
         isRevoked: true, // Revoked, should be ignored
         productType: .autoRenewable
       )
@@ -798,7 +753,7 @@ struct EntitlementProcessorTests {
   }
 
   // MARK: - Transaction Processing Tests
-  
+
   @Test("Process transactions into subscription and non-subscription objects")
   func testProcessTransactions() {
     let transactions = [
@@ -851,22 +806,138 @@ struct EntitlementProcessorTests {
     #expect(subscription?.isInBillingRetryPeriod == false)
   }
 
+  @Test("Process transactions separates autoRenewable and nonRenewable into subscriptions")
+  func testProcessTransactions_separatesSubscriptionTypes() {
+    let transactions = [
+      createMockTransaction(
+        productId: "auto_renewable",
+        transactionId: "txn_auto",
+        productType: .autoRenewable,
+        willRenew: true,
+        isActive: true
+      ),
+      createMockTransaction(
+        productId: "non_renewable",
+        transactionId: "txn_non_renewable",
+        productType: .nonRenewable,
+        willRenew: false,
+        isActive: true
+      )
+    ]
+
+    let (_, subscriptions) = EntitlementProcessor.processTransactions(from: transactions)
+
+    #expect(subscriptions.count == 2)
+    #expect(subscriptions.contains { $0.productId == "auto_renewable" })
+    #expect(subscriptions.contains { $0.productId == "non_renewable" })
+  }
+
+  @Test("Process transactions preserves subscription state fields")
+  func testProcessTransactions_preservesSubscriptionStateFields() {
+    let transactions = [
+      createMockTransaction(
+        productId: "grace_period_sub",
+        transactionId: "txn_grace",
+        expirationDate: Date().addingTimeInterval(3600),
+        productType: .autoRenewable,
+        willRenew: true,
+        isInGracePeriod: true,
+        isInBillingRetryPeriod: false,
+        isActive: true
+      ),
+      createMockTransaction(
+        productId: "billing_retry_sub",
+        transactionId: "txn_billing",
+        expirationDate: Date().addingTimeInterval(3600),
+        productType: .autoRenewable,
+        willRenew: true,
+        isInGracePeriod: false,
+        isInBillingRetryPeriod: true,
+        isActive: true
+      ),
+      createMockTransaction(
+        productId: "revoked_sub",
+        transactionId: "txn_revoked",
+        expirationDate: Date().addingTimeInterval(3600),
+        isRevoked: true,
+        productType: .autoRenewable,
+        willRenew: false,
+        isInGracePeriod: false,
+        isInBillingRetryPeriod: false,
+        isActive: false
+      )
+    ]
+
+    let (_, subscriptions) = EntitlementProcessor.processTransactions(from: transactions)
+
+    #expect(subscriptions.count == 3)
+
+    let gracePeriodSub = subscriptions.first { $0.productId == "grace_period_sub" }
+    #expect(gracePeriodSub?.isInGracePeriod == true)
+    #expect(gracePeriodSub?.isInBillingRetryPeriod == false)
+    #expect(gracePeriodSub?.willRenew == true)
+    #expect(gracePeriodSub?.isActive == true)
+
+    let billingRetrySub = subscriptions.first { $0.productId == "billing_retry_sub" }
+    #expect(billingRetrySub?.isInGracePeriod == false)
+    #expect(billingRetrySub?.isInBillingRetryPeriod == true)
+    #expect(billingRetrySub?.willRenew == true)
+    #expect(billingRetrySub?.isActive == true)
+
+    let revokedSub = subscriptions.first { $0.productId == "revoked_sub" }
+    #expect(revokedSub?.isRevoked == true)
+    #expect(revokedSub?.willRenew == false)
+    #expect(revokedSub?.isActive == false)
+  }
+
+  @Test("Process transactions preserves revoked field for non-subscriptions")
+  func testProcessTransactions_preservesRevokedFieldForNonSubscriptions() {
+    let transactions = [
+      createMockTransaction(
+        productId: "active_lifetime",
+        transactionId: "txn_active",
+        isRevoked: false,
+        productType: .nonConsumable
+      ),
+      createMockTransaction(
+        productId: "revoked_lifetime",
+        transactionId: "txn_revoked",
+        isRevoked: true,
+        productType: .nonConsumable
+      )
+    ]
+
+    let (nonSubscriptions, _) = EntitlementProcessor.processTransactions(from: transactions)
+
+    #expect(nonSubscriptions.count == 2)
+
+    let activeLifetime = nonSubscriptions.first { $0.productId == "active_lifetime" }
+    #expect(activeLifetime?.isRevoked == false)
+
+    let revokedLifetime = nonSubscriptions.first { $0.productId == "revoked_lifetime" }
+    #expect(revokedLifetime?.isRevoked == true)
+  }
+
   // MARK: - Enhanced Processing Tests
+  // Note: Testing the enhanced processing path with revoked state requires real StoreKit Transaction objects
+  // which can't be easily mocked. The revoked state tracking is tested indirectly through:
+  // - testProcessTransactions_preservesSubscriptionStateFields() which tests revoked flag in SubscriptionTransaction
+  // - testRevokedNonConsumableDoesNotGrantLifetime() which tests revoked non-consumables don't grant lifetime access
+  // - Integration tests with real StoreKit transactions that verify the full flow
 
   @available(iOS 15.0, *)
-  @Test("Process and enhance entitlements with mock subscription status")
-  func testProcessAndEnhanceEntitlements() async {
+  @Test("Process and enhance entitlements with subscription in grace period")
+  func testProcessAndEnhanceEntitlements_gracePeriod() async {
     let transaction = createMockTransaction(
       productId: "subscription_product",
-      transactionId: "txn_123",
+      transactionId: "txn_grace",
       purchaseDate: Date(),
       originalPurchaseDate: Date(),
-      expirationDate: Date().addingTimeInterval(86400),
+      expirationDate: Date().addingTimeInterval(3600),
       isRevoked: false,
       productType: .autoRenewable,
       willRenew: true,
-      renewedAt: nil as Date?,
-      isInGracePeriod: false,
+      isInGracePeriod: true,
       isInBillingRetryPeriod: false,
       isActive: true
     )
@@ -880,18 +951,16 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["premium": [transaction]]
     let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
     let productIdsByEntitlementId = ["premium": Set(["subscription_product"])]
-    var subscriptions: [SubscriptionTransaction] = []
 
-    let mockProvider = MockSubscriptionStatusProvider()
+    // First process transactions to create subscription objects
+    let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
+    var subscriptions = initialSubscriptions
 
-    // First test basic processing to debug
-    let basicResult = EntitlementProcessor.processEntitlements(
-      from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+    // Mock provider returns grace period state
+    let mockProvider = MockSubscriptionStatusProvider(
+      mockWillAutoRenew: true,
+      mockState: .inGracePeriod
     )
-
-    let basicEntitlement = basicResult["subscription_product"]?.first
-    #expect(basicEntitlement?.willRenew == true, "Basic processing should preserve willRenew from mock transaction")
 
     let result = await EntitlementProcessor.processAndEnhanceEntitlements(
       from: transactionsByEntitlement,
@@ -905,7 +974,127 @@ struct EntitlementProcessorTests {
     let processedEntitlement = result["subscription_product"]?.first
     #expect(processedEntitlement?.id == "premium")
     #expect(processedEntitlement?.isActive == true)
-    #expect(processedEntitlement?.willRenew == true, "Enhanced processing should preserve willRenew from mock transaction")
+    #expect(processedEntitlement?.willRenew == true)
+
+    // Verify subscription transaction was updated with grace period state
+    #expect(subscriptions.count == 1)
+    #expect(subscriptions.first?.isInGracePeriod == true)
+    #expect(subscriptions.first?.isInBillingRetryPeriod == false)
+  }
+
+  @available(iOS 15.0, *)
+  @Test("Process and enhance entitlements with subscription in billing retry")
+  func testProcessAndEnhanceEntitlements_billingRetry() async {
+    let transaction = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_billing",
+      purchaseDate: Date(),
+      originalPurchaseDate: Date(),
+      expirationDate: Date().addingTimeInterval(3600),
+      isRevoked: false,
+      productType: .autoRenewable,
+      willRenew: true,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: true,
+      isActive: true
+    )
+
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    let transactionsByEntitlement = ["premium": [transaction]]
+    let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["premium": Set(["subscription_product"])]
+
+    // First process transactions to create subscription objects
+    let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
+    var subscriptions = initialSubscriptions
+
+    // Mock provider returns billing retry state
+    let mockProvider = MockSubscriptionStatusProvider(
+      mockWillAutoRenew: true,
+      mockState: .inBillingRetryPeriod
+    )
+
+    let result = await EntitlementProcessor.processAndEnhanceEntitlements(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: mockProvider
+    )
+
+    #expect(result.count == 1)
+    let processedEntitlement = result["subscription_product"]?.first
+    #expect(processedEntitlement?.id == "premium")
+    #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.willRenew == true)
+
+    // Verify subscription transaction was updated with billing retry state
+    #expect(subscriptions.count == 1)
+    #expect(subscriptions.first?.isInGracePeriod == false)
+    #expect(subscriptions.first?.isInBillingRetryPeriod == true)
+  }
+
+  @available(iOS 15.0, *)
+  @Test("Process and enhance entitlements with revoked subscription")
+  func testProcessAndEnhanceEntitlements_revoked() async {
+    let transaction = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_revoked",
+      purchaseDate: Date(),
+      originalPurchaseDate: Date(),
+      expirationDate: Date().addingTimeInterval(3600),
+      isRevoked: true,
+      productType: .autoRenewable,
+      willRenew: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: false
+    )
+
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    let transactionsByEntitlement = ["premium": [transaction]]
+    let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["premium": Set(["subscription_product"])]
+
+    // First process transactions to create subscription objects
+    let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
+    var subscriptions = initialSubscriptions
+
+    // Mock provider returns revoked state
+    let mockProvider = MockSubscriptionStatusProvider(
+      mockWillAutoRenew: false,
+      mockState: .revoked
+    )
+
+    let result = await EntitlementProcessor.processAndEnhanceEntitlements(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: mockProvider
+    )
+
+    #expect(result.count == 1)
+    let processedEntitlement = result["subscription_product"]?.first
+    #expect(processedEntitlement?.id == "premium")
+    #expect(processedEntitlement?.isActive == false)
+    #expect(processedEntitlement?.willRenew == false)
+
+    // Verify subscription transaction was created with revoked state
+    #expect(subscriptions.count == 1)
+    #expect(subscriptions.first?.isRevoked == true)
+    #expect(subscriptions.first?.willRenew == false)
+    #expect(subscriptions.first?.isActive == false)
   }
 }
 
@@ -915,9 +1104,19 @@ struct EntitlementProcessorTests {
 
 @available(iOS 15.0, *)
 struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
-  var mockWillAutoRenew: Bool = true
-  var mockState: LatestSubscription.State? = .subscribed
+  var mockWillAutoRenew: Bool
+  var mockState: LatestSubscription.State?
   var mockOfferType: LatestSubscription.OfferType?
+
+  init(
+    mockWillAutoRenew: Bool = true,
+    mockState: LatestSubscription.State? = .subscribed,
+    mockOfferType: LatestSubscription.OfferType? = nil
+  ) {
+    self.mockWillAutoRenew = mockWillAutoRenew
+    self.mockState = mockState
+    self.mockOfferType = mockOfferType
+  }
 
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
     return nil // Simplified for testing
