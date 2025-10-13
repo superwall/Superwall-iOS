@@ -271,8 +271,8 @@ extension Entitlement {
   /// Returns `true` if this entitlement should be prioritized over the other.
   ///
   /// Priority order (highest to lowest):
-  /// 1. Lifetime entitlements (isLifetime = true)
-  /// 2. Active entitlements (isActive = true)
+  /// 1. Active entitlements (isActive = true)
+  /// 2. Lifetime entitlements (isLifetime = true)
   /// 3. Non-revoked entitlements (isRevoked = false)
   /// 4. Latest expiry time (furthest future expiresAt)
   /// 5. Will renew vs won't renew (willRenew = true)
@@ -281,17 +281,17 @@ extension Entitlement {
     // Both must have same ID to be compared
     guard self.id == other.id else { return false }
 
-    // 1. Lifetime takes absolute priority
+    // 1. Active vs inactive
+    if self.isActive != other.isActive {
+      return self.isActive
+    }
+
+    // 2. Lifetime takes priority (when both have same active status)
     let selfIsLifetime = self.isLifetime ?? false
     let otherIsLifetime = other.isLifetime ?? false
 
     if selfIsLifetime != otherIsLifetime {
       return selfIsLifetime
-    }
-
-    // 2. Active vs inactive
-    if self.isActive != other.isActive {
-      return self.isActive
     }
 
     // 3. Non-revoked vs revoked
@@ -314,6 +314,15 @@ extension Entitlement {
     }
 
     // 5. Will renew vs won't renew
+    // First check if one has information and the other doesn't
+    if self.willRenew != nil && other.willRenew == nil {
+      return true
+    }
+    if self.willRenew == nil && other.willRenew != nil {
+      return false
+    }
+
+    // If both have information (or both nil), compare values
     let selfWillRenew = self.willRenew ?? false
     let otherWillRenew = other.willRenew ?? false
 
@@ -322,6 +331,15 @@ extension Entitlement {
     }
 
     // 6. Not in grace period vs in grace period
+    // First check if one has state information and the other doesn't
+    if self.state != nil && other.state == nil {
+      return true
+    }
+    if self.state == nil && other.state != nil {
+      return false
+    }
+
+    // If both have state (or both nil), prefer not in grace period
     let selfInGracePeriod = self.isInGracePeriod ?? false
     let otherInGracePeriod = other.isInGracePeriod ?? false
 
@@ -335,16 +353,50 @@ extension Entitlement {
 
   /// Merges a collection of entitlements, keeping the highest priority one for each unique ID.
   ///
+  /// When merging entitlements with the same ID, the higher priority entitlement is kept,
+  /// but the `productIds` from all entitlements with that ID are merged together.
+  ///
   /// - Parameter entitlements: A collection of entitlements to merge
-  /// - Returns: A set containing the highest priority entitlement for each unique ID
+  /// - Returns: A set containing the highest priority entitlement for each unique ID with merged productIds
   static func mergePrioritized<T: Collection>(_ entitlements: T) -> Set<Entitlement> where T.Element == Entitlement {
     var mergedEntitlements: [String: Entitlement] = [:]
 
     for entitlement in entitlements {
       if let existing = mergedEntitlements[entitlement.id] {
-        // Keep the higher priority entitlement
+        // Merge productIds from both entitlements
+        let mergedProductIds = existing.productIds.union(entitlement.productIds)
+
+        // Keep the higher priority entitlement but with merged productIds
         if entitlement.shouldTakePriorityOver(existing) {
-          mergedEntitlements[entitlement.id] = entitlement
+          mergedEntitlements[entitlement.id] = Entitlement(
+            id: entitlement.id,
+            type: entitlement.type,
+            isActive: entitlement.isActive,
+            productIds: mergedProductIds,
+            latestProductId: entitlement.latestProductId,
+            startsAt: entitlement.startsAt,
+            renewedAt: entitlement.renewedAt,
+            expiresAt: entitlement.expiresAt,
+            isLifetime: entitlement.isLifetime,
+            willRenew: entitlement.willRenew,
+            state: entitlement.state,
+            offerType: entitlement.offerType
+          )
+        } else {
+          mergedEntitlements[entitlement.id] = Entitlement(
+            id: existing.id,
+            type: existing.type,
+            isActive: existing.isActive,
+            productIds: mergedProductIds,
+            latestProductId: existing.latestProductId,
+            startsAt: existing.startsAt,
+            renewedAt: existing.renewedAt,
+            expiresAt: existing.expiresAt,
+            isLifetime: existing.isLifetime,
+            willRenew: existing.willRenew,
+            state: existing.state,
+            offerType: existing.offerType
+          )
         }
       } else {
         mergedEntitlements[entitlement.id] = entitlement
