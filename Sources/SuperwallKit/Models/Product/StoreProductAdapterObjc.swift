@@ -22,13 +22,19 @@ public final class StoreProductAdapterObjc: NSObject, Codable, Sendable {
   /// `stripe`.
   public let stripeProduct: StripeProduct?
 
+  /// The Paddle product. This is non-nil if `store` is
+  /// `paddle`.
+  public let paddleProduct: PaddleProduct?
+
   init(
     store: ProductStore,
     appStoreProduct: AppStoreProduct?,
-    stripeProduct: StripeProduct?
+    stripeProduct: StripeProduct?,
+    paddleProduct: PaddleProduct?
   ) {
     self.store = store
     self.appStoreProduct = appStoreProduct
     self.stripeProduct = stripeProduct
+    self.paddleProduct = paddleProduct
   }
 }

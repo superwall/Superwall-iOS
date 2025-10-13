@@ -80,7 +80,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement: [String: [any EntitlementTransaction]] = [:]
     let rawEntitlementsByProductId: [String: Set<Entitlement>] = [:]
     
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -105,7 +105,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["lifetime_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["lifetime_product": Set([entitlement])]
     
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -135,7 +135,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["subscription_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
     
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -164,7 +164,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["expired_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["expired_product": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -206,7 +206,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["multi_entitlement": [olderTransaction, newerTransaction]]
     let rawEntitlementsByProductId = ["product1": Set([entitlement])]
     
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -240,7 +240,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["renewal_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["renewal_product": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -277,7 +277,7 @@ struct EntitlementProcessorTests {
       "product2": Set([entitlement])
     ]
     
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -308,7 +308,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["non_consumable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["non_consumable": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -335,7 +335,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["consumable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["consumable": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -374,7 +374,7 @@ struct EntitlementProcessorTests {
       "subscription_product": Set([entitlement])
     ]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -426,7 +426,7 @@ struct EntitlementProcessorTests {
       "shared_product": Set([entitlement1, entitlement2])
     ]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -468,7 +468,7 @@ struct EntitlementProcessorTests {
       "new_product": Set([entitlement])
     ]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -488,7 +488,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["orphan_entitlement": [transaction]]
     let rawEntitlementsByProductId: [String: Set<Entitlement>] = [:] // No raw entitlements
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -512,7 +512,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["transaction_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["product_a": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -562,7 +562,7 @@ struct EntitlementProcessorTests {
       "product3": Set([entitlement])
     ]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -591,7 +591,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["non_renewable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["non_renewable_product": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -633,7 +633,7 @@ struct EntitlementProcessorTests {
       rawEntitlementsByProductId[transaction.productId] = Set([entitlement])
     }
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -668,7 +668,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["extreme_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["extreme_product": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -694,7 +694,7 @@ struct EntitlementProcessorTests {
     let transactionsByEntitlement = ["empty_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["": Set([entitlement])]
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -740,7 +740,7 @@ struct EntitlementProcessorTests {
       transactionsByEntitlement[entitlementId] = transactions
     }
 
-    let result = EntitlementProcessor.processEntitlements(
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -962,7 +962,7 @@ struct EntitlementProcessorTests {
       mockState: .inGracePeriod
     )
 
-    let result = await EntitlementProcessor.processAndEnhanceEntitlements(
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId,
       productIdsByEntitlementId: productIdsByEntitlementId,
@@ -1019,7 +1019,7 @@ struct EntitlementProcessorTests {
       mockState: .inBillingRetryPeriod
     )
 
-    let result = await EntitlementProcessor.processAndEnhanceEntitlements(
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId,
       productIdsByEntitlementId: productIdsByEntitlementId,
@@ -1076,7 +1076,7 @@ struct EntitlementProcessorTests {
       mockState: .revoked
     )
 
-    let result = await EntitlementProcessor.processAndEnhanceEntitlements(
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId,
       productIdsByEntitlementId: productIdsByEntitlementId,

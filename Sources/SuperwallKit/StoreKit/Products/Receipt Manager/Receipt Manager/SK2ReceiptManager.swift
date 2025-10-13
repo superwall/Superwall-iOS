@@ -81,7 +81,8 @@ actor SK2ReceiptManager: ReceiptManagerType {
           Entitlement(
             id: entitlement.id,
             type: entitlement.type,
-            productIds: allProductIds
+            productIds: allProductIds,
+            store: entitlement.store
           )
         )
       }
@@ -144,7 +145,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
     var capturedWillRenew: Bool?
     var capturedOfferType: LatestSubscription.OfferType?
 
-    entitlementsByProductId = await EntitlementProcessor.processAndEnhanceEntitlements(
+    entitlementsByProductId = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
       from: txnsPerEntitlement,
       rawEntitlementsByProductId: entitlementsByProductId,
       productIdsByEntitlementId: productIdsByEntitlementId,

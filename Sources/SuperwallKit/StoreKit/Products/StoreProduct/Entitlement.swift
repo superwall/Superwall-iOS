@@ -7,10 +7,13 @@
 
 import Foundation
 
-/// An enum whose types specify the store which the product belongs to.
+/// Type alias for ProductStore when used in the context of entitlements.
+public typealias EntitlementStore = ProductStore
+
+/// An enum whose types specify the entitlement tier type.
 @objc(SWKEntitlementType)
 public enum EntitlementType: Int, Codable, Sendable {
-  /// An Apple App Store product.
+  /// A service level entitlement.
   case serviceLevel
 
   private enum CodingKeys: String, CodingKey {
@@ -67,6 +70,11 @@ public final class Entitlement: NSObject, Codable, Sendable {
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let latestProductId: String?
+
+  /// The store from which this entitlement was granted.
+  ///
+  /// This will be ``ProductStore/appStore`` for entitlements from device transactions, or ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other`` for web-based entitlements.
+  public let store: EntitlementStore
 
   /// The purchase date of the first transaction that unlocked this entitlement.
   ///
@@ -153,6 +161,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     case isActive
     case productIds
     case latestProductId
+    case store
     case startsAt
     case renewedAt
     case expiresAt
@@ -168,6 +177,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     isActive: Bool = false,
     productIds: Set<String> = [],
     latestProductId: String? = nil,
+    store: EntitlementStore = .appStore,
     startsAt: Date? = nil,
     renewedAt: Date? = nil,
     expiresAt: Date? = nil,
@@ -181,6 +191,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.isActive = isActive
     self.productIds = productIds
     self.latestProductId = latestProductId
+    self.store = store
     self.startsAt = startsAt
     self.renewedAt = renewedAt
     self.expiresAt = expiresAt
@@ -203,6 +214,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
     self.productIds = try container.decodeIfPresent(Set<String>.self, forKey: .productIds) ?? []
     self.latestProductId = try container.decodeIfPresent(String.self, forKey: .latestProductId)
+    self.store = try container.decodeIfPresent(EntitlementStore.self, forKey: .store) ?? .appStore
     self.startsAt = try container.decodeIfPresent(Date.self, forKey: .startsAt)
     self.renewedAt = try container.decodeIfPresent(Date.self, forKey: .renewedAt)
     self.expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
@@ -219,6 +231,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     try container.encodeIfPresent(isActive, forKey: .isActive)
     try container.encodeIfPresent(productIds, forKey: .productIds)
     try container.encodeIfPresent(latestProductId, forKey: .latestProductId)
+    try container.encode(store, forKey: .store)
     try container.encodeIfPresent(startsAt, forKey: .startsAt)
     try container.encodeIfPresent(renewedAt, forKey: .renewedAt)
     try container.encodeIfPresent(expiresAt, forKey: .expiresAt)
@@ -238,6 +251,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
       && self.isActive == other.isActive
       && self.productIds == other.productIds
       && self.latestProductId == other.latestProductId
+      && self.store == other.store
       && self.startsAt == other.startsAt
       && self.renewedAt == other.renewedAt
       && self.expiresAt == other.expiresAt
@@ -254,6 +268,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     hasher.combine(isActive)
     hasher.combine(productIds)
     hasher.combine(latestProductId)
+    hasher.combine(store)
     hasher.combine(startsAt)
     hasher.combine(renewedAt)
     hasher.combine(expiresAt)
@@ -374,6 +389,7 @@ extension Entitlement {
             isActive: entitlement.isActive,
             productIds: mergedProductIds,
             latestProductId: entitlement.latestProductId,
+            store: entitlement.store,
             startsAt: entitlement.startsAt,
             renewedAt: entitlement.renewedAt,
             expiresAt: entitlement.expiresAt,
@@ -389,6 +405,7 @@ extension Entitlement {
             isActive: existing.isActive,
             productIds: mergedProductIds,
             latestProductId: existing.latestProductId,
+            store: existing.store,
             startsAt: existing.startsAt,
             renewedAt: existing.renewedAt,
             expiresAt: existing.expiresAt,

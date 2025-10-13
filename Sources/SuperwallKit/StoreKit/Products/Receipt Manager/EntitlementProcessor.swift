@@ -162,7 +162,7 @@ enum EntitlementProcessor {
   }
 
   /// Process entitlements from transactions, enriching them with metadata
-  static func processEntitlements(
+  static func buildEntitlementsFromTransactions(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
     rawEntitlementsByProductId: [String: Set<Entitlement>]
   ) -> [String: Set<Entitlement>] {
@@ -261,6 +261,7 @@ enum EntitlementProcessor {
               isActive: isActive,
               productIds: productIds,
               latestProductId: latestProductId,
+              store: .appStore,
               startsAt: startsAt,
               renewedAt: renewedAt,
               expiresAt: expiresAt,
@@ -280,9 +281,9 @@ enum EntitlementProcessor {
     return processedEntitlementsByProductId
   }
 
-  /// Process and enhance entitlements with subscription status information
+  /// Build entitlements with live subscription data from StoreKit
   @available(iOS 15.0, *)
-  static func processAndEnhanceEntitlements(
+  static func buildEntitlementsWithLiveSubscriptionData(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
     rawEntitlementsByProductId: [String: Set<Entitlement>],
     productIdsByEntitlementId: [String: Set<String>],
@@ -292,7 +293,7 @@ enum EntitlementProcessor {
     onLatestSubscriptionUpdate: ((LatestSubscription.State?, Bool?, LatestSubscription.OfferType?) -> Void)? = nil
   ) async -> [String: Set<Entitlement>] {
     // First, do the basic processing and build mostRecentRenewable lookup
-    let basicEntitlementsByProductId = processEntitlements(
+    let basicEntitlementsByProductId = buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
@@ -378,6 +379,7 @@ enum EntitlementProcessor {
               isActive: entitlement.isActive,
               productIds: entitlement.productIds,
               latestProductId: entitlement.latestProductId,
+              store: entitlement.store,
               startsAt: entitlement.startsAt,
               renewedAt: entitlement.renewedAt,
               expiresAt: entitlement.expiresAt,
