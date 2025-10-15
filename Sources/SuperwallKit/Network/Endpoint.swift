@@ -349,6 +349,7 @@ extension Endpoint where
     let queryItems = [URLQueryItem(name: "deviceId", value: deviceId)]
 
     return Endpoint(
+      retryCount: 0,
       components: Components(
         host: .web2app,
         path: "users/\(appUserId ?? deviceId)/entitlements",

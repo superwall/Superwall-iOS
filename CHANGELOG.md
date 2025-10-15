@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Changes "With/Without Free Trial" to "With/Without Intro Offer" in the debugger.
 - Fixes rare crash caused by a concurrency issue.
+- Fixes issue where no internet would cause a minute delay for paywall presentation.
 
 ## 4.8.3
 
