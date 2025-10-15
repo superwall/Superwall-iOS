@@ -174,7 +174,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
   init(
     id: String,
     type: EntitlementType = .serviceLevel,
-    isActive: Bool = false,
+    isActive: Bool = true,
     productIds: Set<String> = [],
     latestProductId: String? = nil,
     store: EntitlementStore = .appStore,
@@ -201,6 +201,14 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.offerType = offerType
   }
 
+  /// Convenience initializer for creating an entitlement with only an ID.
+  ///
+  /// Creates an active entitlement by default (`isActive: true`).
+  /// If you need to create an inactive entitlement, explicitly set `isActive: false`:
+  ///
+  /// ```swift
+  /// Entitlement(id: "premium", isActive: false)
+  /// ```
   public convenience init(
     id: String
   ) {
@@ -432,5 +440,24 @@ extension Entitlement: Stubbable {
       type: .serviceLevel,
       isActive: true
     )
+  }
+}
+
+// MARK: - Set Operations with Priority
+public extension Set where Element == Entitlement {
+  /// Returns a new set containing the elements of this set and the given set, using priority logic.
+  ///
+  /// When entitlements with the same ID exist in both sets, keeps the higher priority one
+  /// and merges their productIds.
+  ///
+  /// Example:
+  /// ```swift
+  /// let deviceEntitlements: Set<Entitlement> = [...]
+  /// let webEntitlements: Set<Entitlement> = [...]
+  /// let merged = deviceEntitlements.union(webEntitlements)
+  /// ```
+  func union(_ other: Set<Entitlement>) -> Set<Entitlement> {
+    let combined = Array(self) + Array(other)
+    return Entitlement.mergePrioritized(combined)
   }
 }

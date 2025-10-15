@@ -180,6 +180,39 @@ public final class Superwall: NSObject, ObservableObject {
         }
       }
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
+
+      // When using an external purchase controller, update CustomerInfo.entitlements
+      // to reflect the entitlements from the purchase controller
+      if dependencyContainer.makeHasExternalPurchaseController() {
+        // Get web entitlements (both active and inactive)
+        let webEntitlements = dependencyContainer.storage.get(LatestRedeemResponse.self)?
+          .customerInfo.entitlements ?? []
+
+        // Get inactive device entitlements to preserve history
+        let inactiveDeviceEntitlements = customerInfo.entitlements.filter { !$0.isActive }
+
+        // Get active entitlements from external purchase controller
+        let externalEntitlements: [Entitlement]
+        switch subscriptionStatus {
+        case .active(let activeEntitlements):
+          externalEntitlements = Array(activeEntitlements)
+        case .inactive,
+          .unknown:
+          externalEntitlements = []
+        }
+
+        // Merge: active from external controller + all web + inactive device
+        // This gives us complete history while respecting external controller as source of truth for active status
+        let combinedEntitlements = externalEntitlements + webEntitlements + inactiveDeviceEntitlements
+        let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+
+        // Create new CustomerInfo with updated entitlements but same transaction history
+        customerInfo = CustomerInfo(
+          subscriptions: customerInfo.subscriptions,
+          nonSubscriptions: customerInfo.nonSubscriptions,
+          entitlements: mergedEntitlements.sorted { $0.id < $1.id }
+        )
+      }
     }
   }
 

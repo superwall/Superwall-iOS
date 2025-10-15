@@ -19,13 +19,15 @@ struct Purchase: Hashable {
 }
 
 actor ReceiptManager {
+  typealias Factory = ConfigStateFactory & HasExternalPurchaseControllerFactory
+
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
-  private unowned let factory: ConfigStateFactory
+  private unowned let factory: Factory
   private unowned let storage: Storage
   static var appTransactionId: String?
   static var appId: UInt64?
@@ -35,7 +37,7 @@ actor ReceiptManager {
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
     receiptDelegate: ReceiptDelegate?,
-    factory: ConfigStateFactory,
+    factory: Factory,
     storage: Storage
   ) {
     self.storeKitVersion = storeKitVersion
@@ -145,11 +147,35 @@ actor ReceiptManager {
     let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
 
     // Merge with web customer info if available
-    let mergedCustomerInfo: CustomerInfo
+    var mergedCustomerInfo: CustomerInfo
     if let latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
       mergedCustomerInfo = onDeviceSnapshot.customerInfo.merging(with: latestRedeemResponse.customerInfo)
     } else {
       mergedCustomerInfo = onDeviceSnapshot.customerInfo
+    }
+
+    // If using an external purchase controller, preserve entitlements that came from it
+    // (The external controller's active entitlements won't necessarily be in device data)
+    if factory.makeHasExternalPurchaseController() {
+      let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
+
+      // Get entitlements that are only in current CustomerInfo (i.e., from external controller)
+      // by filtering out anything that matches device or web entitlements by ID
+      let deviceAndWebEntitlementIds = Set(mergedCustomerInfo.entitlements.map { $0.id })
+      let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
+        // Keep if not in device/web OR if it's active (external controller is source of truth for active)
+        !deviceAndWebEntitlementIds.contains(entitlement.id) || entitlement.isActive
+      }
+
+      // Merge external controller entitlements with device + web
+      let allEntitlements = mergedCustomerInfo.entitlements + externalOnlyEntitlements
+      let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+      mergedCustomerInfo = CustomerInfo(
+        subscriptions: mergedCustomerInfo.subscriptions,
+        nonSubscriptions: mergedCustomerInfo.nonSubscriptions,
+        entitlements: finalEntitlements.sorted { $0.id < $1.id }
+      )
     }
 
     await MainActor.run {

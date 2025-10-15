@@ -23,6 +23,7 @@ actor WebEntitlementRedeemer {
     & OptionsFactory
     & ConfigStateFactory
     & ConfigManagerFactory
+    & HasExternalPurchaseControllerFactory
 
   enum RedeemType: CustomStringConvertible {
     case code(String)
@@ -194,6 +195,34 @@ actor WebEntitlementRedeemer {
     )
 
     storage.save(response, forType: LatestRedeemResponse.self)
+
+    // Merge device and web CustomerInfo
+    let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
+    var mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
+
+    // If using an external purchase controller, preserve entitlements that came from it
+    if factory.makeHasExternalPurchaseController() {
+      let currentCustomerInfo = await MainActor.run { superwall.customerInfo }
+
+      // Get active entitlements from external controller to preserve them
+      let activeExternalEntitlements = currentCustomerInfo.entitlements.filter { $0.isActive }
+
+      // Merge with device + web
+      let allEntitlements = mergedCustomerInfo.entitlements + activeExternalEntitlements
+      let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+      mergedCustomerInfo = CustomerInfo(
+        subscriptions: mergedCustomerInfo.subscriptions,
+        nonSubscriptions: mergedCustomerInfo.nonSubscriptions,
+        entitlements: finalEntitlements.sorted { $0.id < $1.id }
+      )
+    }
+
+    // Update Superwall's CustomerInfo with the merged result
+    await MainActor.run {
+      superwall.customerInfo = mergedCustomerInfo
+    }
+
     await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
 
     if case .code(let code) = type {
@@ -400,8 +429,6 @@ actor WebEntitlementRedeemer {
     do {
       let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
-      // TODO: Need products_v3 to work
-
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()
@@ -417,16 +444,36 @@ actor WebEntitlementRedeemer {
 
       let webEntitlements = Set(response.customerInfo.entitlements)
       if existingWebEntitlements != webEntitlements {
+        // Get the latest device CustomerInfo and merge with web CustomerInfo
+        let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
+        var mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
+
+        // If using an external purchase controller, preserve entitlements that came from it
+        if factory.makeHasExternalPurchaseController() {
+          let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
+
+          // Get active entitlements from external controller to preserve them
+          let activeExternalEntitlements = currentCustomerInfo.entitlements.filter { $0.isActive }
+
+          // Merge with device + web
+          let allEntitlements = mergedCustomerInfo.entitlements + activeExternalEntitlements
+          let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+          mergedCustomerInfo = CustomerInfo(
+            subscriptions: mergedCustomerInfo.subscriptions,
+            nonSubscriptions: mergedCustomerInfo.nonSubscriptions,
+            entitlements: finalEntitlements.sorted { $0.id < $1.id }
+          )
+        }
+
+        // Update Superwall's CustomerInfo with the merged result
+        await MainActor.run {
+          Superwall.shared.customerInfo = mergedCustomerInfo
+        }
+
         // Sets the subscription status internally if no external PurchaseController
-        let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-
-        // Merge web and device entitlements with prioritization
-        // This ensures the highest priority entitlement is kept for each ID
-        let combinedEntitlements = Array(deviceEntitlements) + Array(webEntitlements)
-        let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
-
-        // Filter to only active entitlements
-        let activeEntitlements = mergedEntitlements.filter { $0.isActive }
+        // Use the merged entitlements from CustomerInfo (already prioritized)
+        let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
 
         if activeEntitlements.isEmpty {
           await Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
