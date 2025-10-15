@@ -18,13 +18,13 @@ enum TemplateLogic {
   ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
-      products: TemplatingProductItem.create(from: paywall.products)
+      products: TemplatingProductItem.create(from: paywall.appStoreProducts)
     )
 
     // Dynamically set isSubscribed for each product
     var productVariables = paywall.productVariables ?? []
 
-    for product in paywall.products {
+    for product in paywall.appStoreProducts {
       if let index = productVariables.firstIndex(where: { $0.name == product.name }) {
         let isSubscribed = await receiptManager.isSubscribed(to: product.id)
         productVariables[index].attributes["isSubscribed"] = JSON(isSubscribed)

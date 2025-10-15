@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-  s.version      = "4.8.3"
+  s.version      = "4.9.0"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
 	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '13.0'
 	s.requires_arc = true
-  s.dependency 'Superscript', '1.0.2'
+  s.dependency 'Superscript', '1.0.4'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {

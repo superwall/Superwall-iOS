@@ -86,4 +86,34 @@ struct SWProduct: Codable {
       introductoryPrice = SWProductDiscount(offer: offer, fromProduct: product)
     }
   }
+
+  init(product: StripeProductType) {
+    localizedDescription = "" // product.description
+    localizedTitle = "" // product.displayName
+    price = product.price
+    priceLocale = product.priceLocale.identifier
+    productIdentifier = product.productIdentifier
+    isDownloadable = false
+    downloadContentLengths = []
+    contentVersion = ""
+    downloadContentVersion = ""
+
+    isFamilyShareable = product.isFamilyShareable
+
+    if let offer = product.subscriptionIntroOffer {
+      discounts = [SWProductDiscount(offer: offer, fromProduct: product)]
+    }
+
+    subscriptionGroupIdentifier = product.subscriptionGroupIdentifier
+
+    if let subscriptionPeriod = product.subscriptionPeriod {
+      self.subscriptionPeriod = SWProductSubscriptionPeriod(
+        period: subscriptionPeriod,
+        numberOfPeriods: 1
+      )
+    }
+    if let offer = product.subscriptionIntroOffer {
+      introductoryPrice = SWProductDiscount(offer: offer, fromProduct: product)
+    }
+  }
 }

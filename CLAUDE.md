@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `Superscript-iOS` at exact version 1.0.2
+- Dependencies: `Superscript-iOS` at exact version 1.0.4
 
 ## Architecture Overview
 
