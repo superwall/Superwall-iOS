@@ -40,9 +40,13 @@ public final class CustomerInfo: NSObject, Codable {
   /// ordered by purchase date in ascending order.
   public let nonSubscriptions: [NonSubscriptionTransaction]
 
-  // TODO: Check this is reset on cleanUserCodes
   /// The ID of the user. Equivalent to ``Superwall/userId``.
-  public let userId: String
+  public var userId: String {
+    if Superwall.isInitialized {
+      return Superwall.shared.userId
+    }
+    return ""
+  }
 
   /// All entitlements available to the user.
   public internal(set) var entitlements: [Entitlement]
@@ -59,11 +63,6 @@ public final class CustomerInfo: NSObject, Codable {
     self.subscriptions = subscriptions
     self.nonSubscriptions = nonSubscriptions
     self.entitlements = entitlements
-    if Superwall.isInitialized {
-      self.userId = Superwall.shared.userId
-    } else {
-      self.userId = ""
-    }
     self.isBlank = isBlank
   }
 
@@ -101,13 +100,6 @@ public final class CustomerInfo: NSObject, Codable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     subscriptions = try container.decode([SubscriptionTransaction].self, forKey: .subscriptions)
     nonSubscriptions = try container.decode([NonSubscriptionTransaction].self, forKey: .nonSubscriptions)
-
-    // TODO: Check this
-    if Superwall.isInitialized {
-      userId = Superwall.shared.userId
-    } else {
-      userId = ""
-    }
     entitlements = try container.decode([Entitlement].self, forKey: .entitlements)
     isBlank = try container.decodeIfPresent(Bool.self, forKey: .isBlank) ?? false
     super.init()

@@ -198,7 +198,7 @@ public final class Superwall: NSObject, ObservableObject {
           externalEntitlements = Array(activeEntitlements)
         case .inactive,
           .unknown:
-          externalEntitlements = []
+          externalEntitlements = Array()
         }
 
         // Merge: active from external controller + all web + inactive device
