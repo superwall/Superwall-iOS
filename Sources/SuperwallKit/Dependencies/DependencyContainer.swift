@@ -69,6 +69,7 @@ final class DependencyContainer {
 
     receiptManager = ReceiptManager(
       storeKitVersion: options.storeKitVersion,
+      shouldBypassAppTransactionCheck: options.shouldBypassAppTransactionCheck,
       productsManager: productsManager,
       receiptDelegate: purchaseController as? ReceiptDelegate,
       factory: self,

@@ -25,6 +25,7 @@ actor ReceiptManager {
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
+  private let shouldBypassAppTransactionCheck: Bool
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   private unowned let factory: Factory
@@ -34,6 +35,7 @@ actor ReceiptManager {
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
+    shouldBypassAppTransactionCheck: Bool,
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
     receiptDelegate: ReceiptDelegate?,
@@ -41,6 +43,7 @@ actor ReceiptManager {
     storage: Storage
   ) {
     self.storeKitVersion = storeKitVersion
+    self.shouldBypassAppTransactionCheck = shouldBypassAppTransactionCheck
     self.productsManager = productsManager
     self.factory = factory
     self.storage = storage
@@ -79,7 +82,8 @@ actor ReceiptManager {
 
   private func setAppTransactionId() async {
     #if compiler(>=6.1)
-    if #available(iOS 16.0, *) {
+    if #available(iOS 16.0, *),
+      !shouldBypassAppTransactionCheck {
       if let result = try? await AppTransaction.shared {
         switch result {
         case .verified(let transaction),
