@@ -16,14 +16,11 @@ concurrency:
 
 jobs:
   build-docs:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-
-      - name: Select Xcode 16.4
-        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
 
       - name: Remove Xcodeproj
         run: |
@@ -35,7 +32,7 @@ jobs:
 
       - name: Build DocC Archive 📚
         run: |
-          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16 Pro'
+          xcodebuild docbuild -scheme SuperwallKit -derivedDataPath ./docbuild -destination 'platform=iOS Simulator,OS=latest,name=iPhone 17 Pro'
 
       - name: Transform DocC Archive for static hosting
         run: |

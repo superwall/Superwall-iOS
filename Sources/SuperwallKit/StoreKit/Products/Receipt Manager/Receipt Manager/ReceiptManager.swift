@@ -83,7 +83,8 @@ actor ReceiptManager {
   private func setAppTransactionId() async {
     #if compiler(>=6.1)
     if #available(iOS 16.0, *),
-      !shouldBypassAppTransactionCheck {
+      !shouldBypassAppTransactionCheck,
+      !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
       if let result = try? await AppTransaction.shared {
         switch result {
         case .verified(let transaction),

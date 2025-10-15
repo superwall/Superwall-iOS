@@ -28,12 +28,9 @@ jobs:
 
   cocoapods:
     needs: tag
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v3
-
-      - name: Select Xcode 16.4
-        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
 
       - name: Publish to CocoaPod register
         env:
