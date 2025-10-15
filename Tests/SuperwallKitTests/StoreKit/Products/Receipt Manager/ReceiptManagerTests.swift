@@ -36,6 +36,7 @@ class ReceiptManagerTests: XCTestCase {
     let sk1ReceiptManager = SK1ReceiptManager(receiptData: getReceiptData)
     let receiptManager = ReceiptManager(
       storeKitVersion: .storeKit1,
+      shouldBypassAppTransactions: false,
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
       receiptDelegate: purchaseController
@@ -62,6 +63,7 @@ class ReceiptManagerTests: XCTestCase {
     let sk1ReceiptManager = SK1ReceiptManager(receiptData: getReceiptData)
     let receiptManager = ReceiptManager(
       storeKitVersion: .storeKit1,
+      shouldBypassAppTransactions: false,
       productsManager: productsManager,
       receiptManager: sk1ReceiptManager,
       receiptDelegate: purchaseController

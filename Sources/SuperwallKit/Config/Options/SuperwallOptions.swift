@@ -202,6 +202,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Enables experimental device variables. These are subject to change. Defaults to `false`.
   public var enableExperimentalDeviceVariables = false
 
+  /// Disables the app transaction check on SDK launch. Defaults to `false`.
+  public var shouldBypassAppTransactionCheck = false
+
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
