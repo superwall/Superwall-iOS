@@ -15,13 +15,11 @@ concurrency:
 
 jobs:
   run-tests:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: Select Xcode 16.4
-        run: sudo xcode-select -switch /Applications/Xcode_16.4.app
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.2.3
       - name: Run Tests
