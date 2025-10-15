@@ -151,7 +151,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   ///
-  /// - Note: This is only non-`nil` on iOS 17.2+.
+  /// - Note: This is only non-`nil` on iOS 17.2+ or if it's a web entitlement.
   public let offerType: LatestSubscription.OfferType?
 
   private enum CodingKeys: String, CodingKey {
