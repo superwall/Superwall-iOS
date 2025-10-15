@@ -9,6 +9,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds ability to open the web checkout page in a payment sheet style web view.
 - Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
 - Adds the `SuperwallOption` `shouldBypassAppTransactionCheck`, which allows you to opt out of `AppTransaction.shared` usage during SDK initialization. This is useful in testing environments to avoid triggering the Apple ID sign-in prompt.
+- Adds `device.isApplePayAvailable` to the device attributes that can be used in audience filters.
+- Adds `onWillDismiss` to the `PaywallPresentationHandler`, which is called when the paywall will dismiss.
 
 ### Fixes
 
