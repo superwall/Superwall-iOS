@@ -132,6 +132,11 @@ class Storage {
 
     queue.async { [weak self] in
       self?._assignments = nil
+      Logger.debug(
+        logLevel: .debug,
+        scope: .superwallCore,
+        message: "Cleared assignments"
+      )
       self?._didTrackFirstSeen = false
     }
 
@@ -205,6 +210,15 @@ class Storage {
     if assignments.isFullyEqual(to: newAssignments) {
       return
     }
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .superwallCore,
+      message: "Saving new assignments",
+      info: [
+        "newAssignmentsCount": newAssignments.count
+      ]
+    )
 
     save(newAssignments, forType: Assignments.self)
     self.assignments = newAssignments

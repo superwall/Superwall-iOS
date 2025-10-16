@@ -279,6 +279,14 @@ class ConfigManager {
   /// Reassigns variants and preloads paywalls again.
   func reset() {
     guard let config = configState.value.getConfig() else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .superwallCore,
+        message: "Resetting didn't work because there is no config loaded yet",
+        info: [
+          "config state": configState.value
+        ]
+      )
       return
     }
     choosePaywallVariants(from: config.triggers)
@@ -301,9 +309,29 @@ class ConfigManager {
   private func choosePaywallVariants(from triggers: Set<Trigger>) {
     var assignments = storage.getAssignments()
 
+    Logger.debug(
+      logLevel: .debug,
+      scope: .superwallCore,
+      message: "Choosing paywall variants",
+      info: [
+        "storageAssignmentsCount": assignments.count,
+        "storageAssignments": assignments.map { $0.variant.id }
+      ]
+    )
+
     assignments = ConfigLogic.chooseAssignments(
       fromTriggers: triggers,
       assignments: assignments
+    )
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .superwallCore,
+      message: "Chose paywall variants",
+      info: [
+        "chosenAssignmentsCount": assignments.count,
+        "chosenAssignments": assignments.map { $0.variant.id }
+      ]
     )
 
     storage.overwriteAssignments(assignments)
@@ -319,6 +347,11 @@ class ConfigManager {
     let triggers = config.triggers
 
     guard !triggers.isEmpty else {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .configManager,
+        message: "No triggers, aborting getAssignments()."
+      )
       return
     }
 
@@ -326,10 +359,29 @@ class ConfigManager {
       let serverAssignments = try await network.getAssignments()
       var localAssignments = storage.getAssignments()
 
+      Logger.debug(
+        logLevel: .debug,
+        scope: .configManager,
+        message: "Got local and server assignments.",
+        info: [
+          "serverAssignments": serverAssignments.map { $0.variantId }.joined(),
+          "localAssignments": localAssignments.map { $0.variant.id }.joined()
+        ]
+      )
+
       localAssignments = ConfigLogic.transferAssignments(
         fromServer: serverAssignments,
         toDisk: localAssignments,
         triggers: triggers
+      )
+
+      Logger.debug(
+        logLevel: .debug,
+        scope: .configManager,
+        message: "Overwriting assignments.",
+        info: [
+          "localAssignments": localAssignments.map { $0.variant.id }.joined()
+        ]
       )
 
       storage.overwriteAssignments(localAssignments)

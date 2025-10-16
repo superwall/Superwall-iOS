@@ -64,7 +64,27 @@ extension Superwall {
       let isForPresentation = !request.flags.type.isGettingPresentationResult
       let delegate = request.flags.type.getPaywallVcDelegateAdapter()
 
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallPresentation,
+        message: "Getting paywall from request",
+        info: debugInfo.merging([
+          "paywallId": responseIdentifiers.paywallId ?? "nil",
+          "experimentId": responseIdentifiers.experiment?.id ?? "nil"
+        ])
+      )
+
       let paywall = try await dependencyContainer.paywallManager.getPaywall(from: paywallRequest)
+
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallPresentation,
+        message: "Successfully got paywall, creating view controller",
+        info: debugInfo.merging([
+          "paywallId": paywall.identifier,
+          "paywallName": paywall.name
+        ])
+      )
 
       let paywallViewController = try await dependencyContainer.paywallManager.getViewController(
         for: paywall,
@@ -74,8 +94,26 @@ extension Superwall {
         delegate: delegate
       )
 
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallPresentation,
+        message: "Successfully created paywall view controller",
+        info: debugInfo
+      )
+
       return paywallViewController
     } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "GetPaywallVC caught error before conversion to noPaywallViewController",
+        info: debugInfo.merging([
+          "errorDomain": (error as NSError).domain,
+          "errorCode": (error as NSError).code,
+          "errorDescription": error.localizedDescription
+        ]),
+        error: error
+      )
       throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
     }
   }

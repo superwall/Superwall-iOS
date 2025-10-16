@@ -73,7 +73,41 @@ class PaywallManager {
   }
 
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
-    return try await paywallRequestManager.getPaywall(from: request)
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallPresentation,
+      message: "PaywallManager.getPaywall called",
+      info: [
+        "paywallId": request.responseIdentifiers.paywallId ?? "nil",
+        "experimentId": request.responseIdentifiers.experiment?.id ?? "nil"
+      ]
+    )
+    do {
+      let paywall = try await paywallRequestManager.getPaywall(from: request)
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallPresentation,
+        message: "PaywallManager.getPaywall succeeded",
+        info: [
+          "paywallId": paywall.identifier,
+          "paywallName": paywall.name
+        ]
+      )
+      return paywall
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "PaywallManager.getPaywall failed",
+        info: [
+          "errorDomain": (error as NSError).domain,
+          "errorCode": (error as NSError).code,
+          "errorDescription": error.localizedDescription
+        ],
+        error: error
+      )
+      throw error
+    }
   }
 
   /// Tries to preload the archive for the paywall, if available.
@@ -92,6 +126,19 @@ class PaywallManager {
     isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallPresentation,
+      message: "PaywallManager.getViewController called",
+      info: [
+        "paywallId": paywall.identifier,
+        "paywallName": paywall.name,
+        "isDebuggerLaunched": isDebuggerLaunched,
+        "isForPresentation": isForPresentation,
+        "isPreloading": isPreloading
+      ]
+    )
+
     let deviceInfo = factory.makeDeviceInfo()
     let cacheKey = PaywallCacheLogic.key(
       identifier: paywall.identifier,
@@ -100,6 +147,16 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallPresentation,
+        message: "PaywallManager.getViewController returning cached view controller",
+        info: [
+          "paywallId": paywall.identifier,
+          "cacheKey": cacheKey
+        ]
+      )
+
       let outcomes = PaywallManagerLogic.handleCachedPaywall(
         newPaywall: paywall,
         oldPaywall: viewController.paywall,
@@ -123,6 +180,16 @@ class PaywallManager {
       return viewController
     }
 
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallPresentation,
+      message: "PaywallManager.getViewController creating new view controller",
+      info: [
+        "paywallId": paywall.identifier,
+        "cacheKey": cacheKey
+      ]
+    )
+
     let paywallViewController = factory.makePaywallViewController(
       for: paywall,
       withCache: cache,
@@ -136,6 +203,15 @@ class PaywallManager {
       // Not if we're just checking it's result
       paywallViewController.loadViewIfNeeded()
     }
+
+    Logger.debug(
+      logLevel: .debug,
+      scope: .paywallPresentation,
+      message: "PaywallManager.getViewController succeeded",
+      info: [
+        "paywallId": paywall.identifier
+      ]
+    )
 
     return paywallViewController
   }

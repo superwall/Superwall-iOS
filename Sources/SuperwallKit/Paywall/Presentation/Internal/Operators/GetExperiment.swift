@@ -46,6 +46,17 @@ extension Superwall {
       errorType = .placementNotFound
       paywallStatePublisher?.send(.skipped(.placementNotFound))
     case let .error(error):
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "GetExperiment received error from audience evaluation",
+        info: debugInfo.merging([
+          "errorDomain": (error as NSError).domain,
+          "errorCode": (error as NSError).code,
+          "errorDescription": error.localizedDescription
+        ]),
+        error: error
+      )
       if request.flags.type.isGettingPresentationResult {
         Logger.debug(
           logLevel: .error,

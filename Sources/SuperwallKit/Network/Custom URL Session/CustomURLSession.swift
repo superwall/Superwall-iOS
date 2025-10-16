@@ -87,7 +87,8 @@ class CustomURLSession {
         "api_key": auth ?? "N/A",
         "url": request.url?.absoluteString ?? "unknown",
         "request_id": requestId,
-        "request_duration": requestDuration
+        "request_duration": requestDuration,
+        "response": String(data: data, encoding: .utf8) ?? ""
       ]
     )
 

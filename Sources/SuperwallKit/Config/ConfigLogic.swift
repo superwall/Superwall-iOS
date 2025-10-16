@@ -107,16 +107,28 @@ enum ConfigLogic {
         }
 
         // Choose a new variant for the experiment.
-        guard let newVariant = try? Self.chooseVariant(from: audience.experiment.variants) else {
+        do {
+          let newVariant = try Self.chooseVariant(from: audience.experiment.variants)
+          assignments.insert(
+            Assignment(
+              experimentId: experimentId,
+              variant: newVariant,
+              isSentToServer: false
+            )
+          )
+        } catch {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .superwallCore,
+            message: "Error choosing variant",
+            info: [
+              "audienceVariantCount": audience.experiment.variants.count,
+              "error": error.localizedDescription
+            ],
+            error: error
+          )
           continue
         }
-        assignments.insert(
-          Assignment(
-            experimentId: experimentId,
-            variant: newVariant,
-            isSentToServer: false
-          )
-        )
       }
     }
 
