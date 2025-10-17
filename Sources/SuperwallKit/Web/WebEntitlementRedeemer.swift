@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length type_body_length trailing_closure
+// swiftlint:disable function_body_length type_body_length trailing_closure cyclomatic_complexity
 
 import UIKit
 import Foundation
