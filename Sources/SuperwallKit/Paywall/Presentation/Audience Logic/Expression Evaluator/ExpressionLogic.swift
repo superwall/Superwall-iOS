@@ -25,6 +25,8 @@ struct ExpressionLogic {
         return .match(audience: audience)
       }
 
+      // We add one here because audience occurrences are saved on
+      // presentation (or holdout), so after this function is run.
       let count = await storage
         .coreDataManager
         .countAudienceOccurrences(

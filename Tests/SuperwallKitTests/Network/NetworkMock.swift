@@ -15,7 +15,8 @@ final class NetworkMock: Network {
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
-  var redeemEntitlementsResponse: RedeemResponse?
+  var getWebEntitlementsResponse: RedeemResponse?
+  var getEntitlementsResponse: EntitlementsResponse?
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
 
@@ -52,8 +53,20 @@ final class NetworkMock: Network {
 
   override func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
     redeemRequest = request
-    if let redeemEntitlementsResponse = redeemEntitlementsResponse {
-      return redeemEntitlementsResponse
+    if let getWebEntitlementsResponse = getWebEntitlementsResponse {
+      return getWebEntitlementsResponse
+    } else if let redeemError = redeemError {
+      throw redeemError
+    }
+    throw NetworkError.unknown
+  }
+
+  override func getEntitlements(
+    appUserId: String?,
+    deviceId: String
+  ) async throws -> EntitlementsResponse {
+    if let getEntitlementsResponse = getEntitlementsResponse {
+      return getEntitlementsResponse
     } else if let redeemError = redeemError {
       throw redeemError
     }
