@@ -188,7 +188,7 @@ actor WebEntitlementRedeemer {
       await superwall.track(completeEvent)
     }
 
-    let (allEntitlements, paywallEntitlements) = await processEntitlements(
+    let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
       response: response,
       type: type,
       superwall: superwall
@@ -198,9 +198,10 @@ actor WebEntitlementRedeemer {
 
     // Merge device and web CustomerInfo
     let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
-    var mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
+    let baseCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
 
     // If using an external purchase controller, preserve entitlements that came from it
+    let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {
       let currentCustomerInfo = await MainActor.run { superwall.customerInfo }
 
@@ -208,14 +209,16 @@ actor WebEntitlementRedeemer {
       let activeExternalEntitlements = currentCustomerInfo.entitlements.filter { $0.isActive }
 
       // Merge with device + web
-      let allEntitlements = mergedCustomerInfo.entitlements + activeExternalEntitlements
+      let allEntitlements = baseCustomerInfo.entitlements + activeExternalEntitlements
       let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
 
       mergedCustomerInfo = CustomerInfo(
-        subscriptions: mergedCustomerInfo.subscriptions,
-        nonSubscriptions: mergedCustomerInfo.nonSubscriptions,
+        subscriptions: baseCustomerInfo.subscriptions,
+        nonSubscriptions: baseCustomerInfo.nonSubscriptions,
         entitlements: finalEntitlements.sorted { $0.id < $1.id }
       )
+    } else {
+      mergedCustomerInfo = baseCustomerInfo
     }
 
     // Update Superwall's CustomerInfo with the merged result
@@ -229,8 +232,8 @@ actor WebEntitlementRedeemer {
       await handleCodeRedemptionCompletion(
         code: code,
         response: response,
-        allEntitlements: allEntitlements,
-        paywallEntitlements: paywallEntitlements,
+        allEntitlementIds: Set(allEntitlements.map { $0.id }),
+        paywallEntitlementIds: paywallEntitlementIds,
         superwall: superwall
       )
     }
@@ -240,19 +243,21 @@ actor WebEntitlementRedeemer {
     response: RedeemResponse,
     type: RedeemType,
     superwall: Superwall
-  ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlements: Set<Entitlement>) {
+  ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
     let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
     let combinedEntitlements = Array(deviceEntitlements) + Array(response.customerInfo.entitlements)
     let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
-    var paywallEntitlements: Set<Entitlement> = []
+    var paywallEntitlementIds: Set<String> = []
 
     if case .code = type, let paywallVc = superwall.paywallViewController {
       for id in await paywallVc.info.productIds {
-        paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+        let entitlements = Superwall.shared.entitlements.byProductId(id)
+        paywallEntitlementIds.formUnion(entitlements.map { $0.id })
       }
 
-      if paywallEntitlements.subtracting(allEntitlements).isEmpty {
+      let allEntitlementIds = Set(allEntitlements.map { $0.id })
+      if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
         let trackedEvent = await InternalSuperwallEvent.Restore(
           state: .complete,
           paywallInfo: paywallVc.info
@@ -268,7 +273,7 @@ actor WebEntitlementRedeemer {
       }
     }
 
-    return (allEntitlements, paywallEntitlements)
+    return (allEntitlements, paywallEntitlementIds)
   }
 
   private func updateSubscriptionStatus(
@@ -283,8 +288,8 @@ actor WebEntitlementRedeemer {
   private func handleCodeRedemptionCompletion(
     code: String,
     response: RedeemResponse,
-    allEntitlements: Set<Entitlement>,
-    paywallEntitlements: Set<Entitlement>,
+    allEntitlementIds: Set<String>,
+    paywallEntitlementIds: Set<String>,
     superwall: Superwall
   ) async {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
@@ -294,7 +299,7 @@ actor WebEntitlementRedeemer {
 
     func afterRedeem() async {
       if let paywallVc = superwall.paywallViewController,
-        paywallEntitlements.subtracting(allEntitlements).isEmpty,
+        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
         superwallOptions.paywalls.automaticallyDismiss {
         await superwall.dismiss(paywallVc, result: .restored)
       }
@@ -446,9 +451,10 @@ actor WebEntitlementRedeemer {
       if existingWebEntitlements != webEntitlements {
         // Get the latest device CustomerInfo and merge with web CustomerInfo
         let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
-        var mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
+        let baseCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
 
         // If using an external purchase controller, preserve entitlements that came from it
+        let mergedCustomerInfo: CustomerInfo
         if factory.makeHasExternalPurchaseController() {
           let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
 
@@ -456,14 +462,16 @@ actor WebEntitlementRedeemer {
           let activeExternalEntitlements = currentCustomerInfo.entitlements.filter { $0.isActive }
 
           // Merge with device + web
-          let allEntitlements = mergedCustomerInfo.entitlements + activeExternalEntitlements
+          let allEntitlements = baseCustomerInfo.entitlements + activeExternalEntitlements
           let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
 
           mergedCustomerInfo = CustomerInfo(
-            subscriptions: mergedCustomerInfo.subscriptions,
-            nonSubscriptions: mergedCustomerInfo.nonSubscriptions,
+            subscriptions: baseCustomerInfo.subscriptions,
+            nonSubscriptions: baseCustomerInfo.nonSubscriptions,
             entitlements: finalEntitlements.sorted { $0.id < $1.id }
           )
+        } else {
+          mergedCustomerInfo = baseCustomerInfo
         }
 
         // Update Superwall's CustomerInfo with the merged result
