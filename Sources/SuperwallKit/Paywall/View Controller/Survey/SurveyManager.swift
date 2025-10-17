@@ -71,13 +71,23 @@ final class SurveyManager {
       message: survey.message,
       preferredStyle: .actionSheet
     )
-    alertController.popoverPresentationController?.sourceView = presenter.view
-    // Calculate the center of the view
-    let centerX = presenter.view.bounds.midX
-    let centerY = presenter.view.bounds.minY
-
-    // Set the sourceRect to center the popover
-    alertController.popoverPresentationController?.sourceRect = CGRect(x: centerX, y: centerY, width: 0, height: 0)
+    if presenter.traitCollection.userInterfaceIdiom == .pad,
+      let popover = alertController.popoverPresentationController {
+      let sourceView: UIView
+      if let rootView = presenter.view.window?.rootViewController?.view {
+        sourceView = rootView
+      } else {
+        sourceView = presenter.view
+      }
+      popover.sourceView = sourceView
+      popover.sourceRect = CGRect(
+        x: sourceView.bounds.midX,
+        y: sourceView.bounds.midY,
+        width: 0,
+        height: 0
+      )
+      popover.permittedArrowDirections = []
+    }
     alertController.isModalInPresentation = true
 
     for option in options {
@@ -112,7 +122,6 @@ final class SurveyManager {
           preferredStyle: .alert
         )
         self.otherAlertController = otherAlertController
-        otherAlertController.popoverPresentationController?.sourceView = presenter.view
         otherAlertController.addTextField { textField in
           textField.addTarget(
             self,

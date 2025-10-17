@@ -66,7 +66,16 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    try? await Task.sleep(nanoseconds: 30_000_000)
+    // Poll for session ID to change with timeout (more robust than fixed sleep)
+    let startTime = Date()
+    let timeout: TimeInterval = 1.0
+    while appSessionManager.appSession.id == oldAppSession.id {
+      if Date().timeIntervalSince(startTime) > timeout {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+
     XCTAssertNotEqual(appSessionManager.appSession.id, oldAppSession.id)
   }
 
@@ -86,7 +95,15 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    try? await Task.sleep(nanoseconds: 30_000_000)
+    // Poll for endAt to become nil with timeout (more robust than fixed sleep)
+    let startTime = Date()
+    let timeout: TimeInterval = 1.0
+    while appSessionManager.appSession.endAt != nil {
+      if Date().timeIntervalSince(startTime) > timeout {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
 
     XCTAssertNil(appSessionManager.appSession.endAt)
 

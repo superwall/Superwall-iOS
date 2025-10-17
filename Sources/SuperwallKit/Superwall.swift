@@ -980,8 +980,8 @@ public final class Superwall: NSObject, ObservableObject {
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
-    dependencyContainer.configManager.reset()
     Task {
+      await dependencyContainer.configManager.reset()
       await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)

@@ -452,9 +452,9 @@ class CoreDataManagerTests: XCTestCase {
     }
     
     await fulfillment(of: [expectation], timeout: 2.0)
-    
+
     let count = await coreDataManager.countPlacement(targetPlacementName, interval: interval)
-    
+
     XCTAssertEqual(count, 2)
   }
 

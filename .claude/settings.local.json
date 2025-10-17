@@ -5,7 +5,8 @@
       "Bash(scripts/test.sh:*)",
       "Bash(xcodebuild test:*)",
       "Bash(xcodegen:*)",
-      "Bash(xcodebuild build:*)"
+      "Bash(xcodebuild build:*)",
+      "Bash(scripts/lint.sh:*)"
     ],
     "deny": [],
     "ask": []
