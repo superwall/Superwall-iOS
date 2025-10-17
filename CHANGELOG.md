@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.9.1
+
+### Fixes
+
+- Fixes a rare issue where calling reset while the SDK was still retrieving its configuration could occasionally prevent paywalls from appearing.
+
 ## 4.9.0
 
 ### Enhancements
