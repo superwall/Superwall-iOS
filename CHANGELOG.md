@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes a rare issue where calling reset while the SDK was still retrieving its configuration could occasionally prevent paywalls from appearing.
+- Fixes positioning issue for surveys in iOS 26.
 
 ## 4.9.0
 
