@@ -277,14 +277,23 @@ class ConfigManager {
   }
 
   /// Reassigns variants and preloads paywalls again.
-  func reset() {
-    guard let config = configState.value.getConfig() else {
-      return
-    }
-    choosePaywallVariants(from: config.triggers)
-    Task {
+  func reset() async {
+    do {
+      let config = try await self.configState
+        .compactMap { $0.getConfig() }
+        .throwableAsync()
+
+      choosePaywallVariants(from: config.triggers)
+
       await webEntitlementRedeemer.redeem(.existingCodes)
       await preloadPaywalls()
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "There was an error awaiting config. Couldn't reset paywall variants.",
+        error: error
+      )
     }
   }
 

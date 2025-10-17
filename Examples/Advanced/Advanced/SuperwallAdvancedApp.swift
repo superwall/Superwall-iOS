@@ -58,8 +58,8 @@ struct SuperwallAdvancedApp: App {
       purchaseController: purchaseController
     )
 
-     // Step 3 - Optionally create and set a SuperwallDelegate.
-     // Check out the Delegate class if you're using web paywalls.
+    // Step 3 - Optionally create and set a SuperwallDelegate.
+    // Check out the Delegate class if you're using web paywalls.
     delegate = Delegate()
     Superwall.shared.delegate = delegate
 

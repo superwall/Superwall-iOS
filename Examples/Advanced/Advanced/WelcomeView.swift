@@ -70,7 +70,7 @@ struct WelcomeView: View {
   @ViewBuilder
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
-      Superwall.shared.identify(userId: "345")
+      Superwall.shared.identify(userId: "678")
       Superwall.shared.setUserAttributes(["firstName": name])
       isLoggedIn = true
     }

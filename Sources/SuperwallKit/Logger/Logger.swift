@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/28/21.
 //
-// swiftlint:disable disable_print line_length
+// swiftlint:disable disable_print
 
 import Foundation
 

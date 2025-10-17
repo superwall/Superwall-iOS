@@ -36,7 +36,7 @@ final class ManagedTriggerRuleOccurrence: NSManagedObject {
   }
 
   @nonobjc
-  class func fetchRequest() -> NSFetchRequest<ManagedTriggerRuleOccurrence> {
+  static func fetchRequest() -> NSFetchRequest<ManagedTriggerRuleOccurrence> {
     return NSFetchRequest<ManagedTriggerRuleOccurrence>(entityName: entityName)
   }
 
