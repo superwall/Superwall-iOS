@@ -218,11 +218,54 @@ struct CustomerInfoDecodingTests {
     #expect(customerInfo.subscriptions.count == 1)
     #expect(customerInfo.nonSubscriptions.count == 1)
     #expect(customerInfo.entitlements.count == 1)
-    #expect(customerInfo.isBlank == false)
+    #expect(customerInfo.isPlaceholder == false)
 
     // Verify dates are properly decoded
     let subscription = customerInfo.subscriptions[0]
     let expectedPurchaseDate = Date(timeIntervalSince1970: 1704067200.0)
     #expect(subscription.purchaseDate.timeIntervalSince1970 == expectedPurchaseDate.timeIntervalSince1970)
+  }
+
+  @Test("Decode CustomerInfo with entitlements but no transactions")
+  func testCustomerInfoWithEntitlementsButNoTransactions() throws {
+    let json = """
+    {
+      "subscriptions": [],
+      "nonSubscriptions": [],
+      "entitlements": [{
+        "identifier": "premium",
+        "type": "SERVICE_LEVEL",
+        "isActive": true,
+        "productIds": ["test.product"],
+        "startsAt": 1704067200000,
+        "expiresAt": 1735689600000,
+        "store": "STRIPE"
+      }],
+      "isBlank": false
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let decoder = JSONDecoder.web2App
+    let customerInfo = try decoder.decode(CustomerInfo.self, from: data)
+
+    // Verify no transactions
+    #expect(customerInfo.subscriptions.isEmpty)
+    #expect(customerInfo.nonSubscriptions.isEmpty)
+    #expect(customerInfo.activeSubscriptionProductIds.isEmpty)
+
+    // Verify entitlements are still present and accessible
+    #expect(customerInfo.entitlements.count == 1)
+    #expect(customerInfo.isPlaceholder == false)
+
+    let entitlement = customerInfo.entitlements[0]
+    #expect(entitlement.id == "premium")
+    #expect(entitlement.isActive == true)
+    #expect(entitlement.productIds == ["test.product"])
+    #expect(entitlement.store == .stripe)
+
+    // Verify entitlementsByProductId works correctly
+    let entitlementsByProduct = customerInfo.entitlementsByProductId
+    #expect(entitlementsByProduct["test.product"]?.contains(entitlement) == true)
   }
 }

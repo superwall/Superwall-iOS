@@ -67,6 +67,7 @@
 		210BEE229900A19606803EDC /* SurveyOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03347D6B3B672A878CA2A7CA /* SurveyOption.swift */; };
 		213E7FC262106BFBC44462AC /* SWLocalizationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE7D1E1AF61D199E17B5C05 /* SWLocalizationViewController.swift */; };
 		2205A0CC8F059B3D6231C603 /* PaywallLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */; };
+		2231B31B4B9A25778069B20A /* PaddleProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */; };
 		225D6F5363B1520744EABD86 /* RedeemResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C339E7D08CDD7B1808AD4069 /* RedeemResponseTests.swift */; };
 		22B3763157DF592D4E3B27A0 /* InAppReceipt+ASN1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E80C81546752BCF32016A27 /* InAppReceipt+ASN1.swift */; };
 		234C1753A4606242CA765CA7 /* ManagedTriggerRuleOccurrence.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCFFBE357699F5CAAB803DA7 /* ManagedTriggerRuleOccurrence.swift */; };
@@ -775,6 +776,7 @@
 		8E9E1A8F57B5DCA4CD16296F /* Dictionary+Keys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Keys.swift"; sourceTree = "<group>"; };
 		8EF6F057A58A42193F279BE6 /* GetPaywallComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPaywallComponents.swift; sourceTree = "<group>"; };
 		8F0D2AB91DA66490A73D1CB5 /* PostbackAssignmentWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostbackAssignmentWrapper.swift; sourceTree = "<group>"; };
+		8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddleProduct.swift; sourceTree = "<group>"; };
 		8FC7F8602B38644BCCDAD159 /* ConfirmPaywallAssignmentOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmPaywallAssignmentOperatorTests.swift; sourceTree = "<group>"; };
 		910786130E2D7EDE2ED5452D /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		911CD5859EC1BE7E428F06C4 /* EvaluationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvaluationResult.swift; sourceTree = "<group>"; };
@@ -1894,6 +1896,7 @@
 			isa = PBXGroup;
 			children = (
 				18E059F7745769ABCA0F2A99 /* AppStoreProduct.swift */,
+				8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */,
 				D38D3A69A26709BFB52C6A3A /* Product.swift */,
 				7106327DAD1C9044E4A57DD5 /* ProductStore.swift */,
 				BC8730F0D05BFDFA12AA6309 /* ProductVariable.swift */,
@@ -3108,6 +3111,7 @@
 				B7750B3709CE8073697C9A9C /* OpacityAnimation.swift in Sources */,
 				F75F5E1D503B9391ADD812EC /* PKCS7.swift in Sources */,
 				56408549E721E2ED524DEA35 /* PaddingListener.swift in Sources */,
+				2231B31B4B9A25778069B20A /* PaddleProduct.swift in Sources */,
 				2D4E15921C454AC9B9C13709 /* PassableValue.swift in Sources */,
 				F605AA51AB24B564D3A21B07 /* Paywall.swift in Sources */,
 				A9F9A35AEC72D17C7C15DAD4 /* PaywallArchiveManager.swift in Sources */,

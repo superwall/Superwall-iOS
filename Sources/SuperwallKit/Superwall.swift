@@ -231,7 +231,7 @@ public final class Superwall: NSObject, ObservableObject {
   @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
-      if !customerInfo.isBlank {
+      if !customerInfo.isPlaceholder {
         continuation.yield(customerInfo)
       }
 
@@ -1241,17 +1241,17 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: A ``CustomerInfo`` object.
   public func getCustomerInfo() async -> CustomerInfo {
-    // If we already have a non-blank customerInfo, return it immediately
-    if !customerInfo.isBlank {
+    // If we already have a non-placeholder customerInfo, return it immediately
+    if !customerInfo.isPlaceholder {
       return customerInfo
     }
 
-    // Otherwise, await the first non-nil emission from the publisher
+    // Otherwise, await the first non-placeholder emission from the publisher
     return await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
       cancellable = $customerInfo
         .removeDuplicates()
-        .filter { !$0.isBlank }
+        .filter { !$0.isPlaceholder }
         .sink { newInfo in
           continuation.resume(returning: newInfo)
           cancellable?.cancel()

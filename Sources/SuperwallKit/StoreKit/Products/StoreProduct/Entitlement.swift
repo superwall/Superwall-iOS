@@ -74,8 +74,12 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   /// The store from which this entitlement was granted.
   ///
-  /// This will be ``ProductStore/appStore`` for entitlements from device transactions, or ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other`` for web-based entitlements.
-  public let store: EntitlementStore
+  /// This will be ``ProductStore/appStore`` for entitlements from device transactions,
+  /// or ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other``
+  /// for web-based entitlements.
+  ///
+  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  public let store: EntitlementStore?
 
   /// The purchase date of the first transaction that unlocked this entitlement.
   ///
@@ -178,7 +182,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     isActive: Bool = true,
     productIds: Set<String> = [],
     latestProductId: String? = nil,
-    store: EntitlementStore = .appStore,
+    store: EntitlementStore? = nil,
     startsAt: Date? = nil,
     renewedAt: Date? = nil,
     expiresAt: Date? = nil,
@@ -204,7 +208,8 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   /// Convenience initializer for creating an entitlement with only an ID.
   ///
-  /// Creates an active entitlement by default (`isActive: true`).
+  /// Creates an active entitlement by default (`isActive: true`), assuming it's from the App Store.
+  /// The store will be set when a transaction unlocks this entitlement.
   /// If you need to create an inactive entitlement, explicitly set `isActive: false`:
   ///
   /// ```swift
@@ -213,7 +218,11 @@ public final class Entitlement: NSObject, Codable, Sendable {
   public convenience init(
     id: String
   ) {
-    self.init(id: id, type: .serviceLevel)
+    self.init(
+      id: id,
+      type: .serviceLevel,
+      store: .appStore
+    )
   }
 
   public init(from decoder: Decoder) throws {
@@ -223,7 +232,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     self.isActive = try container.decodeIfPresent(Bool.self, forKey: .isActive) ?? false
     self.productIds = try container.decodeIfPresent(Set<String>.self, forKey: .productIds) ?? []
     self.latestProductId = try container.decodeIfPresent(String.self, forKey: .latestProductId)
-    self.store = try container.decodeIfPresent(EntitlementStore.self, forKey: .store) ?? .appStore
+    self.store = try container.decodeIfPresent(EntitlementStore.self, forKey: .store)
     self.startsAt = try container.decodeIfPresent(Date.self, forKey: .startsAt)
     self.renewedAt = try container.decodeIfPresent(Date.self, forKey: .renewedAt)
     self.expiresAt = try container.decodeIfPresent(Date.self, forKey: .expiresAt)
@@ -240,7 +249,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
     try container.encodeIfPresent(isActive, forKey: .isActive)
     try container.encodeIfPresent(productIds, forKey: .productIds)
     try container.encodeIfPresent(latestProductId, forKey: .latestProductId)
-    try container.encode(store, forKey: .store)
+    try container.encodeIfPresent(store, forKey: .store)
     try container.encodeIfPresent(startsAt, forKey: .startsAt)
     try container.encodeIfPresent(renewedAt, forKey: .renewedAt)
     try container.encodeIfPresent(expiresAt, forKey: .expiresAt)

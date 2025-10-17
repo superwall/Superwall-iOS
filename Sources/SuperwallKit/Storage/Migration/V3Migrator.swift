@@ -18,7 +18,14 @@ struct LegacyEntitlement: Codable, Hashable {
   }
 
   func toNew() -> Entitlement {
-    return Entitlement(id: id, type: type)
+    return Entitlement(
+      id: id,
+      type: type,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe
+    )
   }
 }
 

@@ -51,19 +51,21 @@ public final class CustomerInfo: NSObject, Codable {
   /// All entitlements available to the user.
   public internal(set) var entitlements: [Entitlement]
 
-  /// Internally set to `true` on first ever load of CustomerInfo`.
-  let isBlank: Bool
+  /// Indicates whether this is a placeholder CustomerInfo that hasn't been populated with real data yet.
+  /// `true` means this is the initial placeholder state before data has been loaded.
+  /// `false` means real data has been loaded (even if that data is empty).
+  let isPlaceholder: Bool
 
   init(
     subscriptions: [SubscriptionTransaction],
     nonSubscriptions: [NonSubscriptionTransaction],
     entitlements: [Entitlement],
-    isBlank: Bool = false
+    isPlaceholder: Bool = false
   ) {
     self.subscriptions = subscriptions
     self.nonSubscriptions = nonSubscriptions
     self.entitlements = entitlements
-    self.isBlank = isBlank
+    self.isPlaceholder = isPlaceholder
   }
 
   override public func isEqual(_ object: Any?) -> Bool {
@@ -75,7 +77,7 @@ public final class CustomerInfo: NSObject, Codable {
       self.nonSubscriptions == other.nonSubscriptions &&
       self.userId == other.userId &&
       self.entitlements == other.entitlements &&
-      self.isBlank == other.isBlank
+      self.isPlaceholder == other.isPlaceholder
   }
 
   override public var hash: Int {
@@ -84,7 +86,7 @@ public final class CustomerInfo: NSObject, Codable {
     hasher.combine(nonSubscriptions)
     hasher.combine(userId)
     hasher.combine(entitlements)
-    hasher.combine(isBlank)
+    hasher.combine(isPlaceholder)
     return hasher.finalize()
   }
 
@@ -93,7 +95,7 @@ public final class CustomerInfo: NSObject, Codable {
     case nonSubscriptions
     case userId
     case entitlements
-    case isBlank
+    case isPlaceholder = "isBlank"  // Keep old key for backward compatibility
   }
 
   public required init(from decoder: Decoder) throws {
@@ -101,7 +103,7 @@ public final class CustomerInfo: NSObject, Codable {
     subscriptions = try container.decode([SubscriptionTransaction].self, forKey: .subscriptions)
     nonSubscriptions = try container.decode([NonSubscriptionTransaction].self, forKey: .nonSubscriptions)
     entitlements = try container.decode([Entitlement].self, forKey: .entitlements)
-    isBlank = try container.decodeIfPresent(Bool.self, forKey: .isBlank) ?? false
+    isPlaceholder = try container.decodeIfPresent(Bool.self, forKey: .isPlaceholder) ?? false
     super.init()
   }
 
@@ -110,7 +112,7 @@ public final class CustomerInfo: NSObject, Codable {
     try container.encode(subscriptions, forKey: .subscriptions)
     try container.encode(nonSubscriptions, forKey: .nonSubscriptions)
     try container.encode(entitlements, forKey: .entitlements)
-    try container.encode(isBlank, forKey: .isBlank)
+    try container.encode(isPlaceholder, forKey: .isPlaceholder)
   }
 
   static func blank() -> CustomerInfo {
@@ -118,7 +120,7 @@ public final class CustomerInfo: NSObject, Codable {
       subscriptions: [],
       nonSubscriptions: [],
       entitlements: [],
-      isBlank: true
+      isPlaceholder: true
     )
   }
 
