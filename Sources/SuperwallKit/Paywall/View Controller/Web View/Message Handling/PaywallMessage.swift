@@ -53,6 +53,7 @@ enum PaywallMessage: Decodable, Equatable {
   case purchase(productId: String)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
+  case initiateWebCheckout(contextId: String)
   case requestStoreReview(ReviewType)
 
   // All cases below here are sent from device to paywall
@@ -80,6 +81,7 @@ enum PaywallMessage: Decodable, Equatable {
     case purchase
     case custom
     case customPlacement = "custom_placement"
+    case initiateWebCheckout = "initiate_web_checkout"
     case requestStoreReview = "request_store_review"
   }
 
@@ -95,12 +97,14 @@ enum PaywallMessage: Decodable, Equatable {
     case params
     case reviewType
     case browserType
+    case checkoutContextId
   }
 
   enum PaywallMessageError: Error {
     case decoding(String)
   }
 
+  // swiftlint:disable:next function_body_length
   init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     if let messageType = try? values.decode(MessageTypes.self, forKey: .messageType) {
@@ -148,6 +152,11 @@ enum PaywallMessage: Decodable, Equatable {
         if let name = try? values.decode(String.self, forKey: .name),
           let params = try? values.decode(JSON.self, forKey: .params) {
           self = .customPlacement(name: name, params: params)
+          return
+        }
+      case .initiateWebCheckout:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId) {
+          self = .initiateWebCheckout(contextId: checkoutContextId)
           return
         }
       case .requestStoreReview:
