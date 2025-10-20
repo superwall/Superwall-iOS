@@ -365,9 +365,17 @@ actor WebEntitlementRedeemer {
     do {
       let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
 
+      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
+      let timeout: TimeInterval
+      if case .active = cachedSubsStatus {
+        timeout = 0.5
+      } else {
+        timeout = 1
+      }
       let entitlements = try await network.redeemEntitlements(
         appUserId: factory.makeAppUserId(),
-        deviceId: factory.makeDeviceId()
+        deviceId: factory.makeDeviceId(),
+        timeout: timeout
       )
 
       // Update the latest redeem response with the entitlements.

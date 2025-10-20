@@ -325,12 +325,14 @@ extension Endpoint where
   Response == WebEntitlements {
   static func redeem(
     appUserId: String?,
-    deviceId: String
+    deviceId: String,
+    timeout: Seconds?
   ) -> Self {
     let queryItems = [URLQueryItem(name: "deviceId", value: deviceId)]
 
     return Endpoint(
       retryCount: 0,
+      timeout: timeout,
       components: Components(
         host: .web2app,
         path: "users/\(appUserId ?? deviceId)/entitlements",

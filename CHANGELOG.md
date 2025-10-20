@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.9.2
+
+### Fixes
+
+- Fixes delay in paywall presentation if there's an issue retrieving web entitlements.
+
 ## 4.9.1
 
 ### Fixes
