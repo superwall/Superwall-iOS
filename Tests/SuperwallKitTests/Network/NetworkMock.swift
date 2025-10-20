@@ -63,7 +63,8 @@ final class NetworkMock: Network {
 
   override func getEntitlements(
     appUserId: String?,
-    deviceId: String
+    deviceId: String,
+    timeout: Seconds? = nil
   ) async throws -> EntitlementsResponse {
     if let getEntitlementsResponse = getEntitlementsResponse {
       return getEntitlementsResponse
