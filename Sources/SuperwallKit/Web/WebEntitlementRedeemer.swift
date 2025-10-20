@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable type_body_length trailing_closure file_length
+// swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import UIKit
 import Foundation
@@ -434,9 +434,17 @@ actor WebEntitlementRedeemer {
     do {
       let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
+      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
+      let timeout: TimeInterval
+      if case .active = cachedSubsStatus {
+        timeout = 0.5
+      } else {
+        timeout = 1
+      }
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
-        deviceId: factory.makeDeviceId()
+        deviceId: factory.makeDeviceId(),
+        timeout: timeout
       )
 
       // Update the latest redeem response with the entitlements and customer info from the response.

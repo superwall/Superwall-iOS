@@ -5,7 +5,7 @@
 //  Created by Nguyen Cong Huy on 7/4/16.
 //  Copyright © 2016 Nguyen Cong Huy. All rights reserved.
 //
-// swiftlint:disable file_length large_tuple type_body_length line_length
+// swiftlint:disable file_length large_tuple type_body_length
 
 import UIKit
 

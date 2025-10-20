@@ -216,7 +216,7 @@ extension CheckoutWebViewController: WKNavigationDelegate {
     // Check if this should be opened externally (deep links or universal links)
     if url.isSuperwallDeepLink {
       await MainActor.run {
-        Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+        _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
       }
       return .cancel
     }

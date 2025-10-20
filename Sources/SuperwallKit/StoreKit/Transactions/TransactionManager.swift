@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length file_length line_length function_body_length
+// swiftlint:disable type_body_length file_length function_body_length
 
 import Combine
 import StoreKit
@@ -241,12 +241,12 @@ final class TransactionManager {
           let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
           let noSubsText = "No App Store subscription found, would you like to check on the web?"
 
-          // swiftlint:disable:next trailing_closure
           paywallViewController.presentAlert(
             title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
             closeActionTitle: "Cancel",
+            // swiftlint:disable:next trailing_closure
             action: {
               guard let sharedApplication = UIApplication.sharedApplication else {
                 return
