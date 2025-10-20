@@ -437,9 +437,9 @@ actor WebEntitlementRedeemer {
       let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
       let timeout: TimeInterval
       if case .active = cachedSubsStatus {
-        timeout = 0.5
-      } else {
         timeout = 1
+      } else {
+        timeout = 2
       }
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
