@@ -444,6 +444,11 @@ actor WebEntitlementRedeemer {
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
         latestRedeemResponse.customerInfo = response.customerInfo
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
+      } else {
+        // Create new redeem response with empty results. This is to make sure web entitlements
+        // are added correctly when setting the subscription status on load.
+        let latestRedeemResponse = RedeemResponse(results: [], entitlements: entitlements)
+        storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
