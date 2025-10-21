@@ -265,7 +265,9 @@ class ConfigManager {
     choosePaywallVariants(from: config.triggers)
 
     await factory.loadPurchasedProducts(config: config)
-    await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+    Task {
+      await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+    }
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
     }

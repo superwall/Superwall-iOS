@@ -412,6 +412,7 @@ actor WebEntitlementRedeemer {
     }
   }
 
+  // swiftlint:disable:next cyclomatic_complexity
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
@@ -434,17 +435,9 @@ actor WebEntitlementRedeemer {
     do {
       let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
-      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
-      let timeout: TimeInterval
-      if case .active = cachedSubsStatus {
-        timeout = 1
-      } else {
-        timeout = 2
-      }
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
-        deviceId: factory.makeDeviceId(),
-        timeout: timeout
+        deviceId: factory.makeDeviceId()
       )
 
       // Update the latest redeem response with the entitlements and customer info from the response.
@@ -495,6 +488,35 @@ actor WebEntitlementRedeemer {
           await Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
         } else {
           await Superwall.shared.internallySetSubscriptionStatus(to: .active(activeEntitlements))
+        }
+
+        // If there's a paywall, check if we should dismiss it
+        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+        if let superwall = superwall,
+          let paywallVc = superwall.paywallViewController {
+          // Get entitlement IDs of products from paywall
+          var paywallEntitlementIds: Set<String> = []
+          for id in await paywallVc.info.productIds {
+            let entitlements = Superwall.shared.entitlements.byProductId(id)
+            paywallEntitlementIds.formUnion(entitlements.map { $0.id })
+          }
+
+          // If the restored entitlements cover the paywall entitlements, track and dismiss
+          let activeEntitlementsIds = Set(activeEntitlements.map { $0.id })
+          if paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
+            let trackedEvent = await InternalSuperwallEvent.Restore(
+              state: .complete,
+              paywallInfo: paywallVc.info
+            )
+            await superwall.track(trackedEvent)
+
+            await paywallVc.webView.messageHandler.handle(PaywallMessage.restoreComplete)
+
+            let superwallOptions = factory.makeSuperwallOptions()
+            if superwallOptions.paywalls.automaticallyDismiss {
+              await superwall.dismiss(paywallVc, result: PaywallResult.restored)
+            }
+          }
         }
       }
     } catch {
