@@ -339,7 +339,10 @@ class Network {
     deviceId: String
   ) async throws -> Set<Entitlement> {
     return try await urlSession.request(
-      .redeem(appUserId: appUserId, deviceId: deviceId),
+      .redeem(
+        appUserId: appUserId,
+        deviceId: deviceId
+      ),
       data: SuperwallRequestData(factory: factory)
     ).entitlements
   }

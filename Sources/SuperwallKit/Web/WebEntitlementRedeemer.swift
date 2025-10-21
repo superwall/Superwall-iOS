@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length type_body_length trailing_closure cyclomatic_complexity
+// swiftlint:disable function_body_length type_body_length trailing_closure cyclomatic_complexity file_length
 
 import UIKit
 import Foundation
@@ -374,6 +374,11 @@ actor WebEntitlementRedeemer {
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
         latestRedeemResponse.entitlements = entitlements
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
+      } else {
+        // Create new redeem response with empty results. This is to make sure web entitlements
+        // are added correctly when setting the subscription status on load.
+        let latestRedeemResponse = RedeemResponse(results: [], entitlements: entitlements)
+        storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
@@ -383,6 +388,35 @@ actor WebEntitlementRedeemer {
         let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
         let allEntitlements = deviceEntitlements.union(entitlements)
         await Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
+
+        // If there's a paywall, check if we should dismiss it
+        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+        if let superwall = superwall,
+          let paywallVc = superwall.paywallViewController {
+          // Get entitlement IDs of products from paywall
+          var paywallEntitlementIds: Set<String> = []
+          for id in await paywallVc.info.productIds {
+            let entitlements = Superwall.shared.entitlements.byProductId(id)
+            paywallEntitlementIds.formUnion(entitlements.map { $0.id })
+          }
+
+          // If the restored entitlements cover the paywall entitlements, track and dismiss
+          let allEntitlementIds = Set(allEntitlements.map { $0.id })
+          if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
+            let trackedEvent = await InternalSuperwallEvent.Restore(
+              state: .complete,
+              paywallInfo: paywallVc.info
+            )
+            await superwall.track(trackedEvent)
+
+            await paywallVc.webView.messageHandler.handle(PaywallMessage.restoreComplete)
+
+            let superwallOptions = factory.makeSuperwallOptions()
+            if superwallOptions.paywalls.automaticallyDismiss {
+              await superwall.dismiss(paywallVc, result: PaywallResult.restored)
+            }
+          }
+        }
       }
     } catch {
       Logger.debug(
