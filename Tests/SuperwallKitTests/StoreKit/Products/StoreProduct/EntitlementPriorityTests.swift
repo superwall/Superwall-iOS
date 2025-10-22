@@ -14,11 +14,12 @@ import Testing
 ///
 /// Priority order (highest to lowest):
 /// 1. Active entitlements (isActive = true)
-/// 2. Lifetime entitlements (isLifetime = true)
-/// 3. Non-revoked entitlements (isRevoked = false)
-/// 4. Latest expiry time (furthest future expiresAt)
-/// 5. Will renew vs won't renew (willRenew = true)
-/// 6. Not in grace period vs in grace period (isInGracePeriod = false)
+/// 2. Has transaction history (latestProductId != nil)
+/// 3. Lifetime entitlements (isLifetime = true)
+/// 4. Non-revoked entitlements (isRevoked = false)
+/// 5. Latest expiry time (furthest future expiresAt)
+/// 6. Will renew vs won't renew (willRenew = true)
+/// 7. Not in grace period vs in grace period (isInGracePeriod = false)
 @Suite("Entitlement Priority Tests")
 struct EntitlementPriorityTests {
 
@@ -111,7 +112,106 @@ struct EntitlementPriorityTests {
     #expect(!inactiveSubscription.shouldTakePriorityOver(inactiveLifetime))
   }
 
-  // MARK: - Priority 2: Lifetime
+  // MARK: - Priority 2: Has Transaction History
+
+  @Test("Has transaction history takes priority over no transaction history when both inactive")
+  func testTransactionHistoryPriorityOverNoTransactionHistory() {
+    let withTransactionHistory = Entitlement(
+      id: "premium",
+      isActive: false,
+      latestProductId: "monthly_premium"
+    )
+    let noTransactionHistory = Entitlement(
+      id: "premium",
+      isActive: false,
+      latestProductId: nil
+    )
+
+    #expect(withTransactionHistory.shouldTakePriorityOver(noTransactionHistory))
+    #expect(!noTransactionHistory.shouldTakePriorityOver(withTransactionHistory))
+  }
+
+  @Test("Revoked with transaction history takes priority over inactive with no transaction history")
+  func testRevokedWithTransactionHistoryPriorityOverInactiveNoHistory() {
+    // Scenario: Refunded purchase creates revoked entitlement with transaction data
+    let revokedWithHistory = Entitlement(
+      id: "diamond",
+      isActive: false,
+      latestProductId: "superwall_diamond_8999",
+      state: .revoked
+    )
+
+    // Ghost entitlement from config with no transaction data
+    let ghostEntitlement = Entitlement(
+      id: "diamond",
+      isActive: false,
+      latestProductId: nil,
+      state: nil
+    )
+
+    // Even though revoked, having transaction history takes priority
+    #expect(revokedWithHistory.shouldTakePriorityOver(ghostEntitlement))
+    #expect(!ghostEntitlement.shouldTakePriorityOver(revokedWithHistory))
+  }
+
+  @Test("Has transaction history takes priority when both active")
+  func testTransactionHistoryPriorityWhenBothActive() {
+    let withTransactionHistory = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: "monthly_premium"
+    )
+    let noTransactionHistory = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: nil
+    )
+
+    #expect(withTransactionHistory.shouldTakePriorityOver(noTransactionHistory))
+    #expect(!noTransactionHistory.shouldTakePriorityOver(withTransactionHistory))
+  }
+
+  @Test("Both have transaction history continues to next priority check (lifetime)")
+  func testBothHaveTransactionHistoryContinueToLifetimeCheck() {
+    let lifetime = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: "lifetime_premium",
+      isLifetime: true
+    )
+    let subscription = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: "monthly_premium",
+      isLifetime: false
+    )
+
+    // Should fall through to lifetime check
+    #expect(lifetime.shouldTakePriorityOver(subscription))
+    #expect(!subscription.shouldTakePriorityOver(lifetime))
+  }
+
+  @Test("Both have no transaction history continues to next priority check (lifetime)")
+  func testBothNoTransactionHistoryContinueToLifetimeCheck() {
+    let lifetime = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: nil,
+      isLifetime: true
+    )
+    let subscription = Entitlement(
+      id: "premium",
+      isActive: true,
+      latestProductId: nil,
+      isLifetime: false
+    )
+
+    // Should fall through to lifetime check
+    #expect(lifetime.shouldTakePriorityOver(subscription))
+    #expect(!subscription.shouldTakePriorityOver(lifetime))
+  }
+
+  // MARK: - Priority 3: Lifetime
 
   @Test("Lifetime takes priority over non-lifetime when both active")
   func testLifetimePriorityOverNonLifetimeWhenBothActive() {
@@ -142,7 +242,7 @@ struct EntitlementPriorityTests {
     #expect(!lifetime2.shouldTakePriorityOver(lifetime1))
   }
 
-  // MARK: - Priority 3: Revoked Status
+  // MARK: - Priority 4: Revoked Status
 
   @Test("Non-revoked takes priority over revoked when both active")
   func testNonRevokedPriorityOverRevoked() {
@@ -180,7 +280,7 @@ struct EntitlementPriorityTests {
     #expect(!revoked.shouldTakePriorityOver(expired))
   }
 
-  // MARK: - Priority 4: Expiry Date
+  // MARK: - Priority 5: Expiry Date
 
   @Test("Later expiry takes priority when both have expiry dates")
   func testLaterExpiryPriority() {
@@ -274,7 +374,7 @@ struct EntitlementPriorityTests {
     #expect(!wontRenew.shouldTakePriorityOver(willRenew))
   }
 
-  // MARK: - Priority 5: Will Renew
+  // MARK: - Priority 6: Will Renew
 
   @Test("Will renew takes priority over won't renew")
   func testWillRenewPriority() {
@@ -325,7 +425,7 @@ struct EntitlementPriorityTests {
     #expect(!willRenewNil.shouldTakePriorityOver(willRenewFalse))
   }
 
-  // MARK: - Priority 6: Grace Period
+  // MARK: - Priority 7: Grace Period
 
   @Test("Not in grace period takes priority over in grace period")
   func testNotInGracePeriodPriority() {

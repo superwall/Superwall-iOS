@@ -305,11 +305,12 @@ extension Entitlement {
   ///
   /// Priority order (highest to lowest):
   /// 1. Active entitlements (isActive = true)
-  /// 2. Lifetime entitlements (isLifetime = true)
-  /// 3. Non-revoked entitlements (isRevoked = false)
-  /// 4. Latest expiry time (furthest future expiresAt)
-  /// 5. Will renew vs won't renew (willRenew = true)
-  /// 6. Not in grace period vs in grace period (isInGracePeriod = false)
+  /// 2. Has transaction history (latestProductId != nil)
+  /// 3. Lifetime entitlements (isLifetime = true)
+  /// 4. Non-revoked entitlements (isRevoked = false)
+  /// 5. Latest expiry time (furthest future expiresAt)
+  /// 6. Will renew vs won't renew (willRenew = true)
+  /// 7. Not in grace period vs in grace period (isInGracePeriod = false)
   func shouldTakePriorityOver(_ other: Entitlement) -> Bool {
     // Both must have same ID to be compared
     guard self.id == other.id else { return false }
@@ -319,7 +320,15 @@ extension Entitlement {
       return self.isActive
     }
 
-    // 2. Lifetime takes priority (when both have same active status)
+    // 2. Has transaction history vs no transaction history
+    let selfHasTransactionHistory = self.latestProductId != nil
+    let otherHasTransactionHistory = other.latestProductId != nil
+
+    if selfHasTransactionHistory != otherHasTransactionHistory {
+      return selfHasTransactionHistory
+    }
+
+    // 3. Lifetime takes priority (when both have same active status)
     let selfIsLifetime = self.isLifetime ?? false
     let otherIsLifetime = other.isLifetime ?? false
 
@@ -327,7 +336,7 @@ extension Entitlement {
       return selfIsLifetime
     }
 
-    // 3. Non-revoked vs revoked
+    // 4. Non-revoked vs revoked
     let selfIsRevoked = self.isRevoked ?? false
     let otherIsRevoked = other.isRevoked ?? false
 
@@ -335,7 +344,7 @@ extension Entitlement {
       return !selfIsRevoked
     }
 
-    // 4. Latest expiry time (only compare if both have expiry dates)
+    // 5. Latest expiry time (only compare if both have expiry dates)
     if let selfExpiry = self.expiresAt, let otherExpiry = other.expiresAt {
       if selfExpiry != otherExpiry {
         return selfExpiry > otherExpiry
@@ -346,7 +355,7 @@ extension Entitlement {
       return self.expiresAt != nil
     }
 
-    // 5. Will renew vs won't renew
+    // 6. Will renew vs won't renew
     // First check if one has information and the other doesn't
     if self.willRenew != nil && other.willRenew == nil {
       return true
@@ -363,7 +372,7 @@ extension Entitlement {
       return selfWillRenew
     }
 
-    // 6. Not in grace period vs in grace period
+    // 7. Not in grace period vs in grace period
     // First check if one has state information and the other doesn't
     if self.state != nil && other.state == nil {
       return true
