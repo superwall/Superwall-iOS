@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 22/06/2022.
 //
-// swiftlint:disable type_body_length function_body_length file_length
+// swiftlint:disable type_body_length file_length
 
 import Combine
 import UIKit
@@ -81,14 +81,18 @@ class ConfigManager {
 
   /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
   /// It fails quietly, falling back to the old config.
-  func refreshConfiguration() async {
-    // Make sure config already exists
-    guard let oldConfig = config else {
+  ///
+  /// - Parameter oldConfig: If provided, uses this config and bypasses feature flag check. Otherwise uses stored config and checks feature flag.
+  func refreshConfiguration(oldConfig: Config? = nil) async {
+    let wasConfigProvided = oldConfig != nil
+
+    // If oldConfig is provided, use it. Otherwise, make sure config already exists.
+    guard let oldConfig = oldConfig ?? config else {
       return
     }
 
-    // Ensure the config refresh feature flag is enabled
-    guard oldConfig.featureFlags.enableConfigRefresh == true else {
+    // Ensure the config refresh feature flag is enabled (skip check if oldConfig was provided)
+    guard wasConfigProvided || oldConfig.featureFlags.enableConfigRefresh == true else {
       return
     }
 
@@ -135,97 +139,213 @@ class ConfigManager {
     do {
       let startAt = Date()
 
-      // Retrieve cached config and determine if refresh is enabled
+      // Step 1: Determine fetch strategy based on subscription status and cached data
       let cachedConfig = storage.get(LatestConfig.self)
-      let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
-
       let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
-      let timeout: TimeInterval
+
+      let isSubscribed: Bool
       if case .active = cachedSubsStatus {
-        timeout = 0.5
+        isSubscribed = true
       } else {
-        timeout = 1
+        isSubscribed = false
       }
 
-      // Prepare tasks for fetching config and geoInfo concurrently
-      // Return a tuple including the `isUsingCached` flag
-      async let configResult: (config: Config, isUsingCached: Bool) = { [weak self] in
-        guard let self = self else {
-          throw CancellationError()
-        }
-        if let cachedConfig = cachedConfig,
-          enableConfigRefresh {
-          do {
-            let result = try await self.network.getConfig(maxRetry: 0, timeout: timeout)
-            return (result, false)
-          } catch {
-            // Return the cached config and set isUsingCached to true
-            return (cachedConfig, true)
-          }
-        } else {
-          let config = try await self.network.getConfig { attempt in
-            self.configRetryCount = attempt
-            self.configState.send(.retrying)
-          }
-          return (config, false)
-        }
-      }()
+      let shouldFetchAsync = cachedConfig != nil && isSubscribed
 
-      async let isUsingCachedEnrichment: Bool = { [weak self] in
-        guard let self = self else {
-          return false
-        }
-        let cachedEnrichment = self.storage.get(LatestEnrichment.self)
+      // Step 2: Fetch or use cached config
+      let fetchResult = try await fetchConfig(
+        cachedConfig: cachedConfig,
+        shouldFetchAsync: shouldFetchAsync,
+        startAt: startAt
+      )
+      let config = fetchResult.config
+      let isUsingCachedConfig = fetchResult.isUsingCached
+      let configFetchDuration = fetchResult.fetchDuration
 
-        // If there's no cached enrichment and config refresh is disabled,
-        // try to fetch with 1 sec timeout or fail.
-        guard
-          let cachedEnrichment = cachedEnrichment,
-          enableConfigRefresh
-        else {
-          try? await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
-          return false
-        }
+      // Step 3: Handle enrichment (use cached if async, fetch with timeout if sync)
+      let usingCachedEnrichment = await handleEnrichment(
+        shouldFetchAsync: shouldFetchAsync,
+        cachedConfig: cachedConfig
+      )
 
-        // Try fetching enrichment with 1 sec timeout. If it fails, fall
-        // back to cached version.
-        do {
-          try await self.deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
-          return false
-        } catch {
-          self.deviceHelper.enrichment = cachedEnrichment
-          return true
-        }
-      }()
-
-      let (config, isUsingCachedConfig) = try await configResult
-      let configFetchDuration = Date().timeIntervalSince(startAt)
-      let usingCachedEnrichment = await isUsingCachedEnrichment
-
-      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus =
-        isUsingCachedConfig ? .cached : .notCached
-      Task {
-        let configRefresh = InternalSuperwallEvent.ConfigRefresh(
-          buildId: config.buildId,
-          retryCount: configRetryCount,
-          cacheStatus: cacheStatus,
-          fetchDuration: configFetchDuration
+      // Step 4: Track config fetch event (only for sync path)
+      if !shouldFetchAsync {
+        trackConfigFetch(
+          config: config,
+          isUsingCachedConfig: isUsingCachedConfig,
+          configFetchDuration: configFetchDuration
         )
-        await Superwall.shared.track(configRefresh)
       }
 
+      // Step 5: Track device attributes
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
+      // Step 6: Process config and set state
       await processConfig(config, isFirstTime: true)
-
       configState.send(.retrieved(config))
 
-      Task {
-        await preloadPaywalls()
+      // Step 7: Schedule background tasks
+      scheduleBackgroundTasks(
+        shouldFetchAsync: shouldFetchAsync,
+        isUsingCachedConfig: isUsingCachedConfig,
+        usingCachedEnrichment: usingCachedEnrichment,
+        config: config
+      )
+    } catch {
+      handleConfigFetchError(error)
+    }
+  }
+
+  // MARK: - Config Fetch Helpers
+
+  private struct ConfigFetchResult {
+    let config: Config
+    let isUsingCached: Bool
+    let fetchDuration: TimeInterval
+  }
+
+  private func fetchConfig(
+    cachedConfig: Config?,
+    shouldFetchAsync: Bool,
+    startAt: Date
+  ) async throws -> ConfigFetchResult {
+    if shouldFetchAsync {
+      // Use cached config immediately for subscribed users
+      guard let cachedConfig = cachedConfig else {
+        throw NSError(
+          domain: "ConfigManager",
+          code: -1,
+          userInfo: [NSLocalizedDescriptionKey: "Cached config unexpectedly nil"]
+        )
       }
+      return ConfigFetchResult(
+        config: cachedConfig,
+        isUsingCached: true,
+        fetchDuration: 0
+      )
+    } else {
+      // Fetch config synchronously
+      let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
+
+      let isActive: Bool
+      if case .active = storage.get(SubscriptionStatusKey.self) {
+        isActive = true
+      } else {
+        isActive = false
+      }
+      let timeout: TimeInterval = isActive ? 0.5 : 1
+
+      if let cachedConfig = cachedConfig,
+        enableConfigRefresh {
+        do {
+          let result = try await network.getConfig(maxRetry: 0, timeout: timeout)
+          return ConfigFetchResult(
+            config: result,
+            isUsingCached: false,
+            fetchDuration: Date().timeIntervalSince(startAt)
+          )
+        } catch {
+          return ConfigFetchResult(
+            config: cachedConfig,
+            isUsingCached: true,
+            fetchDuration: Date().timeIntervalSince(startAt)
+          )
+        }
+      } else {
+        let config = try await network.getConfig { [weak self] attempt in
+          self?.configRetryCount = attempt
+          self?.configState.send(.retrying)
+        }
+        return ConfigFetchResult(
+          config: config,
+          isUsingCached: false,
+          fetchDuration: Date().timeIntervalSince(startAt)
+        )
+      }
+    }
+  }
+
+  private func handleEnrichment(
+    shouldFetchAsync: Bool,
+    cachedConfig: Config?
+  ) async -> Bool {
+    if shouldFetchAsync {
+      // Use cached enrichment for async path - refreshConfiguration will fetch fresh
+      if let cachedEnrichment = storage.get(LatestEnrichment.self) {
+        deviceHelper.enrichment = cachedEnrichment
+        return true
+      }
+      return false
+    } else {
+      // Fetch enrichment with timeout for sync path
+      let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
+
+      let isActive: Bool
+      if case .active = storage.get(SubscriptionStatusKey.self) {
+        isActive = true
+      } else {
+        isActive = false
+      }
+      let timeout: TimeInterval = isActive ? 0.5 : 1
+
+      let cachedEnrichment = storage.get(LatestEnrichment.self)
+
+      guard
+        let cachedEnrichment = cachedEnrichment,
+        enableConfigRefresh
+      else {
+        try? await deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
+        return false
+      }
+
+      do {
+        try await deviceHelper.getEnrichment(maxRetry: 0, timeout: timeout)
+        return false
+      } catch {
+        deviceHelper.enrichment = cachedEnrichment
+        return true
+      }
+    }
+  }
+
+  private func trackConfigFetch(
+    config: Config,
+    isUsingCachedConfig: Bool,
+    configFetchDuration: TimeInterval
+  ) {
+    Task {
+      let cacheStatus: InternalSuperwallEvent.ConfigCacheStatus =
+        isUsingCachedConfig ? .cached : .notCached
+      let configRefresh = InternalSuperwallEvent.ConfigRefresh(
+        buildId: config.buildId,
+        retryCount: configRetryCount,
+        cacheStatus: cacheStatus,
+        fetchDuration: configFetchDuration
+      )
+      await Superwall.shared.track(configRefresh)
+    }
+  }
+
+  private func scheduleBackgroundTasks(
+    shouldFetchAsync: Bool,
+    isUsingCachedConfig: Bool,
+    usingCachedEnrichment: Bool,
+    config: Config
+  ) {
+    Task {
+      await preloadPaywalls()
+    }
+
+    if shouldFetchAsync {
+      // Async path: refresh config in background (also fetches enrichment)
+      Task {
+        await refreshConfiguration(oldConfig: config)
+      }
+    } else {
+      // Sync path: fetch enrichment if needed, refresh config if using cached
       if usingCachedEnrichment {
         Task {
           try? await deviceHelper.getEnrichment()
@@ -236,22 +356,26 @@ class ConfigManager {
           await refreshConfiguration()
         }
       }
-    } catch {
-      configState.send(completion: .failure(error))
+    }
+  }
 
+  private func handleConfigFetchError(_ error: Error) {
+    configState.send(completion: .failure(error))
+
+    Task {
       let configFallback = InternalSuperwallEvent.ConfigFail(
         message: error.localizedDescription
       )
       await Superwall.shared.track(configFallback)
-
-      Logger.debug(
-        logLevel: .error,
-        scope: .superwallCore,
-        message: "Failed to Fetch Configuration",
-        info: nil,
-        error: error
-      )
     }
+
+    Logger.debug(
+      logLevel: .error,
+      scope: .superwallCore,
+      message: "Failed to Fetch Configuration",
+      info: nil,
+      error: error
+    )
   }
 
   private func processConfig(
