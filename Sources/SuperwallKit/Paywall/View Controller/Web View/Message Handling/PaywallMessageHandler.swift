@@ -158,6 +158,10 @@ final class PaywallMessageHandler: WebEventDelegate {
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
       handleCustomPlacement(name: name, params: params)
+    case .initiateWebCheckout:
+      // No-op: This is only here for backwards compatibility so that we don't log
+      // and error when decoding the message.
+      break
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
     }

@@ -11,11 +11,11 @@ import Foundation
 /// and web entitlements.
 struct RedeemResponse: Codable {
   var results: [RedemptionResult]
-  var entitlements: Set<Entitlement>
+  var customerInfo: CustomerInfo
 
   private enum CodingKeys: String, CodingKey {
     case results = "codes"
-    case entitlements
+    case customerInfo
   }
 
   var allCodes: Set<Redeemable> {
@@ -26,16 +26,22 @@ struct RedeemResponse: Codable {
 
   init(
     results: [RedemptionResult],
-    entitlements: Set<Entitlement>
+    customerInfo: CustomerInfo
   ) {
     self.results = results
-    self.entitlements = entitlements
+    self.customerInfo = customerInfo
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     self.results = try container.decode([RedemptionResult].self, forKey: .results)
-    self.entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
+    self.customerInfo = try container.decodeIfPresent(CustomerInfo.self, forKey: .customerInfo) ?? .blank()
+  }
+
+  func encode(to encoder: Encoder) throws {
+    var container = encoder.container(keyedBy: CodingKeys.self)
+    try container.encode(results, forKey: .results)
+    try container.encode(customerInfo, forKey: .customerInfo)
   }
 }
 
@@ -43,7 +49,7 @@ extension RedeemResponse: Stubbable {
   static func stub() -> RedeemResponse {
     return .init(
       results: [],
-      entitlements: []
+      customerInfo: CustomerInfo.stub()
     )
   }
 }

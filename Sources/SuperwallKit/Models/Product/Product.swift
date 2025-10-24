@@ -15,6 +15,7 @@ public final class Product: NSObject, Codable, Sendable {
   public enum StoreProductType: Codable, Sendable, Hashable {
     case appStore(AppStoreProduct)
     case stripe(StripeProduct)
+    case paddle(PaddleProduct)
   }
 
   private enum CodingKeys: String, CodingKey {
@@ -59,13 +60,22 @@ public final class Product: NSObject, Codable, Sendable {
       objcAdapter = .init(
         store: .appStore,
         appStoreProduct: product,
-        stripeProduct: nil
+        stripeProduct: nil,
+        paddleProduct: nil
       )
     case .stripe(let product):
       objcAdapter = .init(
         store: .stripe,
         appStoreProduct: nil,
-        stripeProduct: product
+        stripeProduct: product,
+        paddleProduct: nil
+      )
+    case .paddle(let product):
+      objcAdapter = .init(
+        store: .paddle,
+        appStoreProduct: nil,
+        stripeProduct: nil,
+        paddleProduct: product
       )
     }
   }
@@ -83,6 +93,8 @@ public final class Product: NSObject, Codable, Sendable {
       try container.encode(product, forKey: .storeProduct)
     case .stripe(let product):
       try container.encode(product, forKey: .storeProduct)
+    case .paddle(let product):
+      try container.encode(product, forKey: .storeProduct)
     }
   }
 
@@ -90,7 +102,7 @@ public final class Product: NSObject, Codable, Sendable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     name = try container.decodeIfPresent(String.self, forKey: .name)
 
-    // These will throw an error if the StoreProduct is not an AppStoreProduct/StripeProduct
+    // These will throw an error if the StoreProduct is not an AppStoreProduct/StripeProduct/PaddleProduct
     // or if the entitlement type is not `SERVICE_LEVEL`, which must be caught in a
     // `Throwable` and ignored in the paywall object.
     entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
@@ -101,7 +113,8 @@ public final class Product: NSObject, Codable, Sendable {
       objcAdapter = .init(
         store: .appStore,
         appStoreProduct: appStoreProduct,
-        stripeProduct: nil
+        stripeProduct: nil,
+        paddleProduct: nil
       )
       // Try to decode from swCompositeProductId, fallback to computing from type
       if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
@@ -110,18 +123,36 @@ public final class Product: NSObject, Codable, Sendable {
         id = appStoreProduct.id
       }
     } catch {
-      let stripeProduct = try container.decode(StripeProduct.self, forKey: .storeProduct)
-      type = .stripe(stripeProduct)
-      objcAdapter = .init(
-        store: .stripe,
-        appStoreProduct: nil,
-        stripeProduct: stripeProduct
-      )
-      // Try to decode from swCompositeProductId, fallback to computing from type
-      if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
-        id = decodedId
-      } else {
-        id = stripeProduct.id
+      do {
+        let stripeProduct = try container.decode(StripeProduct.self, forKey: .storeProduct)
+        type = .stripe(stripeProduct)
+        objcAdapter = .init(
+          store: .stripe,
+          appStoreProduct: nil,
+          stripeProduct: stripeProduct,
+          paddleProduct: nil
+        )
+        // Try to decode from swCompositeProductId, fallback to computing from type
+        if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+          id = decodedId
+        } else {
+          id = stripeProduct.id
+        }
+      } catch {
+        let paddleProduct = try container.decode(PaddleProduct.self, forKey: .storeProduct)
+        type = .paddle(paddleProduct)
+        objcAdapter = .init(
+          store: .paddle,
+          appStoreProduct: nil,
+          stripeProduct: nil,
+          paddleProduct: paddleProduct
+        )
+        // Try to decode from swCompositeProductId, fallback to computing from type
+        if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+          id = decodedId
+        } else {
+          id = paddleProduct.id
+        }
       }
     }
   }

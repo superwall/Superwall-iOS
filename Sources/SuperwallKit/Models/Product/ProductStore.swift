@@ -16,9 +16,17 @@ public enum ProductStore: Int, Codable, Sendable {
   /// A Stripe product.
   case stripe
 
+  /// A Paddle product.
+  case paddle
+
+  /// Other/Unknown store.
+  case other
+
   enum CodingKeys: String, CodingKey {
     case appStore = "APP_STORE"
     case stripe = "STRIPE"
+    case paddle = "PADDLE"
+    case other = "OTHER"
   }
 
   public func encode(to encoder: Encoder) throws {
@@ -28,6 +36,10 @@ public enum ProductStore: Int, Codable, Sendable {
       try container.encode(CodingKeys.appStore.rawValue)
     case .stripe:
       try container.encode(CodingKeys.stripe.rawValue)
+    case .paddle:
+      try container.encode(CodingKeys.paddle.rawValue)
+    case .other:
+      try container.encode(CodingKeys.other.rawValue)
     }
   }
 
@@ -40,14 +52,13 @@ public enum ProductStore: Int, Codable, Sendable {
       self = .appStore
     case .stripe:
       self = .stripe
+    case .paddle:
+      self = .paddle
+    case .other:
+      self = .other
     case .none:
-      throw DecodingError.valueNotFound(
-        String.self,
-        .init(
-          codingPath: [],
-          debugDescription: "Unsupported product store type."
-        )
-      )
+      // Default to other for unknown stores
+      self = .other
     }
   }
 }

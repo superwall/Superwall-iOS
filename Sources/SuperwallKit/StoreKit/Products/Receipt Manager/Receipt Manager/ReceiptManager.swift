@@ -19,6 +19,8 @@ struct Purchase: Hashable {
 }
 
 actor ReceiptManager {
+  typealias Factory = ConfigStateFactory & HasExternalPurchaseControllerFactory
+
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
   private weak var receiptDelegate: ReceiptDelegate?
@@ -26,6 +28,8 @@ actor ReceiptManager {
   private let shouldBypassAppTransactionCheck: Bool
   private let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
+  private unowned let factory: Factory
+  private unowned let storage: Storage
   static var appTransactionId: String?
   static var appId: UInt64?
 
@@ -34,11 +38,15 @@ actor ReceiptManager {
     shouldBypassAppTransactionCheck: Bool,
     productsManager: ProductsManager,
     receiptManager: ReceiptManagerType? = nil, // For testing
-    receiptDelegate: ReceiptDelegate?
+    receiptDelegate: ReceiptDelegate?,
+    factory: Factory,
+    storage: Storage
   ) {
     self.storeKitVersion = storeKitVersion
     self.shouldBypassAppTransactionCheck = shouldBypassAppTransactionCheck
     self.productsManager = productsManager
+    self.factory = factory
+    self.storage = storage
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -115,14 +123,78 @@ actor ReceiptManager {
     return values
   }
 
-  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers,
-  /// purchases and active purchases.
-  func loadPurchasedProducts() async {
-    let purchases = await manager.loadPurchases()
+  /// Loads purchased products from the receipt, storing the purchased subscription group identifiers, purchases and active purchases.
+  func loadPurchasedProducts(config: Config?) async {
+    let resolvedConfig: Config?
 
-    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
+    if let config = config {
+      resolvedConfig = config
+    } else {
+      let configState = factory.makeConfigState()
+      do {
+        resolvedConfig = try await configState
+          .compactMap { $0.getConfig() }
+          .throwableAsync()
+      } catch {
+        return
+      }
+    }
 
-    let purchasedProductIds = Set(purchases.map { $0.id })
+    guard let config = resolvedConfig else {
+      // Neither input config nor config from state is available
+      return
+    }
+
+    // Each product id has a set of entitlements
+    let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
+
+    // Merge web entitlements transaction history with native purchases
+    let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+
+    // Merge with web customer info if available
+    let baseCustomerInfo: CustomerInfo
+    if let latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
+      baseCustomerInfo = onDeviceSnapshot.customerInfo.merging(with: latestRedeemResponse.customerInfo)
+    } else {
+      baseCustomerInfo = onDeviceSnapshot.customerInfo
+    }
+
+    // If using an external purchase controller, preserve entitlements that came from it
+    // (The external controller's active entitlements won't necessarily be in device data)
+    let mergedCustomerInfo: CustomerInfo
+    if factory.makeHasExternalPurchaseController() {
+      let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
+
+      // Get entitlements that are only in current CustomerInfo (i.e., from external controller)
+      // by filtering out anything that matches device or web entitlements by ID
+      let deviceAndWebEntitlementIds = Set(baseCustomerInfo.entitlements.map { $0.id })
+      let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
+        // Keep if not in device/web OR if it's active (external controller is source of truth for active)
+        !deviceAndWebEntitlementIds.contains(entitlement.id) || entitlement.isActive
+      }
+
+      // Merge external controller entitlements with device + web
+      let allEntitlements = baseCustomerInfo.entitlements + externalOnlyEntitlements
+      let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+      mergedCustomerInfo = CustomerInfo(
+        subscriptions: baseCustomerInfo.subscriptions,
+        nonSubscriptions: baseCustomerInfo.nonSubscriptions,
+        entitlements: finalEntitlements.sorted { $0.id < $1.id }
+      )
+    } else {
+      mergedCustomerInfo = baseCustomerInfo
+    }
+
+    await MainActor.run {
+      Superwall.shared.customerInfo = mergedCustomerInfo
+    }
+
+    Superwall.shared.entitlements.setEntitlementsFromConfig(mergedCustomerInfo.entitlementsByProductId)
+
+    await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
+
+    let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
       identifiers: purchasedProductIds,
