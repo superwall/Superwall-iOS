@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.9.3
+
+### Enhancements
+
+- Zero second delay when presenting paywalls after calling `Superwall.configure` if 1. the user is subscribed, and 2. there is a cached configuration.
+
 ## 4.9.2
 
 ### Fixes
