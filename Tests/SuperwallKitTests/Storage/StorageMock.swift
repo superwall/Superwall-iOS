@@ -103,6 +103,8 @@ final class StorageMock: Storage {
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
     if keyType == LatestConfig.self {
       internalCachedConfig = value as? Config
+    } else if keyType == LatestRedeemResponse.self {
+      internalRedeemResponse = value as? RedeemResponse
     }
     super.save(value, forType: keyType)
     didSave = true
@@ -112,6 +114,8 @@ final class StorageMock: Storage {
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
     if keyType == LatestConfig.self {
       internalCachedConfig = value as? Config
+    } else if keyType == LatestRedeemResponse.self {
+      internalRedeemResponse = value as? RedeemResponse
     }
     super.save(value, forType: keyType)
     didSave = true

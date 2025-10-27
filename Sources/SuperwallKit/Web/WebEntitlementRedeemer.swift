@@ -197,7 +197,8 @@ actor WebEntitlementRedeemer {
     storage.save(response, forType: LatestRedeemResponse.self)
 
     // Merge device and web CustomerInfo
-    let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
+    // Get device-only CustomerInfo to avoid using stale cached web entitlements
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
     let baseCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
 
     // If using an external purchase controller, preserve entitlements that came from it
@@ -459,7 +460,8 @@ actor WebEntitlementRedeemer {
       let webEntitlements = Set(response.customerInfo.entitlements)
       if existingWebEntitlements != webEntitlements {
         // Get the latest device CustomerInfo and merge with web CustomerInfo
-        let deviceCustomerInfo = storage.get(LatestCustomerInfo.self) ?? .blank()
+        // Get device-only CustomerInfo to avoid using stale cached web entitlements
+        let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
         let baseCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
 
         // If using an external purchase controller, preserve entitlements that came from it

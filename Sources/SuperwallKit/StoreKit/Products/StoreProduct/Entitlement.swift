@@ -75,8 +75,9 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// The store from which this entitlement was granted.
   ///
   /// This will be ``ProductStore/appStore`` for entitlements from device transactions,
-  /// or ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other``
-  /// for web-based entitlements.
+  /// ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other``
+  /// for web-based entitlements, or ``ProductStore/superwall`` for manually granted
+  /// entitlements from the Superwall dashboard.
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let store: EntitlementStore?
@@ -321,8 +322,10 @@ extension Entitlement {
     }
 
     // 2. Has transaction history vs no transaction history
-    let selfHasTransactionHistory = self.latestProductId != nil
-    let otherHasTransactionHistory = other.latestProductId != nil
+    // SUPERWALL store entitlements are manually granted and should be treated
+    // as having transaction history even without latestProductId
+    let selfHasTransactionHistory = self.latestProductId != nil || self.store == .superwall
+    let otherHasTransactionHistory = other.latestProductId != nil || other.store == .superwall
 
     if selfHasTransactionHistory != otherHasTransactionHistory {
       return selfHasTransactionHistory

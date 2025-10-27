@@ -148,8 +148,11 @@ actor ReceiptManager {
     // Each product id has a set of entitlements
     let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
 
-    // Merge web entitlements transaction history with native purchases
+    // Get device snapshot
     let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+
+    // Save device-only CustomerInfo to storage for use when merging with web entitlements
+    storage.save(onDeviceSnapshot.customerInfo, forType: LatestDeviceCustomerInfo.self)
 
     // Merge with web customer info if available
     let baseCustomerInfo: CustomerInfo

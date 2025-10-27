@@ -19,6 +19,9 @@ public enum ProductStore: Int, Codable, Sendable {
   /// A Paddle product.
   case paddle
 
+  /// A manually granted entitlement from the Superwall dashboard.
+  case superwall
+
   /// Other/Unknown store.
   case other
 
@@ -26,6 +29,7 @@ public enum ProductStore: Int, Codable, Sendable {
     case appStore = "APP_STORE"
     case stripe = "STRIPE"
     case paddle = "PADDLE"
+    case superwall = "SUPERWALL"
     case other = "OTHER"
   }
 
@@ -38,6 +42,8 @@ public enum ProductStore: Int, Codable, Sendable {
       try container.encode(CodingKeys.stripe.rawValue)
     case .paddle:
       try container.encode(CodingKeys.paddle.rawValue)
+    case .superwall:
+      try container.encode(CodingKeys.superwall.rawValue)
     case .other:
       try container.encode(CodingKeys.other.rawValue)
     }
@@ -54,6 +60,8 @@ public enum ProductStore: Int, Codable, Sendable {
       self = .stripe
     case .paddle:
       self = .paddle
+    case .superwall:
+      self = .superwall
     case .other:
       self = .other
     case .none:

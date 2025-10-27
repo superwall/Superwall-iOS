@@ -411,4 +411,107 @@ struct WebEntitlementRedeemerTests {
 //    let savedResponse = mockStorage.savedObjects[LatestRedeemResponse.self] as? LatestRedeemResponse
 //    #expect(savedResponse != nil)
 //  }
+
+  @Test("Revoked SUPERWALL entitlement is correctly removed")
+  func testPollWebEntitlements_revokedSuperwallEntitlement() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // Create a SUPERWALL entitlement that was previously granted
+    let previousSuperwallEntitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["test_product"],
+      latestProductId: nil,  // SUPERWALL entitlements don't have latestProductId
+      store: .superwall,
+      startsAt: Date(),
+      renewedAt: nil,
+      expiresAt: nil,
+      isLifetime: true,
+      willRenew: nil,
+      state: nil,
+      offerType: nil
+    )
+
+    // Set up existing state: SUPERWALL entitlement exists in previous web response
+    let previousWebCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [previousSuperwallEntitlement]
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: previousWebCustomerInfo)
+
+    // Device has no entitlements (empty device CustomerInfo)
+    let deviceCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+
+    // Set up mock storage with both previous web response and device customer info
+    let mockStorage = StorageMock(
+      internalRedeemResponse: previousRedeemResponse,
+      cache: Cache()
+    )
+    // Manually set the device CustomerInfo in storage
+    mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // New response from backend: SUPERWALL entitlement has been REVOKED (empty entitlements)
+    let revokedResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: []  // No entitlements - the SUPERWALL one was revoked
+      )
+    )
+    mockNetwork.getEntitlementsResponse = revokedResponse
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    // Poll web entitlements - this should detect the revocation
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    // Verify the SUPERWALL entitlement was removed
+    #expect(superwall.customerInfo.entitlements.isEmpty, "CustomerInfo should have no entitlements after revocation")
+    #expect(superwall.entitlements.active.isEmpty, "Active entitlements should be empty after revocation")
+
+    // Verify the LatestRedeemResponse was updated with empty entitlements
+    let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
+    #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
+  }
 }

@@ -109,6 +109,22 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
+  /// Returns a `Set` of ``Entitlement``s belonging to a given set of `productId`s.
+  ///
+  /// - Parameter productIds: A `Set` of `String`s representing `productId`s.
+  /// - Returns: A `Set` of ``Entitlement``s.
+  public func byProductIds(_ productIds: Set<String>) -> Set<Entitlement> {
+    return queue.sync {
+      var entitlements: Set<Entitlement> = []
+      for productId in productIds {
+        if let productEntitlements = entitlementsByProductId[productId] {
+          entitlements.formUnion(productEntitlements)
+        }
+      }
+      return entitlements
+    }
+  }
+
   // MARK: - Private API
 
   func subscriptionStatusDidSet(_ subscriptionStatus: SubscriptionStatus) {
