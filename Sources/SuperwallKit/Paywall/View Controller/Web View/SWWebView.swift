@@ -236,4 +236,8 @@ extension SWWebView: WKNavigationDelegate {
   ) {
     completion?(error)
   }
+
+  func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    webView.reload()
+  }
 }
