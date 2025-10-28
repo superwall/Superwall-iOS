@@ -109,10 +109,10 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  /// Returns a `Set` of ``Entitlement``s belonging to a given set of `productId`s.
+  /// Returns a `Set` of ``Entitlement`` objects belonging to a given set of `productId`s.
   ///
-  /// - Parameter productIds: A `Set` of `String`s representing `productId`s.
-  /// - Returns: A `Set` of ``Entitlement``s.
+  /// - Parameter productIds: A `Set` of `String`s representing product identifiers.
+  /// - Returns: A `Set` of ``Entitlement`` objects.
   public func byProductIds(_ productIds: Set<String>) -> Set<Entitlement> {
     return queue.sync {
       var entitlements: Set<Entitlement> = []

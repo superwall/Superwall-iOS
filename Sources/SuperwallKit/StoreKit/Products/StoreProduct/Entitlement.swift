@@ -69,15 +69,10 @@ public final class Entitlement: NSObject, Codable, Sendable {
   ///
   /// If one or more lifetime products unlock this entitlement, the `latestProductId` will always be the product identifier of the first lifetime product.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public let latestProductId: String?
 
   /// The store from which this entitlement was granted.
-  ///
-  /// This will be ``ProductStore/appStore`` for entitlements from device transactions,
-  /// ``ProductStore/stripe``, ``ProductStore/paddle``, or ``ProductStore/other``
-  /// for web-based entitlements, or ``ProductStore/superwall`` for manually granted
-  /// entitlements from the Superwall dashboard.
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let store: EntitlementStore?
@@ -109,7 +104,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// Indicates whether the last subscription transaction associated with this
   /// entitlement was revoked.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public var isRevoked: Bool? {
     guard let state = state else {
       return nil
@@ -119,7 +114,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   /// Indicates whether the last subscription transaction associated with this entitlement will auto renew.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public let willRenew: Bool?
 
   /// The `Date` at which the subscription renews, if at all.
@@ -138,7 +133,7 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// Indicates whether the last subscription transaction associated with this
   /// entitlement is in a billing grace period state.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public var isInGracePeriod: Bool? {
     guard let state = state else {
       return nil
@@ -149,13 +144,13 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// The state of the last subscription transaction associated with the
   /// entitlement.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public let state: LatestSubscription.State?
 
   /// The type of offer that applies to the last subscription transaction that
   /// unlocks this entitlement.
   ///
-  /// This is `nil` if there aren't any transactions that unlock this entitlement.
+  /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   ///
   /// - Note: This is only non-`nil` on iOS 17.2+ or if it's a web entitlement.
   public let offerType: LatestSubscription.OfferType?
@@ -348,7 +343,8 @@ extension Entitlement {
     }
 
     // 5. Latest expiry time (only compare if both have expiry dates)
-    if let selfExpiry = self.expiresAt, let otherExpiry = other.expiresAt {
+    if let selfExpiry = self.expiresAt,
+      let otherExpiry = other.expiresAt {
       if selfExpiry != otherExpiry {
         return selfExpiry > otherExpiry
       }
