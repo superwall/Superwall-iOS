@@ -236,4 +236,20 @@ extension SWWebView: WKNavigationDelegate {
   ) {
     completion?(error)
   }
+
+  func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    webView.reload()
+
+    Task {
+      guard let paywallInfo = delegate?.info else {
+        return
+      }
+
+      let processTerminated = InternalSuperwallEvent.PaywallWebviewLoad(
+        state: .processTerminated,
+        paywallInfo: paywallInfo
+      )
+      await Superwall.shared.track(processTerminated)
+    }
+  }
 }

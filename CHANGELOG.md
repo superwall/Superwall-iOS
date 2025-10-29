@@ -10,6 +10,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `Superwall.shared.entitlements.byProductIds(_:)` to return a `Set` of `Entitlement` objects belonging to a given set of product identifiers.
 - Zero second delay when presenting paywalls after calling `Superwall.configure` if 1. the user is subscribed, and 2. there is a cached configuration.
 
+### Fixes
+
+- Allowed paywall webviews to refresh if they were terminated by the system. This typically happened in Expo apps if very large photos were used in the paywall.
+
 ## 4.9.2
 
 ### Fixes
