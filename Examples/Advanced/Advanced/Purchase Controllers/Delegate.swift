@@ -23,12 +23,6 @@ final class Delegate: SuperwallDelegate {
       await purchaseController.syncSubscriptionStatus()
     }
   }
-  
-  func customerInfoDidChange(from oldValue: SuperwallKit.CustomerInfo, to newValue: SuperwallKit.CustomerInfo) {
-    Task {
-      await purchaseController.syncSubscriptionStatus()
-    }
-  }
 }
 
 // MARK: - Option 2: Delegate when using a Purchase Controller with RevenueCat

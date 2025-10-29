@@ -21,22 +21,24 @@ final class SWPurchaseController: PurchaseController {
   /// Makes sure that Superwall knows the customer's subscription status by
   /// changing `Superwall.shared.subscriptionStatus`
   func syncSubscriptionStatus() async {
-    var products: Set<String> = []
-    for await verificationResult in Transaction.currentEntitlements {
-      switch verificationResult {
-      case .verified(let transaction):
-        products.insert(transaction.productID)
-      case .unverified:
-        break
+    /// Every time the customer info changes, the subscription status should be updated.
+    for await _ in Superwall.shared.customerInfoStream {
+      var products: Set<String> = []
+      for await verificationResult in Transaction.currentEntitlements {
+        switch verificationResult {
+        case .verified(let transaction):
+          products.insert(transaction.productID)
+        case .unverified:
+          break
+        }
       }
-    }
-
-    let deviceEntitlements = Superwall.shared.entitlements.byProductIds(products)
-    let webEntitlements = Superwall.shared.entitlements.web
-    let allEntitlements = deviceEntitlements.union(webEntitlements)
-
-    await MainActor.run {
-      Superwall.shared.subscriptionStatus = .active(allEntitlements)
+      let deviceEntitlements = Superwall.shared.entitlements.byProductIds(products)
+      let webEntitlements = Superwall.shared.entitlements.web
+      let allEntitlements = deviceEntitlements.union(webEntitlements)
+      
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .active(allEntitlements)
+      }
     }
   }
 
