@@ -60,10 +60,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     }
   }
 
-  /// The active device entitlements - doesn't include the web ones like
-  /// ``EntitlementsInfo/active``.
-  var activeDeviceEntitlements: Set<Entitlement> = []
-
   // MARK: - Private vars
   /// The backing variable for ``EntitlementsInfo/active``.
   private var backingActive: Set<Entitlement> = []

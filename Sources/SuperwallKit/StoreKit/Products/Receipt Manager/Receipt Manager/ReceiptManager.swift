@@ -172,7 +172,11 @@ actor ReceiptManager {
       // by filtering out anything that matches device or web entitlements by ID
       let deviceAndWebEntitlementIds = Set(baseCustomerInfo.entitlements.map { $0.id })
       let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
-        // Keep if not in device/web OR if it's active (external controller is source of truth for active)
+        // Keep if not in device/web OR if it's active
+        // The isActive check is necessary to ensure that when an entitlement exists in BOTH
+        // external controller (active) and device/web (inactive), both versions are passed to
+        // mergePrioritized(), which will then correctly prioritize the active version.
+        // Without this check, only the inactive device/web version would be available to merge.
         !deviceAndWebEntitlementIds.contains(entitlement.id) || entitlement.isActive
       }
 

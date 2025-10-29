@@ -31,8 +31,7 @@ final class SWPurchaseController: PurchaseController {
       }
     }
 
-    let storeProducts = await Superwall.shared.products(for: products)
-    let deviceEntitlements = Set(storeProducts.flatMap { $0.entitlements })
+    let deviceEntitlements = Superwall.shared.entitlements.byProductIds(products)
     let webEntitlements = Superwall.shared.entitlements.web
     let allEntitlements = deviceEntitlements.union(webEntitlements)
 

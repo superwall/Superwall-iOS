@@ -69,6 +69,7 @@ struct EntitlementProcessorTests {
     return Entitlement(
       id: id,
       type: .serviceLevel,
+      isActive: false,
       productIds: productIds
     )
   }
@@ -517,9 +518,11 @@ struct EntitlementProcessorTests {
       rawEntitlementsByProductId: rawEntitlementsByProductId
     )
 
-    // Should return empty sets for each product when entitlement IDs don't match
-    // The processor finds raw entitlements for the product but filters out those with mismatched IDs
-    #expect(result["product_a"]?.isEmpty == true)
+    // Should return the entitlement even though it has no transactions (as inactive)
+    // This ensures all entitlements from config are preserved
+    #expect(result["product_a"]?.count == 1)
+    #expect(result["product_a"]?.first?.id == "different_entitlement")
+    #expect(result["product_a"]?.first?.isActive == false)
   }
 
   @Test("Process complex expiration date selection")
@@ -1095,6 +1098,135 @@ struct EntitlementProcessorTests {
     #expect(subscriptions.first?.isRevoked == true)
     #expect(subscriptions.first?.willRenew == false)
     #expect(subscriptions.first?.isActive == false)
+  }
+
+  // MARK: - No Transactions Tests
+
+  @Test("Process with no transactions but single inactive entitlement")
+  func testProcessNoTransactionsSingleEntitlement() {
+    let entitlement = createEntitlement(
+      id: "entitlement_1",
+      productIds: ["product_a"]
+    )
+
+    let transactionsByEntitlement: [String: [MockTransaction]] = [:] // No transactions
+    let rawEntitlementsByProductId = ["product_a": Set([entitlement])]
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId
+    )
+
+    // Should return the entitlement even without transactions (as inactive)
+    #expect(result["product_a"]?.count == 1)
+    #expect(result["product_a"]?.first?.id == "entitlement_1")
+    #expect(result["product_a"]?.first?.isActive == false)
+  }
+
+  @Test("Process with no transactions but multiple inactive entitlements")
+  func testProcessNoTransactionsMultipleEntitlements() {
+    let entitlement1 = createEntitlement(
+      id: "entitlement_1",
+      productIds: ["product_a"]
+    )
+    let entitlement2 = createEntitlement(
+      id: "entitlement_2",
+      productIds: ["product_b"]
+    )
+    let entitlement3 = createEntitlement(
+      id: "entitlement_3",
+      productIds: ["product_c"]
+    )
+
+    let transactionsByEntitlement: [String: [MockTransaction]] = [:] // No transactions
+    let rawEntitlementsByProductId = [
+      "product_a": Set([entitlement1]),
+      "product_b": Set([entitlement2]),
+      "product_c": Set([entitlement3])
+    ]
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId
+    )
+
+    // Should return all entitlements even without transactions (all inactive)
+    #expect(result["product_a"]?.count == 1)
+    #expect(result["product_a"]?.first?.id == "entitlement_1")
+    #expect(result["product_a"]?.first?.isActive == false)
+
+    #expect(result["product_b"]?.count == 1)
+    #expect(result["product_b"]?.first?.id == "entitlement_2")
+    #expect(result["product_b"]?.first?.isActive == false)
+
+    #expect(result["product_c"]?.count == 1)
+    #expect(result["product_c"]?.first?.id == "entitlement_3")
+    #expect(result["product_c"]?.first?.isActive == false)
+  }
+
+  @Test("Process with no transactions but entitlement with multiple products")
+  func testProcessNoTransactionsEntitlementMultipleProducts() {
+    let entitlement = createEntitlement(
+      id: "premium_tier",
+      productIds: ["monthly", "annual", "lifetime"]
+    )
+
+    let transactionsByEntitlement: [String: [MockTransaction]] = [:] // No transactions
+    let rawEntitlementsByProductId = [
+      "monthly": Set([entitlement]),
+      "annual": Set([entitlement]),
+      "lifetime": Set([entitlement])
+    ]
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId
+    )
+
+    // Should return the same entitlement for all products (all inactive)
+    #expect(result["monthly"]?.count == 1)
+    #expect(result["monthly"]?.first?.id == "premium_tier")
+    #expect(result["monthly"]?.first?.isActive == false)
+
+    #expect(result["annual"]?.count == 1)
+    #expect(result["annual"]?.first?.id == "premium_tier")
+    #expect(result["annual"]?.first?.isActive == false)
+
+    #expect(result["lifetime"]?.count == 1)
+    #expect(result["lifetime"]?.first?.id == "premium_tier")
+    #expect(result["lifetime"]?.first?.isActive == false)
+  }
+
+  @Test("Process with no transactions and multiple entitlements per product")
+  func testProcessNoTransactionsMultipleEntitlementsPerProduct() {
+    let entitlement1 = createEntitlement(
+      id: "basic_tier",
+      productIds: ["product_a"]
+    )
+    let entitlement2 = createEntitlement(
+      id: "premium_tier",
+      productIds: ["product_a"]
+    )
+
+    let transactionsByEntitlement: [String: [MockTransaction]] = [:] // No transactions
+    let rawEntitlementsByProductId = [
+      "product_a": Set([entitlement1, entitlement2])
+    ]
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId
+    )
+
+    // Should return both entitlements for the product (all inactive)
+    #expect(result["product_a"]?.count == 2)
+    let entitlementIds = result["product_a"]?.map { $0.id } ?? []
+    #expect(entitlementIds.contains("basic_tier"))
+    #expect(entitlementIds.contains("premium_tier"))
+
+    // All should be inactive
+    let allInactive = result["product_a"]?.allSatisfy { !$0.isActive } ?? false
+    #expect(allInactive)
   }
 }
 

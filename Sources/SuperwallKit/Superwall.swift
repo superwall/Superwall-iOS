@@ -189,7 +189,9 @@ public final class Superwall: NSObject, ObservableObject {
           .customerInfo.entitlements ?? []
 
         // Get inactive device entitlements to preserve history
-        let inactiveDeviceEntitlements = customerInfo.entitlements.filter { !$0.isActive }
+        // Use device-only CustomerInfo to avoid using stale cached web entitlements
+        let deviceCustomerInfo = dependencyContainer.storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+        let inactiveDeviceEntitlements = deviceCustomerInfo.entitlements.filter { !$0.isActive }
 
         // Get active entitlements from external purchase controller
         let externalEntitlements: [Entitlement]

@@ -95,7 +95,7 @@ public final class CustomerInfo: NSObject, Codable {
     case nonSubscriptions
     case userId
     case entitlements
-    case isPlaceholder = "isBlank"  // Keep old key for backward compatibility
+    case isPlaceholder
   }
 
   public required init(from decoder: Decoder) throws {

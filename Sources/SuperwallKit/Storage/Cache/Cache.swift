@@ -410,7 +410,8 @@ extension Cache {
       // purchase controller and returns early if so, making the developer responsible
       // for updating subscription status.
       if !existingActiveWebEntitlements.isEmpty {
-        let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
+        let deviceCustomerInfo = read(LatestDeviceCustomerInfo.self) ?? .blank()
+        let deviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
         Task {
           await Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
         }

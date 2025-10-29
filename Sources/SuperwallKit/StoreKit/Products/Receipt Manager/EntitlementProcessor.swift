@@ -278,6 +278,19 @@ enum EntitlementProcessor {
       }
     }
 
+    // Add entitlements from config that have no transactions
+    // This ensures all entitlements are available even if never purchased
+    let processedEntitlementIds = Set(transactionsByEntitlement.keys)
+    for (productId, rawEntitlements) in rawEntitlementsByProductId {
+      for rawEntitlement in rawEntitlements {
+        // If this entitlement wasn't processed (no transactions for this entitlement ID),
+        // add it as inactive to preserve the full entitlement structure
+        if !processedEntitlementIds.contains(rawEntitlement.id) {
+          processedEntitlementsByProductId[productId, default: []].insert(rawEntitlement)
+        }
+      }
+    }
+
     return processedEntitlementsByProductId
   }
 

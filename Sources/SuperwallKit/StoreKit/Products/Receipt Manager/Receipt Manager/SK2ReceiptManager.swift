@@ -81,6 +81,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
           Entitlement(
             id: entitlement.id,
             type: entitlement.type,
+            isActive: false,  // Will be set to true by EntitlementProcessor if there are transactions
             productIds: allProductIds,
             store: entitlement.store
           )
@@ -165,13 +166,16 @@ actor SK2ReceiptManager: ReceiptManagerType {
       latestSubscriptionPeriodType = capturedOfferType
     }
 
+    var entitlements = entitlementsByProductId.values
+      .flatMap { $0 }
+    entitlements = Array(Entitlement.mergePrioritized(entitlements))
+      .sorted { $0.id < $1.id }
+
     self.purchases = purchases
     let customerInfo = CustomerInfo(
       subscriptions: subscriptions.reversed(),
       nonSubscriptions: nonSubscriptions.reversed(),
-      entitlements: entitlementsByProductId.values
-        .flatMap { $0 }
-        .sorted { $0.id < $1.id }
+      entitlements: entitlements
     )
 
     return PurchaseSnapshot(

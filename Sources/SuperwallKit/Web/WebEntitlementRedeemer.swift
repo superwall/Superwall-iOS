@@ -245,8 +245,9 @@ actor WebEntitlementRedeemer {
     type: RedeemType,
     superwall: Superwall
   ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
-    let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-    let combinedEntitlements = Array(deviceEntitlements) + Array(response.customerInfo.entitlements)
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+    let combinedEntitlements = Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
     let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
     var paywallEntitlementIds: Set<String> = []

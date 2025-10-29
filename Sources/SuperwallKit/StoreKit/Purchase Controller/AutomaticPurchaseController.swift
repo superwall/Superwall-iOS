@@ -29,8 +29,6 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
-    entitlementsInfo.activeDeviceEntitlements = entitlements
-
     await MainActor.run { [entitlements] in
       if entitlements.isEmpty {
         Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
