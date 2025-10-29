@@ -6,7 +6,8 @@
       "Bash(xcodebuild test:*)",
       "Bash(xcodegen:*)",
       "Bash(xcodebuild build:*)",
-      "Bash(scripts/lint.sh:*)"
+      "Bash(scripts/lint.sh:*)",
+      "Read(//private/tmp/**)"
     ],
     "deny": [],
     "ask": []
