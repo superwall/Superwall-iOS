@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Zero second delay when presenting paywalls after calling `Superwall.configure` if 1. the user is subscribed, and 2. there is a cached configuration.
 
+### Fixes
+
+- Allowed paywall webviews to refresh if they were terminated by the system. This typically happened in Expo apps if very large photos were used in the paywall.
+
 ## 4.9.2
 
 ### Fixes
