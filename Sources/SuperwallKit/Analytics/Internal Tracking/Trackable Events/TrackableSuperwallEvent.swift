@@ -734,6 +734,7 @@ enum InternalSuperwallEvent {
       case timeout
       case complete
       case fallback
+      case processTerminated
     }
     let state: State
 
@@ -749,6 +750,8 @@ enum InternalSuperwallEvent {
         return .paywallWebviewLoadComplete(paywallInfo: paywallInfo)
       case .fallback:
         return .paywallWebviewLoadFallback(paywallInfo: paywallInfo)
+      case .processTerminated:
+        return .paywallWebviewProcessTerminated(paywallInfo: paywallInfo)
       }
     }
     let paywallInfo: PaywallInfo
