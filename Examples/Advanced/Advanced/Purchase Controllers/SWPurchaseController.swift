@@ -48,7 +48,6 @@ final class SWPurchaseController: PurchaseController {
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: StoreProduct) async -> PurchaseResult {
     let result = await Superwall.shared.purchase(product)
-    await syncSubscriptionStatus()
     return result
   }
 
@@ -57,7 +56,6 @@ final class SWPurchaseController: PurchaseController {
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
     let result = await Superwall.shared.restorePurchases()
-    await syncSubscriptionStatus()
     return result
   }
 }
