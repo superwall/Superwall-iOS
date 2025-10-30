@@ -36,7 +36,7 @@ struct SuperwallAdvancedApp: App {
 
     // Step 3 - Optionally create and set a SuperwallDelegate.
     // Check out the Delegate class if you're using web paywalls.
-    delegate = Delegate(purchaseController: purchaseController)
+    delegate = Delegate()
     Superwall.shared.delegate = delegate
 
     // Step 4 - Sync Subscription Status
@@ -54,7 +54,7 @@ struct SuperwallAdvancedApp: App {
     // Step 2 - Configure Superwall
     /// Always configure Superwall first. Pass in the `purchaseController` you just created.
     Superwall.configure(
-      apiKey: "pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d",
+      apiKey: apiKey,
       purchaseController: purchaseController
     )
 
