@@ -514,4 +514,277 @@ struct WebEntitlementRedeemerTests {
     let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
     #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
   }
+
+  @Test("External purchase controller with mixed web + appStore entitlements - polling removes web entitlements")
+  func testPollWebEntitlements_externalPurchaseController_mixedEntitlements_webRemoved() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    // Create a simple external purchase controller (doesn't conform to InternalPurchaseController, so isInternal = false)
+    class ExternalPurchaseController: PurchaseController {
+      @MainActor
+      func purchase(product: StoreProduct) async -> PurchaseResult {
+        return .purchased
+      }
+
+      @MainActor
+      func restorePurchases() async -> RestorationResult {
+        return .restored
+      }
+    }
+
+    // Set the external purchase controller on the dependency container BEFORE creating Superwall
+    let externalController = ExternalPurchaseController()
+    dependencyContainer.purchaseController = externalController
+
+    // Create a web entitlement that was previously granted
+    let webEntitlement = Entitlement(
+      id: "premium_web",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["web_product"],
+      latestProductId: nil,
+      store: .superwall,
+      startsAt: Date(),
+      renewedAt: nil,
+      expiresAt: nil,
+      isLifetime: true,
+      willRenew: nil,
+      state: nil,
+      offerType: nil
+    )
+
+    // Create an appStore entitlement from external purchase controller
+    let appStoreEntitlement = Entitlement(
+      id: "premium_appstore",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["appstore_product"],
+      latestProductId: "appstore_product",
+      store: .appStore,
+      startsAt: Date(),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(3600 * 24 * 30), // 30 days from now
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+
+    // Set up superwall instance
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // Set up mixed entitlements in subscription status
+    // With external purchase controller, we need to set this directly since internallySetSubscriptionStatus returns early
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, appStoreEntitlement])
+    }
+
+    // Previous web response had the web entitlement
+    let previousWebCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [webEntitlement]
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: previousWebCustomerInfo)
+
+    // Device has no entitlements (empty device CustomerInfo)
+    let deviceCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+
+    // Set up mock storage
+    let mockStorage = StorageMock(
+      internalRedeemResponse: previousRedeemResponse,
+      cache: Cache()
+    )
+    mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // New response from backend: web entitlement has been REVOKED (empty entitlements)
+    let revokedResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: []  // No web entitlements anymore
+      )
+    )
+    mockNetwork.getEntitlementsResponse = revokedResponse
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: externalController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    // Poll web entitlements - this should remove the web entitlement but keep the appStore one
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    // Verify that ONLY the appStore entitlement remains (superwall/web-granted entitlement was filtered out)
+    #expect(superwall.customerInfo.entitlements.count == 1, "CustomerInfo should have only 1 entitlement")
+    #expect(superwall.customerInfo.entitlements.first?.id == "premium_appstore", "Only appStore entitlement should remain")
+    #expect(superwall.customerInfo.entitlements.first?.store == .appStore, "Remaining entitlement should be appStore")
+
+    // Note: We don't verify superwall.entitlements.active here because with an external purchase controller,
+    // subscriptionStatus is not updated by internallySetSubscriptionStatus (it returns early).
+    // The external purchase controller owns subscriptionStatus, so we only verify customerInfo.
+
+    // Verify the LatestRedeemResponse was updated with empty entitlements (no superwall/web-granted entitlements)
+    let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
+    #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no superwall/web-granted entitlements")
+  }
+
+  @Test("External purchase controller with only web entitlements - polling removes all web entitlements")
+  func testPollWebEntitlements_externalPurchaseController_onlyWebEntitlements_allRemoved() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    // Create a simple external purchase controller (doesn't conform to InternalPurchaseController, so isInternal = false)
+    class ExternalPurchaseController: PurchaseController {
+      @MainActor
+      func purchase(product: StoreProduct) async -> PurchaseResult {
+        return .purchased
+      }
+
+      @MainActor
+      func restorePurchases() async -> RestorationResult {
+        return .restored
+      }
+    }
+
+    // Set the external purchase controller on the dependency container BEFORE creating Superwall
+    let externalController = ExternalPurchaseController()
+    dependencyContainer.purchaseController = externalController
+
+    // Create a web entitlement that was previously granted
+    let webEntitlement = Entitlement(
+      id: "premium_web",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["web_product"],
+      latestProductId: nil,
+      store: .superwall,
+      startsAt: Date(),
+      renewedAt: nil,
+      expiresAt: nil,
+      isLifetime: true,
+      willRenew: nil,
+      state: nil,
+      offerType: nil
+    )
+
+    // Set up superwall instance
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // Set up only web entitlement in subscription status
+    await superwall.internallySetSubscriptionStatus(
+      to: .active([webEntitlement]),
+      superwall: superwall
+    )
+
+    // Previous web response had the web entitlement
+    let previousWebCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [webEntitlement]
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: previousWebCustomerInfo)
+
+    // Device has no entitlements (empty device CustomerInfo)
+    let deviceCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+
+    // Set up mock storage
+    let mockStorage = StorageMock(
+      internalRedeemResponse: previousRedeemResponse,
+      cache: Cache()
+    )
+    mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // New response from backend: web entitlement has been REVOKED (empty entitlements)
+    let revokedResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: []  // No web entitlements anymore
+      )
+    )
+    mockNetwork.getEntitlementsResponse = revokedResponse
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: externalController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    // Poll web entitlements - this should remove all web entitlements
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    // Verify that all entitlements were removed (since the only one was a web entitlement)
+    #expect(superwall.customerInfo.entitlements.isEmpty, "CustomerInfo should have no entitlements")
+
+    // Note: We don't verify subscriptionStatus or entitlements.active here because with an external purchase controller,
+    // subscriptionStatus is not updated by internallySetSubscriptionStatus (it returns early).
+    // The external purchase controller owns subscriptionStatus, so we only verify customerInfo.
+
+    // Verify the LatestRedeemResponse was updated with empty entitlements
+    let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
+    #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
+  }
 }

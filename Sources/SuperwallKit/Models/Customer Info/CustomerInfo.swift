@@ -171,6 +171,57 @@ public final class CustomerInfo: NSObject, Codable {
       entitlements: mergedEntitlements.sorted { $0.id < $1.id }
     )
   }
+
+  /// Creates a merged CustomerInfo from device, web, and external purchase controller sources.
+  /// This is a factory method that reads from storage and merges all entitlement sources.
+  ///
+  /// When using an external purchase controller, subscriptionStatus is the source of truth for active entitlements.
+  /// We preserve inactive device entitlements for history, and all web entitlements.
+  ///
+  /// - Parameters:
+  ///   - storage: Storage to read device and web CustomerInfo from
+  ///   - subscriptionStatus: The subscription status containing entitlements from external purchase controller
+  /// - Returns: A new CustomerInfo with all sources merged
+  static func forExternalPurchaseController(
+    storage: Storage,
+    subscriptionStatus: SubscriptionStatus
+  ) -> CustomerInfo {
+    // Get web CustomerInfo
+    let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
+
+    // Get device CustomerInfo to preserve history
+    // Use device-only CustomerInfo to avoid using stale cached web entitlements
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+
+    // Merge device and web transactions (subscriptions and nonSubscriptions)
+    // This handles transaction deduplication by transaction ID
+    let baseCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+
+    // For entitlements: only take inactive device entitlements
+    // Active entitlements come from the external purchase controller (source of truth)
+    let inactiveDeviceEntitlements = deviceCustomerInfo.entitlements.filter { !$0.isActive }
+
+    // Get active appStore entitlements from external controller (the source of truth for active status)
+    // Filter for appStore ones only to avoid duplicating web-granted entitlements
+    let externalEntitlements: [Entitlement]
+    switch subscriptionStatus {
+    case .active(let activeEntitlements):
+      externalEntitlements = activeEntitlements.filter { $0.store == .appStore }
+    case .inactive, .unknown:
+      externalEntitlements = []
+    }
+
+    // Merge: active from external controller + all web + inactive device
+    // This gives us complete history while respecting external controller as source of truth for active status
+    let allEntitlements = externalEntitlements + webCustomerInfo.entitlements + inactiveDeviceEntitlements
+    let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+    return CustomerInfo(
+      subscriptions: baseCustomerInfo.subscriptions,
+      nonSubscriptions: baseCustomerInfo.nonSubscriptions,
+      entitlements: finalEntitlements.sorted { $0.id < $1.id }
+    )
+  }
 }
 
 extension CustomerInfo: Stubbable {
