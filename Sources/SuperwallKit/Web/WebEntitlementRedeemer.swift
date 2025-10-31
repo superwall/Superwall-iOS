@@ -417,8 +417,10 @@ actor WebEntitlementRedeemer {
           }
         }
       } else {
-        // Don't proceed at all if there's no web2app config
-        return
+        // Don't proceed at all if there's no web2app config and it's not a UI test
+        if !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
+          return
+        }
       }
     }
 
