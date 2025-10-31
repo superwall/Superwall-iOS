@@ -29,8 +29,6 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
-    entitlementsInfo.activeDeviceEntitlements = entitlements
-
     await MainActor.run { [entitlements] in
       if entitlements.isEmpty {
         Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
@@ -55,7 +53,7 @@ extension AutomaticPurchaseController: PurchaseController {
     let hasRestored = result == .restored
     await factory.refreshSK1Receipt()
     if hasRestored {
-      await factory.loadPurchasedProducts()
+      await factory.loadPurchasedProducts(config: nil)
     }
 
     return result

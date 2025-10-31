@@ -40,12 +40,16 @@ final class RedeemResponseTests {
         }
       }
     ],
-    "entitlements": [
-      {
-        "identifier": "abc",
-        "type": "SERVICE_LEVEL"
-      }
-    ]
+    "customerInfo": {
+      "subscriptions": [],
+      "nonSubscriptions": [],
+      "entitlements": [
+        {
+          "identifier": "abc",
+          "type": "SERVICE_LEVEL"
+        }
+      ]
+    }
   }
   """.data(using: .utf8)!
 
@@ -57,7 +61,11 @@ final class RedeemResponseTests {
         "code": "redemption_8c7916a7-d48bs-42c1-8eae-a58e0a57d37d"
       }
     ],
-    "entitlements": []
+    "customerInfo": {
+      "subscriptions": [],
+      "nonSubscriptions": [],
+      "entitlements": []
+    }
   }
   """.data(using: .utf8)!
 
@@ -73,7 +81,11 @@ final class RedeemResponseTests {
         }
       }
     ],
-    "entitlements": []
+    "customerInfo": {
+      "subscriptions": [],
+      "nonSubscriptions": [],
+      "entitlements": []
+    }
   }
   """.data(using: .utf8)!
 
@@ -84,7 +96,7 @@ final class RedeemResponseTests {
 
     #expect(response.results.count == 1)
     #expect(response.results.first?.code == "redemption_8c7916a7-d48b-42c1-8eae-a58e0a57d37d")
-    #expect(!response.entitlements.isEmpty)
+    #expect(!response.customerInfo.entitlements.isEmpty)
   }
 
   @Test("All codes extracts the codes")
@@ -106,7 +118,7 @@ final class RedeemResponseTests {
     default:
       Issue.record("Incorrect result type")
     }
-    #expect(response.entitlements.isEmpty)
+    #expect(response.customerInfo.entitlements.isEmpty)
   }
 
   @Test("Code is expired")
@@ -121,6 +133,6 @@ final class RedeemResponseTests {
     default:
       Issue.record("Incorrect result type")
     }
-    #expect(response.entitlements.isEmpty)
+    #expect(response.customerInfo.entitlements.isEmpty)
   }
 }
