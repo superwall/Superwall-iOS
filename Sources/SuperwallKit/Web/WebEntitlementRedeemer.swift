@@ -247,19 +247,21 @@ actor WebEntitlementRedeemer {
       }
 
       let allEntitlementIds = Set(allEntitlements.map { $0.id })
-      if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
-        let trackedEvent = await InternalSuperwallEvent.Restore(
-          state: .complete,
-          paywallInfo: paywallVc.info
-        )
-        await superwall.track(trackedEvent)
-        await paywallVc.webView.messageHandler.handle(.restoreComplete)
-      } else {
-        await trackRestorationFailure(
-          paywallViewController: paywallVc,
-          message: "Failed to restore subscriptions from the web",
-          superwall: superwall
-        )
+      if !paywallEntitlementIds.isEmpty {
+        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
+          let trackedEvent = await InternalSuperwallEvent.Restore(
+            state: .complete,
+            paywallInfo: paywallVc.info
+          )
+          await superwall.track(trackedEvent)
+          await paywallVc.webView.messageHandler.handle(.restoreComplete)
+        } else {
+          await trackRestorationFailure(
+            paywallViewController: paywallVc,
+            message: "Failed to restore subscriptions from the web",
+            superwall: superwall
+          )
+        }
       }
     }
 
@@ -289,6 +291,7 @@ actor WebEntitlementRedeemer {
 
     func afterRedeem() async {
       if let paywallVc = superwall.paywallViewController,
+        !paywallEntitlementIds.isEmpty,
         paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
         superwallOptions.paywalls.automaticallyDismiss {
         await superwall.dismiss(paywallVc, result: .restored)
@@ -498,7 +501,8 @@ actor WebEntitlementRedeemer {
 
           // If the restored entitlements cover the paywall entitlements, track and dismiss
           let activeEntitlementsIds = Set(activeEntitlements.map { $0.id })
-          if paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
+          if !paywallEntitlementIds.isEmpty,
+            paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
             let trackedEvent = await InternalSuperwallEvent.Restore(
               state: .complete,
               paywallInfo: paywallVc.info
