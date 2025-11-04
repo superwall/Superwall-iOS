@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.9.4
+
+### Fixes
+
+- Fixes issue after purchasing web products where localized strings weren't correct in SDK wrappers like Expo.
+
 ## 4.9.3
 
 ### Enhancements
