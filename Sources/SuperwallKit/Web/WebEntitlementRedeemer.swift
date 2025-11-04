@@ -248,7 +248,7 @@ actor WebEntitlementRedeemer {
 
       let allEntitlementIds = Set(allEntitlements.map { $0.id })
       if !paywallEntitlementIds.isEmpty {
-        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
+        if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
           let trackedEvent = await InternalSuperwallEvent.Restore(
             state: .complete,
             paywallInfo: paywallVc.info
