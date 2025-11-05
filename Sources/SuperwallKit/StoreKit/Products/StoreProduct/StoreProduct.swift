@@ -11,6 +11,8 @@
 //
 // Created by Andrés Boedo on 7/16/21.
 // Updated by Yusuf Tör from Superwall on 11/8/22.
+// swiftlint:disable file_length
+
 import Foundation
 import StoreKit
 
@@ -365,4 +367,63 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   ) {
     self.init(SK2StoreProduct(sk2Product: sk2Product, entitlements: entitlements))
   }
+
+  /// Creates a blank StoreProduct with empty/default values.
+  static func blank() -> StoreProduct {
+    return StoreProduct(BlankStoreProduct())
+  }
+}
+
+// MARK: - Blank StoreProduct Implementation
+private struct BlankStoreProduct: StoreProductType {
+  var productIdentifier: String { "" }
+  var entitlements: Set<Entitlement> { [] }
+  var price: Decimal { 0 }
+  var subscriptionGroupIdentifier: String? { nil }
+  var swProduct: SWProduct {
+    SWProduct.blank()
+  }
+  var localizedPrice: String { "" }
+  var localizedSubscriptionPeriod: String { "" }
+  var period: String { "" }
+  var periodly: String { "" }
+  var periodWeeks: Int { 0 }
+  var periodWeeksString: String { "0" }
+  var periodMonths: Int { 0 }
+  var periodMonthsString: String { "0" }
+  var periodYears: Int { 0 }
+  var periodYearsString: String { "0" }
+  var periodDays: Int { 0 }
+  var periodDaysString: String { "0" }
+  var dailyPrice: String { "" }
+  var weeklyPrice: String { "" }
+  var monthlyPrice: String { "" }
+  var yearlyPrice: String { "" }
+  var hasFreeTrial: Bool { false }
+  var trialPeriodEndDate: Date? { nil }
+  var trialPeriodEndDateString: String { "" }
+  var localizedTrialPeriodPrice: String { "" }
+  var trialPeriodPrice: Decimal { 0 }
+  var trialPeriodDays: Int { 0 }
+  var trialPeriodDaysString: String { "0" }
+  var trialPeriodWeeks: Int { 0 }
+  var trialPeriodWeeksString: String { "0" }
+  var trialPeriodMonths: Int { 0 }
+  var trialPeriodMonthsString: String { "0" }
+  var trialPeriodYears: Int { 0 }
+  var trialPeriodYearsString: String { "0" }
+  var trialPeriodText: String { "" }
+  var locale: String { "" }
+  var languageCode: String? { nil }
+  var currencyCode: String? { nil }
+  var currencySymbol: String? { nil }
+  var regionCode: String? { nil }
+  var subscriptionPeriod: SubscriptionPeriod? { nil }
+  var introductoryDiscount: StoreProductDiscount? { nil }
+  var discounts: [StoreProductDiscount] { [] }
+
+  @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 8.0, *)
+  var isFamilyShareable: Bool { false }
+
+  func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String { "" }
 }

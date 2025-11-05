@@ -45,7 +45,8 @@ Pod::Spec.new do |s|
       "Sources/SuperwallKit/**/*.xcassets",
       "Sources/SuperwallKit/**/*.xcdatamodeld",
       "Sources/SuperwallKit/**/*.cer",
-      "Sources/SuperwallKit/**/PrivacyInfo.xcprivacy"
+      "Sources/SuperwallKit/**/PrivacyInfo.xcprivacy",
+      "Sources/SuperwallKit/**/*.lproj"
     ]
   }
 

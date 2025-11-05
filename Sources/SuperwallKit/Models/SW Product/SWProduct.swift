@@ -116,4 +116,56 @@ struct SWProduct: Codable {
       introductoryPrice = SWProductDiscount(offer: offer, fromProduct: product)
     }
   }
+
+  init(
+    localizedDescription: String,
+    localizedTitle: String,
+    price: Decimal,
+    priceLocale: String,
+    productIdentifier: String,
+    isDownloadable: Bool,
+    downloadContentLengths: [Double],
+    contentVersion: String,
+    downloadContentVersion: String,
+    isFamilyShareable: Bool?,
+    subscriptionGroupIdentifier: String?,
+    discounts: [SWProductDiscount]?,
+    subscriptionPeriod: SWProductSubscriptionPeriod?,
+    introductoryPrice: SWProductDiscount?
+  ) {
+    self.localizedDescription = localizedDescription
+    self.localizedTitle = localizedTitle
+    self.price = price
+    self.priceLocale = priceLocale
+    self.productIdentifier = productIdentifier
+    self.isDownloadable = isDownloadable
+    self.downloadContentLengths = downloadContentLengths
+    self.contentVersion = contentVersion
+    self.downloadContentVersion = downloadContentVersion
+    self.isFamilyShareable = isFamilyShareable
+    self.subscriptionGroupIdentifier = subscriptionGroupIdentifier
+    self.discounts = discounts
+    self.subscriptionPeriod = subscriptionPeriod
+    self.introductoryPrice = introductoryPrice
+  }
+
+  /// Creates a blank SWProduct with empty/default values.
+  static func blank() -> SWProduct {
+    SWProduct(
+      localizedDescription: "",
+      localizedTitle: "",
+      price: 0,
+      priceLocale: "",
+      productIdentifier: "",
+      isDownloadable: false,
+      downloadContentLengths: [],
+      contentVersion: "",
+      downloadContentVersion: "",
+      isFamilyShareable: nil,
+      subscriptionGroupIdentifier: nil,
+      discounts: nil,
+      subscriptionPeriod: nil,
+      introductoryPrice: nil
+    )
+  }
 }

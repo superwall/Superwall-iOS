@@ -533,7 +533,7 @@ enum InternalSuperwallEvent {
     enum State {
       case start(StoreProduct)
       case fail(TransactionError)
-      case abandon(StoreProduct)
+      case abandon(StoreProduct?)
       case complete(StoreProduct, StoreTransaction?, TransactionType)
       case restore(RestoreType)
       case timeout
@@ -554,7 +554,7 @@ enum InternalSuperwallEvent {
         )
       case .abandon(let product):
         return .transactionAbandon(
-          product: product,
+          product: product ?? .blank(),
           paywallInfo: paywallInfo
         )
       case let .complete(product, model, type):
@@ -582,7 +582,8 @@ enum InternalSuperwallEvent {
     let transaction: StoreTransaction?
     let source: Source
     let isObserved: Bool
-    let storeKitVersion: SuperwallOptions.StoreKitVersion
+    let storeKitVersion: SuperwallOptions.StoreKitVersion?
+    var store: ProductStore = .appStore
     var demandScore: Int?
     var demandTier: String?
 
@@ -597,7 +598,9 @@ enum InternalSuperwallEvent {
       switch state {
       case .abandon(let product):
         var params = paywallInfo.audienceFilterParams()
-        params["abandoned_product_id"] = product.productIdentifier
+        if let product = product {
+          params["abandoned_product_id"] = product.productIdentifier
+        }
         return params
       default:
         return paywallInfo.audienceFilterParams()
@@ -612,10 +615,12 @@ enum InternalSuperwallEvent {
         storefrontId = await Storefront.current?.id ?? ""
       }
       var placementParams: [String: Any] = [
-        "store": "APP_STORE",
-        "source": source.rawValue,
-        "storekit_version": storeKitVersion.description
+        "store": store.description,
+        "source": source.rawValue
       ]
+      if let storeKitVersion = storeKitVersion {
+        placementParams["storekit_version"] = storeKitVersion.description
+      }
 
       switch state {
       case .restore:

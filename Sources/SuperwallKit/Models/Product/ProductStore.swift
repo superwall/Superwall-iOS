@@ -28,6 +28,24 @@ public enum ProductStore: Int, Codable, Sendable {
   /// Other/Unknown store.
   case other
 
+  /// Returns the string representation of the product store (e.g., "APP_STORE", "STRIPE")
+  public var description: String {
+    switch self {
+    case .appStore:
+      return CodingKeys.appStore.rawValue
+    case .stripe:
+      return CodingKeys.stripe.rawValue
+    case .paddle:
+      return CodingKeys.paddle.rawValue
+    case .playStore:
+      return CodingKeys.playStore.rawValue
+    case .superwall:
+      return CodingKeys.superwall.rawValue
+    case .other:
+      return CodingKeys.other.rawValue
+    }
+  }
+
   enum CodingKeys: String, CodingKey {
     case appStore = "APP_STORE"
     case stripe = "STRIPE"
