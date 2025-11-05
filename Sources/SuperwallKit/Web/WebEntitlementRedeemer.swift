@@ -252,6 +252,8 @@ actor WebEntitlementRedeemer {
       }
 
       let allEntitlementIds = Set(allEntitlements.map { $0.id })
+      // Need to check that entitlements aren't empty because if they are then
+      // it can't be claimed that you've restored the entitlements.
       if !paywallEntitlementIds.isEmpty {
         if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
           let trackedEvent = await InternalSuperwallEvent.Restore(

@@ -190,8 +190,24 @@ struct WebEntitlementRedeemerTests {
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
     )
+
+    // Create entitlement that will be restored
+    let entitlement = Entitlement(id: "premium", isActive: true)
+
+    // Create a product with the entitlement
+    let product = Product(
+      name: "Test Product",
+      type: .appStore(.init(id: "test_product")),
+      id: "test_product",
+      entitlements: [entitlement]
+    )
+
+    // Create paywall with the product
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [product])
+
     let paywallVc = await PaywallViewControllerMock(
-      paywall: .stub(),
+      paywall: paywall,
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
@@ -202,8 +218,12 @@ struct WebEntitlementRedeemerTests {
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
     let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // Map the product ID to its entitlement so restore tracking works
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
+
     let existingCode = "TESTCODE"
-    let existingEntitlements: Set<Entitlement> = [.stub()]
+    let existingEntitlements: Set<Entitlement> = [entitlement]
     let existingResult = RedemptionResult.success(
       code: existingCode,
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: existingEntitlements)
@@ -241,9 +261,9 @@ struct WebEntitlementRedeemerTests {
       superwall: superwall
     )
 
-    // Set expectations
+    // Set expectations - use the same entitlement created for the paywall
     let code = "TESTCODE"
-    let entitlements: Set<Entitlement> = [.stub()]
+    let entitlements: Set<Entitlement> = [entitlement]
     let result = RedemptionResult.success(
       code: code,
       redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
