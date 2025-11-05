@@ -609,7 +609,7 @@ enum InternalSuperwallEvent {
         storefrontId = await Storefront.current?.id ?? ""
       }
       var placementParams: [String: Any] = [
-        "store": store.rawValue,
+        "store": store.description,
         "source": source.rawValue
       ]
       if let storeKitVersion = storeKitVersion {
