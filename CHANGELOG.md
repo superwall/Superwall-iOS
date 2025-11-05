@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.9.4
 
+### Enhancements
+
+- Adds `transaction_abandon` capability to web checkout payment sheet.
+
 ### Fixes
 
 - Fixes issue after purchasing web products where localized strings weren't correct in SDK wrappers like Expo.

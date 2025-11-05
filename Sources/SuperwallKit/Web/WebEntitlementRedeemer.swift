@@ -106,6 +106,10 @@ actor WebEntitlementRedeemer {
       allCodes.insert(redeemable)
 
       if let paywallVc = superwall.paywallViewController {
+        // Mark that redeem called so that we stop the transaction abandon tracking
+        await MainActor.run {
+          paywallVc.markRedeemInitiated()
+        }
         let trackedEvent = await InternalSuperwallEvent.Restore(
           state: .start,
           paywallInfo: paywallVc.info
