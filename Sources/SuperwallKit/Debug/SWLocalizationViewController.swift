@@ -14,8 +14,8 @@ final class SWLocalizationViewController: UITableViewController {
 	}
 	private var completion: (String) -> Void
   private lazy var allRowModels: [LocalizationGrouping] = {
-		return localizationManager.localizationGroupings
-	}()
+    return localizationManager.localizationGroupings
+  }()
 	private lazy var searchBar: UISearchBar = {
 		let searchBar = UISearchBar()
 		searchBar.searchBarStyle = UISearchBar.Style.default

@@ -30,6 +30,7 @@ struct DeviceTemplate: Codable {
   var radioType: String
   var interfaceStyle: String
   var isLowPowerModeEnabled: Bool
+  var isApplePayAvailable: Bool
   var bundleId: String
   var appInstallDate: String
   var isMac: Bool
@@ -38,6 +39,7 @@ struct DeviceTemplate: Codable {
   var daysSinceLastPaywallView: Int?
   var minutesSinceLastPaywallView: Int?
   var totalPaywallViews: Int
+  var totalReviewRequests: Int
   var utcDate: String
   var localDate: String
   var utcTime: String
@@ -47,6 +49,7 @@ struct DeviceTemplate: Codable {
   var isSandbox: String
   var activeEntitlements: Set<String>
   var activeEntitlementObjects: Set<Entitlement>
+  var customerInfo: CustomerInfo
   var activeProducts: Set<String>
   var subscriptionStatus: String
   var isFirstAppOpen: Bool
@@ -59,6 +62,9 @@ struct DeviceTemplate: Codable {
   var capabilitiesConfig: JSON
   var platformWrapper: String?
   var platformWrapperVersion: String?
+  var swiftVersion: String
+  var compilerVersion: String
+  var deviceId: String
 
   func toDictionary() -> [String: Any] {
     guard let data = try? JSONEncoder().encode(self) else {

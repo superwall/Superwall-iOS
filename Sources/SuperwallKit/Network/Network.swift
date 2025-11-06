@@ -46,7 +46,10 @@ class Network {
   @objc
   @MainActor
   private func applicationStateDidChange() {
-    applicationStateSubject.send(UIApplication.shared.applicationState)
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return
+    }
+    applicationStateSubject.send(sharedApplication.applicationState)
   }
 
   func sendEvents(events: EventsRequest) async {
@@ -91,7 +94,7 @@ class Network {
           appUserId: factory.identityManager.userId,
           apiKey: factory.storage.apiKey,
           config: factory.configManager.config,
-          locale: factory.deviceHelper.locale
+          locale: factory.deviceHelper.localeIdentifier
         ),
         data: SuperwallRequestData(factory: factory)
       )
@@ -153,7 +156,8 @@ class Network {
       var config = try await urlSession.request(
         .config(
           maxRetry: maxRetry ?? options.maxConfigRetryCount,
-          apiKey: factory.storage.apiKey
+          apiKey: factory.storage.apiKey,
+          timeout: timeout
         ),
         data: SuperwallRequestData(
           factory: factory,
@@ -330,14 +334,17 @@ class Network {
     )
   }
 
-  func redeemEntitlements(
+  func getEntitlements(
     appUserId: String?,
     deviceId: String
-  ) async throws -> Set<Entitlement> {
+  ) async throws -> EntitlementsResponse {
     return try await urlSession.request(
-      .redeem(appUserId: appUserId, deviceId: deviceId),
+      .entitlements(
+        appUserId: appUserId,
+        deviceId: deviceId
+      ),
       data: SuperwallRequestData(factory: factory)
-    ).entitlements
+    )
   }
 
   func getIntroOfferToken(

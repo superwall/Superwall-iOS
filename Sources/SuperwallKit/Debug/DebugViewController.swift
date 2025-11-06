@@ -225,7 +225,7 @@ final class DebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first(where: { $0.databaseId == paywallDatabaseId })?.identifier
+			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
 			paywallIdentifier = paywallId
     } else {
       return
@@ -402,16 +402,16 @@ final class DebugViewController: UIViewController {
       message: "Which version?",
       options: [
         AlertOption(
-          title: "With Free Trial",
+          title: "With Intro Offer",
           action: { [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: true)
+            self?.loadAndShowPaywall(introOfferAvailable: true)
           },
           style: .default
         ),
         AlertOption(
-          title: "Without Free Trial",
+          title: "Without Intro Offer",
           action: {  [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: false)
+            self?.loadAndShowPaywall(introOfferAvailable: false)
           },
           style: .default
         )
@@ -420,7 +420,7 @@ final class DebugViewController: UIViewController {
     )
   }
 
-  func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
+  func loadAndShowPaywall(introOfferAvailable: Bool = false) {
     guard let paywallIdentifier = paywallIdentifier else {
       return
     }
@@ -431,7 +431,7 @@ final class DebugViewController: UIViewController {
     let presentationRequest = factory.makePresentationRequest(
       .fromIdentifier(
         paywallIdentifier,
-        freeTrialOverride: freeTrialAvailable
+        freeTrialOverride: introOfferAvailable
       ),
       paywallOverrides: nil,
       presenter: self,
@@ -474,7 +474,8 @@ final class DebugViewController: UIViewController {
           let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
-        case .dismissed:
+        case .dismissed,
+          .willDismiss:
           break
         case .presentationError(let error):
           Logger.debug(

@@ -166,6 +166,9 @@ public enum RedemptionResult: Codable {
         /// The subscription was purchased via Stripe.
         case stripe(customerId: String, subscriptionIds: [String])
 
+        /// The subscription was purchased via Paddle.
+        case paddle(customerId: String, subscriptionIds: [String])
+
         /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
 
@@ -173,6 +176,8 @@ public enum RedemptionResult: Codable {
           case store
           case stripeCustomerId
           case stripeSubscriptionIds
+          case paddleCustomerId
+          case paddleSubscriptionIds
         }
 
         struct DynamicCodingKey: CodingKey {
@@ -195,6 +200,13 @@ public enum RedemptionResult: Codable {
               customerId: stripeCustomerId,
               subscriptionIds: stripeSubscriptionIds
             )
+          case "PADDLE":
+            let paddleCustomerId = try container.decode(String.self, forKey: .paddleCustomerId)
+            let paddleSubscriptionIds = try container.decode([String].self, forKey: .paddleSubscriptionIds)
+            self = .paddle(
+              customerId: paddleCustomerId,
+              subscriptionIds: paddleSubscriptionIds
+            )
           default:
             // Decode entire JSON payload to capture additional fields
             let json = try JSON(from: decoder)
@@ -212,6 +224,10 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
+          case let .paddle(customerId, subscriptionIds):
+            try container.encode("PADDLE", forKey: .store)
+            try container.encode(customerId, forKey: .paddleCustomerId)
+            try container.encode(subscriptionIds, forKey: .paddleSubscriptionIds)
           case let .stripe(customerId, subscriptionIds):
             try container.encode("STRIPE", forKey: .store)
             try container.encode(customerId, forKey: .stripeCustomerId)
@@ -241,6 +257,11 @@ public enum RedemptionResult: Codable {
           case let .stripe(customerId, subscriptionIds):
             return RedemptionResultObjc.StoreIdentifiers(
               stripeWithCustomerId: customerId,
+              subscriptionIds: subscriptionIds
+            )
+          case let .paddle(customerId, subscriptionIds):
+            return RedemptionResultObjc.StoreIdentifiers(
+              paddleWithCustomerId: customerId,
               subscriptionIds: subscriptionIds
             )
           case let .unknown(store, additionalInfo):
@@ -279,12 +300,16 @@ public enum RedemptionResult: Codable {
       /// The ID of the experiment that the paywall belongs to.
       public let experimentId: String
 
+      /// The product identifier associated with the paywall.
+      public let productIdentifier: String?
+
       enum CodingKeys: String, CodingKey {
         case identifier
         case placementName
         case placementParams
         case variantId
         case experimentId
+        case productIdentifier
       }
 
       public init(from decoder: Decoder) throws {
@@ -293,6 +318,7 @@ public enum RedemptionResult: Codable {
         placementName = try container.decode(String.self, forKey: .placementName)
         variantId = try container.decode(String.self, forKey: .variantId)
         experimentId = try container.decode(String.self, forKey: .experimentId)
+        productIdentifier = try container.decodeIfPresent(String.self, forKey: .productIdentifier)
 
         let paramsJSON = try container.decode(JSON.self, forKey: .placementParams)
         placementParams = paramsJSON.dictionaryObject ?? [:]
@@ -304,6 +330,7 @@ public enum RedemptionResult: Codable {
         try container.encode(placementName, forKey: .placementName)
         try container.encode(variantId, forKey: .variantId)
         try container.encode(experimentId, forKey: .experimentId)
+        try container.encodeIfPresent(productIdentifier, forKey: .productIdentifier)
 
         let jsonData = JSON(placementParams)
         try container.encode(jsonData, forKey: .placementParams)
@@ -315,7 +342,8 @@ public enum RedemptionResult: Codable {
           placementName: placementName,
           placementParams: placementParams,
           variantId: variantId,
-          experimentId: experimentId
+          experimentId: experimentId,
+          productIdentifier: productIdentifier
         )
       }
     }

@@ -150,4 +150,43 @@ final class SuperwallDelegateAdapter {
       objcDelegate.willRedeemLink?()
     }
   }
+
+  @MainActor
+  func handleSuperwallDeepLink(
+    _ fullURL: URL,
+    pathComponents: [String],
+    queryParameters: [String: String]
+  ) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.handleSuperwallDeepLink(
+        fullURL,
+        pathComponents: pathComponents,
+        queryParameters: queryParameters
+      )
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.handleSuperwallDeepLink?(
+        fullURL: fullURL,
+        pathComponents: pathComponents,
+        queryParameters: queryParameters
+      )
+    }
+  }
+
+  @MainActor
+  func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
+  ) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.customerInfoDidChange(
+        from: oldValue,
+        to: newValue
+      )
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.customerInfoDidChange?(
+        from: oldValue,
+        to: newValue
+      )
+    }
+  }
 }

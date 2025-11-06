@@ -271,6 +271,7 @@ public final class PaywallInfo: NSObject {
       "close_reason": closeReason.description,
       "is_scroll_enabled": isScrollEnabled as Any,
       "intro_offer_eligibility": introOfferEligibility.description
+      "app_transaction_id": ReceiptManager.appTransactionId as Any
     ]
 
     var loadingVars: [String: Any] = [:]

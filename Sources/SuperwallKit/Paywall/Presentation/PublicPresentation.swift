@@ -4,6 +4,7 @@
 //
 //  Created by Jake Mor on 10/9/21.
 //
+// swiftlint:disable function_body_length
 
 import Combine
 import Foundation
@@ -131,14 +132,26 @@ extension Superwall {
             switch state {
             case .presented(let paywallInfo):
               handler?.onPresentHandler?(paywallInfo)
+            case let .willDismiss(paywallInfo, paywallResult):
+              if let handler = handler?.onWillDismissHandler {
+                handler(paywallInfo, paywallResult)
+              } else {
+                handler?.onWillDismissHandlerObjc?(
+                  paywallInfo,
+                  paywallResult.convertForObjc(),
+                  paywallResult.product
+                )
+              }
             case let .dismissed(paywallInfo, paywallResult):
               if let handler = handler?.onDismissHandler {
                 handler(paywallInfo, paywallResult)
               } else {
                 handler?.onDismissHandlerObjc?(
-                  paywallInfo, paywallResult.convertForObjc(), paywallResult.product)
+                  paywallInfo,
+                  paywallResult.convertForObjc(),
+                  paywallResult.product
+                )
               }
-
               switch paywallResult {
               case .purchased,
                 .restored:

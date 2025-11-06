@@ -111,7 +111,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_attributes_withCustomParams() async {
     // Given
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": "hello",
@@ -137,7 +137,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containsDollar() async {
     // Given
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "$myCustomParam": "hello",
@@ -163,7 +163,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containArray() async {
     // Given
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": ["hello"],
@@ -189,7 +189,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_containDictionary() async {
     // Given
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": ["one": "two"],
@@ -205,18 +205,18 @@ final class TrackingLogicTests: XCTestCase {
     XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
     XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertNil(parameters.audienceFilterParams["myCustomParam"])
+    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! [String: String], ["one": "two"])
     XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
     XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
     XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertNil(parameters.delegateParams["myCustomParam"])
+    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! [String: String], ["one": "two"])
     XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
   }
 
   func testProcessParameters_superwallEvent_customParams_containsDate() async {
     // Given
     let date = Date(timeIntervalSince1970: 1_650_534_735)
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": date,
@@ -243,7 +243,7 @@ final class TrackingLogicTests: XCTestCase {
   func testProcessParameters_superwallEvent_customParams_containsUrl() async {
     // Given
     let url = URL(string: "https://www.google.com")!
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": url,
@@ -269,7 +269,7 @@ final class TrackingLogicTests: XCTestCase {
 
   func testProcessParameters_superwallEvent_customParams_nilValue() async {
     // Given
-    let event = InternalSuperwallEvent.Attributes(
+    let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
       audienceFilterParams: [
         "myCustomParam": nil,

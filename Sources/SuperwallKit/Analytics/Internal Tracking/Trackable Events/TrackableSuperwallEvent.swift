@@ -95,7 +95,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
-  struct Attributes: TrackableSuperwallEvent {
+  struct UserAttributes: TrackableSuperwallEvent {
     let appInstalledAtString: String
     var superwallEvent: SuperwallEvent {
       return .userAttributes(audienceFilterParams)
@@ -104,6 +104,16 @@ enum InternalSuperwallEvent {
       return [
         "application_installed_at": appInstalledAtString
       ]
+    }
+    var audienceFilterParams: [String: Any] = [:]
+  }
+
+  struct IntegrationAttributes: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .integrationAttributes(audienceFilterParams)
+    }
+    func getSuperwallParameters() async -> [String: Any] {
+      return [:]
     }
     var audienceFilterParams: [String: Any] = [:]
   }
@@ -119,9 +129,8 @@ enum InternalSuperwallEvent {
       .deepLink(url: url)
     }
     let url: URL
-
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
+    private var parameters: [String: Any] {
+      [
         "url": url.absoluteString,
         "path": url.path,
         "pathExtension": url.pathExtension,
@@ -132,20 +141,24 @@ enum InternalSuperwallEvent {
       ]
     }
 
+    func getSuperwallParameters() async -> [String: Any] {
+      return parameters
+    }
+
     var audienceFilterParams: [String: Any] {
+      var parameters: [String: Any] = parameters
       guard
         let urlComponents = URLComponents(
           url: url,
           resolvingAgainstBaseURL: false
         )
       else {
-        return [:]
+        return parameters
       }
       guard let queryItems = urlComponents.queryItems else {
-        return [:]
+        return parameters
       }
 
-      var queryStrings: [String: Any] = [:]
       for queryItem in queryItems {
         guard
           !queryItem.name.isEmpty,
@@ -157,18 +170,18 @@ enum InternalSuperwallEvent {
         let name = queryItem.name
         let lowerCaseValue = value.lowercased()
         if lowerCaseValue == "true" {
-          queryStrings[name] = true
+          parameters[name] = true
         } else if lowerCaseValue == "false" {
-          queryStrings[name] = false
+          parameters[name] = false
         } else if let int = Int(value) {
-          queryStrings[name] = int
+          parameters[name] = int
         } else if let double = Double(value) {
-          queryStrings[name] = double
+          parameters[name] = double
         } else {
-          queryStrings[name] = value
+          parameters[name] = value
         }
       }
-      return queryStrings
+      return parameters
     }
   }
 
@@ -293,6 +306,12 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct CustomerInfoDidChange: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .customerInfoDidChange
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
   struct TriggerFire: TrackableSuperwallEvent {
     let triggerResult: InternalTriggerResult
     var superwallEvent: SuperwallEvent {
@@ -403,6 +422,7 @@ enum InternalSuperwallEvent {
       if let demandTier = demandTier {
         params["attr_demandTier"] = demandTier
       }
+      params["user_attributes"] = Superwall.shared.userAttributes
       return params
     }
     var audienceFilterParams: [String: Any] {
@@ -513,7 +533,7 @@ enum InternalSuperwallEvent {
     enum State {
       case start(StoreProduct)
       case fail(TransactionError)
-      case abandon(StoreProduct)
+      case abandon(StoreProduct?)
       case complete(StoreProduct, StoreTransaction?, TransactionType)
       case restore(RestoreType)
       case timeout
@@ -534,7 +554,7 @@ enum InternalSuperwallEvent {
         )
       case .abandon(let product):
         return .transactionAbandon(
-          product: product,
+          product: product ?? .blank(),
           paywallInfo: paywallInfo
         )
       case let .complete(product, model, type):
@@ -562,7 +582,8 @@ enum InternalSuperwallEvent {
     let transaction: StoreTransaction?
     let source: Source
     let isObserved: Bool
-    let storeKitVersion: SuperwallOptions.StoreKitVersion
+    let storeKitVersion: SuperwallOptions.StoreKitVersion?
+    var store: ProductStore = .appStore
     var demandScore: Int?
     var demandTier: String?
 
@@ -577,7 +598,9 @@ enum InternalSuperwallEvent {
       switch state {
       case .abandon(let product):
         var params = paywallInfo.audienceFilterParams()
-        params["abandoned_product_id"] = product.productIdentifier
+        if let product = product {
+          params["abandoned_product_id"] = product.productIdentifier
+        }
         return params
       default:
         return paywallInfo.audienceFilterParams()
@@ -592,10 +615,12 @@ enum InternalSuperwallEvent {
         storefrontId = await Storefront.current?.id ?? ""
       }
       var placementParams: [String: Any] = [
-        "store": "APP_STORE",
-        "source": source.rawValue,
-        "storekit_version": storeKitVersion.description
+        "store": store.description,
+        "source": source.rawValue
       ]
+      if let storeKitVersion = storeKitVersion {
+        placementParams["storekit_version"] = storeKitVersion.description
+      }
 
       switch state {
       case .restore:
@@ -617,10 +642,7 @@ enum InternalSuperwallEvent {
         if let demandTier = demandTier {
           placementParams["attr_demandTier"] = demandTier
         }
-        let appleSearchAttributes = Superwall.shared.userAttributes.filter {
-          $0.key.hasPrefix("apple_search_ads_")
-        }
-        placementParams += appleSearchAttributes
+        placementParams["user_attributes"] = Superwall.shared.userAttributes
         fallthrough
       case .start,
         .abandon,
@@ -723,6 +745,7 @@ enum InternalSuperwallEvent {
       case timeout
       case complete
       case fallback
+      case processTerminated
     }
     let state: State
 
@@ -738,6 +761,8 @@ enum InternalSuperwallEvent {
         return .paywallWebviewLoadComplete(paywallInfo: paywallInfo)
       case .fallback:
         return .paywallWebviewLoadFallback(paywallInfo: paywallInfo)
+      case .processTerminated:
+        return .paywallWebviewProcessTerminated(paywallInfo: paywallInfo)
       }
     }
     let paywallInfo: PaywallInfo
@@ -763,6 +788,7 @@ enum InternalSuperwallEvent {
       case fail(Error)
       case complete
       case retry(Int)
+      case missingProducts(Set<String>)
     }
     let state: State
     var audienceFilterParams: [String: Any] {
@@ -785,6 +811,12 @@ enum InternalSuperwallEvent {
           paywallInfo: paywallInfo,
           attempt: attempt
         )
+      case .missingProducts(let identifiers):
+        return .paywallProductsLoadMissingProducts(
+          triggeredPlacementName: placementData?.name,
+          paywallInfo: paywallInfo,
+          identifiers: identifiers
+        )
       }
     }
     let paywallInfo: PaywallInfo
@@ -797,6 +829,9 @@ enum InternalSuperwallEvent {
       ]
       if case .fail(let error) = state {
         params["error_message"] = error.safeLocalizedDescription
+      }
+      if case .missingProducts(let identifiers) = state {
+        params["missing_products"] = Array(identifiers).joined(separator: ",")
       }
       params += await paywallInfo.placementParams()
       return params
@@ -985,6 +1020,22 @@ enum InternalSuperwallEvent {
       return [
         "request_url": requestURLString,
         "response": responseString
+      ]
+    }
+  }
+
+  struct ReviewRequested: TrackableSuperwallEvent {
+    let count: Int
+    let type: ReviewType
+    var superwallEvent: SuperwallEvent {
+      return .reviewRequested(count: count)
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "count": count,
+        "type": type.rawValue
       ]
     }
   }

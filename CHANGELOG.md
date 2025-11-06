@@ -2,6 +2,156 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.0
+
+### Enhancements
+
+- Adds `CustomerInfo`. This contains the latest information about all of the customer's purchase and subscription data. This can be accessed via the published property `Superwall.shared.customerInfo`, via `Superwall.shared.getCustomerInfo()`, via the `AsyncStream` `customerInfoStream`, or via the delegate method `customerInfoDidChange(from:to:)`. This updates the `Entitlement` object to have more properties such as `startsAt` and `expiredAt`. These can be used in audience filters.
+- Adds `Superwall.shared.entitlements.byProductIds(_:)` to return a `Set` of `Entitlement` objects belonging to a given set of product identifiers.
+- Changes the `PurchaseController` examples to account for `CustomerInfo` changes.
+- Adds `transaction_abandon` capability to web checkout payment sheet.
+
+### Fixes
+
+- Fixes issue after purchasing web products where localized strings weren't correct in SDK wrappers like Expo.
+
+## 4.9.3
+
+### Enhancements
+
+- Zero second delay when presenting paywalls after calling `Superwall.configure` if 1. the user is subscribed, and 2. there is a cached configuration.
+
+### Fixes
+
+- Allowed paywall webviews to refresh if they were terminated by the system. This typically happened in Expo apps if very large photos were used in the paywall.
+
+## 4.9.2
+
+### Fixes
+
+- Fixes delay in paywall presentation if there's an issue retrieving web entitlements.
+
+## 4.9.1
+
+### Fixes
+
+- Fixes a rare issue where calling reset while the SDK was still retrieving its configuration could occasionally prevent paywalls from appearing.
+- Fixes positioning issue for surveys in iOS 26.
+
+## 4.9.0
+
+### Enhancements
+
+- Adds ability to open the web checkout page in a payment sheet style web view.
+- Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
+- Adds the `SuperwallOption` `shouldBypassAppTransactionCheck`, which allows you to opt out of `AppTransaction.shared` usage during SDK initialization. This is useful in testing environments to avoid triggering the Apple ID sign-in prompt.
+- Adds `device.isApplePayAvailable` to the device attributes that can be used in audience filters.
+- Adds `onWillDismiss` to the `PaywallPresentationHandler`, which is called when the paywall will dismiss.
+
+### Enhancements
+
+- Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
+
+### Fixes
+
+- Changes "With/Without Free Trial" to "With/Without Intro Offer" in the debugger.
+- Fixes rare crash caused by a concurrency issue.
+- Fixes issue where no internet would cause a minute delay for paywall presentation.
+
+## 4.8.3
+
+### Enhancements
+
+- Adds support for redeeming web entitlements with Paddle.
+
+## 4.8.2
+
+### Enhancements
+
+- Adds `review_requested` event when a review is requested.
+
+## 4.8.1
+
+### Enhancements
+
+- Adds ability to specify a custom height and corner radius for the drawer presentation style.
+- Adds ability to grant an entitlement to anyone.
+- Adds `Superwall.shared.setIntegrationAttributes(_:)` which allows you to set attributes for third-party integrations.
+- Adds `Superwall.shared.setIntegrationAttribute(_:_:)` for setting individual integration attributes.
+- Adds `Superwall.shared.integrationAttributes` to get the attributes you've set.
+- Adds the ability to ask for an App Store review from a paywall tap action.
+- Adds a popup presentation style.
+- Adds product retrying if StoreKit 2 encounters an error while fetching products.
+- Tracks a `paywallProductsLoad_missingProducts` event if the products were missing.
+
+### Fixes
+
+- Fixes issue with tracking `demandScore` and `demandTier` on paywall open.
+- Fixes a rare crash due to memory allocation issues.
+- Fixes a rare crash due to a race condition during data processing.
+- Fixes issue where weekly StoreKit 2 products might have the wrong daily price.
+
+## 4.7.0
+
+### Enhancements
+
+- Adds `placementsInX` which can be used in audience filters. This means you can make a filter that will only fire if a placement has been fired X times in the past hour/day/week/year/since install.
+- Updates Superscript version to 1.0.2. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.2).
+- Adds `swiftVersion` and `compilerVersion` to the device attributes.
+
+### Fixes
+
+- Makes sure web entitlements are always redeemed the first time the app loads from a cold start.
+- Fixes issue where the Superwall config wasn't timing out and falling back to the cached config after 1 second.
+
+## 4.6.0
+
+### Enhancements
+
+- Adds the `PaywallOption` `overrideProductsByName`, which can be used to globally override products on any paywall that have a given name. This can also be set after configure has been called by setting `Superwall.shared.overrideProductsByName`.
+- Adds the `PaywallOption` `shouldShowWebPurchaseConfirmationAlert`, which shows a localized alert confirming a successful purchase via web checkout. Defaults to `true`.
+
+### Fixes
+
+- Fixes issue where deep links passed to the SDK before configure completes aren’t handled after configure finishes.
+
+## 4.5.2
+
+### Fixes
+
+- Replace `UIApplication.shared` with `sharedApplication` accessed via KVC so that SuperwallKit can be used in app extensions.
+- Fixes issue where the paywall debugger would crash when viewing template variables if products weren't loaded.
+- Fixes issue where an in-app web checkout wouldn't close Safari after purchase.
+
+## 4.5.1
+
+### Fixes
+
+- Fixes issue where `webViewLoad_fail` events weren't being tracked.
+
+## 4.5.0
+
+### Enhancements
+
+- Adds `handleSuperwallDeepLink(_:pathComponents:queryParameters:)` to the `SuperwallDelegate`. This is called when all deep links from the web checkout are handled. This link may arrive as either a universal link (`https://yoursubdomain.superwall.app/app-link/...`) or a custom URL scheme (`subdomain://yoursubdomain.superwall.app/app-link/...`).
+- Adds `url`, `path`, `pathExtension`, `lastPathComponent`, `host`, `query`, and `fragment` to the `deepLink_open` event, which you can use in audience filters.
+
+### Fixes
+
+- Fixes a race condition when identifying and then immediately getting user attributes.
+- Removes usage of private API `LSApplicationWorkspace`.
+
+## 4.4.2
+
+### Enhancements
+
+- Updates Superscript to 0.2.8.
+
+### Fixes
+
+- Fix for old versions of Xcode not building due to not supporting `.winBack` transaction offer types.
+- Fixes an issue where the paywall could be presented from the wrong scene in multi-window apps.
+
 ## 4.4.1
 
 ### Fixes

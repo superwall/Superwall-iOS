@@ -8,7 +8,7 @@
 import Foundation
 
 struct GameControllerEvent: Codable {
-  var eventName: String = "game_controller_input"
+  var eventName = "game_controller_input"
   var controllerElement: String
   var value: Double
   var x: Double

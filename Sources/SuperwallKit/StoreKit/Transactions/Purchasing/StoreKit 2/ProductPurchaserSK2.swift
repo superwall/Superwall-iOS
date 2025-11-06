@@ -108,7 +108,10 @@ final class ProductPurchaserSK2: Purchasing {
       let result: StoreKit.Product.PurchaseResult
 
       #if os(visionOS)
-      guard let scene = await UIApplication.shared.connectedScenes.first else {
+      guard let sharedApplication = UIApplication.sharedApplication else {
+        return .cancelled
+      }
+      guard let scene = await sharedApplication.connectedScenes.first else {
         return .cancelled
       }
       result = try await product.purchase(confirmIn: scene, options: options)
@@ -119,7 +122,7 @@ final class ProductPurchaserSK2: Purchasing {
       switch result {
       case let .success(.verified(transaction)):
         await transaction.finish()
-        await receiptManager.loadPurchasedProducts()
+        await receiptManager.loadPurchasedProducts(config: nil)
         let result = PurchaseResult.purchased
         await coordinator.storeTransaction(transaction, result: result)
         return result

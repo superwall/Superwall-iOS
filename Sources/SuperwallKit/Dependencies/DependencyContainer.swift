@@ -40,6 +40,7 @@ final class DependencyContainer {
   var attributionPoster: AttributionPoster!
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
+  var attributionFetcher: AttributionFetcher!
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -68,8 +69,11 @@ final class DependencyContainer {
 
     receiptManager = ReceiptManager(
       storeKitVersion: options.storeKitVersion,
+      shouldBypassAppTransactionCheck: options.shouldBypassAppTransactionCheck,
       productsManager: productsManager,
-      receiptDelegate: purchaseController as? ReceiptDelegate
+      receiptDelegate: purchaseController as? ReceiptDelegate,
+      factory: self,
+      storage: storage
     )
 
     webEntitlementRedeemer = WebEntitlementRedeemer(
@@ -115,10 +119,17 @@ final class DependencyContainer {
       factory: self
     )
 
+    attributionFetcher = AttributionFetcher(
+      storage: storage,
+      deviceHelper: deviceHelper,
+      webEntitlementRedeemer: webEntitlementRedeemer
+    )
+
     attributionPoster = AttributionPoster(
       storage: storage,
       network: network,
-      configManager: configManager
+      configManager: configManager,
+      attributionFetcher: attributionFetcher
     )
 
     placementsQueue = PlacementsQueue(
@@ -193,7 +204,7 @@ extension DependencyContainer: TransactionManagerFactory {
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
-    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.locale)
+    return PaywallViewControllerCache(deviceLocaleString: deviceHelper.localeIdentifier)
   }
 }
 
@@ -209,7 +220,7 @@ extension DependencyContainer: DeviceHelperFactory {
   func makeDeviceInfo() -> DeviceInfo {
     return DeviceInfo(
       appInstalledAtString: deviceHelper.appInstalledAtString,
-      locale: deviceHelper.locale
+      locale: deviceHelper.localeIdentifier
     )
   }
 
@@ -219,7 +230,6 @@ extension DependencyContainer: DeviceHelperFactory {
 
   func makeSessionDeviceAttributes() async -> [String: Any] {
     var attributes = await deviceHelper.getTemplateDevice()
-
     attributes["utcDate"] = nil
     attributes["localDate"] = nil
     attributes["localDate"] = nil
@@ -374,7 +384,7 @@ extension DependencyContainer: ApiFactory {
       "X-App-Version": deviceHelper.appVersion,
       "X-OS-Version": deviceHelper.osVersion,
       "X-Device-Model": deviceHelper.model,
-      "X-Device-Locale": deviceHelper.locale,
+      "X-Device-Locale": deviceHelper.localeIdentifier,
       "X-Device-Language-Code": deviceHelper.languageCode,
       "X-Device-Currency-Code": deviceHelper.currencyCode,
       "X-Device-Currency-Symbol": deviceHelper.currencySymbol,
@@ -521,8 +531,8 @@ extension DependencyContainer: PurchasedTransactionsFactory {
 
 // MARK: - User Attributes Placement Factory
 extension DependencyContainer: UserAttributesPlacementFactory {
-  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes {
-    return InternalSuperwallEvent.Attributes(
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.UserAttributes {
+    return InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: deviceHelper.appInstalledAtString,
       audienceFilterParams: identityManager.userAttributes
     )
@@ -531,8 +541,8 @@ extension DependencyContainer: UserAttributesPlacementFactory {
 
 // MARK: - Receipt Factory
 extension DependencyContainer: ReceiptFactory {
-  func loadPurchasedProducts() async {
-    await receiptManager.loadPurchasedProducts()
+  func loadPurchasedProducts(config: Config? = nil) async {
+    await receiptManager.loadPurchasedProducts(config: config)
   }
 
   func refreshSK1Receipt() async {
@@ -588,8 +598,16 @@ extension DependencyContainer: RestoreAccessFactory {
   }
 }
 
+// MARK: - ConfigStateFactory
 extension DependencyContainer: ConfigStateFactory {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
     return configManager.configState
+  }
+}
+
+// MARK: - AppIdFactory
+extension DependencyContainer: AppIdFactory {
+  func makeAppId() -> String? {
+    return configManager.config?.iosAppId
   }
 }

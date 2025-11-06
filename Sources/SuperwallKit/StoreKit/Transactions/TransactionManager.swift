@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length file_length line_length function_body_length
+// swiftlint:disable type_body_length file_length function_body_length
 
 import Combine
 import StoreKit
@@ -216,15 +216,17 @@ final class TransactionManager {
         Superwall.shared.options.paywalls.shouldShowWebRestorationAlert,
         hasRestored,
         let paywallViewController = paywallViewController {
-        // Get entitlements of products from paywall.
-        var paywallEntitlements: Set<Entitlement> = []
+        // Get entitlement IDs of products from paywall.
+        var paywallEntitlementIds: Set<String> = []
         for id in paywallViewController.info.productIds {
-          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+          let entitlements = Superwall.shared.entitlements.byProductId(id)
+          paywallEntitlementIds.formUnion(entitlements.map { $0.id })
         }
 
         // If the restored entitlements cover the paywall entitlements,
         // track successful restore.
-        if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
+        let activeEntitlementIds = Set(Superwall.shared.entitlements.active.map { $0.id })
+        if paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty {
           await logAndTrack(
             state: .complete,
             message: "Transactions Restored",
@@ -239,13 +241,18 @@ final class TransactionManager {
           let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
           let noSubsText = "No App Store subscription found, would you like to check on the web?"
 
-          // swiftlint:disable:next trailing_closure
           paywallViewController.presentAlert(
             title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
             closeActionTitle: "Cancel",
-            action: { UIApplication.shared.open(restoreUrl) }
+            // swiftlint:disable:next trailing_closure
+            action: {
+              guard let sharedApplication = UIApplication.sharedApplication else {
+                return
+              }
+              sharedApplication.open(restoreUrl)
+            }
           )
           return .webRestore
         }
@@ -649,7 +656,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
@@ -677,7 +684,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
 
       await trackTransactionDidSucceed(transaction)
     }

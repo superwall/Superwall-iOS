@@ -196,6 +196,7 @@ public class RedemptionResultObjc: NSObject {
   @objc(SWKStoreIdentifierType)
   public enum StoreIdentifierType: Int {
     case stripe
+    case paddle
     case unknown
   }
 
@@ -231,6 +232,18 @@ public class RedemptionResultObjc: NSObject {
       super.init()
     }
 
+    public init(
+      paddleWithCustomerId customerId: String,
+      subscriptionIds: [String]
+    ) {
+      self.type = .paddle
+      self.customerId = customerId
+      self.subscriptionIds = subscriptionIds
+      self.store = nil
+      self.additionalInfo = nil
+      super.init()
+    }
+
     /// Initializer for unknown store identifiers.
     public init(
       unknownStore store: String,
@@ -244,9 +257,17 @@ public class RedemptionResultObjc: NSObject {
       super.init()
     }
 
-    /// Convenience variable to get the stripe subscription IDs.
+    /// Convenience variable to get the Stripe subscription IDs.
     public var stripeSubscriptionIds: [String]? {
       if type == .stripe {
+        return subscriptionIds
+      }
+      return nil
+    }
+
+    /// Convenience variable to get the Paddle subscription IDs.
+    public var paddleSubscriptionIds: [String]? {
+      if type == .paddle {
         return subscriptionIds
       }
       return nil
@@ -272,18 +293,23 @@ public class RedemptionResultObjc: NSObject {
     /// The ID of the experiment that the paywall belongs to.
     public let experimentId: String
 
+    /// The product identifier associated with the paywall.
+    public let productIdentifier: String?
+
     public init(
       identifier: String,
       placementName: String,
       placementParams: [String: Any],
       variantId: String,
-      experimentId: String
+      experimentId: String,
+      productIdentifier: String? = nil
     ) {
       self.identifier = identifier
       self.placementName = placementName
       self.placementParams = placementParams
       self.variantId = variantId
       self.experimentId = experimentId
+      self.productIdentifier = productIdentifier
       super.init()
     }
   }

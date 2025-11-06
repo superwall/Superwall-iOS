@@ -15,15 +15,13 @@ concurrency:
 
 jobs:
   run-tests:
-    runs-on: macos-15
+    runs-on: macos-26
 
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
-      - name: Select Xcode 16.2
-        run: sudo xcode-select -switch /Applications/Xcode_16.2.app
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.2.3
       - name: Run Tests
         run: |
-          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 16 Pro' test
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 17 Pro' test

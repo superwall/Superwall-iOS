@@ -38,6 +38,15 @@ enum PaywallLogic {
     return "\(id)_\(locale)_\(substitutions)"
   }
 
+  static func getAppStoreProducts(from products: [Product]) -> [Product] {
+    return products.filter {
+      if case .appStore = $0.type {
+        return true
+      }
+      return false
+    }
+  }
+
   static func handlePaywallError(
     _ error: Error,
     forPlacement placement: PlacementData?,

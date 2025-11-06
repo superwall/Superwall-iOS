@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "Tutto pronto.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "Il tuo acquisto è stato completato con successo.";
+
+/* Alert action button */
+"purchase_success_action_title" = "OK";

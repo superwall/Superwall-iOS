@@ -54,11 +54,17 @@ struct Paywall: Codable {
   /// A surveys to potentially show when an action happens in the paywall.
   var surveys: [Survey]
 
-  /// An ordered list of products associated with the paywall.
+  /// An ordered list of products associated with the paywall. Note these can be AppStore or Stripe.
   var products: [Product] {
     didSet {
       productIds = products.map { $0.id }
+      appStoreProductIds = appStoreProducts.map { $0.id }
     }
+  }
+
+  /// The App Store-only products associated with the paywall.
+  var appStoreProducts: [Product] {
+    return PaywallLogic.getAppStoreProducts(from: products)
   }
 
   /// Indicates whether scrolling is enabled on the webview.
@@ -83,8 +89,14 @@ struct Paywall: Codable {
 
   /// An array of the ids of paywall products.
   ///
-  /// This is set on init and whenever products are updated.
+  /// This is set on init and whenever products are updated. This can include both App Store
+  /// and Stripe product IDs.
   var productIds: [String]
+
+  /// An array of the ids specific to the App Store of paywall products.
+  ///
+  /// This is set on init and whenever products are updated.
+  var appStoreProductIds: [String]
 
   /// The experiment associated with the paywall.
   var experiment: Experiment?
@@ -141,7 +153,7 @@ struct Paywall: Codable {
     case url
     case urlConfig
     case htmlSubstitutions = "paywalljsEvent"
-    case presentationStyle = "presentationStyleV2"
+    case presentationStyle = "presentationStyleV3"
     case presentationCondition
     case presentationDelay
     case backgroundColorHex
@@ -210,13 +222,14 @@ struct Paywall: Codable {
       self.darkBackgroundColorHex = nil
     }
 
-    let appStoreProductItems = try values.decodeIfPresent(
+    let products = try values.decodeIfPresent(
       [Throwable<Product>].self,
       forKey: .products
     ) ?? []
-    products = appStoreProductItems.compactMap { try? $0.result.get() }
+    self.products = products.compactMap { try? $0.result.get() }
 
-    productIds = products.map { $0.id }
+    productIds = self.products.map { $0.id }
+    appStoreProductIds = PaywallLogic.getAppStoreProducts(from: self.products).map { $0.id }
 
     let responseLoadStartTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadStartTime)
     let responseLoadCompleteTime = try values.decodeIfPresent(Date.self, forKey: .responseLoadCompleteTime)
@@ -347,6 +360,7 @@ struct Paywall: Codable {
     darkBackgroundColor: UIColor?,
     productItems: [Product],
     productIds: [String],
+    appStoreProductIds: [String],
     responseLoadingInfo: LoadingInfo,
     webviewLoadingInfo: LoadingInfo,
     productsLoadingInfo: LoadingInfo,
@@ -380,6 +394,7 @@ struct Paywall: Codable {
     self.darkBackgroundColorHex = darkBackgroundColorHex
     self.products = productItems
     self.productIds = productIds
+    self.appStoreProductIds = appStoreProductIds
     self.responseLoadingInfo = responseLoadingInfo
     self.webviewLoadingInfo = webviewLoadingInfo
     self.productsLoadingInfo = productsLoadingInfo
@@ -478,6 +493,7 @@ extension Paywall: Stubbable {
       darkBackgroundColor: nil,
       productItems: [],
       productIds: [],
+      appStoreProductIds: [],
       responseLoadingInfo: .init(),
       webviewLoadingInfo: .init(),
       productsLoadingInfo: .init(),

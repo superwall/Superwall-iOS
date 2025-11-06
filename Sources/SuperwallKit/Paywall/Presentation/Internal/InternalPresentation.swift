@@ -56,25 +56,12 @@ extension Superwall {
     closeReason: PaywallCloseReason = .systemLogic,
     completion: (() -> Void)? = nil
   ) {
-    let dismissPaywall = {
+    paywallViewController.closeSafari {
       paywallViewController.dismiss(
         result: result,
         closeReason: closeReason,
         completion: completion
       )
-    }
-
-    if paywallViewController.isSafariVCPresented,
-      let safariVC = paywallViewController.presentedViewController as? SFSafariViewController {
-      safariVC.dismiss(
-        animated: true,
-        completion: dismissPaywall
-      )
-      // Must set this maually because programmatically dismissing the SafariVC doesn't call its
-      // delegate method where we set this.
-      paywallViewController.isSafariVCPresented = false
-    } else {
-      dismissPaywall()
     }
   }
 }

@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
   name: "SuperwallKit",
+  defaultLocalization: "en",
   platforms: [
     .iOS(.v13),
     .macOS(.v10_12),
@@ -18,7 +19,7 @@ let package = Package(
     )
   ],
   dependencies: [
-    .package(url: "https://github.com/superwall/Superscript-iOS", .exact("0.2.4"))
+    .package(url: "https://github.com/superwall/Superscript-iOS", .exact("1.0.4"))
   ],
   targets: [
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -31,6 +32,7 @@ let package = Package(
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
         .process("Resources/Certificates"),
+        .process("Resources/Localizations"),
         .copy("Resources/PrivacyInfo.xcprivacy")
       ]
     ),

@@ -10,8 +10,13 @@ import XCTest
 @testable import SuperwallKit
 
 class AppSessionManagerTests: XCTestCase {
-  lazy var dependencyContainer: DependencyContainer = {
-    let dependencyContainer = DependencyContainer()
+  var dependencyContainer: DependencyContainer!
+  var appSessionManager: AppSessionManager!
+  let delegate = AppManagerDelegateMock()
+
+  override func setUp() {
+    // Create fresh instances for each test to ensure isolation
+    dependencyContainer = DependencyContainer()
     appSessionManager = AppSessionManager(
       configManager: dependencyContainer.configManager,
       identityManager: dependencyContainer.identityManager,
@@ -19,13 +24,11 @@ class AppSessionManagerTests: XCTestCase {
       delegate: delegate
     )
     dependencyContainer.appSessionManager = appSessionManager
-    return dependencyContainer
-  }()
-  var appSessionManager: AppSessionManager!
-  let delegate = AppManagerDelegateMock()
-
-  override func setUp() {
-    _ = dependencyContainer
+  }
+  
+  override func tearDown() {
+    appSessionManager = nil
+    dependencyContainer = nil
   }
 
   func testAppWillResignActive() async {
@@ -63,7 +66,16 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    try? await Task.sleep(nanoseconds: 30_000_000)
+    // Poll for session ID to change with timeout (more robust than fixed sleep)
+    let startTime = Date()
+    let timeout: TimeInterval = 1.0
+    while appSessionManager.appSession.id == oldAppSession.id {
+      if Date().timeIntervalSince(startTime) > timeout {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+
     XCTAssertNotEqual(appSessionManager.appSession.id, oldAppSession.id)
   }
 
@@ -83,7 +95,15 @@ class AppSessionManagerTests: XCTestCase {
       Notification(name: UIApplication.didBecomeActiveNotification)
     )
 
-    try? await Task.sleep(nanoseconds: 30_000_000)
+    // Poll for endAt to become nil with timeout (more robust than fixed sleep)
+    let startTime = Date()
+    let timeout: TimeInterval = 1.0
+    while appSessionManager.appSession.endAt != nil {
+      if Date().timeIntervalSince(startTime) > timeout {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
 
     XCTAssertNil(appSessionManager.appSession.endAt)
 

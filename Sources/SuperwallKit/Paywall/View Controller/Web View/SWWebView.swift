@@ -4,14 +4,13 @@
 //
 //  Created by Yusuf Tör on 03/03/2022.
 //
-// swiftlint:disable implicitly_unwrapped_optional function_body_length line_length
+// swiftlint:disable implicitly_unwrapped_optional function_body_length
 
 import Foundation
 import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
-  func webViewDidFailProvisionalNavigation()
   func webViewDidFail()
 }
 
@@ -35,7 +34,11 @@ enum WebViewError: LocalizedError {
 class SWWebView: WKWebView {
   let messageHandler: PaywallMessageHandler
   let loadingHandler: SWWebViewLoadingHandler
-  weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)?
+  weak var delegate: (SWWebViewDelegate & PaywallMessageHandlerDelegate)? {
+    didSet {
+      self.loadingHandler.webViewDelegate = delegate
+    }
+  }
   private let wkConfig: WKWebViewConfiguration
   private let isMac: Bool
   private let isOnDeviceCacheEnabled: Bool
@@ -52,7 +55,9 @@ class SWWebView: WKWebView {
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
 
-    self.loadingHandler = SWWebViewLoadingHandler(enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true)
+    self.loadingHandler = SWWebViewLoadingHandler(
+      enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true
+    )
 
     let config = WKWebViewConfiguration()
     config.allowsInlineMediaPlayback = true
@@ -98,7 +103,6 @@ class SWWebView: WKWebView {
       configuration: wkConfig
     )
     self.loadingHandler.loadingDelegate = self
-    self.loadingHandler.webViewDelegate = delegate
 
     wkConfig.userContentController.add(
       RawWebMessageHandler(delegate: messageHandler),
@@ -231,5 +235,21 @@ extension SWWebView: WKNavigationDelegate {
     withError error: Error
   ) {
     completion?(error)
+  }
+
+  func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    webView.reload()
+
+    Task {
+      guard let paywallInfo = delegate?.info else {
+        return
+      }
+
+      let processTerminated = InternalSuperwallEvent.PaywallWebviewLoad(
+        state: .processTerminated,
+        paywallInfo: paywallInfo
+      )
+      await Superwall.shared.track(processTerminated)
+    }
   }
 }

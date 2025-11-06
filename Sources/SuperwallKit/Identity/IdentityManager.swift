@@ -327,7 +327,7 @@ class IdentityManager {
       newUserAttributes["appUserId"] = appUserId
     }
 
-    mergeUserAttributes(newUserAttributes)
+    _mergeUserAttributes(newUserAttributes)
   }
 }
 
@@ -393,7 +393,7 @@ extension IdentityManager {
 
     if shouldTrackMerge {
       Task {
-        let attributes = InternalSuperwallEvent.Attributes(
+        let attributes = InternalSuperwallEvent.UserAttributes(
           appInstalledAtString: deviceHelper.appInstalledAtString,
           audienceFilterParams: mergedAttributes
         )

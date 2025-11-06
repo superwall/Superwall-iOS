@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 19/09/2024.
 //
-// swiftlint:disable function_body_length cyclomatic_complexity
+// swiftlint:disable function_body_length
 
 import Foundation
 import StoreKit
@@ -18,38 +18,40 @@ protocol ReceiptManagerType: AnyObject {
   var appTransactionId: String? { get async }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
-  func loadPurchases() async -> Set<Purchase>
+  func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool
 }
 
-enum LatestSubscription {
-  enum PeriodType: String {
-    case trial
-    case code
-    case subscription
-    case promotional
-    case winback
-    case revoked
-  }
-
-  enum State: String {
-    case inGracePeriod
-    case subscribed
-    case expired
-    case inBillingRetryPeriod
-    case revoked
-  }
+struct PurchaseSnapshot {
+  let purchases: Set<Purchase>
+  let customerInfo: CustomerInfo
 }
 
 @available(iOS 15.0, *)
 actor SK2ReceiptManager: ReceiptManagerType {
-  private var sk2IntroOfferEligibility: [String: Bool] = [:]
-  var purchases: Set<Purchase> = []
-  var transactionReceipts: [TransactionReceipt] = []
+  private var sk2IntroOfferEligibility: [String: Bool]
+  var purchases: Set<Purchase>
+  var transactionReceipts: [TransactionReceipt]
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
   var latestSubscriptionWillAutoRenew: Bool?
   var latestSubscriptionState: LatestSubscription.State?
   var appTransactionId: String?
+
+  init(
+    sk2IntroOfferEligibility: [String: Bool] = [:],
+    purchases: Set<Purchase> = [],
+    transactionReceipts: [TransactionReceipt] = [],
+    latestSubscriptionPeriodType: LatestSubscription.PeriodType? = nil,
+    latestSubscriptionWillAutoRenew: Bool? = nil,
+    latestSubscriptionState: LatestSubscription.State? = nil
+  ) {
+    self.sk2IntroOfferEligibility = sk2IntroOfferEligibility
+    self.purchases = purchases
+    self.transactionReceipts = transactionReceipts
+    self.latestSubscriptionPeriodType = latestSubscriptionPeriodType
+    self.latestSubscriptionWillAutoRenew = latestSubscriptionWillAutoRenew
+    self.latestSubscriptionState = latestSubscriptionState
+  }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     for storeProduct in storeProducts {
@@ -57,147 +59,170 @@ actor SK2ReceiptManager: ReceiptManagerType {
     }
   }
 
-  func loadPurchases() async -> Set<Purchase> {
+  func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     var purchases: Set<Purchase> = []
-    // Iterate through the user's purchased products.
     var originalTransactionIds: Set<UInt64> = []
     transactionReceipts = []
-    var latestSubscriptionTransaction: Transaction?
     let enableExperimentalDeviceVariables = Superwall.shared.options.enableExperimentalDeviceVariables
 
-    #if compiler(>=6.1)
-    if #available(iOS 16.0, *) {
-      if let result = try? await AppTransaction.shared {
-        switch result {
-        case .verified(let transaction),
-          .unverified(let transaction, _):
-          self.appTransactionId = transaction.appTransactionID
-        }
+    // per-entitlement groupings
+    var entitlementsByProductId: [String: Set<Entitlement>] = [:]
+    var productIdsByEntitlementId: [String: Set<String>] = [:]
+    var txnsPerEntitlement: [String: [Transaction]] = [:]
+    var nonSubscriptions: [NonSubscriptionTransaction] = []
+    var subscriptions: [SubscriptionTransaction] = []
+
+    for (productId, serverEntitlements) in serverEntitlementsByProductId {
+      for entitlement in serverEntitlements {
+        // Collect all productIds for this entitlement ID
+        productIdsByEntitlementId[entitlement.id, default: []].insert(productId)
+
+        let allProductIds = productIdsByEntitlementId[entitlement.id] ?? [productId]
+
+        entitlementsByProductId[productId, default: []].insert(
+          Entitlement(
+            id: entitlement.id,
+            type: entitlement.type,
+            isActive: false,  // Will be set to true by EntitlementProcessor if there are transactions
+            productIds: allProductIds,
+            store: entitlement.store
+          )
+        )
       }
     }
-    #endif
+
+    // 1️⃣ FIRST PASS: collect txns & receipts & purchases
+    var allVerifiedTransactions: [Transaction] = []
 
     for await verificationResult in Transaction.all {
       switch verificationResult {
-      case .verified(let transaction):
-        self.appTransactionId = transaction.appTransactionID
-        // Track latest auto-renewable transaction
-        if enableExperimentalDeviceVariables,
-          transaction.productType == .autoRenewable {
-          if let latest = latestSubscriptionTransaction {
-            if transaction.purchaseDate > latest.purchaseDate {
-              latestSubscriptionTransaction = transaction
-            }
-          } else {
-            latestSubscriptionTransaction = transaction
+      case .verified(let txn):
+        allVerifiedTransactions.append(txn)
+
+        // Get the entitlements for a purchased product.
+        if let serverEntitlements = serverEntitlementsByProductId[txn.productID] {
+          // Map transactions and their product IDs to each entitlement.
+          for entitlement in serverEntitlements {
+            txnsPerEntitlement[entitlement.id, default: []].append(txn)
           }
         }
 
-        // Store the first transaction receipt for each original txn ID.
-        let originalTransactionId = verificationResult.underlyingTransaction.originalID
-        if originalTransactionId == transaction.id,
-          !originalTransactionIds.contains(originalTransactionId) {
+        // first receipt per original txn
+        let originalTxnId = verificationResult.underlyingTransaction.originalID
+        if originalTxnId == txn.id,
+          !originalTransactionIds.contains(originalTxnId) {
           transactionReceipts.append(
             TransactionReceipt(jwsRepresentation: verificationResult.jwsRepresentation)
           )
-          originalTransactionIds.insert(originalTransactionId)
+          originalTransactionIds.insert(originalTxnId)
         }
 
-        // If already expired, set as inactive
-        if let expirationDate = transaction.expirationDate {
-          if expirationDate < Date() {
-            purchases.insert(
-              Purchase(
-                id: transaction.productID,
-                isActive: false,
-                purchaseDate: transaction.purchaseDate
-              )
-            )
-            continue
-          }
-        }
-        // If refunded/revoked, set as inactive
-        if transaction.revocationDate != nil {
-          purchases.insert(
-            Purchase(
-              id: transaction.productID,
-              isActive: false,
-              purchaseDate: transaction.purchaseDate
-            )
-          )
-          continue
-        }
-
+        // record purchase
+        let isActive = isAnyTransactionActive([txn])
         purchases.insert(
           Purchase(
-            id: transaction.productID,
-            isActive: true,
-            purchaseDate: transaction.purchaseDate
+            id: txn.productID,
+            isActive: isActive,
+            purchaseDate: txn.purchaseDate
           )
         )
-      case let .unverified(transaction, error):
+      case let .unverified(txn, error):
         Logger.debug(
           logLevel: .warn,
           scope: .transactions,
-          message: "The purchased transactions contains an unverified transaction "
-            + "\(transaction.debugDescription). \(error.localizedDescription)"
+          message: "The purchased transactions contain an unverified transaction"
+            + ": \(txn.debugDescription). \(error.localizedDescription)"
         )
       }
     }
 
-    // Only check subscription status on the latest subscription transaction
-    if enableExperimentalDeviceVariables,
-      let transaction = latestSubscriptionTransaction {
-      let status = await transaction.subscriptionStatus
-      if case let .verified(renewalInfo) = status?.renewalInfo {
-        #if compiler(>=6.0)
-        if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-          updatePeriodType(from: transaction)
-        }
-        #endif
-        latestSubscriptionWillAutoRenew = renewalInfo.willAutoRenew == true
-      }
-      updateLatestSubscriptionState(from: status)
+    // Process transactions using shared EntitlementProcessor
+    let (processedNonSubscriptions, processedSubscriptions) = EntitlementProcessor.processTransactions(
+      from: allVerifiedTransactions
+    )
+    nonSubscriptions = processedNonSubscriptions
+    subscriptions = processedSubscriptions
+
+    // 2️⃣ & 3️⃣ SECOND AND THIRD PASS: use enhanced EntitlementProcessor
+    var capturedState: LatestSubscription.State?
+    var capturedWillRenew: Bool?
+    var capturedOfferType: LatestSubscription.OfferType?
+
+    entitlementsByProductId = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: txnsPerEntitlement,
+      rawEntitlementsByProductId: entitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: StoreKitSubscriptionStatusProvider(),
+      enableExperimentalDeviceVariables: enableExperimentalDeviceVariables
+    ) { state, willRenew, offerType in
+      capturedState = state
+      capturedWillRenew = willRenew
+      capturedOfferType = offerType
     }
+
+    // Update actor-isolated properties after the async call
+    if enableExperimentalDeviceVariables {
+      latestSubscriptionState = capturedState
+      latestSubscriptionWillAutoRenew = capturedWillRenew
+      latestSubscriptionPeriodType = capturedOfferType
+    }
+
+    var entitlements = entitlementsByProductId.values
+      .flatMap { $0 }
+    entitlements = Array(Entitlement.mergePrioritized(entitlements))
+      .sorted { $0.id < $1.id }
 
     self.purchases = purchases
-    return purchases
+    let customerInfo = CustomerInfo(
+      subscriptions: subscriptions.reversed(),
+      nonSubscriptions: nonSubscriptions.reversed(),
+      entitlements: entitlements
+    )
+
+    return PurchaseSnapshot(
+      purchases: purchases,
+      customerInfo: customerInfo
+    )
   }
 
-  @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
-  private func updatePeriodType(from transaction: Transaction) {
-    switch transaction.offer?.type {
-    case .introductory:
-      latestSubscriptionPeriodType = .trial
-    case .code:
-      latestSubscriptionPeriodType = .code
-    case .promotional:
-      latestSubscriptionPeriodType = .promotional
-    case .winBack:
-      latestSubscriptionPeriodType = .winback
-    case .none:
-      latestSubscriptionPeriodType = .subscription
-    default:
-      break
+
+  private func isAnyTransactionActive(_ transactions: [Transaction]) -> Bool {
+    let now = Date()
+
+    return transactions.contains { txn in
+      guard txn.revocationDate == nil else {
+        return false
+      }
+      if let expiration = txn.expirationDate {
+        return expiration > now
+      }
+      return txn.productType == .nonConsumable
     }
   }
 
-  private func updateLatestSubscriptionState(from status: StoreKit.Product.SubscriptionInfo.Status?) {
-    switch status?.state {
-    case .inGracePeriod:
-      latestSubscriptionState = .inGracePeriod
-    case .subscribed:
-      latestSubscriptionState = .subscribed
-    case .expired:
-      latestSubscriptionState = .expired
-    case .inBillingRetryPeriod:
-      latestSubscriptionState = .inBillingRetryPeriod
-    case .revoked:
-      latestSubscriptionState = .revoked
-    default:
-      break
+  private func latestExpirationDate(from transactions: [Transaction]) -> Date? {
+    var latestExpiration: Date?
+
+    for txn in transactions {
+      switch txn.productType {
+      case .autoRenewable,
+        .nonRenewable:
+        guard txn.revocationDate == nil else { continue }
+        if let expiration = txn.expirationDate {
+          latestExpiration = latestExpiration.map { max($0, expiration) } ?? expiration
+        }
+      case .nonConsumable:
+        // If it's lifetime, it never expires - return nil
+        return nil
+      default:
+        continue
+      }
     }
+
+    return latestExpiration
   }
+
 
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     guard let product = storeProduct.product as? SK2StoreProduct else {
