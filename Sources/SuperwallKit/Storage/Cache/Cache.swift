@@ -371,7 +371,6 @@ extension Cache {
 
   /// Cleans codes and entitlements that are owned by the user.
   func cleanUserCodes() {
-    // TODO: Review this once customerinfo merged
     if let redeemResponse = read(LatestRedeemResponse.self) {
       // Capture existing active web entitlements before cleanup
       let existingActiveWebEntitlements = redeemResponse.customerInfo.entitlements.filter { $0.isActive }
