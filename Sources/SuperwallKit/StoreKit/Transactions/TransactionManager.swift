@@ -216,15 +216,17 @@ final class TransactionManager {
         Superwall.shared.options.paywalls.shouldShowWebRestorationAlert,
         hasRestored,
         let paywallViewController = paywallViewController {
-        // Get entitlements of products from paywall.
-        var paywallEntitlements: Set<Entitlement> = []
+        // Get entitlement IDs of products from paywall.
+        var paywallEntitlementIds: Set<String> = []
         for id in paywallViewController.info.productIds {
-          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+          let entitlements = Superwall.shared.entitlements.byProductId(id)
+          paywallEntitlementIds.formUnion(entitlements.map { $0.id })
         }
 
         // If the restored entitlements cover the paywall entitlements,
         // track successful restore.
-        if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
+        let activeEntitlementIds = Set(Superwall.shared.entitlements.active.map { $0.id })
+        if paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty {
           await logAndTrack(
             state: .complete,
             message: "Transactions Restored",
@@ -654,7 +656,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
@@ -682,7 +684,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
 
       await trackTransactionDidSucceed(transaction)
     }

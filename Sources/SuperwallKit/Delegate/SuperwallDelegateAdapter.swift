@@ -171,4 +171,22 @@ final class SuperwallDelegateAdapter {
       )
     }
   }
+
+  @MainActor
+  func customerInfoDidChange(
+    from oldValue: CustomerInfo,
+    to newValue: CustomerInfo
+  ) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.customerInfoDidChange(
+        from: oldValue,
+        to: newValue
+      )
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.customerInfoDidChange?(
+        from: oldValue,
+        to: newValue
+      )
+    }
+  }
 }

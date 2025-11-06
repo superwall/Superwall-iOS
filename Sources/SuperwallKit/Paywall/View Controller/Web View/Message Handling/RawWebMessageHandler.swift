@@ -53,15 +53,18 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
         return
       }
 
-      guard let wrappedPaywallMessages = try? JSONDecoder.fromSnakeCase.decode(
-        WrappedPaywallMessages.self,
-        from: bodyData
-      ) else {
+      let wrappedPaywallMessages: WrappedPaywallMessages
+      do {
+        wrappedPaywallMessages = try JSONDecoder.fromSnakeCase.decode(
+          WrappedPaywallMessages.self,
+          from: bodyData
+        )
+      } catch {
         Logger.debug(
           logLevel: .warn,
           scope: .paywallViewController,
           message: "Invalid WrappedPaywallEvent",
-          info: ["message": message.debugDescription]
+          info: ["body": bodyString, "error": error.localizedDescription]
         )
         return
       }

@@ -60,7 +60,7 @@ enum EndpointKinds {
   }
 
   enum Web2App: EndpointKind {
-    static var jsonDecoder = JSONDecoder()
+    static var jsonDecoder = JSONDecoder.web2App
 
     static func prepare(
       _ request: inout URLRequest,

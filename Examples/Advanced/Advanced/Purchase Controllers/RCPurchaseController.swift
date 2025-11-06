@@ -39,17 +39,42 @@ final class RCPurchaseController: PurchaseController {
   /// changing `Superwall.shared.subscriptionStatus`
   func syncSubscriptionStatus() {
     assert(Purchases.isConfigured, "You must configure RevenueCat before calling this method.")
+
+    // Listen to RevenueCat customerInfo changes
     Task {
       for await customerInfo in Purchases.shared.customerInfoStream {
-        // Gets called whenever new CustomerInfo is available
-        let entitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
+        let rcEntitlements = Set(customerInfo.entitlements.activeInCurrentEnvironment.keys.map {
           Entitlement(id: $0)
         })
-
-        await MainActor.run {
-          Superwall.shared.subscriptionStatus = .active(entitlements)
-        }
+        await updateSubscriptionStatus(with: rcEntitlements)
       }
+    }
+
+    // Listen to Superwall customerInfo changes (for web entitlements)
+    Task {
+      for await _ in Superwall.shared.customerInfoStream {
+        // Get current RC entitlements
+        guard let currentRCCustomerInfo = try? await Purchases.shared.customerInfo() else {
+          continue
+        }
+        let rcEntitlements = Set(currentRCCustomerInfo.entitlements.activeInCurrentEnvironment.keys.map {
+          Entitlement(id: $0)
+        })
+        await updateSubscriptionStatus(with: rcEntitlements)
+      }
+    }
+  }
+
+  /// Merges RevenueCat entitlements with Superwall web entitlements and updates subscription status
+  private func updateSubscriptionStatus(with rcEntitlements: Set<Entitlement>) async {
+    // Get web entitlements from Superwall
+    let webEntitlements = Superwall.shared.entitlements.web
+
+    // Merge them
+    let allEntitlements = rcEntitlements.union(webEntitlements)
+
+    await MainActor.run {
+      Superwall.shared.subscriptionStatus = .active(allEntitlements)
     }
   }
 
@@ -91,3 +116,4 @@ final class RCPurchaseController: PurchaseController {
     }
   }
 }
+

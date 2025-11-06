@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 12/03/2025.
 //
-// swiftlint:disable function_body_length type_body_length trailing_closure cyclomatic_complexity file_length
+// swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import UIKit
 import Foundation
@@ -23,6 +23,7 @@ actor WebEntitlementRedeemer {
     & OptionsFactory
     & ConfigStateFactory
     & ConfigManagerFactory
+    & HasExternalPurchaseControllerFactory
 
   enum RedeemType: CustomStringConvertible {
     case code(String)
@@ -82,45 +83,70 @@ actor WebEntitlementRedeemer {
     _ type: RedeemType,
     injectedConfig: Config? = nil
   ) async {
-    // Prepare data to redeem
     let superwall = superwall ?? Superwall.shared
     let latestRedeemResponse = storage.get(LatestRedeemResponse.self)
 
-    var allCodes = latestRedeemResponse?.allCodes ?? []
+    let allCodes = await prepareCodesForRedemption(
+      type: type,
+      existingCodes: latestRedeemResponse?.allCodes ?? [],
+      superwall: superwall
+    )
 
-    switch type {
-    case .code(let code):
-      // If redeeming a code, add it to list of existing codes,
-      // marking as first redemption or not.
-      var isFirstRedemption = true
+    let request = await createRedeemRequest(allCodes: allCodes)
+    await trackRedemptionStart(type: type, superwall: superwall)
+    await prepareUIForRedemption(type: type, superwall: superwall)
 
-      if !allCodes.isEmpty {
-        // If we have codes, isFirstRedemption is false if we already have the code
-        isFirstRedemption = !allCodes.contains { $0.code == code }
-      }
-
-      let redeemable = Redeemable(
-        code: code,
-        isFirstRedemption: isFirstRedemption
+    do {
+      let response = try await network.redeemEntitlements(request: request)
+      await handleRedemptionSuccess(
+        response: response,
+        type: type,
+        superwall: superwall
       )
-      allCodes.insert(redeemable)
+    } catch {
+      await handleRedemptionFailure(
+        error: error,
+        type: type,
+        latestRedeemResponse: latestRedeemResponse,
+        superwall: superwall
+      )
+    }
+  }
 
-      if let paywallVc = superwall.paywallViewController {
-        let trackedEvent = await InternalSuperwallEvent.Restore(
-          state: .start,
-          paywallInfo: paywallVc.info
-        )
-        await superwall.track(trackedEvent)
-      }
-    case .existingCodes,
-      .integrationAttributes:
-      break
+  private func prepareCodesForRedemption(
+    type: RedeemType,
+    existingCodes: Set<Redeemable>,
+    superwall: Superwall
+  ) async -> Set<Redeemable> {
+    var allCodes = existingCodes
+
+    guard case .code(let code) = type else {
+      return allCodes
     }
 
-    let attributes = storage.get(IntegrationAttributes.self) ?? [:]
+    let isFirstRedemption = allCodes.isEmpty || !allCodes.contains { $0.code == code }
+    let redeemable = Redeemable(code: code, isFirstRedemption: isFirstRedemption)
+    allCodes.insert(redeemable)
 
-    // Create request to redeem
-    let request = await RedeemRequest(
+    if let paywallVc = superwall.paywallViewController {
+      // Mark that redeem called so that we stop the transaction abandon tracking
+      await MainActor.run {
+        paywallVc.markRedeemInitiated()
+      }
+
+      let trackedEvent = await InternalSuperwallEvent.Restore(
+        state: .start,
+        paywallInfo: paywallVc.info
+      )
+      await superwall.track(trackedEvent)
+    }
+
+    return allCodes
+  }
+
+  private func createRedeemRequest(allCodes: Set<Redeemable>) async -> RedeemRequest {
+    let attributes = storage.get(IntegrationAttributes.self) ?? [:]
+    return await RedeemRequest(
       metadata: JSON(attributes),
       deviceId: factory.makeDeviceId(),
       appUserId: factory.makeAppUserId(),
@@ -129,70 +155,112 @@ actor WebEntitlementRedeemer {
       receipts: receiptManager.getTransactionReceipts(),
       appTransactionId: ReceiptManager.appTransactionId
     )
+  }
 
-    switch type {
-    case .code,
-      .existingCodes:
-      let startEvent = InternalSuperwallEvent.Redemption(
-        state: .start,
-        type: type
+  private func trackRedemptionStart(type: RedeemType, superwall: Superwall) async {
+    guard case .code = type else {
+      if case .existingCodes = type {
+        let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
+        await superwall.track(startEvent)
+      }
+      return
+    }
+    let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
+    await superwall.track(startEvent)
+  }
+
+  private func prepareUIForRedemption(type: RedeemType, superwall: Superwall) async {
+    guard case .code = type else { return }
+    await MainActor.run {
+      superwall.paywallViewController?.loadingState = .manualLoading
+      superwall.paywallViewController?.closeSafari()
+    }
+    await delegate.willRedeemLink()
+  }
+
+  private func handleRedemptionSuccess(
+    response: RedeemResponse,
+    type: RedeemType,
+    superwall: Superwall
+  ) async {
+    storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+
+    if case .code = type {
+      let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
+      await superwall.track(completeEvent)
+    } else if case .existingCodes = type {
+      let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
+      await superwall.track(completeEvent)
+    }
+
+    let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
+      response: response,
+      type: type,
+      superwall: superwall
+    )
+
+    storage.save(response, forType: LatestRedeemResponse.self)
+
+    // Merge device and web CustomerInfo
+    // If using an external purchase controller, also preserve entitlements that came from it
+    let mergedCustomerInfo: CustomerInfo
+    if factory.makeHasExternalPurchaseController() {
+      let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
+      mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: storage,
+        subscriptionStatus: subscriptionStatus
       )
-      await superwall.track(startEvent)
-    case .integrationAttributes:
-      break
+    } else {
+      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+      mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
     }
 
-    // Close safari if open and show spinner, then call delegate
-    switch type {
-    case .code:
-      await MainActor.run {
-        superwall.paywallViewController?.loadingState = .manualLoading
-        superwall.paywallViewController?.closeSafari()
-      }
-      await delegate.willRedeemLink()
-    case .existingCodes,
-      .integrationAttributes:
-      break
+    // Update Superwall's CustomerInfo with the merged result
+    await MainActor.run {
+      superwall.customerInfo = mergedCustomerInfo
     }
 
-    do {
-      // Redeem
-      let response = try await network.redeemEntitlements(request: request)
+    await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
 
-      storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+    if case .code(let code) = type {
+      await handleCodeRedemptionCompletion(
+        code: code,
+        response: response,
+        allEntitlementIds: Set(allEntitlements.map { $0.id }),
+        paywallEntitlementIds: paywallEntitlementIds,
+        superwall: superwall
+      )
+    }
+  }
 
-      switch type {
-      case .code,
-        .existingCodes:
-        let completeEvent = InternalSuperwallEvent.Redemption(
-          state: .complete,
-          type: type
-        )
-        await superwall.track(completeEvent)
-      case .integrationAttributes:
-        break
+  private func processEntitlements(
+    response: RedeemResponse,
+    type: RedeemType,
+    superwall: Superwall
+  ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+    let combinedEntitlements = Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
+    let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+
+    var paywallEntitlementIds: Set<String> = []
+
+    if case .code = type, let paywallVc = superwall.paywallViewController {
+      for id in await paywallVc.info.productIds {
+        let entitlements = superwall.entitlements.byProductId(id)
+        paywallEntitlementIds.formUnion(entitlements.map { $0.id })
       }
 
-      let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-      let allEntitlements = deviceEntitlements.union(response.entitlements)
-
-      // Get entitlements of products from paywall.
-      var paywallEntitlements: Set<Entitlement> = []
-      if case .code = type,
-        let paywallVc = superwall.paywallViewController {
-        for id in await paywallVc.info.productIds {
-          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
-        }
-
-        // If the restored entitlements cover the paywall entitlements,
-        // track successful restore
-        if paywallEntitlements.subtracting(allEntitlements).isEmpty {
+      let allEntitlementIds = Set(allEntitlements.map { $0.id })
+      // Need to check that entitlements aren't empty because if they are then
+      // it can't be claimed that you've restored the entitlements.
+      if !paywallEntitlementIds.isEmpty {
+        if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
           let trackedEvent = await InternalSuperwallEvent.Restore(
             state: .complete,
             paywallInfo: paywallVc.info
           )
           await superwall.track(trackedEvent)
-
           await paywallVc.webView.messageHandler.handle(.restoreComplete)
         } else {
           await trackRestorationFailure(
@@ -202,117 +270,118 @@ actor WebEntitlementRedeemer {
           )
         }
       }
+    }
 
-      storage.save(response, forType: LatestRedeemResponse.self)
+    return (allEntitlements, paywallEntitlementIds)
+  }
 
-      await superwall.internallySetSubscriptionStatus(
-        to: .active(allEntitlements),
-        superwall: superwall
+  private func updateSubscriptionStatus(
+    with allEntitlements: Set<Entitlement>,
+    superwall: Superwall
+  ) async {
+    let activeEntitlements = allEntitlements.filter { $0.isActive }
+    let status: SubscriptionStatus = activeEntitlements.isEmpty ? .inactive : .active(activeEntitlements)
+    await superwall.internallySetSubscriptionStatus(to: status, superwall: superwall)
+  }
+
+  private func handleCodeRedemptionCompletion(
+    code: String,
+    response: RedeemResponse,
+    allEntitlementIds: Set<String>,
+    paywallEntitlementIds: Set<String>,
+    superwall: Superwall
+  ) async {
+    guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
+
+    let superwallOptions = factory.makeSuperwallOptions()
+    let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
+
+    func afterRedeem() async {
+      if let paywallVc = superwall.paywallViewController,
+        !paywallEntitlementIds.isEmpty,
+        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
+        superwallOptions.paywalls.automaticallyDismiss {
+        await superwall.dismiss(paywallVc, result: .restored)
+      }
+
+      await MainActor.run {
+        superwall.paywallViewController?.loadingState = .ready
+      }
+      await self.delegate.didRedeemLink(result: codeResult)
+    }
+
+    if showConfirmation {
+      let title = LocalizationLogic.localizedBundle().localizedString(
+        forKey: "purchase_success_title",
+        value: nil,
+        table: nil
+      )
+      let message = LocalizationLogic.localizedBundle().localizedString(
+        forKey: "purchase_success_message",
+        value: nil,
+        table: nil
+      )
+      let closeActionTitle = LocalizationLogic.localizedBundle().localizedString(
+        forKey: "purchase_success_action_title",
+        value: nil,
+        table: nil
       )
 
-      // Call the delegate if user try to redeem a code,
-      // then close the paywall.
-      if case let .code(code) = type {
-        if let codeResult = response.results.first(where: { $0.code == code }) {
-          let superwallOptions = factory.makeSuperwallOptions()
-          let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
-
-          func afterRedeem() async {
-            if let paywallVc = superwall.paywallViewController,
-              paywallEntitlements.subtracting(allEntitlements).isEmpty {
-              if superwallOptions.paywalls.automaticallyDismiss {
-                await superwall.dismiss(paywallVc, result: .restored)
-              }
-            }
-
-            await MainActor.run {
-              superwall.paywallViewController?.loadingState = .ready
-            }
-            await self.delegate.didRedeemLink(result: codeResult)
-          }
-
-          if showConfirmation {
-            let title = LocalizationLogic
-              .localizedBundle()
-              .localizedString(
-                forKey: "purchase_success_title",
-                value: nil,
-                table: nil
-              )
-            let message = LocalizationLogic
-              .localizedBundle()
-              .localizedString(
-                forKey: "purchase_success_message",
-                value: nil,
-                table: nil
-              )
-            let closeActionTitle = LocalizationLogic
-              .localizedBundle()
-              .localizedString(
-                forKey: "purchase_success_action_title",
-                value: nil,
-                table: nil
-              )
-
-            await superwall.paywallViewController?.presentAlert(
-              title: title,
-              message: message,
-              closeActionTitle: closeActionTitle,
-              onClose: {
-                Task {
-                  await afterRedeem()
-                }
-              }
-            )
-          } else {
+      await superwall.paywallViewController?.presentAlert(
+        title: title,
+        message: message,
+        closeActionTitle: closeActionTitle,
+        onClose: {
+          Task {
             await afterRedeem()
           }
         }
-      }
-    } catch {
-      switch type {
-      case .code,
-        .existingCodes:
-        let event = InternalSuperwallEvent.Redemption(
-          state: .fail,
-          type: type
-        )
-        await superwall.track(event)
-      case .integrationAttributes:
-        break
-      }
-
-      // Call the delegate if user try to redeem a code
-      if case let .code(code) = type {
-        if let paywallVc = superwall.paywallViewController {
-          await trackRestorationFailure(
-            paywallViewController: paywallVc,
-            message: error.localizedDescription,
-            superwall: superwall
-          )
-        }
-        var redemptions = latestRedeemResponse?.results ?? []
-        let errorResult = RedemptionResult.error(
-          code: code,
-          error: RedemptionResult.ErrorInfo(
-            message: error.localizedDescription
-          )
-        )
-        redemptions.append(errorResult)
-
-        await MainActor.run {
-          superwall.paywallViewController?.loadingState = .ready
-        }
-        await delegate.didRedeemLink(result: errorResult)
-      }
-
-      Logger.debug(
-        logLevel: .error,
-        scope: .webEntitlements,
-        message: "Failed to redeem",
-        info: [:]
       )
+    } else {
+      await afterRedeem()
     }
+  }
+
+  private func handleRedemptionFailure(
+    error: Error,
+    type: RedeemType,
+    latestRedeemResponse: RedeemResponse?,
+    superwall: Superwall
+  ) async {
+    if case .code = type {
+      let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
+      await superwall.track(event)
+    } else if case .existingCodes = type {
+      let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
+      await superwall.track(event)
+    }
+
+    if case let .code(code) = type {
+      if let paywallVc = superwall.paywallViewController {
+        await trackRestorationFailure(
+          paywallViewController: paywallVc,
+          message: error.localizedDescription,
+          superwall: superwall
+        )
+      }
+
+      let errorResult = RedemptionResult.error(
+        code: code,
+        error: RedemptionResult.ErrorInfo(message: error.localizedDescription)
+      )
+
+      await MainActor.run {
+        superwall.paywallViewController?.loadingState = .ready
+      }
+      await delegate.didRedeemLink(result: errorResult)
+    }
+
+    Logger.debug(
+      logLevel: .error,
+      scope: .webEntitlements,
+      message: "Failed to redeem",
+      info: [:]
+    )
   }
 
   private func trackRestorationFailure(
@@ -343,6 +412,7 @@ actor WebEntitlementRedeemer {
     }
   }
 
+  // swiftlint:disable:next cyclomatic_complexity
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
@@ -357,52 +427,89 @@ actor WebEntitlementRedeemer {
           }
         }
       } else {
-        // Don't proceed at all if there's no web2app config
-        return
+        // Don't proceed at all if there's no web2app config and it's not a UI test
+        if !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
+          return
+        }
       }
     }
 
     do {
-      let existingWebEntitlements = storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+      let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
-      let entitlements = try await network.redeemEntitlements(
+      let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()
       )
 
-      // Update the latest redeem response with the entitlements.
+      // Update the latest redeem response with the entitlements and customer info from the response.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
-        latestRedeemResponse.entitlements = entitlements
+        latestRedeemResponse.customerInfo = response.customerInfo
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
       } else {
         // Create new redeem response with empty results. This is to make sure web entitlements
         // are added correctly when setting the subscription status on load.
-        let latestRedeemResponse = RedeemResponse(results: [], entitlements: entitlements)
+        let latestRedeemResponse = RedeemResponse(
+          results: [],
+          customerInfo: response.customerInfo
+        )
         storage.save(latestRedeemResponse, forType: LatestRedeemResponse.self)
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-      if existingWebEntitlements != entitlements {
+      let webEntitlements = Set(response.customerInfo.entitlements)
+      if existingWebEntitlements != webEntitlements {
+        // Use the injected superwall instance or fall back to shared
+        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+        guard let superwall = superwall else {
+          return
+        }
+
+        // Merge device and web CustomerInfo
+        // If using an external purchase controller, also preserve entitlements that came from it
+        let mergedCustomerInfo: CustomerInfo
+        if factory.makeHasExternalPurchaseController() {
+          let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
+          mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
+            storage: storage,
+            subscriptionStatus: subscriptionStatus
+          )
+        } else {
+          let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+          mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
+        }
+
+        // Update Superwall's CustomerInfo with the merged result
+        await MainActor.run {
+          superwall.customerInfo = mergedCustomerInfo
+        }
+
         // Sets the subscription status internally if no external PurchaseController
-        let deviceEntitlements = entitlementsInfo.activeDeviceEntitlements
-        let allEntitlements = deviceEntitlements.union(entitlements)
-        await Superwall.shared.internallySetSubscriptionStatus(to: .active(allEntitlements))
+        // Use the merged entitlements from CustomerInfo (already prioritized)
+        let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
+        if activeEntitlements.isEmpty {
+          await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
+        } else {
+          await superwall.internallySetSubscriptionStatus(
+            to: .active(activeEntitlements),
+            superwall: superwall
+          )
+        }
 
         // If there's a paywall, check if we should dismiss it
-        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
-        if let superwall = superwall,
-          let paywallVc = superwall.paywallViewController {
+        if let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []
           for id in await paywallVc.info.productIds {
-            let entitlements = Superwall.shared.entitlements.byProductId(id)
+            let entitlements = superwall.entitlements.byProductId(id)
             paywallEntitlementIds.formUnion(entitlements.map { $0.id })
           }
 
           // If the restored entitlements cover the paywall entitlements, track and dismiss
-          let allEntitlementIds = Set(allEntitlements.map { $0.id })
-          if paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty {
+          let activeEntitlementsIds = Set(activeEntitlements.map { $0.id })
+          if !paywallEntitlementIds.isEmpty,
+            paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
             let trackedEvent = await InternalSuperwallEvent.Restore(
               state: .complete,
               paywallInfo: paywallVc.info

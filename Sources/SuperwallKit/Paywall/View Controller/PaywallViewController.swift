@@ -101,6 +101,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Defines when Safari is presenting in app.
   var isSafariVCPresented = false
 
+  /// Tracks if a redeem succeeded while the checkout web view is open.
+  /// Used to prevent tracking transaction abandon when redeem succeeds.
+  private var didRedeemSucceedDuringCheckout = false
+
+  /// Work item for tracking transaction abandon, can be cancelled if redeem succeeds.
+  private var transactionAbandonWorkItem: DispatchWorkItem?
+
+  /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
+  private var isCheckoutDismissedProgrammatically = false
+
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
 
@@ -370,6 +380,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         completion: completion
       )
     } else if let checkoutVC = presentedViewController as? CheckoutWebViewController {
+      // Mark as programmatic dismissal to prevent tracking transaction abandon
+      isCheckoutDismissedProgrammatically = true
       checkoutVC.dismiss(
         animated: true,
         completion: completion
@@ -905,18 +917,61 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
       closeReason: .manualClose
     )
   }
+
+  /// Marks that a redeem succeeded while the checkout web view is open.
+  /// Cancels any pending transaction abandon tracking.
+  func markRedeemInitiated() {
+    didRedeemSucceedDuringCheckout = true
+    transactionAbandonWorkItem?.cancel()
+    transactionAbandonWorkItem = nil
+  }
 }
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openPaymentSheet(_ url: URL) {
+    // Reset flags when opening checkout
+    didRedeemSucceedDuringCheckout = false
+    isCheckoutDismissedProgrammatically = false
+    transactionAbandonWorkItem?.cancel()
+    transactionAbandonWorkItem = nil
+
     let checkoutVC = CheckoutWebViewController(url: url)
     checkoutVC.onDismiss = { [weak self] in
-      self?.isSafariVCPresented = false
-      self?.loadingState = .ready
+      guard let self = self else { return }
+      self.isSafariVCPresented = false
+      self.loadingState = .ready
+
+      // Only track abandon if:
+      // 1. Redeem did NOT succeed
+      // 2. Dismissal was NOT programmatic (user dismissed it)
+      if !self.didRedeemSucceedDuringCheckout,
+        !self.isCheckoutDismissedProgrammatically {
+        let workItem = DispatchWorkItem { [weak self] in
+          guard let self = self else { return }
+          Task {
+            let event = InternalSuperwallEvent.Transaction(
+              state: .abandon(StoreProduct.blank()),
+              paywallInfo: self.info,
+              product: nil,
+              transaction: nil,
+              source: .internal,
+              isObserved: false,
+              storeKitVersion: nil,
+              store: .stripe
+            )
+            await Superwall.shared.track(event)
+          }
+        }
+        self.transactionAbandonWorkItem = workItem
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
+      }
+      // Reset flags after handling
+      self.didRedeemSucceedDuringCheckout = false
+      self.isCheckoutDismissedProgrammatically = false
     }
 
-    // Configure for sheet presentation with medium and large detents
+    checkoutVC.modalPresentationStyle = .pageSheet
     if #available(iOS 15.0, *) {
       if let sheet = checkoutVC.sheetPresentationController {
         sheet.detents = [.medium(), .large()]
@@ -926,7 +981,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         sheet.preferredCornerRadius = 62
       }
     }
-    checkoutVC.modalPresentationStyle = .pageSheet
     self.isSafariVCPresented = true
     loadingState = .loadingPurchase
     present(checkoutVC, animated: true)
