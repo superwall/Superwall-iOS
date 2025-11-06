@@ -9,11 +9,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `CustomerInfo`. This contains the latest information about all of the customer's purchase and subscription data. This can be accessed via the published property `Superwall.shared.customerInfo`, via `Superwall.shared.getCustomerInfo()`, via the `AsyncStream` `customerInfoStream`, or via the delegate method `customerInfoDidChange(from:to:)`. This updates the `Entitlement` object to have more properties such as `startsAt` and `expiredAt`. These can be used in audience filters.
 - Adds `Superwall.shared.entitlements.byProductIds(_:)` to return a `Set` of `Entitlement` objects belonging to a given set of product identifiers.
 - Changes the `PurchaseController` examples to account for `CustomerInfo` changes.
-
-## 4.9.4
-
-### Enhancements
-
 - Adds `transaction_abandon` capability to web checkout payment sheet.
 
 ### Fixes
