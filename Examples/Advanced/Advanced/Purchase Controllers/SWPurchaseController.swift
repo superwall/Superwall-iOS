@@ -21,23 +21,25 @@ final class SWPurchaseController: PurchaseController {
   /// Makes sure that Superwall knows the customer's subscription status by
   /// changing `Superwall.shared.subscriptionStatus`
   func syncSubscriptionStatus() async {
-    var products: Set<String> = []
-    for await verificationResult in Transaction.currentEntitlements {
-      switch verificationResult {
-      case .verified(let transaction):
-        products.insert(transaction.productID)
-      case .unverified:
-        break
+    /// Every time the customer info changes, the subscription status should be updated.
+    for await _ in Superwall.shared.customerInfoStream {
+      var products: Set<String> = []
+      for await verificationResult in Transaction.currentEntitlements {
+        switch verificationResult {
+        case .verified(let transaction):
+          products.insert(transaction.productID)
+        case .unverified:
+          break
+        }
       }
-    }
 
-    let storeProducts = await Superwall.shared.products(for: products)
-    let deviceEntitlements = Set(storeProducts.flatMap { $0.entitlements })
-    let webEntitlements = Superwall.shared.entitlements.web
-    let allEntitlements = deviceEntitlements.union(webEntitlements)
+      let activeDeviceEntitlements = Superwall.shared.entitlements.byProductIds(products)
+      let activeWebEntitlements = Superwall.shared.entitlements.web
+      let allActiveEntitlements = activeDeviceEntitlements.union(activeWebEntitlements)
 
-    await MainActor.run {
-      Superwall.shared.subscriptionStatus = .active(allEntitlements)
+      await MainActor.run {
+        Superwall.shared.subscriptionStatus = .active(allActiveEntitlements)
+      }
     }
   }
 
@@ -46,7 +48,6 @@ final class SWPurchaseController: PurchaseController {
   /// someone tries to purchase a product on one of your paywalls.
   func purchase(product: StoreProduct) async -> PurchaseResult {
     let result = await Superwall.shared.purchase(product)
-    await syncSubscriptionStatus()
     return result
   }
 
@@ -55,7 +56,6 @@ final class SWPurchaseController: PurchaseController {
   /// This gets called when someone tries to restore purchases on one of your paywalls.
   func restorePurchases() async -> RestorationResult {
     let result = await Superwall.shared.restorePurchases()
-    await syncSubscriptionStatus()
     return result
   }
 }

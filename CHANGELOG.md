@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.0
+
+### Enhancements
+
+- Adds `CustomerInfo`. This contains the latest information about all of the customer's purchase and subscription data. This can be accessed via the published property `Superwall.shared.customerInfo`, via `Superwall.shared.getCustomerInfo()`, via the `AsyncStream` `customerInfoStream`, or via the delegate method `customerInfoDidChange(from:to:)`. This updates the `Entitlement` object to have more properties such as `startsAt` and `expiredAt`. These can be used in audience filters.
+- Adds `Superwall.shared.entitlements.byProductIds(_:)` to return a `Set` of `Entitlement` objects belonging to a given set of product identifiers.
+
 ## 4.9.4
 
 ### Enhancements
@@ -44,6 +51,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the `SuperwallOption` `shouldBypassAppTransactionCheck`, which allows you to opt out of `AppTransaction.shared` usage during SDK initialization. This is useful in testing environments to avoid triggering the Apple ID sign-in prompt.
 - Adds `device.isApplePayAvailable` to the device attributes that can be used in audience filters.
 - Adds `onWillDismiss` to the `PaywallPresentationHandler`, which is called when the paywall will dismiss.
+
+### Enhancements
+
+- Updates Superscript version to 1.0.4. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.4).
 
 ### Fixes
 

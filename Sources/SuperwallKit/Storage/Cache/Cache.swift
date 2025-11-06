@@ -372,7 +372,8 @@ extension Cache {
   /// Cleans codes and entitlements that are owned by the user.
   func cleanUserCodes() {
     if let redeemResponse = read(LatestRedeemResponse.self) {
-      let existingWebEntitlements = redeemResponse.entitlements
+      // Capture existing active web entitlements before cleanup
+      let existingActiveWebEntitlements = redeemResponse.customerInfo.entitlements.filter { $0.isActive }
       var deviceResults: [RedemptionResult] = []
 
       for result in redeemResponse.results {
@@ -390,15 +391,26 @@ extension Cache {
         }
       }
 
+      let clearedCustomerInfo = CustomerInfo(
+        subscriptions: redeemResponse.customerInfo.subscriptions,
+        nonSubscriptions: redeemResponse.customerInfo.nonSubscriptions,
+        entitlements: []
+      )
+
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
-        entitlements: []
+        customerInfo: clearedCustomerInfo
       )
 
       write(newRedeemResponse, forType: LatestRedeemResponse.self)
 
-      if !existingWebEntitlements.isEmpty {
-        let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
+      // Only update subscription status if we had active web entitlements before cleanup.
+      // Note: internallySetSubscriptionStatus already checks if there's an external
+      // purchase controller and returns early if so, making the developer responsible
+      // for updating subscription status.
+      if !existingActiveWebEntitlements.isEmpty {
+        let deviceCustomerInfo = read(LatestDeviceCustomerInfo.self) ?? .blank()
+        let deviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
         Task {
           await Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
         }

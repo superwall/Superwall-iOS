@@ -105,6 +105,7 @@ enum PaywallMessage: Decodable, Equatable {
     case decoding(String)
   }
 
+  // swiftlint:disable:next function_body_length
   init(from decoder: Decoder) throws {
     let values = try decoder.container(keyedBy: CodingKeys.self)
     if let messageType = try? values.decode(MessageTypes.self, forKey: .messageType) {

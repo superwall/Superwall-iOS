@@ -37,8 +37,27 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
       let defaultComponents = factory.makeDefaultComponents(host: components.host ?? .base)
       var component = URLComponents()
       component.scheme = defaultComponents.scheme
-      component.host = defaultComponents.host
-      component.port = defaultComponents.port
+
+      // Handle local environment where host contains port (e.g., "localhost:3000")
+      let host = defaultComponents.host
+      if case .local = defaultComponents.networkEnvironment,
+        host.contains(":") {
+        let hostParts = host.split(separator: ":")
+        if hostParts.count == 2,
+          let portString = hostParts.last,
+          let port = Int(portString),
+          let firstHostPart = hostParts.first {
+          component.host = String(firstHostPart)
+          component.port = port
+        } else {
+          component.host = host
+          component.port = defaultComponents.port
+        }
+      } else {
+        component.host = host
+        component.port = defaultComponents.port
+      }
+
       component.queryItems = components.queryItems
       component.path = defaultComponents.path + components.path
 
@@ -322,8 +341,8 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
-  Response == WebEntitlements {
-  static func redeem(
+  Response == EntitlementsResponse {
+  static func entitlements(
     appUserId: String?,
     deviceId: String
   ) -> Self {
