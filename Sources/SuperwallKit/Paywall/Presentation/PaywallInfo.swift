@@ -270,7 +270,7 @@ public final class PaywallInfo: NSObject {
       "build_id": buildId,
       "close_reason": closeReason.description,
       "is_scroll_enabled": isScrollEnabled as Any,
-      "intro_offer_eligibility": introOfferEligibility.description
+      "intro_offer_eligibility": introOfferEligibility.description,
       "app_transaction_id": ReceiptManager.appTransactionId as Any
     ]
 
