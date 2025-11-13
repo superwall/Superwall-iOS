@@ -88,7 +88,7 @@ final class DeepLinkRouter {
 
 extension URL {
   /// The web checkout code to redeem given a Superwall deep link format.
-  fileprivate var redeemableCode: String? {
+  var redeemableCode: String? {
     let urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)
 
     if host == "superwall",

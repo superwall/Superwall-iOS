@@ -36,6 +36,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -78,6 +79,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -121,6 +123,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -163,6 +166,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -205,6 +209,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -247,6 +252,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -295,6 +301,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -346,6 +353,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -394,6 +402,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )
@@ -447,6 +456,7 @@ final class SurveyManagerTests: XCTestCase {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )

@@ -276,6 +276,7 @@ extension DependencyContainer: ViewControllerFactory {
       factory: self,
       storage: storage,
       webView: webView,
+      webEntitlementRedeemer: webEntitlementRedeemer,
       cache: cache,
       paywallArchiveManager: paywallArchiveManager
     )
