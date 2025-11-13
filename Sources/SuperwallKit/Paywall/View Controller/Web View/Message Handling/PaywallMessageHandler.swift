@@ -18,7 +18,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   var isActive: Bool { get }
 
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
-  func openDeepLink(_ url: URL)
+  func openDeepLink(_ url: URL, shouldDismiss: Bool)
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
   func requestReview(type: ReviewType)
@@ -385,7 +385,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       userInfo: ["url": url]
     )
     hapticFeedback()
-    delegate?.openDeepLink(url)
+    // Don't dismiss paywall for redemption links
+    let shouldDismiss = url.redeemableCode == nil
+    delegate?.openDeepLink(url, shouldDismiss: shouldDismiss)
   }
 
   private func requestReview(type: ReviewType) {

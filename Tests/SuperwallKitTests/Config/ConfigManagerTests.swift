@@ -103,7 +103,7 @@ struct ConfigManagerTests {
     )
     configManager.postbackAssignment(assignment)
 
-    try? await Task.sleep(for: .seconds(1))
+    try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
 
     #expect(network.assignmentsConfirmed)
     #expect(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant == variant)
@@ -139,7 +139,7 @@ struct ConfigManagerTests {
     )
     configManager.postbackAssignment(assignment)
 
-    try? await Task.sleep(for: .seconds(1))
+    try? await Task.sleep(nanoseconds: UInt64(1 * 1_000_000_000))
 
     #expect(network.assignmentsConfirmed)
     #expect(storage.getAssignments().first(where: { $0.experimentId == experimentId })?.variant == variant)
@@ -174,7 +174,7 @@ struct ConfigManagerTests {
       try? await configManager.getAssignments()
     }
 
-    try? await Task.sleep(for: .seconds(0.1))
+    try? await Task.sleep(nanoseconds: UInt64(0.1 * 1_000_000_000))
     task.cancel()
 
     #expect(storage.getAssignments().isEmpty)
@@ -323,7 +323,7 @@ struct ConfigManagerTests {
     // The background refresh is tested separately in refreshConfiguration test
 
     // Wait for background tasks to complete before test ends
-    try await Task.sleep(for: .seconds(0.3))
+    try await Task.sleep(nanoseconds: UInt64(0.3 * 1_000_000_000))
   }
 
   @Test
@@ -371,7 +371,7 @@ struct ConfigManagerTests {
     #expect(configManager.config?.buildId == "sync_789", "Should use freshly fetched config")
 
     // Wait for background tasks to complete before test ends
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
 
   @Test
@@ -417,7 +417,7 @@ struct ConfigManagerTests {
     #expect(configManager.config?.buildId == "first_launch_999", "Should use freshly fetched config")
 
     // Wait for background tasks to complete before test ends
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
 
   @Test
@@ -467,7 +467,7 @@ struct ConfigManagerTests {
     #expect(configManager.config?.buildId == "subscribed_no_cache_789", "Should use freshly fetched config")
 
     // Wait for background tasks to complete before test ends
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
 
   @Test
@@ -522,7 +522,7 @@ struct ConfigManagerTests {
     #expect(configManager.config?.buildId == "cached_but_not_subscribed_999", "Should use freshly fetched config, not cached")
 
     // Wait for background tasks to complete before test ends
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
 
   @Test
@@ -577,6 +577,6 @@ struct ConfigManagerTests {
     #expect(configManager.config?.buildId == "cached_fallback_123", "Should fall back to cached config on network error")
 
     // Wait for background tasks to complete before test ends
-    try? await Task.sleep(for: .seconds(0.2))
+    try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
 }

@@ -102,6 +102,7 @@ extension Superwall {
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer
       ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: dependencyContainer.makeCache(),
       paywallArchiveManager: dependencyContainer.paywallArchiveManager
     )

@@ -135,7 +135,7 @@ final class PaywallMessageHandlerTests: XCTestCase {
   }
 
   @MainActor
-  func test_openDeepLink() {
+  func test_openDeepLink_regularDeepLink_shouldDismiss() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -157,6 +157,59 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.handle(.openDeepLink(url: url))
 
     XCTAssertTrue(delegate.didOpenDeepLink)
+    XCTAssertEqual(delegate.deepLinkShouldDismiss, true)
+  }
+
+  @MainActor
+  func test_openDeepLink_superwallDeepLink_withoutRedemption_shouldDismiss() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    let url = URL(string: "https://example.superwall.app/app-link/myapp/home")!
+    messageHandler.handle(.openDeepLink(url: url))
+
+    XCTAssertTrue(delegate.didOpenDeepLink)
+    XCTAssertEqual(delegate.deepLinkShouldDismiss, true)
+  }
+
+  @MainActor
+  func test_openDeepLink_redemptionLink_shouldNotDismiss() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    let url = URL(string: "exampleapp://superwall/redeem?code=redemption_12345")!
+    messageHandler.handle(.openDeepLink(url: url))
+
+    XCTAssertTrue(delegate.didOpenDeepLink)
+    XCTAssertEqual(delegate.deepLinkShouldDismiss, false)
   }
 
   @MainActor
