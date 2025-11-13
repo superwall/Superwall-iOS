@@ -13,6 +13,7 @@ final class CheckoutWebViewController: UIViewController {
   private let webView: WKWebView
   private let url: URL
   var onDismiss: (() -> Void)?
+  var hasHandledRedemption = false
 
   deinit {
     NotificationCenter.default.removeObserver(self)
@@ -213,8 +214,13 @@ extension CheckoutWebViewController: WKNavigationDelegate {
       return .allow
     }
 
-    // Check if this should be opened externally (deep links or universal links)
+    // Block Superwall deep links from checkout to prevent duplicate redemptions
     if url.isSuperwallDeepLink {
+      if hasHandledRedemption {
+        return .cancel
+      }
+
+      hasHandledRedemption = true
       await MainActor.run {
         _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
       }

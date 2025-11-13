@@ -25,6 +25,10 @@ actor WebEntitlementRedeemer {
     & ConfigManagerFactory
     & HasExternalPurchaseControllerFactory
 
+  var isCurrentlyProcessing: Bool {
+    isProcessing
+  }
+
   enum RedeemType: CustomStringConvertible {
     case code(String)
     case existingCodes
@@ -84,6 +88,29 @@ actor WebEntitlementRedeemer {
     injectedConfig: Config? = nil
   ) async {
     let superwall = superwall ?? Superwall.shared
+
+    // Only block concurrent .code redemptions if a paywall is currently open
+    // (.code is the only type that can dismiss the paywall)
+    var shouldCleanupProcessingFlag = false
+    if case .code = type {
+      // Check isProcessing BEFORE any await to prevent race condition
+      if isProcessing {
+        return
+      }
+
+      let hasPaywall = await MainActor.run { superwall.paywallViewController != nil }
+
+      if hasPaywall {
+        isProcessing = true
+        shouldCleanupProcessingFlag = true
+      }
+    }
+    defer {
+      if shouldCleanupProcessingFlag {
+        isProcessing = false
+      }
+    }
+
     let latestRedeemResponse = storage.get(LatestRedeemResponse.self)
 
     let allCodes = await prepareCodesForRedemption(

@@ -212,6 +212,7 @@ struct WebEntitlementRedeemerTests {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
       paywallArchiveManager: nil
     )
@@ -323,6 +324,7 @@ struct WebEntitlementRedeemerTests {
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
       paywallArchiveManager: nil
     )
@@ -386,7 +388,7 @@ struct WebEntitlementRedeemerTests {
       injectedConfig: config
     )
 
-    try? await Task.sleep(for: .milliseconds(300))
+    try? await Task.sleep(nanoseconds: UInt64(300 * 1_000_000))
     #expect(mockStorage.saveCount == 0)
     #expect(superwall.entitlements.active.isEmpty)
     #expect(mockDelegate.receivedResult?.code == result.code)
@@ -807,5 +809,244 @@ struct WebEntitlementRedeemerTests {
     // Verify the LatestRedeemResponse was updated with empty entitlements
     let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
     #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
+  }
+
+  @Test("Concurrent redemptions blocked when paywall is open")
+  func testRedeem_concurrent_paywallOpen_secondBlocked() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let cache = dependencyContainer.paywallManager.cache
+    let messageHandler = await PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let webView = await SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let paywallVc = await PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: cache,
+      paywallArchiveManager: nil
+    )
+    cache.save(paywallVc, forKey: "key")
+    cache.activePaywallVcKey = "key"
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // Add a delay to the network mock so the first redemption is still in progress
+    mockNetwork.redeemDelay = 1.0
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "CODE1",
+      redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
+    )
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
+      .setting(\.results, to: [result])
+
+    // Start first redemption (will take 1 second due to delay)
+    async let firstRedemption: Void = redeemer.redeem(.code("CODE1"))
+
+    // Wait a bit to ensure first redemption has started
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    // Start second redemption while first is still in progress
+    let secondRedemptionStartTime = Date()
+    await redeemer.redeem(.code("CODE2"))
+    let secondRedemptionEndTime = Date()
+
+    // Second redemption should return immediately (not wait for network)
+    let secondRedemptionDuration = secondRedemptionEndTime.timeIntervalSince(secondRedemptionStartTime)
+    #expect(secondRedemptionDuration < 0.5, "Second redemption should be blocked immediately, not wait for network")
+
+    // Wait for first redemption to complete
+    await firstRedemption
+
+    // Only first redemption should have completed
+    #expect(mockNetwork.redeemCallCount == 1, "Only first redemption should have made network call")
+  }
+
+  @Test("Concurrent redemptions allowed when no paywall is open")
+  func testRedeem_concurrent_noPaywall_bothAllowed() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // Add a delay to the network mock
+    mockNetwork.redeemDelay = 0.5
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "CODE1",
+      redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
+    )
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
+      .setting(\.results, to: [result])
+
+    // Start both redemptions concurrently (no paywall open)
+    async let firstRedemption: Void = redeemer.redeem(.code("CODE1"))
+    async let secondRedemption: Void = redeemer.redeem(.code("CODE2"))
+
+    await firstRedemption
+    await secondRedemption
+
+    // Both redemptions should have completed
+    #expect(mockNetwork.redeemCallCount == 2, "Both redemptions should have made network calls since no paywall is open")
+  }
+
+  @Test("ExistingCodes redemptions not blocked when paywall is open")
+  func testRedeem_existingCodes_paywallOpen_notBlocked() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let cache = dependencyContainer.paywallManager.cache
+    let messageHandler = await PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let webView = await SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let paywallVc = await PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: cache,
+      paywallArchiveManager: nil
+    )
+    cache.save(paywallVc, forKey: "key")
+    cache.activePaywallVcKey = "key"
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    // Add a delay to the network mock
+    mockNetwork.redeemDelay = 1.0
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "CODE1",
+      redemptionInfo: .init(ownership: .appUser(appUserId: "appUserId"), purchaserInfo: .init(appUserId: "appUserId", email: nil, storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])), entitlements: entitlements)
+    )
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
+      .setting(\.results, to: [result])
+
+    // Start .code redemption (will take 1 second due to delay)
+    async let firstRedemption: Void = redeemer.redeem(.code("CODE1"))
+
+    // Wait a bit to ensure first redemption has started
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    // Start .existingCodes redemption while .code is still in progress
+    async let secondRedemption: Void = redeemer.redeem(.existingCodes)
+
+    await firstRedemption
+    await secondRedemption
+
+    // Both redemptions should have completed (existingCodes is not blocked)
+    #expect(mockNetwork.redeemCallCount == 2, "Both redemptions should have made network calls since .existingCodes is not blocked")
   }
 }

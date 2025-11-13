@@ -19,6 +19,8 @@ final class NetworkMock: Network {
   var getEntitlementsResponse: EntitlementsResponse?
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
+  var redeemDelay: TimeInterval = 0
+  var redeemCallCount = 0
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
@@ -53,6 +55,12 @@ final class NetworkMock: Network {
 
   override func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
     redeemRequest = request
+    redeemCallCount += 1
+
+    if redeemDelay > 0 {
+      try? await Task.sleep(nanoseconds: UInt64(redeemDelay * 1_000_000_000))
+    }
+
     if let getWebEntitlementsResponse = getWebEntitlementsResponse {
       return getWebEntitlementsResponse
     } else if let redeemError = redeemError {
