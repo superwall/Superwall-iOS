@@ -18,7 +18,6 @@ final class SK1ReceiptManager: ReceiptManagerType {
   var latestSubscriptionState: LatestSubscription.State?
   var appTransactionId: String?
   let transactionReceipts: [TransactionReceipt] = []
-  let appTransactionId: String? = nil
 
   init(
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData

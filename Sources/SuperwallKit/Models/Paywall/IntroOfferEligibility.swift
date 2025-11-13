@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// An enum whose cases indicate whether the ``Superwall/register(placement:params:handler:feature:)``
-/// `feature` block executes or not.
+/// An enum whose cases indicate the user's eligibility for introductory offers on the paywall.
 @objc(SWKIntroOfferEligibility)
 public enum IntroOfferEligibility: Int, Codable, CustomStringConvertible, Sendable {
   /// Allows a user to always claim a free trial.
@@ -21,17 +20,17 @@ public enum IntroOfferEligibility: Int, Codable, CustomStringConvertible, Sendab
   case automatic
 
   enum CodingKeys: String, CodingKey {
-    case eligible = "ELIGIBLE"
-    case ineligible = "INELIGIBLE"
+    case eligible = "ALWAYS_ELIGIBLE"
+    case ineligible = "ALWAYS_INELIGIBLE"
     case automatic = "AUTOMATIC"
   }
 
   public var description: String {
     switch self {
     case .eligible:
-      return "ELIGIBLE"
+      return "ALWAYS_ELIGIBLE"
     case .ineligible:
-      return "INELIGIBLE"
+      return "ALWAYS_INELIGIBLE"
     case .automatic:
       return "AUTOMATIC"
     }

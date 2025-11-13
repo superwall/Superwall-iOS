@@ -215,7 +215,9 @@ class PaywallLogicTests: XCTestCase {
 
     let expectedProductVariables = [ProductVariable(
       name: "secondary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasFreeTrial: false
     )]
     XCTAssertFalse(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)
@@ -259,7 +261,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasFreeTrial: false
     )]
 
     XCTAssertFalse(response.isFreeTrialAvailable)
@@ -302,7 +306,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasFreeTrial: true
     )]
 
     XCTAssertTrue(response.isFreeTrialAvailable)
@@ -345,7 +351,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasFreeTrial: true
     )]
     XCTAssertTrue(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)

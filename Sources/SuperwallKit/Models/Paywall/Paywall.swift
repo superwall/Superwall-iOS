@@ -69,7 +69,7 @@ struct Paywall: Codable {
 
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
-  
+
   /// Indicates how intro offer eligiblity should be treat on products. Defaults to
   /// `.automatic`.
   let introOfferEligibility: IntroOfferEligibility
@@ -166,6 +166,7 @@ struct Paywall: Codable {
     case surveys
     case manifest
     case isScrollEnabled
+    case introductoryOfferEligibility
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -181,7 +182,6 @@ struct Paywall: Codable {
 
     case shimmerLoadStartTime
     case shimmerLoadCompleteTime
-    case introOfferEligibility
   }
 
   init(from decoder: Decoder) throws {
@@ -282,7 +282,7 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
-    introOfferEligibility = try values.decodeIfPresent(IntroOfferEligibility.self, forKey: .introOfferEligibility) ?? .automatic
+    introOfferEligibility = try values.decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
   }
 
   func encode(to encoder: Encoder) throws {
@@ -339,7 +339,7 @@ struct Paywall: Codable {
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
     try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
-    try container.encodeIfPresent(introOfferEligibility, forKey: .introOfferEligibility)
+    try container.encodeIfPresent(introOfferEligibility, forKey: .introductoryOfferEligibility)
   }
 
   // Only used in stub

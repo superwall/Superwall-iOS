@@ -348,15 +348,15 @@ class Network {
   }
 
   func getIntroOfferToken(
-    eligible: Bool,
     productIds: [String],
-    appTransactionId: String
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
   ) async throws -> [String: IntroOfferToken] {
     return try await urlSession.request(
       .getIntroOfferToken(
-        eligible: eligible,
         productIds: productIds,
-        appTransactionId: appTransactionId
+        appTransactionId: appTransactionId,
+        allowIntroductoryOffer: allowIntroductoryOffer
       ),
       data: SuperwallRequestData(factory: factory)
     ).tokensByProductId

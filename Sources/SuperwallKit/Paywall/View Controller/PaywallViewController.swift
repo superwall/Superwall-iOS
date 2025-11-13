@@ -111,6 +111,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
   private var isCheckoutDismissedProgrammatically = false
 
+  /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+  let introOfferTokenManager: IntroOfferTokenManager
+
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
 
@@ -209,6 +212,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     deviceHelper: DeviceHelper,
     factory: Factory,
     storage: Storage,
+    network: Network,
     webView: SWWebView,
     cache: PaywallViewControllerCache?,
     paywallArchiveManager: PaywallArchiveManager?
@@ -226,6 +230,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.storage = storage
     self.paywall = paywall
     self.webView = webView
+    self.introOfferTokenManager = IntroOfferTokenManager(network: network)
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
@@ -239,6 +244,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     super.viewDidLoad()
     configureUI()
     loadWebView()
+    introOfferTokenManager.startObservingAppLifecycle()
+  }
+
+  deinit {
+    introOfferTokenManager.stopObservingAppLifecycle()
   }
 
   private func configureUI() {
@@ -940,6 +950,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     checkoutVC.onDismiss = { [weak self] in
       guard let self = self else { return }
       self.isSafariVCPresented = false
+
+      // TODO: This needs to ONLY go to ready if we're not in the process of redeeming......
       self.loadingState = .ready
 
       // Only track abandon if:
@@ -1023,16 +1035,16 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func openDeepLink(_ url: URL) {
-    dismiss(
-      result: .declined,
-      closeReason: .systemLogic
-    ) { [weak self] in
-      self?.eventDidOccur(.openedDeepLink(url: url))
+//    dismiss(
+//      result: .declined,
+//      closeReason: .systemLogic
+//    ) { [weak self] in
+      self.eventDidOccur(.openedDeepLink(url: url))
       guard let sharedApplication = UIApplication.sharedApplication else {
         return
       }
       sharedApplication.open(url)
-    }
+    // }
   }
 
   func requestReview(type: ReviewType) {
@@ -1106,11 +1118,6 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
-  // TODO: s
-  /*
-   On open, we send off the requrst for the token for intro offer eligiblity. And then if someone goes to purchase, we either use that or we await for the request to finish and then attach it before purchasing.
-   */
-
   /// Determines whether a survey will show.
   private var willShowSurvey: Bool {
     if paywall.surveys.isEmpty {
@@ -1138,18 +1145,8 @@ extension PaywallViewController {
       return
     }
 
-    // TODO: This needs to be somewhere such that when a user goes ot purchase we add the product if available just in time
-    Task {
-      if paywall.introOfferEligibility != .automatic,
-        let productIds = paywall.productIdsWithIntroOffers,
-        let appTransactionId = await receiptManager.getAppTransactionId() {
-        let tokensByProductId = network.getIntroOfferToken(
-          eligible: paywall.introOfferEligibility == .eligible ? true : false,
-          productIds: productIds,
-          appTransactionId: appTransactionId
-        )
-      }
-    }
+    // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+    fetchIntroOfferTokens()
 
     if willShowSurvey {
       didDisableSwipeForSurvey = true
@@ -1171,6 +1168,20 @@ extension PaywallViewController {
     }
 
     presentationWillPrepare = false
+  }
+
+  // MARK: - Intro Offer Token Management
+
+  /// Fetches intro offer eligibility tokens if configured for this paywall
+  private func fetchIntroOfferTokens() {
+    Task {
+      await introOfferTokenManager.fetchTokens(
+        introOfferEligibility: paywall.introOfferEligibility,
+        paywallId: paywall.identifier,
+        productIds: paywall.productIdsWithIntroOffers,
+        appTransactionId: ReceiptManager.appTransactionId
+      )
+    }
   }
 
   public override func viewDidAppear(_ animated: Bool) {

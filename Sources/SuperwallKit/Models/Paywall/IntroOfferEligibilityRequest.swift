@@ -6,7 +6,11 @@
 //
 
 struct IntroOfferEligibilityRequest: Codable {
-  let eligible: Bool
-  let productIds: [String]
-  let appTransactionId: String
+  struct Product: Codable {
+    let productId: String
+    let transactionId: String
+  }
+
+  let allowIntroductoryOffer: Bool
+  let products: [Product]
 }

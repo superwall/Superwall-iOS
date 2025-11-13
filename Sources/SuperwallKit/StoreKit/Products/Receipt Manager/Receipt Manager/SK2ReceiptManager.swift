@@ -15,7 +15,6 @@ protocol ReceiptManagerType: AnyObject {
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType? { get async }
   var latestSubscriptionWillAutoRenew: Bool? { get async }
   var latestSubscriptionState: LatestSubscription.State? { get async }
-  var appTransactionId: String? { get async }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot
@@ -35,7 +34,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
   var latestSubscriptionWillAutoRenew: Bool?
   var latestSubscriptionState: LatestSubscription.State?
-  var appTransactionId: String?
 
   init(
     sk2IntroOfferEligibility: [String: Bool] = [:],

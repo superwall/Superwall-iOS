@@ -39,7 +39,9 @@ actor StoreKitManager {
         productAttributes.append(
           ProductVariable(
             name: name,
-            attributes: storeProduct.attributesJson
+            attributes: storeProduct.attributesJson,
+            id: storeProduct.productIdentifier,
+            hasFreeTrial: storeProduct.hasFreeTrial
           )
         )
       }

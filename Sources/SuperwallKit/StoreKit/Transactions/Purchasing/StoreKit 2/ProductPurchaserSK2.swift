@@ -93,16 +93,12 @@ final class ProductPurchaserSK2: Purchasing {
       }
 
       #if compiler(>=6.1)
-      /*
-       Need to get the JWS when the paywall loads and then pass that to the paywall (or get it directly from the paywall?). It needs
-       to adjust the free trial eligibility.
-       What happens if we want to preview the paywall with custom free trial eligibility.
-
-       If offline?
-        -> We need to store the JWS? Not sure this would work as it'd probs expire. We'd need to at least store the eligiblity so we can show the correct eligiblity.
-       */
-      let signature = "jws.signed.signature.generated.from.your.server.goes.here"
-      options.insert(.introductoryOfferEligibility(compactJWS: signature))
+      // Add intro offer eligibility token if available for this product
+      // This allows overriding Apple's automatic eligibility determination
+      if let paywallViewController = Superwall.shared.paywallViewController,
+        let token = await paywallViewController.introOfferTokenManager.getValidToken(for: product.id) {
+        options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+      }
       #endif
 
       let result: StoreKit.Product.PurchaseResult

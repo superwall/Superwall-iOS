@@ -19,6 +19,8 @@ final class NetworkMock: Network {
   var getEntitlementsResponse: EntitlementsResponse?
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
+  var getIntroOfferTokenResult: Result<[String: IntroOfferToken], Error>?
+  var getIntroOfferTokenCallCount = 0
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
@@ -69,6 +71,23 @@ final class NetworkMock: Network {
       return getEntitlementsResponse
     } else if let redeemError = redeemError {
       throw redeemError
+    }
+    throw NetworkError.unknown
+  }
+
+  override func getIntroOfferToken(
+    productIds: [String],
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
+  ) async throws -> [String: IntroOfferToken] {
+    getIntroOfferTokenCallCount += 1
+    if let result = getIntroOfferTokenResult {
+      switch result {
+      case .success(let tokens):
+        return tokens
+      case .failure(let error):
+        throw error
+      }
     }
     throw NetworkError.unknown
   }
