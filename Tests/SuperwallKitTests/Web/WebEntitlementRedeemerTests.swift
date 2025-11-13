@@ -388,7 +388,7 @@ struct WebEntitlementRedeemerTests {
       injectedConfig: config
     )
 
-    try? await Task.sleep(for: .milliseconds(300))
+    try? await Task.sleep(nanoseconds: UInt64(300 * 1_000_000))
     #expect(mockStorage.saveCount == 0)
     #expect(superwall.entitlements.active.isEmpty)
     #expect(mockDelegate.receivedResult?.code == result.code)
@@ -886,7 +886,7 @@ struct WebEntitlementRedeemerTests {
     async let firstRedemption: Void = redeemer.redeem(.code("CODE1"))
 
     // Wait a bit to ensure first redemption has started
-    try? await Task.sleep(for: .milliseconds(100))
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     // Start second redemption while first is still in progress
     let secondRedemptionStartTime = Date()
@@ -1038,7 +1038,7 @@ struct WebEntitlementRedeemerTests {
     async let firstRedemption: Void = redeemer.redeem(.code("CODE1"))
 
     // Wait a bit to ensure first redemption has started
-    try? await Task.sleep(for: .milliseconds(100))
+    try? await Task.sleep(nanoseconds: 100_000_000)
 
     // Start .existingCodes redemption while .code is still in progress
     async let secondRedemption: Void = redeemer.redeem(.existingCodes)

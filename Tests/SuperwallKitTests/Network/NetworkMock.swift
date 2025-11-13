@@ -58,7 +58,7 @@ final class NetworkMock: Network {
     redeemCallCount += 1
 
     if redeemDelay > 0 {
-      try? await Task.sleep(for: .seconds(redeemDelay))
+      try? await Task.sleep(nanoseconds: UInt64(redeemDelay * 1_000_000_000))
     }
 
     if let getWebEntitlementsResponse = getWebEntitlementsResponse {
