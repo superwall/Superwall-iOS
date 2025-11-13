@@ -26,6 +26,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var eventDidOccur: PaywallWebEvent?
   var didPresentSafariInApp = false
   var didOpenDeepLink = false
+  var deepLinkShouldDismiss: Bool?
   var didPresentSafariExternal = false
   var didRequestReview = false
   var didOpenPaymentSheet = false
@@ -54,8 +55,9 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     eventDidOccur = paywallWebEvent
   }
 
-  func openDeepLink(_ url: URL) {
+  func openDeepLink(_ url: URL, shouldDismiss: Bool) {
     didOpenDeepLink = true
+    deepLinkShouldDismiss = shouldDismiss
   }
 
   func presentSafariInApp(_ url: URL) {

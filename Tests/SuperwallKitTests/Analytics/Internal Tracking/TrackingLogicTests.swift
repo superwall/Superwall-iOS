@@ -316,6 +316,7 @@ final class TrackingLogicTests: XCTestCase {
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
       paywallArchiveManager: nil
     )

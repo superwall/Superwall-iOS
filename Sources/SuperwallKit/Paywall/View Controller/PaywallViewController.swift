@@ -113,6 +113,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
+  
+  /// Reference to the current checkout webview controller
+  private weak var currentCheckoutVC: CheckoutWebViewController?
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
@@ -200,6 +203,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let factory: Factory
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
+  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private weak var cache: PaywallViewControllerCache?
   private weak var paywallArchiveManager: PaywallArchiveManager?
 
@@ -214,6 +218,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     storage: Storage,
     network: Network,
     webView: SWWebView,
+    webEntitlementRedeemer: WebEntitlementRedeemer,
     cache: PaywallViewControllerCache?,
     paywallArchiveManager: PaywallArchiveManager?
   ) {
@@ -231,6 +236,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.paywall = paywall
     self.webView = webView
     self.introOfferTokenManager = IntroOfferTokenManager(network: network)
+    self.webEntitlementRedeemer = webEntitlementRedeemer
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
@@ -934,6 +940,8 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
     didRedeemSucceedDuringCheckout = true
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
+    // Mark checkout as having handled redemption to prevent duplicate navigations
+    currentCheckoutVC?.hasHandledRedemption = true
   }
 }
 
@@ -947,12 +955,17 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     transactionAbandonWorkItem = nil
 
     let checkoutVC = CheckoutWebViewController(url: url)
+    // Store reference to communicate redemption state
+    self.currentCheckoutVC = checkoutVC
     checkoutVC.onDismiss = { [weak self] in
       guard let self = self else { return }
       self.isSafariVCPresented = false
 
-      // TODO: This needs to ONLY go to ready if we're not in the process of redeeming......
-      self.loadingState = .ready
+      // Set loadingState to ready unless we programmatically dismissed
+      // (programmatic dismissal happens when redemption starts, which sets manualLoading)
+      if !self.isCheckoutDismissedProgrammatically {
+        self.loadingState = .ready
+      }
 
       // Only track abandon if:
       // 1. Redeem did NOT succeed
@@ -1034,17 +1047,24 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     sharedApplication.open(url)
   }
 
-  func openDeepLink(_ url: URL) {
-//    dismiss(
-//      result: .declined,
-//      closeReason: .systemLogic
-//    ) { [weak self] in
-      self.eventDidOccur(.openedDeepLink(url: url))
+  func openDeepLink(_ url: URL, shouldDismiss: Bool) {
+    let openUrl = { [weak self] in
+      self?.eventDidOccur(.openedDeepLink(url: url))
       guard let sharedApplication = UIApplication.sharedApplication else {
         return
       }
       sharedApplication.open(url)
-    // }
+    }
+
+    if shouldDismiss {
+      dismiss(
+        result: .declined,
+        closeReason: .systemLogic,
+        completion: openUrl
+      )
+    } else {
+      openUrl()
+    }
   }
 
   func requestReview(type: ReviewType) {
