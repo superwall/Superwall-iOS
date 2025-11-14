@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where `Superwall.shared.confirmAllAssignments()` would be empty if config hadn't been retrieved.
+- Updates Superscript to 1.0.9 to fix issue with namespacing in SPM. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.9).
 
 ## 4.10.1
 
