@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes issue where `Superwall.shared.confirmAllAssignments()` would be empty if config hadn't been retrieved.
+- Fixes issue where `Superwall.shared.confirmAllAssignments()` would be return an empty `Set` if config hadn't been retrieved.
 
 ## 4.10.1
 
