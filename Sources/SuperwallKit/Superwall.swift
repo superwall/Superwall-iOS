@@ -651,6 +651,10 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// - Returns: An array of ``Assignment`` objects.
   public func confirmAllAssignments() async -> [Assignment] {
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+
     let confirmAllAssignments = InternalSuperwallEvent.ConfirmAllAssignments()
     await track(confirmAllAssignments)
 

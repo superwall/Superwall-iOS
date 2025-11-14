@@ -2,13 +2,20 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.2
+
+### Fixes
+
+- Fixes issue where `Superwall.shared.confirmAllAssignments()` would be empty if config hadn't been retrieved.
+- Updates Superscript to 1.0.9 to fix issue with namespacing in SPM. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.9).
+
 ## 4.10.1
 
 ### Fixes
 
-- Fixes issue where `willRedeemLink` might get called twice during the payment sheet web checkout flow.
+- Fixes issue where `willRedeemLink` might get called twice during the web checkout payment sheet flow.
 - Fixes issue where paywall might get dismissed prematurely during web checkout.
-- Fixes issue where the spinner on the paywall wasn't showing for a few seconds after the system closed the payment sheet due to a successful purchase.
+- Fixes issue where the spinner on the paywall wasn't showing for a few seconds after the system closed the web checkout payment sheet due to a successful purchase.
 
 ## 4.10.0
 
