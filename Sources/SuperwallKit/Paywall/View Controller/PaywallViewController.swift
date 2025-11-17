@@ -113,9 +113,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
-  
-  /// Reference to the current checkout webview controller
-  private weak var currentCheckoutVC: CheckoutWebViewController?
+
+  #if !os(visionOS)
+    /// Reference to the current checkout webview controller
+    private weak var currentCheckoutVC: CheckoutWebViewController?
+  #endif
 
   /// The presentation style for the paywall.
   private var presentationStyle: PaywallPresentationStyle
@@ -390,21 +392,32 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     // Check if it's a Safari VC or Checkout Web VC
-    if let safariVC = presentedViewController as? SFSafariViewController {
-      safariVC.dismiss(
-        animated: true,
-        completion: completion
-      )
-    } else if let checkoutVC = presentedViewController as? CheckoutWebViewController {
-      // Mark as programmatic dismissal to prevent tracking transaction abandon
-      isCheckoutDismissedProgrammatically = true
-      checkoutVC.dismiss(
-        animated: true,
-        completion: completion
-      )
-    } else {
-      completion?()
-    }
+    #if !os(visionOS)
+      if let safariVC = presentedViewController as? SFSafariViewController {
+        safariVC.dismiss(
+          animated: true,
+          completion: completion
+        )
+      } else if let checkoutVC = presentedViewController as? CheckoutWebViewController {
+        // Mark as programmatic dismissal to prevent tracking transaction abandon
+        isCheckoutDismissedProgrammatically = true
+        checkoutVC.dismiss(
+          animated: true,
+          completion: completion
+        )
+      } else {
+        completion?()
+      }
+    #else
+      if let safariVC = presentedViewController as? SFSafariViewController {
+        safariVC.dismiss(
+          animated: true,
+          completion: completion
+        )
+      } else {
+        completion?()
+      }
+    #endif
 
     // Must set this manually because programmatically dismissing doesn't call
     // delegate methods where we set this.
@@ -940,14 +953,17 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
     didRedeemSucceedDuringCheckout = true
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
-    // Mark checkout as having handled redemption to prevent duplicate navigations
-    currentCheckoutVC?.hasHandledRedemption = true
+    #if !os(visionOS)
+      // Mark checkout as having handled redemption to prevent duplicate navigations
+      currentCheckoutVC?.hasHandledRedemption = true
+    #endif
   }
 }
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openPaymentSheet(_ url: URL) {
+    #if !os(visionOS)
     // Reset flags when opening checkout
     didRedeemSucceedDuringCheckout = false
     isCheckoutDismissedProgrammatically = false
@@ -1009,6 +1025,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     self.isSafariVCPresented = true
     loadingState = .loadingPurchase
     present(checkoutVC, animated: true)
+    #endif
   }
 
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
@@ -1070,17 +1087,23 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func requestReview(type: ReviewType) {
     switch type {
     case .inApp:
-      if let scene = view.window?.windowScene {
-        if #available(iOS 16.0, *) {
+      #if os(visionOS)
+        if let scene = view.window?.windowScene {
           AppStore.requestReview(in: scene)
-        } else if #available(iOS 14.0, *) {
-          SKStoreReviewController.requestReview(in: scene)
+        }
+      #else
+        if let scene = view.window?.windowScene {
+          if #available(iOS 16.0, *) {
+            AppStore.requestReview(in: scene)
+          } else if #available(iOS 14.0, *) {
+            SKStoreReviewController.requestReview(in: scene)
+          } else {
+            SKStoreReviewController.requestReview()
+          }
         } else {
           SKStoreReviewController.requestReview()
         }
-      } else {
-        SKStoreReviewController.requestReview()
-      }
+      #endif
       trackReviewRequest(type: .inApp)
     case .external:
       let appId: String

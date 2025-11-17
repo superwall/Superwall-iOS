@@ -372,7 +372,7 @@ enum EntitlementProcessor {
           subscriptions[index].isInBillingRetryPeriod = state == .inBillingRetryPeriod
         }
 
-        if #available(iOS 17.2, *) {
+        if #available(iOS 17.2, visionOS 1.1, *) {
           offerType = subscriptionStatusProvider.getOfferType(from: renewableTransaction)
         }
 
