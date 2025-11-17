@@ -529,6 +529,9 @@ struct WebEntitlementRedeemerTests {
     // Poll web entitlements - this should detect the revocation
     await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
 
+    // Allow async queue operations to complete (EntitlementsInfo updates backingActive async)
+    try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+
     // Verify the SUPERWALL entitlement was removed
     #expect(superwall.customerInfo.entitlements.isEmpty, "CustomerInfo should have no entitlements after revocation")
     #expect(superwall.entitlements.active.isEmpty, "Active entitlements should be empty after revocation")
