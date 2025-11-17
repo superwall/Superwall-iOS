@@ -263,7 +263,7 @@ class PaywallLogicTests: XCTestCase {
       name: "primary",
       attributes: product.attributesJson,
       id: productId,
-      hasFreeTrial: false
+      hasFreeTrial: true
     )]
 
     XCTAssertFalse(response.isFreeTrialAvailable)
