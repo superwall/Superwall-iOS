@@ -76,7 +76,7 @@ struct Paywall: Codable {
 
   var productIdsWithIntroOffers: [String] {
     return productVariables?
-      .filter { $0.hasFreeTrial }
+      .filter { $0.hasIntroOffer }
       .map { $0.id } ?? []
   }
 

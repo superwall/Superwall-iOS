@@ -217,7 +217,7 @@ class PaywallLogicTests: XCTestCase {
       name: "secondary",
       attributes: product.attributesJson,
       id: productId,
-      hasFreeTrial: false
+      hasIntroOffer: false
     )]
     XCTAssertFalse(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)
@@ -263,7 +263,7 @@ class PaywallLogicTests: XCTestCase {
       name: "primary",
       attributes: product.attributesJson,
       id: productId,
-      hasFreeTrial: true
+      hasIntroOffer: true
     )]
 
     XCTAssertFalse(response.isFreeTrialAvailable)
@@ -308,7 +308,7 @@ class PaywallLogicTests: XCTestCase {
       name: "primary",
       attributes: product.attributesJson,
       id: productId,
-      hasFreeTrial: true
+      hasIntroOffer: true
     )]
 
     XCTAssertTrue(response.isFreeTrialAvailable)
@@ -353,7 +353,7 @@ class PaywallLogicTests: XCTestCase {
       name: "primary",
       attributes: product.attributesJson,
       id: productId,
-      hasFreeTrial: true
+      hasIntroOffer: true
     )]
     XCTAssertTrue(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)

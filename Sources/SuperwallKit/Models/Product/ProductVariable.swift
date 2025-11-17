@@ -13,7 +13,7 @@ struct ProductVariable: Codable, Equatable {
 
   // Unused for encoding:
   let id: String
-  let hasFreeTrial: Bool
+  let hasIntroOffer: Bool
 
   /// Encodes in the format `"name": [attributes]`
   func encode(to encoder: Encoder) throws {

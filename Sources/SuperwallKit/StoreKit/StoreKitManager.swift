@@ -41,7 +41,7 @@ actor StoreKitManager {
             name: name,
             attributes: storeProduct.attributesJson,
             id: storeProduct.productIdentifier,
-            hasFreeTrial: storeProduct.hasFreeTrial
+            hasIntroOffer: storeProduct.hasFreeTrial
           )
         )
       }
