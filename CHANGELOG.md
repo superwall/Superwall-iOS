@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.4
+
+### Fixes
+
+- Updates Superscript version to 1.0.10. This fixes an issue with namespacing in cocoapods. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.10).
+- Fixes some issues building for visionOS.
+
 ## 4.10.3
 
 ### Fixes
