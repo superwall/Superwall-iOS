@@ -9,6 +9,7 @@
 import UIKit
 import WebKit
 
+#if !os(visionOS)
 final class CheckoutWebViewController: UIViewController {
   private let webView: WKWebView
   private let url: URL
@@ -266,3 +267,4 @@ extension CheckoutWebViewController: WKScriptMessageHandler {
     }
   }
 }
+#endif
