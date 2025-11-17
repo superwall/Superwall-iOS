@@ -67,10 +67,17 @@ enum PaywallMessage: Decodable, Equatable {
 
   case transactionRestore
   case transactionStart
-  case transactionComplete
+  case transactionComplete(trialEndDate: Date?)
   case transactionFail
   case transactionAbandon
   case transactionTimeout
+  case scheduleNotification(
+    type: LocalNotificationType,
+    title: String,
+    subtitle: String?,
+    body: String,
+    delay: Milliseconds
+  )
 
   private enum MessageTypes: String, Decodable {
     case onReady = "ping"
@@ -84,6 +91,7 @@ enum PaywallMessage: Decodable, Equatable {
     case customPlacement = "custom_placement"
     case initiateWebCheckout = "initiate_web_checkout"
     case requestStoreReview = "request_store_review"
+    case scheduleNotification = "schedule_notification"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -99,6 +107,11 @@ enum PaywallMessage: Decodable, Equatable {
     case reviewType
     case browserType
     case checkoutContextId
+    case type
+    case title
+    case subtitle
+    case body
+    case delay
   }
 
   enum PaywallMessageError: Error {
@@ -163,6 +176,21 @@ enum PaywallMessage: Decodable, Equatable {
       case .requestStoreReview:
         if let reviewType = try? values.decode(ReviewType.self, forKey: .reviewType) {
           self = .requestStoreReview(reviewType)
+          return
+        }
+      case .scheduleNotification:
+        if let type = try? values.decode(LocalNotificationType.self, forKey: .type),
+          let title = try? values.decode(String.self, forKey: .title),
+          let body = try? values.decode(String.self, forKey: .body),
+          let delay = try? values.decode(Milliseconds.self, forKey: .delay) {
+          let subtitle = try? values.decode(String.self, forKey: .subtitle)
+          self = .scheduleNotification(
+            type: type,
+            title: title,
+            subtitle: subtitle,
+            body: body,
+            delay: delay
+          )
           return
         }
       }

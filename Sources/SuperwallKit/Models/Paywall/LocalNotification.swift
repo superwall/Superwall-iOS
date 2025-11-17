@@ -41,6 +41,30 @@ public final class LocalNotification: NSObject, Codable {
   }
 }
 
+// MARK: - Equatable
+extension LocalNotification {
+  public override func isEqual(_ object: Any?) -> Bool {
+    guard let other = object as? LocalNotification else {
+      return false
+    }
+    return type == other.type &&
+      title == other.title &&
+      subtitle == other.subtitle &&
+      body == other.body &&
+      delay == other.delay
+  }
+
+  public override var hash: Int {
+    var hasher = Hasher()
+    hasher.combine(type)
+    hasher.combine(title)
+    hasher.combine(subtitle)
+    hasher.combine(body)
+    hasher.combine(delay)
+    return hasher.finalize()
+  }
+}
+
 // MARK: - Stubbable
 extension LocalNotification: Stubbable {
   static func stub() -> LocalNotification {

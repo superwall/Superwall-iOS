@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.4
+
+### Enhancements
+
+- Added dynamic notification support and scheduling.
+
 ## 4.10.3
 
 ### Fixes
