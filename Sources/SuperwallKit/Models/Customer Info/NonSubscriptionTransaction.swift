@@ -7,6 +7,9 @@
 
 import Foundation
 
+/**
+ * Represents a non-subscription transaction (i.e. consumables and non-consumables) in the customer's purchase history.
+ */
 @objc(SWKNonSubscriptionTransaction)
 @objcMembers
 public final class NonSubscriptionTransaction: NSObject, Codable {

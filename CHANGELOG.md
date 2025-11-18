@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.5
+
+### Fixes
+
+- Updates `device.isApplePayAvailable` for more accurate filtering. Previously it returned true whenever the device supported Apple Pay, even if no card was added. It now returns true only when the device supports Apple Pay and the user has added a card.
+
 ## 4.10.4
 
 ### Fixes
