@@ -71,6 +71,8 @@ enum PaywallMessage: Decodable, Equatable {
   case transactionFail
   case transactionAbandon
   case transactionTimeout
+
+  // swiftlint:disable:next enum_case_associated_values_count
   case scheduleNotification(
     type: LocalNotificationType,
     title: String,
