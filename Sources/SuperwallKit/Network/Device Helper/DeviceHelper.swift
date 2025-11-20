@@ -215,16 +215,16 @@ class DeviceHelper {
     if #available(iOS 17.0, *) {
       networks += [.tmoney, .pagoBancomat]
     }
-    if #available(iOS 17.4, *) {
+    if #available(iOS 17.4, visionOS 1.1, *) {
       networks += [.meeza]
     }
-    if #available(iOS 17.5, *) {
+    if #available(iOS 17.5, visionOS 1.2, *) {
       networks += [.bankAxept, .NAPAS]
     }
-    if #available(iOS 18.4, *) {
+    if #available(iOS 18.4, visionOS 2.4, *) {
       networks += [.himyan, .jaywan]
     }
-    if #available(iOS 26.0, *) {
+    if #available(iOS 26.0, visionOS 26.0, *) {
       networks += [.myDebit]
     }
 
