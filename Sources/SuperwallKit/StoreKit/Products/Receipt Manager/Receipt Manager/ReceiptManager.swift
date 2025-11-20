@@ -92,12 +92,34 @@ actor ReceiptManager {
           Self.appTransactionId = transaction.appTransactionID
           Self.appId = transaction.appID
           if Superwall.isInitialized {
+            registerAppTransactionIdIfNeeded()
             Superwall.shared.dequeueIntegrationAttributes()
           }
         }
       }
     }
     #endif
+  }
+
+  private func registerAppTransactionIdIfNeeded() {
+    // Check if already sent
+    if storage.get(AppTransactionIdSent.self) == true {
+      return
+    }
+
+    // Don't register if app transaction ID is nil
+    guard Self.appTransactionId != nil else {
+      return
+    }
+
+    Task {
+      // Call redeem with existing codes (or empty if none)
+      // This will send the app transaction ID to the backend
+      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+
+      // Mark as sent
+      storage.save(true, forType: AppTransactionIdSent.self)
+    }
   }
 
   func getExperimentalDeviceProperties() async -> [String: Any] {

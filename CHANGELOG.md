@@ -2,17 +2,28 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.10.4
+## 4.10.5
 
 ### Enhancements
 
-- Added dynamic notification support and scheduling.
+- Adds dynamic notification support and scheduling.
+
+### Fixes
+
+- Updates `device.isApplePayAvailable` for more accurate filtering. Previously it returned true whenever the device supported Apple Pay, even if no card was added. It now returns true only when the device supports Apple Pay and the user has added a card.
+
+## 4.10.4
+
+### Fixes
+
+- Updates Superscript version to 1.0.10. This fixes an issue with namespacing in cocoapods. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.10).
+- Fixes some issues building for visionOS.
 
 ## 4.10.3
 
 ### Fixes
 
-- Fixes issue where `Superwall.shared.confirmAllAssignments()` would be empty if config hadn't been retrieved.
+- Fixes issue where `Superwall.shared.confirmAllAssignments()` would be return an empty `Set` if config hadn't been retrieved.
 
 ## 4.10.1
 

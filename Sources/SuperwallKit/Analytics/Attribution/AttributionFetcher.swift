@@ -27,8 +27,8 @@ final class AttributionFetcher {
   var identifierForAdvertisers: String? {
     // should match available platforms here:
     // https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier
-    #if os(iOS) || os(tvOS) || os(macOS) || VISION_OS
-    if #available(macOS 10.14, *) {
+    #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
+    if #available(macCatalyst 13.1, macOS 10.14, *) {
       let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
       guard let identifierManagerProxy = identifierManagerProxy else {
         Logger.debug(

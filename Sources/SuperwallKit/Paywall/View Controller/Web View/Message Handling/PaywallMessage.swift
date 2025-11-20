@@ -142,7 +142,12 @@ enum PaywallMessage: Decodable, Equatable {
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
           let browserType = try? values.decode(String.self, forKey: .browserType)
-          self = browserType == "payment_sheet" ? .openPaymentSheet(url) : .openUrl(url)
+          #if os(visionOS)
+            // On visionOS, always use openUrl instead of payment sheet
+            self = .openUrl(url)
+          #else
+            self = browserType == "payment_sheet" ? .openPaymentSheet(url) : .openUrl(url)
+          #endif
           return
         }
       case .openUrlInSafari:

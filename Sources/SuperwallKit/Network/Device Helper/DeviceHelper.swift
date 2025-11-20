@@ -174,7 +174,63 @@ class DeviceHelper {
   }
 
   var isApplePayAvailable: Bool {
-    return PKPaymentAuthorizationViewController.canMakePayments()
+    var networks: [PKPaymentNetwork] = [
+      .amex,
+      .cartesBancaires,
+      .chinaUnionPay,
+      .discover,
+      .eftpos,
+      .electron,
+      .elo,
+      .idCredit,
+      .interac,
+      .JCB,
+      .mada,
+      .maestro,
+      .masterCard,
+      .privateLabel,
+      .quicPay,
+      .suica,
+      .visa,
+      .vPay
+    ]
+    if #available(iOS 14.0, *) {
+      networks += [.barcode, .girocard]
+    }
+    if #available(iOS 14.5, *) {
+      networks += [.mir]
+    }
+    if #available(iOS 15.0, *) {
+      networks += [.nanaco]
+    }
+    if #available(iOS 15.1, *) {
+      networks += [.dankort]
+    }
+    if #available(iOS 16.0, *) {
+      networks += [.bancomat, .nanaco, .waon]
+    }
+    if #available(iOS 16.4, *) {
+      networks += [.postFinance]
+    }
+    if #available(iOS 17.0, *) {
+      networks += [.tmoney, .pagoBancomat]
+    }
+    if #available(iOS 17.4, *) {
+      networks += [.meeza]
+    }
+    if #available(iOS 17.5, *) {
+      networks += [.bankAxept, .NAPAS]
+    }
+    if #available(iOS 18.4, *) {
+      networks += [.himyan, .jaywan]
+    }
+    if #available(iOS 26.0, *) {
+      networks += [.myDebit]
+    }
+
+    return PKPaymentAuthorizationViewController.canMakePayments(
+      usingNetworks: networks
+    )
   }
 
   let bundleId: String = {

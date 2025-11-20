@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Represents a subscription in the customer's purchase history.
 @objc(SWKSubscriptionTransaction)
 @objcMembers
 public final class SubscriptionTransaction: NSObject, Codable {
