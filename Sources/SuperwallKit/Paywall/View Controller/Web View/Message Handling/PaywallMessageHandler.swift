@@ -168,7 +168,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       break
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
-    case .scheduleNotification(let type, let title, let subtitle, let body, let delay):
+    case let .scheduleNotification(type, title, subtitle, body, delay):
       let notification = LocalNotification(
         type: type,
         title: title,
@@ -197,20 +197,6 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
     let base64Event = jsonData.base64EncodedString()
     await passMessageToWebView(base64Event)
-  }
-
-  /// Sends a TransactionComplete message to the webview and suspends until the message is delivered.
-  /// This ensures the webview has time to process the message before any subsequent actions (like dismiss).
-  func sendTransactionComplete(trialEndDate: Date?) async {
-    guard let paywall = delegate?.paywall else {
-      return
-    }
-    let transactionComplete = SuperwallEventObjc.transactionComplete.description
-    await pass(
-      placement: transactionComplete,
-      from: paywall,
-      payload: trialEndDate.map { ["trial_end_date": Int($0.timeIntervalSince1970 * 1000)] } ?? [:]
-    )
   }
 
   /// Passes the templated variables and params to the webview.

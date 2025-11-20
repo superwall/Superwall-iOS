@@ -188,7 +188,7 @@ enum PaywallMessage: Decodable, Equatable {
           let title = try? values.decode(String.self, forKey: .title),
           let body = try? values.decode(String.self, forKey: .body),
           let delay = try? values.decode(Milliseconds.self, forKey: .delay) {
-          let subtitle = try? values.decode(String.self, forKey: .subtitle)
+          let subtitle = try values.decodeIfPresent(String.self, forKey: .subtitle)
           self = .scheduleNotification(
             type: type,
             title: title,

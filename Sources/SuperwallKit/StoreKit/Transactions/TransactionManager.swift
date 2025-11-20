@@ -899,7 +899,8 @@ final class TransactionManager {
     case .internal(_, let paywallViewController):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
-      await paywallViewController.webView.messageHandler.sendTransactionComplete(trialEndDate: trialEndDate)
+      await paywallViewController.webView.messageHandler
+        .handle(.transactionComplete(trialEndDate: trialEndDate))
     case .purchaseFunc,
       .observeFunc:
       paywallInfo = .empty()
