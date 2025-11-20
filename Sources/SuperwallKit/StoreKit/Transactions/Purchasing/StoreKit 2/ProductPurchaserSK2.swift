@@ -88,10 +88,18 @@ final class ProductPurchaserSK2: Purchasing {
     }
     do {
       var options: Set<StoreKit.Product.PurchaseOption> = []
-
       if let appAccountToken = identityManager.appAccountToken {
         options.insert(.appAccountToken(appAccountToken))
       }
+
+      #if compiler(>=6.1)
+      // Add intro offer eligibility token if available for this product
+      // This allows overriding Apple's automatic eligibility determination
+      if let paywallViewController = Superwall.shared.paywallViewController,
+        let token = await paywallViewController.introOfferTokenManager.getValidToken(for: product.id) {
+        options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+      }
+      #endif
 
       let result: StoreKit.Product.PurchaseResult
 

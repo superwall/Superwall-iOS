@@ -314,6 +314,7 @@ final class TrackingLogicTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,

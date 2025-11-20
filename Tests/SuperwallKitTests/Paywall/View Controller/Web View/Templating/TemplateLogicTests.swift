@@ -48,7 +48,7 @@ final class TemplateLogicTests: XCTestCase {
         entitlements: [.stub()]
       )
     ]
-    let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
+    let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"], id: "primary_product_id", hasIntroOffer: false)]
     let userAttributes = [
       "name": "Yusuf"
     ]
@@ -110,7 +110,7 @@ final class TemplateLogicTests: XCTestCase {
         entitlements: [.stub()]
       )
     ]
-    let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"])]
+    let productVariables = [ProductVariable(name: "primary", attributes: ["period": "month"], id: "primary_product_id", hasIntroOffer: false)]
     let userAttributes = [
       "name": "Yusuf"
     ]
@@ -186,9 +186,9 @@ final class TemplateLogicTests: XCTestCase {
       ),
     ]
     let productVariables = [
-      ProductVariable(name: "primary", attributes: ["period": "month"]),
-      ProductVariable(name: "secondary", attributes: ["period": "month"]),
-      ProductVariable(name: "tertiary", attributes: ["period": "month"]),
+      ProductVariable(name: "primary", attributes: ["period": "month"], id: "primary_product_id", hasIntroOffer: false),
+      ProductVariable(name: "secondary", attributes: ["period": "month"], id: "secondary_product_id", hasIntroOffer: false),
+      ProductVariable(name: "tertiary", attributes: ["period": "month"], id: "tertiary_product_id", hasIntroOffer: false),
     ]
     let userAttributes = [
       "name": "Yusuf"
@@ -274,9 +274,9 @@ final class TemplateLogicTests: XCTestCase {
       ),
     ]
     let productVariables = [
-      ProductVariable(name: "primary", attributes: ["period": "month"]),
-      ProductVariable(name: "secondary", attributes: ["period": "month"]),
-      ProductVariable(name: "tertiary", attributes: ["period": "month"]),
+      ProductVariable(name: "primary", attributes: ["period": "month"], id: "primary_product_id", hasIntroOffer: false),
+      ProductVariable(name: "secondary", attributes: ["period": "month"], id: "secondary_product_id", hasIntroOffer: false),
+      ProductVariable(name: "tertiary", attributes: ["period": "month"], id: "tertiary_product_id", hasIntroOffer: false),
     ]
     let userAttributes = [
       "name": "Yusuf"
