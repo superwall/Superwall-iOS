@@ -939,6 +939,14 @@ final class TransactionManager {
           transaction: transaction
         )
       )
+      let notifications = paywallInfo.localNotifications.filter {
+        $0.type == .trialStarted
+      }
+      await NotificationScheduler.shared.scheduleNotifications(
+        notifications,
+        fromPaywallId: paywallInfo.identifier,
+        factory: factory
+      )
     case .subscriptionStart:
       await Superwall.shared.track(
         InternalSuperwallEvent.SubscriptionStart(

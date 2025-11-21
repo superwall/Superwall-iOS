@@ -81,12 +81,19 @@ extension LocalNotification: Stubbable {
 
 /// The type of notification.
 @objc(SWKLocalNotificationType)
-public enum LocalNotificationType: Int, Codable {
+public enum LocalNotificationType: Int, Codable, CustomStringConvertible {
   /// The notification will fire after a transaction.
   case trialStarted
 
   enum CodingKeys: String, CodingKey {
     case trialStarted = "TRIAL_STARTED"
+  }
+
+  public var description: String {
+    switch self {
+    case .trialStarted:
+      return CodingKeys.trialStarted.rawValue
+    }
   }
 
   public init(from decoder: Decoder) throws {

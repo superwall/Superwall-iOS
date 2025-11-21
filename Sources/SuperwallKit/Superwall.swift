@@ -1306,8 +1306,9 @@ extension Superwall: PaywallViewControllerEventDelegate {
         await Superwall.shared.track(customPlacement)
       }
     case .scheduleNotification(let notification):
-      await NotificationScheduler.scheduleNotifications(
+      await NotificationScheduler.shared.scheduleNotifications(
         [notification],
+        fromPaywallId: paywallViewController.paywall.identifier,
         factory: dependencyContainer
       )
     }
