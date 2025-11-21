@@ -337,7 +337,8 @@ actor WebEntitlementRedeemer {
       await self.delegate.didRedeemLink(result: codeResult)
     }
 
-    if showConfirmation, let paywallVc = superwall.paywallViewController {
+    if showConfirmation,
+      let paywallVc = superwall.paywallViewController {
       let title = LocalizationLogic.localizedBundle().localizedString(
         forKey: "purchase_success_title",
         value: nil,
