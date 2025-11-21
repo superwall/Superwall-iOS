@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.6
+
+### Fixes
+
+- Fixes issue that prevented the SDK from being built on old Xcode versions.
+
 ## 4.10.5
 
 ### Fixes
