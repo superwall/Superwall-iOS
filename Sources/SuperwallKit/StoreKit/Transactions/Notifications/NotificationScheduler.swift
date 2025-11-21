@@ -8,36 +8,54 @@
 import UIKit
 import UserNotifications
 
-enum NotificationScheduler {
+actor NotificationScheduler {
+  static let shared = NotificationScheduler()
   static let superwallIdentifier = "com.superwall.ios"
+  private var isScheduling = false
 
-  private static func askForPermissionsIfNecessary(
+  private func askForPermissionsIfNecessary(
     using notificationCenter: NotificationAuthorizable
   ) async -> Bool {
-    if await checkIsAuthorized(using: notificationCenter) {
+    if await Self.checkIsAuthorized(using: notificationCenter) {
       return true
     }
 
-    return await withCheckedContinuation { continuation in
-      notificationCenter.requestAuthorization(options: [.alert, .sound, .badge]) { isAuthorized, _ in
-        if isAuthorized {
-          return continuation.resume(returning: true)
-        } else {
-          return continuation.resume(returning: false)
-        }
-      }
+    do {
+      return try await notificationCenter.requestAuthorization(options: [.alert, .sound, .badge])
+    } catch {
+      return false
     }
   }
 
-  static func scheduleNotifications(
+  func scheduleNotifications(
     _ notifications: [LocalNotification],
+    fromPaywallId paywallId: String,
     factory: DeviceHelperFactory,
     notificationCenter: NotificationAuthorizable = UNUserNotificationCenter.current()
   ) async {
     if notifications.isEmpty {
       return
     }
-    guard await NotificationScheduler.askForPermissionsIfNecessary(using: notificationCenter) else {
+
+    // Prevent concurrent scheduling which could show duplicate alerts
+    if isScheduling {
+      return
+    }
+    isScheduling = true
+    defer { isScheduling = false }
+
+    // Filter out notifications that are already scheduled
+    let pendingIdentifiers = await Self.getPendingNotificationIdentifiers(using: notificationCenter)
+    let notificationsToSchedule = notifications.filter { notification in
+      let identifier = Self.makeNotificationIdentifier(paywallId: paywallId, type: notification.type)
+      return !pendingIdentifiers.contains(identifier)
+    }
+
+    if notificationsToSchedule.isEmpty {
+      return
+    }
+
+    guard await askForPermissionsIfNecessary(using: notificationCenter) else {
       if let notificationPermissionsDenied = Superwall.shared.options.paywalls.notificationPermissionsDenied {
         await withCheckedContinuation { continuation in
           Task { @MainActor in
@@ -65,17 +83,19 @@ enum NotificationScheduler {
       return
     }
 
-    await withTaskGroup(of: Void.self) { taskGroup in
-      for notification in notifications {
-        taskGroup.addTask {
-          await scheduleNotification(notification, factory: factory, notificationCenter: notificationCenter)
-        }
-      }
+    for notification in notificationsToSchedule {
+      await Self.scheduleNotification(
+        notification,
+        paywallId: paywallId,
+        factory: factory,
+        notificationCenter: notificationCenter
+      )
     }
   }
 
   private static func scheduleNotification(
     _ notification: LocalNotification,
+    paywallId: String,
     factory: DeviceHelperFactory,
     notificationCenter: NotificationAuthorizable
   ) async {
@@ -106,9 +126,10 @@ enum NotificationScheduler {
       repeats: false
     )
 
-    // Choose a random identifier
+    // Use deterministic identifier based on paywall and notification type
+    let identifier = makeNotificationIdentifier(paywallId: paywallId, type: notification.type)
     let request = UNNotificationRequest(
-      identifier: superwallIdentifier + "-" + UUID().uuidString,
+      identifier: identifier,
       content: content,
       trigger: trigger
     )
@@ -125,18 +146,29 @@ enum NotificationScheduler {
     }
   }
 
+  private static func makeNotificationIdentifier(
+    paywallId: String,
+    type: LocalNotificationType
+  ) -> String {
+    return "\(superwallIdentifier)-\(paywallId)-\(type.description)"
+  }
+
+  private static func getPendingNotificationIdentifiers(
+    using notificationCenter: NotificationAuthorizable
+  ) async -> Set<String> {
+    let requests = await notificationCenter.pendingNotificationRequests()
+    return Set(requests.map { $0.identifier })
+  }
+
   private static func checkIsAuthorized(using notificationCenter: NotificationAuthorizable) async -> Bool {
-    return await withCheckedContinuation { continuation in
-      notificationCenter.getSettings { settings in
-        switch settings.authorizationStatus {
-        case .authorized,
-          .ephemeral,
-          .provisional:
-          continuation.resume(returning: true)
-        default:
-          continuation.resume(returning: false)
-        }
-      }
+    let settings = await notificationCenter.notificationSettings()
+    switch settings.authorizationStatus {
+    case .authorized,
+      .ephemeral,
+      .provisional:
+      return true
+    default:
+      return false
     }
   }
 }

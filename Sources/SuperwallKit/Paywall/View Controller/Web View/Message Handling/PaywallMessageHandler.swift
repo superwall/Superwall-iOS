@@ -122,10 +122,14 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case .transactionComplete:
+    case .transactionComplete(let trialEndDate):
       let transactionComplete = SuperwallEventObjc.transactionComplete.description
       Task {
-        await self.pass(placement: transactionComplete, from: paywall)
+        await self.pass(
+          placement: transactionComplete,
+          from: paywall,
+          payload: trialEndDate.map { ["trial_end_date": Int($0.timeIntervalSince1970 * 1000)] } ?? [:]
+        )
       }
     case .transactionFail:
       let transactionFail = SuperwallEventObjc.transactionFail.description
@@ -164,22 +168,34 @@ final class PaywallMessageHandler: WebEventDelegate {
       break
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
+    case let .scheduleNotification(type, title, subtitle, body, delay):
+      let notification = LocalNotification(
+        type: type,
+        title: title,
+        subtitle: subtitle,
+        body: body,
+        delay: delay
+      )
+      delegate?.eventDidOccur(.scheduleNotification(notification: notification))
     }
   }
 
   nonisolated private func pass(
     placement: String,
-    from paywall: Paywall
+    from paywall: Paywall,
+    payload: [String: Any] = [:]
   ) async {
-    let event = [
+    var event: [String: Any] = [
       "event_name": placement,
       "paywall_id": paywall.databaseId,
       "paywall_identifier": paywall.identifier
     ]
-    guard let jsonEncodedEvent = try? JSONEncoder().encode([event]) else {
+    event.merge(payload) { _, new in new }
+
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: [event]) else {
       return
     }
-    let base64Event = jsonEncodedEvent.base64EncodedString()
+    let base64Event = jsonData.base64EncodedString()
     await passMessageToWebView(base64Event)
   }
 

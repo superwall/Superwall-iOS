@@ -10,6 +10,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.10.5
 
+### Enhancements
+
+- Adds dynamic notification support and scheduling.
+
 ### Fixes
 
 - Updates `device.isApplePayAvailable` for more accurate filtering. Previously it returned true whenever the device supported Apple Pay, even if no card was added. It now returns true only when the device supports Apple Pay and the user has added a card.
