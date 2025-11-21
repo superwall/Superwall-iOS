@@ -88,6 +88,83 @@ struct WebEntitlementRedeemerTests {
     #expect(!events.contains(SuperwallEventObjc.restoreFail))
   }
 
+  @Test("didRedeemLink is called even when no paywall VC is presented")
+  func testRedeem_noPaywallVC_callsDidRedeemLink() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // Verify no paywall VC is presented
+    #expect(superwall.paywallViewController == nil)
+
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    let code = "TESTCODE"
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: code,
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: Array(entitlements)))
+      .setting(\.results, to: [result])
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code(code),
+      injectedConfig: config
+    )
+
+    // Verify didRedeemLink was called with the correct result
+    #expect(mockDelegate.receivedResult != nil, "didRedeemLink should be called even without a paywall VC")
+    #expect(mockDelegate.receivedResult?.code == code)
+    if case .success = mockDelegate.receivedResult {} else {
+      Issue.record("didRedeemLink should have received a success result")
+    }
+  }
+
   @Test("Redemption of existing code")
   func testRedeem_withCode_notFirstRedemption_savesCodeAndTracksEvents() async {
     guard #available(iOS 14.0, *) else {
@@ -530,9 +607,9 @@ struct WebEntitlementRedeemerTests {
     await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
 
     // Wait for async queue operations to complete (EntitlementsInfo updates backingActive async)
-    // Poll up to 1 second for the entitlements to be updated
+    // Poll up to 3 seconds for the entitlements to be updated (CI can be slow)
     var attempts = 0
-    while !superwall.entitlements.active.isEmpty && attempts < 10 {
+    while !superwall.entitlements.active.isEmpty && attempts < 30 {
       try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
       attempts += 1
     }

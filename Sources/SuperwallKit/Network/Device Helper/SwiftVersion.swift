@@ -8,8 +8,10 @@
 
 extension DeviceHelper {
   func currentSwiftVersion() -> String {
-  #if swift(>=6.1)
-    return "6.1+"
+  #if swift(>=6.2)
+    return "6.2"
+  #elseif swift(>=6.1)
+    return "6.1"
   #elseif swift(>=6.0)
     return "6.0"
   #elseif swift(>=5.10)
@@ -108,7 +110,9 @@ extension DeviceHelper {
   }
 
   func currentCompilerVersion() -> String {
-  #if compiler(>=6.1)
+  #if compiler(>=6.2)
+    return "6.2"
+  #elseif compiler(>=6.1)
     return "6.1+"
   #elseif compiler(>=6.0)
     return "6.0"
