@@ -523,7 +523,10 @@ public final class Superwall: NSObject, ObservableObject {
                 to: newValue
               )
 
-              let event = InternalSuperwallEvent.CustomerInfoDidChange()
+              let event = InternalSuperwallEvent.CustomerInfoDidChange(
+                fromCustomerInfo: oldValue,
+                toCustomerInfo: newValue
+              )
               await self.track(event)
             }
           }
