@@ -256,3 +256,11 @@ enum LatestDeviceCustomerInfo: Storable {
   static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = CustomerInfo
 }
+
+enum AppTransactionIdSent: Storable {
+  static var key: String {
+    "store.appTransactionIdSent"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}

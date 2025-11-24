@@ -309,7 +309,45 @@ enum InternalSuperwallEvent {
   struct CustomerInfoDidChange: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .customerInfoDidChange
     var audienceFilterParams: [String: Any] = [:]
-    func getSuperwallParameters() async -> [String: Any] { [:] }
+    let fromCustomerInfo: CustomerInfo
+    let toCustomerInfo: CustomerInfo
+
+    private struct EntitlementsSnapshot: Encodable {
+      let entitlements: [Entitlement]
+      let isPlaceholder: Bool
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      let encoder = JSONEncoder()
+      encoder.dateEncodingStrategy = .iso8601
+
+      var fromJson = "{}"
+      var toJson = "{}"
+
+      let fromSnapshot = EntitlementsSnapshot(
+        entitlements: fromCustomerInfo.entitlements,
+        isPlaceholder: fromCustomerInfo.isPlaceholder
+      )
+      let toSnapshot = EntitlementsSnapshot(
+        entitlements: toCustomerInfo.entitlements,
+        isPlaceholder: toCustomerInfo.isPlaceholder
+      )
+
+      if let data = try? encoder.encode(fromSnapshot),
+        let jsonString = String(data: data, encoding: .utf8) {
+        fromJson = jsonString
+      }
+
+      if let data = try? encoder.encode(toSnapshot),
+        let jsonString = String(data: data, encoding: .utf8) {
+        toJson = jsonString
+      }
+
+      return [
+        "from": fromJson,
+        "to": toJson
+      ]
+    }
   }
 
   struct TriggerFire: TrackableSuperwallEvent {
