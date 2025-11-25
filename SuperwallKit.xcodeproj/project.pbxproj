@@ -132,6 +132,7 @@
 		43EF1A9F46DECE0EECFD0368 /* HiddenListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */; };
 		44829144E9EFA0CE4A75BBA1 /* ExpressionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154A9E99D00B9BD8837B798 /* ExpressionLogic.swift */; };
 		454421E34ED200400A001AE1 /* PaywallManagerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8012E350CCE22B0D892E0F96 /* PaywallManagerLogic.swift */; };
+		456DBA8DAD02F465404A9B7A /* SuperwallLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 959F98D411793233B66A2185 /* SuperwallLogoView.swift */; };
 		480C37A4D7A8AB5EE0760BF1 /* PaywallLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6C4D551369C55D8AFB7F96 /* PaywallLogic.swift */; };
 		4A4E788046CD308F465B37BF /* ProductsFetcherSK2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AD390BC73341A49301B4AA /* ProductsFetcherSK2.swift */; };
 		4AA4E2CE223DC7CF1678E83C /* TrackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E23B703C00044332FDEBE8 /* TrackTests.swift */; };
@@ -791,6 +792,7 @@
 		94125DB9AC8A2EA66F983EDA /* PresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationResult.swift; sourceTree = "<group>"; };
 		9423D7BA0604D88E30161BFB /* PaywallCacheLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCacheLogic.swift; sourceTree = "<group>"; };
 		943CA7F8AE219A07C1245232 /* GetPaywallVcOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPaywallVcOperatorTests.swift; sourceTree = "<group>"; };
+		959F98D411793233B66A2185 /* SuperwallLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallLogoView.swift; sourceTree = "<group>"; };
 		95ED8690E8B88125776BC247 /* TrackingLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingLogic.swift; sourceTree = "<group>"; };
 		95F0D7536DD55DC78654443C /* ArchivingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivingError.swift; sourceTree = "<group>"; };
 		96237542E710511C51A39070 /* PurchaseResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseResult.swift; sourceTree = "<group>"; };
@@ -1443,6 +1445,7 @@
 			children = (
 				AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */,
 				7569A0893012A88442B7ED36 /* PaywallViewController.swift */,
+				959F98D411793233B66A2185 /* SuperwallLogoView.swift */,
 				6F9276EC956CE4A6C09949CE /* Delegates */,
 				1DE8CF6D5ACEFA6B6349B142 /* Loading */,
 				43AE802CA13E36803E2FF13E /* Popup Transition */,
@@ -3266,6 +3269,7 @@
 				CE1954BE6150CA19BE5F3476 /* SuperwallEventObjc.swift in Sources */,
 				A78DC9BD71DD85831025D620 /* SuperwallGraveyard.swift in Sources */,
 				941F2296F5250A15DE6B5B70 /* SuperwallKit_Model.xcdatamodeld in Sources */,
+				456DBA8DAD02F465404A9B7A /* SuperwallLogoView.swift in Sources */,
 				0A1366F15DD3C1761C095DF5 /* SuperwallOptions.swift in Sources */,
 				F365F06BBA58055920FC751B /* SuperwallPlacementInfo.swift in Sources */,
 				776B122691BB67A703BB0DDD /* Survey.swift in Sources */,

@@ -166,6 +166,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }()
 
+  /// The Superwall logo view that appears under the notch for fullscreen paywalls.
+  private var logoView: SuperwallLogoView?
+
+  /// Observer for app becoming inactive (app switcher, control center, etc.)
+  private var willResignActiveObserver: NSObjectProtocol?
+
+  /// Observer for app becoming active again.
+  private var didBecomeActiveObserver: NSObjectProtocol?
+
   /// The push presentation animation transition delegate.
   private let transitionDelegate = PushTransitionDelegate()
   /// The popup presentation animation transition delegate.
@@ -460,6 +469,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
+      // Show logo for fullscreen presentations after initial load
+      if oldValue == .loadingURL {
+        showLogoViewIfNeeded()
+      }
+
       if !spinnerDidShow {
         UIView.animate(
           withDuration: 0.6,
@@ -583,6 +597,97 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
     loadingViewController.hide()
+  }
+
+  /// Shows the Superwall logo view on the paywall for fullscreen presentations.
+  /// Only shows when presentation animation is complete and content is ready.
+  private func showLogoViewIfNeeded() {
+    #if !os(visionOS)
+    // Only show for fullscreen presentations
+    switch presentationStyle {
+    case .fullscreen, .fullscreenNoAnimation:
+      break
+    default:
+      return
+    }
+
+    // Only show after presentation animation is complete
+    guard presentationDidFinishPrepare else {
+      return
+    }
+
+    // Only show when content is ready
+    guard loadingState == .ready else {
+      return
+    }
+
+    // Only show if device has a notch
+    guard SuperwallLogoView.deviceHasTopNotch else {
+      return
+    }
+
+    // Don't add again if already showing
+    guard logoView == nil else {
+      return
+    }
+
+    let logoView = SuperwallLogoView()
+    logoView.alpha = 0
+    view.addSubview(logoView)
+
+    NSLayoutConstraint.activate([
+      logoView.topAnchor.constraint(equalTo: view.topAnchor),
+      logoView.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+    ])
+
+    self.logoView = logoView
+
+    // Show the logo (respects orientation - won't show in landscape)
+    logoView.show()
+
+    // Set up observers to hide logo when app goes to background/app switcher
+    setupLogoAppStateObservers()
+    #endif
+  }
+
+  /// Sets up observers to hide/show logo based on app state.
+  private func setupLogoAppStateObservers() {
+    // Hide logo when app becomes inactive (app switcher, control center, etc.)
+    willResignActiveObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.willResignActiveNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.logoView?.alpha = 0
+    }
+
+    // Show logo again when app becomes active (respects orientation)
+    didBecomeActiveObserver = NotificationCenter.default.addObserver(
+      forName: UIApplication.didBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] _ in
+      self?.logoView?.show()
+    }
+  }
+
+  /// Removes the logo app state observers.
+  private func removeLogoAppStateObservers() {
+    if let observer = willResignActiveObserver {
+      NotificationCenter.default.removeObserver(observer)
+      willResignActiveObserver = nil
+    }
+    if let observer = didBecomeActiveObserver {
+      NotificationCenter.default.removeObserver(observer)
+      didBecomeActiveObserver = nil
+    }
+  }
+
+  /// Hides the logo view during dismissal.
+  private func hideLogoView() {
+    removeLogoAppStateObservers()
+    logoView?.removeFromSuperview()
+    logoView = nil
   }
 
   // MARK: - Timeout
@@ -1227,6 +1332,9 @@ extension PaywallViewController {
     }
     GameControllerManager.shared.setDelegate(self)
     presentationDidFinishPrepare = true
+
+    // Show logo if content is already ready
+    showLogoViewIfNeeded()
   }
 
   override public func viewWillDisappear(_ animated: Bool) {
@@ -1238,7 +1346,23 @@ extension PaywallViewController {
       return
     }
 
+    hideLogoView()
     willDismiss()
+  }
+
+  public override func viewWillTransition(
+    to size: CGSize,
+    with coordinator: UIViewControllerTransitionCoordinator
+  ) {
+    super.viewWillTransition(to: size, with: coordinator)
+
+    // Hide logo immediately when rotation begins
+    logoView?.alpha = 0
+
+    // Show logo again after rotation completes (if in portrait)
+    coordinator.animate(alongsideTransition: nil) { [weak self] _ in
+      self?.logoView?.show()
+    }
   }
 
   override public func viewDidDisappear(_ animated: Bool) {
