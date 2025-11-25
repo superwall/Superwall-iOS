@@ -65,6 +65,9 @@ class SWWebView: WKWebView {
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
+    // Register custom URL scheme handler for local files (videos, images, etc.)
+    config.setURLSchemeHandler(LocalFileSchemeHandler(), forURLScheme: LocalFileSchemeHandler.scheme)
+
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
     }
