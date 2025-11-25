@@ -80,9 +80,54 @@ final class DeepLinkRouter {
   }
 
   /// Stores the deep link until it can be handled.
+  ///
+  /// Called when `handleDeepLink` is invoked before Superwall configuration completes.
+  /// The URL is always stored so it can be processed once config loads, but the return
+  /// value indicates whether Superwall will definitely handle this URL.
+  ///
+  /// - Note: The URL is always stored regardless of return value because the fresh config
+  ///   might have a `deepLink_open` trigger even if cached config doesn't. This ensures
+  ///   deep links aren't lost during app launch. If the URL isn't a Superwall URL,
+  ///   returning `false` allows other handlers in a handler chain to process it.
+  ///
+  /// - Parameter url: The deep link URL to store.
+  /// - Returns: `true` if the URL is a Superwall URL that will be handled, `false` otherwise.
   static func storeDeepLink(_ url: URL) -> Bool {
+    // Always store the URL - the fresh config might have deepLink_open trigger
+    // even if cached config doesn't
     pendingDeepLink = url
-    return true
+
+    // Only return true if we're confident Superwall will handle this URL
+    return isSuperwallURL(url)
+  }
+
+  /// Checks if the URL is one that Superwall will handle.
+  private static func isSuperwallURL(_ url: URL) -> Bool {
+    // Superwall universal links (*.superwall.app/app-link/*)
+    if url.isSuperwallDeepLink {
+      return true
+    }
+
+    // Redemption codes
+    if url.redeemableCode != nil {
+      return true
+    }
+
+    // Debug/preview URLs
+    if DebugManager.outcomeForDeepLink(url: url) != nil {
+      return true
+    }
+
+    // Check cached config for deepLink_open trigger
+    let cache = Cache()
+    if let config = cache.read(LatestConfig.self) {
+      let triggers = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
+      if triggers[SuperwallEventObjc.deepLink.description] != nil {
+        return true
+      }
+    }
+
+    return false
   }
 }
 
