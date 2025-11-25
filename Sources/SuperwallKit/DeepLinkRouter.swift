@@ -38,7 +38,9 @@ final class DeepLinkRouter {
     }
 
     let deepLinkUrl: URL
-    if url.isSuperwallDeepLink {
+    let isSuperwallDeepLink = url.isSuperwallDeepLink
+
+    if isSuperwallDeepLink {
       deepLinkUrl = url.superwallDeepLinkMappedURL
 
       Task { @MainActor in
@@ -52,11 +54,26 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
-
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
-    return debugManager.handle(deepLinkUrl: deepLinkUrl)
+
+    // Check if this is a debug URL
+    if debugManager.handle(deepLinkUrl: deepLinkUrl) {
+      return true
+    }
+
+    // Return true for Superwall deep links (we handled it above)
+    if isSuperwallDeepLink {
+      return true
+    }
+
+    // Return true if there's a deepLink_open trigger configured
+    if configManager.triggersByPlacementName[SuperwallEventObjc.deepLink.description] != nil {
+      return true
+    }
+
+    return false
   }
 
   private func listenToConfig() {
