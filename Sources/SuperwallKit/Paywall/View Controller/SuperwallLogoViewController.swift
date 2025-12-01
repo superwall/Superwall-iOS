@@ -27,15 +27,22 @@ final class SuperwallLogoViewController: UIViewController {
   ///   - paywall: The paywall to check presentation conditions.
   ///   - presentationStyle: The paywall presentation style.
   ///   - windowScene: The window scene to attach to.
+  ///   - isEnabled: Whether the Superwall logo feature flag is enabled.
   @discardableResult
   static func showIfNeeded(
     for paywall: Paywall,
     presentationStyle: PaywallPresentationStyle,
-    in windowScene: UIWindowScene?
+    in windowScene: UIWindowScene?,
+    isEnabled: Bool
   ) -> SuperwallLogoViewController? {
     #if os(visionOS)
     return nil
     #else
+    // Only show if feature flag is enabled
+    guard isEnabled else {
+      return nil
+    }
+
     // Don't show during UI tests
     if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
       return nil

@@ -76,6 +76,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   typealias Factory = TriggerFactory
     & RestoreAccessFactory
     & AppIdFactory
+    & FeatureFlagsFactory
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
@@ -619,7 +620,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     logoViewController = SuperwallLogoViewController.showIfNeeded(
       for: paywall,
       presentationStyle: paywall.presentation.style,
-      in: view.window?.windowScene
+      in: view.window?.windowScene,
+      isEnabled: factory.makeFeatureFlags()?.enableSuperwallLogo == true
     )
   }
 
