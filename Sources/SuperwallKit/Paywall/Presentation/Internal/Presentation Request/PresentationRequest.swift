@@ -104,6 +104,28 @@ enum PresentationRequestType: Equatable, CustomStringConvertible {
   }
 }
 
+/// The source function type that initiated the presentation request.
+enum PresentationSourceType: String {
+  /// Presented via an implicit trigger (e.g. app_launch).
+  case implicit
+
+  /// Presented via ``Superwall/register(placement:params:handler:feature:)``.
+  case register
+
+  /// Retrieved via ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:)``.
+  case getPaywall
+
+  /// Whether Superwall is controlling the presentation (not the developer).
+  var isSuperwallPresenting: Bool {
+    switch self {
+    case .implicit, .register:
+      return true
+    case .getPaywall:
+      return false
+    }
+  }
+}
+
 /// Defines the information needed to request the presentation of a paywall.
 struct PresentationRequest {
   /// The type of trigger (implicit/explicit/fromIdentifier), and associated data.
@@ -116,17 +138,17 @@ struct PresentationRequest {
   var paywallOverrides: PaywallOverrides?
 
   /// The source function type that initiated the presentation request.
-  var presentationSourceType: String? {
+  var presentationSourceType: PresentationSourceType? {
     switch presentationInfo {
     case .implicitTrigger:
-      return "implicit"
+      return .implicit
     case .explicitTrigger,
       .fromIdentifier:
       switch flags.type {
       case .getPaywall:
-        return "getPaywall"
+        return .getPaywall
       case .presentation:
-        return "register"
+        return .register
       case .paywallDeclineCheck,
         .handleImplicitTrigger,
         .getPresentationResult,

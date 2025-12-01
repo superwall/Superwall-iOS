@@ -34,9 +34,7 @@ struct PaywallRequest {
   let isDebuggerLaunched: Bool
 
   /// The source function type that created the presentation request.
-  ///
-  /// e.g. implicit/register/getPaywall/nil
-  let presentationSourceType: String?
+  let presentationSourceType: PresentationSourceType?
 
   /// The number of times to retry the request.
   let retryCount: Int

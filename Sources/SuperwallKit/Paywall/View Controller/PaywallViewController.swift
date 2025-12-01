@@ -76,6 +76,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   typealias Factory = TriggerFactory
     & RestoreAccessFactory
     & AppIdFactory
+    & FeatureFlagsFactory
 
   // MARK: - Private Properties
   /// Internal passthrough subject that emits ``PaywallState`` objects. These state objects feed back to
@@ -165,6 +166,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       action: #selector(forceClose)
     )
   }()
+
+  #if !os(visionOS)
+  /// The Superwall logo view controller that appears under the notch for fullscreen paywalls.
+  private var logoViewController: SuperwallLogoViewController?
+  #endif
 
   /// The push presentation animation transition delegate.
   private let transitionDelegate = PushTransitionDelegate()
@@ -460,6 +466,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
+      // Show logo for fullscreen presentations after initial load
+      #if !os(visionOS)
+      if oldValue == .loadingURL {
+        showLogoViewIfNeeded()
+      }
+      #endif
+
       if !spinnerDidShow {
         UIView.animate(
           withDuration: 0.6,
@@ -584,6 +597,40 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
     loadingViewController.hide()
   }
+
+  #if !os(visionOS)
+  /// Shows the Superwall logo view on the paywall for fullscreen presentations.
+  /// Only shows when presentation animation is complete and content is ready.
+  private func showLogoViewIfNeeded() {
+    // Only show after presentation animation is complete
+    guard presentationDidFinishPrepare else {
+      return
+    }
+
+    // Only show when content is ready
+    guard loadingState == .ready else {
+      return
+    }
+
+    // Don't add again if already showing
+    guard logoViewController == nil else {
+      return
+    }
+
+    logoViewController = SuperwallLogoViewController.showIfNeeded(
+      for: paywall,
+      presentationStyle: paywall.presentation.style,
+      in: view.window?.windowScene,
+      isEnabled: factory.makeFeatureFlags()?.enableSuperwallLogo == true
+    )
+  }
+
+  /// Hides the logo view during dismissal.
+  private func hideLogoView() {
+    SuperwallLogoViewController.hideAndRemove()
+    logoViewController = nil
+  }
+  #endif
 
   // MARK: - Timeout
 
@@ -1227,6 +1274,11 @@ extension PaywallViewController {
     }
     GameControllerManager.shared.setDelegate(self)
     presentationDidFinishPrepare = true
+
+    // Show logo if content is already ready
+    #if !os(visionOS)
+    showLogoViewIfNeeded()
+    #endif
   }
 
   override public func viewWillDisappear(_ animated: Bool) {
@@ -1238,8 +1290,12 @@ extension PaywallViewController {
       return
     }
 
+    #if !os(visionOS)
+    hideLogoView()
+    #endif
     willDismiss()
   }
+
 
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
