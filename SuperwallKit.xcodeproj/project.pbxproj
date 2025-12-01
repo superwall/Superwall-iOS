@@ -132,7 +132,6 @@
 		43EF1A9F46DECE0EECFD0368 /* HiddenListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */; };
 		44829144E9EFA0CE4A75BBA1 /* ExpressionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154A9E99D00B9BD8837B798 /* ExpressionLogic.swift */; };
 		454421E34ED200400A001AE1 /* PaywallManagerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8012E350CCE22B0D892E0F96 /* PaywallManagerLogic.swift */; };
-		456DBA8DAD02F465404A9B7A /* SuperwallLogoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 959F98D411793233B66A2185 /* SuperwallLogoView.swift */; };
 		480C37A4D7A8AB5EE0760BF1 /* PaywallLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6C4D551369C55D8AFB7F96 /* PaywallLogic.swift */; };
 		4A4E788046CD308F465B37BF /* ProductsFetcherSK2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AD390BC73341A49301B4AA /* ProductsFetcherSK2.swift */; };
 		4AA4E2CE223DC7CF1678E83C /* TrackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E23B703C00044332FDEBE8 /* TrackTests.swift */; };
@@ -163,6 +162,7 @@
 		591DCE67E64C63AACFFB604B /* IdentityLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB3F04AC933701EE33F5F325 /* IdentityLogic.swift */; };
 		59685CE55D34FA6A96A8F890 /* AssignmentLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3501D12845840D6CBA1F0081 /* AssignmentLogicTests.swift */; };
 		5A6D06700C4E4E2C6C9BC1B2 /* ShimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D123D95036ED6CE3B097BBF0 /* ShimmerView.swift */; };
+		5AC470740936AEB32426374C /* DynamicIslandInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8941591BB2FAA730E0A2F5DC /* DynamicIslandInfo.swift */; };
 		5C504112376B6E0798CA20CE /* Variables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75209DF76859131941CA0F /* Variables.swift */; };
 		5D0DAFA97F75920FFB99DF6B /* PriceFormatterProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B5BF873B8D190097E8CFB5 /* PriceFormatterProvider.swift */; };
 		5DDABDA8ECE4A96BDFCEF4B0 /* ArchivalManifestDownloaded.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0895B5C0A26AA7FD3C0178 /* ArchivalManifestDownloaded.swift */; };
@@ -306,9 +306,11 @@
 		A9F9A35AEC72D17C7C15DAD4 /* PaywallArchiveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB580546C647ED707C43FEC /* PaywallArchiveManager.swift */; };
 		AACC7BEE37DDDD7068A1E48C /* TransactionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646E6799FE4934BF76A06F34 /* TransactionManager.swift */; };
 		ABC17AE96AD396607E3CAB17 /* CoreDataStackMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E828EBAB18CCC0B236EF71D /* CoreDataStackMock.swift */; };
+		ABD6EE6870FD0722ED9F39FC /* DynamicIslandInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B883AA7A00F577500BF3555 /* DynamicIslandInfoTests.swift */; };
 		AC0AF760E7EA2FFF5621955D /* PurchaseControllerObjcAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8F4169717A629E15CEB9C7 /* PurchaseControllerObjcAdapter.swift */; };
 		AC7D527612F631AAADC7D225 /* FileManagerMigratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB3F2FC9FCCD4B912E61A1F /* FileManagerMigratorTests.swift */; };
 		AD26500C2B27829305F76859 /* EndpointKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E6FBB3D0826827A04F87AE /* EndpointKind.swift */; };
+		AD38C3B5A3D5C6ED6649A33B /* SuperwallLogoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38F7080500BAA02B0E7B183A /* SuperwallLogoViewController.swift */; };
 		AD5EBB6DBA919E3CBC5B85B7 /* SessionEventsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40D6FA6547CB5B9520B0B64 /* SessionEventsRequest.swift */; };
 		AE0555AA0B433427E5D17309 /* InternalGetPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57F454704875FFFC5CE1827 /* InternalGetPresentationResult.swift */; };
 		AE1D15070BC159212967CAD4 /* ConfirmHoldoutAssignmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018F5856F39FC33AFE9740D4 /* ConfirmHoldoutAssignmentTests.swift */; };
@@ -612,6 +614,7 @@
 		35F538F901BAF97DDCA86F84 /* DeviceHelperMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceHelperMock.swift; sourceTree = "<group>"; };
 		368EF475049935105AF8154C /* Entitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
 		37B17A8801A2A9454E66D892 /* ASN1Decoder+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+Utils.swift"; sourceTree = "<group>"; };
+		38F7080500BAA02B0E7B183A /* SuperwallLogoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallLogoViewController.swift; sourceTree = "<group>"; };
 		39B81D88316F06C0C2757F10 /* MockReceiptData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockReceiptData.swift; sourceTree = "<group>"; };
 		3A6728F289EC434B1C856BD2 /* V2Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Migrator.swift; sourceTree = "<group>"; };
 		3A7BF742EBC950966662849F /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -634,6 +637,7 @@
 		49E522F5BCABB3A95B97549E /* PurchaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseError.swift; sourceTree = "<group>"; };
 		4B001199B53C314F25788603 /* PassableValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassableValue.swift; sourceTree = "<group>"; };
 		4B1DC32C4ABB60B8323E5D28 /* AsyncSequence+Extract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AsyncSequence+Extract.swift"; sourceTree = "<group>"; };
+		4B883AA7A00F577500BF3555 /* DynamicIslandInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandInfoTests.swift; sourceTree = "<group>"; };
 		4BE6E7AC2E38E0EB43C35AF5 /* V1Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V1Migrator.swift; sourceTree = "<group>"; };
 		4BFFA527207A52EB7C70CAD4 /* PopupTransitionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionTests.swift; sourceTree = "<group>"; };
 		4C2AC9214EA750436EF1FE11 /* SWWebViewLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebViewLogicTests.swift; sourceTree = "<group>"; };
@@ -766,6 +770,7 @@
 		887834329A06971D86D5282F /* NotificationProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationProtocols.swift; sourceTree = "<group>"; };
 		88EBF6FC3090E004EE1377B4 /* PaywallViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerDelegate.swift; sourceTree = "<group>"; };
 		891BDDF19DEC970709DDF4BB /* V3Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V3Migrator.swift; sourceTree = "<group>"; };
+		8941591BB2FAA730E0A2F5DC /* DynamicIslandInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DynamicIslandInfo.swift; sourceTree = "<group>"; };
 		8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogicTests.swift; sourceTree = "<group>"; };
 		8B66B5A624F8A2E225EACA69 /* SurveyPresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyPresentationResult.swift; sourceTree = "<group>"; };
 		8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerCache.swift; sourceTree = "<group>"; };
@@ -792,7 +797,6 @@
 		94125DB9AC8A2EA66F983EDA /* PresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationResult.swift; sourceTree = "<group>"; };
 		9423D7BA0604D88E30161BFB /* PaywallCacheLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCacheLogic.swift; sourceTree = "<group>"; };
 		943CA7F8AE219A07C1245232 /* GetPaywallVcOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPaywallVcOperatorTests.swift; sourceTree = "<group>"; };
-		959F98D411793233B66A2185 /* SuperwallLogoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallLogoView.swift; sourceTree = "<group>"; };
 		95ED8690E8B88125776BC247 /* TrackingLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingLogic.swift; sourceTree = "<group>"; };
 		95F0D7536DD55DC78654443C /* ArchivingError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivingError.swift; sourceTree = "<group>"; };
 		96237542E710511C51A39070 /* PurchaseResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseResult.swift; sourceTree = "<group>"; };
@@ -1445,7 +1449,7 @@
 			children = (
 				AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */,
 				7569A0893012A88442B7ED36 /* PaywallViewController.swift */,
-				959F98D411793233B66A2185 /* SuperwallLogoView.swift */,
+				38F7080500BAA02B0E7B183A /* SuperwallLogoViewController.swift */,
 				6F9276EC956CE4A6C09949CE /* Delegates */,
 				1DE8CF6D5ACEFA6B6349B142 /* Loading */,
 				43AE802CA13E36803E2FF13E /* Popup Transition */,
@@ -1608,6 +1612,7 @@
 		4D7656D6A565958F58A644AF /* Misc */ = {
 			isa = PBXGroup;
 			children = (
+				4B883AA7A00F577500BF3555 /* DynamicIslandInfoTests.swift */,
 				F2F75130AF54DFC4C7FA839A /* Extensions */,
 			);
 			path = Misc;
@@ -2610,6 +2615,7 @@
 				643A346628DA026FEA092C27 /* ButtonFactory.swift */,
 				42956918D4FFA5FBA79F3AA5 /* Constants.swift */,
 				7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */,
+				8941591BB2FAA730E0A2F5DC /* DynamicIslandInfo.swift */,
 				E09C238ADC0B019047FAB1DF /* JSONToDict.swift */,
 				2E2027BFC214905CBE589AF2 /* KeypathWritable.swift */,
 				19F010DC597017F5BEAEDE86 /* SwiftyJSON.swift */,
@@ -2887,6 +2893,7 @@
 				01BE837B492223B76A95CB5D /* DeepLinkRouterTests.swift in Sources */,
 				0CA13E721ADB243882536D4A /* DeviceHelperMock.swift in Sources */,
 				9DBDDD10A1EFC7CD3575D9E5 /* DeviceHelperTests.swift in Sources */,
+				ABD6EE6870FD0722ED9F39FC /* DynamicIslandInfoTests.swift in Sources */,
 				A03AC977AD8110290DABECBD /* EntitlementPriorityTests.swift in Sources */,
 				6BA614F410A95F36CBA42F93 /* EntitlementProcessorTests.swift in Sources */,
 				1225B991B40D16B7FB4EF1A5 /* EvaluateRulesOperatorTests.swift in Sources */,
@@ -3038,6 +3045,7 @@
 				507E017DBEC2663F1B4727E0 /* Dictionary+Merging.swift in Sources */,
 				DB6FF170AE90FF8623A31E14 /* DispatchQueueBacked.swift in Sources */,
 				61AE58F17230AE1578B9FB19 /* Documentation.docc in Sources */,
+				5AC470740936AEB32426374C /* DynamicIslandInfo.swift in Sources */,
 				9EAE577E60052F5E1C7B9657 /* EmptyResponse.swift in Sources */,
 				CB1E11FB74879A29DD1C9EB1 /* Encodable+Dictionary.swift in Sources */,
 				11477D1EB60D1FDA32F5099A /* Endpoint.swift in Sources */,
@@ -3269,7 +3277,7 @@
 				CE1954BE6150CA19BE5F3476 /* SuperwallEventObjc.swift in Sources */,
 				A78DC9BD71DD85831025D620 /* SuperwallGraveyard.swift in Sources */,
 				941F2296F5250A15DE6B5B70 /* SuperwallKit_Model.xcdatamodeld in Sources */,
-				456DBA8DAD02F465404A9B7A /* SuperwallLogoView.swift in Sources */,
+				AD38C3B5A3D5C6ED6649A33B /* SuperwallLogoViewController.swift in Sources */,
 				0A1366F15DD3C1761C095DF5 /* SuperwallOptions.swift in Sources */,
 				F365F06BBA58055920FC751B /* SuperwallPlacementInfo.swift in Sources */,
 				776B122691BB67A703BB0DDD /* Survey.swift in Sources */,

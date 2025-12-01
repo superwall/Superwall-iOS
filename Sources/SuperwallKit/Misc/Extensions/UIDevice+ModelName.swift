@@ -9,6 +9,12 @@ import UIKit
 
 extension UIDevice {
   static var modelName: String {
+    // For simulators, get the simulated device model
+    if let simulatorModelIdentifier = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+      return simulatorModelIdentifier
+    }
+
+    // For real devices, get the hardware identifier
     var systemInfo = utsname()
     uname(&systemInfo)
     let machineMirror = Mirror(reflecting: systemInfo.machine)

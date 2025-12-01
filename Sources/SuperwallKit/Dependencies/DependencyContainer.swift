@@ -330,7 +330,7 @@ extension DependencyContainer: RequestFactory {
     responseIdentifiers: ResponseIdentifiers,
     overrides: PaywallRequest.Overrides? = nil,
     isDebuggerLaunched: Bool,
-    presentationSourceType: String?
+    presentationSourceType: PresentationSourceType?
   ) -> PaywallRequest {
     return PaywallRequest(
       placementData: placementData,

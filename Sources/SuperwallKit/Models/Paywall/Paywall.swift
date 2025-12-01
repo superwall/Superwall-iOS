@@ -102,8 +102,8 @@ struct Paywall: Codable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
-  /// The source of the presentation request. Either 'implicit', 'getPaywall', 'register'.
-  var presentationSourceType: String?
+  /// The source of the presentation request.
+  var presentationSourceType: PresentationSourceType?
 
   /// The reason for closing the paywall.
   var closeReason: PaywallCloseReason = .none
@@ -355,7 +355,7 @@ struct Paywall: Codable {
     paywalljsVersion: String,
     productVariables: [ProductVariable]? = [],
     isFreeTrialAvailable: Bool = false,
-    presentationSourceType: String? = nil,
+    presentationSourceType: PresentationSourceType? = nil,
     featureGating: FeatureGatingBehavior = .nonGated,
     onDeviceCache: OnDeviceCaching = .disabled,
     localNotifications: [LocalNotification] = [],
@@ -423,7 +423,7 @@ struct Paywall: Codable {
       experiment: experiment,
       paywalljsVersion: paywalljsVersion,
       isFreeTrialAvailable: isFreeTrialAvailable,
-      presentationSourceType: presentationSourceType,
+      presentationSourceType: presentationSourceType?.rawValue,
       featureGatingBehavior: featureGating,
       closeReason: closeReason,
       localNotifications: localNotifications,
