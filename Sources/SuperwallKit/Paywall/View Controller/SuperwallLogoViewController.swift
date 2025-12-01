@@ -36,6 +36,11 @@ final class SuperwallLogoViewController: UIViewController {
     #if os(visionOS)
     return nil
     #else
+    // Don't show during UI tests
+    if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
+      return nil
+    }
+
     // Only show for fullscreen paywalls
     switch presentationStyle {
     case .fullscreen,
@@ -111,7 +116,7 @@ final class SuperwallLogoViewController: UIViewController {
   /// The pill-shaped container that holds the logo
   private let pillView: UIView = {
     let view = UIView()
-    view.backgroundColor = .red // TODO: Change back to UIColor(hexString: "#13151A")
+    view.backgroundColor = UIColor(hexString: "#13151A")
     view.layer.cornerCurve = .continuous
     view.alpha = 0 // Start hidden
     return view
