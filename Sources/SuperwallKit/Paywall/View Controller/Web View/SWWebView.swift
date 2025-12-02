@@ -55,7 +55,7 @@ class SWWebView: WKWebView {
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
-    self.enableIframeNavigation = featureFlags?.enableIframeNavigation ?? true
+    self.enableIframeNavigation = featureFlags?.enableIframeNavigation ?? false
 
     self.loadingHandler = SWWebViewLoadingHandler(
       enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true
