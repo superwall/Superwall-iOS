@@ -1314,6 +1314,9 @@ extension Superwall: PaywallViewControllerEventDelegate {
         )
         await Superwall.shared.track(customPlacement)
       }
+    case let .userAttributesUpdated(attributes: attributes):
+      let attributesDict = attributes.dictionaryObject ?? [:]
+      setUserAttributes(attributesDict)
     }
   }
 }

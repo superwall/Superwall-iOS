@@ -282,4 +282,28 @@ final class PaywallMessageHandlerTests: XCTestCase {
 
     XCTAssertEqual(delegate.eventDidOccur, .custom(string: string))
   }
+
+  @MainActor
+  func test_userAttributesUpdated() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    let attributes = JSON(["name": "John", "age": 30])
+    messageHandler.handle(.userAttributesUpdated(attributes: attributes))
+
+    XCTAssertEqual(delegate.eventDidOccur, .userAttributesUpdated(attributes: attributes))
+  }
 }
