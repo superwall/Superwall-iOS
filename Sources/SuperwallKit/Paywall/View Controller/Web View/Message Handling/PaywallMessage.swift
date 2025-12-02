@@ -83,7 +83,7 @@ enum PaywallMessage: Decodable, Equatable {
     case purchase
     case custom
     case customPlacement = "custom_placement"
-    case userAttributesUpdated = "user_attributes_updated"
+    case userAttributesUpdated = "user_attribute_updated"
     case initiateWebCheckout = "initiate_web_checkout"
     case requestStoreReview = "request_store_review"
   }

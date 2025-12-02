@@ -1315,7 +1315,13 @@ extension Superwall: PaywallViewControllerEventDelegate {
         await Superwall.shared.track(customPlacement)
       }
     case let .userAttributesUpdated(attributes: attributes):
-      let attributesDict = attributes.dictionaryObject ?? [:]
+      // Attributes is an array of {key, value} objects, convert to dictionary
+      var attributesDict: [String: Any] = [:]
+      for attribute in attributes.arrayValue {
+        if let key = attribute["key"].string {
+          attributesDict[key] = attribute["value"].object
+        }
+      }
       setUserAttributes(attributesDict)
     }
   }
