@@ -44,7 +44,7 @@ struct FeatureFlags: Codable, Equatable {
     enableMultiplePaywallUrls = rawFeatureFlags.value(forKey: "enable_multiple_paywall_urls", default: false)
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh_v2", default: false)
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
-    enableIframeNavigation = rawFeatureFlags.value(forKey: "enable_iframe_navigation", default: true)
+    enableIframeNavigation = rawFeatureFlags.value(forKey: "enable_iframe_navigation", default: false)
   }
 
   func encode(to encoder: Encoder) throws {
