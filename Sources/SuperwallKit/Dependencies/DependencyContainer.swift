@@ -141,7 +141,12 @@ final class DependencyContainer {
       deviceHelper: deviceHelper,
       storage: storage,
       configManager: configManager,
-      webEntitlementRedeemer: webEntitlementRedeemer
+      webEntitlementRedeemer: webEntitlementRedeemer,
+      notifyUserChange: { [weak self] newAttributes in
+        Task { @MainActor in
+          self?.delegateAdapter.userAttributesDidChange(newAttributes: newAttributes)
+        }
+      }
     )
 
     appSessionManager = AppSessionManager(

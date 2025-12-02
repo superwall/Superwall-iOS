@@ -1322,7 +1322,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
           attributesDict[key] = attribute["value"].object
         }
       }
-      setUserAttributes(attributesDict)
+      dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
     }
   }
 }
