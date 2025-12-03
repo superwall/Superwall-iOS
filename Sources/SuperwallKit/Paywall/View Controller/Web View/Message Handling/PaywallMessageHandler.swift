@@ -122,13 +122,17 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case .transactionComplete(let trialEndDate):
-      let transactionComplete = SuperwallEventObjc.transactionComplete.description
+    case .transactionComplete(let trialEndDate, let productIdentifier):
+      let freeTrialStart = SuperwallEventObjc.freeTrialStart.description
       Task {
+        var payload: [String: Any] = ["product_identifier": productIdentifier]
+        if let trialEndDate {
+          payload["trial_end_date"] = Int(trialEndDate.timeIntervalSince1970 * 1000)
+        }
         await self.pass(
-          placement: transactionComplete,
+          placement: freeTrialStart,
           from: paywall,
-          payload: trialEndDate.map { ["trial_end_date": Int($0.timeIntervalSince1970 * 1000)] } ?? [:]
+          payload: payload
         )
       }
     case .transactionFail:

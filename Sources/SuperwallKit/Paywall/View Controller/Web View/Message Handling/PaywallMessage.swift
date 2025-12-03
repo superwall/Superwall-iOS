@@ -67,7 +67,7 @@ enum PaywallMessage: Decodable, Equatable {
 
   case transactionRestore
   case transactionStart
-  case transactionComplete(trialEndDate: Date?)
+  case transactionComplete(trialEndDate: Date?, productIdentifier: String)
   case transactionFail
   case transactionAbandon
   case transactionTimeout
