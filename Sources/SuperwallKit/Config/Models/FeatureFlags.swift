@@ -77,7 +77,7 @@ struct FeatureFlags: Codable, Equatable {
     enableConfigRefresh: Bool,
     enableTextInteraction: Bool,
     enableCELLogging: Bool,
-    enableIframeNavigation: Bool = true
+    enableIframeNavigation: Bool
   ) {
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
