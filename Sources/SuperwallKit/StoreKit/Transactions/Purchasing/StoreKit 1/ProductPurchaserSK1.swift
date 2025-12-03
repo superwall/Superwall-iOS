@@ -178,12 +178,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     let source = await coordinator.source
     if let source = source {
       switch source {
-      case .internal,
-        .purchaseFunc:
+      case .internal:
         if factory.makeHasExternalPurchaseController() {
           return
         }
-      case .observeFunc:
+      case .purchaseFunc,
+        .observeFunc:
         break
       }
     } else if skTransaction.transactionState == .purchasing {
