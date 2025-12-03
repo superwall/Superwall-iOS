@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.7
+
+### Fixes
+
+- Fixes issue returning the `PurchaseResult` from `Superwall.shared.purchase(_:)` when using StoreKit 1 inside a `PurchaseController`.
+- Fixes `handleDeepLink` returning true for non-Superwall URLs when called before configuration completes.
+
+## 4.10.6
+
+### Fixes
+
+- Fixes issue that prevented the SDK from being built on old Xcode versions.
+
 ## 4.10.5
 
 ### Enhancements

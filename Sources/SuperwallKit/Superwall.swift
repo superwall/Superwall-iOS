@@ -913,16 +913,25 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.deepLinkRouter.route(url: url)
   }
 
-  /// Handles a deep link sent to your app to open a preview of your paywall.
+  /// Handles a deep link sent to your app.
   ///
-  /// You can preview your paywall on-device before going live by utilizing paywall previews. This uses a deep link to render a
-  /// preview of a paywall you've configured on the Superwall dashboard on your device. See
-  /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
-  /// more.
+  /// This method handles several types of deep links:
+  /// - **Paywall previews**: Preview paywalls on-device before going live. See
+  ///   [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews).
+  /// - **Redemption codes**: Redeem web checkout codes via deep link.
+  /// - **Superwall universal links**: Links in the format `*.superwall.app/app-link/*`.
+  /// - **`deepLink_open` trigger**: Any deep link can trigger a paywall if you've configured
+  ///   a `deepLink_open` trigger in your Superwall dashboard.
   ///
-  /// - Parameters:
-  ///   - url: The URL of the deep link.
-  /// - Returns: A `Bool` that is `true` if the deep link was handled. If called before ``Superwall/configure(apiKey:purchaseController:options:completion:)`` completes then it'll always return `true`.
+  /// This method is designed to work in a handler chain pattern where multiple handlers
+  /// process deep links. It returns `true` only for URLs that Superwall will handle,
+  /// allowing other handlers to process non-Superwall URLs.
+  ///
+  /// - Parameter url: The URL of the deep link.
+  /// - Returns: `true` if Superwall will handle this deep link, `false` otherwise.
+  ///   When called before ``Superwall/configure(apiKey:purchaseController:options:completion:)``
+  ///   completes, returns `true` only for recognized Superwall URL formats or if cached
+  ///   config contains a `deepLink_open` trigger.
   @discardableResult
   public static func handleDeepLink(_ url: URL) -> Bool {
     if Superwall.isInitialized,
