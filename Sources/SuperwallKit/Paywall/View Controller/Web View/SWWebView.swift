@@ -216,7 +216,8 @@ extension SWWebView: WKNavigationDelegate {
     if navigationAction.navigationType == .reload {
       return .allow
     }
-    if enableIframeNavigation && navigationAction.targetFrame?.isMainFrame == false {
+    if enableIframeNavigation,
+      navigationAction.targetFrame?.isMainFrame == false {
       return .allow
     }
     return .cancel
