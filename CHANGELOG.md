@@ -4,8 +4,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.10.7
 
+### Enhancements
+
+- Adds support for `Set user attributes` action.
+- Adds new `SuperwallDelegate` method called `userAttributesDidChange` that notifies you when user attributes change from an external source.
+
 ### Fixes
 
+- Fixes a crash caused by a race condition when accessing JSON dictionaries concurrently.
 - Fixes issue returning the `PurchaseResult` from `Superwall.shared.purchase(_:)` when using StoreKit 1 inside a `PurchaseController`.
 - Fixes `handleDeepLink` returning true for non-Superwall URLs when called before configuration completes.
 

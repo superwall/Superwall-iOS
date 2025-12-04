@@ -153,6 +153,15 @@ public protocol SuperwallDelegate: AnyObject {
     from oldValue: CustomerInfo,
     to newValue: CustomerInfo
   )
+
+  /// Called when user attributes change due to a paywall action.
+  ///
+  /// This is triggered by user interactions within the paywall that update
+  /// user attributes.
+  ///
+  /// - Parameter newAttributes: The new merged user attributes after the update.
+  @MainActor
+  func userAttributesDidChange(newAttributes: [String: Any])
 }
 
 extension SuperwallDelegate {
@@ -202,4 +211,6 @@ extension SuperwallDelegate {
     from oldValue: CustomerInfo,
     to newValue: CustomerInfo
   ) {}
+
+  public func userAttributesDidChange(newAttributes: [String: Any]) {}
 }
