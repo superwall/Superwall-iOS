@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.10.8
+
+## Enhancements
+- Adds support for `Set user attributes` action
+- Adds new `SuperwallDelegate` method called `userAttributesDidChange` that notifies you when user attributes change from an external source
+
 ## 4.10.7
 
 ### Fixes

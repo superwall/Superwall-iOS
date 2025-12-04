@@ -11,6 +11,7 @@ import Testing
 final class MockSuperwallDelegate: SuperwallDelegate {
   var receivedResult: RedemptionResult?
   var eventsReceived: [SuperwallEvent] = []
+  var receivedUserAttributes: [String: Any]?
 
   func didRedeemLink(result: RedemptionResult) {
     receivedResult = result
@@ -18,5 +19,9 @@ final class MockSuperwallDelegate: SuperwallDelegate {
 
   func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
     eventsReceived.append(eventInfo.event)
+  }
+
+  func userAttributesDidChange(newAttributes: [String: Any]) {
+    receivedUserAttributes = newAttributes
   }
 }
