@@ -263,11 +263,12 @@ private func unwrap(_ object: Any) -> Any {
   case let array as [Any]:
     return array.map(unwrap)
   case let dictionary as [String: Any]:
-    var dictionary = dictionary
-    dictionary.forEach { pair in
-      dictionary[pair.key] = unwrap(pair.value)
+    var result: [String: Any] = [:]
+    result.reserveCapacity(dictionary.count)
+    for (key, value) in dictionary {
+      result[key] = unwrap(value)
     }
-    return dictionary
+    return result
   default:
     return object
   }

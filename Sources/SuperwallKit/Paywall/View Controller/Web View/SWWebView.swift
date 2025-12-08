@@ -43,6 +43,7 @@ class SWWebView: WKWebView {
   private let isMac: Bool
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
+  private let enableIframeNavigation: Bool
 
   init(
     isMac: Bool,
@@ -54,6 +55,7 @@ class SWWebView: WKWebView {
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
+    self.enableIframeNavigation = featureFlags?.enableIframeNavigation ?? false
 
     self.loadingHandler = SWWebViewLoadingHandler(
       enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true
@@ -212,6 +214,10 @@ extension SWWebView: WKNavigationDelegate {
       return .allow
     }
     if navigationAction.navigationType == .reload {
+      return .allow
+    }
+    if enableIframeNavigation,
+      navigationAction.targetFrame?.isMainFrame == false {
       return .allow
     }
     return .cancel
