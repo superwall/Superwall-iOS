@@ -51,6 +51,7 @@
 		16622133C8DD73C2B153A32A /* Queue.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41A0BC4F44E339BBCA0D9F0 /* Queue.swift */; };
 		1753820CBFBDD8FF70455D71 /* ScaleAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1DF64C51FA26B40D8D7B880 /* ScaleAnimation.swift */; };
 		17C0F1960CD89B6BFA8B2FBB /* SuperwallDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7318EF33D7374DC5C8B4549D /* SuperwallDelegate.swift */; };
+		1894723C383155082D7C6287 /* IdentityManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF6B2C623B994FF663F75719 /* IdentityManagerTests.swift */; };
 		18B147198F2E19C69013BA4B /* Sk1StoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00736909A4B4A1C2F2C356BC /* Sk1StoreProduct.swift */; };
 		18B68013D856DFD01E2EADAE /* Superwall_Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 91B1FD7EAF0ACE1983E07F69 /* Superwall_Assets.xcassets */; };
 		18D39CB7BCF324B44197735D /* TaskRetryingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D2422F9742D74360FB716B /* TaskRetryingTests.swift */; };
@@ -980,6 +981,7 @@
 		EE1E7DA9C8816082FA05B84D /* PushTransition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTransition.swift; sourceTree = "<group>"; };
 		EEA21AF7F6C5FB0EC83E4E1A /* PresentPaywallOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentPaywallOperatorTests.swift; sourceTree = "<group>"; };
 		EEE0510BC2F7917AA57B896D /* AlertControllerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertControllerFactory.swift; sourceTree = "<group>"; };
+		EF6B2C623B994FF663F75719 /* IdentityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityManagerTests.swift; sourceTree = "<group>"; };
 		EFA6E24E16D14D1A71DC568F /* GetPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPresenter.swift; sourceTree = "<group>"; };
 		F0B300DB3367C74A42536395 /* CustomerInfoDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerInfoDecodingTests.swift; sourceTree = "<group>"; };
 		F115F0BE94943D7B60CDDD4A /* LogPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogPresentation.swift; sourceTree = "<group>"; };
@@ -1458,6 +1460,7 @@
 			children = (
 				40AE19B5A9B237A2552D5F36 /* IdentityLogicTests.swift */,
 				2714D9FD9F55611B4C5E4E7D /* IdentityManagerMock.swift */,
+				EF6B2C623B994FF663F75719 /* IdentityManagerTests.swift */,
 			);
 			path = Identity;
 			sourceTree = "<group>";
@@ -2895,6 +2898,7 @@
 				AF4AD928FACF9056E00D5920 /* HandleTriggerResultOperatorTests.swift in Sources */,
 				77EDD2927FF8DCF95579BE3E /* IdentityLogicTests.swift in Sources */,
 				D89E9C69317044050B97B573 /* IdentityManagerMock.swift in Sources */,
+				1894723C383155082D7C6287 /* IdentityManagerTests.swift in Sources */,
 				7909E7B477A2E2EBF84598F2 /* InternallySetSubscriptionStatusTests.swift in Sources */,
 				4DE01655FC4CC148DD3D161C /* LoggerMock.swift in Sources */,
 				B294572426111EC04F225289 /* MockExternalPurchaseControllerFactory.swift in Sources */,
