@@ -96,7 +96,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
       switch verificationResult {
       case .verified(let txn):
         allVerifiedTransactions.append(txn)
-
+        
         // Get the entitlements for a purchased product.
         if let serverEntitlements = serverEntitlementsByProductId[txn.productID] {
           // Map transactions and their product IDs to each entitlement.
@@ -220,7 +220,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
 
     return latestExpiration
   }
-
 
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     guard let product = storeProduct.product as? SK2StoreProduct else {

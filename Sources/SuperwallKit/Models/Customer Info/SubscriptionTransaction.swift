@@ -17,7 +17,7 @@ public final class SubscriptionTransaction: NSObject, Codable {
   /// The product identifier of the subscription.
   public let productId: String
 
-  /// The date that the App Store charged the user’s account.
+  /// The date that the App Store charged the user's account.
   public let purchaseDate: Date
 
   /// Indicates whether the subscription will renew.
@@ -40,6 +40,19 @@ public final class SubscriptionTransaction: NSObject, Codable {
   /// This is `nil` if it's a non-renewing subscription.
   public let expirationDate: Date?
 
+  /// The type of offer applied to this transaction (trial, code, promotional, winback).
+  ///
+  /// This is `nil` if no offer was applied or on iOS versions below 17.2.
+  public let offerType: LatestSubscription.OfferType?
+
+  /// The subscription group identifier for this subscription.
+  ///
+  /// This is `nil` if the subscription group couldn't be determined.
+  public let subscriptionGroupId: String?
+
+  /// The store where this subscription was purchased.
+  public let store: ProductStore
+
   init(
     transactionId: String,
     productId: String,
@@ -49,7 +62,10 @@ public final class SubscriptionTransaction: NSObject, Codable {
     isInGracePeriod: Bool,
     isInBillingRetryPeriod: Bool,
     isActive: Bool,
-    expirationDate: Date?
+    expirationDate: Date?,
+    offerType: LatestSubscription.OfferType? = nil,
+    subscriptionGroupId: String? = nil,
+    store: ProductStore = .appStore
   ) {
     self.transactionId = transactionId
     self.productId = productId
@@ -60,6 +76,9 @@ public final class SubscriptionTransaction: NSObject, Codable {
     self.isInBillingRetryPeriod = isInBillingRetryPeriod
     self.isActive = isActive
     self.expirationDate = expirationDate
+    self.offerType = offerType
+    self.subscriptionGroupId = subscriptionGroupId
+    self.store = store
   }
 
   override public func isEqual(_ object: Any?) -> Bool {
@@ -74,7 +93,10 @@ public final class SubscriptionTransaction: NSObject, Codable {
       self.isInGracePeriod == other.isInGracePeriod &&
       self.isInBillingRetryPeriod == other.isInBillingRetryPeriod &&
       self.isActive == other.isActive &&
-      self.expirationDate == other.expirationDate
+      self.expirationDate == other.expirationDate &&
+      self.offerType == other.offerType &&
+      self.subscriptionGroupId == other.subscriptionGroupId &&
+      self.store == other.store
   }
 
   override public var hash: Int {
@@ -88,6 +110,9 @@ public final class SubscriptionTransaction: NSObject, Codable {
     hasher.combine(isInBillingRetryPeriod)
     hasher.combine(isActive)
     hasher.combine(expirationDate)
+    hasher.combine(offerType)
+    hasher.combine(subscriptionGroupId)
+    hasher.combine(store)
     return hasher.finalize()
   }
 
@@ -101,6 +126,9 @@ public final class SubscriptionTransaction: NSObject, Codable {
     case isInBillingRetryPeriod
     case isActive
     case expirationDate
+    case offerType
+    case subscriptionGroupId
+    case store
   }
 
   public required init(from decoder: Decoder) throws {
@@ -114,6 +142,9 @@ public final class SubscriptionTransaction: NSObject, Codable {
     isInBillingRetryPeriod = try container.decode(Bool.self, forKey: .isInBillingRetryPeriod)
     isActive = try container.decode(Bool.self, forKey: .isActive)
     expirationDate = try container.decodeIfPresent(Date.self, forKey: .expirationDate)
+    offerType = try container.decodeIfPresent(LatestSubscription.OfferType.self, forKey: .offerType)
+    subscriptionGroupId = try container.decodeIfPresent(String.self, forKey: .subscriptionGroupId)
+    store = try container.decode(ProductStore.self, forKey: .store)
     super.init()
   }
 
@@ -128,5 +159,8 @@ public final class SubscriptionTransaction: NSObject, Codable {
     try container.encode(isInBillingRetryPeriod, forKey: .isInBillingRetryPeriod)
     try container.encode(isActive, forKey: .isActive)
     try container.encodeIfPresent(expirationDate, forKey: .expirationDate)
+    try container.encodeIfPresent(offerType, forKey: .offerType)
+    try container.encodeIfPresent(subscriptionGroupId, forKey: .subscriptionGroupId)
+    try container.encode(store, forKey: .store)
   }
 }
