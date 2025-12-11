@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the ability to override introductory offer eligibility via the paywall editor.
+- Adds dynamic notification support and scheduling.
 
 ### Fixes
 

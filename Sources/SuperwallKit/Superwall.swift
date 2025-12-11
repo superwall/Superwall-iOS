@@ -1314,6 +1314,12 @@ extension Superwall: PaywallViewControllerEventDelegate {
         )
         await Superwall.shared.track(customPlacement)
       }
+    case .scheduleNotification(let notification):
+      await NotificationScheduler.shared.scheduleNotifications(
+        [notification],
+        fromPaywallId: paywallViewController.paywall.identifier,
+        factory: dependencyContainer
+      )
     case let .userAttributesUpdated(attributes: attributes):
       // Attributes is an array of {key, value} objects, convert to dictionary
       var attributesDict: [String: Any] = [:]
