@@ -186,4 +186,38 @@ struct NotificationSchedulerTests {
     // Should have added the new request
     #expect(notificationCenter.requests.count == 1)
   }
+
+  @Test("Does not schedule duplicate notification when called twice with same paywall")
+  func scheduleNotifications_calledTwice_noDuplicate() async {
+    let factory = Factory()
+    let notification: LocalNotification = .stub()
+    let notifications: [LocalNotification] = [notification]
+    let notificationCenter = MockNotificationCenter(settings: AuthorizedNotificationSettings())
+    let paywallId = "my_paywall"
+
+    // First call - simulates scheduling from paywall message handler
+    await NotificationScheduler.shared.scheduleNotifications(
+      notifications,
+      fromPaywallId: paywallId,
+      factory: factory,
+      notificationCenter: notificationCenter
+    )
+
+    // Should have scheduled the notification
+    #expect(notificationCenter.requests.count == 1)
+
+    // Add the scheduled request to pending requests (simulating system state)
+    notificationCenter.pendingRequests = notificationCenter.requests
+
+    // Second call - simulates scheduling after transaction complete
+    await NotificationScheduler.shared.scheduleNotifications(
+      notifications,
+      fromPaywallId: paywallId,
+      factory: factory,
+      notificationCenter: notificationCenter
+    )
+
+    // Should still only have 1 request (no duplicate added)
+    #expect(notificationCenter.requests.count == 1)
+  }
 }
