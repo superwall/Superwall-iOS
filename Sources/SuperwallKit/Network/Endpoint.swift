@@ -321,6 +321,40 @@ extension Endpoint where
   }
 }
 
+// MARK: - IntroOfferToken
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
+  Response == IntroOfferTokenWrapper {
+  static func getIntroOfferToken(
+    productIds: [String],
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
+  ) -> Self {
+    let products = productIds.map { productId in
+      IntroOfferEligibilityRequest.Product(
+        productId: productId,
+        transactionId: appTransactionId
+      )
+    }
+
+    let body = IntroOfferEligibilityRequest(
+      allowIntroductoryOffer: allowIntroductoryOffer,
+      products: products
+    )
+    let bodyData = try? JSONEncoder().encode(body)
+
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "app-store/intro-eligibility/jws",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+
 // MARK: - Web2App
 extension Endpoint where
   Kind == EndpointKinds.Web2App,

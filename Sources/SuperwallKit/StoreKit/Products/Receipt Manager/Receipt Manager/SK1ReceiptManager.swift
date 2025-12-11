@@ -12,14 +12,12 @@ final class SK1ReceiptManager: ReceiptManagerType {
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
 
-  // Unused for now:
+  // Unused in SK1:
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
   var latestSubscriptionWillAutoRenew: Bool?
   var latestSubscriptionState: LatestSubscription.State?
-
-  /// This is unused in SK1
+  var appTransactionId: String?
   let transactionReceipts: [TransactionReceipt] = []
-  let appTransactionId: String? = nil
 
   init(
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
