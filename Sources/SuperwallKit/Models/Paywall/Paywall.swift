@@ -282,7 +282,8 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
-    introOfferEligibility = try values.decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
+    introOfferEligibility = try values
+      .decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
   }
 
   func encode(to encoder: Encoder) throws {

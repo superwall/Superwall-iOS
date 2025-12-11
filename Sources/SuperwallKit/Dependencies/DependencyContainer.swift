@@ -141,14 +141,12 @@ final class DependencyContainer {
       deviceHelper: deviceHelper,
       storage: storage,
       configManager: configManager,
-      webEntitlementRedeemer: webEntitlementRedeemer,
-      // swiftlint:disable:next trailing_closure
-      notifyUserChange: { [weak self] newAttributes in
-        Task { @MainActor in
-          self?.delegateAdapter.userAttributesDidChange(newAttributes: newAttributes)
-        }
+      webEntitlementRedeemer: webEntitlementRedeemer
+    ) { [weak self] newAttributes in
+      Task { @MainActor in
+        self?.delegateAdapter.userAttributesDidChange(newAttributes: newAttributes)
       }
-    )
+    }
 
     appSessionManager = AppSessionManager(
       configManager: configManager,

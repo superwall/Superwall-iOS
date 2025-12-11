@@ -246,13 +246,12 @@ final class TransactionManager {
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
             closeActionTitle: "Cancel"
-          )            // swiftlint:disable:next trailing_closure
-            {
-              guard let sharedApplication = UIApplication.sharedApplication else {
-                return
-              }
-              sharedApplication.open(restoreUrl)
+          ) {
+            guard let sharedApplication = UIApplication.sharedApplication else {
+              return
             }
+            sharedApplication.open(restoreUrl)
+          }
           return .webRestore
         }
       }
