@@ -35,6 +35,9 @@ public enum IntegrationAttribute: Int {
   /// The Firebase instance identifier.
   case firebaseAppInstanceId
 
+  /// The Firebase installation ID.
+  case firebaseInstallationId
+
   /// The Iterable identifier for the user.
   case iterableUserId
 
@@ -91,6 +94,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "fbAnonId"
     case .firebaseAppInstanceId:
       return "firebaseAppInstanceId"
+    case .firebaseInstallationId:
+      return "firebaseInstallationId"
     case .iterableUserId:
       return "iterableUserId"
     case .iterableCampaignId:

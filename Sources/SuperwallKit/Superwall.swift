@@ -1320,6 +1320,15 @@ extension Superwall: PaywallViewControllerEventDelegate {
         fromPaywallId: paywallViewController.paywall.identifier,
         factory: dependencyContainer
       )
+    case let .userAttributesUpdated(attributes: attributes):
+      // Attributes is an array of {key, value} objects, convert to dictionary
+      var attributesDict: [String: Any] = [:]
+      for attribute in attributes.arrayValue {
+        if let key = attribute["key"].string {
+          attributesDict[key] = attribute["value"].object
+        }
+      }
+      dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
     }
   }
 }

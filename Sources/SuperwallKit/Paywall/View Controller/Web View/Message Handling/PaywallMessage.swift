@@ -54,6 +54,7 @@ enum PaywallMessage: Decodable, Equatable {
   case purchase(productId: String)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
+  case userAttributesUpdated(attributes: JSON)
   case initiateWebCheckout(contextId: String)
   case requestStoreReview(ReviewType)
 
@@ -91,6 +92,7 @@ enum PaywallMessage: Decodable, Equatable {
     case purchase
     case custom
     case customPlacement = "custom_placement"
+    case userAttributesUpdated = "user_attribute_updated"
     case initiateWebCheckout = "initiate_web_checkout"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
@@ -106,6 +108,7 @@ enum PaywallMessage: Decodable, Equatable {
     case version
     case name
     case params
+    case attributes
     case reviewType
     case browserType
     case checkoutContextId
@@ -173,6 +176,11 @@ enum PaywallMessage: Decodable, Equatable {
         if let name = try? values.decode(String.self, forKey: .name),
           let params = try? values.decode(JSON.self, forKey: .params) {
           self = .customPlacement(name: name, params: params)
+          return
+        }
+      case .userAttributesUpdated:
+        if let attributes = try? values.decode(JSON.self, forKey: .attributes) {
+          self = .userAttributesUpdated(attributes: attributes)
           return
         }
       case .initiateWebCheckout:

@@ -26,18 +26,23 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
   /// Indicates whether the transaction has been revoked.
   public let isRevoked: Bool
 
+  /// The store where this transaction was made.
+  public let store: ProductStore
+
   init(
     transactionId: String,
     productId: String,
     purchaseDate: Date,
     isConsumable: Bool,
-    isRevoked: Bool
+    isRevoked: Bool,
+    store: ProductStore = .appStore
   ) {
     self.transactionId = transactionId
     self.productId = productId
     self.purchaseDate = purchaseDate
     self.isConsumable = isConsumable
     self.isRevoked = isRevoked
+    self.store = store
   }
 
   override public func isEqual(_ object: Any?) -> Bool {
@@ -48,7 +53,8 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
       self.productId == other.productId &&
       self.purchaseDate == other.purchaseDate &&
       self.isConsumable == other.isConsumable &&
-      self.isRevoked == other.isRevoked
+      self.isRevoked == other.isRevoked &&
+      self.store == other.store
   }
 
   override public var hash: Int {
@@ -58,6 +64,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     hasher.combine(purchaseDate)
     hasher.combine(isConsumable)
     hasher.combine(isRevoked)
+    hasher.combine(store)
     return hasher.finalize()
   }
 
@@ -67,6 +74,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     case purchaseDate
     case isConsumable
     case isRevoked
+    case store
   }
 
   public required init(from decoder: Decoder) throws {
@@ -76,6 +84,7 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     purchaseDate = try container.decode(Date.self, forKey: .purchaseDate)
     isConsumable = try container.decode(Bool.self, forKey: .isConsumable)
     isRevoked = try container.decode(Bool.self, forKey: .isRevoked)
+    store = try container.decode(ProductStore.self, forKey: .store)
     super.init()
   }
 
@@ -86,5 +95,6 @@ public final class NonSubscriptionTransaction: NSObject, Codable {
     try container.encode(purchaseDate, forKey: .purchaseDate)
     try container.encode(isConsumable, forKey: .isConsumable)
     try container.encode(isRevoked, forKey: .isRevoked)
+    try container.encode(store, forKey: .store)
   }
 }

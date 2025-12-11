@@ -17,4 +17,5 @@ enum PaywallWebEvent: Equatable {
   case openedDeepLink(url: URL)
   case customPlacement(name: String, params: JSON)
   case scheduleNotification(notification: LocalNotification)
+  case userAttributesUpdated(attributes: JSON)
 }
