@@ -122,7 +122,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case .transactionComplete(let trialEndDate, let productIdentifier):
+    case let .transactionComplete(trialEndDate, productIdentifier):
       let freeTrialStart = SuperwallEventObjc.freeTrialStart.description
       Task {
         var payload: [String: Any] = ["product_identifier": productIdentifier]

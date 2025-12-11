@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the ability to override introductory offer eligibility via the paywall editor.
+- Adds dynamic notification support and scheduling.
 
 ### Fixes
 
@@ -33,10 +34,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issue that prevented the SDK from being built on old Xcode versions.
 
 ## 4.10.5
-
-### Enhancements
-
-- Adds dynamic notification support and scheduling.
 
 ### Fixes
 
