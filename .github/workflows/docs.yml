@@ -45,6 +45,7 @@ jobs:
           sudo git config --global user.name 'Jake'
           sudo git config --global user.email 'jakemor@users.noreply.github.com'
           git fetch --all
+          git checkout -- Package.resolved || true
           git checkout --track origin/gh-pages
           
           sed -i '' 's#<head>#<head><script type="text/javascript">\

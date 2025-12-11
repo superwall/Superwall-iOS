@@ -245,15 +245,13 @@ final class TransactionManager {
             title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
-            closeActionTitle: "Cancel",
-            // swiftlint:disable:next trailing_closure
-            action: {
-              guard let sharedApplication = UIApplication.sharedApplication else {
-                return
-              }
-              sharedApplication.open(restoreUrl)
+            closeActionTitle: "Cancel"
+          ) {
+            guard let sharedApplication = UIApplication.sharedApplication else {
+              return
             }
-          )
+            sharedApplication.open(restoreUrl)
+          }
           return .webRestore
         }
       }

@@ -336,6 +336,7 @@ struct AttributionTests {
         .onesignalId: "onesignal-id",
         .fbAnonId: "fb-anon-id",
         .firebaseAppInstanceId: "firebase-app-instance-id",
+        .firebaseInstallationId: "firebase-installation-id",
         .iterableUserId: "iterable-user-id",
         .iterableCampaignId: "iterable-campaign-id",
         .iterableTemplateId: "iterable-template-id",
@@ -363,6 +364,7 @@ struct AttributionTests {
       #expect(storedProps["onesignalId"] as? String == "onesignal-id")
       #expect(storedProps["fbAnonId"] as? String == "fb-anon-id")
       #expect(storedProps["firebaseAppInstanceId"] as? String == "firebase-app-instance-id")
+      #expect(storedProps["firebaseInstallationId"] as? String == "firebase-installation-id")
       #expect(storedProps["iterableUserId"] as? String == "iterable-user-id")
       #expect(storedProps["iterableCampaignId"] as? String == "iterable-campaign-id")
       #expect(storedProps["iterableTemplateId"] as? String == "iterable-template-id")

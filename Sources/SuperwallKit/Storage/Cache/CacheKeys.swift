@@ -229,7 +229,7 @@ enum LastWebEntitlementsFetchDate: Storable {
   static var key: String {
     "store.LastWebEntitlementsFetchDate"
   }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
+  static var directory: SearchPathDirectory = .userSpecificDocuments
   typealias Value = Date
 }
 

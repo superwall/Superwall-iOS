@@ -12,9 +12,9 @@ import StoreKit
 
 @Suite("EntitlementProcessor Tests")
 struct EntitlementProcessorTests {
-  
+
   // MARK: - Mock Transaction Types
-  
+
   struct MockTransaction: EntitlementTransaction {
     let productId: String
     let transactionId: String
@@ -28,10 +28,12 @@ struct EntitlementProcessorTests {
     let isInGracePeriod: Bool
     let isInBillingRetryPeriod: Bool
     let isActive: Bool
+    let offerType: LatestSubscription.OfferType?
+    let subscriptionGroupId: String?
   }
-  
+
   // MARK: - Helper Methods
-  
+
   private func createMockTransaction(
     productId: String = "test_product",
     transactionId: String = "txn_123",
@@ -44,7 +46,9 @@ struct EntitlementProcessorTests {
     renewedAt: Date? = nil,
     isInGracePeriod: Bool = false,
     isInBillingRetryPeriod: Bool = false,
-    isActive: Bool = false
+    isActive: Bool = false,
+    offerType: LatestSubscription.OfferType? = nil,
+    subscriptionGroupId: String? = nil
   ) -> MockTransaction {
     return MockTransaction(
       productId: productId,
@@ -58,10 +62,12 @@ struct EntitlementProcessorTests {
       renewedAt: renewedAt,
       isInGracePeriod: isInGracePeriod,
       isInBillingRetryPeriod: isInBillingRetryPeriod,
-      isActive: isActive
+      isActive: isActive,
+      offerType: offerType,
+      subscriptionGroupId: subscriptionGroupId
     )
   }
-  
+
   private func createEntitlement(
     id: String = "test_entitlement",
     productIds: Set<String> = ["test_product"]
@@ -80,10 +86,12 @@ struct EntitlementProcessorTests {
   func testProcessEmptyTransactions() {
     let transactionsByEntitlement: [String: [any EntitlementTransaction]] = [:]
     let rawEntitlementsByProductId: [String: Set<Entitlement>] = [:]
-    
+    let productIdsByEntitlementId: [String: Set<String>] = [:]
+
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     #expect(result.isEmpty)
@@ -97,20 +105,22 @@ struct EntitlementProcessorTests {
       productType: .nonConsumable,
       isActive: true
     )
-    
+
     let entitlement = createEntitlement(
       id: "lifetime_entitlement",
       productIds: ["lifetime_product"]
     )
-    
+
     let transactionsByEntitlement = ["lifetime_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["lifetime_product": Set([entitlement])]
-    
+    let productIdsByEntitlementId = ["lifetime_entitlement": Set(["lifetime_product"])]
+
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
-    
+
     let processedEntitlement = result["lifetime_product"]?.first
     #expect(processedEntitlement?.isActive == true)
     #expect(processedEntitlement?.isLifetime == true)
@@ -127,20 +137,22 @@ struct EntitlementProcessorTests {
       willRenew: true,
       isActive: true
     )
-    
+
     let entitlement = createEntitlement(
       id: "subscription_entitlement",
       productIds: ["subscription_product"]
     )
-    
+
     let transactionsByEntitlement = ["subscription_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
-    
+    let productIdsByEntitlementId = ["subscription_entitlement": Set(["subscription_product"])]
+
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
-    
+
     let processedEntitlement = result["subscription_product"]?.first
     #expect(processedEntitlement?.isActive == true)
     #expect(processedEntitlement?.isLifetime == false)
@@ -164,10 +176,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["expired_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["expired_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["expired_entitlement": Set(["expired_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["expired_product"]?.first
@@ -188,30 +202,32 @@ struct EntitlementProcessorTests {
       productType: .autoRenewable,
       isActive: false
     )
-    
+
     let newerTransaction = createMockTransaction(
       productId: "product1",
-      transactionId: "txn_2", 
+      transactionId: "txn_2",
       purchaseDate: baseDate,
       expirationDate: baseDate.addingTimeInterval(3600), // Active
       productType: .autoRenewable,
       willRenew: true,
       isActive: true
     )
-    
+
     let entitlement = createEntitlement(
       id: "multi_entitlement",
       productIds: ["product1"]
     )
-    
+
     let transactionsByEntitlement = ["multi_entitlement": [olderTransaction, newerTransaction]]
     let rawEntitlementsByProductId = ["product1": Set([entitlement])]
-    
+    let productIdsByEntitlementId = ["multi_entitlement": Set(["product1"])]
+
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
-    
+
     let processedEntitlement = result["product1"]?.first
     #expect(processedEntitlement?.isActive == true)
     #expect(processedEntitlement?.willRenew == true)
@@ -240,10 +256,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["renewal_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["renewal_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["renewal_entitlement": Set(["renewal_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["renewal_product"]?.first
@@ -260,29 +278,31 @@ struct EntitlementProcessorTests {
       transactionId: "txn_1",
       productType: .nonConsumable
     )
-    
+
     let transaction2 = createMockTransaction(
-      productId: "product2", 
+      productId: "product2",
       transactionId: "txn_2",
       productType: .nonConsumable
     )
-    
+
     let entitlement = createEntitlement(
       id: "multi_product_entitlement",
       productIds: ["product1", "product2"]
     )
-    
+
     let transactionsByEntitlement = ["multi_product_entitlement": [transaction1, transaction2]]
     let rawEntitlementsByProductId = [
       "product1": Set([entitlement]),
       "product2": Set([entitlement])
     ]
-    
+    let productIdsByEntitlementId = ["multi_product_entitlement": Set(["product1", "product2"])]
+
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
-    
+
     #expect(result.count == 2)
     #expect(result["product1"]?.first?.isActive == true)
     #expect(result["product2"]?.first?.isActive == true)
@@ -308,10 +328,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["non_consumable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["non_consumable": Set([entitlement])]
+    let productIdsByEntitlementId = ["non_consumable_entitlement": Set(["non_consumable"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["non_consumable"]?.first
@@ -335,10 +357,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["consumable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["consumable": Set([entitlement])]
+    let productIdsByEntitlementId = ["consumable_entitlement": Set(["consumable"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["consumable"]?.first
@@ -374,10 +398,12 @@ struct EntitlementProcessorTests {
       "lifetime_product": Set([entitlement]),
       "subscription_product": Set([entitlement])
     ]
+    let productIdsByEntitlementId = ["mixed_entitlement": Set(["lifetime_product", "subscription_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Both products should return exactly one entitlement with the same ID
@@ -426,10 +452,15 @@ struct EntitlementProcessorTests {
     let rawEntitlementsByProductId = [
       "shared_product": Set([entitlement1, entitlement2])
     ]
+    let productIdsByEntitlementId = [
+      "entitlement_1": Set(["shared_product"]),
+      "entitlement_2": Set(["shared_product"])
+    ]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let entitlements = result["shared_product"]
@@ -468,10 +499,12 @@ struct EntitlementProcessorTests {
       "old_product": Set([entitlement]),
       "new_product": Set([entitlement])
     ]
+    let productIdsByEntitlementId = ["version_entitlement": Set(["old_product", "new_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["new_product"]?.first
@@ -488,10 +521,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["orphan_entitlement": [transaction]]
     let rawEntitlementsByProductId: [String: Set<Entitlement>] = [:] // No raw entitlements
+    let productIdsByEntitlementId = ["orphan_entitlement": Set(["orphan_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return empty result when no matching raw entitlements
@@ -512,10 +547,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["transaction_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["product_a": Set([entitlement])]
+    let productIdsByEntitlementId = ["transaction_entitlement": Set(["product_a"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return the entitlement even though it has no transactions (as inactive)
@@ -564,10 +601,12 @@ struct EntitlementProcessorTests {
       "product2": Set([entitlement]),
       "product3": Set([entitlement])
     ]
+    let productIdsByEntitlementId = ["complex_entitlement": Set(["product1", "product2", "product3"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["product1"]?.first
@@ -593,10 +632,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["non_renewable_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["non_renewable_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["non_renewable_entitlement": Set(["non_renewable_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["non_renewable_product"]?.first
@@ -635,10 +676,12 @@ struct EntitlementProcessorTests {
     for transaction in transactions {
       rawEntitlementsByProductId[transaction.productId] = Set([entitlement])
     }
+    let productIdsByEntitlementId = ["bulk_entitlement": Set(transactions.map { $0.productId })]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     #expect(result.count == 100)
@@ -670,10 +713,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["extreme_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["extreme_product": Set([entitlement])]
+    let productIdsByEntitlementId = ["extreme_entitlement": Set(["extreme_product"])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result["extreme_product"]?.first
@@ -696,10 +741,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement = ["empty_entitlement": [transaction]]
     let rawEntitlementsByProductId = ["": Set([entitlement])]
+    let productIdsByEntitlementId = ["empty_entitlement": Set([""])]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     let processedEntitlement = result[""]?.first
@@ -714,6 +761,7 @@ struct EntitlementProcessorTests {
     // 10 entitlements each with 5 products, 5 products each with 10 entitlements
     var transactionsByEntitlement: [String: [MockTransaction]] = [:]
     var rawEntitlementsByProductId: [String: Set<Entitlement>] = [:]
+    var productIdsByEntitlementId: [String: Set<String>] = [:]
 
     for entitlementIndex in 0..<10 {
       let entitlementId = "entitlement_\(entitlementIndex)"
@@ -741,11 +789,13 @@ struct EntitlementProcessorTests {
       }
 
       transactionsByEntitlement[entitlementId] = transactions
+      productIdsByEntitlementId[entitlementId] = productIds
     }
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should have 5 products, each with up to 10 entitlements
@@ -1111,10 +1161,12 @@ struct EntitlementProcessorTests {
 
     let transactionsByEntitlement: [String: [MockTransaction]] = [:] // No transactions
     let rawEntitlementsByProductId = ["product_a": Set([entitlement])]
+    let productIdsByEntitlementId: [String: Set<String>] = [:]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return the entitlement even without transactions (as inactive)
@@ -1144,10 +1196,12 @@ struct EntitlementProcessorTests {
       "product_b": Set([entitlement2]),
       "product_c": Set([entitlement3])
     ]
+    let productIdsByEntitlementId: [String: Set<String>] = [:]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return all entitlements even without transactions (all inactive)
@@ -1177,10 +1231,12 @@ struct EntitlementProcessorTests {
       "annual": Set([entitlement]),
       "lifetime": Set([entitlement])
     ]
+    let productIdsByEntitlementId: [String: Set<String>] = [:]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return the same entitlement for all products (all inactive)
@@ -1212,10 +1268,12 @@ struct EntitlementProcessorTests {
     let rawEntitlementsByProductId = [
       "product_a": Set([entitlement1, entitlement2])
     ]
+    let productIdsByEntitlementId: [String: Set<String>] = [:]
 
     let result = EntitlementProcessor.buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
 
     // Should return both entitlements for the product (all inactive)
@@ -1227,6 +1285,52 @@ struct EntitlementProcessorTests {
     // All should be inactive
     let allInactive = result["product_a"]?.allSatisfy { !$0.isActive } ?? false
     #expect(allInactive)
+  }
+
+  // MARK: - ProductIds From Server Config Tests
+
+  @Test("ProductIds contains all products from server config, not just transacted products")
+  func testProductIdsContainsAllFromServerConfig() {
+    // This test verifies the fix where productIds should contain ALL product IDs
+    // from server config that unlock the entitlement, not just the ones with transactions.
+
+    // Server config says products A, B, and C all unlock "premium" entitlement
+    let entitlement = createEntitlement(
+      id: "premium",
+      productIds: ["product_a", "product_b", "product_c"]
+    )
+
+    // User only has a transaction for product_a
+    let transaction = createMockTransaction(
+      productId: "product_a",
+      productType: .nonConsumable
+    )
+
+    let transactionsByEntitlement = ["premium": [transaction]]
+    let rawEntitlementsByProductId = [
+      "product_a": Set([entitlement]),
+      "product_b": Set([entitlement]),
+      "product_c": Set([entitlement])
+    ]
+    // This is the key - server config says all 3 products unlock premium
+    let productIdsByEntitlementId = ["premium": Set(["product_a", "product_b", "product_c"])]
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: transactionsByEntitlement,
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
+    )
+
+    // The entitlement's productIds should contain ALL products from server config,
+    // not just product_a which had the transaction
+    let processedEntitlement = result["product_a"]?.first
+    #expect(processedEntitlement?.productIds == Set(["product_a", "product_b", "product_c"]))
+    #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.isLifetime == true)
+
+    // Also verify the entitlement is returned for all products
+    #expect(result["product_b"]?.first?.productIds == Set(["product_a", "product_b", "product_c"]))
+    #expect(result["product_c"]?.first?.productIds == Set(["product_a", "product_b", "product_c"]))
   }
 }
 

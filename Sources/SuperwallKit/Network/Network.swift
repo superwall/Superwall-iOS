@@ -346,4 +346,19 @@ class Network {
       data: SuperwallRequestData(factory: factory)
     )
   }
+
+  func getIntroOfferToken(
+    productIds: [String],
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
+  ) async throws -> [String: IntroOfferToken] {
+    return try await urlSession.request(
+      .getIntroOfferToken(
+        productIds: productIds,
+        appTransactionId: appTransactionId,
+        allowIntroductoryOffer: allowIntroductoryOffer
+      ),
+      data: SuperwallRequestData(factory: factory)
+    ).tokensByProductId
+  }
 }
