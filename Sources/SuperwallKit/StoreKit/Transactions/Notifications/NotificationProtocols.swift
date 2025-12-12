@@ -15,13 +15,14 @@ protocol NotificationSettings {
 extension UNNotificationSettings: NotificationSettings {}
 
 protocol NotificationAuthorizable {
-  func requestAuthorization(options: UNAuthorizationOptions, completionHandler: @escaping (Bool, Error?) -> Void)
-  func getSettings(completionHandler: @escaping (NotificationSettings) -> Void)
+  func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+  func notificationSettings() async -> NotificationSettings
   func add(_ request: UNNotificationRequest) async throws
+  func pendingNotificationRequests() async -> [UNNotificationRequest]
 }
 
 extension UNUserNotificationCenter: NotificationAuthorizable {
-  func getSettings(completionHandler: @escaping (NotificationSettings) -> Void) {
-    getNotificationSettings(completionHandler: completionHandler)
+  func notificationSettings() async -> NotificationSettings {
+    await self.notificationSettings() as UNNotificationSettings
   }
 }

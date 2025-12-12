@@ -70,6 +70,16 @@ struct Paywall: Codable {
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
 
+  /// Indicates how intro offer eligiblity should be treat on products. Defaults to
+  /// `.automatic`.
+  let introOfferEligibility: IntroOfferEligibility
+
+  var productIdsWithIntroOffers: [String] {
+    return productVariables?
+      .filter { $0.hasIntroOffer }
+      .map { $0.id } ?? []
+  }
+
   // MARK: - Added by client
 
   var responseLoadingInfo: LoadingInfo
@@ -156,6 +166,7 @@ struct Paywall: Codable {
     case surveys
     case manifest
     case isScrollEnabled
+    case introductoryOfferEligibility
 
     case responseLoadStartTime
     case responseLoadCompleteTime
@@ -271,6 +282,8 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
+    introOfferEligibility = try values
+      .decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
   }
 
   func encode(to encoder: Encoder) throws {
@@ -327,6 +340,7 @@ struct Paywall: Codable {
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
     try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
+    try container.encodeIfPresent(introOfferEligibility, forKey: .introductoryOfferEligibility)
   }
 
   // Only used in stub
@@ -362,7 +376,8 @@ struct Paywall: Codable {
     computedPropertyRequests: [ComputedPropertyRequest] = [],
     surveys: [Survey] = [],
     manifest: ArchiveManifest? = nil,
-    isScrollEnabled: Bool
+    isScrollEnabled: Bool,
+    introOfferEligibility: IntroOfferEligibility = .automatic
   ) {
     self.databaseId = databaseId
     self.identifier = identifier
@@ -396,6 +411,7 @@ struct Paywall: Codable {
     self.surveys = surveys
     self.manifest = manifest
     self.isScrollEnabled = isScrollEnabled
+    self.introOfferEligibility = introOfferEligibility
   }
 
   func getInfo(fromPlacement: PlacementData?) -> PaywallInfo {
@@ -431,7 +447,8 @@ struct Paywall: Codable {
       surveys: surveys,
       presentation: presentation,
       isScrollEnabled: isScrollEnabled,
-      state: state
+      state: state,
+      introOfferEligibility: introOfferEligibility
     )
   }
 
@@ -483,7 +500,8 @@ extension Paywall: Stubbable {
       productsLoadingInfo: .init(),
       shimmerLoadingInfo: .init(),
       paywalljsVersion: "",
-      isScrollEnabled: true
+      isScrollEnabled: true,
+      introOfferEligibility: .automatic
     )
   }
 }

@@ -111,6 +111,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
   private var isCheckoutDismissedProgrammatically = false
 
+  /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+  let introOfferTokenManager: IntroOfferTokenManager
+
   #if !os(visionOS)
     /// Reference to the current checkout webview controller
     private weak var currentCheckoutVC: CheckoutWebViewController?
@@ -215,6 +218,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     deviceHelper: DeviceHelper,
     factory: Factory,
     storage: Storage,
+    network: Network,
     webView: SWWebView,
     webEntitlementRedeemer: WebEntitlementRedeemer,
     cache: PaywallViewControllerCache?,
@@ -233,6 +237,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.storage = storage
     self.paywall = paywall
     self.webView = webView
+    self.introOfferTokenManager = IntroOfferTokenManager(network: network)
     self.webEntitlementRedeemer = webEntitlementRedeemer
 
     presentationStyle = paywall.presentation.style
@@ -247,6 +252,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     super.viewDidLoad()
     configureUI()
     loadWebView()
+    introOfferTokenManager.startObservingAppLifecycle()
+  }
+
+  deinit {
+    introOfferTokenManager.stopObservingAppLifecycle()
   }
 
   private func configureUI() {
@@ -1177,6 +1187,10 @@ extension PaywallViewController {
     guard presentationWillPrepare else {
       return
     }
+
+    // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+    fetchIntroOfferTokens()
+
     if willShowSurvey {
       didDisableSwipeForSurvey = true
       presentationController?.delegate = self
@@ -1197,6 +1211,20 @@ extension PaywallViewController {
     }
 
     presentationWillPrepare = false
+  }
+
+  // MARK: - Intro Offer Token Management
+
+  /// Fetches intro offer eligibility tokens if configured for this paywall
+  private func fetchIntroOfferTokens() {
+    Task {
+      await introOfferTokenManager.fetchTokens(
+        introOfferEligibility: paywall.introOfferEligibility,
+        paywallId: paywall.identifier,
+        productIds: paywall.productIdsWithIntroOffers,
+        appTransactionId: ReceiptManager.appTransactionId
+      )
+    }
   }
 
   public override func viewDidAppear(_ animated: Bool) {

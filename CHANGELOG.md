@@ -2,6 +2,19 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.0
+
+### Enhancements
+
+- Adds the ability to override introductory offer eligibility via the paywall editor.
+- Adds dynamic notification support and scheduling.
+- Adds `refreshConfiguration()` to manually refresh the SDK configuration. This should only be used in wrapper SDKs in development for hot reloading.
+- Adds `offerType`, `subscriptionGroupId` and `store` to SubscriptionTransaction` and `NonSubscriptionTransaction`.
+
+### Fixes
+
+- Fixes an issue where not all product IDs belonging to `Entitlement`s in `CustomerInfo` were being included.
+
 ## 4.10.8
 
 ### Enhancements
