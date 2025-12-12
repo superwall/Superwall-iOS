@@ -892,11 +892,13 @@ final class TransactionManager {
 
     let paywallInfo: PaywallInfo
     let eventSource: InternalSuperwallEvent.Transaction.Source
+    let trialEndDate = product.trialPeriodEndDate
     switch source {
     case .internal(_, let paywallViewController):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
-      await paywallViewController.webView.messageHandler.handle(.transactionComplete)
+      await paywallViewController.webView.messageHandler
+        .handle(.transactionComplete(trialEndDate: trialEndDate, productIdentifier: product.productIdentifier))
     case .purchaseFunc,
       .observeFunc:
       paywallInfo = .empty()
@@ -938,7 +940,11 @@ final class TransactionManager {
       let notifications = paywallInfo.localNotifications.filter {
         $0.type == .trialStarted
       }
-      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+      await NotificationScheduler.shared.scheduleNotifications(
+        notifications,
+        fromPaywallId: paywallInfo.identifier,
+        factory: factory
+      )
     case .subscriptionStart:
       await Superwall.shared.track(
         InternalSuperwallEvent.SubscriptionStart(

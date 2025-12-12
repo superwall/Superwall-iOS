@@ -82,8 +82,13 @@ class ConfigManager {
   /// This refreshes config, requiring paywalls to reload and removing unused paywall view controllers.
   /// It fails quietly, falling back to the old config.
   ///
-  /// - Parameter oldConfig: If provided, uses this config and bypasses feature flag check. Otherwise uses stored config and checks feature flag.
-  func refreshConfiguration(oldConfig: Config? = nil) async {
+  /// - Parameters:
+  ///   - oldConfig: If provided, uses this config. Otherwise uses stored config.
+  ///   - isUserInitiated: If `true`, bypasses the feature flag check. Defaults to `false`.
+  func refreshConfiguration(
+    oldConfig: Config? = nil,
+    isUserInitiated: Bool = false
+  ) async {
     let wasConfigProvided = oldConfig != nil
 
     // If oldConfig is provided, use it. Otherwise, make sure config already exists.
@@ -91,8 +96,9 @@ class ConfigManager {
       return
     }
 
-    // Ensure the config refresh feature flag is enabled (skip check if oldConfig was provided)
-    guard wasConfigProvided || oldConfig.featureFlags.enableConfigRefresh == true else {
+    // Ensure the config refresh feature flag is enabled (skip check if oldConfig was provided or user-initiated)
+    let shouldBypassFeatureFlagCheck = wasConfigProvided || isUserInitiated
+    guard shouldBypassFeatureFlagCheck || oldConfig.featureFlags.enableConfigRefresh == true else {
       return
     }
 
