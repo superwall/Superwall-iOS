@@ -985,17 +985,18 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   // MARK: - Teardown
+
   /// Tears down the SDK and prepares it for re-initialization.
   ///
   /// Call this method in development environments that support hot reload (e.g., Expo, React Native)
-  /// before calling ``configure(apiKey:purchaseController:options:completion:)-52tke`` again.
+  /// before calling ``configure(apiKey:)`` again.
   /// This method:
   /// - Resets all user data, assignments, and caches
   /// - Clears the paywall view controller cache
-  /// - Allows ``configure(apiKey:purchaseController:options:completion:)-52tke`` to be called again
+  /// - Allows ``configure(apiKey:)`` to be called again
   ///
   /// After calling this method, you must call
-  /// ``configure(apiKey:purchaseController:options:completion:)-52tke`` to use the SDK again.
+  /// ``configure(apiKey:)`` to use the SDK again.
   ///
   /// Example usage in Expo/React Native hot reload:
   /// ```swift
@@ -1006,7 +1007,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// Superwall.configure(apiKey: "your-api-key")
   /// ```
   ///
-  /// - Note: This is intended for development use only. Do not rely on this
+  /// - Warning: This is intended for development use only. Do not rely on this
   /// method in production as a way to reset.
   public static func teardown() {
     superwall?.reset(duringIdentify: false)
