@@ -811,6 +811,30 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Refreshes the configuration from the Superwall dashboard.
+  ///
+  /// This fetches the latest configuration from the server and updates any paywalls that have changed.
+  /// Paywalls that have been removed or modified will be reloaded on next presentation.
+  ///
+  /// - Note: This is intended for development use only.
+  public func refreshConfiguration() async {
+    await dependencyContainer.configManager.refreshConfiguration(isUserInitiated: true)
+  }
+
+  /// Refreshes the configuration from the Superwall dashboard.
+  ///
+  /// This fetches the latest configuration from the server and updates any paywalls that have changed.
+  /// Paywalls that have been removed or modified will be reloaded on next presentation.
+  ///
+  /// - Parameter completion: An optional completion block called when the refresh completes.
+  /// - Note: This is intended for development use only.
+  public func refreshConfiguration(completion: (() -> Void)? = nil) {
+    Task {
+      await refreshConfiguration()
+      completion?()
+    }
+  }
+
   /// **For internal use only. Do not use this.**
   public func setPlatformWrapper(
     _ platformWrapper: String,

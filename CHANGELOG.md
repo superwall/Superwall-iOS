@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the ability to override introductory offer eligibility via the paywall editor.
 - Adds dynamic notification support and scheduling.
+- Adds `refreshConfiguration()` to manually refresh the SDK configuration. This should only be used in wrapper SDKs in development for hot reloading.
 
 ### Fixes
 
