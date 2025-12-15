@@ -57,6 +57,7 @@ enum PaywallMessage: Decodable, Equatable {
   case userAttributesUpdated(attributes: JSON)
   case initiateWebCheckout(contextId: String)
   case requestStoreReview(ReviewType)
+  case requestPermission(permissionType: PermissionType, requestId: String)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -96,6 +97,7 @@ enum PaywallMessage: Decodable, Equatable {
     case initiateWebCheckout = "initiate_web_checkout"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
+    case requestPermission = "request_permission"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -117,6 +119,8 @@ enum PaywallMessage: Decodable, Equatable {
     case subtitle
     case body
     case delay
+    case permissionType = "permission_type"
+    case requestId = "request_id"
   }
 
   enum PaywallMessageError: Error {
@@ -206,6 +210,12 @@ enum PaywallMessage: Decodable, Equatable {
             body: body,
             delay: delay
           )
+          return
+        }
+      case .requestPermission:
+        if let permissionType = try? values.decode(PermissionType.self, forKey: .permissionType),
+          let requestId = try? values.decode(String.self, forKey: .requestId) {
+          self = .requestPermission(permissionType: permissionType, requestId: requestId)
           return
         }
       }

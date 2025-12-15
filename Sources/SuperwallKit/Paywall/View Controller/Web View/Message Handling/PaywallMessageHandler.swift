@@ -30,6 +30,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
+  private let userPermissions: UserPermissions
 
   struct EnqueuedMessage {
     let name: String
@@ -40,10 +41,12 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   init(
     receiptManager: ReceiptManager,
-    factory: VariablesFactory
+    factory: VariablesFactory,
+    userPermissions: UserPermissions
   ) {
     self.receiptManager = receiptManager
     self.factory = factory
+    self.userPermissions = userPermissions
   }
 
   func handle(_ message: PaywallMessage) {
@@ -183,6 +186,8 @@ final class PaywallMessageHandler: WebEventDelegate {
         delay: delay
       )
       delegate?.eventDidOccur(.scheduleNotification(notification: notification))
+    case let .requestPermission(permissionType, requestId):
+      handleRequestPermission(permissionType: permissionType, requestId: requestId)
     }
   }
 
@@ -478,5 +483,49 @@ final class PaywallMessageHandler: WebEventDelegate {
     #if !os(visionOS)
       UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
     #endif
+  }
+
+  // MARK: - Permission Handling
+
+  private func handleRequestPermission(
+    permissionType: PermissionType,
+    requestId: String
+  ) {
+    // Notify delegate that permission was requested
+    delegate?.eventDidOccur(.requestPermission(permissionType: permissionType, requestId: requestId))
+
+    Task {
+      let status = await userPermissions.requestPermission(permissionType)
+      await sendPermissionResult(
+        requestId: requestId,
+        permissionType: permissionType,
+        status: status
+      )
+    }
+  }
+
+  private func sendPermissionResult(
+    requestId: String,
+    permissionType: PermissionType,
+    status: PermissionStatus
+  ) async {
+    let event: [String: Any] = [
+      "event_name": "permission_result",
+      "permission_type": permissionType.rawValue,
+      "request_id": requestId,
+      "status": status.rawValue
+    ]
+
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: [event]) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Failed to serialize permission result"
+      )
+      return
+    }
+
+    let base64Event = jsonData.base64EncodedString()
+    passMessageToWebView(base64Event)
   }
 }

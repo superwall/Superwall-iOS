@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.1
+
+### Enhancements
+
+- Adds `request permission` action support allowing you to request Notification permissions from paywalls
+
 ## 4.11.0
 
 ### Enhancements
