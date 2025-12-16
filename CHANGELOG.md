@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.1
+
+### Fixes
+
+- Fixes issue where `isApplePayAvailable` being calculated off the main thread could cause a crash.
+
 ## 4.11.0
 
 ### Enhancements

@@ -173,84 +173,24 @@ class DeviceHelper {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }
 
-  var isApplePayAvailable: Bool {
-    var networks: [PKPaymentNetwork] = [
-      .amex,
-      .cartesBancaires,
-      .chinaUnionPay,
-      .discover,
-      .eftpos,
-      .electron,
-      .elo,
-      .idCredit,
-      .interac,
-      .JCB,
-      .mada,
-      .maestro,
-      .masterCard,
-      .privateLabel,
-      .quicPay,
-      .suica,
-      .visa,
-      .vPay
-    ]
-    if #available(iOS 14.0, *) {
-      networks += [.barcode, .girocard]
-    }
-    if #available(iOS 14.5, *) {
-      networks += [.mir]
+  @DispatchQueueBacked
+  private var cachedIsApplePayAvailable: Bool?
+
+  func getIsApplePayAvailable() async -> Bool {
+    if let cached = cachedIsApplePayAvailable {
+      return cached
     }
 
-    if #available(iOS 15.0, *) {
-      networks += [.nanaco]
-    }
-    if #available(iOS 15.1, *) {
-      networks += [.dankort]
-    }
-
-    #if compiler(>=5.7)
-    if #available(iOS 16.0, *) {
-      networks += [.bancomat, .nanaco, .waon]
-    }
-    #endif
-
-    #if compiler(>=5.8)
-    if #available(iOS 16.4, *) {
-      networks += [.postFinance]
-    }
-    #endif
-
-    #if compiler(>=5.9)
-    if #available(iOS 17.0, *) {
-      networks += [.tmoney, .pagoBancomat]
-    }
-    #endif
-
-    #if compiler(>=5.10)
-    if #available(iOS 17.4, visionOS 1.1, *) {
-      networks += [.meeza]
+    let result = await MainActor.run {
+      guard PKPaymentAuthorizationViewController.canMakePayments() else {
+        return false
+      }
+      let availableNetworks = PKPaymentRequest.availableNetworks()
+      return PKPaymentAuthorizationViewController.canMakePayments(usingNetworks: availableNetworks)
     }
 
-    if #available(iOS 17.5, visionOS 1.2, *) {
-      networks += [.bankAxept, .NAPAS]
-    }
-    #endif
-
-    #if compiler(>=6.1)
-    if #available(iOS 18.4, visionOS 2.4, *) {
-      networks += [.himyan, .jaywan]
-    }
-    #endif
-
-    #if compiler(>=6.2)
-    if #available(iOS 26.0, visionOS 26.0, *) {
-      networks += [.myDebit]
-    }
-    #endif
-
-    return PKPaymentAuthorizationViewController.canMakePayments(
-      usingNetworks: networks
-    )
+    cachedIsApplePayAvailable = result
+    return result
   }
 
   let bundleId: String = {
@@ -623,7 +563,7 @@ class DeviceHelper {
       radioType: radioType,
       interfaceStyle: interfaceStyle,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
-      isApplePayAvailable: isApplePayAvailable,
+      isApplePayAvailable: await getIsApplePayAvailable(),
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,
       isMac: isMac,
