@@ -190,37 +190,44 @@ extension SWWebView: SWWebViewLoadingDelegate {
 extension SWWebView: WKNavigationDelegate {
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationResponse: WKNavigationResponse
-  ) async -> WKNavigationResponsePolicy {
+    decidePolicyFor navigationResponse: WKNavigationResponse,
+    decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+  ) {
     guard let statusCode = (navigationResponse.response as? HTTPURLResponse)?.statusCode else {
       // if there's no http status code to act on, exit and allow navigation
-      return .allow
+      decisionHandler(.allow)
+      return
     }
 
     // Track paywall errors
     if statusCode >= 400 {
       completion?(WebViewError.network(statusCode))
-      return .cancel
+      decisionHandler(.cancel)
+      return
     }
 
-    return .allow
+    decisionHandler(.allow)
   }
 
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationAction: WKNavigationAction
-  ) async -> WKNavigationActionPolicy {
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
     if webView.isLoading {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
     if navigationAction.navigationType == .reload {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
     if enableIframeNavigation,
       navigationAction.targetFrame?.isMainFrame == false {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
-    return .cancel
+    decisionHandler(.cancel)
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

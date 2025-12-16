@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.1
+
+### Fixes
+
+- Fixes issue where `isApplePayAvailable` being calculated off the main thread could cause a crash.
+- Fixes potential crashes in WebKit navigation delegate methods. 
+
 ## 4.11.0
 
 ### Enhancements
@@ -9,7 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the ability to override introductory offer eligibility via the paywall editor.
 - Adds dynamic notification support and scheduling.
 - Adds `refreshConfiguration()` to manually refresh the SDK configuration. This should only be used in wrapper SDKs in development for hot reloading.
-- Adds `offerType`, `subscriptionGroupId` and `store` to SubscriptionTransaction` and `NonSubscriptionTransaction`.
+- Adds `offerType`, `subscriptionGroupId` and `store` to `SubscriptionTransaction` and `NonSubscriptionTransaction`.
 
 ### Fixes
 
