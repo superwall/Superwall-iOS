@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue where `isApplePayAvailable` being calculated off the main thread could cause a crash.
+- Fixes potential crashes in WebKit navigation delegate methods. 
 
 ## 4.11.0
 
