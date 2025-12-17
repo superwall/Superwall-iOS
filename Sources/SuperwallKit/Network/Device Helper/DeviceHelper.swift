@@ -173,26 +173,6 @@ class DeviceHelper {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
   }
 
-  @DispatchQueueBacked
-  private var cachedIsApplePayAvailable: Bool?
-
-  func getIsApplePayAvailable() async -> Bool {
-    if let cached = cachedIsApplePayAvailable {
-      return cached
-    }
-
-    let result = await MainActor.run {
-      guard PKPaymentAuthorizationViewController.canMakePayments() else {
-        return false
-      }
-      let availableNetworks = PKPaymentRequest.availableNetworks()
-      return PKPaymentAuthorizationViewController.canMakePayments(usingNetworks: availableNetworks)
-    }
-
-    cachedIsApplePayAvailable = result
-    return result
-  }
-
   let bundleId: String = {
     return Bundle.main.bundleIdentifier ?? ""
   }()
@@ -563,7 +543,7 @@ class DeviceHelper {
       radioType: radioType,
       interfaceStyle: interfaceStyle,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
-      isApplePayAvailable: await getIsApplePayAvailable(),
+      isApplePayAvailable: true,
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,
       isMac: isMac,

@@ -2,12 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.2
+
+### Fixes
+
+- Deprecates `device.isApplePayAvailable` and defaults it to `true`.
+
 ## 4.11.1
 
 ### Fixes
 
 - Fixes issue where `isApplePayAvailable` being calculated off the main thread could cause a crash.
-- Fixes potential crashes in WebKit navigation delegate methods. 
+- Fixes potential crashes in WebKit navigation delegate methods.
 
 ## 4.11.0
 
