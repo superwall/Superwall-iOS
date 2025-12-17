@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Deprecates `device.isApplePayAvailable` and defaults it to `true`.
+- Deprecates `device.isApplePayAvailable` and defaults it to `true`. This also removes the PassKit import, which was getting flagged for some developers in review.
 
 ## 4.11.1
 

@@ -12,7 +12,6 @@ import SystemConfiguration
 import CoreTelephony
 #endif
 import StoreKit
-import PassKit
 
 class DeviceHelper {
   var localeIdentifier: String {
