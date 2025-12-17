@@ -12,7 +12,6 @@ import SystemConfiguration
 import CoreTelephony
 #endif
 import StoreKit
-import PassKit
 
 class DeviceHelper {
   var localeIdentifier: String {
@@ -171,26 +170,6 @@ class DeviceHelper {
 
   var isLowPowerModeEnabled: String {
     return ProcessInfo.processInfo.isLowPowerModeEnabled ? "true" : "false"
-  }
-
-  @DispatchQueueBacked
-  private var cachedIsApplePayAvailable: Bool?
-
-  func getIsApplePayAvailable() async -> Bool {
-    if let cached = cachedIsApplePayAvailable {
-      return cached
-    }
-
-    let result = await MainActor.run {
-      guard PKPaymentAuthorizationViewController.canMakePayments() else {
-        return false
-      }
-      let availableNetworks = PKPaymentRequest.availableNetworks()
-      return PKPaymentAuthorizationViewController.canMakePayments(usingNetworks: availableNetworks)
-    }
-
-    cachedIsApplePayAvailable = result
-    return result
   }
 
   let bundleId: String = {
@@ -563,7 +542,7 @@ class DeviceHelper {
       radioType: radioType,
       interfaceStyle: interfaceStyle,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
-      isApplePayAvailable: await getIsApplePayAvailable(),
+      isApplePayAvailable: true,
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,
       isMac: isMac,
