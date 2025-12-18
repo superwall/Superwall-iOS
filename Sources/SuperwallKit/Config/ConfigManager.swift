@@ -552,7 +552,14 @@ class ConfigManager {
       if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
+
+      let preloadStart = InternalSuperwallEvent.PaywallPreloadStart(paywallCount: paywallIds.count)
+      await Superwall.shared.track(preloadStart)
+
       await self.preloadPaywalls(withIdentifiers: paywallIds)
+
+      let preloadComplete = InternalSuperwallEvent.PaywallPreloadComplete(paywallCount: paywallIds.count)
+      await Superwall.shared.track(preloadComplete)
     }
   }
 

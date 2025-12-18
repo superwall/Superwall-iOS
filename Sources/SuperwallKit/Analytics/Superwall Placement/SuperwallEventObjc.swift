@@ -223,6 +223,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a review is requested from the user.
   case reviewRequested
 
+  /// When paywall preloading starts.
+  case paywallPreloadStart
+
+  /// When paywall preloading completes.
+  case paywallPreloadComplete
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -363,6 +369,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "integration_attributes"
     case .reviewRequested:
       return "review_requested"
+    case .paywallPreloadStart:
+      return "paywallPreload_start"
+    case .paywallPreloadComplete:
+      return "paywallPreload_complete"
     }
   }
 }
