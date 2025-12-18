@@ -11,6 +11,13 @@ import Foundation
 /// Maps to the paywall schema permission_type values.
 public enum PermissionType: String, Decodable {
   case notification
+  case location
+  // swiftlint:disable:next identifier_name
+  case background_location
+  // swiftlint:disable:next identifier_name
+  case read_images
+  case contacts
+  case camera
 
   /// Create a PermissionType from a raw string value
   /// - Parameter raw: The permission type string (e.g., "notification")
