@@ -553,13 +553,7 @@ class ConfigManager {
         paywallIds.remove(presentedPaywallId)
       }
 
-      let preloadStart = InternalSuperwallEvent.PaywallPreloadStart(paywallCount: paywallIds.count)
-      await Superwall.shared.track(preloadStart)
-
       await self.preloadPaywalls(withIdentifiers: paywallIds)
-
-      let preloadComplete = InternalSuperwallEvent.PaywallPreloadComplete(paywallCount: paywallIds.count)
-      await Superwall.shared.track(preloadComplete)
     }
   }
 
@@ -582,6 +576,13 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
+    let paywallCount = paywallIdentifiers.count
+    let preloadStart = InternalSuperwallEvent.PaywallPreload(
+      state: .start,
+      paywallCount: paywallCount
+    )
+    await Superwall.shared.track(preloadStart)
+
     await withTaskGroup(of: Void.self) { group in
       for identifier in paywallIdentifiers {
         group.addTask { [weak self] in
@@ -611,5 +612,11 @@ class ConfigManager {
         }
       }
     }
+
+    let preloadComplete = InternalSuperwallEvent.PaywallPreload(
+      state: .complete,
+      paywallCount: paywallCount
+    )
+    await Superwall.shared.track(preloadComplete)
   }
 }

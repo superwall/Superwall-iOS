@@ -1078,29 +1078,27 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PaywallPreloadStart: TrackableSuperwallEvent {
-    let paywallCount: Int
-    var superwallEvent: SuperwallEvent {
-      return .paywallPreloadStart(paywallCount: paywallCount)
-    }
-    var audienceFilterParams: [String: Any] = [:]
-
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
-        "paywall_count": paywallCount
-      ]
-    }
+  enum PaywallPreloadState: String {
+    case start
+    case complete
   }
 
-  struct PaywallPreloadComplete: TrackableSuperwallEvent {
+  struct PaywallPreload: TrackableSuperwallEvent {
+    let state: PaywallPreloadState
     let paywallCount: Int
     var superwallEvent: SuperwallEvent {
-      return .paywallPreloadComplete(paywallCount: paywallCount)
+      switch state {
+      case .start:
+        return .paywallPreloadStart(paywallCount: paywallCount)
+      case .complete:
+        return .paywallPreloadComplete(paywallCount: paywallCount)
+      }
     }
     var audienceFilterParams: [String: Any] = [:]
 
     func getSuperwallParameters() async -> [String: Any] {
       return [
+        "state": state.rawValue,
         "paywall_count": paywallCount
       ]
     }
