@@ -245,6 +245,12 @@ public enum SuperwallEvent {
   /// When a review is requested from the user.
   case reviewRequested(count: Int)
 
+  /// When paywall preloading starts.
+  case paywallPreloadStart(paywallCount: Int)
+
+  /// When paywall preloading completes.
+  case paywallPreloadComplete(paywallCount: Int)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -420,6 +426,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .integrationAttributes)
     case .reviewRequested:
       return .init(objcEvent: .reviewRequested)
+    case .paywallPreloadStart:
+      return .init(objcEvent: .paywallPreloadStart)
+    case .paywallPreloadComplete:
+      return .init(objcEvent: .paywallPreloadComplete)
     }
   }
 }
