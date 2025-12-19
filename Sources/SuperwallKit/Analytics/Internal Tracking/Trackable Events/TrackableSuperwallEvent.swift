@@ -1098,7 +1098,6 @@ enum InternalSuperwallEvent {
 
     func getSuperwallParameters() async -> [String: Any] {
       return [
-        "state": state.rawValue,
         "paywall_count": paywallCount
       ]
     }
