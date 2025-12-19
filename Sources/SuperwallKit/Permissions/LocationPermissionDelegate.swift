@@ -26,8 +26,17 @@ final class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
     super.init()
   }
 
+  // iOS 14+
   func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
     completeIfDetermined(manager.currentAuthorizationStatus)
+  }
+
+  // iOS 13 and earlier
+  func locationManager(
+    _ manager: CLLocationManager,
+    didChangeAuthorization status: CLAuthorizationStatus
+  ) {
+    completeIfDetermined(status)
   }
 
   private func completeIfDetermined(_ status: CLAuthorizationStatus) {

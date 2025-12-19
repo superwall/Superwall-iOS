@@ -12,6 +12,7 @@ extension PermissionHandler {
     return locationManager.currentAuthorizationStatus.toPermissionStatus
   }
 
+  @MainActor
   func requestLocationPermission() async -> PermissionStatus {
     guard hasPlistKey(PlistKey.locationWhenInUse) else {
       Logger.debug(
@@ -37,9 +38,9 @@ extension PermissionHandler {
         self?.locationDelegate = nil
         continuation.resume(returning: status.toPermissionStatus)
       }
-      locationDelegate = delegate
-      locationManager.delegate = delegate
-      locationManager.requestWhenInUseAuthorization()
+      self.locationDelegate = delegate
+      self.locationManager.delegate = delegate
+      self.locationManager.requestWhenInUseAuthorization()
     }
   }
 
@@ -51,6 +52,7 @@ extension PermissionHandler {
     #endif
   }
 
+  @MainActor
   func requestBackgroundLocationPermission() async -> PermissionStatus {
     #if os(visionOS)
     return .unsupported
@@ -88,9 +90,9 @@ extension PermissionHandler {
         self?.locationDelegate = nil
         continuation.resume(returning: status.toBackgroundPermissionStatus)
       }
-      locationDelegate = delegate
-      locationManager.delegate = delegate
-      locationManager.requestAlwaysAuthorization()
+      self.locationDelegate = delegate
+      self.locationManager.delegate = delegate
+      self.locationManager.requestAlwaysAuthorization()
     }
     #endif
   }
