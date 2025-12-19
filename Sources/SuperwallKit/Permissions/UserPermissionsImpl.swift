@@ -95,8 +95,16 @@ final class UserPermissionsImpl: UserPermissions {
 
   // MARK: - Location Permission
 
+  private func getLocationAuthorizationStatus() -> CLAuthorizationStatus {
+    if #available(iOS 14.0, *) {
+      return locationManager.authorizationStatus
+    } else {
+      return CLLocationManager.authorizationStatus()
+    }
+  }
+
   private func checkLocationPermission() -> PermissionStatus {
-    let status = locationManager.authorizationStatus
+    let status = getLocationAuthorizationStatus()
     switch status {
     case .authorizedWhenInUse, .authorizedAlways:
       return .granted
@@ -116,7 +124,7 @@ final class UserPermissionsImpl: UserPermissions {
     }
 
     // Check if not determined - only then can we request
-    let authStatus = locationManager.authorizationStatus
+    let authStatus = getLocationAuthorizationStatus()
     guard authStatus == .notDetermined else {
       return currentStatus
     }
@@ -151,7 +159,7 @@ final class UserPermissionsImpl: UserPermissions {
   // MARK: - Background Location Permission
 
   private func checkBackgroundLocationPermission() -> PermissionStatus {
-    let status = locationManager.authorizationStatus
+    let status = getLocationAuthorizationStatus()
     switch status {
     case .authorizedAlways:
       return .granted
@@ -180,7 +188,7 @@ final class UserPermissionsImpl: UserPermissions {
     }
 
     // Now request always authorization
-    let authStatus = locationManager.authorizationStatus
+    let authStatus = getLocationAuthorizationStatus()
     guard authStatus != .authorizedAlways else {
       return .granted
     }
@@ -210,7 +218,16 @@ final class UserPermissionsImpl: UserPermissions {
   // MARK: - Photos Permission
 
   private func checkPhotosPermission() -> PermissionStatus {
-    let status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    let status: PHAuthorizationStatus
+    if #available(iOS 14, *) {
+      status = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    } else {
+      status = PHPhotoLibrary.authorizationStatus()
+    }
+    return mapPhotosAuthorizationStatus(status)
+  }
+
+  private func mapPhotosAuthorizationStatus(_ status: PHAuthorizationStatus) -> PermissionStatus {
     switch status {
     case .authorized, .limited:
       return .granted
@@ -229,16 +246,15 @@ final class UserPermissionsImpl: UserPermissions {
       return .granted
     }
 
-    let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
-    switch status {
-    case .authorized, .limited:
-      return .granted
-    case .denied, .restricted:
-      return .denied
-    case .notDetermined:
-      return .denied
-    @unknown default:
-      return .unsupported
+    if #available(iOS 14, *) {
+      let status = await PHPhotoLibrary.requestAuthorization(for: .readWrite)
+      return mapPhotosAuthorizationStatus(status)
+    } else {
+      return await withCheckedContinuation { continuation in
+        PHPhotoLibrary.requestAuthorization { status in
+          continuation.resume(returning: self.mapPhotosAuthorizationStatus(status))
+        }
+      }
     }
   }
 
@@ -246,6 +262,10 @@ final class UserPermissionsImpl: UserPermissions {
 
   private func checkContactsPermission() -> PermissionStatus {
     let status = CNContactStore.authorizationStatus(for: .contacts)
+    return mapContactsAuthorizationStatus(status)
+  }
+
+  private func mapContactsAuthorizationStatus(_ status: CNAuthorizationStatus) -> PermissionStatus {
     switch status {
     case .authorized:
       return .granted
@@ -253,10 +273,9 @@ final class UserPermissionsImpl: UserPermissions {
       return .denied
     case .notDetermined:
       return .denied
-    case .limited:
-      return .granted
     @unknown default:
-      return .unsupported
+      // This handles .limited on iOS 18+ and any future cases
+      return .granted
     }
   }
 
@@ -319,8 +338,18 @@ private final class LocationPermissionDelegate: NSObject, CLLocationManagerDeleg
     super.init()
   }
 
+  @available(iOS 14.0, *)
   func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
     let status = manager.authorizationStatus
+    completeIfDetermined(status)
+  }
+
+  // iOS 13 compatibility
+  func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+    completeIfDetermined(status)
+  }
+
+  private func completeIfDetermined(_ status: CLAuthorizationStatus) {
     // Only complete if status has been determined
     guard status != .notDetermined, !hasCompleted else { return }
     hasCompleted = true
