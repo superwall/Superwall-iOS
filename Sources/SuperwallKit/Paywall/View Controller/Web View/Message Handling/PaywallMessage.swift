@@ -119,8 +119,8 @@ enum PaywallMessage: Decodable, Equatable {
     case subtitle
     case body
     case delay
-    case permissionType = "permission_type"
-    case requestId = "request_id"
+    case permissionType
+    case requestId
   }
 
   enum PaywallMessageError: Error {

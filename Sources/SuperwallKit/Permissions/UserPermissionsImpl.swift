@@ -17,8 +17,22 @@ final class UserPermissionsImpl: UserPermissions {
   private let notificationCenter: UNUserNotificationCenter
   private lazy var locationManager: CLLocationManager = CLLocationManager()
 
+  // Info.plist keys for each permission type
+  private enum PlistKey {
+    static let camera = "NSCameraUsageDescription"
+    static let photoLibrary = "NSPhotoLibraryUsageDescription"
+    static let contacts = "NSContactsUsageDescription"
+    static let locationWhenInUse = "NSLocationWhenInUseUsageDescription"
+    static let locationAlways = "NSLocationAlwaysAndWhenInUseUsageDescription"
+  }
+
   init(notificationCenter: UNUserNotificationCenter = .current()) {
     self.notificationCenter = notificationCenter
+  }
+
+  /// Checks if the required Info.plist key exists for a permission
+  private func hasPlistKey(_ key: String) -> Bool {
+    return Bundle.main.object(forInfoDictionaryKey: key) != nil
   }
 
   func hasPermission(_ permission: PermissionType) async -> PermissionStatus {
@@ -58,7 +72,7 @@ final class UserPermissionsImpl: UserPermissions {
   // MARK: - Notification Permission
 
   private func checkNotificationPermission() async -> PermissionStatus {
-    let settings = await notificationCenter.notificationSettings()
+      let settings: UNNotificationSettings = await notificationCenter.notificationSettings()
     return mapNotificationAuthorizationStatus(settings.authorizationStatus)
   }
 
@@ -118,6 +132,15 @@ final class UserPermissionsImpl: UserPermissions {
   }
 
   private func requestLocationPermission() async -> PermissionStatus {
+    guard hasPlistKey(PlistKey.locationWhenInUse) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Missing \(PlistKey.locationWhenInUse) in Info.plist. Cannot request location permission."
+      )
+      return .unsupported
+    }
+
     let currentStatus = checkLocationPermission()
     if currentStatus == .granted {
       return .granted
@@ -173,6 +196,15 @@ final class UserPermissionsImpl: UserPermissions {
   }
 
   private func requestBackgroundLocationPermission() async -> PermissionStatus {
+    guard hasPlistKey(PlistKey.locationAlways) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Missing \(PlistKey.locationAlways) in Info.plist. Cannot request background location permission."
+      )
+      return .unsupported
+    }
+
     let currentStatus = checkBackgroundLocationPermission()
     if currentStatus == .granted {
       return .granted
@@ -241,6 +273,15 @@ final class UserPermissionsImpl: UserPermissions {
   }
 
   private func requestPhotosPermission() async -> PermissionStatus {
+    guard hasPlistKey(PlistKey.photoLibrary) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Missing \(PlistKey.photoLibrary) in Info.plist. Cannot request photo library permission."
+      )
+      return .unsupported
+    }
+
     let currentStatus = checkPhotosPermission()
     if currentStatus == .granted {
       return .granted
@@ -280,6 +321,15 @@ final class UserPermissionsImpl: UserPermissions {
   }
 
   private func requestContactsPermission() async -> PermissionStatus {
+    guard hasPlistKey(PlistKey.contacts) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Missing \(PlistKey.contacts) in Info.plist. Cannot request contacts permission."
+      )
+      return .unsupported
+    }
+
     let currentStatus = checkContactsPermission()
     if currentStatus == .granted {
       return .granted
@@ -317,6 +367,15 @@ final class UserPermissionsImpl: UserPermissions {
   }
 
   private func requestCameraPermission() async -> PermissionStatus {
+    guard hasPlistKey(PlistKey.camera) else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallViewController,
+        message: "Missing \(PlistKey.camera) in Info.plist. Cannot request camera permission."
+      )
+      return .unsupported
+    }
+
     let currentStatus = checkCameraPermission()
     if currentStatus == .granted {
       return .granted
