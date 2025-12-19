@@ -232,6 +232,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a permission is denied after being requested from a paywall.
   case permissionDenied
 
+  /// When paywall preloading starts.
+  case paywallPreloadStart
+
+  /// When paywall preloading completes.
+  case paywallPreloadComplete
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -378,6 +384,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "permission_granted"
     case .permissionDenied:
       return "permission_denied"
+    case .paywallPreloadStart:
+      return "paywallPreload_start"
+    case .paywallPreloadComplete:
+      return "paywallPreload_complete"
     }
   }
 }

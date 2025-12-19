@@ -253,6 +253,11 @@ public enum SuperwallEvent {
 
   /// When a permission is denied after being requested from a paywall.
   case permissionDenied(permissionName: String, paywallIdentifier: String)
+  /// When paywall preloading starts.
+  case paywallPreloadStart(paywallCount: Int)
+
+  /// When paywall preloading completes.
+  case paywallPreloadComplete(paywallCount: Int)
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -435,6 +440,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .permissionGranted)
     case .permissionDenied:
       return .init(objcEvent: .permissionDenied)
+    case .paywallPreloadStart:
+      return .init(objcEvent: .paywallPreloadStart)
+    case .paywallPreloadComplete:
+      return .init(objcEvent: .paywallPreloadComplete)
     }
   }
 }
