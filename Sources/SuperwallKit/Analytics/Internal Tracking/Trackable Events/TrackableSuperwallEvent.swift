@@ -1078,7 +1078,7 @@ enum InternalSuperwallEvent {
     }
   }
 
-  enum PaywallPreloadState: String {
+  enum PaywallPreloadState {
     case start
     case complete
   }
