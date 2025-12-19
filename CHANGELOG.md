@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.11.3
+
+### Enhancements
+
+- Adds `paywallPreload_start` and `paywallPreload_complete` events.
+
 ## 4.11.2
 
 ### Fixes
