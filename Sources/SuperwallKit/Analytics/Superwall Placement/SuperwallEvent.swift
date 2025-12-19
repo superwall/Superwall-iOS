@@ -245,6 +245,15 @@ public enum SuperwallEvent {
   /// When a review is requested from the user.
   case reviewRequested(count: Int)
 
+  /// When a permission is requested from a paywall.
+  case permissionRequested(permissionName: String, paywallIdentifier: String)
+
+  /// When a permission is granted after being requested from a paywall.
+  case permissionGranted(permissionName: String, paywallIdentifier: String)
+
+  /// When a permission is denied after being requested from a paywall.
+  case permissionDenied(permissionName: String, paywallIdentifier: String)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -420,6 +429,12 @@ extension SuperwallEvent {
       return .init(objcEvent: .integrationAttributes)
     case .reviewRequested:
       return .init(objcEvent: .reviewRequested)
+    case .permissionRequested:
+      return .init(objcEvent: .permissionRequested)
+    case .permissionGranted:
+      return .init(objcEvent: .permissionGranted)
+    case .permissionDenied:
+      return .init(objcEvent: .permissionDenied)
     }
   }
 }

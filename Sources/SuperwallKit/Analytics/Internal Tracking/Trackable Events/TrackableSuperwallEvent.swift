@@ -1077,4 +1077,61 @@ enum InternalSuperwallEvent {
       ]
     }
   }
+
+  struct PermissionRequested: TrackableSuperwallEvent {
+    let permissionName: String
+    let paywallIdentifier: String
+    var superwallEvent: SuperwallEvent {
+      return .permissionRequested(
+        permissionName: permissionName,
+        paywallIdentifier: paywallIdentifier
+      )
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "permission_name": permissionName,
+        "paywall_identifier": paywallIdentifier
+      ]
+    }
+  }
+
+  struct PermissionGranted: TrackableSuperwallEvent {
+    let permissionName: String
+    let paywallIdentifier: String
+    var superwallEvent: SuperwallEvent {
+      return .permissionGranted(
+        permissionName: permissionName,
+        paywallIdentifier: paywallIdentifier
+      )
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "permission_name": permissionName,
+        "paywall_identifier": paywallIdentifier
+      ]
+    }
+  }
+
+  struct PermissionDenied: TrackableSuperwallEvent {
+    let permissionName: String
+    let paywallIdentifier: String
+    var superwallEvent: SuperwallEvent {
+      return .permissionDenied(
+        permissionName: permissionName,
+        paywallIdentifier: paywallIdentifier
+      )
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "permission_name": permissionName,
+        "paywall_identifier": paywallIdentifier
+      ]
+    }
+  }
 }

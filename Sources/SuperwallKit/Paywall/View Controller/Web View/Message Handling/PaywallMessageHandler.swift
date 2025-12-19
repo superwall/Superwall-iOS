@@ -491,11 +491,38 @@ final class PaywallMessageHandler: WebEventDelegate {
     permissionType: PermissionType,
     requestId: String
   ) {
+    let paywallIdentifier = delegate?.paywall.identifier ?? ""
+    let permissionName = permissionType.rawValue
+
     // Notify delegate that permission was requested
     delegate?.eventDidOccur(.requestPermission(permissionType: permissionType, requestId: requestId))
 
     Task {
+      // Track permission requested event
+      let requestedEvent = InternalSuperwallEvent.PermissionRequested(
+        permissionName: permissionName,
+        paywallIdentifier: paywallIdentifier
+      )
+      await Superwall.shared.track(requestedEvent)
+
       let status = await userPermissions.requestPermission(permissionType)
+
+      // Track permission result event
+      switch status {
+      case .granted:
+        let grantedEvent = InternalSuperwallEvent.PermissionGranted(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+        await Superwall.shared.track(grantedEvent)
+      case .denied, .unsupported:
+        let deniedEvent = InternalSuperwallEvent.PermissionDenied(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+        await Superwall.shared.track(deniedEvent)
+      }
+
       await sendPermissionResult(
         requestId: requestId,
         permissionType: permissionType,
