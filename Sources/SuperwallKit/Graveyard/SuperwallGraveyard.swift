@@ -99,7 +99,7 @@ extension Superwall {
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer,
-          userPermissions: dependencyContainer.userPermissions
+          permissionHandler: dependencyContainer.permissionHandler
         ),
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer

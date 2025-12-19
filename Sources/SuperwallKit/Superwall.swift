@@ -1353,10 +1353,6 @@ extension Superwall: PaywallViewControllerEventDelegate {
         }
       }
       dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
-    case .requestPermission:
-      // Permission requests are handled by PaywallMessageHandler which
-      // requests the permission and sends the result back to the webview.
-      break
     }
   }
 }

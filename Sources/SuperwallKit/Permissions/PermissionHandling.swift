@@ -1,5 +1,5 @@
 //
-//  UserPermissions.swift
+//  PermissionHandling.swift
 //  SuperwallKit
 //
 //  Created by Superwall on 2024.
@@ -8,7 +8,7 @@
 import Foundation
 
 /// Protocol for handling user permission requests.
-protocol UserPermissions {
+protocol PermissionHandling {
   /// Check the current status of a permission.
   /// - Parameter permission: The permission type to check
   /// - Returns: The current status of the permission

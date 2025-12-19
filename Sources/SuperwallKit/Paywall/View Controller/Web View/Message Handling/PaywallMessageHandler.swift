@@ -30,7 +30,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
-  private let userPermissions: UserPermissions
+  private let permissionHandler: PermissionHandling
 
   struct EnqueuedMessage {
     let name: String
@@ -42,11 +42,11 @@ final class PaywallMessageHandler: WebEventDelegate {
   init(
     receiptManager: ReceiptManager,
     factory: VariablesFactory,
-    userPermissions: UserPermissions
+    permissionHandler: PermissionHandling
   ) {
     self.receiptManager = receiptManager
     self.factory = factory
-    self.userPermissions = userPermissions
+    self.permissionHandler = permissionHandler
   }
 
   func handle(_ message: PaywallMessage) {
@@ -187,7 +187,11 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
       delegate?.eventDidOccur(.scheduleNotification(notification: notification))
     case let .requestPermission(permissionType, requestId):
-      handleRequestPermission(permissionType: permissionType, requestId: requestId)
+      handleRequestPermission(
+        permissionType: permissionType,
+        requestId: requestId,
+        paywall: paywall
+      )
     }
   }
 
@@ -489,64 +493,40 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func handleRequestPermission(
     permissionType: PermissionType,
-    requestId: String
+    requestId: String,
+    paywall: Paywall
   ) {
-    let paywallIdentifier = delegate?.paywall.identifier ?? ""
     let permissionName = permissionType.rawValue
-
-    // Notify delegate that permission was requested
-    delegate?.eventDidOccur(.requestPermission(permissionType: permissionType, requestId: requestId))
 
     Task {
       // Track permission requested event
       let requestedEvent = InternalSuperwallEvent.Permission(
         state: .requested,
         permissionName: permissionName,
-        paywallIdentifier: paywallIdentifier
+        paywallIdentifier: paywall.identifier
       )
       await Superwall.shared.track(requestedEvent)
 
-      let status = await userPermissions.requestPermission(permissionType)
+      let status = await permissionHandler.requestPermission(permissionType)
 
       // Track permission result event
       let resultState: InternalSuperwallEvent.PermissionState = status == .granted ? .granted : .denied
       let resultEvent = InternalSuperwallEvent.Permission(
         state: resultState,
         permissionName: permissionName,
-        paywallIdentifier: paywallIdentifier
+        paywallIdentifier: paywall.identifier
       )
       await Superwall.shared.track(resultEvent)
 
-      await sendPermissionResult(
-        requestId: requestId,
-        permissionType: permissionType,
-        status: status
+      await pass(
+        placement: "permission_result",
+        from: paywall,
+        payload: [
+          "permission_type": permissionType.rawValue,
+          "request_id": requestId,
+          "status": status.rawValue
+        ]
       )
     }
-  }
-
-  private func sendPermissionResult(
-    requestId: String,
-    permissionType: PermissionType,
-    status: PermissionStatus
-  ) async {
-    let event: [String: Any] = [
-      "event_name": "permission_result",
-      "permission_type": permissionType.rawValue,
-      "request_id": requestId,
-      "status": status.rawValue
-    ]
-
-    guard let jsonData = try? JSONSerialization.data(withJSONObject: [event]) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Failed to serialize permission result"
-      )
-      return
-    }
-
-    let base64Event = jsonData.base64EncodedString()
-    passMessageToWebView(base64Event)
   }
 }

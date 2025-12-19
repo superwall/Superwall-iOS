@@ -259,7 +259,8 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = await SWWebView(
       isMac: false,
@@ -388,7 +389,8 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = await SWWebView(
       isMac: false,
@@ -905,7 +907,8 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = await SWWebView(
       isMac: false,
@@ -1058,7 +1061,8 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = await SWWebView(
       isMac: false,

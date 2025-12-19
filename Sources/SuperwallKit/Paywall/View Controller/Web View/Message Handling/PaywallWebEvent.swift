@@ -18,5 +18,4 @@ enum PaywallWebEvent: Equatable {
   case customPlacement(name: String, params: JSON)
   case scheduleNotification(notification: LocalNotification)
   case userAttributesUpdated(attributes: JSON)
-  case requestPermission(permissionType: PermissionType, requestId: String)
 }

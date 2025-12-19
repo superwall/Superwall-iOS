@@ -5,69 +5,59 @@
 //  Created by Superwall on 2024.
 //
 
-import XCTest
+import Foundation
+import Testing
 @testable import SuperwallKit
 
-final class PermissionStatusTests: XCTestCase {
-  func test_fromRaw_granted_returns_granted() {
-    let result = PermissionStatus.fromRaw("granted")
-    XCTAssertEqual(result, .granted)
+@Suite
+struct PermissionStatusTests {
+  @Test func rawValue_granted_returns_granted() {
+    let result = PermissionStatus(rawValue: "granted")
+    #expect(result == .granted)
   }
 
-  func test_fromRaw_denied_returns_denied() {
-    let result = PermissionStatus.fromRaw("denied")
-    XCTAssertEqual(result, .denied)
+  @Test func rawValue_denied_returns_denied() {
+    let result = PermissionStatus(rawValue: "denied")
+    #expect(result == .denied)
   }
 
-  func test_fromRaw_unsupported_returns_unsupported() {
-    let result = PermissionStatus.fromRaw("unsupported")
-    XCTAssertEqual(result, .unsupported)
+  @Test func rawValue_unsupported_returns_unsupported() {
+    let result = PermissionStatus(rawValue: "unsupported")
+    #expect(result == .unsupported)
   }
 
-  func test_fromRaw_unknown_returns_nil() {
-    let result = PermissionStatus.fromRaw("unknown_status")
-    XCTAssertNil(result)
+  @Test func rawValue_unknown_returns_nil() {
+    let result = PermissionStatus(rawValue: "unknown_status")
+    #expect(result == nil)
   }
 
-  func test_rawValue_granted_is_correct() {
-    XCTAssertEqual(PermissionStatus.granted.rawValue, "granted")
-  }
-
-  func test_rawValue_denied_is_correct() {
-    XCTAssertEqual(PermissionStatus.denied.rawValue, "denied")
-  }
-
-  func test_rawValue_unsupported_is_correct() {
-    XCTAssertEqual(PermissionStatus.unsupported.rawValue, "unsupported")
-  }
-
-  func test_decodable_granted() throws {
+  @Test func decodable_granted() throws {
     let json = """
     "granted"
     """.data(using: .utf8)!
 
     let decoder = JSONDecoder()
     let result = try decoder.decode(PermissionStatus.self, from: json)
-    XCTAssertEqual(result, .granted)
+    #expect(result == .granted)
   }
 
-  func test_decodable_denied() throws {
+  @Test func decodable_denied() throws {
     let json = """
     "denied"
     """.data(using: .utf8)!
 
     let decoder = JSONDecoder()
     let result = try decoder.decode(PermissionStatus.self, from: json)
-    XCTAssertEqual(result, .denied)
+    #expect(result == .denied)
   }
 
-  func test_decodable_unsupported() throws {
+  @Test func decodable_unsupported() throws {
     let json = """
     "unsupported"
     """.data(using: .utf8)!
 
     let decoder = JSONDecoder()
     let result = try decoder.decode(PermissionStatus.self, from: json)
-    XCTAssertEqual(result, .unsupported)
+    #expect(result == .unsupported)
   }
 }

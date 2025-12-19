@@ -8,7 +8,7 @@
 import Foundation
 @testable import SuperwallKit
 
-final class FakeUserPermissions: UserPermissions {
+final class FakePermissionHandler: PermissionHandling {
   var permissionToReturn: PermissionStatus = .granted
   var requestedPermissions: [PermissionType] = []
 
