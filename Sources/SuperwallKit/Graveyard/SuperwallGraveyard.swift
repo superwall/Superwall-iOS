@@ -98,7 +98,8 @@ extension Superwall {
         isMac: false,
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
-          factory: dependencyContainer
+          factory: dependencyContainer,
+          permissionHandler: dependencyContainer.permissionHandler
         ),
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer

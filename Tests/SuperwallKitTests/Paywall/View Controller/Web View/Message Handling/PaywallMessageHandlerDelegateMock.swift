@@ -1,12 +1,26 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 19/01/2023.
 //
 
 import Foundation
 @testable import SuperwallKit
+
+final class FakePermissionHandler: PermissionHandling {
+  var permissionToReturn: PermissionStatus = .granted
+  var requestedPermissions: [PermissionType] = []
+
+  func hasPermission(_ permission: PermissionType) async -> PermissionStatus {
+    return permissionToReturn
+  }
+
+  func requestPermission(_ permission: PermissionType) async -> PermissionStatus {
+    requestedPermissions.append(permission)
+    return permissionToReturn
+  }
+}
 
 final class FakeWebView: SWWebView {
   var willHandleJs = false

@@ -223,6 +223,15 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a review is requested from the user.
   case reviewRequested
 
+  /// When a permission is requested from a paywall.
+  case permissionRequested
+
+  /// When a permission is granted after being requested from a paywall.
+  case permissionGranted
+
+  /// When a permission is denied after being requested from a paywall.
+  case permissionDenied
+
   /// When paywall preloading starts.
   case paywallPreloadStart
 
@@ -369,6 +378,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "integration_attributes"
     case .reviewRequested:
       return "review_requested"
+    case .permissionRequested:
+      return "permission_requested"
+    case .permissionGranted:
+      return "permission_granted"
+    case .permissionDenied:
+      return "permission_denied"
     case .paywallPreloadStart:
       return "paywallPreload_start"
     case .paywallPreloadComplete:
