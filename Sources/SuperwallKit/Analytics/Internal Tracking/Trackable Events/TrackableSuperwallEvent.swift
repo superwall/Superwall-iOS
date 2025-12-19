@@ -1103,52 +1103,34 @@ enum InternalSuperwallEvent {
     }
   }
 
-  struct PermissionRequested: TrackableSuperwallEvent {
-    let permissionName: String
-    let paywallIdentifier: String
-    var superwallEvent: SuperwallEvent {
-      return .permissionRequested(
-        permissionName: permissionName,
-        paywallIdentifier: paywallIdentifier
-      )
-    }
-    var audienceFilterParams: [String: Any] = [:]
-
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
-        "permission_name": permissionName,
-        "paywall_identifier": paywallIdentifier
-      ]
-    }
+  enum PermissionState {
+    case requested
+    case granted
+    case denied
   }
 
-  struct PermissionGranted: TrackableSuperwallEvent {
+  struct Permission: TrackableSuperwallEvent {
+    let state: PermissionState
     let permissionName: String
     let paywallIdentifier: String
     var superwallEvent: SuperwallEvent {
-      return .permissionGranted(
-        permissionName: permissionName,
-        paywallIdentifier: paywallIdentifier
-      )
-    }
-    var audienceFilterParams: [String: Any] = [:]
-
-    func getSuperwallParameters() async -> [String: Any] {
-      return [
-        "permission_name": permissionName,
-        "paywall_identifier": paywallIdentifier
-      ]
-    }
-  }
-
-  struct PermissionDenied: TrackableSuperwallEvent {
-    let permissionName: String
-    let paywallIdentifier: String
-    var superwallEvent: SuperwallEvent {
-      return .permissionDenied(
-        permissionName: permissionName,
-        paywallIdentifier: paywallIdentifier
-      )
+      switch state {
+      case .requested:
+        return .permissionRequested(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      case .granted:
+        return .permissionGranted(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      case .denied:
+        return .permissionDenied(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      }
     }
     var audienceFilterParams: [String: Any] = [:]
 
