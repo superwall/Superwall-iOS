@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `paywallPreload_start` and `paywallPreload_complete` events.
 - Adds `request permission` action support allowing you to request Notification permissions from paywalls.
+- Improves drawer presentation style corner rounding by applying the device radius on bottom corners.
 
 ## 4.11.2
 
