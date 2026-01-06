@@ -41,7 +41,7 @@ final class DependencyContainer {
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
-  var permissionHandler: PermissionHandling!
+  let permissionHandler = PermissionHandler()
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -183,8 +183,6 @@ final class DependencyContainer {
       productsManager: productsManager,
       factory: self
     )
-
-    permissionHandler = PermissionHandler()
   }
 }
 

@@ -33,14 +33,14 @@ extension PermissionHandler {
       return currentStatus
     }
 
-    return await withCheckedContinuation { continuation in
-      let delegate = LocationPermissionDelegate { [weak self] status in
+    return await withCheckedContinuation { [weak self] continuation in
+      let delegate = LocationPermissionDelegate { status in
         self?.locationDelegate = nil
         continuation.resume(returning: status.toPermissionStatus)
       }
-      self.locationDelegate = delegate
-      self.locationManager.delegate = delegate
-      self.locationManager.requestWhenInUseAuthorization()
+      self?.locationDelegate = delegate
+      self?.locationManager.delegate = delegate
+      self?.locationManager.requestWhenInUseAuthorization()
     }
   }
 
@@ -85,14 +85,14 @@ extension PermissionHandler {
       return .granted
     }
 
-    return await withCheckedContinuation { continuation in
-      let delegate = LocationPermissionDelegate { [weak self] status in
+    return await withCheckedContinuation { [weak self] continuation in
+      let delegate = LocationPermissionDelegate { status in
         self?.locationDelegate = nil
         continuation.resume(returning: status.toBackgroundPermissionStatus)
       }
-      self.locationDelegate = delegate
-      self.locationManager.delegate = delegate
-      self.locationManager.requestAlwaysAuthorization()
+      self?.locationDelegate = delegate
+      self?.locationManager.delegate = delegate
+      self?.locationManager.requestAlwaysAuthorization()
     }
     #endif
   }
