@@ -30,6 +30,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
+  private let permissionHandler: PermissionHandling
 
   struct EnqueuedMessage {
     let name: String
@@ -40,10 +41,12 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   init(
     receiptManager: ReceiptManager,
-    factory: VariablesFactory
+    factory: VariablesFactory,
+    permissionHandler: PermissionHandling
   ) {
     self.receiptManager = receiptManager
     self.factory = factory
+    self.permissionHandler = permissionHandler
   }
 
   func handle(_ message: PaywallMessage) {
@@ -183,6 +186,12 @@ final class PaywallMessageHandler: WebEventDelegate {
         delay: delay
       )
       delegate?.eventDidOccur(.scheduleNotification(notification: notification))
+    case let .requestPermission(permissionType, requestId):
+      handleRequestPermission(
+        permissionType: permissionType,
+        requestId: requestId,
+        paywall: paywall
+      )
     }
   }
 
@@ -478,5 +487,46 @@ final class PaywallMessageHandler: WebEventDelegate {
     #if !os(visionOS)
       UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
     #endif
+  }
+
+  // MARK: - Permission Handling
+
+  private func handleRequestPermission(
+    permissionType: PermissionType,
+    requestId: String,
+    paywall: Paywall
+  ) {
+    let permissionName = permissionType.rawValue
+
+    Task {
+      // Track permission requested event
+      let requestedEvent = InternalSuperwallEvent.Permission(
+        state: .requested,
+        permissionName: permissionName,
+        paywallIdentifier: paywall.identifier
+      )
+      await Superwall.shared.track(requestedEvent)
+
+      let status = await permissionHandler.requestPermission(permissionType)
+
+      // Track permission result event
+      let resultState: InternalSuperwallEvent.PermissionState = status == .granted ? .granted : .denied
+      let resultEvent = InternalSuperwallEvent.Permission(
+        state: resultState,
+        permissionName: permissionName,
+        paywallIdentifier: paywall.identifier
+      )
+      await Superwall.shared.track(resultEvent)
+
+      await pass(
+        placement: "permission_result",
+        from: paywall,
+        payload: [
+          "permission_type": permissionType.rawValue,
+          "request_id": requestId,
+          "status": status.rawValue
+        ]
+      )
+    }
   }
 }
