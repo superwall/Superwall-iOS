@@ -2,13 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.11.3
+## 4.12.0
 
 ### Enhancements
 
 - Adds `paywallPreload_start` and `paywallPreload_complete` events.
-- Adds `request permission` action support allowing you to request Notification permissions from paywalls.
+- Adds `request permission` action support allowing you to request notification, location, photos, contacts, and camera permissions from paywalls.
 - Improves drawer presentation style corner rounding by applying the device radius on bottom corners.
+
+### Fixes
+
+- Updates Superscript version to 1.0.12. This fixes an issue with `appVersionPadded` comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.11).
 
 ## 4.11.2
 
