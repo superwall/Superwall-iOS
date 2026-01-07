@@ -12,7 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Updates Superscript version to 1.0.12. This fixes an issue with `appVersionPadded` comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.11).
+- Updates Superscript version to 1.0.12. This fixes an issue with `appVersionPadded` comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.12).
 
 ## 4.11.2
 
