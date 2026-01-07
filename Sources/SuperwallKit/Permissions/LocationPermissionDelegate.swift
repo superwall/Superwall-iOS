@@ -32,12 +32,14 @@ final class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
   }
 
   // iOS 13 and earlier
+  #if !os(visionOS)
   func locationManager(
     _ manager: CLLocationManager,
     didChangeAuthorization status: CLAuthorizationStatus
   ) {
     completeIfDetermined(status)
   }
+  #endif
 
   private func completeIfDetermined(_ status: CLAuthorizationStatus) {
     if status == .notDetermined {
