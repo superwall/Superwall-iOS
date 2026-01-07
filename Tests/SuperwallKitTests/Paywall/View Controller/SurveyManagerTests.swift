@@ -22,7 +22,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -66,7 +67,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -111,7 +113,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -155,7 +158,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -199,7 +203,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -243,7 +248,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -293,7 +299,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -346,7 +353,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -396,7 +404,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
@@ -451,7 +460,8 @@ final class SurveyManagerTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
     )
     let webView = SWWebView(
       isMac: false,
