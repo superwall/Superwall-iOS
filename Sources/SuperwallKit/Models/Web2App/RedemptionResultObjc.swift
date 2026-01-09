@@ -299,7 +299,7 @@ public class RedemptionResultObjc: NSObject {
     public let productIdentifier: String?
 
     /// Product variables associated with the paywall.
-    public let product: Product?
+    public let product: PaywallProduct?
 
     public init(
       identifier: String,
@@ -308,7 +308,7 @@ public class RedemptionResultObjc: NSObject {
       variantId: String,
       experimentId: String,
       productIdentifier: String? = nil,
-      product: Product? = nil
+      product: PaywallProduct? = nil
     ) {
       self.identifier = identifier
       self.placementName = placementName
@@ -324,7 +324,7 @@ public class RedemptionResultObjc: NSObject {
   /// Product variables associated with a paywall redemption.
   @objc(SWKRedemptionPaywallProduct)
   @objcMembers
-  public class Product: NSObject {
+  public class PaywallProduct: NSObject {
     public let identifier: String
     public let languageCode: String
     public let locale: String
