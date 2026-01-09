@@ -294,7 +294,11 @@ public class RedemptionResultObjc: NSObject {
     public let experimentId: String
 
     /// The product identifier associated with the paywall.
+    @available(*, deprecated, renamed: "product.identifier")
     public let productIdentifier: String?
+
+    /// Product variables associated with the paywall.
+    public let product: PaywallProduct?
 
     public init(
       identifier: String,
@@ -302,7 +306,8 @@ public class RedemptionResultObjc: NSObject {
       placementParams: [String: Any],
       variantId: String,
       experimentId: String,
-      productIdentifier: String? = nil
+      productIdentifier: String? = nil,
+      product: PaywallProduct? = nil
     ) {
       self.identifier = identifier
       self.placementName = placementName
@@ -310,6 +315,111 @@ public class RedemptionResultObjc: NSObject {
       self.variantId = variantId
       self.experimentId = experimentId
       self.productIdentifier = productIdentifier
+      self.product = product
+      super.init()
+    }
+  }
+
+  /// Product variables associated with a paywall redemption.
+  @objc(SWKRedemptionPaywallProduct)
+  @objcMembers
+  public class PaywallProduct: NSObject {
+    public let identifier: String
+    public let languageCode: String
+    public let locale: String
+    public let currencyCode: String
+    public let currencySymbol: String
+    public let period: String
+    public let periodly: String
+    public let localizedPeriod: String
+    public let periodAlt: String
+    public let periodDays: Int
+    public let periodWeeks: Int
+    public let periodMonths: Int
+    public let periodYears: Int
+    public let rawPrice: Double
+    public let price: String
+    public let dailyPrice: String
+    public let weeklyPrice: String
+    public let monthlyPrice: String
+    public let yearlyPrice: String
+    public let rawTrialPeriodPrice: Double
+    public let trialPeriodPrice: String
+    public let trialPeriodDailyPrice: String
+    public let trialPeriodWeeklyPrice: String
+    public let trialPeriodMonthlyPrice: String
+    public let trialPeriodYearlyPrice: String
+    public let trialPeriodDays: Int
+    public let trialPeriodWeeks: Int
+    public let trialPeriodMonths: Int
+    public let trialPeriodYears: Int
+    public let trialPeriodText: String
+    public let trialPeriodEndDate: String
+
+    public init(
+      identifier: String,
+      languageCode: String,
+      locale: String,
+      currencyCode: String,
+      currencySymbol: String,
+      period: String,
+      periodly: String,
+      localizedPeriod: String,
+      periodAlt: String,
+      periodDays: Int,
+      periodWeeks: Int,
+      periodMonths: Int,
+      periodYears: Int,
+      rawPrice: Double,
+      price: String,
+      dailyPrice: String,
+      weeklyPrice: String,
+      monthlyPrice: String,
+      yearlyPrice: String,
+      rawTrialPeriodPrice: Double,
+      trialPeriodPrice: String,
+      trialPeriodDailyPrice: String,
+      trialPeriodWeeklyPrice: String,
+      trialPeriodMonthlyPrice: String,
+      trialPeriodYearlyPrice: String,
+      trialPeriodDays: Int,
+      trialPeriodWeeks: Int,
+      trialPeriodMonths: Int,
+      trialPeriodYears: Int,
+      trialPeriodText: String,
+      trialPeriodEndDate: String
+    ) {
+      self.identifier = identifier
+      self.languageCode = languageCode
+      self.locale = locale
+      self.currencyCode = currencyCode
+      self.currencySymbol = currencySymbol
+      self.period = period
+      self.periodly = periodly
+      self.localizedPeriod = localizedPeriod
+      self.periodAlt = periodAlt
+      self.periodDays = periodDays
+      self.periodWeeks = periodWeeks
+      self.periodMonths = periodMonths
+      self.periodYears = periodYears
+      self.rawPrice = rawPrice
+      self.price = price
+      self.dailyPrice = dailyPrice
+      self.weeklyPrice = weeklyPrice
+      self.monthlyPrice = monthlyPrice
+      self.yearlyPrice = yearlyPrice
+      self.rawTrialPeriodPrice = rawTrialPeriodPrice
+      self.trialPeriodPrice = trialPeriodPrice
+      self.trialPeriodDailyPrice = trialPeriodDailyPrice
+      self.trialPeriodWeeklyPrice = trialPeriodWeeklyPrice
+      self.trialPeriodMonthlyPrice = trialPeriodMonthlyPrice
+      self.trialPeriodYearlyPrice = trialPeriodYearlyPrice
+      self.trialPeriodDays = trialPeriodDays
+      self.trialPeriodWeeks = trialPeriodWeeks
+      self.trialPeriodMonths = trialPeriodMonths
+      self.trialPeriodYears = trialPeriodYears
+      self.trialPeriodText = trialPeriodText
+      self.trialPeriodEndDate = trialPeriodEndDate
       super.init()
     }
   }
