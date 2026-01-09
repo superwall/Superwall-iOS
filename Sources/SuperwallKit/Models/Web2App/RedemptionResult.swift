@@ -319,8 +319,8 @@ public enum RedemptionResult: Codable {
         public let trialPeriodText: String
         public let trialPeriodEndDate: String
 
-        func toObjc() -> RedemptionResultObjc.PaywallProduct {
-          return RedemptionResultObjc.PaywallProduct(
+        func toObjc() -> RedemptionResultObjc.Product {
+          return RedemptionResultObjc.Product(
             identifier: identifier,
             languageCode: languageCode,
             locale: locale,

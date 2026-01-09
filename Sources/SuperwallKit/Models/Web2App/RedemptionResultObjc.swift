@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 07/04/2025.
 //
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 
@@ -298,7 +299,7 @@ public class RedemptionResultObjc: NSObject {
     public let productIdentifier: String?
 
     /// Product variables associated with the paywall.
-    public let product: PaywallProduct?
+    public let product: Product?
 
     public init(
       identifier: String,
@@ -307,7 +308,7 @@ public class RedemptionResultObjc: NSObject {
       variantId: String,
       experimentId: String,
       productIdentifier: String? = nil,
-      product: PaywallProduct? = nil
+      product: Product? = nil
     ) {
       self.identifier = identifier
       self.placementName = placementName
@@ -323,7 +324,7 @@ public class RedemptionResultObjc: NSObject {
   /// Product variables associated with a paywall redemption.
   @objc(SWKRedemptionPaywallProduct)
   @objcMembers
-  public class PaywallProduct: NSObject {
+  public class Product: NSObject {
     public let identifier: String
     public let languageCode: String
     public let locale: String
