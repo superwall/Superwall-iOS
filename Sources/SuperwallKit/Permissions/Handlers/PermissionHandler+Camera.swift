@@ -9,10 +9,23 @@ import AVFoundation
 
 extension PermissionHandler {
   func checkCameraPermission() -> PermissionStatus {
+    #if targetEnvironment(macCatalyst)
+    if #available(macCatalyst 14.0, *) {
+      return AVCaptureDevice.authorizationStatus(for: .video).toPermissionStatus
+    }
+    return .unsupported
+    #else
     return AVCaptureDevice.authorizationStatus(for: .video).toPermissionStatus
+    #endif
   }
 
   func requestCameraPermission() async -> PermissionStatus {
+    #if targetEnvironment(macCatalyst)
+    guard #available(macCatalyst 14.0, *) else {
+      return .unsupported
+    }
+    #endif
+
     guard hasPlistKey(PlistKey.camera) else {
       Logger.debug(
         logLevel: .error,

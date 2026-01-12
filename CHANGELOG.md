@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.2
+
+### Fixes
+
+- Fixes issue building for Mac Catalyst.
+
 ## 4.12.1
 
 ### Enhancements
