@@ -12,13 +12,10 @@ extension PermissionHandler {
     return CNContactStore.authorizationStatus(for: .contacts).toPermissionStatus
   }
 
+  @MainActor
   func requestContactsPermission() async -> PermissionStatus {
     guard hasPlistKey(PlistKey.contacts) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Missing \(PlistKey.contacts) in Info.plist. Cannot request contacts permission."
-      )
+      await showMissingPlistKeyAlert(for: PlistKey.contacts, permissionName: "Contacts")
       return .unsupported
     }
 

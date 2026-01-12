@@ -15,11 +15,7 @@ extension PermissionHandler {
   @MainActor
   func requestLocationPermission() async -> PermissionStatus {
     guard hasPlistKey(PlistKey.locationWhenInUse) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Missing \(PlistKey.locationWhenInUse) in Info.plist. Cannot request location permission."
-      )
+      await showMissingPlistKeyAlert(for: PlistKey.locationWhenInUse, permissionName: "Location")
       return .unsupported
     }
 
@@ -58,11 +54,7 @@ extension PermissionHandler {
     return .unsupported
     #else
     guard hasPlistKey(PlistKey.locationAlways) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Missing \(PlistKey.locationAlways) in Info.plist. Cannot request background location permission."
-      )
+      await showMissingPlistKeyAlert(for: PlistKey.locationAlways, permissionName: "Background Location")
       return .unsupported
     }
 

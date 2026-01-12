@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+import AppTrackingTransparency
 import AVFoundation
 import Contacts
 import CoreLocation
@@ -83,6 +84,22 @@ extension CNAuthorizationStatus {
 
 @available(macCatalyst 14.0, *)
 extension AVAuthorizationStatus {
+  var toPermissionStatus: PermissionStatus {
+    switch self {
+    case .authorized:
+      return .granted
+    case .denied,
+      .restricted,
+      .notDetermined:
+      return .denied
+    @unknown default:
+      return .unsupported
+    }
+  }
+}
+
+@available(iOS 14, macCatalyst 14.0, macOS 11.0, tvOS 14.0, *)
+extension ATTrackingManager.AuthorizationStatus {
   var toPermissionStatus: PermissionStatus {
     switch self {
     case .authorized:

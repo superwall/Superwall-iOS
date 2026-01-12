@@ -14,6 +14,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `redemptionInfo.paywallInfo.product` which contains information about the product that was purchased. This deprecates `redemptionInfo.paywallInfo.productIdentifier` in favor of `redemptionInfo.paywallInfo.product.identifer`.
 
+
+## 4.12.1
+
+### Enhancements
+
+- Adds `App transparency tracking` permission request
+
 ## 4.12.0
 
 ### Enhancements

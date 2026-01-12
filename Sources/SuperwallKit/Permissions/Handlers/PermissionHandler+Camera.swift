@@ -19,6 +19,7 @@ extension PermissionHandler {
     #endif
   }
 
+  @MainActor
   func requestCameraPermission() async -> PermissionStatus {
     #if targetEnvironment(macCatalyst)
     guard #available(macCatalyst 14.0, *) else {
@@ -27,11 +28,7 @@ extension PermissionHandler {
     #endif
 
     guard hasPlistKey(PlistKey.camera) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Missing \(PlistKey.camera) in Info.plist. Cannot request camera permission."
-      )
+      await showMissingPlistKeyAlert(for: PlistKey.camera, permissionName: "Camera")
       return .unsupported
     }
 
