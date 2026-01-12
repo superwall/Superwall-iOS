@@ -4,6 +4,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.12.1
 
+### Fixes
+
+- Fixes issue building for Mac Catalyst.
+
+## 4.12.1
+
 ### Enhancements
 
 - Adds `redemptionInfo.paywallInfo.product` which contains information about the product that was purchased. This deprecates `redemptionInfo.paywallInfo.productIdentifier` in favor of `redemptionInfo.paywallInfo.product.identifer`.
