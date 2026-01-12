@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.3
+
+### Fixes
+
+- Removes contacts and location permission APIs to prevent App Store warnings.
+
 ## 4.12.2
 
 ### Fixes
