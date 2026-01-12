@@ -12,15 +12,11 @@ import UserNotifications
 final class PermissionHandler: PermissionHandling {
   lazy var notificationCenter = UNUserNotificationCenter.current()
   lazy var locationManager = CLLocationManager()
-  var locationDelegate: LocationPermissionDelegate?
 
   // Info.plist keys for each permission type
   enum PlistKey {
     static let camera = "NSCameraUsageDescription"
     static let photoLibrary = "NSPhotoLibraryUsageDescription"
-    static let contacts = "NSContactsUsageDescription"
-    static let locationWhenInUse = "NSLocationWhenInUseUsageDescription"
-    static let locationAlways = "NSLocationAlwaysAndWhenInUseUsageDescription"
   }
 
   func hasPlistKey(_ key: String) -> Bool {
@@ -32,13 +28,13 @@ final class PermissionHandler: PermissionHandling {
     case .notification:
       return await checkNotificationPermission()
     case .location:
-      return checkLocationPermission()
+      return .unsupported
     case .backgroundLocation:
-      return checkBackgroundLocationPermission()
+      return .unsupported
     case .readImages:
       return checkPhotosPermission()
     case .contacts:
-      return checkContactsPermission()
+      return .unsupported
     case .camera:
       return checkCameraPermission()
     }
@@ -49,13 +45,13 @@ final class PermissionHandler: PermissionHandling {
     case .notification:
       return await requestNotificationPermission()
     case .location:
-      return await requestLocationPermission()
+      return .unsupported
     case .backgroundLocation:
-      return await requestBackgroundLocationPermission()
+      return .unsupported
     case .readImages:
       return await requestPhotosPermission()
     case .contacts:
-      return await requestContactsPermission()
+      return .unsupported
     case .camera:
       return await requestCameraPermission()
     }
