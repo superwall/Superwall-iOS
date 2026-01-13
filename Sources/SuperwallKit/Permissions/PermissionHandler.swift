@@ -21,6 +21,7 @@ final class PermissionHandler: PermissionHandling {
     static let locationWhenInUse = "NSLocationWhenInUseUsageDescription"
     static let locationAlways = "NSLocationAlwaysAndWhenInUseUsageDescription"
     static let tracking = "NSUserTrackingUsageDescription"
+    static let microphone = "NSMicrophoneUsageDescription"
   }
 
   func hasPlistKey(_ key: String) -> Bool {
@@ -69,6 +70,8 @@ final class PermissionHandler: PermissionHandling {
       return checkCameraPermission()
     case .tracking:
       return checkTrackingPermission()
+    case .microphone:
+      return checkMicrophonePermission()
     }
   }
 
@@ -88,6 +91,8 @@ final class PermissionHandler: PermissionHandling {
       return await requestCameraPermission()
     case .tracking:
       return await requestTrackingPermission()
+    case .microphone:
+      return await requestMicrophonePermission()
     }
   }
 }

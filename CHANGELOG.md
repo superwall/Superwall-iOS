@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.5
+
+### Enhancements
+
+- Adds microphone permission request support.
+
 ## 4.12.4
 
 ### Enhancements
