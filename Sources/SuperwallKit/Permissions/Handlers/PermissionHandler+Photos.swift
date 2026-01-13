@@ -18,13 +18,10 @@ extension PermissionHandler {
     return status.toPermissionStatus
   }
 
+  @MainActor
   func requestPhotosPermission() async -> PermissionStatus {
     guard hasPlistKey(PlistKey.photoLibrary) else {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallViewController,
-        message: "Missing \(PlistKey.photoLibrary) in Info.plist. Cannot request photo library permission."
-      )
+      await showMissingPlistKeyAlert(for: PlistKey.photoLibrary, permissionName: "Photo Library")
       return .unsupported
     }
 

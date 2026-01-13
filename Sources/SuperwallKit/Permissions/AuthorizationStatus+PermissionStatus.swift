@@ -107,4 +107,20 @@ extension Int {
       return .unsupported
     }
   }
+
+  var toTrackingPermissionStatus: PermissionStatus {
+    // ATTrackingManager.AuthorizationStatus:
+    // 0 notDetermined
+    // 1 restricted
+    // 2 denied
+    // 3 authorized
+    switch self {
+    case 3:
+      return .granted
+    case 0, 1, 2:
+      return .denied
+    default:
+      return .unsupported
+    }
+  }
 }
