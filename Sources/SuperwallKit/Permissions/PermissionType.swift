@@ -17,4 +17,5 @@ enum PermissionType: String, Decodable {
   case contacts
   case camera
   case tracking
+  case microphone
 }
