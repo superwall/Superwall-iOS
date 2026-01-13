@@ -6,8 +6,6 @@
 //
 
 import AVFoundation
-import Contacts
-import CoreLocation
 import Photos
 import UserNotifications
 
@@ -24,29 +22,6 @@ extension UNAuthorizationStatus {
   }
 }
 
-extension CLAuthorizationStatus {
-  var toPermissionStatus: PermissionStatus {
-    switch self {
-    case .authorizedWhenInUse, .authorizedAlways:
-      return .granted
-    case .denied, .restricted, .notDetermined:
-      return .denied
-    @unknown default:
-      return .unsupported
-    }
-  }
-
-  var toBackgroundPermissionStatus: PermissionStatus {
-    switch self {
-    case .authorizedAlways:
-      return .granted
-    case .authorizedWhenInUse, .denied, .restricted, .notDetermined:
-      return .denied
-    @unknown default:
-      return .unsupported
-    }
-  }
-}
 
 extension PHAuthorizationStatus {
   var toPermissionStatus: PermissionStatus {
@@ -64,23 +39,6 @@ extension PHAuthorizationStatus {
   }
 }
 
-extension CNAuthorizationStatus {
-  var toPermissionStatus: PermissionStatus {
-    switch self {
-    case .authorized,
-      .limited:
-      return .granted
-    case .denied,
-      .restricted,
-      .notDetermined:
-      return .denied
-    @unknown default:
-      // Handles .limited on iOS 18+ and future cases
-      return .granted
-    }
-  }
-}
-
 @available(macCatalyst 14.0, *)
 extension AVAuthorizationStatus {
   var toPermissionStatus: PermissionStatus {
@@ -92,6 +50,76 @@ extension AVAuthorizationStatus {
       .notDetermined:
       return .denied
     @unknown default:
+      return .unsupported
+    }
+  }
+}
+
+extension Int {
+  var toContactsPermissionStatus: PermissionStatus {
+    // CNAuthorizationStatus:
+    // 0 notDetermined
+    // 1 restricted
+    // 2 denied
+    // 3 authorized
+    // 4 limited (iOS 18+)
+    switch self {
+    case 3, 4:
+      return .granted
+    case 0, 1, 2:
+      return .denied
+    default:
+      // Mirrors your @unknown default policy
+      return .granted
+    }
+  }
+
+  var toLocationPermissionStatus: PermissionStatus {
+    // CLAuthorizationStatus:
+    // 0 notDetermined
+    // 1 restricted
+    // 2 denied
+    // 3 authorizedAlways
+    // 4 authorizedWhenInUse
+    switch self {
+    case 3, 4:
+      return .granted
+    case 0, 1, 2:
+      return .denied
+    default:
+      return .unsupported
+    }
+  }
+
+  var toBackgroundLocationPermissionStatus: PermissionStatus {
+    // CLAuthorizationStatus:
+    // 0 notDetermined
+    // 1 restricted
+    // 2 denied
+    // 3 authorizedAlways
+    // 4 authorizedWhenInUse
+    switch self {
+    case 3:
+      return .granted
+    case 0, 1, 2, 4:
+      return .denied
+    default:
+      return .unsupported
+    }
+  }
+
+  var toTrackingPermissionStatus: PermissionStatus {
+    // ATTrackingManager.AuthorizationStatus:
+    // 0 notDetermined
+    // 1 restricted
+    // 2 denied
+    // 3 authorized
+    switch self {
+    case 3:
+      return .granted
+    case 0, 1, 2:
+      return .denied
+    default:
       return .unsupported
     }
   }
