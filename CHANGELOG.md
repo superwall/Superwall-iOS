@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.4
+
+### Enhancements
+
+- Adds back in contacts and location permissions but this time will not get flagged in App Store review if it's not being used.
+
 ## 4.12.3
 
 ### Fixes

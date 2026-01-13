@@ -5,18 +5,20 @@
 //  Created by Superwall on 2024.
 //
 
-import CoreLocation
 import Foundation
 import UserNotifications
 
 final class PermissionHandler: PermissionHandling {
   lazy var notificationCenter = UNUserNotificationCenter.current()
-  lazy var locationManager = CLLocationManager()
+  var locationDelegate: LocationPermissionDelegate?
 
   // Info.plist keys for each permission type
   enum PlistKey {
     static let camera = "NSCameraUsageDescription"
     static let photoLibrary = "NSPhotoLibraryUsageDescription"
+    static let contacts = "NSContactsUsageDescription"
+    static let locationWhenInUse = "NSLocationWhenInUseUsageDescription"
+    static let locationAlways = "NSLocationAlwaysAndWhenInUseUsageDescription"
   }
 
   func hasPlistKey(_ key: String) -> Bool {
@@ -28,13 +30,13 @@ final class PermissionHandler: PermissionHandling {
     case .notification:
       return await checkNotificationPermission()
     case .location:
-      return .unsupported
+      return checkLocationPermission()
     case .backgroundLocation:
-      return .unsupported
+      return checkBackgroundLocationPermission()
     case .readImages:
       return checkPhotosPermission()
     case .contacts:
-      return .unsupported
+      return checkContactsPermission()
     case .camera:
       return checkCameraPermission()
     }
@@ -45,13 +47,13 @@ final class PermissionHandler: PermissionHandling {
     case .notification:
       return await requestNotificationPermission()
     case .location:
-      return .unsupported
+      return await requestLocationPermission()
     case .backgroundLocation:
-      return .unsupported
+      return await requestBackgroundLocationPermission()
     case .readImages:
       return await requestPhotosPermission()
     case .contacts:
-      return .unsupported
+      return await requestContactsPermission()
     case .camera:
       return await requestCameraPermission()
     }
