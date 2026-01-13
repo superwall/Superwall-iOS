@@ -6,7 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds back in contacts and location permissions but this time will not get flagged in App Store review if it's not being used.
+- Adds back in contacts and location permission requests but this time will not get flagged in App Store review if they're not being used.
+- Adds App Tracking Transparency permission request.
 
 ## 4.12.3
 
@@ -25,13 +26,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `redemptionInfo.paywallInfo.product` which contains information about the product that was purchased. This deprecates `redemptionInfo.paywallInfo.productIdentifier` in favor of `redemptionInfo.paywallInfo.product.identifer`.
-
-
-## 4.12.1
-
-### Enhancements
-
-- Adds `App transparency tracking` permission request
 
 ## 4.12.0
 
