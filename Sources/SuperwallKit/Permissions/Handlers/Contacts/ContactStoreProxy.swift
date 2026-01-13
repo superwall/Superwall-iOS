@@ -59,11 +59,11 @@ final class ContactStoreProxy: NSObject {
       return -1
     }
 
-    typealias Fn = @convention(c) (AnyObject, Selector, Int) -> Int
-    let fn = unsafeBitCast(imp, to: Fn.self)
+    typealias Function = @convention(c) (AnyObject, Selector, Int) -> Int
+    let function = unsafeBitCast(imp, to: Function.self)
 
     // For class methods, the receiver is the class object itself.
-    return fn(cls as AnyObject, sel, Self.contactsEntityType)
+    return function(cls as AnyObject, sel, Self.contactsEntityType)
   }
 
   func requestAccess() async throws -> Bool {
@@ -89,10 +89,10 @@ final class ContactStoreProxy: NSObject {
         }
       }
 
-      typealias Fn = @convention(c) (AnyObject, Selector, Int, AnyObject) -> Void
-      let fn = unsafeBitCast(imp, to: Fn.self)
+      typealias Function = @convention(c) (AnyObject, Selector, Int, AnyObject) -> Void
+      let function = unsafeBitCast(imp, to: Function.self)
 
-      fn(store, sel, Self.contactsEntityType, completion as AnyObject)
+      function(store, sel, Self.contactsEntityType, completion as AnyObject)
     }
   }
 }
