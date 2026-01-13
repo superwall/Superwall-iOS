@@ -5,14 +5,12 @@
 //  Created by Superwall on 2024.
 //
 
-import CoreLocation
 import Foundation
 import UIKit
 import UserNotifications
 
 final class PermissionHandler: PermissionHandling {
   lazy var notificationCenter = UNUserNotificationCenter.current()
-  lazy var locationManager = CLLocationManager()
   var locationDelegate: LocationPermissionDelegate?
 
   // Info.plist keys for each permission type

@@ -1,15 +1,18 @@
 //
-//  PermissionHandler+Contacts.swift
+//  PermissionsHandler+Contacts.swift
 //  SuperwallKit
 //
-//  Created by Superwall on 2024.
+//  Created by Yusuf Tör on 13/01/2026.
 //
-
-import Contacts
 
 extension PermissionHandler {
   func checkContactsPermission() -> PermissionStatus {
-    return CNContactStore.authorizationStatus(for: .contacts).toPermissionStatus
+    let proxy = ContactStoreProxy()
+    let raw = proxy.authorizationStatus()
+    guard raw >= 0 else {
+      return .unsupported
+    }
+    return raw.toContactsPermissionStatus
   }
 
   @MainActor
@@ -19,14 +22,13 @@ extension PermissionHandler {
       return .unsupported
     }
 
-    let currentStatus = checkContactsPermission()
-    if currentStatus == .granted {
+    if checkContactsPermission() == .granted {
       return .granted
     }
 
-    let store = CNContactStore()
     do {
-      let granted = try await store.requestAccess(for: .contacts)
+      let proxy = ContactStoreProxy()
+      let granted = try await proxy.requestAccess()
       return granted ? .granted : .denied
     } catch {
       Logger.debug(
