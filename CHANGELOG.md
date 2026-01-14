@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds microphone permission request support.
+- Adds post purchase actions support.
 
 ## 4.12.4
 
