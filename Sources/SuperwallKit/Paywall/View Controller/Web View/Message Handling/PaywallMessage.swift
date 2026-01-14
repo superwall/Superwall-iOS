@@ -51,7 +51,7 @@ enum PaywallMessage: Decodable, Equatable {
   case openUrlInSafari(_ url: URL)
   case openPaymentSheet(_ url: URL)
   case openDeepLink(url: URL)
-  case purchase(productId: String)
+  case purchase(productId: String, shouldDismiss: Bool, postPurchaseAction: PostPurchaseAction?)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
   case userAttributesUpdated(attributes: JSON)
@@ -101,9 +101,11 @@ enum PaywallMessage: Decodable, Equatable {
   }
 
   // Everyone write to eventName, other may use the remaining keys
+  // Note: JSONDecoder.fromSnakeCase converts snake_case keys to camelCase automatically
   private enum CodingKeys: String, CodingKey {
     case messageType = "eventName"
     case productId = "productIdentifier"
+    case postPurchaseAction
     case url
     case link
     case data
@@ -141,7 +143,13 @@ enum PaywallMessage: Decodable, Equatable {
         return
       case .purchase:
         if let productId = try? values.decode(String.self, forKey: .productId) {
-          self = .purchase(productId: productId)
+          let postPurchaseAction = try? values.decode(PostPurchaseAction.self, forKey: .postPurchaseAction)
+          let shouldDismiss = postPurchaseAction?.shouldDismissPaywall ?? true
+          self = .purchase(
+            productId: productId,
+            shouldDismiss: shouldDismiss,
+            postPurchaseAction: postPurchaseAction
+          )
           return
         }
       case .restore:

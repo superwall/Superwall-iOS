@@ -9,7 +9,11 @@ import Foundation
 
 enum PaywallWebEvent: Equatable {
   case closed
-  case initiatePurchase(productId: String)
+  case initiatePurchase(
+    productId: String,
+    shouldDismiss: Bool,
+    postPurchaseAction: PostPurchaseAction?
+  )
   case initiateRestore
   case custom(string: String)
   case openedURL(url: URL)

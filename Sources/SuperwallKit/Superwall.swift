@@ -1307,13 +1307,13 @@ extension Superwall: PaywallViewControllerEventDelegate {
         result: .declined,
         closeReason: .manualClose
       )
-    case .initiatePurchase(let productId):
+    case let .initiatePurchase(productId, shouldDismiss, postPurchaseAction):
       if purchaseTask != nil {
         return
       }
       purchaseTask = Task {
         await dependencyContainer.transactionManager.purchase(
-          .internal(productId, paywallViewController)
+          .internal(productId, paywallViewController, shouldDismiss, postPurchaseAction)
         )
         purchaseTask = nil
       }

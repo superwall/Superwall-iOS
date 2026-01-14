@@ -163,8 +163,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case .purchase(productId: let id):
-      purchaseProduct(withId: id)
+    case let .purchase(
+      productId: id,
+      shouldDismiss: shouldDismiss,
+      postPurchaseAction: postPurchaseAction
+    ):
+      purchaseProduct(
+        withId: id,
+        shouldDismiss: shouldDismiss,
+        postPurchaseAction: postPurchaseAction
+      )
     case .custom(data: let name):
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
@@ -431,10 +439,20 @@ final class PaywallMessageHandler: WebEventDelegate {
     delegate?.eventDidOccur(.initiateRestore)
   }
 
-  private func purchaseProduct(withId id: String) {
+  private func purchaseProduct(
+    withId id: String,
+    shouldDismiss: Bool,
+    postPurchaseAction: PostPurchaseAction?
+  ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
-    delegate?.eventDidOccur(.initiatePurchase(productId: id))
+    delegate?.eventDidOccur(
+      .initiatePurchase(
+        productId: id,
+        shouldDismiss: shouldDismiss,
+        postPurchaseAction: postPurchaseAction
+      )
+    )
   }
 
   private func handleCustomEvent(_ customEvent: String) {
