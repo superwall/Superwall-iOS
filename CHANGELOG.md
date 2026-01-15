@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds microphone permission request support.
 
+### Fixes
+
+- Fixes issue where the notification permission prompt would not appear if provisional notification permission was already granted.
+
 ## 4.12.4
 
 ### Enhancements

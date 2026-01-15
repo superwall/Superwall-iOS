@@ -164,8 +164,7 @@ actor NotificationScheduler {
     let settings = await notificationCenter.notificationSettings()
     switch settings.authorizationStatus {
     case .authorized,
-      .ephemeral,
-      .provisional:
+      .ephemeral:
       return true
     default:
       return false
