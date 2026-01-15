@@ -61,7 +61,7 @@ final class TransactionManager {
     let product: StoreProduct
 
     switch purchaseSource {
-    case .internal(let productId, _):
+    case .internal(let productId, _, _):
       guard let storeProduct = await storeKitManager.productsById[productId] else {
         Logger.debug(
           logLevel: .error,
@@ -126,7 +126,7 @@ final class TransactionManager {
         case .observing:
           break
         case .purchasing(let purchaseSource):
-          if case let .internal(_, paywallViewController) = purchaseSource {
+          if case let .internal(_, paywallViewController, _) = purchaseSource {
             await paywallViewController.togglePaywallSpinner(isHidden: true)
           }
         }
@@ -459,7 +459,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -559,7 +559,7 @@ final class TransactionManager {
     let shouldTrackTransactionStart = !(purchaseManager.isUsingSK2 && isObserved)
 
     switch purchaseSource {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -633,7 +633,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case let .internal(_, paywallViewController, shouldDismiss):
       guard let product = await coordinator.product else {
         return
       }
@@ -658,11 +658,17 @@ final class TransactionManager {
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
-      if superwallOptions.paywalls.automaticallyDismiss {
+      let shouldDismissPaywall = superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
+      if shouldDismissPaywall {
         await Superwall.shared.dismiss(
           paywallViewController,
           result: .purchased(product)
         )
+      }
+      if !shouldDismissPaywall {
+        await MainActor.run {
+          paywallViewController.togglePaywallSpinner(isHidden: true)
+        }
       }
     case .purchaseFunc,
       .observeFunc:
@@ -704,7 +710,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -764,7 +770,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -894,7 +900,7 @@ final class TransactionManager {
     let eventSource: InternalSuperwallEvent.Transaction.Source
     let trialEndDate = product.trialPeriodEndDate
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
       await paywallViewController.webView.messageHandler
