@@ -55,6 +55,20 @@ extension AVAuthorizationStatus {
   }
 }
 
+extension AVAudioSession.RecordPermission {
+  var toPermissionStatus: PermissionStatus {
+    switch self {
+    case .granted:
+      return .granted
+    case .denied,
+      .undetermined:
+      return .denied
+    @unknown default:
+      return .unsupported
+    }
+  }
+}
+
 extension Int {
   var toContactsPermissionStatus: PermissionStatus {
     // CNAuthorizationStatus:
