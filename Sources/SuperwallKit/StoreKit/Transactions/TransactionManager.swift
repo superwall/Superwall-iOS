@@ -61,7 +61,7 @@ final class TransactionManager {
     let product: StoreProduct
 
     switch purchaseSource {
-    case .internal(let productId, _, _, _):
+    case .internal(let productId, _, _):
       guard let storeProduct = await storeKitManager.productsById[productId] else {
         Logger.debug(
           logLevel: .error,
@@ -126,7 +126,7 @@ final class TransactionManager {
         case .observing:
           break
         case .purchasing(let purchaseSource):
-          if case let .internal(_, paywallViewController, _, _) = purchaseSource {
+          if case let .internal(_, paywallViewController, _) = purchaseSource {
             await paywallViewController.togglePaywallSpinner(isHidden: true)
           }
         }
@@ -459,7 +459,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController, _, _):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -559,7 +559,7 @@ final class TransactionManager {
     let shouldTrackTransactionStart = !(purchaseManager.isUsingSK2 && isObserved)
 
     switch purchaseSource {
-    case .internal(_, let paywallViewController, _, _):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -633,7 +633,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case let .internal(_, paywallViewController, shouldDismiss, postPurchaseAction):
+    case let .internal(_, paywallViewController, shouldDismiss):
       guard let product = await coordinator.product else {
         return
       }
@@ -670,13 +670,6 @@ final class TransactionManager {
           paywallViewController.togglePaywallSpinner(isHidden: true)
         }
       }
-      if let postPurchaseAction,
-        !shouldDismissPaywall {
-        await handlePostPurchaseAction(
-          postPurchaseAction,
-          on: paywallViewController
-        )
-      }
     case .purchaseFunc,
       .observeFunc:
       Logger.debug(
@@ -701,16 +694,6 @@ final class TransactionManager {
     }
   }
 
-  private func handlePostPurchaseAction(
-    _ action: PostPurchaseAction,
-    on paywallViewController: PaywallViewController
-  ) async {
-    guard let message = action.toPaywallMessage() else {
-      return
-    }
-    await paywallViewController.webView.messageHandler.handle(message)
-  }
-
   /// Track the cancelled
   func trackCancelled() async {
     let coordinator = factory.makePurchasingCoordinator()
@@ -727,7 +710,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController, _, _):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -787,7 +770,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController, _, _):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -917,7 +900,7 @@ final class TransactionManager {
     let eventSource: InternalSuperwallEvent.Transaction.Source
     let trialEndDate = product.trialPeriodEndDate
     switch source {
-    case .internal(_, let paywallViewController, _, _):
+    case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
       await paywallViewController.webView.messageHandler

@@ -11,8 +11,7 @@ enum PaywallWebEvent: Equatable {
   case closed
   case initiatePurchase(
     productId: String,
-    shouldDismiss: Bool,
-    postPurchaseAction: PostPurchaseAction?
+    shouldDismiss: Bool
   )
   case initiateRestore
   case custom(string: String)

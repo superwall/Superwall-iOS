@@ -266,12 +266,11 @@ struct PaywallMessageHandlerTests {
     )
     messageHandler.delegate = delegate
     let productId = "abc"
-    messageHandler.handle(.purchase(productId: productId, shouldDismiss: true, postPurchaseAction: nil))
+    messageHandler.handle(.purchase(productId: productId, shouldDismiss: true))
 
     #expect(delegate.eventDidOccur == .initiatePurchase(
       productId: productId,
-      shouldDismiss: true,
-      postPurchaseAction: nil
+      shouldDismiss: true
     ))
   }
 
@@ -394,7 +393,7 @@ struct PaywallMessageHandlerTests {
   // MARK: - Purchase Message Decoding Tests
 
   @Test
-  func decodePurchase_noPostPurchaseAction_shouldDismissTrue() throws {
+  func decodePurchase_noShouldDismiss_defaultsToTrue() throws {
     let json = """
     {
       "version": 1,
@@ -414,13 +413,12 @@ struct PaywallMessageHandlerTests {
 
     #expect(message == .purchase(
       productId: "com.test.product",
-      shouldDismiss: true,
-      postPurchaseAction: nil
+      shouldDismiss: true
     ))
   }
 
   @Test
-  func decodePurchase_postPurchaseActionNone_shouldDismissFalse() throws {
+  func decodePurchase_shouldDismissFalse() throws {
     let json = """
     {
       "version": 1,
@@ -429,9 +427,7 @@ struct PaywallMessageHandlerTests {
           {
             "eventName": "purchase",
             "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "none"
-            }
+            "should_dismiss": false
           }
         ]
       }
@@ -443,13 +439,12 @@ struct PaywallMessageHandlerTests {
 
     #expect(message == .purchase(
       productId: "com.test.product",
-      shouldDismiss: false,
-      postPurchaseAction: PostPurchaseAction.none
+      shouldDismiss: false
     ))
   }
 
   @Test
-  func decodePurchase_postPurchaseActionClose_shouldDismissTrue() throws {
+  func decodePurchase_shouldDismissTrue() throws {
     let json = """
     {
       "version": 1,
@@ -458,9 +453,7 @@ struct PaywallMessageHandlerTests {
           {
             "eventName": "purchase",
             "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "close"
-            }
+            "should_dismiss": true
           }
         ]
       }
@@ -472,135 +465,7 @@ struct PaywallMessageHandlerTests {
 
     #expect(message == .purchase(
       productId: "com.test.product",
-      shouldDismiss: true,
-      postPurchaseAction: .close
-    ))
-  }
-
-  @Test
-  func decodePurchase_postPurchaseActionOpenUrl() throws {
-    let json = """
-    {
-      "version": 1,
-      "payload": {
-        "events": [
-          {
-            "eventName": "purchase",
-            "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "open-url",
-              "url": "https://example.com",
-              "urlType": "external"
-            }
-          }
-        ]
-      }
-    }
-    """
-    let data = json.data(using: .utf8)!
-    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
-    let message = wrapped.payload.messages.first
-
-    #expect(message == .purchase(
-      productId: "com.test.product",
-      shouldDismiss: false,
-      postPurchaseAction: .openUrl(url: URL(string: "https://example.com")!, urlType: .external)
-    ))
-  }
-
-  @Test
-  func decodePurchase_postPurchaseActionCustomInApp() throws {
-    let json = """
-    {
-      "version": 1,
-      "payload": {
-        "events": [
-          {
-            "eventName": "purchase",
-            "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "custom-in-app",
-              "data": "custom-data-here"
-            }
-          }
-        ]
-      }
-    }
-    """
-    let data = json.data(using: .utf8)!
-    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
-    let message = wrapped.payload.messages.first
-
-    #expect(message == .purchase(
-      productId: "com.test.product",
-      shouldDismiss: false,
-      postPurchaseAction: .customInApp(data: "custom-data-here")
-    ))
-  }
-
-  @Test
-  func decodePurchase_postPurchaseActionCustomPlacement() throws {
-    let json = """
-    {
-      "version": 1,
-      "payload": {
-        "events": [
-          {
-            "eventName": "purchase",
-            "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "custom-placement",
-              "name": "my-placement"
-            }
-          }
-        ]
-      }
-    }
-    """
-    let data = json.data(using: .utf8)!
-    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
-    let message = wrapped.payload.messages.first
-
-    #expect(message == .purchase(
-      productId: "com.test.product",
-      shouldDismiss: false,
-      postPurchaseAction: .customPlacement(name: "my-placement")
-    ))
-  }
-
-  @Test
-  func decodePurchase_postPurchaseActionSetAttribute() throws {
-    let json = """
-    {
-      "version": 1,
-      "payload": {
-        "events": [
-          {
-            "eventName": "purchase",
-            "productIdentifier": "com.test.product",
-            "post_purchase_action": {
-              "type": "set-attribute",
-              "attributes": [
-                {"key": "name", "value": "John"},
-                {"key": "tier", "value": "premium"}
-              ]
-            }
-          }
-        ]
-      }
-    }
-    """
-    let data = json.data(using: .utf8)!
-    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
-    let message = wrapped.payload.messages.first
-
-    #expect(message == .purchase(
-      productId: "com.test.product",
-      shouldDismiss: false,
-      postPurchaseAction: .setAttribute(attributes: [
-        PostPurchaseAttribute(key: "name", value: "John"),
-        PostPurchaseAttribute(key: "tier", value: "premium")
-      ])
+      shouldDismiss: true
     ))
   }
 }
