@@ -342,6 +342,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
       // block selection
       let selectionString =
+      // swiftlint:disable:next line_length
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
         + "var head = document.head || document.getElementsByTagName('head')[0]; "
         + "var style = document.createElement('style'); style.type = 'text/css'; "
@@ -355,6 +356,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       self.delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
 
       let preventSelection =
+      // swiftlint:disable:next line_length
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
