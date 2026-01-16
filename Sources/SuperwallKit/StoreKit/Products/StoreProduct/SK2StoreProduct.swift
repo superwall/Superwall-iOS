@@ -387,16 +387,16 @@ struct SK2StoreProduct: StoreProductType {
     return futureDate
   }
 
-  var trialPeriodEndDateString: String {
-    if let trialPeriodEndDate = trialPeriodEndDate {
-      let dateFormatter = DateFormatter()
-      dateFormatter.dateStyle = .medium
-      dateFormatter.timeStyle = .none
-      dateFormatter.locale = .autoupdatingCurrent
+  private static let trialDateFormatter: DateFormatter = {
+    let formatter = DateFormatter()
+    formatter.dateStyle = .medium
+    formatter.timeStyle = .none
+    formatter.locale = .autoupdatingCurrent
+    return formatter
+  }()
 
-      return dateFormatter.string(from: trialPeriodEndDate)
-    }
-    return ""
+  var trialPeriodEndDateString: String {
+    trialPeriodEndDate.map { Self.trialDateFormatter.string(from: $0) } ?? ""
   }
 
   var trialPeriodDays: Int {
