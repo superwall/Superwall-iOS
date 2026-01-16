@@ -105,7 +105,8 @@ enum Logger: Loggable {
         dumping["error"] = error
       }
 
-      var name = "\(Date().isoString) \(logLevel.descriptionEmoji) [Superwall] [\(scope.description)] - \(logLevel.description)"
+      var name = "\(Date().isoString) \(logLevel.descriptionEmoji) "
+        + "[Superwall] [\(scope.description)] - \(logLevel.description)"
 
       if let message = message {
         name += ": \(message)"

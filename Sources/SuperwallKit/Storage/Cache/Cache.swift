@@ -71,16 +71,23 @@ class Cache {
       guard let self = self else { return }
       guard
         let documentDirectory = self.fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
-        let applicationSupportDirectory = self.fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        let applicationSupportDirectory = self.fileManager.urls(
+          for: .applicationSupportDirectory,
+          in: .userDomainMask
+        ).first
       else {
         return
       }
 
-      let userSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
-      let appSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+      let userSpecificDocumentUrl = documentDirectory
+        .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificDocumentUrl = documentDirectory
+        .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
-      let userSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
-      let appSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+      let userSpecificSupportUrl = applicationSupportDirectory
+        .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificSupportUrl = applicationSupportDirectory
+        .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
       do {
         // Create the destination directories if they don't exist.

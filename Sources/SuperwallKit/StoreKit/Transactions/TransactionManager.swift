@@ -269,8 +269,9 @@ final class TransactionManager {
       } else {
         var message = "Transactions Failed to Restore."
         if !hasActiveEntitlements && hasRestored {
-          message +=
-            " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
+          message += " The restoration result is \"restored\" but there are no active "
+            + "entitlements. Ensure the active entitlements are set before confirming "
+            + "successful restoration."
         }
         if case .failed(let error) = restorationResult,
           let error = error {
