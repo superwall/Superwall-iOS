@@ -126,16 +126,25 @@ final class PaywallMessageHandler: WebEventDelegate {
         await self.pass(placement: transactionStart, from: paywall)
       }
     case let .transactionComplete(trialEndDate, productIdentifier):
-      let freeTrialStart = SuperwallEventObjc.freeTrialStart.description
       Task {
-        var payload: [String: Any] = ["product_identifier": productIdentifier]
+        // Send transaction_complete to trigger post-purchase actions
+        let transactionComplete = SuperwallEventObjc.transactionComplete.description
+        await self.pass(
+          placement: transactionComplete,
+          from: paywall,
+          payload: ["product_identifier": productIdentifier]
+        )
+
+        // Send freeTrial_start for notification scheduling
+        let freeTrialStart = SuperwallEventObjc.freeTrialStart.description
+        var freeTrialPayload: [String: Any] = ["product_identifier": productIdentifier]
         if let trialEndDate {
-          payload["trial_end_date"] = Int(trialEndDate.timeIntervalSince1970 * 1000)
+          freeTrialPayload["trial_end_date"] = Int(trialEndDate.timeIntervalSince1970 * 1000)
         }
         await self.pass(
           placement: freeTrialStart,
           from: paywall,
-          payload: payload
+          payload: freeTrialPayload
         )
       }
     case .transactionFail:
@@ -163,8 +172,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case .purchase(productId: let id):
-      purchaseProduct(withId: id)
+    case let .purchase(productId: id, shouldDismiss: shouldDismiss):
+      purchaseProduct(withId: id, shouldDismiss: shouldDismiss)
     case .custom(data: let name):
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
@@ -433,10 +442,18 @@ final class PaywallMessageHandler: WebEventDelegate {
     delegate?.eventDidOccur(.initiateRestore)
   }
 
-  private func purchaseProduct(withId id: String) {
+  private func purchaseProduct(
+    withId id: String,
+    shouldDismiss: Bool
+  ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
-    delegate?.eventDidOccur(.initiatePurchase(productId: id))
+    delegate?.eventDidOccur(
+      .initiatePurchase(
+        productId: id,
+        shouldDismiss: shouldDismiss
+      )
+    )
   }
 
   private func handleCustomEvent(_ customEvent: String) {
