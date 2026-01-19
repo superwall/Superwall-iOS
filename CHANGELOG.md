@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.6
+
+### Enhancements
+
+- Adds post purchase actions support.
+
+### Fixes
+
+- Fixes a rare issue where TestFlight products could display in a different currency on the paywall than on Apple's payment sheet.
+
 ## 4.12.5
 
 ### Enhancements

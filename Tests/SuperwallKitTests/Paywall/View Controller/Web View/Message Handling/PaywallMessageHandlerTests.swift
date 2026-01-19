@@ -266,9 +266,12 @@ struct PaywallMessageHandlerTests {
     )
     messageHandler.delegate = delegate
     let productId = "abc"
-    messageHandler.handle(.purchase(productId: productId))
+    messageHandler.handle(.purchase(productId: productId, shouldDismiss: true))
 
-    #expect(delegate.eventDidOccur == .initiatePurchase(productId: productId))
+    #expect(delegate.eventDidOccur == .initiatePurchase(
+      productId: productId,
+      shouldDismiss: true
+    ))
   }
 
   @Test
@@ -385,5 +388,84 @@ struct PaywallMessageHandlerTests {
 
     #expect(fakePermissions.requestedPermissions == [.notification])
     #expect(webView.willHandleJs == true) // Should have sent permission_result back
+  }
+
+  // MARK: - Purchase Message Decoding Tests
+
+  @Test
+  func decodePurchase_noShouldDismiss_defaultsToTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissFalse() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": false
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: false
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": true
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
   }
 }
