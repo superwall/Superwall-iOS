@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.7
+
+### Fixes
+
+- Fixes microphone permission request to prevent App Store Connect warnings.
+
 ## 4.12.6
 
 ### Enhancements

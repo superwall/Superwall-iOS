@@ -5,11 +5,14 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
-import AVFoundation
-
 extension PermissionHandler {
   func checkMicrophonePermission() -> PermissionStatus {
-    return AVAudioSession.sharedInstance().recordPermission.toPermissionStatus
+    let proxy = AudioSessionProxy()
+    let raw = proxy.recordPermission()
+    guard raw >= 0 else {
+      return .unsupported
+    }
+    return raw.toMicrophonePermissionStatus
   }
 
   @MainActor
@@ -22,15 +25,12 @@ extension PermissionHandler {
       return .unsupported
     }
 
-    let currentStatus = checkMicrophonePermission()
-    if currentStatus == .granted {
+    if checkMicrophonePermission() == .granted {
       return .granted
     }
 
-    return await withCheckedContinuation { continuation in
-      AVAudioSession.sharedInstance().requestRecordPermission { granted in
-        continuation.resume(returning: granted ? .granted : .denied)
-      }
-    }
+    let proxy = AudioSessionProxy()
+    let granted = await proxy.requestRecordPermission()
+    return granted ? .granted : .denied
   }
 }
