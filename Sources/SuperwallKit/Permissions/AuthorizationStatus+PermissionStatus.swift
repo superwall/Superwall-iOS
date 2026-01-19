@@ -55,20 +55,6 @@ extension AVAuthorizationStatus {
   }
 }
 
-extension AVAudioSession.RecordPermission {
-  var toPermissionStatus: PermissionStatus {
-    switch self {
-    case .granted:
-      return .granted
-    case .denied,
-      .undetermined:
-      return .denied
-    @unknown default:
-      return .unsupported
-    }
-  }
-}
-
 extension Int {
   var toContactsPermissionStatus: PermissionStatus {
     // CNAuthorizationStatus:
@@ -132,6 +118,21 @@ extension Int {
     case 3:
       return .granted
     case 0, 1, 2:
+      return .denied
+    default:
+      return .unsupported
+    }
+  }
+
+  var toMicrophonePermissionStatus: PermissionStatus {
+    // AVAudioSession.RecordPermission raw values:
+    // 0x756e6474 ('undt') undetermined
+    // 0x64656e79 ('deny') denied
+    // 0x67726e74 ('grnt') granted
+    switch self {
+    case 0x67726e74: // granted
+      return .granted
+    case 0x756e6474, 0x64656e79: // undetermined, denied
       return .denied
     default:
       return .unsupported
