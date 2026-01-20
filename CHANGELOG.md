@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Stop logging `paywallWebviewLoad_timeout` events because they were confusing.
+- Only refreshes terminated webviews once to avoid infinite reloading loops on low RAM devices.
 
 ## 4.12.7
 
