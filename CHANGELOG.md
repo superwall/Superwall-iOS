@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.8
+
+### Fixes
+
+- Stop logging `paywallWebviewLoad_timeout` events because they were confusing.
+
 ## 4.12.7
 
 ### Fixes
