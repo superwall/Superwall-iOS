@@ -131,6 +131,13 @@ extension Superwall {
           receiveValue: { state in
             switch state {
             case .presented(let paywallInfo):
+              // Register custom callback handler if provided
+              if let callbackHandler = handler?.onCustomCallbackHandler {
+                self?.dependencyContainer.customCallbackRegistry.register(
+                  paywallIdentifier: paywallInfo.identifier,
+                  handler: callbackHandler
+                )
+              }
               handler?.onPresentHandler?(paywallInfo)
             case let .willDismiss(paywallInfo, paywallResult):
               if let handler = handler?.onWillDismissHandler {
@@ -143,6 +150,10 @@ extension Superwall {
                 )
               }
             case let .dismissed(paywallInfo, paywallResult):
+              // Unregister custom callback handler
+              self?.dependencyContainer.customCallbackRegistry.unregister(
+                paywallIdentifier: paywallInfo.identifier
+              )
               if let handler = handler?.onDismissHandler {
                 handler(paywallInfo, paywallResult)
               } else {

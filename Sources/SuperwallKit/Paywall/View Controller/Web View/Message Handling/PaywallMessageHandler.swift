@@ -31,6 +31,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
   private let permissionHandler: PermissionHandling
+  private let customCallbackRegistry: CustomCallbackRegistry
 
   struct EnqueuedMessage {
     let name: String
@@ -42,11 +43,13 @@ final class PaywallMessageHandler: WebEventDelegate {
   init(
     receiptManager: ReceiptManager,
     factory: VariablesFactory,
-    permissionHandler: PermissionHandling
+    permissionHandler: PermissionHandling,
+    customCallbackRegistry: CustomCallbackRegistry
   ) {
     self.receiptManager = receiptManager
     self.factory = factory
     self.permissionHandler = permissionHandler
+    self.customCallbackRegistry = customCallbackRegistry
   }
 
   func handle(_ message: PaywallMessage) {
@@ -199,6 +202,14 @@ final class PaywallMessageHandler: WebEventDelegate {
       handleRequestPermission(
         permissionType: permissionType,
         requestId: requestId,
+        paywall: paywall
+      )
+    case let .requestCallback(requestId, name, behavior, variables):
+      handleRequestCallback(
+        requestId: requestId,
+        name: name,
+        behavior: behavior,
+        variables: variables,
         paywall: paywall
       )
     }
@@ -547,5 +558,95 @@ final class PaywallMessageHandler: WebEventDelegate {
         ]
       )
     }
+  }
+
+  // MARK: - Custom Callback Handling
+
+  private func handleRequestCallback(
+    requestId: String,
+    name: String,
+    behavior: CustomCallbackBehavior,
+    variables: JSON?,
+    paywall: Paywall
+  ) {
+    let paywallIdentifier = paywall.identifier
+
+    // Emit the event for listeners
+    delegate?.eventDidOccur(.requestCallback(
+      name: name,
+      behavior: behavior,
+      requestId: requestId,
+      variables: variables
+    ))
+
+    Task {
+      let callbackHandler = customCallbackRegistry.getHandler(paywallIdentifier: paywallIdentifier)
+
+      guard let callbackHandler else {
+        // No handler registered, send failure result
+        Logger.debug(
+          logLevel: .debug,
+          scope: .paywallViewController,
+          message: "No custom callback handler registered for paywall",
+          info: ["paywallIdentifier": paywallIdentifier, "callbackName": name]
+        )
+        await sendCallbackResult(
+          requestId: requestId,
+          name: name,
+          status: .failure,
+          data: nil,
+          paywall: paywall
+        )
+        return
+      }
+
+      // Call the registered handler
+      let callback = CustomCallback(name: name, variables: variables?.dictionaryObject)
+      let result: CustomCallbackResult
+      do {
+        result = await callbackHandler(callback)
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .paywallViewController,
+          message: "Custom callback handler threw error",
+          info: ["callbackName": name],
+          error: error
+        )
+        result = .failure()
+      }
+
+      await sendCallbackResult(
+        requestId: requestId,
+        name: name,
+        status: result.status,
+        data: result.data,
+        paywall: paywall
+      )
+    }
+  }
+
+  nonisolated private func sendCallbackResult(
+    requestId: String,
+    name: String,
+    status: CustomCallbackResultStatus,
+    data: [String: Any]?,
+    paywall: Paywall
+  ) async {
+    var payload: [String: Any] = [
+      "event_name": "callback_result",
+      "request_id": requestId,
+      "name": name,
+      "status": status.rawValue
+    ]
+    if let data {
+      payload["data"] = data
+    }
+
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: [payload]) else {
+      return
+    }
+    let base64Event = jsonData.base64EncodedString()
+    await passMessageToWebView(base64Event)
   }
 }

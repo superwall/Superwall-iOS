@@ -1353,6 +1353,17 @@ extension Superwall: PaywallViewControllerEventDelegate {
         }
       }
       dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
+    case let .requestCallback(name, behavior, requestId, _):
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallViewController,
+        message: "Custom callback requested",
+        info: [
+          "name": name,
+          "behavior": behavior.rawValue,
+          "requestId": requestId
+        ]
+      )
     }
   }
 }
