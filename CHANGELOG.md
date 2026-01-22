@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.12.8
 
+### Enhancements
+
+- Exposes the `introOfferToken` on `StoreProduct` so that those using a PurchaseController can take advantage of the introductory offer eligiblity override.
+
 ### Fixes
 
 - Stop logging `paywallWebviewLoad_timeout` events because they were confusing.

@@ -29,6 +29,24 @@ public typealias SK2Product = StoreKit.Product
 public final class StoreProduct: NSObject, StoreProductType, Sendable {
   let product: StoreProductType
 
+  /// The intro offer eligibility token for this product, if available.
+  ///
+  /// Use this token with StoreKit 2's `.introductoryOfferEligibility(compactJWS:)`
+  /// purchase option to override Apple's automatic eligibility determination.
+  ///
+  /// This property is only populated when purchasing from a Superwall paywall and
+  /// is only applicable on iOS 18.2+.
+  ///
+  /// Example usage in a custom `PurchaseController`:
+  /// ```swift
+  /// #if compiler(>=6.1)
+  /// if let token = product.introOfferToken {
+  ///   options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+  /// }
+  /// #endif
+  /// ```
+  public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
+
   /// A `Set` of ``Entitlements`` associated with the product.
   public var entitlements: Set<Entitlement> {
     product.entitlements
