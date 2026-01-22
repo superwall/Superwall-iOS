@@ -39,11 +39,9 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   ///
   /// Example usage in a custom `PurchaseController`:
   /// ```swift
-  /// #if compiler(>=6.1)
   /// if let token = product.introOfferToken {
   ///   options.insert(.introductoryOfferEligibility(compactJWS: token.token))
   /// }
-  /// #endif
   /// ```
   public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
 
