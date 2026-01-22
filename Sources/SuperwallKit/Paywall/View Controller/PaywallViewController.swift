@@ -621,14 +621,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        Task(priority: .utility) {
-          let webviewTimeout = await InternalSuperwallEvent.PaywallWebviewLoad(
-            state: .timeout,
-            paywallInfo: self.info
-          )
-          await Superwall.shared.track(webviewTimeout)
-        }
-
         UIView.springAnimate(withDuration: 2) {
           self.refreshPaywallButton.alpha = 1.0
           self.exitButton.alpha = 1.0
