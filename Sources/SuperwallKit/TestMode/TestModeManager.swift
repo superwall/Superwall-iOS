@@ -46,7 +46,7 @@ class TestModeManager {
   private(set) var products: [SuperwallProduct] = []
 
   /// Entitlements set via test mode purchases.
-  private(set) var testEntitlementIds: Set<Int> = []
+  private(set) var testEntitlementIds: Set<String> = []
 
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
@@ -103,7 +103,7 @@ class TestModeManager {
   /// Simulates a purchase by adding the product's entitlements.
   func fakePurchase(entitlementIds: [Int]) {
     for id in entitlementIds {
-      testEntitlementIds.insert(id)
+      testEntitlementIds.insert(String(id))
     }
   }
 
@@ -113,7 +113,7 @@ class TestModeManager {
   }
 
   /// Sets entitlements from an entitlement picker selection.
-  func setEntitlements(_ entitlementIds: Set<Int>) {
+  func setEntitlements(_ entitlementIds: Set<String>) {
     testEntitlementIds = entitlementIds
   }
 }

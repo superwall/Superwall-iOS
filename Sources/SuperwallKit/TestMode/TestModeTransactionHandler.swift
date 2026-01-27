@@ -47,7 +47,7 @@ final class TestModeTransactionHandler {
 
       // Set subscription status
       let entitlements = testModeManager.testEntitlementIds.map {
-        Entitlement(id: String($0))
+        Entitlement(id: $0)
       }
       Superwall.shared.subscriptionStatus = .active(Set(entitlements))
 

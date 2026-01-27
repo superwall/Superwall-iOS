@@ -298,7 +298,7 @@ final class TransactionManager {
 
       // Set subscription status based on test entitlements
       let entitlements = testModeManager.testEntitlementIds.map {
-        Entitlement(id: String($0))
+        Entitlement(id: $0)
       }
       if entitlements.isEmpty {
         Superwall.shared.subscriptionStatus = .inactive
