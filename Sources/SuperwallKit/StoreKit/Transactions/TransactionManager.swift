@@ -306,7 +306,7 @@ final class TransactionManager {
         Superwall.shared.subscriptionStatus = .active(Set(entitlements))
       }
 
-      return entitlements.isEmpty ? .failed() : .restored
+      return entitlements.isEmpty ? .failed(nil) : .restored
     }
 
     switch restoreSource {
