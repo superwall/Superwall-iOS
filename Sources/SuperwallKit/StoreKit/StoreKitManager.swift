@@ -10,6 +10,10 @@ actor StoreKitManager {
   var testModeManager: TestModeManager?
 
   private(set) var productsById: [String: StoreProduct] = [:]
+
+  func setProduct(_ product: StoreProduct, forIdentifier identifier: String) {
+    productsById[identifier] = product
+  }
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]

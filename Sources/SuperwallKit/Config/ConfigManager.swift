@@ -649,8 +649,8 @@ class ConfigManager {
           superwallProduct: superwallProduct,
           entitlements: []
         )
-        let storeProduct = StoreProduct(product: testProduct)
-        storeKitManager.productsById[superwallProduct.identifier] = storeProduct
+        let storeProduct = StoreProduct(testProduct: testProduct)
+        await storeKitManager.setProduct(storeProduct, forIdentifier: superwallProduct.identifier)
       }
 
       Logger.debug(
