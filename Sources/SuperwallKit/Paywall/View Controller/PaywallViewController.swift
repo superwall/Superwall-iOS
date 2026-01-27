@@ -1041,6 +1041,15 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
     )
   }
 
+  public func presentationControllerDidDismiss(
+    _ presentationController: UIPresentationController
+  ) {
+    dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+  }
+
   /// Marks that a redeem succeeded while the checkout web view is open.
   /// Cancels any pending transaction abandon tracking.
   func markRedeemInitiated() {
@@ -1294,10 +1303,19 @@ extension PaywallViewController {
     // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
     fetchIntroOfferTokens()
 
-    if willShowSurvey {
-      didDisableSwipeForSurvey = true
+    switch presentationStyle {
+    case .modal, .drawer:
       presentationController?.delegate = self
-      isModalInPresentation = true
+      if willShowSurvey {
+        didDisableSwipeForSurvey = true
+        isModalInPresentation = true
+      }
+    default:
+      if willShowSurvey {
+        didDisableSwipeForSurvey = true
+        presentationController?.delegate = self
+        isModalInPresentation = true
+      }
     }
     addShimmerView(onPresent: true)
 
