@@ -76,7 +76,8 @@ actor StoreKitManager {
 
       var productItems: [Product] = []
       for original in paywall?.products ?? [] {
-        if let id = original.id, let product = testProductsById[id] {
+        let id = original.id
+        if let product = testProductsById[id] {
           productItems.append(
             Product(
               name: original.name,
