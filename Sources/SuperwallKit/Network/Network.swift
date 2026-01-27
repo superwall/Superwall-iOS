@@ -366,10 +366,10 @@ class Network {
   /// The application is inferred from the SDK's public API key.
   ///
   /// - Returns: A response containing all products for this application.
-  func getV2Products() async throws -> V2ProductsResponse {
+  func getSuperwallProducts() async throws -> SuperwallProductsResponse {
     do {
       return try await urlSession.request(
-        .v2Products(),
+        .superwallProducts(),
         data: SuperwallRequestData(factory: factory)
       )
     } catch {

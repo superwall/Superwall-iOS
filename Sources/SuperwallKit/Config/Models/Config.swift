@@ -28,6 +28,7 @@ struct Config: Codable, Equatable {
     }
   }
   var iosAppId: String?
+  var testStoreUsers: [TestStoreUser]?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -82,6 +83,7 @@ struct Config: Codable, Equatable {
     case products = "productsV3"
     case web2appConfig
     case iosAppId
+    case testStoreUsers
   }
 
   init(from decoder: Decoder) throws {
@@ -97,6 +99,7 @@ struct Config: Codable, Equatable {
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
     iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
+    testStoreUsers = try values.decodeIfPresent([TestStoreUser].self, forKey: .testStoreUsers)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })

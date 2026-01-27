@@ -25,6 +25,7 @@ final class TransactionManager {
     & DeviceHelperFactory
     & HasExternalPurchaseControllerFactory
     & RestoreAccessFactory
+    & TestModeManagerFactory
   enum State {
     case observing
     case purchasing(PurchaseSource)
@@ -289,6 +290,25 @@ final class TransactionManager {
       }
     }
 
+    // In test mode, show entitlement picker instead of StoreKit restore
+    let testModeManager = factory.makeTestModeManager()
+    if testModeManager.isTestMode {
+      let handler = TestModeTransactionHandler(testModeManager: testModeManager)
+      await handler.handleRestore()
+
+      // Set subscription status based on test entitlements
+      let entitlements = testModeManager.testEntitlementIds.map {
+        Entitlement(id: String($0))
+      }
+      if entitlements.isEmpty {
+        Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        Superwall.shared.subscriptionStatus = .active(Set(entitlements))
+      }
+
+      return entitlements.isEmpty ? .failed() : .restored
+    }
+
     switch restoreSource {
     case .internal(let paywallViewController):
       paywallViewController.loadingState = .loadingPurchase
@@ -428,6 +448,16 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
+    // In test mode, show the test mode drawer instead of calling StoreKit
+    let testModeManager = factory.makeTestModeManager()
+    if testModeManager.isTestMode {
+      let handler = TestModeTransactionHandler(testModeManager: testModeManager)
+      return await handler.handlePurchase(
+        product: product,
+        purchaseSource: purchaseSource
+      )
+    }
+
     // Attach intro offer token if available from the paywall
     if case .internal(_, let paywallViewController, _) = purchaseSource {
       product.introOfferToken = await paywallViewController

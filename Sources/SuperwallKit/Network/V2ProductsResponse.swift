@@ -1,5 +1,5 @@
 //
-//  V2ProductsResponse.swift
+//  SuperwallProductsResponse.swift
 //  Superwall
 //
 //  Created by Claude on 2026-01-26.
@@ -7,14 +7,14 @@
 
 import Foundation
 
-/// Response from the /v2/products endpoint containing a list of products.
-struct V2ProductsResponse: Decodable {
+/// Response from the /v1/products endpoint containing a list of products.
+struct SuperwallProductsResponse: Decodable {
   /// The list of products.
-  let data: [V2Product]
+  let data: [SuperwallProduct]
 }
 
-/// A product from the Superwall catalog (v2 API).
-public struct V2Product: Decodable, Sendable {
+/// A product from the Superwall catalog.
+public struct SuperwallProduct: Decodable, Sendable {
   /// The unique identifier for the product.
   public let id: Int
 
@@ -31,13 +31,13 @@ public struct V2Product: Decodable, Sendable {
   public let name: String?
 
   /// The platform this product is for.
-  public let platform: V2ProductPlatform
+  public let platform: SuperwallProductPlatform
 
   /// The price of the product.
-  public let price: V2ProductPrice?
+  public let price: SuperwallProductPrice?
 
   /// Subscription details if this is a subscription product.
-  public let subscription: V2ProductSubscription?
+  public let subscription: SuperwallProductSubscription?
 
   /// The entitlement IDs associated with this product.
   public let entitlements: [Int]
@@ -51,16 +51,19 @@ public struct V2Product: Decodable, Sendable {
   /// Arbitrary metadata associated with the product.
   public let metadata: [String: AnyCodable]?
 
+  /// The storefront country code for pricing (e.g., "USA").
+  public let storefront: String?
+
   enum CodingKeys: String, CodingKey {
     case id, object, application, identifier, name, platform
-    case price, subscription, entitlements, metadata
+    case price, subscription, entitlements, metadata, storefront
     case createdAt = "created_at"
     case updatedAt = "updated_at"
   }
 }
 
 /// The platform a product is available on.
-public enum V2ProductPlatform: String, Decodable, Sendable {
+public enum SuperwallProductPlatform: String, Decodable, Sendable {
   case ios
   case android
   case stripe
@@ -68,7 +71,7 @@ public enum V2ProductPlatform: String, Decodable, Sendable {
 }
 
 /// Price information for a product.
-public struct V2ProductPrice: Decodable, Sendable {
+public struct SuperwallProductPrice: Decodable, Sendable {
   /// The price amount in cents.
   public let amount: Int
 
@@ -77,9 +80,9 @@ public struct V2ProductPrice: Decodable, Sendable {
 }
 
 /// Subscription details for a product.
-public struct V2ProductSubscription: Decodable, Sendable {
+public struct SuperwallProductSubscription: Decodable, Sendable {
   /// The subscription period unit.
-  public let period: V2SubscriptionPeriod
+  public let period: SuperwallSubscriptionPeriod
 
   /// The number of periods in each billing cycle.
   public let periodCount: Int
@@ -88,7 +91,7 @@ public struct V2ProductSubscription: Decodable, Sendable {
   public let trialPeriodDays: Int?
 
   /// Introductory offer details, if any.
-  public let introductoryOffer: V2IntroductoryOffer?
+  public let introductoryOffer: SuperwallIntroductoryOffer?
 
   enum CodingKeys: String, CodingKey {
     case period
@@ -99,7 +102,7 @@ public struct V2ProductSubscription: Decodable, Sendable {
 }
 
 /// The unit of a subscription period.
-public enum V2SubscriptionPeriod: String, Decodable, Sendable {
+public enum SuperwallSubscriptionPeriod: String, Decodable, Sendable {
   case day
   case week
   case month
@@ -107,9 +110,9 @@ public enum V2SubscriptionPeriod: String, Decodable, Sendable {
 }
 
 /// Introductory offer details.
-public struct V2IntroductoryOffer: Decodable, Sendable {
+public struct SuperwallIntroductoryOffer: Decodable, Sendable {
   /// The type of introductory offer.
-  public let type: V2IntroOfferType
+  public let type: SuperwallIntroOfferType
 
   /// The duration of the offer in days.
   public let durationDays: Int
@@ -121,7 +124,7 @@ public struct V2IntroductoryOffer: Decodable, Sendable {
 }
 
 /// The type of introductory offer.
-public enum V2IntroOfferType: String, Decodable, Sendable {
+public enum SuperwallIntroOfferType: String, Decodable, Sendable {
   case freeTrial = "free_trial"
   case payAsYouGo = "pay_as_you_go"
   case payUpFront = "pay_up_front"

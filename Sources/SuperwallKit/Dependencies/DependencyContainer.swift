@@ -41,6 +41,7 @@ final class DependencyContainer {
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
+  var testModeManager: TestModeManager!
   let permissionHandler = PermissionHandler()
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
@@ -149,6 +150,17 @@ final class DependencyContainer {
       }
     }
 
+    testModeManager = TestModeManager(
+      identityManager: identityManager,
+      deviceHelper: deviceHelper
+    )
+
+    deviceHelper.testModeManager = testModeManager
+
+    Task {
+      await storeKitManager.setTestModeManager(testModeManager)
+    }
+
     appSessionManager = AppSessionManager(
       configManager: configManager,
       identityManager: identityManager,
@@ -206,6 +218,13 @@ extension DependencyContainer: TransactionManagerFactory {
   }
 }
 
+// MARK: - TestModeManagerFactory
+extension DependencyContainer: TestModeManagerFactory {
+  func makeTestModeManager() -> TestModeManager {
+    return testModeManager
+  }
+}
+
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
@@ -230,6 +249,9 @@ extension DependencyContainer: DeviceHelperFactory {
   }
 
   func makeIsSandbox() -> Bool {
+    if testModeManager.isTestMode {
+      return true
+    }
     return deviceHelper.isSandbox == "true"
   }
 

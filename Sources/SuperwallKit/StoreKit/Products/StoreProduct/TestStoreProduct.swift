@@ -9,17 +9,17 @@
 import Foundation
 import StoreKit
 
-/// A `StoreProductType` backed by a `V2Product` from the Superwall API.
+/// A `StoreProductType` backed by a `SuperwallProduct` from the Superwall API.
 ///
 /// Used for test store products that are not fetched from StoreKit.
 struct TestStoreProduct: StoreProductType {
-  let v2Product: V2Product
+  let superwallProduct: SuperwallProduct
   let entitlements: Set<Entitlement>
 
   private let priceFormatterProvider = PriceFormatterProvider()
 
   private var subscriptionUnit: SubscriptionPeriod.Unit? {
-    guard let sub = v2Product.subscription else { return nil }
+    guard let sub = superwallProduct.subscription else { return nil }
     switch sub.period {
     case .day: return .day
     case .week: return .week
@@ -29,15 +29,15 @@ struct TestStoreProduct: StoreProductType {
   }
 
   private var subscriptionValue: Int {
-    v2Product.subscription?.periodCount ?? 0
+    superwallProduct.subscription?.periodCount ?? 0
   }
 
   var productIdentifier: String {
-    v2Product.identifier
+    superwallProduct.identifier
   }
 
   var price: Decimal {
-    guard let amount = v2Product.price?.amount else { return 0 }
+    guard let amount = superwallProduct.price?.amount else { return 0 }
     // amount is in cents
     return Decimal(amount) / 100
   }
@@ -45,12 +45,12 @@ struct TestStoreProduct: StoreProductType {
   var localizedPrice: String {
     let formatter = NumberFormatter()
     formatter.numberStyle = .currency
-    formatter.currencyCode = v2Product.price?.currency.uppercased() ?? "USD"
+    formatter.currencyCode = superwallProduct.price?.currency.uppercased() ?? "USD"
     return formatter.string(from: NSDecimalNumber(decimal: price)) ?? "$\(price)"
   }
 
   var currencyCode: String? {
-    v2Product.price?.currency.uppercased()
+    superwallProduct.price?.currency.uppercased()
   }
 
   var currencySymbol: String? {
@@ -237,12 +237,12 @@ struct TestStoreProduct: StoreProductType {
   // MARK: - Trial
 
   var hasFreeTrial: Bool {
-    guard let trialDays = v2Product.subscription?.trialPeriodDays else { return false }
+    guard let trialDays = superwallProduct.subscription?.trialPeriodDays else { return false }
     return trialDays > 0
   }
 
   var trialPeriodEndDate: Date? {
-    guard let trialDays = v2Product.subscription?.trialPeriodDays, trialDays > 0 else {
+    guard let trialDays = superwallProduct.subscription?.trialPeriodDays, trialDays > 0 else {
       return nil
     }
     return Calendar.current.date(byAdding: .day, value: trialDays, to: Date())
@@ -268,7 +268,7 @@ struct TestStoreProduct: StoreProductType {
   }
 
   var trialPeriodDays: Int {
-    v2Product.subscription?.trialPeriodDays ?? 0
+    superwallProduct.subscription?.trialPeriodDays ?? 0
   }
 
   var trialPeriodDaysString: String { "\(trialPeriodDays)" }
@@ -326,7 +326,7 @@ struct TestStoreProduct: StoreProductType {
 extension SWProduct {
   init(product: TestStoreProduct) {
     localizedDescription = ""
-    localizedTitle = product.v2Product.name ?? ""
+    localizedTitle = product.superwallProduct.name ?? ""
     price = product.price
     priceLocale = product.locale
     productIdentifier = product.productIdentifier

@@ -396,10 +396,10 @@ extension Endpoint where
 // MARK: - V2 Products
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
-  Response == V2ProductsResponse {
+  Response == SuperwallProductsResponse {
   /// Fetches all products from the subscriptions API.
   /// The application is inferred from the SDK's public API key.
-  static func v2Products() -> Self {
+  static func superwallProducts() -> Self {
     return Endpoint(
       components: Components(
         host: .web2app,

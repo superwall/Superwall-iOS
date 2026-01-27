@@ -51,6 +51,8 @@ class ConfigManager {
     & AudienceFilterAttributesFactory
     & ReceiptFactory
     & DeviceHelperFactory
+    & TestModeManagerFactory
+    & HasExternalPurchaseControllerFactory
   private let factory: Factory
 
   init(
@@ -394,12 +396,26 @@ class ConfigManager {
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
 
-    await factory.loadPurchasedProducts(config: config)
+    // Evaluate test mode before loading products
+    let testModeManager = factory.makeTestModeManager()
+    testModeManager.evaluateTestMode(config: config)
+
+    if testModeManager.isTestMode {
+      // In test mode, fetch products from API instead of StoreKit
+      await fetchTestModeProducts(testModeManager: testModeManager)
+    } else {
+      await factory.loadPurchasedProducts(config: config)
+    }
+
     Task {
       await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
     }
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
+
+      if testModeManager.isTestMode, let reason = testModeManager.testModeReason {
+        await presentTestModeColdLaunchAlert(reason: reason)
+      }
     }
   }
 
@@ -618,5 +634,55 @@ class ConfigManager {
       paywallCount: paywallCount
     )
     await Superwall.shared.track(preloadComplete)
+  }
+
+  // MARK: - Test Mode
+
+  private func fetchTestModeProducts(testModeManager: TestModeManager) async {
+    do {
+      let response = try await network.getSuperwallProducts()
+      testModeManager.setProducts(response.data)
+
+      // Also populate storeKitManager.productsById with test products
+      for superwallProduct in response.data {
+        let testProduct = TestStoreProduct(
+          superwallProduct: superwallProduct,
+          entitlements: []
+        )
+        let storeProduct = StoreProduct(product: testProduct)
+        storeKitManager.productsById[superwallProduct.identifier] = storeProduct
+      }
+
+      Logger.debug(
+        logLevel: .info,
+        scope: .superwallCore,
+        message: "Test mode: loaded \(response.data.count) products from API"
+      )
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "Test mode: failed to fetch products",
+        error: error
+      )
+    }
+  }
+
+  @MainActor
+  private func presentTestModeColdLaunchAlert(reason: TestModeReason) {
+    guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let rootVC = windowScene.windows.first?.rootViewController else {
+      return
+    }
+
+    let userId = factory.makeTestModeManager().identityManager.userId
+    let hasPurchaseController = factory.makeHasExternalPurchaseController()
+
+    TestModeColdLaunchAlert.present(
+      reason: reason,
+      userId: userId,
+      hasPurchaseController: hasPurchaseController,
+      from: rootVC
+    )
   }
 }
