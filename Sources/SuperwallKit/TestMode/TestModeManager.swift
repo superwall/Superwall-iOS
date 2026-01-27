@@ -91,6 +91,15 @@ class TestModeManager {
       }
     }
 
+    // Check bundle ID mismatch
+    if let expectedBundleId = config.bundleIdConfig,
+       let actualBundleId = Bundle.main.bundleIdentifier,
+       expectedBundleId != actualBundleId {
+      isTestMode = true
+      testModeReason = .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
+      return
+    }
+
     isTestMode = false
     testModeReason = nil
   }
