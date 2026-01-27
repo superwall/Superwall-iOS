@@ -176,8 +176,18 @@ class DeviceHelper {
     return Bundle.main.bundleIdentifier ?? ""
   }()
 
-  /// Returns true if built for the simulator or using TestFlight.
-  let isSandbox: String = {
+  /// Set after initialization to enable test mode sandbox override.
+  var testModeManager: TestModeManager?
+
+  /// Returns true if built for the simulator, using TestFlight, or in test mode.
+  var isSandbox: String {
+    if testModeManager?.isTestMode == true {
+      return "true"
+    }
+    return Self.detectSandbox()
+  }
+
+  private static func detectSandbox() -> String {
     #if targetEnvironment(simulator)
       return "true"
     #else
@@ -188,7 +198,7 @@ class DeviceHelper {
 
     return "\(url.path.contains("sandboxReceipt"))"
     #endif
-  }()
+  }
 
   /// The first URL scheme defined in the Info.plist. Assumes there's only one.
   let urlScheme: String = {

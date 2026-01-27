@@ -7,8 +7,13 @@ import Combine
 actor StoreKitManager {
   /// Retrieves products from storekit.
   private let productsManager: ProductsManager
+  var testModeManager: TestModeManager?
 
   private(set) var productsById: [String: StoreProduct] = [:]
+
+  func setProduct(_ product: StoreProduct, forIdentifier identifier: String) {
+    productsById[identifier] = product
+  }
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
@@ -17,6 +22,10 @@ actor StoreKitManager {
 
   init(productsManager: ProductsManager) {
     self.productsManager = productsManager
+  }
+
+  func setTestModeManager(_ manager: TestModeManager) {
+    self.testModeManager = manager
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -58,6 +67,37 @@ actor StoreKitManager {
     productsById: [String: StoreProduct],
     productItems: [Product]
   ) {
+    // In test mode, use cached test products instead of fetching from StoreKit
+    if testModeManager?.isTestMode == true {
+      var testProductsById: [String: StoreProduct] = [:]
+      for (id, product) in productsById {
+        testProductsById[id] = product
+      }
+
+      var productItems: [Product] = []
+      for original in paywall?.products ?? [] {
+        let id = original.id
+        if let product = testProductsById[id] {
+          productItems.append(
+            Product(
+              name: original.name,
+              type: original.type,
+              id: id,
+              entitlements: product.entitlements
+            )
+          )
+        } else {
+          productItems.append(original)
+        }
+      }
+
+      testProductsById.forEach { id, product in
+        self.productsById[id] = product
+      }
+
+      return (testProductsById, productItems)
+    }
+
     // 1. Compute fetch IDs = paywall IDs - byProduct IDs + byId IDs
     let paywallIDs = Set(paywall?.appStoreProductIds ?? [])
     let byIdIDs: Set<String> = Set(substituteProductsByLabel?.values.compactMap {

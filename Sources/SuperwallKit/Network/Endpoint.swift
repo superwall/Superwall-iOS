@@ -392,3 +392,20 @@ extension Endpoint where
     )
   }
 }
+
+// MARK: - V2 Products
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
+  Response == SuperwallProductsResponse {
+  /// Fetches all products from the subscriptions API.
+  /// The application is inferred from the SDK's public API key.
+  static func superwallProducts() -> Self {
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "products"
+      ),
+      method: .get
+    )
+  }
+}
