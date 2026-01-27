@@ -361,4 +361,25 @@ class Network {
       data: SuperwallRequestData(factory: factory)
     ).tokensByProductId
   }
+
+  /// Fetches all products from the subscriptions API.
+  /// The application is inferred from the SDK's public API key.
+  ///
+  /// - Returns: A response containing all products for this application.
+  func getV2Products() async throws -> V2ProductsResponse {
+    do {
+      return try await urlSession.request(
+        .v2Products(),
+        data: SuperwallRequestData(factory: factory)
+      )
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /v1/products",
+        error: error
+      )
+      throw error
+    }
+  }
 }
