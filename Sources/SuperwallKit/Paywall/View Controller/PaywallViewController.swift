@@ -1310,8 +1310,9 @@ extension PaywallViewController {
 
     switch presentationStyle {
     case .modal, .drawer:
+      let shouldShowSurvey = willShowSurvey
       presentationController?.delegate = self
-      if willShowSurvey {
+      if shouldShowSurvey {
         didDisableSwipeForSurvey = true
         isModalInPresentation = true
       }
