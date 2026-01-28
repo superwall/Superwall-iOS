@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.9
+
+### Fixes
+
+- Updates Superscript version to 1.0.13. This fixes an issue with String and Int comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.13).
+- Fixes an issue where dismissing a modally presented paywall didn't fire `paywall_decline`.
+
 ## 4.12.8
 
 ### Enhancements
