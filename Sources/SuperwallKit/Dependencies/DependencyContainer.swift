@@ -42,6 +42,7 @@ final class DependencyContainer {
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
   let permissionHandler = PermissionHandler()
+  let customCallbackRegistry = CustomCallbackRegistry()
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -266,7 +267,8 @@ extension DependencyContainer: ViewControllerFactory {
     let messageHandler = PaywallMessageHandler(
       receiptManager: receiptManager,
       factory: self,
-      permissionHandler: permissionHandler
+      permissionHandler: permissionHandler,
+      customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: deviceHelper.isMac,

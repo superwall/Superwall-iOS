@@ -39,6 +39,9 @@ public final class PaywallPresentationHandler: NSObject {
   /// An objective-c only block called when an error occurred while trying to present a paywall.
   var onSkipHandlerObjc: ((PaywallSkippedReasonObjc) -> Void)?
 
+  /// A block called when the paywall requests a custom callback.
+  var onCustomCallbackHandler: ((CustomCallback) async -> CustomCallbackResult)?
+
   /// Sets the handler that will be called when the paywall did present.
   ///
   /// - Parameter handler: A block that accepts a ``PaywallInfo`` object associated with
@@ -110,5 +113,16 @@ public final class PaywallPresentationHandler: NSObject {
   @available(swift, obsoleted: 1.0)
   public func onSkip(_ handler: @escaping (PaywallSkippedReasonObjc) -> Void) {
     self.onSkipHandlerObjc = handler
+  }
+
+  /// Sets the handler that will be called when the paywall requests a custom callback.
+  ///
+  /// Use this to handle custom callbacks from your paywall. The callback receives a ``CustomCallback``
+  /// object containing the callback name and any variables, and should return a ``CustomCallbackResult``
+  /// indicating success or failure.
+  ///
+  /// - Parameter handler: An async block that accepts a ``CustomCallback`` and returns a ``CustomCallbackResult``.
+  public func onCustomCallback(_ handler: @escaping (CustomCallback) async -> CustomCallbackResult) {
+    self.onCustomCallbackHandler = handler
   }
 }
