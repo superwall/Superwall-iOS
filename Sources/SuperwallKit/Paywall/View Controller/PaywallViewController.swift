@@ -1044,6 +1044,11 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
   public func presentationControllerDidDismiss(
     _ presentationController: UIPresentationController
   ) {
+    // Guard against double-dismiss: if didAttemptToDismiss already
+    // triggered our dismiss(), closeReason will already be set.
+    guard paywall.closeReason == .none else {
+      return
+    }
     dismiss(
       result: .declined,
       closeReason: .manualClose
