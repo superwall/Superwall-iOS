@@ -468,4 +468,81 @@ struct PaywallMessageHandlerTests {
       shouldDismiss: true
     ))
   }
+
+  // MARK: - Haptic Feedback Message Decoding Tests
+
+  @Test
+  func decodeHapticFeedback_medium() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "haptic_feedback",
+            "haptic_type": "medium"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .hapticFeedback(hapticType: "medium"))
+  }
+
+  @Test
+  func decodeHapticFeedback_allTypes() throws {
+    let hapticTypes = ["light", "medium", "heavy", "success", "warning", "error", "selection"]
+
+    for hapticType in hapticTypes {
+      let json = """
+      {
+        "version": 1,
+        "payload": {
+          "events": [
+            {
+              "event_name": "haptic_feedback",
+              "haptic_type": "\(hapticType)"
+            }
+          ]
+        }
+      }
+      """
+      let data = json.data(using: .utf8)!
+      let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+      let message = wrapped.payload.messages.first
+
+      #expect(message == .hapticFeedback(hapticType: hapticType))
+    }
+  }
+
+  @Test
+  func handleHapticFeedback() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler()
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    // This should not crash and should not trigger any delegate events
+    messageHandler.handle(.hapticFeedback(hapticType: "medium"))
+
+    // Haptic feedback doesn't trigger delegate events, so we just verify it doesn't crash
+    #expect(delegate.eventDidOccur == nil)
+  }
 }
