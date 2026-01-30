@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds native haptic feedback support for paywall buttons. Haptic types can be configured in the paywall editor and include light, medium, heavy, success, warning, error, and selection.
 
+### Fixes
+
+- Fixes issue where the `app_install` event was being cleared upon reset, which meant that this couldn't be used with `device.daysSince_app_install` after reset.
+
 ## 4.12.9
 
 ### Fixes
