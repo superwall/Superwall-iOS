@@ -591,6 +591,65 @@ class CoreDataManagerTests: XCTestCase {
     XCTAssertEqual(count, 0)
   }
 
+  // MARK: - Delete All Entities Preserves App-Level Events
+
+  func test_deleteAllEntities_preservesAppLevelEvents() async {
+    // Save app-level events
+    let appInstallData = PlacementData.stub()
+      .setting(\.name, to: "app_install")
+      .setting(\.createdAt, to: Date())
+
+    let appLaunchData = PlacementData.stub()
+      .setting(\.name, to: "app_launch")
+      .setting(\.createdAt, to: Date())
+
+    // Save a user-level event that should be deleted
+    let userEventData = PlacementData.stub()
+      .setting(\.name, to: "paywall_decline")
+      .setting(\.createdAt, to: Date())
+
+    let saveExpectation = expectation(description: "Saved events")
+    saveExpectation.expectedFulfillmentCount = 3
+
+    coreDataManager.savePlacementData(appInstallData) { _ in
+      saveExpectation.fulfill()
+    }
+    coreDataManager.savePlacementData(appLaunchData) { _ in
+      saveExpectation.fulfill()
+    }
+    coreDataManager.savePlacementData(userEventData) { _ in
+      saveExpectation.fulfill()
+    }
+    await fulfillment(of: [saveExpectation], timeout: 2.0)
+
+    // Delete all entities
+    let deleteExpectation = expectation(description: "Deleted entities")
+    coreDataManager.deleteAllEntities {
+      deleteExpectation.fulfill()
+    }
+    await fulfillment(of: [deleteExpectation], timeout: 2.0)
+
+    // Verify app-level events are preserved
+    let appInstallCount = await coreDataManager.countPlacement(
+      "app_install",
+      interval: .infinity
+    )
+    XCTAssertEqual(appInstallCount, 1, "app_install should be preserved after deleteAllEntities")
+
+    let appLaunchCount = await coreDataManager.countPlacement(
+      "app_launch",
+      interval: .infinity
+    )
+    XCTAssertEqual(appLaunchCount, 1, "app_launch should be preserved after deleteAllEntities")
+
+    // Verify user-level events are deleted
+    let userEventCount = await coreDataManager.countPlacement(
+      "paywall_decline",
+      interval: .infinity
+    )
+    XCTAssertEqual(userEventCount, 0, "paywall_decline should be deleted after deleteAllEntities")
+  }
+
   func test_countPlacement_concurrent_access() async {
         
     let placementName = "concurrent_test"

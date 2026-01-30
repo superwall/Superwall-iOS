@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.10
+
+### Fixes
+
+- Fixes issue where the `app_install` event was being cleared upon reset, which meant that this couldn't be used with `device.daysSince_app_install` after reset.
+
 ## 4.12.9
 
 ### Fixes
