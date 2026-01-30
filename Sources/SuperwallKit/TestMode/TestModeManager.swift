@@ -62,13 +62,13 @@ class TestModeManager {
   /// Evaluates whether the current user should be in test mode based on the config.
   /// Called on every config refresh.
   func evaluateTestMode(config: Config) {
-    let testStoreUsers = config.testStoreUsers ?? []
+    let testModeUserIds = config.testModeUserIds ?? []
 
     // Check if current user matches any test store user
     let aliasId = identityManager.aliasId
     let appUserId = identityManager.appUserId
 
-    for testUser in testStoreUsers {
+    for testUser in testModeUserIds {
       switch testUser.type {
       case .userId:
         if let appUserId, appUserId == testUser.value {
@@ -93,8 +93,8 @@ class TestModeManager {
 
     // Check bundle ID mismatch
     if let expectedBundleId = config.bundleIdConfig,
-       let actualBundleId = Bundle.main.bundleIdentifier,
-       expectedBundleId != actualBundleId {
+      let actualBundleId = Bundle.main.bundleIdentifier,
+      expectedBundleId != actualBundleId {
       isTestMode = true
       testModeReason = .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
       return
