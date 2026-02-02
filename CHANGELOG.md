@@ -2,7 +2,28 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.10
+
+### Enhancements
+
+- Adds native haptic feedback support for paywall buttons. Haptic types can be configured in the paywall editor and include light, medium, heavy, success, warning, error, and selection.
+
+### Fixes
+
+- Fixes issue where the `app_install` event was being cleared upon reset, which meant that this couldn't be used with `device.daysSince_app_install` after reset.
+
+## 4.12.9
+
+### Fixes
+
+- Updates Superscript version to 1.0.13. This fixes an issue with String and Int comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.13).
+- Fixes an issue where dismissing a modally presented paywall didn't fire `paywall_decline`.
+
 ## 4.12.8
+
+### Enhancements
+
+- Exposes the `introOfferToken` on `StoreProduct` so that those using a PurchaseController can take advantage of the introductory offer eligiblity override.
 
 ### Fixes
 

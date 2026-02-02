@@ -64,6 +64,7 @@ enum PaywallMessage: Decodable, Equatable {
     behavior: CustomCallbackBehavior,
     variables: JSON?
   )
+  case hapticFeedback(hapticType: String)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -105,6 +106,7 @@ enum PaywallMessage: Decodable, Equatable {
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
     case requestCallback = "request_callback"
+    case hapticFeedback = "haptic_feedback"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -132,6 +134,7 @@ enum PaywallMessage: Decodable, Equatable {
     case requestId
     case behavior
     case variables
+    case hapticType
   }
 
   enum PaywallMessageError: Error {
@@ -241,6 +244,9 @@ enum PaywallMessage: Decodable, Equatable {
             behavior: behavior,
             variables: variables
           )
+      case .hapticFeedback:
+        if let hapticType = try? values.decode(String.self, forKey: .hapticType) {
+          self = .hapticFeedback(hapticType: hapticType)
           return
         }
       }

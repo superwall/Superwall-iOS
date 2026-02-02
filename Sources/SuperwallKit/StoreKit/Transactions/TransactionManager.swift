@@ -428,6 +428,13 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
+    // Attach intro offer token if available from the paywall
+    if case .internal(_, let paywallViewController, _) = purchaseSource {
+      product.introOfferToken = await paywallViewController
+        .introOfferTokenManager
+        .getValidToken(for: product.productIdentifier)
+    }
+
     switch purchaseSource {
     case .internal:
       return await purchaseController.purchase(product: product)
