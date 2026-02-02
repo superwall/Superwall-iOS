@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds native haptic feedback support for paywall buttons. Haptic types can be configured in the paywall editor and include light, medium, heavy, success, warning, error, and selection.
-- Adds `custom handler` action support allowing you to request notification, location, photos, contacts, and camera permissions from paywalls.
+- Adds `custom callback` action support allowing you to perform an async action and send the result back to the paywall.
 
 ### Fixes
 
