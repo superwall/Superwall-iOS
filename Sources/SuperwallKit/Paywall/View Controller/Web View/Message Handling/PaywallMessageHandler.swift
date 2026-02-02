@@ -642,19 +642,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
       // Call the registered handler
       let callback = CustomCallback(name: name, variables: variables?.dictionaryObject)
-      let result: CustomCallbackResult
-      do {
-        result = await callbackHandler(callback)
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .paywallViewController,
-          message: "Custom callback handler threw error",
-          info: ["callbackName": name],
-          error: error
-        )
-        result = .failure()
-      }
+      let result = await callbackHandler(callback)
 
       await sendCallbackResult(
         requestId: requestId,

@@ -128,7 +128,7 @@ extension Superwall {
       .subscribe(
         Subscribers.Sink(
           receiveCompletion: { _ in },
-          receiveValue: { state in
+          receiveValue: { [weak self] state in
             switch state {
             case .presented(let paywallInfo):
               // Register custom callback handler if provided
