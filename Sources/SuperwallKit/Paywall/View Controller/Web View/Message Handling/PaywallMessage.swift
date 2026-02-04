@@ -244,6 +244,7 @@ enum PaywallMessage: Decodable, Equatable {
             behavior: behavior,
             variables: variables
           )
+          return
         }
       case .hapticFeedback:
         if let hapticType = try? values.decode(String.self, forKey: .hapticType) {
