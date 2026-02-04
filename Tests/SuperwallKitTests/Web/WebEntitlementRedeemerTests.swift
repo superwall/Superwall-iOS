@@ -260,7 +260,8 @@ struct WebEntitlementRedeemerTests {
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -390,7 +391,8 @@ struct WebEntitlementRedeemerTests {
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -908,7 +910,8 @@ struct WebEntitlementRedeemerTests {
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -1062,7 +1065,8 @@ struct WebEntitlementRedeemerTests {
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
