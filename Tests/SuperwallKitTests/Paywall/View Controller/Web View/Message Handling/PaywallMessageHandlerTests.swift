@@ -18,7 +18,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -44,7 +45,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -71,7 +73,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -95,7 +98,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -121,7 +125,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -147,7 +152,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -174,7 +180,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -201,7 +208,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -228,7 +236,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -252,7 +261,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -280,7 +290,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -305,7 +316,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -333,7 +345,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: fakePermissions
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -367,7 +380,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: fakePermissions
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -525,7 +539,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
