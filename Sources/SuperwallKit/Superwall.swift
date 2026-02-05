@@ -1289,6 +1289,7 @@ public final class Superwall: NSObject, ObservableObject {
 // MARK: - PaywallViewControllerDelegate
 extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
+  // swiftlint:disable:next function_body_length
   func eventDidOccur(
     _ paywallEvent: PaywallWebEvent,
     on paywallViewController: PaywallViewController
@@ -1353,6 +1354,17 @@ extension Superwall: PaywallViewControllerEventDelegate {
         }
       }
       dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
+    case let .requestCallback(name, behavior, requestId, _):
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallViewController,
+        message: "Custom callback requested",
+        info: [
+          "name": name,
+          "behavior": behavior.rawValue,
+          "requestId": requestId
+        ]
+      )
     }
   }
 }

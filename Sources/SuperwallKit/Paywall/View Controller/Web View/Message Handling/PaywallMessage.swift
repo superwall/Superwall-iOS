@@ -58,6 +58,13 @@ enum PaywallMessage: Decodable, Equatable {
   case initiateWebCheckout(contextId: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
+  case requestCallback(
+    requestId: String,
+    name: String,
+    behavior: CustomCallbackBehavior,
+    variables: JSON?
+  )
+  case hapticFeedback(hapticType: String)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -98,6 +105,8 @@ enum PaywallMessage: Decodable, Equatable {
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
+    case requestCallback = "request_callback"
+    case hapticFeedback = "haptic_feedback"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -123,6 +132,9 @@ enum PaywallMessage: Decodable, Equatable {
     case delay
     case permissionType
     case requestId
+    case behavior
+    case variables
+    case hapticType
   }
 
   enum PaywallMessageError: Error {
@@ -219,6 +231,24 @@ enum PaywallMessage: Decodable, Equatable {
         if let permissionType = try? values.decode(PermissionType.self, forKey: .permissionType),
           let requestId = try? values.decode(String.self, forKey: .requestId) {
           self = .requestPermission(permissionType: permissionType, requestId: requestId)
+          return
+        }
+      case .requestCallback:
+        if let requestId = try? values.decode(String.self, forKey: .requestId),
+          let name = try? values.decode(String.self, forKey: .name),
+          let behavior = try? values.decode(CustomCallbackBehavior.self, forKey: .behavior) {
+          let variables = try? values.decode(JSON.self, forKey: .variables)
+          self = .requestCallback(
+            requestId: requestId,
+            name: name,
+            behavior: behavior,
+            variables: variables
+          )
+          return
+        }
+      case .hapticFeedback:
+        if let hapticType = try? values.decode(String.self, forKey: .hapticType) {
+          self = .hapticFeedback(hapticType: hapticType)
           return
         }
       }

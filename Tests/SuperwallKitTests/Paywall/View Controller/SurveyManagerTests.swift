@@ -23,7 +23,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -68,7 +69,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -114,7 +116,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -159,7 +162,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -204,7 +208,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -249,7 +254,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -300,7 +306,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -354,7 +361,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -405,7 +413,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -461,7 +470,8 @@ final class SurveyManagerTests: XCTestCase {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
