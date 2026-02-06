@@ -129,6 +129,20 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// The base URL for the Superwall dashboard.
+    var dashboardBaseUrl: String {
+      switch self {
+      case .release, .releaseCandidate:
+        return "https://superwall.com"
+      case .developer:
+        return "https://superwall.dev"
+      case .local:
+        return "http://localhost:3000"
+      case .custom(let domain):
+        return domain
+      }
+    }
+
     var collectorHost: String {
       switch self {
       case .local:
@@ -157,7 +171,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var web2AppHost: String {
       switch self {
-      case .developer:
+      case .developer,
+        .custom:
         return "subscriptions-api.superwall.dev"
       case .local:
         return "localhost:3045"

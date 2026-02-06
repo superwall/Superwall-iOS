@@ -19,6 +19,5 @@ struct TestStoreUser: Codable, Equatable, Sendable {
 /// The type of identifier used for test store user matching.
 enum TestStoreUserType: String, Codable, Equatable, Sendable {
   case userId
-  case vendorId
   case aliasId
 }

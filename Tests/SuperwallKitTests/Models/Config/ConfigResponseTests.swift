@@ -546,6 +546,12 @@ let response = #"""
         }
       ]
     }
+  ],
+  "test_mode_user_ids": [
+    {
+      "type": "aliasId",
+      "value": "678"
+    }
   ]
 }
 """#

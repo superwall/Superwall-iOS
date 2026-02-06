@@ -692,7 +692,11 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts(config: nil)
+      // Skip receipt loading in test mode - we've already set the subscription status
+      let testModeManager = factory.makeTestModeManager()
+      if !testModeManager.isTestMode {
+        await receiptManager.loadPurchasedProducts(config: nil)
+      }
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()

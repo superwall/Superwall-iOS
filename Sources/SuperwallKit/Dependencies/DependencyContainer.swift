@@ -153,7 +153,8 @@ final class DependencyContainer {
 
     testModeManager = TestModeManager(
       identityManager: identityManager,
-      deviceHelper: deviceHelper
+      deviceHelper: deviceHelper,
+      storage: storage
     )
 
     deviceHelper.testModeManager = testModeManager
@@ -582,7 +583,26 @@ extension DependencyContainer: ReceiptFactory {
   }
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
+    // Check test mode override first
+    if testModeManager.isTestMode {
+      switch testModeManager.freeTrialOverride {
+      case .useDefault:
+        break
+      case .forceAvailable:
+        return true
+      case .forceUnavailable:
+        return false
+      }
+    }
     return await receiptManager.isFreeTrialAvailable(for: product)
+  }
+
+  var isTestMode: Bool {
+    testModeManager.isTestMode
+  }
+
+  var testModeFreeTrialOverride: FreeTrialOverride {
+    testModeManager.freeTrialOverride
   }
 }
 

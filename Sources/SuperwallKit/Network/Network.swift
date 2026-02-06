@@ -368,10 +368,11 @@ class Network {
   /// - Returns: A response containing all products for this application.
   func getSuperwallProducts() async throws -> SuperwallProductsResponse {
     do {
-      return try await urlSession.request(
+      let response: SuperwallProductsResponse = try await urlSession.request(
         .superwallProducts(),
         data: SuperwallRequestData(factory: factory)
       )
+      return response
     } catch {
       Logger.debug(
         logLevel: .error,

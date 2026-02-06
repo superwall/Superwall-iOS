@@ -59,6 +59,7 @@ actor StoreKitManager {
     return productAttributes
   }
 
+  // swiftlint:disable:next cyclomatic_complexity
   func getProducts(
     forPaywall paywall: Paywall?,
     placement: PlacementData?,

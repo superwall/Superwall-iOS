@@ -28,9 +28,19 @@ final class TestModeTransactionHandler {
       return .failed(PurchaseError.productUnavailable)
     }
 
+    // Find entitlements for this product from test mode products
+    let productEntitlements = testModeManager.products
+      .first { $0.identifier == product.productIdentifier }?
+      .entitlements ?? []
+    let entitlementIds = productEntitlements.map { $0.identifier }
+
+    let showFreeTrial = testModeManager.shouldShowFreeTrial(for: product)
+
     let result = await withCheckedContinuation { (continuation: CheckedContinuation<TestModePurchaseResult, Never>) in
       TestModePurchaseDrawer.present(
-        productIdentifier: product.productIdentifier,
+        product: product,
+        entitlements: entitlementIds,
+        showFreeTrial: showFreeTrial,
         from: viewController
       ) { result in
         continuation.resume(returning: result)
@@ -39,23 +49,53 @@ final class TestModeTransactionHandler {
 
     switch result {
     case .purchased:
-      // Find entitlement IDs for this product from test mode products
-      let entitlementIds = testModeManager.products
-        .first { $0.identifier == product.productIdentifier }?
-        .entitlements ?? []
-      testModeManager.fakePurchase(entitlementIds: entitlementIds)
+      testModeManager.fakePurchase(entitlements: productEntitlements)
 
-      // Set subscription status
+      // Create entitlements with proper state (subscribed since it's a purchase)
       let entitlements = testModeManager.testEntitlementIds.map {
-        Entitlement(id: $0)
+        Entitlement(
+          id: $0,
+          type: .serviceLevel,
+          isActive: true,
+          store: .appStore,
+          state: .subscribed
+        )
       }
-      Superwall.shared.subscriptionStatus = .active(Set(entitlements))
+
+      // Update CustomerInfo with the new entitlements
+      let existingCustomerInfo = Superwall.shared.customerInfo
+      let updatedCustomerInfo = CustomerInfo(
+        subscriptions: existingCustomerInfo.subscriptions,
+        nonSubscriptions: existingCustomerInfo.nonSubscriptions,
+        entitlements: entitlements
+      )
+      Superwall.shared.customerInfo = updatedCustomerInfo
+
+      // Set subscription status based on whether any entitlements are active
+      let entitlementSet = Set(entitlements)
+      let hasActiveEntitlements = entitlements.contains { $0.isActive }
+      if hasActiveEntitlements {
+        Superwall.shared.subscriptionStatus = .active(entitlementSet)
+      } else {
+        Superwall.shared.subscriptionStatus = .inactive
+      }
+
+      // Track free trial start if free trial is shown (respecting override)
+      if showFreeTrial {
+        await Superwall.shared.track(
+          InternalSuperwallEvent.FreeTrialStart(
+            paywallInfo: .empty(),
+            product: product,
+            transaction: nil
+          )
+        )
+      }
 
       return .purchased
     case .abandoned:
       return .cancelled
     case .failed:
-      return .failed(PurchaseError.productUnavailable)
+      return .failed(PurchaseError.testModeFailure)
     }
   }
 
@@ -77,14 +117,43 @@ final class TestModeTransactionHandler {
           continuation.resume()
           return
         }
-        let allEntitlementIds = self.testModeManager.products.flatMap { $0.entitlements }
-        self.testModeManager.fakePurchase(entitlementIds: allEntitlementIds)
+        let allEntitlements = self.testModeManager.products.flatMap { $0.entitlements }
+        self.testModeManager.fakePurchase(entitlements: allEntitlements)
+
+        // Update CustomerInfo and subscription status
+        let entitlements = self.testModeManager.testEntitlementIds.map {
+          Entitlement(
+            id: $0,
+            type: .serviceLevel,
+            isActive: true,
+            store: .appStore,
+            state: .subscribed
+          )
+        }
+        let customerInfo = CustomerInfo(
+          subscriptions: [],
+          nonSubscriptions: [],
+          entitlements: entitlements
+        )
+        Superwall.shared.customerInfo = customerInfo
+        Superwall.shared.subscriptionStatus = .active(Set(entitlements))
+
         continuation.resume()
       }
       alert.addAction(activeAction)
 
       let clearAction = UIAlertAction(title: "No Subscription", style: .default) { [weak self] _ in
         self?.testModeManager.resetEntitlements()
+
+        // Clear CustomerInfo and subscription status
+        let customerInfo = CustomerInfo(
+          subscriptions: [],
+          nonSubscriptions: [],
+          entitlements: []
+        )
+        Superwall.shared.customerInfo = customerInfo
+        Superwall.shared.subscriptionStatus = .inactive
+
         continuation.resume()
       }
       alert.addAction(clearAction)

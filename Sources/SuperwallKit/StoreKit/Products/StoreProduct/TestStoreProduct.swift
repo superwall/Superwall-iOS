@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 2026-01-27.
 //
-// swiftlint:disable type_body_length file_length
+// swiftlint:disable type_body_length
 
 import Foundation
 import StoreKit
@@ -326,7 +326,7 @@ struct TestStoreProduct: StoreProductType {
 extension SWProduct {
   init(product: TestStoreProduct) {
     localizedDescription = ""
-    localizedTitle = product.superwallProduct.name ?? ""
+    localizedTitle = product.superwallProduct.identifier
     price = product.price
     priceLocale = product.locale
     productIdentifier = product.productIdentifier

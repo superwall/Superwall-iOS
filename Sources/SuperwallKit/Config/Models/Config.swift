@@ -85,7 +85,7 @@ struct Config: Codable, Equatable {
     case web2appConfig
     case iosAppId
     case bundleIdConfig
-    case testModeUserIds = "test_mode_user_ids"
+    case testModeUserIds
   }
 
   init(from decoder: Decoder) throws {
@@ -135,6 +135,10 @@ struct Config: Codable, Equatable {
 
     try featureFlags.encode(to: encoder)
     try container.encodeIfPresent(requestId, forKey: .requestId)
+    try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
+    try container.encodeIfPresent(iosAppId, forKey: .iosAppId)
+    try container.encodeIfPresent(bundleIdConfig, forKey: .bundleIdConfig)
+    try container.encodeIfPresent(testModeUserIds, forKey: .testModeUserIds)
   }
 
   init(

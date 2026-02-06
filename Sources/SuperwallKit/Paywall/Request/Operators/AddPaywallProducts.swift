@@ -31,6 +31,7 @@ extension PaywallRequestManager {
     return paywall
   }
 
+  // swiftlint:disable:next function_body_length
   private func getProducts(for paywall: Paywall, request: PaywallRequest) async throws -> Paywall {
     var paywall = paywall
 
@@ -49,6 +50,19 @@ extension PaywallRequestManager {
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
         isFreeTrialAvailable: { [weak self] product in
           guard let self = self else { return false }
+
+          // Check test mode override first - it takes precedence over all other logic
+          if self.factory.isTestMode {
+            switch self.factory.testModeFreeTrialOverride {
+            case .forceAvailable:
+              return true
+            case .forceUnavailable:
+              return false
+            case .useDefault:
+              break
+            }
+          }
+
           switch paywall.introOfferEligibility {
           case .eligible:
             // Only show free trial if product has one AND user

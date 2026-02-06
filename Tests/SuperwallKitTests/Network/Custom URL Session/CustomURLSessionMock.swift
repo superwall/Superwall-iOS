@@ -17,6 +17,10 @@ final class CustomURLSessionMock: CustomURLSession {
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response where Kind : EndpointKind, Response : Decodable {
     didRequest = true
-    return try await super.request(endpoint, data: data, isRetryingCallback: isRetryingCallback)
+    return try await super.request(
+      endpoint,
+      data: data,
+      isRetryingCallback: isRetryingCallback
+    )
   }
 }

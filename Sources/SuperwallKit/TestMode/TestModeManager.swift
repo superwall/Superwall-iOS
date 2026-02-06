@@ -7,6 +7,27 @@
 
 import Foundation
 
+/// Override for free trial availability in test mode.
+enum FreeTrialOverride: String, CaseIterable, Sendable {
+  /// Use the product's actual free trial availability.
+  case useDefault
+  /// Force free trial to be available.
+  case forceAvailable
+  /// Force free trial to be unavailable.
+  case forceUnavailable
+
+  var displayName: String {
+    switch self {
+    case .useDefault:
+      return "Use Default"
+    case .forceAvailable:
+      return "Force Available"
+    case .forceUnavailable:
+      return "Force Unavailable"
+    }
+  }
+}
+
 /// The reason why the user is in test mode.
 enum TestModeReason: Sendable {
   /// The user's alias ID matched a test store user from the config.
@@ -24,7 +45,7 @@ enum TestModeReason: Sendable {
       return "User is in test mode (enabled from dashboard)"
     case .debugOption:
       return "Debug mode is enabled via SuperwallOptions"
-    case .bundleIdMismatch(let expected, let actual):
+    case let .bundleIdMismatch(expected, actual):
       return "Bundle ID mismatch: expected \(expected), got \(actual)"
     }
   }
@@ -35,7 +56,7 @@ enum TestModeReason: Sendable {
 /// Test mode allows Superwall to simulate purchases without involving
 /// StoreKit or external purchase controllers. When active, purchases are
 /// faked and entitlements are set directly.
-class TestModeManager {
+final class TestModeManager {
   /// Whether the current user is in test mode.
   private(set) var isTestMode: Bool = false
 
@@ -48,15 +69,21 @@ class TestModeManager {
   /// Entitlements set via test mode purchases.
   private(set) var testEntitlementIds: Set<String> = []
 
+  /// Override for free trial availability.
+  var freeTrialOverride: FreeTrialOverride = .useDefault
+
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
+  private unowned let storage: Storage
 
   init(
     identityManager: IdentityManager,
-    deviceHelper: DeviceHelper
+    deviceHelper: DeviceHelper,
+    storage: Storage
   ) {
     self.identityManager = identityManager
     self.deviceHelper = deviceHelper
+    self.storage = storage
   }
 
   /// Evaluates whether the current user should be in test mode based on the config.
@@ -82,16 +109,10 @@ class TestModeManager {
           testModeReason = .configMatch
           return
         }
-      case .vendorId:
-        if deviceHelper.vendorId == testUser.value {
-          isTestMode = true
-          testModeReason = .configMatch
-          return
-        }
       }
     }
 
-    // Check bundle ID mismatch
+    // Check bundle ID mismatch (only if bundleIdConfig is present in config)
     if let expectedBundleId = config.bundleIdConfig,
       let actualBundleId = Bundle.main.bundleIdentifier,
       expectedBundleId != actualBundleId {
@@ -102,6 +123,18 @@ class TestModeManager {
 
     isTestMode = false
     testModeReason = nil
+    clearTestModeState()
+  }
+
+  /// Clears all test mode state including entitlements, products,
+  /// free trial override, and persisted UserDefaults settings.
+  private func clearTestModeState() {
+    testEntitlementIds.removeAll()
+    products.removeAll()
+    freeTrialOverride = .useDefault
+    UserDefaults.standard.removeObject(forKey: "com.superwall.testmode.entitlementSettings")
+    UserDefaults.standard.removeObject(forKey: "com.superwall.testmode.freeTrialOverride")
+    storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
   /// Sets the products available for test mode purchases.
@@ -110,9 +143,9 @@ class TestModeManager {
   }
 
   /// Simulates a purchase by adding the product's entitlements.
-  func fakePurchase(entitlementIds: [Int]) {
-    for id in entitlementIds {
-      testEntitlementIds.insert(String(id))
+  func fakePurchase(entitlements: [SuperwallEntitlementRef]) {
+    for entitlement in entitlements {
+      testEntitlementIds.insert(entitlement.identifier)
     }
   }
 
@@ -124,5 +157,17 @@ class TestModeManager {
   /// Sets entitlements from an entitlement picker selection.
   func setEntitlements(_ entitlementIds: Set<String>) {
     testEntitlementIds = entitlementIds
+  }
+
+  /// Returns whether free trial should be shown for a product, applying the override.
+  func shouldShowFreeTrial(for product: StoreProduct) -> Bool {
+    switch freeTrialOverride {
+    case .useDefault:
+      return product.hasFreeTrial
+    case .forceAvailable:
+      return true
+    case .forceUnavailable:
+      return false
+    }
   }
 }
