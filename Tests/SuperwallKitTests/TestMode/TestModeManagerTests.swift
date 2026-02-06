@@ -14,12 +14,18 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_activatesForMatchingUserId() {
     let dependencyContainer = DependencyContainer()
+    let identityManager = dependencyContainer.identityManager!
     let manager = dependencyContainer.testModeManager!
 
-    let appUserId = dependencyContainer.identityManager.appUserId ?? "test_user"
+    // Identify with a known userId so we can match against it
+    identityManager.identify(
+      userId: "test_user",
+      options: nil
+    )
+
     let config = Config.stub()
       .setting(\.testModeUserIds, to: [
-        TestStoreUser(type: .userId, value: appUserId)
+        TestStoreUser(type: .userId, value: "test_user")
       ])
 
     manager.evaluateTestMode(config: config)
@@ -64,7 +70,7 @@ struct TestModeManagerTests {
   func evaluateTestMode_clearsStateWhenDeactivated() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
-    let storage = dependencyContainer.storage
+    let storage = dependencyContainer.storage!
 
     let aliasId = dependencyContainer.identityManager.aliasId
 
