@@ -1289,6 +1289,7 @@ public final class Superwall: NSObject, ObservableObject {
 // MARK: - PaywallViewControllerDelegate
 extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
+  // swiftlint:disable:next function_body_length
   func eventDidOccur(
     _ paywallEvent: PaywallWebEvent,
     on paywallViewController: PaywallViewController

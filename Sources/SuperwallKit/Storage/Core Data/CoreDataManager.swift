@@ -88,6 +88,7 @@ class CoreDataManager {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func deleteAllEntities(completion: (() -> Void)? = nil) {
     guard let backgroundContext = backgroundContext else {
       completion?()
