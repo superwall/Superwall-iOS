@@ -726,14 +726,18 @@ class ConfigManager {
       nonSubscriptions: [],
       entitlements: Array(result.entitlements)
     )
+    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
     Superwall.shared.customerInfo = testModeCustomerInfo
 
     // Update subscription status based on whether any entitlements are active
     let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
     if hasActiveEntitlements {
-      Superwall.shared.subscriptionStatus = .active(result.entitlements)
+      let status = SubscriptionStatus.active(result.entitlements)
+      testModeManager.overriddenSubscriptionStatus = status
+      Superwall.shared.subscriptionStatus = status
       storage.save(true, forType: IsTestModeActiveSubscription.self)
     } else {
+      testModeManager.overriddenSubscriptionStatus = .inactive
       Superwall.shared.subscriptionStatus = .inactive
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }

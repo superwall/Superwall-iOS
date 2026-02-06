@@ -20,6 +20,7 @@ final class TestModeTransactionHandler {
 
   /// Handles a purchase in test mode by presenting the drawer and returning a `PurchaseResult`.
   @MainActor
+  // swiftlint:disable:next function_body_length
   func handlePurchase(
     product: StoreProduct,
     purchaseSource: PurchaseSource
@@ -63,20 +64,23 @@ final class TestModeTransactionHandler {
       }
 
       // Update CustomerInfo with the new entitlements
-      let existingCustomerInfo = Superwall.shared.customerInfo
       let updatedCustomerInfo = CustomerInfo(
-        subscriptions: existingCustomerInfo.subscriptions,
-        nonSubscriptions: existingCustomerInfo.nonSubscriptions,
+        subscriptions: [],
+        nonSubscriptions: [],
         entitlements: entitlements
       )
+      testModeManager.overriddenCustomerInfo = updatedCustomerInfo
       Superwall.shared.customerInfo = updatedCustomerInfo
 
       // Set subscription status based on whether any entitlements are active
       let entitlementSet = Set(entitlements)
       let hasActiveEntitlements = entitlements.contains { $0.isActive }
       if hasActiveEntitlements {
-        Superwall.shared.subscriptionStatus = .active(entitlementSet)
+        let status = SubscriptionStatus.active(entitlementSet)
+        testModeManager.overriddenSubscriptionStatus = status
+        Superwall.shared.subscriptionStatus = status
       } else {
+        testModeManager.overriddenSubscriptionStatus = .inactive
         Superwall.shared.subscriptionStatus = .inactive
       }
 
@@ -135,8 +139,11 @@ final class TestModeTransactionHandler {
           nonSubscriptions: [],
           entitlements: entitlements
         )
+        self.testModeManager.overriddenCustomerInfo = customerInfo
         Superwall.shared.customerInfo = customerInfo
-        Superwall.shared.subscriptionStatus = .active(Set(entitlements))
+        let status = SubscriptionStatus.active(Set(entitlements))
+        self.testModeManager.overriddenSubscriptionStatus = status
+        Superwall.shared.subscriptionStatus = status
 
         continuation.resume()
       }
@@ -151,7 +158,9 @@ final class TestModeTransactionHandler {
           nonSubscriptions: [],
           entitlements: []
         )
+        self?.testModeManager.overriddenCustomerInfo = customerInfo
         Superwall.shared.customerInfo = customerInfo
+        self?.testModeManager.overriddenSubscriptionStatus = .inactive
         Superwall.shared.subscriptionStatus = .inactive
 
         continuation.resume()

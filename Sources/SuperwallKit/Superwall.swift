@@ -173,6 +173,17 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
+      // When test mode is active and has a stored status, restore it
+      // so external writes (e.g. from a PurchaseController) don't
+      // overwrite the test entitlements.
+      if let testModeManager = dependencyContainer.testModeManager,
+        testModeManager.isTestMode,
+        let override = testModeManager.overriddenSubscriptionStatus,
+        subscriptionStatus != override {
+        subscriptionStatus = override
+        return
+      }
+
       if case let .active(entitlements) = subscriptionStatus {
         if entitlements.isEmpty {
           subscriptionStatus = .inactive
@@ -182,8 +193,10 @@ public final class Superwall: NSObject, ObservableObject {
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
       // When using an external purchase controller, update CustomerInfo.entitlements
-      // to reflect the entitlements from the purchase controller
-      if dependencyContainer.makeHasExternalPurchaseController() {
+      // to reflect the entitlements from the purchase controller.
+      // Skip this in test mode — test mode manages its own CustomerInfo.
+      if dependencyContainer.makeHasExternalPurchaseController(),
+        dependencyContainer.testModeManager?.isTestMode != true {
         customerInfo = CustomerInfo.forExternalPurchaseController(
           storage: dependencyContainer.storage,
           subscriptionStatus: subscriptionStatus
@@ -198,7 +211,17 @@ public final class Superwall: NSObject, ObservableObject {
   /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
   /// or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
   @Published
-  public var customerInfo: CustomerInfo = .blank()
+  public var customerInfo: CustomerInfo = .blank() {
+    didSet {
+      if let testModeManager = dependencyContainer.testModeManager,
+        testModeManager.isTestMode,
+        let override = testModeManager.overriddenCustomerInfo,
+        customerInfo != override {
+        customerInfo = override
+        return
+      }
+    }
+  }
 
   /// An `AsyncStream` of ``customerInfo`` changes, starting from the last known value.
   ///

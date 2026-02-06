@@ -72,6 +72,16 @@ final class TestModeManager {
   /// Override for free trial availability.
   var freeTrialOverride: FreeTrialOverride = .useDefault
 
+  /// The subscription status that test mode wants to maintain.
+  /// When set, external writes to `subscriptionStatus` are
+  /// overridden with this value.
+  var overriddenSubscriptionStatus: SubscriptionStatus?
+
+  /// The customer info that test mode wants to maintain.
+  /// When set, external writes to `customerInfo` are
+  /// overridden with this value.
+  var overriddenCustomerInfo: CustomerInfo?
+
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
@@ -132,6 +142,8 @@ final class TestModeManager {
     testEntitlementIds.removeAll()
     products.removeAll()
     freeTrialOverride = .useDefault
+    overriddenSubscriptionStatus = nil
+    overriddenCustomerInfo = nil
     UserDefaults.standard.removeObject(forKey: "com.superwall.testmode.entitlementSettings")
     UserDefaults.standard.removeObject(forKey: "com.superwall.testmode.freeTrialOverride")
     storage.save(false, forType: IsTestModeActiveSubscription.self)
