@@ -123,7 +123,7 @@ extension TestModeModalViewController {
 
     let purchaseControllerDetail: String
     if hasPurchaseController {
-      purchaseControllerDetail = "Enabled (not used in Test Mode)"
+      purchaseControllerDetail = "Provided (not used in Test Mode)"
     } else {
       purchaseControllerDetail = "Not provided"
     }

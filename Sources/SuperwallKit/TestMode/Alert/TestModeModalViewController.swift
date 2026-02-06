@@ -7,7 +7,7 @@
 
 import UIKit
 
-/// The main modal view controller for the test mode cold launch alert.
+/// The main modal view controller for the test mode modal.
 final class TestModeModalViewController: UIViewController {
   private static let settingsKey = "com.superwall.testmode.entitlementSettings"
   private static let freeTrialOverrideKey = "com.superwall.testmode.freeTrialOverride"

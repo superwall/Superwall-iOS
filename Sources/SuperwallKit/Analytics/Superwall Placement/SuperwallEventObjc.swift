@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 07/11/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
 
@@ -238,6 +239,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When paywall preloading completes.
   case paywallPreloadComplete
 
+  /// When the test mode modal is opened.
+  case testModeModalOpen
+
+  /// When the test mode modal is closed.
+  case testModeModalClose
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -388,6 +395,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "paywallPreload_start"
     case .paywallPreloadComplete:
       return "paywallPreload_complete"
+    case .testModeModalOpen:
+      return "testModeModal_open"
+    case .testModeModalClose:
+      return "testModeModal_close"
     }
   }
 }

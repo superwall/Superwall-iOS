@@ -435,7 +435,7 @@ class ConfigManager {
     if shouldShowTestModeAlert,
       testModeManager.isTestMode,
       let reason = testModeManager.testModeReason {
-      await presentTestModeColdLaunchAlert(reason: reason, config: config)
+      await presentTestModeModal(reason: reason, config: config)
     }
   }
 
@@ -683,7 +683,7 @@ class ConfigManager {
   }
 
   @MainActor
-  private func presentTestModeColdLaunchAlert(reason: TestModeReason, config: Config) async {
+  private func presentTestModeModal(reason: TestModeReason, config: Config) async {
     guard
       let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
       let rootVC = windowScene.windows.first?.rootViewController
@@ -700,7 +700,9 @@ class ConfigManager {
     let allEntitlementIds = config.products.flatMap { $0.entitlements.map { $0.id } }
     let availableEntitlements = Array(Set(allEntitlementIds)).sorted()
 
-    let result = await TestModeColdLaunchAlert.present(
+    await Superwall.shared.track(InternalSuperwallEvent.TestModeModalOpen())
+
+    let result = await TestModeModal.present(
       reason: reason,
       userId: userId,
       isIdentified: isIdentified,
@@ -711,6 +713,11 @@ class ConfigManager {
       networkEnvironment: options.networkEnvironment,
       from: rootVC
     )
+
+    await Superwall.shared.track(InternalSuperwallEvent.TestModeModalClose(
+      entitlements: result.entitlements,
+      freeTrialOverride: result.freeTrialOverride.rawValue
+    ))
 
     // Set the selected entitlements on the test mode manager
     let entitlementIds = Set(result.entitlements.map { $0.id })
