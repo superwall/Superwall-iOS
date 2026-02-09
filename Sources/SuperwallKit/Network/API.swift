@@ -12,7 +12,7 @@ enum EndpointHost {
   case collector
   case enrichment
   case adServices
-  case web2app
+  case subscriptionsApi
 }
 
 protocol ApiHostConfig {
@@ -33,14 +33,14 @@ struct Api {
   let collector: Collector
   let enrichment: Enrichment
   let adServices: AdServices
-  let web2app: Web2App
+  let subscriptionsApi: SubscriptionsAPI
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     base = Base(networkEnvironment: networkEnvironment)
     collector = Collector(networkEnvironment: networkEnvironment)
     enrichment = Enrichment(networkEnvironment: networkEnvironment)
     adServices = AdServices(networkEnvironment: networkEnvironment)
-    web2app = Web2App(networkEnvironment: networkEnvironment)
+    subscriptionsApi = SubscriptionsAPI(networkEnvironment: networkEnvironment)
   }
 
   func getConfig(host: EndpointHost) -> ApiHostConfig {
@@ -53,8 +53,8 @@ struct Api {
       return enrichment
     case .adServices:
       return adServices
-    case .web2app:
-      return web2app
+    case .subscriptionsApi:
+      return subscriptionsApi
     }
   }
 
@@ -100,7 +100,7 @@ struct Api {
     }
   }
 
-  struct Web2App: ApiHostConfig {
+  struct SubscriptionsAPI: ApiHostConfig {
     let networkEnvironment: SuperwallOptions.NetworkEnvironment
     var host: String { return networkEnvironment.web2AppHost }
     var path: String { return "/subscriptions-api/public/v1/" }
