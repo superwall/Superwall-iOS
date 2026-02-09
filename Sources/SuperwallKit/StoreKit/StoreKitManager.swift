@@ -7,7 +7,6 @@ import Combine
 actor StoreKitManager {
   /// Retrieves products from storekit.
   private let productsManager: ProductsManager
-  var testModeManager: TestModeManager?
 
   private(set) var productsById: [String: StoreProduct] = [:]
 
@@ -22,10 +21,6 @@ actor StoreKitManager {
 
   init(productsManager: ProductsManager) {
     self.productsManager = productsManager
-  }
-
-  func setTestModeManager(_ manager: TestModeManager) {
-    self.testModeManager = manager
   }
 
   func getProductVariables(for paywall: Paywall) async -> [ProductVariable] {
@@ -63,13 +58,14 @@ actor StoreKitManager {
   func getProducts(
     forPaywall paywall: Paywall?,
     placement: PlacementData?,
-    substituting substituteProductsByLabel: [String: ProductOverride]? = nil
+    substituting substituteProductsByLabel: [String: ProductOverride]? = nil,
+    isTestMode: Bool = false
   ) async throws -> (
     productsById: [String: StoreProduct],
     productItems: [Product]
   ) {
     // In test mode, use cached test products instead of fetching from StoreKit
-    if testModeManager?.isTestMode == true {
+    if isTestMode {
       var testProductsById: [String: StoreProduct] = [:]
       for (id, product) in productsById {
         testProductsById[id] = product

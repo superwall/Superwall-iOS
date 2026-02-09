@@ -159,10 +159,6 @@ final class DependencyContainer {
 
     deviceHelper.testModeManager = testModeManager
 
-    Task {
-      await storeKitManager.setTestModeManager(testModeManager)
-    }
-
     appSessionManager = AppSessionManager(
       configManager: configManager,
       identityManager: identityManager,

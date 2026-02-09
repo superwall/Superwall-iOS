@@ -39,7 +39,8 @@ extension PaywallRequestManager {
       let result = try await storeKitManager.getProducts(
         forPaywall: paywall,
         placement: request.placementData,
-        substituting: request.overrides.products
+        substituting: request.overrides.products,
+        isTestMode: factory.isTestMode
       )
 
       paywall.products = result.productItems
