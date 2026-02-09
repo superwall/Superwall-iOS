@@ -70,6 +70,9 @@ public enum IntegrationAttribute: Int {
 
   /// The Customer.io person's identifier (`id)`.
   case customerioId
+
+  /// The Appstack identifier.
+  case appstackId
 }
 
 // MARK: - CustomStringConvertible
@@ -118,6 +121,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "posthogUserId"
     case .customerioId:
       return "customerioId"
+    case .appstackId:
+      return "appstackId"
     }
   }
 }

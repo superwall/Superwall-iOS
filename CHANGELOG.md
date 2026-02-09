@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.11
+
+### Enhancements
+
+- Adds `appstackId` as an `IntegrationAttribute`.
+
 ## 4.12.10
 
 ### Enhancements
