@@ -411,8 +411,11 @@ class ConfigManager {
       await fetchTestModeProducts(testModeManager: testModeManager)
     } else {
       // If test mode was just turned off, reset subscription status
-      // so stale test entitlements don't persist.
-      if testModeJustDeactivated {
+      // so stale test entitlements don't persist. Skip when using an
+      // external purchase controller — it owns the status and
+      // loadPurchasedProducts / the controller itself will restore it.
+      if testModeJustDeactivated,
+        !factory.makeHasExternalPurchaseController() {
         Superwall.shared.subscriptionStatus = .inactive
         Superwall.shared.customerInfo = CustomerInfo(
           subscriptions: [],
