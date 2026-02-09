@@ -173,22 +173,10 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
-      // When test mode is active and has a stored status, restore it
-      // so external writes (e.g. from a PurchaseController) don't
-      // overwrite the test entitlements.
-      if let testModeManager = dependencyContainer.testModeManager,
-        testModeManager.isTestMode,
-        let override = testModeManager.overriddenSubscriptionStatus,
-        subscriptionStatus != override {
-        subscriptionStatus = override
+      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
+      if resolved != subscriptionStatus {
+        subscriptionStatus = resolved
         return
-      }
-
-      if case let .active(entitlements) = subscriptionStatus {
-        if entitlements.isEmpty {
-          subscriptionStatus = .inactive
-          return
-        }
       }
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
@@ -213,12 +201,9 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var customerInfo: CustomerInfo = .blank() {
     didSet {
-      if let testModeManager = dependencyContainer.testModeManager,
-        testModeManager.isTestMode,
-        let override = testModeManager.overriddenCustomerInfo,
-        customerInfo != override {
-        customerInfo = override
-        return
+      let resolved = resolvedCustomerInfo(customerInfo)
+      if resolved != customerInfo {
+        customerInfo = resolved
       }
     }
   }
@@ -391,6 +376,34 @@ public final class Superwall: NSObject, ObservableObject {
         self?._enqueuedIntegrationAttributes?.merge(newAttributes) { _, new in new }
       }
     }
+  }
+
+  // MARK: - Value Resolution
+
+  private func resolvedSubscriptionStatus(
+    _ status: SubscriptionStatus
+  ) -> SubscriptionStatus {
+    if let testModeManager = dependencyContainer.testModeManager,
+      testModeManager.isTestMode,
+      let override = testModeManager.overriddenSubscriptionStatus {
+      return override
+    }
+    if case .active(let entitlements) = status,
+      entitlements.isEmpty {
+      return .inactive
+    }
+    return status
+  }
+
+  private func resolvedCustomerInfo(
+    _ info: CustomerInfo
+  ) -> CustomerInfo {
+    if let testModeManager = dependencyContainer.testModeManager,
+      testModeManager.isTestMode,
+      let override = testModeManager.overriddenCustomerInfo {
+      return override
+    }
+    return info
   }
 
   // MARK: - Private Functions

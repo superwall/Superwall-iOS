@@ -665,9 +665,12 @@ class ConfigManager {
 
       // Also populate storeKitManager.productsById with test products
       for superwallProduct in response.data {
+        let entitlements = Set(superwallProduct.entitlements.map {
+          Entitlement(id: $0.identifier)
+        })
         let testProduct = TestStoreProduct(
           superwallProduct: superwallProduct,
-          entitlements: []
+          entitlements: entitlements
         )
         let storeProduct = StoreProduct(testProduct: testProduct)
         await storeKitManager.setProduct(storeProduct, forIdentifier: superwallProduct.identifier)
