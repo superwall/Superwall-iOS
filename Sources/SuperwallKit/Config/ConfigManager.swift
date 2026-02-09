@@ -426,8 +426,10 @@ class ConfigManager {
       await factory.loadPurchasedProducts(config: config)
     }
 
-    Task {
-      await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+    if !testModeManager.isTestMode {
+      Task {
+        await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+      }
     }
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
