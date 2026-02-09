@@ -103,76 +103,80 @@ final class TestModeTransactionHandler {
     }
   }
 
-  /// Handles a restore in test mode by presenting an entitlement picker.
+  /// Handles a restore in test mode by presenting an entitlement picker drawer.
+  ///
+  /// Returns `.restored` when the user confirms (with or without entitlements),
+  /// or `.failed(nil)` when the user cancels.
   @MainActor
-  func handleRestore() async {
-    guard let viewController = topViewController() else { return }
+  func handleRestore() async -> RestorationResult {
+    guard let viewController = topViewController() else {
+      return .failed(nil)
+    }
 
-    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      let alert = UIAlertController(
-        title: "Test Mode Restore",
-        message: "Choose the entitlement status to simulate:",
-        preferredStyle: .alert
-      )
-
-      let activeAction = UIAlertAction(title: "Active Subscription", style: .default) { [weak self] _ in
-        // Set all product entitlements as active
-        guard let self else {
-          continuation.resume()
-          return
+    // Collect unique entitlement IDs across all products
+    var seen = Set<String>()
+    var uniqueEntitlementIds: [String] = []
+    for product in testModeManager.products {
+      for entitlement in product.entitlements {
+        if seen.insert(entitlement.identifier).inserted {
+          uniqueEntitlementIds.append(entitlement.identifier)
         }
-        let allEntitlements = self.testModeManager.products.flatMap { $0.entitlements }
-        self.testModeManager.fakePurchase(entitlements: allEntitlements)
-
-        // Update CustomerInfo and subscription status
-        let entitlements = self.testModeManager.testEntitlementIds.map {
-          Entitlement(
-            id: $0,
-            type: .serviceLevel,
-            isActive: true,
-            store: .appStore,
-            state: .subscribed
-          )
-        }
-        let customerInfo = CustomerInfo(
-          subscriptions: [],
-          nonSubscriptions: [],
-          entitlements: entitlements
-        )
-        self.testModeManager.overriddenCustomerInfo = customerInfo
-        Superwall.shared.customerInfo = customerInfo
-        let status = SubscriptionStatus.active(Set(entitlements))
-        self.testModeManager.overriddenSubscriptionStatus = status
-        Superwall.shared.subscriptionStatus = status
-
-        continuation.resume()
       }
-      alert.addAction(activeAction)
+    }
 
-      let clearAction = UIAlertAction(title: "No Subscription", style: .default) { [weak self] _ in
-        self?.testModeManager.resetEntitlements()
+    let result = await withCheckedContinuation { (continuation: CheckedContinuation<TestModeRestoreResult, Never>) in
+      TestModeRestoreDrawer.present(
+        availableEntitlements: uniqueEntitlementIds,
+        from: viewController
+      ) { result in
+        continuation.resume(returning: result)
+      }
+    }
 
-        // Clear CustomerInfo and subscription status
+    switch result {
+    case .restored(let entitlements):
+      let hasActive = entitlements.contains { $0.isActive }
+
+      if entitlements.isEmpty {
+        // No Subscription — clear everything
+        testModeManager.resetEntitlements()
+
         let customerInfo = CustomerInfo(
           subscriptions: [],
           nonSubscriptions: [],
           entitlements: []
         )
-        self?.testModeManager.overriddenCustomerInfo = customerInfo
+        testModeManager.overriddenCustomerInfo = customerInfo
         Superwall.shared.customerInfo = customerInfo
-        self?.testModeManager.overriddenSubscriptionStatus = .inactive
+        testModeManager.overriddenSubscriptionStatus = .inactive
         Superwall.shared.subscriptionStatus = .inactive
+      } else {
+        // Update test mode manager with selected entitlement IDs
+        let activeIds = Set(entitlements.map { $0.id })
+        testModeManager.setEntitlements(activeIds)
 
-        continuation.resume()
+        let customerInfo = CustomerInfo(
+          subscriptions: [],
+          nonSubscriptions: [],
+          entitlements: Array(entitlements)
+        )
+        testModeManager.overriddenCustomerInfo = customerInfo
+        Superwall.shared.customerInfo = customerInfo
+
+        if hasActive {
+          let status = SubscriptionStatus.active(entitlements)
+          testModeManager.overriddenSubscriptionStatus = status
+          Superwall.shared.subscriptionStatus = status
+        } else {
+          testModeManager.overriddenSubscriptionStatus = .inactive
+          Superwall.shared.subscriptionStatus = .inactive
+        }
       }
-      alert.addAction(clearAction)
 
-      let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { _ in
-        continuation.resume()
-      }
-      alert.addAction(cancelAction)
-
-      viewController.present(alert, animated: true)
+      // Only count as restored if there are active entitlements
+      return hasActive ? .restored : .failed(nil)
+    case .cancelled:
+      return .failed(nil)
     }
   }
 

@@ -126,6 +126,7 @@
 		3824D48F8E0AF35EEBED8FF4 /* PaywallViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22D96B4C9B546F7B0EC73397 /* PaywallViewControllerWrapper.swift */; };
 		3860BFEF3E9A4F76A90480F1 /* TestModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */; };
 		38A74D299EDFCA3F0A5261B7 /* TransactionErrorLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A719AD2F4475F83DFC9575 /* TransactionErrorLogic.swift */; };
+		3A4A22150A6EB1C234BAC722 /* TestModeRestoreDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0325FB47A06456B909BCB5 /* TestModeRestoreDrawer.swift */; };
 		3B6322A7C3392F4729E00B70 /* SK1StoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99DE58E263F7AE44DDB6BD52 /* SK1StoreProductDiscount.swift */; };
 		3BA17B2DA6B69A7B90D39AF9 /* ReceiptManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03471273DF4C875227102BE2 /* ReceiptManagerTests.swift */; };
 		3BCCE08DF16DC2D16F9AB490 /* UIView+SpringAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F636156244B674A56ADC461C /* UIView+SpringAnimation.swift */; };
@@ -652,6 +653,7 @@
 		299441C3A6D3948BC5E0C741 /* PaywallInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallInfo.swift; sourceTree = "<group>"; };
 		299F91895EE88281B5ED8320 /* SWBounceButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWBounceButton.swift; sourceTree = "<group>"; };
 		29E672B0703E6D85A3C65888 /* StoreTransactionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreTransactionType.swift; sourceTree = "<group>"; };
+		2A0325FB47A06456B909BCB5 /* TestModeRestoreDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeRestoreDrawer.swift; sourceTree = "<group>"; };
 		2ACDC7427B6340E9D86F9B0F /* SubscriptionTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionTransaction.swift; sourceTree = "<group>"; };
 		2B40F35B536F527B029D7BDE /* SWProductSubscriptionPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductSubscriptionPeriod.swift; sourceTree = "<group>"; };
 		2B42460730F1CDB856A35CFA /* Attribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attribution.swift; sourceTree = "<group>"; };
@@ -2003,6 +2005,7 @@
 				EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */,
 				B17DB6AB272712E9350966E4 /* TestModeManagerFactory.swift */,
 				5D8D539E4636D23E549B4520 /* TestModePurchaseDrawer.swift */,
+				2A0325FB47A06456B909BCB5 /* TestModeRestoreDrawer.swift */,
 				6595F247B4839C0AE082224B /* TestModeTransactionHandler.swift */,
 				6AFC01E736000807B3D0C1EF /* Alert */,
 			);
@@ -3604,6 +3607,7 @@
 				D5A1334579BE0B0A207B0BF7 /* TestModeModalViewController+TableView.swift in Sources */,
 				698646693937FE5DFD307EE9 /* TestModeModalViewController.swift in Sources */,
 				9C92AA4586E7013F37C03294 /* TestModePurchaseDrawer.swift in Sources */,
+				3A4A22150A6EB1C234BAC722 /* TestModeRestoreDrawer.swift in Sources */,
 				999CEB0F1A2C8A7CAEE831BB /* TestModeTransactionHandler.swift in Sources */,
 				A6E214D4B9B79C72E1E28212 /* TestStoreProduct.swift in Sources */,
 				EA50607230AA07B509E90E10 /* TestStoreUser.swift in Sources */,

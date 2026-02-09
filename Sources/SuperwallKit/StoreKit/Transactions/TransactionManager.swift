@@ -294,19 +294,21 @@ final class TransactionManager {
     let testModeManager = factory.makeTestModeManager()
     if testModeManager.isTestMode {
       let handler = TestModeTransactionHandler(testModeManager: testModeManager)
-      await handler.handleRestore()
+      let restorationResult = await handler.handleRestore()
 
-      // Set subscription status based on test entitlements
-      let entitlements = testModeManager.testEntitlementIds.map {
-        Entitlement(id: $0)
+      switch restorationResult {
+      case .restored:
+        await didRestore(restoreSource: restoreSource)
+      case .failed:
+        if case .internal(let paywallViewController) = restoreSource {
+          paywallViewController.presentAlert(
+            title: Superwall.shared.options.paywalls.restoreFailed.title,
+            message: Superwall.shared.options.paywalls.restoreFailed.message,
+            closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle
+          )
+        }
       }
-      if entitlements.isEmpty {
-        Superwall.shared.subscriptionStatus = .inactive
-      } else {
-        Superwall.shared.subscriptionStatus = .active(Set(entitlements))
-      }
-
-      return entitlements.isEmpty ? .failed(nil) : .restored
+      return restorationResult
     }
 
     switch restoreSource {
