@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
 	s.name         = "SuperwallKit"
-  s.version      = "4.12.10"
+  s.version      = "4.12.11"
 	s.summary      = "Superwall: In-App Paywalls Made Easy"
 	s.description  = "Paywall infrastructure for mobile apps :) we make things like editing your paywall and running price tests as easy as clicking a few buttons. superwall.com"
 
@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
 	s.license      =  { :type => 'MIT', :text => <<-LICENSE
 		MIT License
 
-		Copyright (c) 2025 Superwall
+		Copyright (c) 2026 Superwall
 
 		Permission is hereby granted, free of charge, to any person obtaining a copy
 		of this software and associated documentation files (the "Software"), to deal
