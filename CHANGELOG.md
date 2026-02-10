@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.13.0
+
+### Enhancements
+
+- Adds support for local images in paywalls.
+
 ## 4.12.11
 
 ### Enhancements
