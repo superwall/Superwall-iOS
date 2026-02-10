@@ -82,73 +82,24 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
 
   // MARK: - File Loading
 
-  /// Loads a file from the app bundle based on the URL path
-  /// - Parameter url: The swlocal:// URL
+  /// Loads a file from `Superwall.shared.localResources` based on the URL host (the localResourceId).
+  /// - Parameter url: The swlocal:// URL where the host is the localResourceId
   /// - Returns: Tuple of file data and MIME type
   private func loadFile(from url: URL) throws -> (Data, String) {
-    // URL format: swlocal://path/to/file.ext
-    // The host + path together form the file path
     guard let host = url.host else {
       throw FileError.invalidURL
     }
 
-    // Combine host and path to get full file path
-    // e.g., swlocal://design/video.mp4 -> design/video.mp4
-    let filePath: String
-    if url.path.isEmpty {
-      filePath = host
-    } else {
-      filePath = host + url.path
+    guard let localURL = Superwall.shared.localResources[host] else {
+      throw FileError.fileNotFound(host)
     }
 
-    guard let fileURL = findInBundle(path: filePath) else {
-      throw FileError.fileNotFound(filePath)
+    guard let data = try? Data(contentsOf: localURL) else {
+      throw FileError.unableToReadFile(localURL.path)
     }
 
-    guard let data = try? Data(contentsOf: fileURL) else {
-      throw FileError.unableToReadFile(filePath)
-    }
-
-    let mimeType = self.mimeType(for: fileURL.pathExtension)
-
+    let mimeType = self.mimeType(for: localURL.pathExtension)
     return (data, mimeType)
-  }
-
-  /// Attempts to find a file in the bundle
-  private func findInBundle(path: String) -> URL? {
-    // Try with the path as-is in the resource path
-    if let resourcePath = Bundle.main.resourcePath {
-      let fullPath = (resourcePath as NSString).appendingPathComponent(path)
-      if FileManager.default.fileExists(atPath: fullPath) {
-        return URL(fileURLWithPath: fullPath)
-      }
-    }
-
-    // Try using url(forResource:withExtension:)
-    let nsPath = path as NSString
-    let name = nsPath.deletingPathExtension
-    let ext = nsPath.pathExtension
-
-    if !ext.isEmpty, let url = Bundle.main.url(forResource: name, withExtension: ext) {
-      return url
-    }
-
-    // Try with subdirectory
-    let directory = (path as NSString).deletingLastPathComponent
-    let filename = (path as NSString).lastPathComponent
-    let fileNameWithoutExt = (filename as NSString).deletingPathExtension
-    let fileExt = (filename as NSString).pathExtension
-
-    if !directory.isEmpty,
-       let url = Bundle.main.url(
-        forResource: fileNameWithoutExt,
-        withExtension: fileExt,
-        subdirectory: directory
-       ) {
-      return url
-    }
-
-    return nil
   }
 
   // MARK: - MIME Type Detection
