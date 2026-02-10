@@ -118,17 +118,20 @@ class IdentityManager {
   private unowned let storage: Storage
   private unowned let configManager: ConfigManager
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  private let notifyUserChange: (([String: Any]) -> Void)?
 
   init(
     deviceHelper: DeviceHelper,
     storage: Storage,
     configManager: ConfigManager,
-    webEntitlementRedeemer: WebEntitlementRedeemer
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    notifyUserChange: (([String: Any]) -> Void)? = nil
   ) {
     self.deviceHelper = deviceHelper
     self.storage = storage
     self.configManager = configManager
     self.webEntitlementRedeemer = webEntitlementRedeemer
+    self.notifyUserChange = notifyUserChange
     self._appUserId = storage.get(AppUserId.self)
 
     var extraAttributes: [String: Any] = [:]
@@ -373,17 +376,36 @@ extension IdentityManager {
     queue.async { [weak self] in
       self?._mergeUserAttributes(
         newUserAttributes,
-        shouldTrackMerge: shouldTrackMerge
+        shouldTrackMerge: shouldTrackMerge,
+        shouldNotify: false
+      )
+    }
+  }
+
+  /// Merges the attributes and notifies the delegate.
+  /// This is used when attributes are updated from the paywall.
+  func mergeUserAttributesAndNotify(
+    _ newUserAttributes: [String: Any?],
+    shouldTrackMerge: Bool = true
+  ) {
+    queue.async { [weak self] in
+      self?._mergeUserAttributes(
+        newUserAttributes,
+        shouldTrackMerge: shouldTrackMerge,
+        shouldNotify: true
       )
     }
   }
 
   /// Merges the provided user attributes with existing attributes then saves them.
   ///
-  /// - Parameter shouldTrackMerge: A boolean indicated whether the merge should be tracked in analytics.
+  /// - Parameters:
+  ///   - shouldTrackMerge: A boolean indicated whether the merge should be tracked in analytics.
+  ///   - shouldNotify: A boolean indicating whether to notify the delegate of the change.
   private func _mergeUserAttributes(
     _ newUserAttributes: [String: Any?],
-    shouldTrackMerge: Bool = true
+    shouldTrackMerge: Bool = true,
+    shouldNotify: Bool = false
   ) {
     let mergedAttributes = IdentityLogic.mergeAttributes(
       newUserAttributes,
@@ -403,5 +425,9 @@ extension IdentityManager {
 
     storage.save(mergedAttributes, forType: UserAttributes.self)
     _userAttributes = mergedAttributes
+
+    if shouldNotify {
+      notifyUserChange?(mergedAttributes)
+    }
   }
 }

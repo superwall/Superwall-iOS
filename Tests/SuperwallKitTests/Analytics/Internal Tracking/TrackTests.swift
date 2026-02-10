@@ -3219,4 +3219,32 @@ final class TrackingTests: XCTestCase {
       result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
       paywallInfo.presentedByPlacementWithName)
   }
+
+  func test_paywallPreloadStart() async {
+    let paywallCount = 5
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.PaywallPreload(state: .start, paywallCount: paywallCount))
+    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    XCTAssertEqual(
+      result.parameters.audienceFilterParams["$event_name"] as! String,
+      "paywallPreload_start")
+    XCTAssertEqual(
+      result.parameters.audienceFilterParams["$paywall_count"] as! Int,
+      paywallCount)
+  }
+
+  func test_paywallPreloadComplete() async {
+    let paywallCount = 3
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.PaywallPreload(state: .complete, paywallCount: paywallCount))
+    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    XCTAssertEqual(
+      result.parameters.audienceFilterParams["$event_name"] as! String,
+      "paywallPreload_complete")
+    XCTAssertEqual(
+      result.parameters.audienceFilterParams["$paywall_count"] as! Int,
+      paywallCount)
+  }
 }

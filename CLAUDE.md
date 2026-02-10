@@ -66,8 +66,11 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Version Management
 
-- Version is defined in `Sources/SuperwallKit/Misc/Constants.swift` line 21
-- Pre-commit hook automatically syncs version to `SuperwallKit.podspec`
+When bumping the version, update all three files:
+1. `Sources/SuperwallKit/Misc/Constants.swift` (line 21)
+2. `SuperwallKit.podspec` (s.version)
+3. `CHANGELOG.md` (add new version entry at top)
+
 - Follows semantic versioning
 
 ### Testing

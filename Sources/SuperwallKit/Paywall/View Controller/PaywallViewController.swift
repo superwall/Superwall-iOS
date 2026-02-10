@@ -111,6 +111,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
   private var isCheckoutDismissedProgrammatically = false
 
+  /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+  let introOfferTokenManager: IntroOfferTokenManager
+
   #if !os(visionOS)
     /// Reference to the current checkout webview controller
     private weak var currentCheckoutVC: CheckoutWebViewController?
@@ -184,6 +187,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// `true` if there's a survey to complete and the paywall is displayed in a modal style.
   private var didDisableSwipeForSurvey = false
 
+  private var drawerDeviceCornerRadius: CGFloat?
+  private var drawerCornerMaskLayer: CAShapeLayer?
+
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
 
@@ -215,6 +221,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     deviceHelper: DeviceHelper,
     factory: Factory,
     storage: Storage,
+    network: Network,
     webView: SWWebView,
     webEntitlementRedeemer: WebEntitlementRedeemer,
     cache: PaywallViewControllerCache?,
@@ -233,6 +240,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.storage = storage
     self.paywall = paywall
     self.webView = webView
+    self.introOfferTokenManager = IntroOfferTokenManager(network: network)
     self.webEntitlementRedeemer = webEntitlementRedeemer
 
     presentationStyle = paywall.presentation.style
@@ -247,6 +255,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     super.viewDidLoad()
     configureUI()
     loadWebView()
+    introOfferTokenManager.startObservingAppLifecycle()
+  }
+
+  deinit {
+    introOfferTokenManager.stopObservingAppLifecycle()
   }
 
   private func configureUI() {
@@ -608,14 +621,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        Task(priority: .utility) {
-          let webviewTimeout = await InternalSuperwallEvent.PaywallWebviewLoad(
-            state: .timeout,
-            paywallInfo: self.info
-          )
-          await Superwall.shared.track(webviewTimeout)
-        }
-
         UIView.springAnimate(withDuration: 2) {
           self.refreshPaywallButton.alpha = 1.0
           self.exitButton.alpha = 1.0
@@ -714,7 +719,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
               return heightRatio * context.maximumDetentValue
             }
           ]
-          sheetPresentationController?.preferredCornerRadius = cornerRadius
         }
       #endif
     case .popup:
@@ -725,6 +729,106 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       break
     }
   }
+
+  #if !os(visionOS)
+  @available(iOS 16.0, *)
+  private func updateDrawerCornerMaskIfNeeded() {
+    guard
+      UIDevice.current.userInterfaceIdiom == .phone,
+      case let .drawer(_, cornerRadius) = presentationStyle,
+      let sheet = sheetPresentationController,
+      let presentedView = sheet.presentedView ?? view.superview
+    else {
+      return
+    }
+
+    let targetView: UIView
+    if presentedView.layer.cornerRadius > 0 {
+      targetView = presentedView
+    } else if let superview = presentedView.superview,
+      superview.layer.cornerRadius > 0 {
+      targetView = superview
+    } else {
+      targetView = presentedView
+    }
+
+    let systemRadius = targetView.layer.cornerRadius
+    if drawerDeviceCornerRadius == nil || drawerDeviceCornerRadius == 0,
+      systemRadius > 0 {
+      drawerDeviceCornerRadius = systemRadius
+    }
+    let bottomRadius = drawerDeviceCornerRadius ?? systemRadius
+    applyDrawerCornerMask(
+      to: targetView,
+      topRadius: CGFloat(cornerRadius),
+      bottomRadius: bottomRadius
+    )
+  }
+
+  private func applyDrawerCornerMask(
+    to targetView: UIView,
+    topRadius: CGFloat,
+    bottomRadius: CGFloat
+  ) {
+    let bounds = targetView.bounds
+    guard
+      bounds.width > 0,
+      bounds.height > 0
+    else {
+      return
+    }
+
+    let maxRadius = min(bounds.width, bounds.height) / 2
+    let clampedTop = min(max(0, topRadius), maxRadius)
+    let clampedBottom = min(max(0, bottomRadius), maxRadius)
+
+    // Build a path with independent top and bottom corner radii.
+    let path = UIBezierPath()
+    path.move(to: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY))
+    path.addLine(to: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY))
+    path.addArc(
+      withCenter: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY + clampedTop),
+      radius: clampedTop,
+      startAngle: -.pi / 2,
+      endAngle: 0,
+      clockwise: true
+    )
+    path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY - clampedBottom))
+    path.addArc(
+      withCenter: CGPoint(x: bounds.maxX - clampedBottom, y: bounds.maxY - clampedBottom),
+      radius: clampedBottom,
+      startAngle: 0,
+      endAngle: .pi / 2,
+      clockwise: true
+    )
+    path.addLine(to: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY))
+    path.addArc(
+      withCenter: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY - clampedBottom),
+      radius: clampedBottom,
+      startAngle: .pi / 2,
+      endAngle: .pi,
+      clockwise: true
+    )
+    path.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY + clampedTop))
+    path.addArc(
+      withCenter: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY + clampedTop),
+      radius: clampedTop,
+      startAngle: .pi,
+      endAngle: 3 * .pi / 2,
+      clockwise: true
+    )
+    path.close()
+
+    let maskLayer = drawerCornerMaskLayer ?? CAShapeLayer()
+    maskLayer.frame = bounds
+    maskLayer.path = path.cgPath
+    targetView.layer.mask = maskLayer
+    drawerCornerMaskLayer = maskLayer
+    if targetView.layer.cornerRadius != 0 {
+      targetView.layer.cornerRadius = 0
+    }
+  }
+  #endif
 
   private func getPopupDimensions() -> PopupDimensions? {
     guard case .popup(let height, let width, let cornerRadius) = presentationStyle else {
@@ -937,6 +1041,20 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
     )
   }
 
+  public func presentationControllerDidDismiss(
+    _ presentationController: UIPresentationController
+  ) {
+    // Guard against double-dismiss: if didAttemptToDismiss already
+    // triggered our dismiss(), closeReason will already be set.
+    guard paywall.closeReason == .none else {
+      return
+    }
+    dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+  }
+
   /// Marks that a redeem succeeded while the checkout web view is open.
   /// Cancels any pending transaction abandon tracking.
   func markRedeemInitiated() {
@@ -1131,6 +1249,15 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
 // MARK: - View Lifecycle
 extension PaywallViewController {
+  override public func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    #if !os(visionOS)
+      if #available(iOS 16.0, *) {
+        updateDrawerCornerMaskIfNeeded()
+      }
+    #endif
+  }
+
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     cache?.activePaywallVcKey = cacheKey
@@ -1177,10 +1304,24 @@ extension PaywallViewController {
     guard presentationWillPrepare else {
       return
     }
-    if willShowSurvey {
-      didDisableSwipeForSurvey = true
+
+    // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
+    fetchIntroOfferTokens()
+
+    switch presentationStyle {
+    case .modal, .drawer:
+      let shouldShowSurvey = willShowSurvey
       presentationController?.delegate = self
-      isModalInPresentation = true
+      if shouldShowSurvey {
+        didDisableSwipeForSurvey = true
+        isModalInPresentation = true
+      }
+    default:
+      if willShowSurvey {
+        didDisableSwipeForSurvey = true
+        presentationController?.delegate = self
+        isModalInPresentation = true
+      }
     }
     addShimmerView(onPresent: true)
 
@@ -1197,6 +1338,20 @@ extension PaywallViewController {
     }
 
     presentationWillPrepare = false
+  }
+
+  // MARK: - Intro Offer Token Management
+
+  /// Fetches intro offer eligibility tokens if configured for this paywall
+  private func fetchIntroOfferTokens() {
+    Task {
+      await introOfferTokenManager.fetchTokens(
+        introOfferEligibility: paywall.introOfferEligibility,
+        paywallId: paywall.identifier,
+        productIds: paywall.productIdsWithIntroOffers,
+        appTransactionId: ReceiptManager.appTransactionId
+      )
+    }
   }
 
   public override func viewDidAppear(_ animated: Bool) {

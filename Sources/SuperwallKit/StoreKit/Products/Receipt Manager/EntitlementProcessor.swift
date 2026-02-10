@@ -44,6 +44,8 @@ protocol EntitlementTransaction {
   var isInGracePeriod: Bool { get }
   var isInBillingRetryPeriod: Bool { get }
   var isActive: Bool { get }
+  var offerType: LatestSubscription.OfferType? { get }
+  var subscriptionGroupId: String? { get }
 }
 
 /// Common product types for entitlement processing
@@ -137,7 +139,8 @@ enum EntitlementProcessor {
             productId: transaction.productId,
             purchaseDate: transaction.purchaseDate,
             isConsumable: transaction.entitlementProductType == .consumable,
-            isRevoked: transaction.isRevoked
+            isRevoked: transaction.isRevoked,
+            store: .appStore
           )
         )
       case .autoRenewable,
@@ -152,7 +155,10 @@ enum EntitlementProcessor {
             isInGracePeriod: transaction.isInGracePeriod,
             isInBillingRetryPeriod: transaction.isInBillingRetryPeriod,
             isActive: transaction.isActive,
-            expirationDate: transaction.expirationDate
+            expirationDate: transaction.expirationDate,
+            offerType: transaction.offerType,
+            subscriptionGroupId: transaction.subscriptionGroupId,
+            store: .appStore
           )
         )
       }
@@ -164,7 +170,8 @@ enum EntitlementProcessor {
   /// Process entitlements from transactions, enriching them with metadata
   static func buildEntitlementsFromTransactions(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
-    rawEntitlementsByProductId: [String: Set<Entitlement>]
+    rawEntitlementsByProductId: [String: Set<Entitlement>],
+    productIdsByEntitlementId: [String: Set<String>]
   ) -> [String: Set<Entitlement>] {
     var processedEntitlementsByProductId: [String: Set<Entitlement>] = [:]
     var mostRecentRenewableByEntitlement: [String: (any EntitlementTransaction)] = [:]
@@ -246,8 +253,8 @@ enum EntitlementProcessor {
         mostRecentRenewableByEntitlement[entitlementId] = mostRecentRenewable
       }
 
-      // Find all product IDs for this entitlement and create enriched entitlements
-      let productIds = Set(transactions.map { $0.productId })
+      // Find all product IDs for this entitlement from server config
+      let productIds = productIdsByEntitlementId[entitlementId] ?? []
 
       for productId in productIds {
         // Get the raw entitlement info for this product
@@ -308,7 +315,8 @@ enum EntitlementProcessor {
     // First, do the basic processing and build mostRecentRenewable lookup
     let basicEntitlementsByProductId = buildEntitlementsFromTransactions(
       from: transactionsByEntitlement,
-      rawEntitlementsByProductId: rawEntitlementsByProductId
+      rawEntitlementsByProductId: rawEntitlementsByProductId,
+      productIdsByEntitlementId: productIdsByEntitlementId
     )
     var finalEntitlementsByProductId = basicEntitlementsByProductId
 
@@ -452,5 +460,33 @@ extension Transaction: EntitlementTransaction {
       return expiration > Date()
     }
     return entitlementProductType == .nonConsumable
+  }
+
+  var offerType: LatestSubscription.OfferType? {
+    if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+      #if compiler(>=6.0.0)
+      if offer?.type == .winBack {
+        return .winback
+      }
+      #endif
+      guard let offer = offer else {
+        return nil
+      }
+      switch offer.type {
+      case .introductory:
+        return .trial
+      case .code:
+        return .code
+      case .promotional:
+        return .promotional
+      default:
+        return nil
+      }
+    }
+    return nil
+  }
+
+  var subscriptionGroupId: String? {
+    subscriptionGroupID
   }
 }

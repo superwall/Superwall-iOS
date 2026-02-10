@@ -21,9 +21,7 @@ public final class DispatchQueueBacked<T>: @unchecked Sendable {
 
   public var wrappedValue: T {
     get {
-      queue.sync {
-        value
-      }
+      queue.sync { value }
     }
     set {
       queue.async { [weak self] in
@@ -39,6 +37,17 @@ public final class DispatchQueueBacked<T>: @unchecked Sendable {
   public func withSnapshot<R>(_ body: (T) throws -> R) rethrows -> R {
     try queue.sync {
       try body(value)
+    }
+  }
+}
+
+extension DispatchQueueBacked where T == Bool {
+  /// Returns `true` if already handled, otherwise marks handled and returns `false`.
+  func testAndSetTrue() -> Bool {
+    queue.sync {
+      if value { return true }
+      value = true
+      return false
     }
   }
 }

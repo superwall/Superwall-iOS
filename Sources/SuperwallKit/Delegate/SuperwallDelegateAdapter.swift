@@ -189,4 +189,13 @@ final class SuperwallDelegateAdapter {
       )
     }
   }
+
+  @MainActor
+  func userAttributesDidChange(newAttributes: [String: Any]) {
+    if let swiftDelegate = swiftDelegate {
+      swiftDelegate.userAttributesDidChange(newAttributes: newAttributes)
+    } else if let objcDelegate = objcDelegate {
+      objcDelegate.userAttributesDidChange?(newAttributes: newAttributes)
+    }
+  }
 }

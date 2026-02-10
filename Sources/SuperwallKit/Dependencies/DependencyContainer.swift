@@ -41,6 +41,8 @@ final class DependencyContainer {
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
+  let permissionHandler = PermissionHandler()
+  let customCallbackRegistry = CustomCallbackRegistry()
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
@@ -142,7 +144,11 @@ final class DependencyContainer {
       storage: storage,
       configManager: configManager,
       webEntitlementRedeemer: webEntitlementRedeemer
-    )
+    ) { [weak self] newAttributes in
+      Task { @MainActor in
+        self?.delegateAdapter.userAttributesDidChange(newAttributes: newAttributes)
+      }
+    }
 
     appSessionManager = AppSessionManager(
       configManager: configManager,
@@ -260,7 +266,9 @@ extension DependencyContainer: ViewControllerFactory {
   ) -> PaywallViewController {
     let messageHandler = PaywallMessageHandler(
       receiptManager: receiptManager,
-      factory: self
+      factory: self,
+      permissionHandler: permissionHandler,
+      customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: deviceHelper.isMac,
@@ -275,6 +283,7 @@ extension DependencyContainer: ViewControllerFactory {
       deviceHelper: deviceHelper,
       factory: self,
       storage: storage,
+      network: network,
       webView: webView,
       webEntitlementRedeemer: webEntitlementRedeemer,
       cache: cache,

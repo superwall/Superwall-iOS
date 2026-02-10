@@ -259,7 +259,9 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -288,6 +290,7 @@ struct WebEntitlementRedeemerTests {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
@@ -387,7 +390,9 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -400,6 +405,7 @@ struct WebEntitlementRedeemerTests {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
@@ -553,13 +559,11 @@ struct WebEntitlementRedeemerTests {
       entitlements: []
     )
 
-    // Set up mock storage with both previous web response and device customer info
-    let mockStorage = StorageMock(
-      internalRedeemResponse: previousRedeemResponse,
-      cache: Cache()
-    )
-    // Manually set the device CustomerInfo in storage
-    mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
+    // Set up the initial state in dependencyContainer.storage
+    // This is critical: entitlementsInfo.web reads from dependencyContainer.storage,
+    // so we must use the same storage instance for consistent behavior.
+    dependencyContainer.storage.save(previousRedeemResponse, forType: LatestRedeemResponse.self)
+    dependencyContainer.storage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
 
     let options = dependencyContainer.makeSuperwallOptions()
     let mockNetwork = NetworkMock(
@@ -587,7 +591,7 @@ struct WebEntitlementRedeemerTests {
 
     let redeemer = WebEntitlementRedeemer(
       network: mockNetwork,
-      storage: mockStorage,
+      storage: dependencyContainer.storage,
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       delegate: dependencyContainer.delegateAdapter,
       purchaseController: mockPurchaseController,
@@ -619,7 +623,7 @@ struct WebEntitlementRedeemerTests {
     #expect(superwall.entitlements.active.isEmpty, "Active entitlements should be empty after revocation")
 
     // Verify the LatestRedeemResponse was updated with empty entitlements
-    let savedRedeemResponse = mockStorage.get(LatestRedeemResponse.self)
+    let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
     #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
   }
 
@@ -905,7 +909,9 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -918,6 +924,7 @@ struct WebEntitlementRedeemerTests {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
@@ -1057,7 +1064,9 @@ struct WebEntitlementRedeemerTests {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
       isMac: false,
@@ -1070,6 +1079,7 @@ struct WebEntitlementRedeemerTests {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,

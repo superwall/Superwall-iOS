@@ -221,7 +221,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
     return latestExpiration
   }
 
-
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     guard let product = storeProduct.product as? SK2StoreProduct else {
       return false

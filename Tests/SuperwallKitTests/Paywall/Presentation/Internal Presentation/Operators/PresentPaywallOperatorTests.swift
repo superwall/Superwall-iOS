@@ -33,7 +33,9 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -46,6 +48,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
@@ -100,7 +103,9 @@ final class PresentPaywallOperatorTests: XCTestCase {
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -113,6 +118,7 @@ final class PresentPaywallOperatorTests: XCTestCase {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,

@@ -811,6 +811,30 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Refreshes the configuration from the Superwall dashboard.
+  ///
+  /// This fetches the latest configuration from the server and updates any paywalls that have changed.
+  /// Paywalls that have been removed or modified will be reloaded on next presentation.
+  ///
+  /// - Note: This is intended for development use only.
+  public func refreshConfiguration() async {
+    await dependencyContainer.configManager.refreshConfiguration(isUserInitiated: true)
+  }
+
+  /// Refreshes the configuration from the Superwall dashboard.
+  ///
+  /// This fetches the latest configuration from the server and updates any paywalls that have changed.
+  /// Paywalls that have been removed or modified will be reloaded on next presentation.
+  ///
+  /// - Parameter completion: An optional completion block called when the refresh completes.
+  /// - Note: This is intended for development use only.
+  public func refreshConfiguration(completion: (() -> Void)? = nil) {
+    Task {
+      await refreshConfiguration()
+      completion?()
+    }
+  }
+
   /// **For internal use only. Do not use this.**
   public func setPlatformWrapper(
     _ platformWrapper: String,
@@ -1265,6 +1289,7 @@ public final class Superwall: NSObject, ObservableObject {
 // MARK: - PaywallViewControllerDelegate
 extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
+  // swiftlint:disable:next function_body_length
   func eventDidOccur(
     _ paywallEvent: PaywallWebEvent,
     on paywallViewController: PaywallViewController
@@ -1283,13 +1308,13 @@ extension Superwall: PaywallViewControllerEventDelegate {
         result: .declined,
         closeReason: .manualClose
       )
-    case .initiatePurchase(let productId):
+    case let .initiatePurchase(productId, shouldDismiss):
       if purchaseTask != nil {
         return
       }
       purchaseTask = Task {
         await dependencyContainer.transactionManager.purchase(
-          .internal(productId, paywallViewController)
+          .internal(productId, paywallViewController, shouldDismiss)
         )
         purchaseTask = nil
       }
@@ -1314,6 +1339,32 @@ extension Superwall: PaywallViewControllerEventDelegate {
         )
         await Superwall.shared.track(customPlacement)
       }
+    case .scheduleNotification(let notification):
+      await NotificationScheduler.shared.scheduleNotifications(
+        [notification],
+        fromPaywallId: paywallViewController.paywall.identifier,
+        factory: dependencyContainer
+      )
+    case let .userAttributesUpdated(attributes: attributes):
+      // Attributes is an array of {key, value} objects, convert to dictionary
+      var attributesDict: [String: Any] = [:]
+      for attribute in attributes.arrayValue {
+        if let key = attribute["key"].string {
+          attributesDict[key] = attribute["value"].object
+        }
+      }
+      dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
+    case let .requestCallback(name, behavior, requestId, _):
+      Logger.debug(
+        logLevel: .debug,
+        scope: .paywallViewController,
+        message: "Custom callback requested",
+        info: [
+          "name": name,
+          "behavior": behavior.rawValue,
+          "requestId": requestId
+        ]
+      )
     }
   }
 }

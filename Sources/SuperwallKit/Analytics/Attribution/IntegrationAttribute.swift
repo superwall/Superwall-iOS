@@ -35,6 +35,9 @@ public enum IntegrationAttribute: Int {
   /// The Firebase instance identifier.
   case firebaseAppInstanceId
 
+  /// The Firebase installation ID.
+  case firebaseInstallationId
+
   /// The Iterable identifier for the user.
   case iterableUserId
 
@@ -67,6 +70,9 @@ public enum IntegrationAttribute: Int {
 
   /// The Customer.io person's identifier (`id)`.
   case customerioId
+
+  /// The Appstack identifier.
+  case appstackId
 }
 
 // MARK: - CustomStringConvertible
@@ -91,6 +97,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "fbAnonId"
     case .firebaseAppInstanceId:
       return "firebaseAppInstanceId"
+    case .firebaseInstallationId:
+      return "firebaseInstallationId"
     case .iterableUserId:
       return "iterableUserId"
     case .iterableCampaignId:
@@ -113,6 +121,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "posthogUserId"
     case .customerioId:
       return "customerioId"
+    case .appstackId:
+      return "appstackId"
     }
   }
 }

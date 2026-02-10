@@ -49,7 +49,22 @@ extension PaywallRequestManager {
         isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
         isFreeTrialAvailable: { [weak self] product in
           guard let self = self else { return false }
-          return await self.factory.isFreeTrialAvailable(for: product)
+          switch paywall.introOfferEligibility {
+          case .eligible:
+            // Only show free trial if product has one AND user
+            // doesn't have an active intro offer in the subscription group
+            guard product.hasFreeTrial else {
+              return false
+            }
+            let hasActiveIntro = await self.hasActiveIntroOffer(
+              inSubscriptionGroup: product.subscriptionGroupIdentifier
+            )
+            return !hasActiveIntro
+          case .ineligible:
+            return false
+          case .automatic:
+            return await self.factory.isFreeTrialAvailable(for: product)
+          }
         }
       )
       paywall.productVariables = outcome.productVariables
@@ -134,5 +149,32 @@ extension PaywallRequestManager {
     await Superwall.shared.track(productsLoad)
 
     return paywall
+  }
+
+  // MARK: - Intro Offer Check
+
+  /// Checks if the user has an active intro offer (e.g., free trial) in the given subscription group.
+  ///
+  /// This uses the subscription data from `customerInfo` which is populated during `loadPurchasedProducts`,
+  /// avoiding additional StoreKit calls that could slow down paywall presentation.
+  ///
+  /// - Parameter subscriptionGroupId: The subscription group identifier to check. If `nil`, returns `false`.
+  /// - Returns: `true` if the user has an active intro offer in the subscription group, `false` otherwise.
+  private func hasActiveIntroOffer(inSubscriptionGroup subscriptionGroupId: String?) async -> Bool {
+    guard let subscriptionGroupId = subscriptionGroupId else {
+      return false
+    }
+
+    let subscriptions = await MainActor.run {
+      Superwall.shared.customerInfo.subscriptions
+    }
+
+    // Find active App Store subscriptions in the same subscription group with an intro offer
+    return subscriptions.contains { subscription in
+      subscription.store == .appStore &&
+        subscription.isActive &&
+        subscription.subscriptionGroupId == subscriptionGroupId &&
+        subscription.offerType == .trial
+    }
   }
 }

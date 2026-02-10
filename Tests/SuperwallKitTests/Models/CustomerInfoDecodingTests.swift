@@ -23,7 +23,9 @@ struct CustomerInfoDecodingTests {
       "isInGracePeriod": false,
       "isInBillingRetryPeriod": false,
       "isActive": true,
-      "expirationDate": 1735689600000
+      "expirationDate": 1735689600000,
+      "store": "APP_STORE",
+      "subscriptionGroupId": "12345678"
     }
     """
 
@@ -42,6 +44,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.willRenew == true)
     #expect(transaction.isRevoked == false)
     #expect(transaction.isActive == true)
+    #expect(transaction.subscriptionGroupId == "12345678")
   }
 
   @Test("Decode SubscriptionTransaction with ISO8601 dates using web2App decoder")
@@ -56,7 +59,8 @@ struct CustomerInfoDecodingTests {
       "isInGracePeriod": false,
       "isInBillingRetryPeriod": false,
       "isActive": true,
-      "expirationDate": "2025-01-01T00:00:00.000Z"
+      "expirationDate": "2025-01-01T00:00:00.000Z",
+      "store": "APP_STORE"
     }
     """
 
@@ -69,6 +73,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.willRenew == true)
     #expect(transaction.isRevoked == false)
     #expect(transaction.isActive == true)
+    #expect(transaction.subscriptionGroupId == nil)
   }
 
   @Test("Decode NonSubscriptionTransaction with milliseconds using web2App decoder")
@@ -79,7 +84,8 @@ struct CustomerInfoDecodingTests {
       "productId": "test.consumable",
       "purchaseDate": 1704067200000,
       "isConsumable": true,
-      "isRevoked": false
+      "isRevoked": false,
+      "store": "APP_STORE"
     }
     """
 
@@ -104,7 +110,8 @@ struct CustomerInfoDecodingTests {
       "productId": "test.consumable",
       "purchaseDate": "2024-01-01T00:00:00.000Z",
       "isConsumable": true,
-      "isRevoked": false
+      "isRevoked": false,
+      "store": "APP_STORE"
     }
     """
 
@@ -190,14 +197,17 @@ struct CustomerInfoDecodingTests {
         "isInGracePeriod": false,
         "isInBillingRetryPeriod": false,
         "isActive": true,
-        "expirationDate": 1735689600000
+        "expirationDate": 1735689600000,
+        "store": "APP_STORE",
+        "subscriptionGroupId": "12345678"
       }],
       "nonSubscriptions": [{
         "transactionId": "789012",
         "productId": "test.consumable",
         "purchaseDate": 1704067200000,
         "isConsumable": true,
-        "isRevoked": false
+        "isRevoked": false,
+        "store": "APP_STORE"
       }],
       "entitlements": [{
         "identifier": "premium",

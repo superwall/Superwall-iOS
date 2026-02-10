@@ -2,11 +2,143 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.10.7
+## 4.12.11
+
+### Enhancements
+
+- Adds `appstackId` as an `IntegrationAttribute`.
+
+## 4.12.10
+
+### Enhancements
+
+- Adds native haptic feedback support for paywall buttons. Haptic types can be configured in the paywall editor and include light, medium, heavy, success, warning, error, and selection.
+- Adds `custom callback` action support allowing you to perform an async action and send the result back to the paywall.
 
 ### Fixes
 
+- Fixes issue where the `app_install` event was being cleared upon reset, which meant that this couldn't be used with `device.daysSince_app_install` after reset.
+
+## 4.12.9
+
+### Fixes
+
+- Updates Superscript version to 1.0.13. This fixes an issue with String and Int comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.13).
+- Fixes an issue where dismissing a modally presented paywall didn't fire `paywall_decline`.
+
+## 4.12.8
+
+### Enhancements
+
+- Exposes the `introOfferToken` on `StoreProduct` so that those using a PurchaseController can take advantage of the introductory offer eligiblity override.
+
+### Fixes
+
+- Stop logging `paywallWebviewLoad_timeout` events because they were confusing.
+- Only refreshes terminated webviews once to avoid infinite reloading loops on low RAM devices.
+
+## 4.12.7
+
+### Fixes
+
+- Fixes microphone permission request to prevent App Store Connect warnings.
+
+## 4.12.6
+
+### Enhancements
+
+- Adds post purchase actions support.
+
+### Fixes
+
+- Fixes a rare issue where TestFlight products could display in a different currency on the paywall than on Apple's payment sheet.
+
+## 4.12.5
+
+### Enhancements
+
+- Adds microphone permission request support.
+
+### Fixes
+
+- Fixes issue where the notification permission prompt would not appear if provisional notification permission was already granted.
+
+## 4.12.4
+
+### Enhancements
+
+- Adds back in contacts and location permission requests but this time will not get flagged in App Store review if they're not being used.
+- Adds App Tracking Transparency permission request.
+
+## 4.12.3
+
+### Fixes
+
+- Removes contacts and location permission APIs to prevent App Store warnings.
+
+## 4.12.2
+
+### Fixes
+
+- Fixes issue building for Mac Catalyst.
+
+## 4.12.1
+
+### Enhancements
+
+- Adds `redemptionInfo.paywallInfo.product` which contains information about the product that was purchased. This deprecates `redemptionInfo.paywallInfo.productIdentifier` in favor of `redemptionInfo.paywallInfo.product.identifer`.
+
+## 4.12.0
+
+### Enhancements
+
+- Adds `paywallPreload_start` and `paywallPreload_complete` events.
+- Adds `request permission` action support allowing you to request notification, location, photos, contacts, and camera permissions from paywalls.
+- Improves drawer presentation style corner rounding by applying the device radius on bottom corners.
+
+### Fixes
+
+- Updates Superscript version to 1.0.12. This fixes an issue with `appVersionPadded` comparison. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.12).
+
+## 4.11.2
+
+### Fixes
+
+- Deprecates `device.isApplePayAvailable` and defaults it to `true`. This also removes the PassKit import, which was getting flagged for some developers in review.
+
+## 4.11.1
+
+### Fixes
+
+- Fixes issue where `isApplePayAvailable` being calculated off the main thread could cause a crash.
+- Fixes potential crashes in WebKit navigation delegate methods.
+
+## 4.11.0
+
+### Enhancements
+
+- Adds the ability to override introductory offer eligibility via the paywall editor.
+- Adds dynamic notification support and scheduling.
+- Adds `refreshConfiguration()` to manually refresh the SDK configuration. This should only be used in wrapper SDKs in development for hot reloading.
+- Adds `offerType`, `subscriptionGroupId` and `store` to `SubscriptionTransaction` and `NonSubscriptionTransaction`.
+
+### Fixes
+
+- Fixes an issue where not all product IDs belonging to `Entitlement`s in `CustomerInfo` were being included.
+
+## 4.10.8
+
+### Enhancements
+
+- Adds support for `Set user attributes` action.
+- Adds new `SuperwallDelegate` method called `userAttributesDidChange` that notifies you when user attributes change from an external source.
+- Adds `firebaseInstallationId` as an `IntegrationAttribute`.
+
+### Fixes
+
+- Fixes a crash caused by a race condition when accessing JSON dictionaries concurrently.
 - Fixes issue returning the `PurchaseResult` from `Superwall.shared.purchase(_:)` when using StoreKit 1 inside a `PurchaseController`.
+- Fixes `handleDeepLink` returning true for non-Superwall URLs when called before configuration completes.
 
 ## 4.10.6
 

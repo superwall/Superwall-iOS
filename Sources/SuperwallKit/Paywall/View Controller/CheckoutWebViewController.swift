@@ -14,6 +14,7 @@ final class CheckoutWebViewController: UIViewController {
   private let webView: WKWebView
   private let url: URL
   var onDismiss: (() -> Void)?
+  @DispatchQueueBacked
   var hasHandledRedemption = false
 
   deinit {
@@ -209,27 +210,28 @@ final class CheckoutWebViewController: UIViewController {
 extension CheckoutWebViewController: WKNavigationDelegate {
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationAction: WKNavigationAction
-  ) async -> WKNavigationActionPolicy {
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
     guard let url = navigationAction.request.url else {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
 
     // Block Superwall deep links from checkout to prevent duplicate redemptions
     if url.isSuperwallDeepLink {
-      if hasHandledRedemption {
-        return .cancel
+      if $hasHandledRedemption.testAndSetTrue() {
+        decisionHandler(.cancel)
+        return
       }
 
-      hasHandledRedemption = true
-      await MainActor.run {
-        _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
-      }
-      return .cancel
+      _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+      decisionHandler(.cancel)
+      return
     }
 
     // Allow all other navigation types for payment flows and SSO authentication
-    return .allow
+    decisionHandler(.allow)
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

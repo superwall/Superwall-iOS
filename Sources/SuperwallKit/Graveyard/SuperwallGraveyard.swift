@@ -93,11 +93,14 @@ extension Superwall {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: SWWebView(
         isMac: false,
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
-          factory: dependencyContainer
+          factory: dependencyContainer,
+          permissionHandler: dependencyContainer.permissionHandler,
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
         ),
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer

@@ -1077,4 +1077,68 @@ enum InternalSuperwallEvent {
       ]
     }
   }
+
+  enum PaywallPreloadState {
+    case start
+    case complete
+  }
+
+  struct PaywallPreload: TrackableSuperwallEvent {
+    let state: PaywallPreloadState
+    let paywallCount: Int
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .paywallPreloadStart(paywallCount: paywallCount)
+      case .complete:
+        return .paywallPreloadComplete(paywallCount: paywallCount)
+      }
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "paywall_count": paywallCount
+      ]
+    }
+  }
+
+  enum PermissionState {
+    case requested
+    case granted
+    case denied
+  }
+
+  struct Permission: TrackableSuperwallEvent {
+    let state: PermissionState
+    let permissionName: String
+    let paywallIdentifier: String
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .requested:
+        return .permissionRequested(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      case .granted:
+        return .permissionGranted(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      case .denied:
+        return .permissionDenied(
+          permissionName: permissionName,
+          paywallIdentifier: paywallIdentifier
+        )
+      }
+    }
+    var audienceFilterParams: [String: Any] = [:]
+
+    func getSuperwallParameters() async -> [String: Any] {
+      return [
+        "permission_name": permissionName,
+        "paywall_identifier": paywallIdentifier
+      ]
+    }
+  }
 }

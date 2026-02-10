@@ -43,6 +43,15 @@ class SWWebView: WKWebView {
   private let isMac: Bool
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
+  private let enableIframeNavigation: Bool
+
+  /// Tracks the number of times the WebView process has terminated and been reloaded.
+  /// Used to prevent infinite reload loops on memory-constrained devices.
+  private var processTerminationRetryCount = 0
+
+  /// Maximum number of automatic reloads after process termination.
+  /// After this limit, the WebView will be reloaded when presented instead.
+  private let maxProcessTerminationRetries = 1
 
   init(
     isMac: Bool,
@@ -54,6 +63,7 @@ class SWWebView: WKWebView {
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
+    self.enableIframeNavigation = featureFlags?.enableIframeNavigation ?? false
 
     self.loadingHandler = SWWebViewLoadingHandler(
       enableMultiplePaywallUrls: featureFlags?.enableMultiplePaywallUrls == true
@@ -191,36 +201,49 @@ extension SWWebView: SWWebViewLoadingDelegate {
 extension SWWebView: WKNavigationDelegate {
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationResponse: WKNavigationResponse
-  ) async -> WKNavigationResponsePolicy {
+    decidePolicyFor navigationResponse: WKNavigationResponse,
+    decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void
+  ) {
     guard let statusCode = (navigationResponse.response as? HTTPURLResponse)?.statusCode else {
       // if there's no http status code to act on, exit and allow navigation
-      return .allow
+      decisionHandler(.allow)
+      return
     }
 
     // Track paywall errors
     if statusCode >= 400 {
       completion?(WebViewError.network(statusCode))
-      return .cancel
+      decisionHandler(.cancel)
+      return
     }
 
-    return .allow
+    decisionHandler(.allow)
   }
 
   func webView(
     _ webView: WKWebView,
-    decidePolicyFor navigationAction: WKNavigationAction
-  ) async -> WKNavigationActionPolicy {
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
     if webView.isLoading {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
     if navigationAction.navigationType == .reload {
-      return .allow
+      decisionHandler(.allow)
+      return
     }
-    return .cancel
+    if enableIframeNavigation,
+      navigationAction.targetFrame?.isMainFrame == false {
+      decisionHandler(.allow)
+      return
+    }
+    decisionHandler(.cancel)
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    // Reset retry count on successful load
+    processTerminationRetryCount = 0
     completion?(nil)
   }
 
@@ -241,7 +264,17 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    webView.reload()
+    // Only reload if we haven't exceeded the retry limit.
+    // This prevents infinite reload loops on memory-constrained devices
+    // where iOS keeps terminating the WebView process.
+    if processTerminationRetryCount < maxProcessTerminationRetries {
+      processTerminationRetryCount += 1
+      webView.reload()
+    } else {
+      // Mark as failed so the WebView will be reloaded when presented again
+      // via PaywallViewController.viewWillAppear checking didFailToLoad.
+      loadingHandler.didFailToLoad = true
+    }
 
     Task {
       guard let paywallInfo = delegate?.info else {

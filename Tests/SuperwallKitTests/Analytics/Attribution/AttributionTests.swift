@@ -336,6 +336,7 @@ struct AttributionTests {
         .onesignalId: "onesignal-id",
         .fbAnonId: "fb-anon-id",
         .firebaseAppInstanceId: "firebase-app-instance-id",
+        .firebaseInstallationId: "firebase-installation-id",
         .iterableUserId: "iterable-user-id",
         .iterableCampaignId: "iterable-campaign-id",
         .iterableTemplateId: "iterable-template-id",
@@ -346,7 +347,8 @@ struct AttributionTests {
         .kochavaDeviceId: "kochava-device-id",
         .tenjinId: "tenjin-id",
         .posthogUserId: "posthog-user-id",
-        .customerioId: "customerio-id"
+        .customerioId: "customerio-id",
+        .appstackId: "appstack-id"
       ]
       
       // When
@@ -363,6 +365,7 @@ struct AttributionTests {
       #expect(storedProps["onesignalId"] as? String == "onesignal-id")
       #expect(storedProps["fbAnonId"] as? String == "fb-anon-id")
       #expect(storedProps["firebaseAppInstanceId"] as? String == "firebase-app-instance-id")
+      #expect(storedProps["firebaseInstallationId"] as? String == "firebase-installation-id")
       #expect(storedProps["iterableUserId"] as? String == "iterable-user-id")
       #expect(storedProps["iterableCampaignId"] as? String == "iterable-campaign-id")
       #expect(storedProps["iterableTemplateId"] as? String == "iterable-template-id")
@@ -374,6 +377,7 @@ struct AttributionTests {
       #expect(storedProps["tenjinId"] as? String == "tenjin-id")
       #expect(storedProps["posthogUserId"] as? String == "posthog-user-id")
       #expect(storedProps["customerioId"] as? String == "customerio-id")
+      #expect(storedProps["appstackId"] as? String == "appstack-id")
     }
   }
 
