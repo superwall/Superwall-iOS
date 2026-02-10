@@ -86,7 +86,7 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   /// Loads a file from `Superwall.shared.localResources` based on the URL host (the localResourceId).
   /// - Parameter url: The swlocal:// URL where the host is the localResourceId
   /// - Returns: Tuple of file data and MIME type
-  private func loadFile(from url: URL) throws -> (Data, String) {
+  func loadFile(from url: URL) throws -> (Data, String) {
     guard let host = url.host else {
       throw FileError.invalidURL
     }
