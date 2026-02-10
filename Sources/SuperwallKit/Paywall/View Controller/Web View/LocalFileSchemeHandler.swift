@@ -11,7 +11,7 @@ import WebKit
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
 /// The URL host is used as a `localResourceId` key to look up the file URL
-/// in `Superwall.shared.localResources`.
+/// in `SuperwallOptions.localResources`.
 ///
 /// ## URL Format
 /// ```
@@ -83,7 +83,7 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
 
   // MARK: - File Loading
 
-  /// Loads a file from `Superwall.shared.localResources` based on the URL host (the localResourceId).
+  /// Loads a file from `SuperwallOptions.localResources` based on the URL host (the localResourceId).
   /// - Parameter url: The swlocal:// URL where the host is the localResourceId
   /// - Returns: Tuple of file data and MIME type
   func loadFile(from url: URL) throws -> (Data, String) {
@@ -91,7 +91,7 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       throw FileError.invalidURL
     }
 
-    guard let localURL = Superwall.shared.localResources[host] else {
+    guard let localURL = Superwall.shared.options.localResources[host] else {
       throw FileError.fileNotFound(host)
     }
 

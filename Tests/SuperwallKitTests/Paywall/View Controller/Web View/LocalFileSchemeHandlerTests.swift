@@ -53,7 +53,7 @@ struct LocalFileSchemeHandlerTests {
   @Test("loadFile throws fileNotFound for unregistered localResourceId")
   func loadFileUnregisteredId() {
     let handler = LocalFileSchemeHandler()
-    Superwall.shared.localResources = [:]
+    Superwall.shared.options.localResources = [:]
     let url = URL(string: "swlocal://hero-video")!
     #expect(throws: LocalFileSchemeHandler.FileError.fileNotFound("hero-video")) {
       try handler.loadFile(from: url)
@@ -71,7 +71,7 @@ struct LocalFileSchemeHandlerTests {
     try testData.write(to: tempFile)
     defer { try? FileManager.default.removeItem(at: tempFile) }
 
-    Superwall.shared.localResources = ["hero-video": tempFile]
+    Superwall.shared.options.localResources = ["hero-video": tempFile]
     let url = URL(string: "swlocal://hero-video")!
 
     let (data, mimeType) = try handler.loadFile(from: url)
@@ -79,14 +79,14 @@ struct LocalFileSchemeHandlerTests {
     #expect(mimeType == "video/mp4")
 
     // Clean up
-    Superwall.shared.localResources = [:]
+    Superwall.shared.options.localResources = [:]
   }
 
   @Test("loadFile throws unableToReadFile when file URL points to missing file")
   func loadFileBadFileUrl() {
     let handler = LocalFileSchemeHandler()
     let badURL = URL(fileURLWithPath: "/nonexistent/path/file.png")
-    Superwall.shared.localResources = ["hero-image": badURL]
+    Superwall.shared.options.localResources = ["hero-image": badURL]
     let url = URL(string: "swlocal://hero-image")!
 
     #expect(throws: LocalFileSchemeHandler.FileError.unableToReadFile("/nonexistent/path/file.png")) {
@@ -94,7 +94,7 @@ struct LocalFileSchemeHandlerTests {
     }
 
     // Clean up
-    Superwall.shared.localResources = [:]
+    Superwall.shared.options.localResources = [:]
   }
 
   @Test("loadFile detects correct mime types from file extension")
@@ -116,7 +116,7 @@ struct LocalFileSchemeHandlerTests {
       try testData.write(to: tempFile)
       defer { try? FileManager.default.removeItem(at: tempFile) }
 
-      Superwall.shared.localResources = [resourceId: tempFile]
+      Superwall.shared.options.localResources = [resourceId: tempFile]
       let url = URL(string: "swlocal://\(resourceId)")!
 
       let (_, mimeType) = try handler.loadFile(from: url)
@@ -124,6 +124,6 @@ struct LocalFileSchemeHandlerTests {
     }
 
     // Clean up
-    Superwall.shared.localResources = [:]
+    Superwall.shared.options.localResources = [:]
   }
 }

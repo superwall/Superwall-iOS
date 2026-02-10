@@ -11,20 +11,6 @@ import StoreKit
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
 
-  /// A mapping of local resource IDs to local file URLs.
-  ///
-  /// Use this to serve paywall assets (images, videos, Lottie animations) from local files
-  /// instead of fetching them over the network. When a paywall references a `localResourceId`,
-  /// the SDK will look up the corresponding URL in this dictionary.
-  ///
-  /// ```swift
-  /// Superwall.shared.localResources = [
-  ///   "hero-video": Bundle.main.url(forResource: "onboarding", withExtension: "mp4")!,
-  ///   "hero-image": Bundle.main.url(forResource: "hero", withExtension: "png")!
-  /// ]
-  /// ```
-  public var localResources: [String: URL] = [:]
-
   /// The delegate that handles Superwall lifecycle events.
   public var delegate: SuperwallDelegate? {
     get {
