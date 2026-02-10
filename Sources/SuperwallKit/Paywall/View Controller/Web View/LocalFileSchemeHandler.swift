@@ -27,9 +27,6 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   /// The custom URL scheme for local files
   static let scheme = "swlocal"
 
-  private var stoppedTasks = Set<ObjectIdentifier>()
-  private let lock = NSLock()
-
   /// Errors that can occur during file loading
   enum FileError: LocalizedError, Equatable {
     case invalidURL
@@ -51,15 +48,8 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   // MARK: - WKURLSchemeHandler
 
   func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
-    let taskId = ObjectIdentifier(urlSchemeTask as AnyObject)
-
     guard let url = urlSchemeTask.request.url else {
-      lock.lock()
-      let stopped = stoppedTasks.contains(taskId)
-      lock.unlock()
-      if !stopped {
-        urlSchemeTask.didFailWithError(FileError.invalidURL)
-      }
+      urlSchemeTask.didFailWithError(FileError.invalidURL)
       return
     }
 
@@ -73,12 +63,6 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
         textEncodingName: nil
       )
 
-      lock.lock()
-      let stopped = stoppedTasks.contains(taskId)
-      lock.unlock()
-
-      guard !stopped else { return }
-
       urlSchemeTask.didReceive(response)
       urlSchemeTask.didReceive(data)
       urlSchemeTask.didFinish()
@@ -89,20 +73,12 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
         message: "Failed to load local file",
         info: ["url": url.absoluteString, "error": error.localizedDescription]
       )
-      lock.lock()
-      let stopped = stoppedTasks.contains(taskId)
-      lock.unlock()
-      if !stopped {
-        urlSchemeTask.didFailWithError(error)
-      }
+      urlSchemeTask.didFailWithError(error)
     }
   }
 
   func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
-    let taskId = ObjectIdentifier(urlSchemeTask as AnyObject)
-    lock.lock()
-    stoppedTasks.insert(taskId)
-    lock.unlock()
+    // No cleanup needed for synchronous file loading
   }
 
   // MARK: - File Loading
