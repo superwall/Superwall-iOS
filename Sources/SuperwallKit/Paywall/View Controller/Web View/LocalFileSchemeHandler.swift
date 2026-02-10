@@ -28,7 +28,7 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   static let scheme = "swlocal"
 
   /// Errors that can occur during file loading
-  enum FileError: LocalizedError {
+  enum FileError: LocalizedError, Equatable {
     case invalidURL
     case fileNotFound(String)
     case unableToReadFile(String)
