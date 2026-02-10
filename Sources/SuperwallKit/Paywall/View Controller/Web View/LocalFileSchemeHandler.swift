@@ -10,17 +10,18 @@ import WebKit
 
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
-/// This enables paywalls to reference local files (videos, images, etc.) bundled with the app.
+/// The URL host is used as a `localResourceId` key to look up the file URL
+/// in `Superwall.shared.localResources`.
 ///
 /// ## URL Format
 /// ```
-/// swlocal://path/to/file.mp4
+/// swlocal://{localResourceId}
 /// ```
 ///
 /// ## Usage in Paywall HTML
 /// ```html
-/// <video src="swlocal://design/intro-video.mp4" autoplay></video>
-/// <img src="swlocal://images/hero.png">
+/// <video src="swlocal://hero-video" autoplay></video>
+/// <img src="swlocal://hero-image">
 /// ```
 final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   /// The custom URL scheme for local files
