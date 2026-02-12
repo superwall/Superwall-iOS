@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.12.12
+
+### Fixes
+
+- Fixes race condition relating to the user ID when upgrading from v3 of the SDK to v4.
+
 ## 4.12.11
 
 ### Enhancements
