@@ -233,6 +233,14 @@ enum LastWebEntitlementsFetchDate: Storable {
   typealias Value = Date
 }
 
+enum PendingStripeCheckoutPollStorage: Storable {
+  static var key: String {
+    "store.PendingStripeCheckoutPollStorage"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = PendingStripeCheckoutPollState
+}
+
 enum LatestCustomerInfo: Storable {
   static var key: String {
     "store.CustomerInfo"

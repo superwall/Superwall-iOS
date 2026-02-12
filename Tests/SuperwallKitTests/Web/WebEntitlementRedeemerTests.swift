@@ -1144,4 +1144,426 @@ struct WebEntitlementRedeemerTests {
     // Both redemptions should have completed (existingCodes is not blocked)
     #expect(mockNetwork.redeemCallCount == 2, "Both redemptions should have made network calls since .existingCodes is not blocked")
   }
+
+  @Test("Stripe checkout start persists pending context with default attempts")
+  func testStripeCheckoutStart_persistsPendingState() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_1", productId: "prod_1")
+
+    let state = mockStorage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(state?.checkoutContextId == "ctx_1")
+    #expect(state?.productId == "prod_1")
+    #expect(state?.remainingForegroundAttempts == 5)
+  }
+
+  @Test("Stripe checkout start replaces older pending context")
+  func testStripeCheckoutStart_replacesPendingState() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_old", productId: "prod_old")
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_new", productId: "prod_new")
+
+    let state = mockStorage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(state?.checkoutContextId == "ctx_new")
+    #expect(state?.productId == "prod_new")
+    #expect(state?.remainingForegroundAttempts == 5)
+  }
+
+  @Test("Stripe checkout complete polls immediately, invokes will/did callbacks, and clears pending on success")
+  func testStripeCheckoutComplete_success_immediatePoll() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "redemption_123",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(
+        RedeemResponse(
+          results: [result],
+          customerInfo: CustomerInfo(
+            subscriptions: [],
+            nonSubscriptions: [],
+            entitlements: Array(entitlements)
+          )
+        )
+      )
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 1)
+    #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self) == nil)
+    #expect(mockDelegate.willRedeemCallCount == 1)
+    #expect(mockDelegate.receivedResult?.code == "redemption_123")
+
+    if let willAt = mockDelegate.willRedeemCalledAt,
+      let didAt = mockDelegate.didRedeemCalledAt {
+      #expect(didAt.timeIntervalSince(willAt) >= 0.19)
+    } else {
+      Issue.record("Expected will/did redeem callbacks to be invoked")
+    }
+  }
+
+  @Test("Legacy redeem keeps callback compatibility: willRedeemLink fires before /redeem request")
+  func testLegacyRedeem_callbacksCompatibility() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "legacy_code",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.getWebEntitlementsResponse = RedeemResponse(
+      results: [result],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: Array(entitlements)
+      )
+    )
+
+    var willRedeemCountAtRequestStart = -1
+    mockNetwork.onRedeemEntitlements = {
+      willRedeemCountAtRequestStart = mockDelegate.willRedeemCallCount
+    }
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.redeem(.code("legacy_code"))
+
+    #expect(willRedeemCountAtRequestStart == 1)
+    #expect(mockDelegate.willRedeemCallCount == 1)
+    #expect(mockDelegate.receivedResult?.code == "legacy_code")
+  }
+
+  @Test("Stripe checkout complete retries no-redemption 3 times and keeps pending state")
+  func testStripeCheckoutComplete_noRedemption_retriesAndKeepsPending() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank()))
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 4)
+    let state = mockStorage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(state?.checkoutContextId == "ctx_1")
+    #expect(state?.remainingForegroundAttempts == 5)
+  }
+
+  @Test("Foreground polling consumes attempts and clears pending after 5 tries")
+  func testStripeForegroundPolling_consumesAttempts() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_1", productId: "prod_1")
+    mockNetwork.pollRedemptionResultResponses = Array(
+      repeating: .failure(NetworkError.unknown),
+      count: 5
+    )
+
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self)?.remainingForegroundAttempts == 4)
+
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 5)
+    #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self) == nil)
+  }
+
+  @Test("Foreground Stripe recovery success uses fake callback timing and clears pending context")
+  func testStripeForegroundPolling_success_fakeCallbacksAndClearsPending() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "redemption_foreground",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(
+        RedeemResponse(
+          results: [result],
+          customerInfo: CustomerInfo(
+            subscriptions: [],
+            nonSubscriptions: [],
+            entitlements: Array(entitlements)
+          )
+        )
+      )
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_fg_1", productId: "prod_fg_1")
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 1)
+    #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self) == nil)
+    #expect(mockDelegate.willRedeemCallCount == 1)
+    #expect(mockDelegate.receivedResult?.code == "redemption_foreground")
+
+    if let willAt = mockDelegate.willRedeemCalledAt,
+      let didAt = mockDelegate.didRedeemCalledAt {
+      #expect(didAt.timeIntervalSince(willAt) >= 0.19)
+    } else {
+      Issue.record("Expected will/did redeem callbacks to be invoked for foreground poll success")
+    }
+  }
+
+  @Test("Foreground Stripe recovery no-redemption retries and consumes one attempt")
+  func testStripeForegroundPolling_noRedemption_retriesAndConsumesAttempt() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank())),
+      .success(RedeemResponse(results: [], customerInfo: .blank()))
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_fg_2", productId: "prod_fg_2")
+    await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 4)
+    let state = mockStorage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(state?.checkoutContextId == "ctx_fg_2")
+    #expect(state?.remainingForegroundAttempts == 4)
+  }
+
+  @Test("Stripe checkout abandon tracks transaction_abandon and does not clear pending")
+  func testStripeCheckoutAbandon_tracksAndKeepsPending() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutStart(contextId: "ctx_1", productId: "prod_1")
+    await redeemer.handleStripeCheckoutAbandon(productId: "prod_1")
+
+    let events = mockDelegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(events.contains(SuperwallEventObjc.transactionAbandon))
+    #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self)?.checkoutContextId == "ctx_1")
+  }
 }

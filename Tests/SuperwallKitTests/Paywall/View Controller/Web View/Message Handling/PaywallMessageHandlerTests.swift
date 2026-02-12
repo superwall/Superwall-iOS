@@ -560,4 +560,222 @@ struct PaywallMessageHandlerTests {
     // Haptic feedback doesn't trigger delegate events, so we just verify it doesn't crash
     #expect(delegate.eventDidOccur == nil)
   }
+
+  @Test
+  func decodeStripeCheckoutStart() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_start",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutStart(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func decodeStripeCheckoutComplete() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_complete",
+            "sw_checkout_id": "sw_123",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutComplete(
+      swCheckoutId: "sw_123",
+      checkoutContextId: "ctx_123",
+      productId: "prod_123"
+    ))
+  }
+
+  @Test
+  func decodeStripeCheckoutFail() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_fail",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func decodeStripeCheckoutAbandon() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_abandon",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutAbandon(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func handleStripeCheckoutStart_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutStart?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutStart?.productId == "prod_123")
+  }
+
+  @Test
+  func handleStripeCheckoutComplete_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(
+      .stripeCheckoutComplete(
+        swCheckoutId: "sw_123",
+        checkoutContextId: "ctx_123",
+        productId: "prod_123"
+      )
+    )
+
+    #expect(delegate.stripeCheckoutComplete?.swCheckoutId == "sw_123")
+    #expect(delegate.stripeCheckoutComplete?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutComplete?.productId == "prod_123")
+  }
+
+  @Test
+  func handleStripeCheckoutAbandon_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutAbandon(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutAbandon?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutAbandon?.productId == "prod_123")
+  }
+
+  @Test
+  func handleStripeCheckoutFail_isNoOp() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutStart == nil)
+    #expect(delegate.stripeCheckoutComplete == nil)
+    #expect(delegate.stripeCheckoutAbandon == nil)
+    #expect(delegate.eventDidOccur == nil)
+  }
 }

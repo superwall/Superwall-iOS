@@ -92,4 +92,32 @@ final class NetworkTests: XCTestCase {
     )
     XCTAssertTrue(urlSession.didRequest)
   }
+
+  func test_pollRedemptionResult_endpointBuildsRequest() async throws {
+    let dependencyContainer = DependencyContainer()
+    let request = PollRedemptionResultRequest(
+      checkoutContextId: "ctx_123",
+      deviceId: "device_123",
+      appUserId: "user_123"
+    )
+    let endpoint = Endpoint<EndpointKinds.Web2App, RedeemResponse>.pollRedemptionResult(request: request)
+
+    let urlRequest = await endpoint.makeRequest(
+      with: SuperwallRequestData(factory: dependencyContainer),
+      factory: dependencyContainer
+    )
+
+    XCTAssertEqual(urlRequest?.httpMethod, "POST")
+    XCTAssertTrue(
+      urlRequest?.url?.absoluteString.contains(
+        "/subscriptions-api/public/v1/checkout/session/poll-redemption-result"
+      ) == true
+    )
+
+    let bodyData = try XCTUnwrap(urlRequest?.httpBody)
+    let bodyJson = try XCTUnwrap(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+    XCTAssertEqual(bodyJson["checkoutContextId"] as? String, "ctx_123")
+    XCTAssertEqual(bodyJson["deviceId"] as? String, "device_123")
+    XCTAssertEqual(bodyJson["appUserId"] as? String, "user_123")
+  }
 }

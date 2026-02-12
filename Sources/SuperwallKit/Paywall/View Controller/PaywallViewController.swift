@@ -111,6 +111,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
   private var isCheckoutDismissedProgrammatically = false
 
+  /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
+  private var didReceiveStripeCheckoutAbandonMessage = false
+
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
 
@@ -1075,6 +1078,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     // Reset flags when opening checkout
     didRedeemSucceedDuringCheckout = false
     isCheckoutDismissedProgrammatically = false
+    didReceiveStripeCheckoutAbandonMessage = false
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
 
@@ -1094,8 +1098,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       // Only track abandon if:
       // 1. Redeem did NOT succeed
       // 2. Dismissal was NOT programmatic (user dismissed it)
+      // 3. No stripe checkout abandon message was received
       if !self.didRedeemSucceedDuringCheckout,
-        !self.isCheckoutDismissedProgrammatically {
+        !self.isCheckoutDismissedProgrammatically,
+        !self.didReceiveStripeCheckoutAbandonMessage {
         let workItem = DispatchWorkItem { [weak self] in
           guard let self = self else { return }
           Task {
@@ -1118,6 +1124,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       // Reset flags after handling
       self.didRedeemSucceedDuringCheckout = false
       self.isCheckoutDismissedProgrammatically = false
+      self.didReceiveStripeCheckoutAbandonMessage = false
     }
 
     checkoutVC.modalPresentationStyle = .pageSheet
@@ -1134,6 +1141,44 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     loadingState = .loadingPurchase
     present(checkoutVC, animated: true)
     #endif
+  }
+
+  func handleStripeCheckoutStart(checkoutContextId: String, productId: String) {
+    Task {
+      await webEntitlementRedeemer.registerStripeCheckoutStart(
+        contextId: checkoutContextId,
+        productId: productId
+      )
+    }
+  }
+
+  func handleStripeCheckoutComplete(
+    swCheckoutId: String,
+    checkoutContextId: String,
+    productId: String
+  ) {
+    _ = swCheckoutId // Included for analytics parity from paywall events.
+    didReceiveStripeCheckoutAbandonMessage = true
+    loadingState = .manualLoading
+    closeSafari()
+
+    Task {
+      await webEntitlementRedeemer.handleStripeCheckoutComplete(
+        contextId: checkoutContextId,
+        productId: productId
+      )
+    }
+  }
+
+  func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
+    _ = checkoutContextId // Context is persisted by start/complete and intentionally not cleared on abandon.
+    didReceiveStripeCheckoutAbandonMessage = true
+    transactionAbandonWorkItem?.cancel()
+    transactionAbandonWorkItem = nil
+
+    Task {
+      await webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+    }
   }
 
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {

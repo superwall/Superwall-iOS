@@ -56,6 +56,14 @@ enum PaywallMessage: Decodable, Equatable {
   case customPlacement(name: String, params: JSON)
   case userAttributesUpdated(attributes: JSON)
   case initiateWebCheckout(contextId: String)
+  case stripeCheckoutStart(checkoutContextId: String, productId: String)
+  case stripeCheckoutComplete(
+    swCheckoutId: String,
+    checkoutContextId: String,
+    productId: String
+  )
+  case stripeCheckoutFail(checkoutContextId: String, productId: String)
+  case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
   case requestCallback(
@@ -102,6 +110,10 @@ enum PaywallMessage: Decodable, Equatable {
     case customPlacement = "custom_placement"
     case userAttributesUpdated = "user_attribute_updated"
     case initiateWebCheckout = "initiate_web_checkout"
+    case stripeCheckoutStart = "stripe_checkout_start"
+    case stripeCheckoutComplete = "stripe_checkout_complete"
+    case stripeCheckoutFail = "stripe_checkout_fail"
+    case stripeCheckoutAbandon = "stripe_checkout_abandon"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
@@ -125,6 +137,7 @@ enum PaywallMessage: Decodable, Equatable {
     case reviewType
     case browserType
     case checkoutContextId
+    case swCheckoutId
     case type
     case title
     case subtitle
@@ -205,6 +218,44 @@ enum PaywallMessage: Decodable, Equatable {
       case .initiateWebCheckout:
         if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId) {
           self = .initiateWebCheckout(contextId: checkoutContextId)
+          return
+        }
+      case .stripeCheckoutStart:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutStart(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutComplete:
+        if let swCheckoutId = try? values.decode(String.self, forKey: .swCheckoutId),
+          let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutComplete(
+            swCheckoutId: swCheckoutId,
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutFail:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutFail(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutAbandon:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutAbandon(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
           return
         }
       case .requestStoreReview:
