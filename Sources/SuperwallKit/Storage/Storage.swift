@@ -84,6 +84,15 @@ class Storage {
   ) {
     self.cache = cache
     self.coreDataManager = coreDataManager
+    self.factory = factory
+
+    // Migration must run before any reads from cache, including the reads
+    // below and IdentityManager.init() which reads AliasId/AppUserId.
+    // Without this, users upgrading from SDK v3 (data store v2) could get
+    // a new alias ID assigned before V2Migrator moves their data from
+    // Documents to Application Support.
+    migrateData()
+
     self._didTrackFirstSeen = self.cache.read(DidTrackFirstSeen.self) == true
 
     // If we've already tracked firstSeen, then it can't be the first session. Useful for those upgrading.
@@ -92,11 +101,9 @@ class Storage {
     } else {
       self._didTrackFirstSession = self.cache.read(DidTrackFirstSession.self) == true
     }
-    self.factory = factory
   }
 
   func configure(apiKey: String) {
-    migrateData()
     updateSdkVersion()
     self.apiKey = apiKey
   }
