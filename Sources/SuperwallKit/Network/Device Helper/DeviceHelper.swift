@@ -576,6 +576,7 @@ class DeviceHelper {
       platformWrapperVersion: platformWrapperVersion,
       swiftVersion: currentSwiftVersion(),
       compilerVersion: currentCompilerVersion(),
+      localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
       deviceId: factory.makeDeviceId()
     )
 

@@ -5,8 +5,10 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.superwall.SuperwallSwiftUIExample</string>
+			<string>com.superwall.Advanced</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>exampleapp</string>

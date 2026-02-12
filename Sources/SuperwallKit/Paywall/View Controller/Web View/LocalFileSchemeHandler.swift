@@ -56,15 +56,12 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     do {
       let (data, mimeType) = try loadFile(from: url)
 
-      let response = HTTPURLResponse(
+      let response = URLResponse(
         url: url,
-        statusCode: 200,
-        httpVersion: nil,
-        headerFields: [
-          "Content-Type": mimeType,
-          "Content-Length": "\(data.count)",
-        ]
-      )!
+        mimeType: mimeType,
+        expectedContentLength: data.count,
+        textEncodingName: nil
+      )
 
       urlSchemeTask.didReceive(response)
       urlSchemeTask.didReceive(data)

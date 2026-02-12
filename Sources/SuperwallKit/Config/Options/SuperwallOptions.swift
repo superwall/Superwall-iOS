@@ -154,7 +154,7 @@ public final class SuperwallOptions: NSObject, Encodable {
       case .local:
         return "localhost:3000"
       case .custom:
-        return hostDomain
+        return "collector.superwall.dev"
       default:
         return "collector.\(hostDomain)"
       }
