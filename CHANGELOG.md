@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for local images in paywalls.
 
+### Fixes
+
+- Fixes race condition relating to the user ID when upgrading from v3 of the SDK to v4.
+
 ## 4.12.11
 
 ### Enhancements
