@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds support for local images in paywalls.
+- Adds support for local images and videos in paywalls.
 
 ### Fixes
 

@@ -5,7 +5,7 @@
 
 import UIKit
 import AVFoundation
-import WebKit
+
 
 final class SWLocalResourcesViewController: UICollectionViewController {
   private var resources: [(id: String, url: URL)] = []
@@ -84,6 +84,7 @@ final class SWLocalResourcesViewController: UICollectionViewController {
     let cell = collectionView.dequeueReusableCell(
       withReuseIdentifier: LocalResourceCell.reuseId,
       for: indexPath
+    // swiftlint:disable:next force_cast
     ) as! LocalResourceCell
     let resource = resources[indexPath.item]
     cell.configure(id: resource.id, url: resource.url)
@@ -163,10 +164,10 @@ private final class LocalResourceCell: UICollectionViewCell {
   }()
 
   private let imageView: UIImageView = {
-    let iv = UIImageView()
-    iv.contentMode = .scaleAspectFit
-    iv.translatesAutoresizingMaskIntoConstraints = false
-    return iv
+    let imageView = UIImageView()
+    imageView.contentMode = .scaleAspectFit
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    return imageView
   }()
 
   private let errorLabel: UILabel = {
@@ -177,8 +178,6 @@ private final class LocalResourceCell: UICollectionViewCell {
     label.translatesAutoresizingMaskIntoConstraints = false
     return label
   }()
-
-  private var lottieWebView: WKWebView?
 
   private let spinner: UIActivityIndicatorView = {
     let spinner = UIActivityIndicatorView(style: .medium)
@@ -217,7 +216,7 @@ private final class LocalResourceCell: UICollectionViewCell {
       spinner.centerYAnchor.constraint(equalTo: previewContainer.centerYAnchor),
 
       errorLabel.centerXAnchor.constraint(equalTo: previewContainer.centerXAnchor),
-      errorLabel.centerYAnchor.constraint(equalTo: previewContainer.centerYAnchor),
+      errorLabel.centerYAnchor.constraint(equalTo: previewContainer.centerYAnchor)
     ])
   }
 
@@ -231,8 +230,6 @@ private final class LocalResourceCell: UICollectionViewCell {
     imageView.isHidden = false
     errorLabel.text = nil
     spinner.stopAnimating()
-    lottieWebView?.removeFromSuperview()
-    lottieWebView = nil
   }
 
   func configure(id: String, url: URL) {
@@ -245,8 +242,6 @@ private final class LocalResourceCell: UICollectionViewCell {
       loadImage(from: url)
     case "mp4", "m4v", "mov", "webm":
       loadVideoThumbnail(from: url)
-    case "json":
-      loadLottie(from: url)
     default:
       spinner.stopAnimating()
       if !FileManager.default.fileExists(atPath: url.path) {
@@ -257,8 +252,10 @@ private final class LocalResourceCell: UICollectionViewCell {
 
   private func loadImage(from url: URL) {
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      guard let data = try? Data(contentsOf: url),
-            let image = UIImage(data: data) else {
+      guard
+        let data = try? Data(contentsOf: url),
+        let image = UIImage(data: data)
+      else {
         DispatchQueue.main.async {
           self?.showErrorText("Image not found")
         }
@@ -272,65 +269,50 @@ private final class LocalResourceCell: UICollectionViewCell {
   }
 
   private func loadVideoThumbnail(from url: URL) {
-    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      let asset = AVAsset(url: url)
-      let generator = AVAssetImageGenerator(asset: asset)
-      generator.appliesPreferredTrackTransform = true
-      let time = CMTime(seconds: 0, preferredTimescale: 600)
+    let asset = AVAsset(url: url)
+    let generator = AVAssetImageGenerator(asset: asset)
+    generator.appliesPreferredTrackTransform = true
+    let time = CMTime(seconds: 0, preferredTimescale: 600)
 
-      guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
-        DispatchQueue.main.async {
-          self?.showErrorText("Video not found")
-        }
+    #if os(visionOS)
+    Task { [weak self] in
+      guard let (cgImage, _) = try? await generator.image(at: time) else {
+        await MainActor.run { self?.showErrorText("Video not found") }
         return
       }
       let thumbnail = UIImage(cgImage: cgImage)
-      DispatchQueue.main.async {
+      await MainActor.run {
         self?.spinner.stopAnimating()
         self?.imageView.image = thumbnail
       }
     }
-  }
-
-  private func loadLottie(from url: URL) {
-    guard let jsonData = try? Data(contentsOf: url),
-          let jsonString = String(data: jsonData, encoding: .utf8) else {
-      showErrorText("File not found")
-      return
+    #else
+    if #available(iOS 16.0, *) {
+      Task { [weak self] in
+        guard let (cgImage, _) = try? await generator.image(at: time) else {
+          await MainActor.run { self?.showErrorText("Video not found") }
+          return
+        }
+        let thumbnail = UIImage(cgImage: cgImage)
+        await MainActor.run {
+          self?.spinner.stopAnimating()
+          self?.imageView.image = thumbnail
+        }
+      }
+    } else {
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        guard let cgImage = try? generator.copyCGImage(at: time, actualTime: nil) else {
+          DispatchQueue.main.async { self?.showErrorText("Video not found") }
+          return
+        }
+        let thumbnail = UIImage(cgImage: cgImage)
+        DispatchQueue.main.async {
+          self?.spinner.stopAnimating()
+          self?.imageView.image = thumbnail
+        }
+      }
     }
-
-    spinner.stopAnimating()
-    imageView.isHidden = true
-
-    let html = """
-    <!DOCTYPE html>
-    <html><head><meta name="viewport" content="width=device-width,initial-scale=1">
-    <style>*{margin:0;padding:0}body{background:transparent;overflow:hidden}#anim{width:100%;height:100%}</style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
-    </head><body><div id="anim"></div><script>
-    lottie.loadAnimation({container:document.getElementById('anim'),renderer:'svg',loop:true,autoplay:true,animationData:\(jsonString)});
-    </script></body></html>
-    """
-
-    let config = WKWebViewConfiguration()
-    config.allowsInlineMediaPlayback = true
-    let webView = WKWebView(frame: .zero, configuration: config)
-    webView.isOpaque = false
-    webView.backgroundColor = .clear
-    webView.scrollView.isScrollEnabled = false
-    webView.isUserInteractionEnabled = false
-    webView.translatesAutoresizingMaskIntoConstraints = false
-
-    previewContainer.addSubview(webView)
-    NSLayoutConstraint.activate([
-      webView.topAnchor.constraint(equalTo: previewContainer.topAnchor),
-      webView.leadingAnchor.constraint(equalTo: previewContainer.leadingAnchor),
-      webView.trailingAnchor.constraint(equalTo: previewContainer.trailingAnchor),
-      webView.bottomAnchor.constraint(equalTo: previewContainer.bottomAnchor)
-    ])
-
-    webView.loadHTMLString(html, baseURL: nil)
-    lottieWebView = webView
+    #endif
   }
 
   private func showErrorText(_ text: String) {
