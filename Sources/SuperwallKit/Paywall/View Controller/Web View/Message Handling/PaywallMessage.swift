@@ -62,6 +62,7 @@ enum PaywallMessage: Decodable, Equatable {
     checkoutContextId: String,
     productId: String
   )
+  case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
   case stripeCheckoutFail(checkoutContextId: String, productId: String)
   case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
   case requestStoreReview(ReviewType)
@@ -112,6 +113,7 @@ enum PaywallMessage: Decodable, Equatable {
     case initiateWebCheckout = "initiate_web_checkout"
     case stripeCheckoutStart = "stripe_checkout_start"
     case stripeCheckoutComplete = "stripe_checkout_complete"
+    case stripeCheckoutSubmit = "stripe_checkout_submit"
     case stripeCheckoutFail = "stripe_checkout_fail"
     case stripeCheckoutAbandon = "stripe_checkout_abandon"
     case requestStoreReview = "request_store_review"
@@ -235,6 +237,15 @@ enum PaywallMessage: Decodable, Equatable {
           let productId = try? values.decode(String.self, forKey: .productId) {
           self = .stripeCheckoutComplete(
             swCheckoutId: swCheckoutId,
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutSubmit:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutSubmit(
             checkoutContextId: checkoutContextId,
             productId: productId
           )

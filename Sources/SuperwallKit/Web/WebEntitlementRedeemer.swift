@@ -134,7 +134,7 @@ actor WebEntitlementRedeemer {
     // Also check once on SDK initialization so pending Stripe checkouts can be
     // recovered on cold launch.
     Task {
-      if await factory.makeConfigManager() == nil {
+      if factory.makeConfigManager() == nil {
         return
       }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
@@ -667,6 +667,8 @@ actor WebEntitlementRedeemer {
         clearPendingStripeCheckoutState()
         return .redeemed
       } catch {
+        // Intentional: we don't retry network failures in this trigger.
+        // Pending state remains persisted, so recovery continues on subsequent foreground polls.
         Logger.debug(
           logLevel: .warn,
           scope: .webEntitlements,
@@ -689,7 +691,7 @@ actor WebEntitlementRedeemer {
   @objc
   nonisolated private func handleAppForeground() {
     Task {
-      if await factory.makeConfigManager() == nil {
+      if factory.makeConfigManager() == nil {
         return
       }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()

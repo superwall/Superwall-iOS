@@ -639,6 +639,30 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
+  func decodeStripeCheckoutSubmit() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_submit",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutSubmit(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
   func decodeStripeCheckoutAbandon() throws {
     let json = """
     {
@@ -772,6 +796,35 @@ struct PaywallMessageHandlerTests {
     messageHandler.delegate = delegate
 
     messageHandler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutStart == nil)
+    #expect(delegate.stripeCheckoutComplete == nil)
+    #expect(delegate.stripeCheckoutAbandon == nil)
+    #expect(delegate.eventDidOccur == nil)
+  }
+
+  @Test
+  func handleStripeCheckoutSubmit_isNoOp() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutSubmit(checkoutContextId: "ctx_123", productId: "prod_123"))
 
     #expect(delegate.stripeCheckoutStart == nil)
     #expect(delegate.stripeCheckoutComplete == nil)

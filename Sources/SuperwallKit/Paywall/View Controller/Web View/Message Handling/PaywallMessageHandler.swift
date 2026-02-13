@@ -195,17 +195,34 @@ final class PaywallMessageHandler: WebEventDelegate {
       // and error when decoding the message.
       break
     case let .stripeCheckoutStart(checkoutContextId, productId):
+      trackStripeCheckoutEvent(
+        eventName: "stripe_checkout_start",
+        productId: productId
+      )
       delegate?.handleStripeCheckoutStart(
         checkoutContextId: checkoutContextId,
         productId: productId
       )
     case let .stripeCheckoutComplete(swCheckoutId, checkoutContextId, productId):
+      trackStripeCheckoutEvent(
+        eventName: "stripe_checkout_complete",
+        productId: productId
+      )
       delegate?.handleStripeCheckoutComplete(
         swCheckoutId: swCheckoutId,
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case .stripeCheckoutFail:
+    case let .stripeCheckoutSubmit(_, productId):
+      trackStripeCheckoutEvent(
+        eventName: "stripe_checkout_submit",
+        productId: productId
+      )
+    case let .stripeCheckoutFail(_, productId):
+      trackStripeCheckoutEvent(
+        eventName: "stripe_checkout_fail",
+        productId: productId
+      )
       // No-op: don't clear checkout context on failure
       break
     case let .stripeCheckoutAbandon(checkoutContextId, productId):
@@ -509,6 +526,26 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func handleUserAttributesUpdated(attributes: JSON) {
     delegate?.eventDidOccur(.userAttributesUpdated(attributes: attributes))
+  }
+
+  private func trackStripeCheckoutEvent(
+    eventName: String,
+    productId: String
+  ) {
+    let params: [String: Any] = [
+      "store": "STRIPE",
+      "product_identifier": productId
+    ]
+
+    Task {
+      let event = UserInitiatedPlacement.Track(
+        rawName: eventName,
+        canImplicitlyTriggerPaywall: false,
+        audienceFilterParams: params,
+        isFeatureGatable: false
+      )
+      await Superwall.shared.track(event)
+    }
   }
 
   private func detectHiddenPaywallEvent(
