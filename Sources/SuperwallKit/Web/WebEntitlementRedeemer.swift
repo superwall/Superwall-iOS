@@ -9,36 +9,6 @@
 import UIKit
 import Foundation
 
-struct PendingStripeCheckoutPollState: Codable, Equatable {
-  static let defaultForegroundAttempts = 5
-
-  let checkoutContextId: String
-  let productId: String
-  let remainingForegroundAttempts: Int
-  let updatedAt: Date
-
-  init(
-    checkoutContextId: String,
-    productId: String,
-    remainingForegroundAttempts: Int = defaultForegroundAttempts,
-    updatedAt: Date = Date()
-  ) {
-    self.checkoutContextId = checkoutContextId
-    self.productId = productId
-    self.remainingForegroundAttempts = remainingForegroundAttempts
-    self.updatedAt = updatedAt
-  }
-
-  func consumingForegroundAttempt() -> PendingStripeCheckoutPollState {
-    PendingStripeCheckoutPollState(
-      checkoutContextId: checkoutContextId,
-      productId: productId,
-      remainingForegroundAttempts: max(remainingForegroundAttempts - 1, 0),
-      updatedAt: Date()
-    )
-  }
-}
-
 actor WebEntitlementRedeemer {
   private unowned let network: Network
   private unowned let storage: Storage
@@ -681,6 +651,7 @@ actor WebEntitlementRedeemer {
           ],
           error: error
         )
+        // Is this intentional or we only want to backoff if no code found? The network req itself backs off so maybe we don't want to have backoff here too.
         return .requestFailed
       }
     }

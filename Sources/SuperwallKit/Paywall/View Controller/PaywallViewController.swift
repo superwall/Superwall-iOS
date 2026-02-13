@@ -1153,11 +1153,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func handleStripeCheckoutComplete(
-    swCheckoutId: String,
     checkoutContextId: String,
     productId: String
   ) {
-    _ = swCheckoutId // Included for analytics parity from paywall events.
     didReceiveStripeCheckoutAbandonMessage = true
     loadingState = .manualLoading
     closeSafari()
@@ -1170,8 +1168,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     }
   }
 
-  func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
-    _ = checkoutContextId // Context is persisted by start/complete and intentionally not cleared on abandon.
+  func handleStripeCheckoutAbandon(productId: String) {
     didReceiveStripeCheckoutAbandonMessage = true
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil

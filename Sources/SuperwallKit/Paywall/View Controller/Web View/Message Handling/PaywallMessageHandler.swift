@@ -25,11 +25,10 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func openPaymentSheet(_ url: URL)
   func handleStripeCheckoutStart(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
-    swCheckoutId: String,
     checkoutContextId: String,
     productId: String
   )
-  func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  func handleStripeCheckoutAbandon(productId: String)
 }
 
 @MainActor
@@ -203,13 +202,12 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case let .stripeCheckoutComplete(swCheckoutId, checkoutContextId, productId):
+    case let .stripeCheckoutComplete(_, checkoutContextId, productId):
       trackStripeCheckoutEvent(
         eventName: "stripe_checkout_complete",
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
-        swCheckoutId: swCheckoutId,
         checkoutContextId: checkoutContextId,
         productId: productId
       )
@@ -226,7 +224,6 @@ final class PaywallMessageHandler: WebEventDelegate {
       // No-op: don't clear checkout context on failure
     case let .stripeCheckoutAbandon(checkoutContextId, productId):
       delegate?.handleStripeCheckoutAbandon(
-        checkoutContextId: checkoutContextId,
         productId: productId
       )
     case .requestStoreReview(let reviewType):
