@@ -55,6 +55,7 @@ actor WebEntitlementRedeemer {
     & ConfigStateFactory
     & ConfigManagerFactory
     & HasExternalPurchaseControllerFactory
+    & DeviceHelperFactory
 
   private enum StripePollTrigger: String {
     case checkoutComplete = "checkout_complete"
@@ -478,6 +479,22 @@ actor WebEntitlementRedeemer {
         await self.delegate.willRedeemLink()
         try? await Task.sleep(nanoseconds: 200_000_000)
         await self.delegate.didRedeemLink(result: codeResult)
+      }
+      
+      // Schedule free trial notification if applicable
+      if case .success(_, let redemptionInfo) = codeResult,
+        let product = redemptionInfo.paywallInfo?.product,
+        product.trialPeriodDays > 0,
+        let paywallVc = superwall.paywallViewController {
+        let paywallInfo = await paywallVc.info
+        let notifications = paywallInfo.localNotifications.filter {
+          $0.type == .trialStarted
+        }
+        await NotificationScheduler.shared.scheduleNotifications(
+          notifications,
+          fromPaywallId: paywallInfo.identifier,
+          factory: self.factory
+        )
       }
 
       if let paywallVc = superwall.paywallViewController,

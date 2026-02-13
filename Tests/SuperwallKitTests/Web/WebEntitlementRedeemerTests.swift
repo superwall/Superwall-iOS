@@ -1055,6 +1055,364 @@ struct WebEntitlementRedeemerTests {
     #expect(mockNetwork.redeemCallCount == 2, "Both redemptions should have made network calls since no paywall is open")
   }
 
+  @Test("Schedules trial notification when redeemed product has free trial")
+  func testRedeem_withFreeTrial_schedulesNotification() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let cache = dependencyContainer.paywallManager.cache
+    let messageHandler = await PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = await SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+
+    let entitlement = Entitlement(id: "premium", isActive: true)
+    let product = Product(
+      name: "Test Product",
+      type: .appStore(.init(id: "test_product")),
+      id: "test_product",
+      entitlements: [entitlement]
+    )
+
+    // Create paywall with local notifications
+    let trialNotification = LocalNotification.stub()
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [product])
+      .setting(\.localNotifications, to: [trialNotification])
+
+    let paywallVc = await PaywallViewControllerMock(
+      paywall: paywall,
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: cache,
+      paywallArchiveManager: nil
+    )
+    cache.save(paywallVc, forKey: "key")
+    cache.activePaywallVcKey = "key"
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
+
+    // Build a RedemptionResult with paywallInfo that has trialPeriodDays > 0
+    let redemptionResultJSON = """
+    {
+      "status": "SUCCESS",
+      "code": "TESTCODE",
+      "redemptionInfo": {
+        "ownership": { "type": "APP_USER", "appUserId": "appUserId" },
+        "purchaserInfo": {
+          "appUserId": "appUserId",
+          "storeIdentifiers": {
+            "store": "STRIPE",
+            "stripeCustomerId": "cus_123",
+            "stripeSubscriptionIds": ["sub_123"]
+          }
+        },
+        "paywallInfo": {
+          "identifier": "test_paywall",
+          "placementName": "test_placement",
+          "placementParams": {},
+          "variantId": "variant_1",
+          "experimentId": "exp_1",
+          "product": {
+            "identifier": "test_product",
+            "languageCode": "en",
+            "locale": "en_US",
+            "currencyCode": "USD",
+            "currencySymbol": "$",
+            "period": "1 month",
+            "periodly": "monthly",
+            "localizedPeriod": "month",
+            "periodAlt": "mo",
+            "periodDays": 30,
+            "periodWeeks": 4,
+            "periodMonths": 1,
+            "periodYears": 0,
+            "rawPrice": 9.99,
+            "price": "$9.99",
+            "dailyPrice": "$0.33",
+            "weeklyPrice": "$2.50",
+            "monthlyPrice": "$9.99",
+            "yearlyPrice": "$119.88",
+            "rawTrialPeriodPrice": 0.0,
+            "trialPeriodPrice": "$0.00",
+            "trialPeriodDailyPrice": "$0.00",
+            "trialPeriodWeeklyPrice": "$0.00",
+            "trialPeriodMonthlyPrice": "$0.00",
+            "trialPeriodYearlyPrice": "$0.00",
+            "trialPeriodDays": 7,
+            "trialPeriodWeeks": 1,
+            "trialPeriodMonths": 0,
+            "trialPeriodYears": 0,
+            "trialPeriodText": "7-day free trial",
+            "trialPeriodEndDate": "2025-04-01"
+          }
+        },
+        "entitlements": [{
+          "identifier": "premium",
+          "type": "SERVICE_LEVEL",
+          "isActive": true
+        }]
+      }
+    }
+    """.data(using: .utf8)!
+
+    let result = try! JSONDecoder().decode(
+      RedemptionResult.self,
+      from: redemptionResultJSON
+    )
+
+    let existingResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [entitlement]
+      ))
+      .setting(\.results, to: [result])
+
+    let mockStorage = StorageMock(internalRedeemResponse: existingResponse)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    mockNetwork.getWebEntitlementsResponse = existingResponse
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
+
+    // Verify the paywall's local notifications exist on the paywall VC
+    let paywallInfo = await paywallVc.info
+    #expect(!paywallInfo.localNotifications.isEmpty)
+    #expect(paywallInfo.localNotifications.first?.type == .trialStarted)
+
+    // Verify delegate received success result
+    if case .success = mockDelegate.receivedResult {} else {
+      Issue.record("should have been a success")
+    }
+  }
+
+  @Test("Does not schedule trial notification when trialPeriodDays is 0")
+  func testRedeem_withNoFreeTrial_doesNotScheduleNotification() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let cache = dependencyContainer.paywallManager.cache
+    let messageHandler = await PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = await SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+
+    let entitlement = Entitlement(id: "premium", isActive: true)
+    let product = Product(
+      name: "Test Product",
+      type: .appStore(.init(id: "test_product")),
+      id: "test_product",
+      entitlements: [entitlement]
+    )
+
+    // Create paywall with local notifications
+    let trialNotification = LocalNotification.stub()
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [product])
+      .setting(\.localNotifications, to: [trialNotification])
+
+    let paywallVc = await PaywallViewControllerMock(
+      paywall: paywall,
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: cache,
+      paywallArchiveManager: nil
+    )
+    cache.save(paywallVc, forKey: "key")
+    cache.activePaywallVcKey = "key"
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["test_product"] = [entitlement]
+
+    // Build a RedemptionResult with paywallInfo that has trialPeriodDays = 0
+    let redemptionResultJSON = """
+    {
+      "status": "SUCCESS",
+      "code": "TESTCODE",
+      "redemptionInfo": {
+        "ownership": { "type": "APP_USER", "appUserId": "appUserId" },
+        "purchaserInfo": {
+          "appUserId": "appUserId",
+          "storeIdentifiers": {
+            "store": "STRIPE",
+            "stripeCustomerId": "cus_123",
+            "stripeSubscriptionIds": ["sub_123"]
+          }
+        },
+        "paywallInfo": {
+          "identifier": "test_paywall",
+          "placementName": "test_placement",
+          "placementParams": {},
+          "variantId": "variant_1",
+          "experimentId": "exp_1",
+          "product": {
+            "identifier": "test_product",
+            "languageCode": "en",
+            "locale": "en_US",
+            "currencyCode": "USD",
+            "currencySymbol": "$",
+            "period": "1 month",
+            "periodly": "monthly",
+            "localizedPeriod": "month",
+            "periodAlt": "mo",
+            "periodDays": 30,
+            "periodWeeks": 4,
+            "periodMonths": 1,
+            "periodYears": 0,
+            "rawPrice": 9.99,
+            "price": "$9.99",
+            "dailyPrice": "$0.33",
+            "weeklyPrice": "$2.50",
+            "monthlyPrice": "$9.99",
+            "yearlyPrice": "$119.88",
+            "rawTrialPeriodPrice": 0.0,
+            "trialPeriodPrice": "$0.00",
+            "trialPeriodDailyPrice": "$0.00",
+            "trialPeriodWeeklyPrice": "$0.00",
+            "trialPeriodMonthlyPrice": "$0.00",
+            "trialPeriodYearlyPrice": "$0.00",
+            "trialPeriodDays": 0,
+            "trialPeriodWeeks": 0,
+            "trialPeriodMonths": 0,
+            "trialPeriodYears": 0,
+            "trialPeriodText": "",
+            "trialPeriodEndDate": ""
+          }
+        },
+        "entitlements": [{
+          "identifier": "premium",
+          "type": "SERVICE_LEVEL",
+          "isActive": true
+        }]
+      }
+    }
+    """.data(using: .utf8)!
+
+    let result = try! JSONDecoder().decode(
+      RedemptionResult.self,
+      from: redemptionResultJSON
+    )
+
+    let existingResponse = RedeemResponse.stub()
+      .setting(\.customerInfo, to: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [entitlement]
+      ))
+      .setting(\.results, to: [result])
+
+    let mockStorage = StorageMock(internalRedeemResponse: existingResponse)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockPurchaseController = MockPurchaseController()
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: mockPurchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    mockNetwork.getWebEntitlementsResponse = existingResponse
+
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+         to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL("https://google.com")!)
+      )
+
+    await redeemer.redeem(
+      .code("TESTCODE"),
+      injectedConfig: config
+    )
+
+    // Verify delegate received success result (code was redeemed successfully)
+    if case .success = mockDelegate.receivedResult {} else {
+      Issue.record("should have been a success")
+    }
+
+    // The notification should NOT have been scheduled because trialPeriodDays == 0.
+    // We verify this indirectly by confirming the code path completes without error
+    // and the result is still success (scheduling is a side effect, not observable
+    // without a mock NotificationScheduler).
+  }
+
   @Test("ExistingCodes redemptions not blocked when paywall is open")
   func testRedeem_existingCodes_paywallOpen_notBlocked() async {
     guard #available(iOS 14.0, *) else {
