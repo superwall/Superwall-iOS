@@ -183,12 +183,14 @@ actor WebEntitlementRedeemer {
 
     // Consume foreground attempts after each trigger completes, except when skipped
     // due to an existing in-flight poll.
-    guard outcome != .skippedInFlight else {
+    if outcome == .skippedInFlight {
       return
     }
 
-    guard let latestState = pendingStripeCheckoutState,
-      latestState.checkoutContextId == pendingState.checkoutContextId else {
+    guard
+      let latestState = pendingStripeCheckoutState,
+      latestState.checkoutContextId == pendingState.checkoutContextId
+    else {
       return
     }
 
@@ -651,7 +653,6 @@ actor WebEntitlementRedeemer {
           ],
           error: error
         )
-        // Is this intentional or we only want to backoff if no code found? The network req itself backs off so maybe we don't want to have backoff here too.
         return .requestFailed
       }
     }
