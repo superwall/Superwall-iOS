@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.13.1
+
+### Enhancements
+
+- Adds Stripe checkout message handling for `stripe_checkout_start`, `stripe_checkout_submit`, `stripe_checkout_complete`, `stripe_checkout_fail`, and `stripe_checkout_abandon`.
+- Adds SDK-side analytics tracking for Stripe checkout lifecycle events (`start`, `submit`, `complete`, `fail`) with `store` and `product_identifier` payload fields.
+
 ## 4.13.0
 
 ### Enhancements

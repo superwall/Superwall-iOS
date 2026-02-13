@@ -480,7 +480,7 @@ actor WebEntitlementRedeemer {
         try? await Task.sleep(nanoseconds: 200_000_000)
         await self.delegate.didRedeemLink(result: codeResult)
       }
-      
+
       // Schedule free trial notification if applicable
       if case .success(_, let redemptionInfo) = codeResult,
         let product = redemptionInfo.paywallInfo?.product,

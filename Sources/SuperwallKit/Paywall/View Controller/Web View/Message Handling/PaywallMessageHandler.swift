@@ -224,7 +224,6 @@ final class PaywallMessageHandler: WebEventDelegate {
         productId: productId
       )
       // No-op: don't clear checkout context on failure
-      break
     case let .stripeCheckoutAbandon(checkoutContextId, productId):
       delegate?.handleStripeCheckoutAbandon(
         checkoutContextId: checkoutContextId,
