@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for local images and videos in paywalls.
 - Schedules trial notifications after purchasing Stripe products.
+- Adds ability to group paywalls into preloading stages.
 
 ### Fixes
 
@@ -329,7 +330,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds ability to group paywalls into preloading stages.
 - Updates Superscript to 0.2.8.
 
 ### Fixes

@@ -52,7 +52,7 @@ class ConfigManager {
     & ReceiptFactory
     & DeviceHelperFactory
   private let factory: Factory
-  
+
   init(
     options: SuperwallOptions,
     storeKitManager: StoreKitManager,
@@ -543,7 +543,6 @@ class ConfigManager {
       if let preloading = config.preloading {
         for step in preloading.schedule {
           let placements = Set(step.placements.map { $0.placement })
-          // Need to double check whether the ifTrue stuff still happens here.
           await preloadPaywalls(for: placements)
           try? await Task.sleep(nanoseconds: UInt64(step.delay * 1_000_000))
         }
@@ -572,7 +571,11 @@ class ConfigManager {
       return
     }
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
-    let paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
+    var paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
+    // Do not preload the presented paywall.
+    if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+      paywallIds.remove(presentedPaywallId)
+    }
     await preloadPaywalls(withIdentifiers: paywallIds)
   }
 
