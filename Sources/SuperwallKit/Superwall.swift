@@ -10,6 +10,7 @@ import StoreKit
 @objcMembers
 public final class Superwall: NSObject, ObservableObject {
   // MARK: - Public Properties
+
   /// The delegate that handles Superwall lifecycle events.
   public var delegate: SuperwallDelegate? {
     get {

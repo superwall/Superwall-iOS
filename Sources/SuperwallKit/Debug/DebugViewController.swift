@@ -79,9 +79,12 @@ final class DebugViewController: UIViewController {
     let button = SWBounceButton()
     button.setTitle("", for: .normal)
     button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
+    button.titleLabel?.numberOfLines = 0
+    button.titleLabel?.lineBreakMode = .byWordWrapping
+    button.titleLabel?.textAlignment = .center
     button.backgroundColor = lightBackgroundColor
     button.setTitleColor(primaryColor, for: .normal)
-    button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+    button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
@@ -346,12 +349,18 @@ final class DebugViewController: UIViewController {
   @objc func pressedConsoleButton() {
     let releaseVersionNumber = Bundle.main.releaseVersionNumber ?? ""
     let buildVersionNumber = Bundle.main.buildVersionNumber ?? ""
+    let localResourceCount = Superwall.shared.options.localResources.count
     presentAlert(
       title: nil,
       message: "Superwall v\(sdkVersion) | App v\(releaseVersionNumber) (\(buildVersionNumber))",
       options: [
         AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
-        AlertOption(title: "Templates", action: showConsole, style: .default)
+        AlertOption(title: "Templates", action: showConsole, style: .default),
+        AlertOption(
+          title: "Local Resources (\(localResourceCount))",
+          action: showLocalResources,
+          style: .default
+        )
       ],
       on: consoleButton
     )
@@ -395,6 +404,12 @@ final class DebugViewController: UIViewController {
     navController.modalPresentationStyle = .overFullScreen
     await present(navController, animated: true)
 	}
+
+  func showLocalResources() async {
+    let viewController = SWLocalResourcesViewController()
+    let navController = UINavigationController(rootViewController: viewController)
+    await present(navController, animated: true)
+  }
 
   @objc func pressedBottomButton() {
     presentAlert(

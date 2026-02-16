@@ -24,6 +24,7 @@ actor WebEntitlementRedeemer {
     & ConfigStateFactory
     & ConfigManagerFactory
     & HasExternalPurchaseControllerFactory
+    & DeviceHelperFactory
 
   var isCurrentlyProcessing: Bool {
     isProcessing
@@ -324,6 +325,22 @@ actor WebEntitlementRedeemer {
     let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
 
     func afterRedeem() async {
+      // Schedule free trial notification if applicable
+      if case .success(_, let redemptionInfo) = codeResult,
+        let product = redemptionInfo.paywallInfo?.product,
+        product.trialPeriodDays > 0,
+        let paywallVc = superwall.paywallViewController {
+        let paywallInfo = await paywallVc.info
+        let notifications = paywallInfo.localNotifications.filter {
+          $0.type == .trialStarted
+        }
+        await NotificationScheduler.shared.scheduleNotifications(
+          notifications,
+          fromPaywallId: paywallInfo.identifier,
+          factory: self.factory
+        )
+      }
+
       if let paywallVc = superwall.paywallViewController,
         !paywallEntitlementIds.isEmpty,
         paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
