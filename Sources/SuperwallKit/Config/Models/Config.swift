@@ -122,7 +122,6 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
-    try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
     try container.encodeIfPresent(preloading, forKey: .preloading)
 
     if !products.isEmpty {
