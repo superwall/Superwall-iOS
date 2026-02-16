@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes race condition relating to the user ID when upgrading from v3 of the SDK to v4.
+- Fixes issue where the Superscript version hadn't been upgraded to 1.0.13.
 
 ## 4.12.11
 
