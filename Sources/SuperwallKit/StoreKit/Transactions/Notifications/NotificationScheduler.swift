@@ -8,7 +8,15 @@
 import UIKit
 import UserNotifications
 
-actor NotificationScheduler {
+protocol NotificationScheduling {
+  func scheduleNotifications(
+    _ notifications: [LocalNotification],
+    fromPaywallId paywallId: String,
+    factory: DeviceHelperFactory
+  ) async
+}
+
+actor NotificationScheduler: NotificationScheduling {
   static let shared = NotificationScheduler()
   static let superwallIdentifier = "com.superwall.ios"
   private var isScheduling = false
@@ -30,12 +38,27 @@ actor NotificationScheduler {
   func scheduleNotifications(
     _ notifications: [LocalNotification],
     fromPaywallId paywallId: String,
+    factory: DeviceHelperFactory
+  ) async {
+    await scheduleNotifications(
+      notifications,
+      fromPaywallId: paywallId,
+      factory: factory,
+      notificationCenter: nil
+    )
+  }
+
+  func scheduleNotifications(
+    _ notifications: [LocalNotification],
+    fromPaywallId paywallId: String,
     factory: DeviceHelperFactory,
-    notificationCenter: NotificationAuthorizable = UNUserNotificationCenter.current()
+    notificationCenter: NotificationAuthorizable?
   ) async {
     if notifications.isEmpty {
       return
     }
+
+    let notificationCenter = notificationCenter ?? UNUserNotificationCenter.current()
 
     // Prevent concurrent scheduling which could show duplicate alerts
     if isScheduling {
