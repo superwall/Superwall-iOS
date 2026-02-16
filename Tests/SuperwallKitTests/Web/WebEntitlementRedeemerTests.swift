@@ -9,6 +9,20 @@ import Testing
 @testable import SuperwallKit
 import Foundation
 
+final class NotificationSchedulerMock: NotificationScheduling {
+  var scheduledNotifications: [LocalNotification] = []
+  var scheduledPaywallId: String?
+
+  func scheduleNotifications(
+    _ notifications: [LocalNotification],
+    fromPaywallId paywallId: String,
+    factory: DeviceHelperFactory
+  ) async {
+    scheduledNotifications = notifications
+    scheduledPaywallId = paywallId
+  }
+}
+
 struct WebEntitlementRedeemerTests {
   let dependencyContainer = DependencyContainer()
 
@@ -1197,6 +1211,7 @@ struct WebEntitlementRedeemerTests {
     dependencyContainer.delegateAdapter = delegateAdapter
 
     let mockPurchaseController = MockPurchaseController()
+    let mockNotificationScheduler = NotificationSchedulerMock()
 
     let redeemer = WebEntitlementRedeemer(
       network: mockNetwork,
@@ -1206,6 +1221,7 @@ struct WebEntitlementRedeemerTests {
       purchaseController: mockPurchaseController,
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
+      notificationScheduler: mockNotificationScheduler,
       superwall: superwall
     )
 
@@ -1223,10 +1239,10 @@ struct WebEntitlementRedeemerTests {
       injectedConfig: config
     )
 
-    // Verify the paywall's local notifications exist on the paywall VC
-    let paywallInfo = await paywallVc.info
-    #expect(!paywallInfo.localNotifications.isEmpty)
-    #expect(paywallInfo.localNotifications.first?.type == .trialStarted)
+    // Verify notifications were scheduled
+    #expect(!mockNotificationScheduler.scheduledNotifications.isEmpty)
+    #expect(mockNotificationScheduler.scheduledNotifications.first?.type == .trialStarted)
+    #expect(mockNotificationScheduler.scheduledPaywallId != nil)
 
     // Verify delegate received success result
     if case .success = mockDelegate.receivedResult {} else {
@@ -1261,11 +1277,8 @@ struct WebEntitlementRedeemerTests {
       entitlements: [entitlement]
     )
 
-    // Create paywall with local notifications
-    let trialNotification = LocalNotification.stub()
     let paywall = Paywall.stub()
       .setting(\.products, to: [product])
-      .setting(\.localNotifications, to: [trialNotification])
 
     let paywallVc = await PaywallViewControllerMock(
       paywall: paywall,
@@ -1376,6 +1389,7 @@ struct WebEntitlementRedeemerTests {
     dependencyContainer.delegateAdapter = delegateAdapter
 
     let mockPurchaseController = MockPurchaseController()
+    let mockNotificationScheduler = NotificationSchedulerMock()
 
     let redeemer = WebEntitlementRedeemer(
       network: mockNetwork,
@@ -1385,6 +1399,7 @@ struct WebEntitlementRedeemerTests {
       purchaseController: mockPurchaseController,
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
+      notificationScheduler: mockNotificationScheduler,
       superwall: superwall
     )
 
@@ -1402,15 +1417,14 @@ struct WebEntitlementRedeemerTests {
       injectedConfig: config
     )
 
-    // Verify delegate received success result (code was redeemed successfully)
+    // Verify delegate received success result
     if case .success = mockDelegate.receivedResult {} else {
       Issue.record("should have been a success")
     }
 
-    // The notification should NOT have been scheduled because trialPeriodDays == 0.
-    // We verify this indirectly by confirming the code path completes without error
-    // and the result is still success (scheduling is a side effect, not observable
-    // without a mock NotificationScheduler).
+    // Verify notifications were NOT scheduled because trialPeriodDays == 0
+    #expect(mockNotificationScheduler.scheduledNotifications.isEmpty)
+    #expect(mockNotificationScheduler.scheduledPaywallId == nil)
   }
 
   @Test("ExistingCodes redemptions not blocked when paywall is open")

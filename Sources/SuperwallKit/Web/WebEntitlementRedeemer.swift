@@ -17,6 +17,7 @@ actor WebEntitlementRedeemer {
   private unowned let purchaseController: PurchaseController
   private unowned let receiptManager: ReceiptManager
   private unowned let factory: Factory
+  private let notificationScheduler: NotificationScheduling
   private var isProcessing = false
   private var activeStripePollContextId: String?
   private var superwall: Superwall?
@@ -82,6 +83,7 @@ actor WebEntitlementRedeemer {
     purchaseController: PurchaseController,
     receiptManager: ReceiptManager,
     factory: Factory,
+    notificationScheduler: NotificationScheduling = NotificationScheduler.shared,
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -90,6 +92,7 @@ actor WebEntitlementRedeemer {
     self.delegate = delegate
     self.purchaseController = purchaseController
     self.factory = factory
+    self.notificationScheduler = notificationScheduler
     self.superwall = superwall
     self.receiptManager = receiptManager
 
@@ -462,7 +465,7 @@ actor WebEntitlementRedeemer {
         let notifications = paywallInfo.localNotifications.filter {
           $0.type == .trialStarted
         }
-        await NotificationScheduler.shared.scheduleNotifications(
+        await self.notificationScheduler.scheduleNotifications(
           notifications,
           fromPaywallId: paywallInfo.identifier,
           factory: self.factory
