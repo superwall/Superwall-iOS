@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 20/10/2022.
 //
-// swiftlint:disable type_body_length file_length line_length function_body_length
+// swiftlint:disable type_body_length file_length function_body_length
 
 import Combine
 import StoreKit
@@ -61,7 +61,7 @@ final class TransactionManager {
     let product: StoreProduct
 
     switch purchaseSource {
-    case .internal(let productId, _):
+    case .internal(let productId, _, _):
       guard let storeProduct = await storeKitManager.productsById[productId] else {
         Logger.debug(
           logLevel: .error,
@@ -126,7 +126,7 @@ final class TransactionManager {
         case .observing:
           break
         case .purchasing(let purchaseSource):
-          if case let .internal(_, paywallViewController) = purchaseSource {
+          if case let .internal(_, paywallViewController, _) = purchaseSource {
             await paywallViewController.togglePaywallSpinner(isHidden: true)
           }
         }
@@ -216,15 +216,17 @@ final class TransactionManager {
         Superwall.shared.options.paywalls.shouldShowWebRestorationAlert,
         hasRestored,
         let paywallViewController = paywallViewController {
-        // Get entitlements of products from paywall.
-        var paywallEntitlements: Set<Entitlement> = []
+        // Get entitlement IDs of products from paywall.
+        var paywallEntitlementIds: Set<String> = []
         for id in paywallViewController.info.productIds {
-          paywallEntitlements.formUnion(Superwall.shared.entitlements.byProductId(id))
+          let entitlements = Superwall.shared.entitlements.byProductId(id)
+          paywallEntitlementIds.formUnion(entitlements.map { $0.id })
         }
 
         // If the restored entitlements cover the paywall entitlements,
         // track successful restore.
-        if paywallEntitlements.subtracting(Superwall.shared.entitlements.active).isEmpty {
+        let activeEntitlementIds = Set(Superwall.shared.entitlements.active.map { $0.id })
+        if paywallEntitlementIds.subtracting(activeEntitlementIds).isEmpty {
           await logAndTrack(
             state: .complete,
             message: "Transactions Restored",
@@ -239,14 +241,17 @@ final class TransactionManager {
           let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
           let noSubsText = "No App Store subscription found, would you like to check on the web?"
 
-          // swiftlint:disable:next trailing_closure
           paywallViewController.presentAlert(
             title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
             message: hasEntitlements ? hasSubsText : noSubsText,
             actionTitle: "Yes",
-            closeActionTitle: "Cancel",
-            action: { UIApplication.shared.open(restoreUrl) }
-          )
+            closeActionTitle: "Cancel"
+          ) {
+            guard let sharedApplication = UIApplication.sharedApplication else {
+              return
+            }
+            sharedApplication.open(restoreUrl)
+          }
           return .webRestore
         }
       }
@@ -264,8 +269,9 @@ final class TransactionManager {
       } else {
         var message = "Transactions Failed to Restore."
         if !hasActiveEntitlements && hasRestored {
-          message +=
-            " The restoration result is \"restored\" but there are no active entitlements. Ensure the active entitlements are set before confirming successful restoration."
+          message += " The restoration result is \"restored\" but there are no active "
+            + "entitlements. Ensure the active entitlements are set before confirming "
+            + "successful restoration."
         }
         if case .failed(let error) = restorationResult,
           let error = error {
@@ -422,6 +428,13 @@ final class TransactionManager {
     _ product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
+    // Attach intro offer token if available from the paywall
+    if case .internal(_, let paywallViewController, _) = purchaseSource {
+      product.introOfferToken = await paywallViewController
+        .introOfferTokenManager
+        .getValidToken(for: product.productIdentifier)
+    }
+
     switch purchaseSource {
     case .internal:
       return await purchaseController.purchase(product: product)
@@ -454,7 +467,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -554,7 +567,7 @@ final class TransactionManager {
     let shouldTrackTransactionStart = !(purchaseManager.isUsingSK2 && isObserved)
 
     switch purchaseSource {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -628,7 +641,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case let .internal(_, paywallViewController, shouldDismiss):
       guard let product = await coordinator.product else {
         return
       }
@@ -649,15 +662,21 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
       await trackTransactionDidSucceed(transaction)
 
       let superwallOptions = factory.makeSuperwallOptions()
-      if superwallOptions.paywalls.automaticallyDismiss {
+      let shouldDismissPaywall = superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
+      if shouldDismissPaywall {
         await Superwall.shared.dismiss(
           paywallViewController,
           result: .purchased(product)
         )
+      }
+      if !shouldDismissPaywall {
+        await MainActor.run {
+          paywallViewController.togglePaywallSpinner(isHidden: true)
+        }
       }
     case .purchaseFunc,
       .observeFunc:
@@ -677,7 +696,7 @@ final class TransactionManager {
         factory: factory
       )
 
-      await receiptManager.loadPurchasedProducts()
+      await receiptManager.loadPurchasedProducts(config: nil)
 
       await trackTransactionDidSucceed(transaction)
     }
@@ -699,7 +718,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -759,7 +778,7 @@ final class TransactionManager {
     }
 
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -887,11 +906,13 @@ final class TransactionManager {
 
     let paywallInfo: PaywallInfo
     let eventSource: InternalSuperwallEvent.Transaction.Source
+    let trialEndDate = product.trialPeriodEndDate
     switch source {
-    case .internal(_, let paywallViewController):
+    case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
-      await paywallViewController.webView.messageHandler.handle(.transactionComplete)
+      await paywallViewController.webView.messageHandler
+        .handle(.transactionComplete(trialEndDate: trialEndDate, productIdentifier: product.productIdentifier))
     case .purchaseFunc,
       .observeFunc:
       paywallInfo = .empty()
@@ -933,7 +954,11 @@ final class TransactionManager {
       let notifications = paywallInfo.localNotifications.filter {
         $0.type == .trialStarted
       }
-      await NotificationScheduler.scheduleNotifications(notifications, factory: factory)
+      await NotificationScheduler.shared.scheduleNotifications(
+        notifications,
+        fromPaywallId: paywallInfo.identifier,
+        factory: factory
+      )
     case .subscriptionStart:
       await Superwall.shared.track(
         InternalSuperwallEvent.SubscriptionStart(

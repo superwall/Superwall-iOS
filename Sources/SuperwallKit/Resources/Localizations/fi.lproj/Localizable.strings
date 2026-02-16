@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "Kaikki valmista.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "Ostosi onnistui.";
+
+/* Alert action button */
+"purchase_success_action_title" = "OK";

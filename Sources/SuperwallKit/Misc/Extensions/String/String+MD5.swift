@@ -8,6 +8,8 @@
 // The following is an altered source version that only includes MD5. The original software can be found at:
 // https://github.com/krzyzanowskim/CryptoSwift
 // This is the original copyright notice:
+//
+// swiftlint:disable all
 /*
   Copyright (C) 2014 Marcin Krzyżanowski <marcin.krzyzanowski@gmail.com>
   This software is provided 'as-is', without any express or implied warranty.

@@ -166,6 +166,9 @@ public enum RedemptionResult: Codable {
         /// The subscription was purchased via Stripe.
         case stripe(customerId: String, subscriptionIds: [String])
 
+        /// The subscription was purchased via Paddle.
+        case paddle(customerId: String, subscriptionIds: [String])
+
         /// The subscription was purchased from an unknown store type.
         case unknown(store: String, additionalInfo: [String: Any])
 
@@ -173,6 +176,8 @@ public enum RedemptionResult: Codable {
           case store
           case stripeCustomerId
           case stripeSubscriptionIds
+          case paddleCustomerId
+          case paddleSubscriptionIds
         }
 
         struct DynamicCodingKey: CodingKey {
@@ -195,6 +200,13 @@ public enum RedemptionResult: Codable {
               customerId: stripeCustomerId,
               subscriptionIds: stripeSubscriptionIds
             )
+          case "PADDLE":
+            let paddleCustomerId = try container.decode(String.self, forKey: .paddleCustomerId)
+            let paddleSubscriptionIds = try container.decode([String].self, forKey: .paddleSubscriptionIds)
+            self = .paddle(
+              customerId: paddleCustomerId,
+              subscriptionIds: paddleSubscriptionIds
+            )
           default:
             // Decode entire JSON payload to capture additional fields
             let json = try JSON(from: decoder)
@@ -212,6 +224,10 @@ public enum RedemptionResult: Codable {
           var container = encoder.container(keyedBy: CodingKeys.self)
 
           switch self {
+          case let .paddle(customerId, subscriptionIds):
+            try container.encode("PADDLE", forKey: .store)
+            try container.encode(customerId, forKey: .paddleCustomerId)
+            try container.encode(subscriptionIds, forKey: .paddleSubscriptionIds)
           case let .stripe(customerId, subscriptionIds):
             try container.encode("STRIPE", forKey: .store)
             try container.encode(customerId, forKey: .stripeCustomerId)
@@ -243,6 +259,11 @@ public enum RedemptionResult: Codable {
               stripeWithCustomerId: customerId,
               subscriptionIds: subscriptionIds
             )
+          case let .paddle(customerId, subscriptionIds):
+            return RedemptionResultObjc.StoreIdentifiers(
+              paddleWithCustomerId: customerId,
+              subscriptionIds: subscriptionIds
+            )
           case let .unknown(store, additionalInfo):
             return RedemptionResultObjc.StoreIdentifiers(
               unknownStore: store,
@@ -264,6 +285,77 @@ public enum RedemptionResult: Codable {
 
     /// Info about the paywall the purchase was made from.
     public struct PaywallInfo: Codable {
+      /// Product variables from the paywall checkout context.
+      public struct PaywallProduct: Codable {
+        public let identifier: String
+        public let languageCode: String
+        public let locale: String
+        public let currencyCode: String
+        public let currencySymbol: String
+        public let period: String
+        public let periodly: String
+        public let localizedPeriod: String
+        public let periodAlt: String
+        public let periodDays: Int
+        public let periodWeeks: Int
+        public let periodMonths: Int
+        public let periodYears: Int
+        public let rawPrice: Double
+        public let price: String
+        public let dailyPrice: String
+        public let weeklyPrice: String
+        public let monthlyPrice: String
+        public let yearlyPrice: String
+        public let rawTrialPeriodPrice: Double
+        public let trialPeriodPrice: String
+        public let trialPeriodDailyPrice: String
+        public let trialPeriodWeeklyPrice: String
+        public let trialPeriodMonthlyPrice: String
+        public let trialPeriodYearlyPrice: String
+        public let trialPeriodDays: Int
+        public let trialPeriodWeeks: Int
+        public let trialPeriodMonths: Int
+        public let trialPeriodYears: Int
+        public let trialPeriodText: String
+        public let trialPeriodEndDate: String
+
+        func toObjc() -> RedemptionResultObjc.PaywallProduct {
+          return RedemptionResultObjc.PaywallProduct(
+            identifier: identifier,
+            languageCode: languageCode,
+            locale: locale,
+            currencyCode: currencyCode,
+            currencySymbol: currencySymbol,
+            period: period,
+            periodly: periodly,
+            localizedPeriod: localizedPeriod,
+            periodAlt: periodAlt,
+            periodDays: periodDays,
+            periodWeeks: periodWeeks,
+            periodMonths: periodMonths,
+            periodYears: periodYears,
+            rawPrice: rawPrice,
+            price: price,
+            dailyPrice: dailyPrice,
+            weeklyPrice: weeklyPrice,
+            monthlyPrice: monthlyPrice,
+            yearlyPrice: yearlyPrice,
+            rawTrialPeriodPrice: rawTrialPeriodPrice,
+            trialPeriodPrice: trialPeriodPrice,
+            trialPeriodDailyPrice: trialPeriodDailyPrice,
+            trialPeriodWeeklyPrice: trialPeriodWeeklyPrice,
+            trialPeriodMonthlyPrice: trialPeriodMonthlyPrice,
+            trialPeriodYearlyPrice: trialPeriodYearlyPrice,
+            trialPeriodDays: trialPeriodDays,
+            trialPeriodWeeks: trialPeriodWeeks,
+            trialPeriodMonths: trialPeriodMonths,
+            trialPeriodYears: trialPeriodYears,
+            trialPeriodText: trialPeriodText,
+            trialPeriodEndDate: trialPeriodEndDate
+          )
+        }
+      }
+
       /// The identifier of the paywall.
       public let identifier: String
 
@@ -279,12 +371,21 @@ public enum RedemptionResult: Codable {
       /// The ID of the experiment that the paywall belongs to.
       public let experimentId: String
 
+      /// The product identifier associated with the paywall.
+      @available(*, deprecated, renamed: "product.identifier")
+      public let productIdentifier: String?
+
+      /// Product variables associated with the paywall.
+      public let product: PaywallProduct?
+
       enum CodingKeys: String, CodingKey {
         case identifier
         case placementName
         case placementParams
         case variantId
         case experimentId
+        case productIdentifier
+        case product
       }
 
       public init(from decoder: Decoder) throws {
@@ -293,6 +394,8 @@ public enum RedemptionResult: Codable {
         placementName = try container.decode(String.self, forKey: .placementName)
         variantId = try container.decode(String.self, forKey: .variantId)
         experimentId = try container.decode(String.self, forKey: .experimentId)
+        productIdentifier = try container.decodeIfPresent(String.self, forKey: .productIdentifier)
+        product = try container.decodeIfPresent(PaywallProduct.self, forKey: .product)
 
         let paramsJSON = try container.decode(JSON.self, forKey: .placementParams)
         placementParams = paramsJSON.dictionaryObject ?? [:]
@@ -304,18 +407,23 @@ public enum RedemptionResult: Codable {
         try container.encode(placementName, forKey: .placementName)
         try container.encode(variantId, forKey: .variantId)
         try container.encode(experimentId, forKey: .experimentId)
+        try container.encodeIfPresent(productIdentifier, forKey: .productIdentifier)
+        try container.encodeIfPresent(product, forKey: .product)
 
         let jsonData = JSON(placementParams)
         try container.encode(jsonData, forKey: .placementParams)
       }
 
       func toObjc() -> RedemptionResultObjc.PaywallInfo {
+        let objcProduct = product?.toObjc()
         return RedemptionResultObjc.PaywallInfo(
           identifier: identifier,
           placementName: placementName,
           placementParams: placementParams,
           variantId: variantId,
-          experimentId: experimentId
+          experimentId: experimentId,
+          productIdentifier: productIdentifier,
+          product: objcProduct
         )
       }
     }

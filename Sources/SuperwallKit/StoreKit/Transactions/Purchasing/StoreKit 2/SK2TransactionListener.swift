@@ -43,7 +43,7 @@ actor SK2TransactionListener {
             await transaction.finish()
           }
 
-          await receiptManager.loadPurchasedProducts()
+          await receiptManager.loadPurchasedProducts(config: nil)
         }
       }
     }

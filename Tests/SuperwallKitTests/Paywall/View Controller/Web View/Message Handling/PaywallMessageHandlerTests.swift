@@ -1,21 +1,25 @@
 //
-//  File.swift
+//  PaywallMessageHandlerTests.swift
 //
 //
 //  Created by Yusuf Tör on 19/01/2023.
 // swiftlint:disable all
 
-import XCTest
-
+import Testing
+import Foundation
 @testable import SuperwallKit
 
-final class PaywallMessageHandlerTests: XCTestCase {
-  @MainActor
-  func test_handleTemplateParams() async {
+@Suite
+@MainActor
+struct PaywallMessageHandlerTests {
+  @Test
+  func handleTemplateParams() async {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -30,17 +34,19 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.delegate = delegate
     messageHandler.handle(.templateParamsAndUserAttributes)
 
-    try? await Task.sleep(nanoseconds: 800_000_000)
+    try? await Task.sleep(nanoseconds: 1_500_000_000)
 
-    XCTAssertTrue(webView.willHandleJs)
+    #expect(webView.willHandleJs == true)
   }
 
-  @MainActor
-  func test_onReady() async {
+  @Test
+  func onReady() async {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -55,18 +61,20 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.delegate = delegate
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
 
-    try? await Task.sleep(nanoseconds: 500_000_000)
+    try? await Task.sleep(nanoseconds: 1_500_000_000)
 
-    XCTAssertEqual(delegate.paywall.paywalljsVersion, "2")
-    XCTAssertTrue(webView.willHandleJs)
+    #expect(delegate.paywall.paywalljsVersion == "2")
+    #expect(webView.willHandleJs == true)
   }
 
-  @MainActor
-  func test_close() {
+  @Test
+  func close() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -81,15 +89,17 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.delegate = delegate
     messageHandler.handle(.close)
 
-    XCTAssertEqual(delegate.eventDidOccur, .closed)
+    #expect(delegate.eventDidOccur == .closed)
   }
 
-  @MainActor
-  func test_openUrl() {
+  @Test
+  func openUrl() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -105,16 +115,18 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let url = URL(string: "https://www.google.com")!
     messageHandler.handle(.openUrl(url))
 
-    XCTAssertEqual(delegate.eventDidOccur, .openedURL(url: url))
-    XCTAssertTrue(delegate.didPresentSafariInApp)
+    #expect(delegate.eventDidOccur == .openedURL(url: url))
+    #expect(delegate.didPresentSafariInApp == true)
   }
 
-  @MainActor
-  func test_openUrlInSafari() {
+  @Test
+  func openUrlInSafari() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -130,16 +142,18 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let url = URL(string: "https://www.google.com")!
     messageHandler.handle(.openUrlInSafari(url))
 
-    XCTAssertEqual(delegate.eventDidOccur, .openedUrlInSafari(url))
-    XCTAssertTrue(delegate.didPresentSafariExternal)
+    #expect(delegate.eventDidOccur == .openedUrlInSafari(url))
+    #expect(delegate.didPresentSafariExternal == true)
   }
 
-  @MainActor
-  func test_openDeepLink() {
+  @Test
+  func openDeepLink_regularDeepLink_shouldDismiss() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -156,15 +170,74 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let url = URL(string: "exampleapp://foo")!
     messageHandler.handle(.openDeepLink(url: url))
 
-    XCTAssertTrue(delegate.didOpenDeepLink)
+    #expect(delegate.didOpenDeepLink == true)
+    #expect(delegate.deepLinkShouldDismiss == true)
   }
 
-  @MainActor
-  func test_restore() {
+  @Test
+  func openDeepLink_superwallDeepLink_withoutRedemption_shouldDismiss() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    let url = URL(string: "https://example.superwall.app/app-link/myapp/home")!
+    messageHandler.handle(.openDeepLink(url: url))
+
+    #expect(delegate.didOpenDeepLink == true)
+    #expect(delegate.deepLinkShouldDismiss == true)
+  }
+
+  @Test
+  func openDeepLink_redemptionLink_shouldNotDismiss() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    let url = URL(string: "exampleapp://superwall/redeem?code=redemption_12345")!
+    messageHandler.handle(.openDeepLink(url: url))
+
+    #expect(delegate.didOpenDeepLink == true)
+    #expect(delegate.deepLinkShouldDismiss == false)
+  }
+
+  @Test
+  func restore() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -179,15 +252,17 @@ final class PaywallMessageHandlerTests: XCTestCase {
     messageHandler.delegate = delegate
     messageHandler.handle(.restore)
 
-    XCTAssertEqual(delegate.eventDidOccur, .initiateRestore)
+    #expect(delegate.eventDidOccur == .initiateRestore)
   }
 
-  @MainActor
-  func test_purchaseProduct() {
+  @Test
+  func purchaseProduct() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -201,17 +276,22 @@ final class PaywallMessageHandlerTests: XCTestCase {
     )
     messageHandler.delegate = delegate
     let productId = "abc"
-    messageHandler.handle(.purchase(productId: productId))
+    messageHandler.handle(.purchase(productId: productId, shouldDismiss: true))
 
-    XCTAssertEqual(delegate.eventDidOccur, .initiatePurchase(productId: productId))
+    #expect(delegate.eventDidOccur == .initiatePurchase(
+      productId: productId,
+      shouldDismiss: true
+    ))
   }
 
-  @MainActor
-  func test_custom() {
+  @Test
+  func custom() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -227,6 +307,257 @@ final class PaywallMessageHandlerTests: XCTestCase {
     let string = "abc"
     messageHandler.handle(.custom(data: string))
 
-    XCTAssertEqual(delegate.eventDidOccur, .custom(string: string))
+    #expect(delegate.eventDidOccur == .custom(string: string))
+  }
+
+  @Test
+  func userAttributesUpdated() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    let attributes = JSON(["name": "John", "age": 30])
+    messageHandler.handle(.userAttributesUpdated(attributes: attributes))
+
+    #expect(delegate.eventDidOccur == .userAttributesUpdated(attributes: attributes))
+  }
+
+  @Test
+  func requestPermission() async {
+    let dependencyContainer = DependencyContainer()
+    let fakePermissions = FakePermissionHandler()
+    fakePermissions.permissionToReturn = .granted
+
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    let permissionType = PermissionType.notification
+    let requestId = "test-request-123"
+
+    messageHandler.handle(.requestPermission(permissionType: permissionType, requestId: requestId))
+
+    // Wait for async task to complete
+    try? await Task.sleep(nanoseconds: 1_500_000_000)
+
+    #expect(fakePermissions.requestedPermissions == [.notification])
+    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+  }
+
+  @Test
+  func requestPermission_denied() async {
+    let dependencyContainer = DependencyContainer()
+    let fakePermissions = FakePermissionHandler()
+    fakePermissions.permissionToReturn = .denied
+
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.requestPermission(permissionType: .notification, requestId: "test-456"))
+
+    // Wait for async task to complete
+    try? await Task.sleep(nanoseconds: 1_500_000_000)
+
+    #expect(fakePermissions.requestedPermissions == [.notification])
+    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+  }
+
+  // MARK: - Purchase Message Decoding Tests
+
+  @Test
+  func decodePurchase_noShouldDismiss_defaultsToTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissFalse() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": false
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: false
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": true
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
+  }
+
+  // MARK: - Haptic Feedback Message Decoding Tests
+
+  @Test
+  func decodeHapticFeedback_medium() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "haptic_feedback",
+            "haptic_type": "medium"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .hapticFeedback(hapticType: "medium"))
+  }
+
+  @Test
+  func decodeHapticFeedback_allTypes() throws {
+    let hapticTypes = ["light", "medium", "heavy", "success", "warning", "error", "selection"]
+
+    for hapticType in hapticTypes {
+      let json = """
+      {
+        "version": 1,
+        "payload": {
+          "events": [
+            {
+              "event_name": "haptic_feedback",
+              "haptic_type": "\(hapticType)"
+            }
+          ]
+        }
+      }
+      """
+      let data = json.data(using: .utf8)!
+      let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+      let message = wrapped.payload.messages.first
+
+      #expect(message == .hapticFeedback(hapticType: hapticType))
+    }
+  }
+
+  @Test
+  func handleHapticFeedback() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    // This should not crash and should not trigger any delegate events
+    messageHandler.handle(.hapticFeedback(hapticType: "medium"))
+
+    // Haptic feedback doesn't trigger delegate events, so we just verify it doesn't crash
+    #expect(delegate.eventDidOccur == nil)
   }
 }

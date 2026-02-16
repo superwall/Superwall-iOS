@@ -15,9 +15,14 @@ final class NetworkMock: Network {
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
-  var redeemEntitlementsResponse: RedeemResponse?
+  var getWebEntitlementsResponse: RedeemResponse?
+  var getEntitlementsResponse: EntitlementsResponse?
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
+  var getIntroOfferTokenResult: Result<[String: IntroOfferToken], Error>?
+  var getIntroOfferTokenCallCount = 0
+  var redeemDelay: TimeInterval = 0
+  var redeemCallCount = 0
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
@@ -52,10 +57,45 @@ final class NetworkMock: Network {
 
   override func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
     redeemRequest = request
-    if let redeemEntitlementsResponse = redeemEntitlementsResponse {
-      return redeemEntitlementsResponse
+    redeemCallCount += 1
+
+    if redeemDelay > 0 {
+      try? await Task.sleep(nanoseconds: UInt64(redeemDelay * 1_000_000_000))
+    }
+
+    if let getWebEntitlementsResponse = getWebEntitlementsResponse {
+      return getWebEntitlementsResponse
     } else if let redeemError = redeemError {
       throw redeemError
+    }
+    throw NetworkError.unknown
+  }
+
+  override func getEntitlements(
+    appUserId: String?,
+    deviceId: String
+  ) async throws -> EntitlementsResponse {
+    if let getEntitlementsResponse = getEntitlementsResponse {
+      return getEntitlementsResponse
+    } else if let redeemError = redeemError {
+      throw redeemError
+    }
+    throw NetworkError.unknown
+  }
+
+  override func getIntroOfferToken(
+    productIds: [String],
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
+  ) async throws -> [String: IntroOfferToken] {
+    getIntroOfferTokenCallCount += 1
+    if let result = getIntroOfferTokenResult {
+      switch result {
+      case .success(let tokens):
+        return tokens
+      case .failure(let error):
+        throw error
+      }
     }
     throw NetworkError.unknown
   }

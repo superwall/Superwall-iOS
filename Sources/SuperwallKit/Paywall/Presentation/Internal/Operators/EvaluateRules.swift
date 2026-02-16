@@ -22,9 +22,12 @@ extension Superwall {
         storage: dependencyContainer.storage,
         factory: dependencyContainer
       )
+      // Force a deep copy with unique storage to prevent concurrent access issues
+      let triggersCopy = dependencyContainer.configManager.triggersByPlacementName
+        .merging([:]) { current, _ in current }
       return await audienceLogic.evaluateAudienceFilters(
         forPlacement: placementData,
-        triggers: dependencyContainer.configManager.triggersByPlacementName
+        triggers: triggersCopy
       )
     } else {
       // Called if the debugger is shown.

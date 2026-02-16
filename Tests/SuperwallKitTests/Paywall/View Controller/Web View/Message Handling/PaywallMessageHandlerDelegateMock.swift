@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 19/01/2023.
 //
@@ -8,10 +8,24 @@
 import Foundation
 @testable import SuperwallKit
 
+final class FakePermissionHandler: PermissionHandling {
+  var permissionToReturn: PermissionStatus = .granted
+  var requestedPermissions: [PermissionType] = []
+
+  func hasPermission(_ permission: PermissionType) async -> PermissionStatus {
+    return permissionToReturn
+  }
+
+  func requestPermission(_ permission: PermissionType) async -> PermissionStatus {
+    requestedPermissions.append(permission)
+    return permissionToReturn
+  }
+}
+
 final class FakeWebView: SWWebView {
   var willHandleJs = false
 
-  #if compiler(>=6.0.0)
+  #if compiler(>=6.0)
   override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
     willHandleJs = true
   }
@@ -26,7 +40,10 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var eventDidOccur: PaywallWebEvent?
   var didPresentSafariInApp = false
   var didOpenDeepLink = false
+  var deepLinkShouldDismiss: Bool?
   var didPresentSafariExternal = false
+  var didRequestReview = false
+  var didOpenPaymentSheet = false
 
   var request: PresentationRequest?
 
@@ -52,8 +69,9 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     eventDidOccur = paywallWebEvent
   }
 
-  func openDeepLink(_ url: URL) {
+  func openDeepLink(_ url: URL, shouldDismiss: Bool) {
     didOpenDeepLink = true
+    deepLinkShouldDismiss = shouldDismiss
   }
 
   func presentSafariInApp(_ url: URL) {
@@ -62,5 +80,13 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func presentSafariExternal(_ url: URL) {
     didPresentSafariExternal = true
+  }
+
+  func requestReview(type: ReviewType) {
+    didRequestReview = true
+  }
+
+  func openPaymentSheet(_ url: URL) {
+    didOpenPaymentSheet = true
   }
 }

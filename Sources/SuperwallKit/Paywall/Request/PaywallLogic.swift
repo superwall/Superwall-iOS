@@ -38,6 +38,15 @@ enum PaywallLogic {
     return "\(id)_\(locale)_\(substitutions)"
   }
 
+  static func getAppStoreProducts(from products: [Product]) -> [Product] {
+    return products.filter {
+      if case .appStore = $0.type {
+        return true
+      }
+      return false
+    }
+  }
+
   static func handlePaywallError(
     _ error: Error,
     forPlacement placement: PlacementData?,
@@ -97,7 +106,7 @@ enum PaywallLogic {
   ) async -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swProducts: [SWProduct] = []
-    var hasFreeTrial = false
+    var eligibleForIntroOffer = false
 
     for productItem in productItems {
       guard let storeProduct = productsById[productItem.id] else {
@@ -110,26 +119,28 @@ enum PaywallLogic {
         productVariables.append(
           ProductVariable(
             name: name,
-            attributes: storeProduct.attributesJson
+            attributes: storeProduct.attributesJson,
+            id: storeProduct.productIdentifier,
+            hasIntroOffer: storeProduct.hasFreeTrial
           )
         )
       }
 
       // Check for a free trial only if we haven't already found one
-      if !hasFreeTrial {
-        hasFreeTrial = await isFreeTrialAvailable(storeProduct)
+      if !eligibleForIntroOffer {
+        eligibleForIntroOffer = await isFreeTrialAvailable(storeProduct)
       }
     }
 
     // use the override if it is set
     if let freeTrialOverride = isFreeTrialAvailableOverride {
-      hasFreeTrial = freeTrialOverride
+      eligibleForIntroOffer = freeTrialOverride
     }
 
     return ProductProcessingOutcome(
       productVariables: productVariables,
       swProducts: swProducts,
-      isFreeTrialAvailable: hasFreeTrial
+      isFreeTrialAvailable: eligibleForIntroOffer
     )
   }
 }

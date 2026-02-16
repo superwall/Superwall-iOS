@@ -11,16 +11,76 @@ import CoreData
 
 @available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
+  init(useInMemoryStore: Bool = true) {
+    // Create persistent container
+    let persistentContainer = NSPersistentContainer(
+      name: CoreDataStack.modelName,
+      managedObjectModel: CoreDataStack.managedObject
+    )
+
+    // Configure for in-memory store if requested (default for tests)
+    if useInMemoryStore {
+      let description = NSPersistentStoreDescription()
+      description.type = NSInMemoryStoreType
+      persistentContainer.persistentStoreDescriptions = [description]
+    }
+
+    // Load the store
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+    var containerError: Error?
+    persistentContainer.loadPersistentStores { _, error in
+      containerError = error
+      if let error = error as NSError? {
+        Logger.debug(
+          logLevel: .error,
+          scope: .coreData,
+          message: "Error loading Core Data persistent stores.",
+          info: error.userInfo,
+          error: error
+        )
+      }
+      dispatchGroup.leave()
+    }
+    dispatchGroup.wait()
+
+    // Initialize parent with dummy - we'll set our own
+    super.init()
+
+    guard containerError == nil else {
+      return
+    }
+
+    self.persistentContainer = persistentContainer
+
+    // Setup contexts
+    let backgroundContext = persistentContainer.newBackgroundContext()
+    backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+    self.backgroundContext = backgroundContext
+
+    let mainContext = persistentContainer.viewContext
+    mainContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
+    self.mainContext = mainContext
+  }
+
   func deleteAllEntities(named entityName: String, completion: () -> Void) {
+    guard let backgroundContext = backgroundContext else {
+      completion()
+      return
+    }
+
     let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: entityName)
     let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
 
-    do {
-      try mainContext!.executeAndMergeChanges(using: deleteRequest)
-      completion()
-      print("Deleted entities")
-    } catch let error as NSError {
-      print("Error deleting!", error)
+    backgroundContext.performAndWait {
+      do {
+        try backgroundContext.executeAndMergeChanges(using: deleteRequest)
+        completion()
+        print("Deleted entities")
+      } catch let error as NSError {
+        print("Error deleting!", error)
+        completion()
+      }
     }
   }
 
@@ -29,34 +89,37 @@ final class CoreDataStackMock: CoreDataStack {
     count: Int,
     completion: @escaping () -> Void
   ) {
-    var index = 0
-
-    let batchInsert = NSBatchInsertRequest(
-      entity: ManagedEventData.entity()
-    ) { (managedObject: NSManagedObject) -> Bool in
-      guard index < count else {
-        return true
-      }
-
-      if let eventData = managedObject as? ManagedEventData {
+    guard let backgroundContext = backgroundContext else {
+      completion()
+      return
+    }
+    
+    backgroundContext.perform {
+      for _ in 0..<count {
         let stub = PlacementData.stub()
           .setting(\.name, to: eventName)
-        eventData.createdAt = stub.createdAt
-        eventData.id = stub.id
-        eventData.name = stub.name
-        let params = try! JSONEncoder().encode(stub.parameters)
-        eventData.parameters = params
+        let data = try? JSONEncoder().encode(stub.parameters)
+        _ = ManagedEventData(
+          context: backgroundContext,
+          id: stub.id,
+          createdAt: stub.createdAt,
+          name: stub.name,
+          parameters: data ?? Data()
+        )
       }
-      index += 1
-      return false
-    }
-
-    persistentContainer!.performBackgroundTask { context in
+      
       do {
-        try context.execute(batchInsert)
-        completion()
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
+        DispatchQueue.main.async {
+          completion()
+        }
       } catch {
-        print("ERROR!", error)
+        print("ERROR saving placement data!", error)
+        DispatchQueue.main.async {
+          completion()
+        }
       }
     }
   }
@@ -66,29 +129,32 @@ final class CoreDataStackMock: CoreDataStack {
     count: Int,
     completion: @escaping () -> Void
   ) {
-    var index = 0
-
-    let batchInsert = NSBatchInsertRequest(
-      entity: ManagedTriggerRuleOccurrence.entity()
-    ) { (managedObject: NSManagedObject) -> Bool in
-      guard index < count else {
-        return true
-      }
-
-      if let occurrence = managedObject as? ManagedTriggerRuleOccurrence {
-        occurrence.createdAt = Date()
-        occurrence.occurrenceKey = key
-      }
-      index += 1
-      return false
+    guard let backgroundContext = backgroundContext else {
+      completion()
+      return
     }
-
-    persistentContainer!.performBackgroundTask { context in
+    
+    backgroundContext.perform {
+      for _ in 0..<count {
+        _ = ManagedTriggerRuleOccurrence(
+          context: backgroundContext,
+          createdAt: Date(),
+          occurrenceKey: key
+        )
+      }
+      
       do {
-        try context.execute(batchInsert)
-        completion()
+        if backgroundContext.hasChanges {
+          try backgroundContext.save()
+        }
+        DispatchQueue.main.async {
+          completion()
+        }
       } catch {
-        print("ERROR!", error)
+        print("ERROR saving trigger occurrences!", error)
+        DispatchQueue.main.async {
+          completion()
+        }
       }
     }
   }

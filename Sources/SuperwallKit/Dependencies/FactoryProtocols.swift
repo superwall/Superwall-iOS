@@ -150,11 +150,11 @@ protocol PurchasedTransactionsFactory: AnyObject {
 }
 
 protocol UserAttributesPlacementFactory: AnyObject {
-  func makeUserAttributesPlacement() -> InternalSuperwallEvent.Attributes
+  func makeUserAttributesPlacement() -> InternalSuperwallEvent.UserAttributes
 }
 
 protocol ReceiptFactory: AnyObject {
-  func loadPurchasedProducts() async
+  func loadPurchasedProducts(config: Config?) async
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
 }
@@ -177,4 +177,8 @@ protocol RestoreAccessFactory: AnyObject {
 
 protocol ConfigStateFactory: AnyObject {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error>
+}
+
+protocol AppIdFactory: AnyObject {
+  func makeAppId() -> String?
 }

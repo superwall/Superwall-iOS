@@ -37,8 +37,27 @@ struct Endpoint<Kind: EndpointKind, Response: Decodable> {
       let defaultComponents = factory.makeDefaultComponents(host: components.host ?? .base)
       var component = URLComponents()
       component.scheme = defaultComponents.scheme
-      component.host = defaultComponents.host
-      component.port = defaultComponents.port
+
+      // Handle local environment where host contains port (e.g., "localhost:3000")
+      let host = defaultComponents.host
+      if case .local = defaultComponents.networkEnvironment,
+        host.contains(":") {
+        let hostParts = host.split(separator: ":")
+        if hostParts.count == 2,
+          let portString = hostParts.last,
+          let port = Int(portString),
+          let firstHostPart = hostParts.first {
+          component.host = String(firstHostPart)
+          component.port = port
+        } else {
+          component.host = host
+          component.port = defaultComponents.port
+        }
+      } else {
+        component.host = host
+        component.port = defaultComponents.port
+      }
+
       component.queryItems = components.queryItems
       component.path = defaultComponents.path + components.path
 
@@ -208,12 +227,14 @@ extension Endpoint where
   Response == Config {
   static func config(
     maxRetry: Int,
-    apiKey: String
+    apiKey: String,
+    timeout: Seconds?
   ) -> Self {
     let queryItems = [URLQueryItem(name: "pk", value: apiKey)]
 
     return Endpoint(
       retryCount: maxRetry,
+      timeout: timeout,
       components: Components(
         host: .base,
         path: "static_config",
@@ -300,6 +321,40 @@ extension Endpoint where
   }
 }
 
+// MARK: - IntroOfferToken
+extension Endpoint where
+  Kind == EndpointKinds.Web2App,
+  Response == IntroOfferTokenWrapper {
+  static func getIntroOfferToken(
+    productIds: [String],
+    appTransactionId: String,
+    allowIntroductoryOffer: Bool
+  ) -> Self {
+    let products = productIds.map { productId in
+      IntroOfferEligibilityRequest.Product(
+        productId: productId,
+        transactionId: appTransactionId
+      )
+    }
+
+    let body = IntroOfferEligibilityRequest(
+      allowIntroductoryOffer: allowIntroductoryOffer,
+      products: products
+    )
+    let bodyData = try? JSONEncoder().encode(body)
+
+    return Endpoint(
+      components: Components(
+        host: .web2app,
+        path: "app-store/intro-eligibility/jws",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}
+
+
 // MARK: - Web2App
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
@@ -320,8 +375,8 @@ extension Endpoint where
 
 extension Endpoint where
   Kind == EndpointKinds.Web2App,
-  Response == WebEntitlements {
-  static func redeem(
+  Response == EntitlementsResponse {
+  static func entitlements(
     appUserId: String?,
     deviceId: String
   ) -> Self {

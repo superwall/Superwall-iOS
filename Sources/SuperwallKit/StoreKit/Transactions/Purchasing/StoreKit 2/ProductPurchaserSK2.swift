@@ -83,31 +83,41 @@ final class ProductPurchaserSK2: Purchasing {
   }
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
-    guard let product = product.sk2Product else {
+    guard let sk2Product = product.sk2Product else {
       return .cancelled
     }
     do {
       var options: Set<StoreKit.Product.PurchaseOption> = []
-
       if let appAccountToken = identityManager.appAccountToken {
         options.insert(.appAccountToken(appAccountToken))
       }
 
+      #if compiler(>=6.1)
+      // Add intro offer eligibility token if available for this product
+      // This allows overriding Apple's automatic eligibility determination
+      if let token = product.introOfferToken {
+        options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+      }
+      #endif
+
       let result: StoreKit.Product.PurchaseResult
 
       #if os(visionOS)
-      guard let scene = await UIApplication.shared.connectedScenes.first else {
+      guard let sharedApplication = UIApplication.sharedApplication else {
         return .cancelled
       }
-      result = try await product.purchase(confirmIn: scene, options: options)
+      guard let scene = await sharedApplication.connectedScenes.first else {
+        return .cancelled
+      }
+      result = try await sk2Product.purchase(confirmIn: scene, options: options)
       #else
-      result = try await product.purchase(options: options)
+      result = try await sk2Product.purchase(options: options)
       #endif
 
       switch result {
       case let .success(.verified(transaction)):
         await transaction.finish()
-        await receiptManager.loadPurchasedProducts()
+        await receiptManager.loadPurchasedProducts(config: nil)
         let result = PurchaseResult.purchased
         await coordinator.storeTransaction(transaction, result: result)
         return result

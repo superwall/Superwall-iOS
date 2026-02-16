@@ -10,7 +10,7 @@ import SuperwallKit
 
 struct WelcomeView: View {
   @Binding var isLoggedIn: Bool
-  @State private var name: String = ""
+  @State private var name = ""
 
   var body: some View {
     NavigationStack {
@@ -70,7 +70,7 @@ struct WelcomeView: View {
   @ViewBuilder
   private func logInButton() -> some View {
     BrandedButton(title: "Log In") {
-      Superwall.shared.identify(userId: "abc")
+      Superwall.shared.identify(userId: "678")
       Superwall.shared.setUserAttributes(["firstName": name])
       isLoggedIn = true
     }

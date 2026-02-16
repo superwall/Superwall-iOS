@@ -79,9 +79,12 @@ final class DebugViewController: UIViewController {
     let button = SWBounceButton()
     button.setTitle("", for: .normal)
     button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
+    button.titleLabel?.numberOfLines = 0
+    button.titleLabel?.lineBreakMode = .byWordWrapping
+    button.titleLabel?.textAlignment = .center
     button.backgroundColor = lightBackgroundColor
     button.setTitleColor(primaryColor, for: .normal)
-    button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+    button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
     button.translatesAutoresizingMaskIntoConstraints = false
     button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
@@ -225,7 +228,7 @@ final class DebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first(where: { $0.databaseId == paywallDatabaseId })?.identifier
+			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
 			paywallIdentifier = paywallId
     } else {
       return
@@ -346,12 +349,18 @@ final class DebugViewController: UIViewController {
   @objc func pressedConsoleButton() {
     let releaseVersionNumber = Bundle.main.releaseVersionNumber ?? ""
     let buildVersionNumber = Bundle.main.buildVersionNumber ?? ""
+    let localResourceCount = Superwall.shared.options.localResources.count
     presentAlert(
       title: nil,
       message: "Superwall v\(sdkVersion) | App v\(releaseVersionNumber) (\(buildVersionNumber))",
       options: [
         AlertOption(title: "Localization", action: showLocalizationPicker, style: .default),
-        AlertOption(title: "Templates", action: showConsole, style: .default)
+        AlertOption(title: "Templates", action: showConsole, style: .default),
+        AlertOption(
+          title: "Local Resources (\(localResourceCount))",
+          action: showLocalResources,
+          style: .default
+        )
       ],
       on: consoleButton
     )
@@ -396,22 +405,28 @@ final class DebugViewController: UIViewController {
     await present(navController, animated: true)
 	}
 
+  func showLocalResources() async {
+    let viewController = SWLocalResourcesViewController()
+    let navController = UINavigationController(rootViewController: viewController)
+    await present(navController, animated: true)
+  }
+
   @objc func pressedBottomButton() {
     presentAlert(
       title: nil,
       message: "Which version?",
       options: [
         AlertOption(
-          title: "With Free Trial",
+          title: "With Intro Offer",
           action: { [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: true)
+            self?.loadAndShowPaywall(introOfferAvailable: true)
           },
           style: .default
         ),
         AlertOption(
-          title: "Without Free Trial",
+          title: "Without Intro Offer",
           action: {  [weak self] in
-            self?.loadAndShowPaywall(freeTrialAvailable: false)
+            self?.loadAndShowPaywall(introOfferAvailable: false)
           },
           style: .default
         )
@@ -420,7 +435,7 @@ final class DebugViewController: UIViewController {
     )
   }
 
-  func loadAndShowPaywall(freeTrialAvailable: Bool = false) {
+  func loadAndShowPaywall(introOfferAvailable: Bool = false) {
     guard let paywallIdentifier = paywallIdentifier else {
       return
     }
@@ -431,7 +446,7 @@ final class DebugViewController: UIViewController {
     let presentationRequest = factory.makePresentationRequest(
       .fromIdentifier(
         paywallIdentifier,
-        freeTrialOverride: freeTrialAvailable
+        freeTrialOverride: introOfferAvailable
       ),
       paywallOverrides: nil,
       presenter: self,
@@ -474,7 +489,8 @@ final class DebugViewController: UIViewController {
           let playButton = UIImage(named: "SuperwallKit_play_button", in: Bundle.module, compatibleWith: nil)!
           self.bottomButton.setImage(playButton, for: .normal)
           self.activityIndicator.stopAnimating()
-        case .dismissed:
+        case .dismissed,
+          .willDismiss:
           break
         case .presentationError(let error):
           Logger.debug(

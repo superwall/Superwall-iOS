@@ -75,6 +75,21 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
   /// The number of years since the placement occurred.
   case yearsSince
 
+  /// The number of placements within the last hour.
+  case placementsInHour
+
+  /// The number of placements within the last day.
+  case placementsInDay
+
+  /// The number of placements within the last week.
+  case placementsInWeek
+
+  /// The number of placements within the last month.
+  case placementsInMonth
+
+  /// The number of placements since install.
+  case placementsSinceInstall
+
   var prefix: String {
     return description + "_"
   }
@@ -91,7 +106,28 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
       return "monthsSince"
     case .yearsSince:
       return "yearsSince"
+    case .placementsInHour:
+      return "placementsInHour"
+    case .placementsInDay:
+      return "placementsInDay"
+    case .placementsInWeek:
+      return "placementsInWeek"
+    case .placementsInMonth:
+      return "placementsInMonth"
+    case .placementsSinceInstall:
+      return "placementsSinceInstall"
     }
+  }
+
+  /// Indicates whether we should be counting placements
+  var isPlacementCount: Bool {
+    return [
+      .placementsInHour,
+      .placementsInDay,
+      .placementsInWeek,
+      .placementsInMonth,
+      .placementsSinceInstall
+    ].contains(self)
   }
 
   var calendarComponent: Calendar.Component {
@@ -105,6 +141,9 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
     case .monthsSince:
       return .month
     case .yearsSince:
+      return .year
+    default:
+      // This should never get called
       return .year
     }
   }
@@ -121,6 +160,11 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
       return components.month
     case .yearsSince:
       return components.year
+    case .placementsInDay:
+      return components.day
+    default:
+      // This should never get called
+      return nil
     }
   }
 
@@ -130,6 +174,11 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
     case daysSince = "DAYS_SINCE"
     case monthsSince = "MONTHS_SINCE"
     case yearsSince = "YEARS_SINCE"
+    case placementsInDay = "PLACEMENTS_IN_DAY"
+    case placementsInHour = "PLACEMENTS_IN_HOUR"
+    case placementsInWeek = "PLACEMENTS_IN_WEEK"
+    case placementsInMonth = "PLACEMENTS_IN_MONTH"
+    case placementsSinceInstall = "PLACEMENTS_SINCE_INSTALL"
   }
 
   public init(from decoder: Decoder) throws {
@@ -147,6 +196,16 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
       self = .monthsSince
     case .yearsSince:
       self = .yearsSince
+    case .placementsInDay:
+      self = .placementsInDay
+    case .placementsInHour:
+      self = .placementsInHour
+    case .placementsInMonth:
+      self = .placementsInMonth
+    case .placementsInWeek:
+      self = .placementsInWeek
+    case .placementsSinceInstall:
+      self = .placementsSinceInstall
     case .none:
       throw DecodingError.valueNotFound(
         String.self,
@@ -171,6 +230,16 @@ public enum ComputedPropertyRequestType: Int, Codable, CustomStringConvertible, 
       try container.encode(CodingKeys.monthsSince.rawValue)
     case .yearsSince:
       try container.encode(CodingKeys.yearsSince.rawValue)
+    case .placementsInDay:
+      try container.encode(CodingKeys.placementsInDay.rawValue)
+    case .placementsInHour:
+      try container.encode(CodingKeys.placementsInHour.rawValue)
+    case .placementsInMonth:
+      try container.encode(CodingKeys.placementsInMonth.rawValue)
+    case .placementsInWeek:
+      try container.encode(CodingKeys.placementsInWeek.rawValue)
+    case .placementsSinceInstall:
+      try container.encode(CodingKeys.placementsSinceInstall.rawValue)
     }
   }
 }

@@ -178,12 +178,12 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     let source = await coordinator.source
     if let source = source {
       switch source {
-      case .internal,
-        .purchaseFunc:
+      case .internal:
         if factory.makeHasExternalPurchaseController() {
           return
         }
-      case .observeFunc:
+      case .purchaseFunc,
+        .observeFunc:
         break
       }
     } else if skTransaction.transactionState == .purchasing {
@@ -204,9 +204,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       if source == nil,
         options.shouldObservePurchases {
         var storedIds = storage.get(PurchasingProductIds.self) ?? []
-        let isExistingTransaction = storedIds.contains(
-          where: { $0 == skTransaction.payment.productIdentifier }
-        )
+        let isExistingTransaction = storedIds.contains { $0 == skTransaction.payment.productIdentifier }
         if !isExistingTransaction {
           let transactionManager = factory.makeTransactionManager()
           await transactionManager.observeSK1Transaction(for: skTransaction.payment.productIdentifier)
@@ -316,6 +314,6 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     ) == nil {
       return
     }
-    await receiptManager.loadPurchasedProducts()
+    await receiptManager.loadPurchasedProducts(config: nil)
   }
 }

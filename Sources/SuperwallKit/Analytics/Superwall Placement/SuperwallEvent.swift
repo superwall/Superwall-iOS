@@ -131,6 +131,9 @@ public enum SuperwallEvent {
   /// When a paywall's website completes loading.
   case paywallWebviewLoadFallback(paywallInfo: PaywallInfo)
 
+  /// When the paywall's web view content process terminates.
+  case paywallWebviewProcessTerminated(paywallInfo: PaywallInfo)
+
   /// When the request to load the paywall's products started.
   case paywallProductsLoadStart(triggeredPlacementName: String?, paywallInfo: PaywallInfo)
 
@@ -143,6 +146,10 @@ public enum SuperwallEvent {
   /// When the request to load the paywall's products has failed and is being retried.
   case paywallProductsLoadRetry(
     triggeredPlacementName: String?, paywallInfo: PaywallInfo, attempt: Int)
+
+  /// When the paywall's products are missing from the App Store.
+  case paywallProductsLoadMissingProducts(
+    triggeredPlacementName: String?, paywallInfo: PaywallInfo, identifiers: Set<String>)
 
   /// When the response to a paywall survey is recorded.
   case surveyResponse(
@@ -228,6 +235,29 @@ public enum SuperwallEvent {
 
   /// When a response from the network fails to decode.
   case networkDecodingFail
+
+  /// When the customer info did change.
+  case customerInfoDidChange
+
+  /// When the integration attributes are set.
+  case integrationAttributes(_ attributes: [String: Any])
+
+  /// When a review is requested from the user.
+  case reviewRequested(count: Int)
+
+  /// When a permission is requested from a paywall.
+  case permissionRequested(permissionName: String, paywallIdentifier: String)
+
+  /// When a permission is granted after being requested from a paywall.
+  case permissionGranted(permissionName: String, paywallIdentifier: String)
+
+  /// When a permission is denied after being requested from a paywall.
+  case permissionDenied(permissionName: String, paywallIdentifier: String)
+  /// When paywall preloading starts.
+  case paywallPreloadStart(paywallCount: Int)
+
+  /// When paywall preloading completes.
+  case paywallPreloadComplete(paywallCount: Int)
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -336,12 +366,16 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallWebviewLoadTimeout)
     case .paywallWebviewLoadFallback:
       return .init(objcEvent: .paywallWebviewLoadFallback)
+    case .paywallWebviewProcessTerminated:
+      return .init(objcEvent: .paywallWebviewProcessTerminated)
     case .paywallProductsLoadStart:
       return .init(objcEvent: .paywallProductsLoadStart)
     case .paywallProductsLoadFail:
       return .init(objcEvent: .paywallProductsLoadFail)
     case .paywallProductsLoadRetry:
       return .init(objcEvent: .paywallProductsLoadRetry)
+    case .paywallProductsLoadMissingProducts:
+      return .init(objcEvent: .paywallProductsLoadMissingProducts)
     case .paywallProductsLoadComplete:
       return .init(objcEvent: .paywallProductsLoadComplete)
     case .paywallPresentationRequest:
@@ -394,6 +428,22 @@ extension SuperwallEvent {
       return .init(objcEvent: .enrichmentComplete)
     case .networkDecodingFail:
       return .init(objcEvent: .networkDecodingFail)
+    case .customerInfoDidChange:
+      return .init(objcEvent: .customerInfoDidChange)
+    case .integrationAttributes:
+      return .init(objcEvent: .integrationAttributes)
+    case .reviewRequested:
+      return .init(objcEvent: .reviewRequested)
+    case .permissionRequested:
+      return .init(objcEvent: .permissionRequested)
+    case .permissionGranted:
+      return .init(objcEvent: .permissionGranted)
+    case .permissionDenied:
+      return .init(objcEvent: .permissionDenied)
+    case .paywallPreloadStart:
+      return .init(objcEvent: .paywallPreloadStart)
+    case .paywallPreloadComplete:
+      return .init(objcEvent: .paywallPreloadComplete)
     }
   }
 }

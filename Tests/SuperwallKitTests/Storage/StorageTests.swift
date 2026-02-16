@@ -17,17 +17,6 @@ class StorageTests: XCTestCase {
       options: SuperwallOptions(),
       factory: dependencyContainer
     )
-    let configManager = ConfigManager(
-      options: SuperwallOptions(),
-      storeKitManager: dependencyContainer.storeKitManager,
-      storage: storage,
-      network: network,
-      paywallManager: dependencyContainer.paywallManager,
-      deviceHelper: dependencyContainer.deviceHelper,
-      entitlementsInfo: dependencyContainer.entitlementsInfo,
-      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
-      factory: dependencyContainer
-    )
 
     let assignments = Set([
       Assignment(
@@ -42,7 +31,6 @@ class StorageTests: XCTestCase {
     XCTAssertEqual(retrievedAssignments.first, assignments.first)
 
     storage.reset()
-    configManager.reset()
 
     let retrievedAssignments2 = storage.getAssignments()
     XCTAssertTrue(retrievedAssignments2.isEmpty)

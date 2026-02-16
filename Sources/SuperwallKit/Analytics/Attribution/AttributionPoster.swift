@@ -9,12 +9,12 @@ import Foundation
 import Combine
 
 final class AttributionPoster {
-  private let attributionFetcher = AttributionFetcher()
   private var isCollecting = false
 
   private unowned let storage: Storage
   private unowned let network: Network
   private unowned let configManager: ConfigManager
+  private unowned let attributionFetcher: AttributionFetcher
   private var cancellables: [AnyCancellable] = []
 
   private var adServicesTokenToPostIfNeeded: String? {
@@ -39,11 +39,13 @@ final class AttributionPoster {
   init(
     storage: Storage,
     network: Network,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    attributionFetcher: AttributionFetcher
   ) {
     self.storage = storage
     self.network = network
     self.configManager = configManager
+    self.attributionFetcher = attributionFetcher
 
     if #available(iOS 14.3, *) {
       listenToConfig()

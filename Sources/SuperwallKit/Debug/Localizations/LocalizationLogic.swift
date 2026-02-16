@@ -78,4 +78,34 @@ enum LocalizationLogic {
 
     return groupings
   }
+
+  /// - Returns: the `Bundle` associated with the given locale if found
+  /// Defaults to `Bundle.module` and the preferred locale of the device.
+  ///
+  /// `SwiftUI.Text` uses `EnvironmentValues.locale` and therefore
+  /// can be mocked in tests.
+  /// However, for views that load strings, this allows specifying a custom `Locale`.
+  /// Example:
+  /// ```swift
+  /// let text = LocalizationLogic
+  ///   .localizedBundle(locale)
+  ///   .localizedString(
+  ///     forKey: "string",
+  ///     value: nil,
+  ///     table: nil
+  ///   )
+  /// ```
+  static func localizedBundle(_ locale: Locale? = nil) -> Bundle {
+    let preferredLocaleIdentifier = Superwall.shared.dependencyContainer.deviceHelper.preferredLocaleIdentifier
+    let locale = locale ?? Locale(identifier: preferredLocaleIdentifier)
+    let containerBundle: Bundle = .module
+
+    let preferredLocale = Bundle.preferredLocalizations(
+      from: containerBundle.localizations,
+      forPreferences: [locale.identifier]
+    ).first
+
+    let path = preferredLocale.flatMap { containerBundle.path(forResource: $0, ofType: "lproj") }
+    return path.flatMap(Bundle.init(path:)) ?? containerBundle
+  }
 }

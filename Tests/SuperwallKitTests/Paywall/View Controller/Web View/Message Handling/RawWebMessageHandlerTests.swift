@@ -46,7 +46,7 @@ final class RawWebMessageHandlerTests: XCTestCase {
       didReceive: message
     )
     
-    try? await Task.sleep(for: .milliseconds(10))
+    try? await Task.sleep(nanoseconds: UInt64(10 * 1_000_000))
     XCTAssertEqual(delegate.handledMessages, [.onReady(paywallJsVersion: "2023-01-12")])
   }
 }

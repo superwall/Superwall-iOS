@@ -9,7 +9,10 @@ import UIKit
 
 extension UIWindow {
   static var isLandscape: Bool {
-    return UIApplication.shared.windows
+    guard let sharedApplication = UIApplication.sharedApplication else {
+      return false
+    }
+    return sharedApplication.windows
       .first?
       .windowScene?
       .interfaceOrientation

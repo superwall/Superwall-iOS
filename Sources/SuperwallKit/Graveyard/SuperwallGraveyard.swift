@@ -18,7 +18,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     on viewController: UIViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
-    presentationStyleOverride: PaywallPresentationStyle = .none,
+    presentationStyleOverride: PaywallPresentationStyleObjc = .none,
     onSkip: ((NSError?) -> Void)? = nil,
     onPresent: ((PaywallInfo) -> Void)? = nil,
     onDismiss: ((Bool, String?, PaywallInfo) -> Void)? = nil
@@ -93,15 +93,19 @@ extension Superwall {
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
       webView: SWWebView(
         isMac: false,
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
-          factory: dependencyContainer
+          factory: dependencyContainer,
+          permissionHandler: dependencyContainer.permissionHandler,
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
         ),
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer
       ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: dependencyContainer.makeCache(),
       paywallArchiveManager: dependencyContainer.paywallArchiveManager
     )

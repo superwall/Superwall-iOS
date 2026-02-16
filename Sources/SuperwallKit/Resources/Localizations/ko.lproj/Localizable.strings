@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "준비가 완료되었습니다.";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "구매가 성공적으로 완료되었습니다.";
+
+/* Alert action button */
+"purchase_success_action_title" = "확인";

@@ -42,7 +42,7 @@ final class ManagedEventData: NSManagedObject {
   }
 
   @nonobjc
-  class func fetchRequest() -> NSFetchRequest<ManagedEventData> {
+  static func fetchRequest() -> NSFetchRequest<ManagedEventData> {
     return NSFetchRequest<ManagedEventData>(entityName: entityName)
   }
 

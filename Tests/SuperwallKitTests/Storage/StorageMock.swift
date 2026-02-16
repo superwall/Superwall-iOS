@@ -37,10 +37,13 @@ final class StorageMock: Storage {
     }
   }
 
+  var internalCachedConfig: Config?
+
   init(
     internalCachedTransactions: [StoreTransaction] = [],
     internalSurveyAssignmentKey: String? = nil,
     internalRedeemResponse: RedeemResponse? = nil,
+    internalCachedConfig: Config? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: Set<Assignment>? = [],
     cache: Cache = Cache()
@@ -49,6 +52,7 @@ final class StorageMock: Storage {
     self.internalConfirmedAssignments = confirmedAssignments
     self.internalSurveyAssignmentKey = internalSurveyAssignmentKey
     self.internalRedeemResponse = internalRedeemResponse
+    self.internalCachedConfig = internalCachedConfig
     super.init(
       factory: DeviceInfoFactoryMock(),
       cache: cache,
@@ -61,6 +65,8 @@ final class StorageMock: Storage {
       return internalCachedTransactions as? Key.Value
     } else if keyType == SurveyAssignmentKey.self {
       return internalSurveyAssignmentKey as? Key.Value
+    } else if keyType == LatestConfig.self {
+      return internalCachedConfig as? Key.Value
     }
     return super.get(keyType)
   }
@@ -72,6 +78,8 @@ final class StorageMock: Storage {
       return internalSurveyAssignmentKey as? Key.Value
     } else if keyType == LatestRedeemResponse.self {
       return internalRedeemResponse as? Key.Value
+    } else if keyType == LatestConfig.self {
+      return internalCachedConfig as? Key.Value
     }
     return super.get(keyType)
   }
@@ -93,12 +101,22 @@ final class StorageMock: Storage {
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = value as? Config
+    } else if keyType == LatestRedeemResponse.self {
+      internalRedeemResponse = value as? RedeemResponse
+    }
     super.save(value, forType: keyType)
     didSave = true
     saveCount += 1
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = value as? Config
+    } else if keyType == LatestRedeemResponse.self {
+      internalRedeemResponse = value as? RedeemResponse
+    }
     super.save(value, forType: keyType)
     didSave = true
     saveCount += 1

@@ -1,0 +1,8 @@
+/* Purchase-success alert title */
+"purchase_success_title" = "सब तैयार है।";
+
+/* Purchase-success alert message */
+"purchase_success_message" = "आपकी खरीद सफल रही।";
+
+/* Alert action button */
+"purchase_success_action_title" = "ठीक है";

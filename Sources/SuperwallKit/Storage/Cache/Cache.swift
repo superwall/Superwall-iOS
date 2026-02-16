@@ -5,7 +5,7 @@
 //  Created by Nguyen Cong Huy on 7/4/16.
 //  Copyright © 2016 Nguyen Cong Huy. All rights reserved.
 //
-// swiftlint:disable file_length large_tuple type_body_length line_length
+// swiftlint:disable file_length large_tuple type_body_length
 
 import UIKit
 
@@ -71,16 +71,23 @@ class Cache {
       guard let self = self else { return }
       guard
         let documentDirectory = self.fileManager.urls(for: .documentDirectory, in: .userDomainMask).first,
-        let applicationSupportDirectory = self.fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        let applicationSupportDirectory = self.fileManager.urls(
+          for: .applicationSupportDirectory,
+          in: .userDomainMask
+        ).first
       else {
         return
       }
 
-      let userSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
-      let appSpecificDocumentUrl = documentDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+      let userSpecificDocumentUrl = documentDirectory
+        .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificDocumentUrl = documentDirectory
+        .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
-      let userSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
-      let appSpecificSupportUrl = applicationSupportDirectory.appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+      let userSpecificSupportUrl = applicationSupportDirectory
+        .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      let appSpecificSupportUrl = applicationSupportDirectory
+        .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
 
       do {
         // Create the destination directories if they don't exist.
@@ -372,7 +379,8 @@ extension Cache {
   /// Cleans codes and entitlements that are owned by the user.
   func cleanUserCodes() {
     if let redeemResponse = read(LatestRedeemResponse.self) {
-      let existingWebEntitlements = redeemResponse.entitlements
+      // Capture existing active web entitlements before cleanup
+      let existingActiveWebEntitlements = redeemResponse.customerInfo.entitlements.filter { $0.isActive }
       var deviceResults: [RedemptionResult] = []
 
       for result in redeemResponse.results {
@@ -390,15 +398,26 @@ extension Cache {
         }
       }
 
+      let clearedCustomerInfo = CustomerInfo(
+        subscriptions: redeemResponse.customerInfo.subscriptions,
+        nonSubscriptions: redeemResponse.customerInfo.nonSubscriptions,
+        entitlements: []
+      )
+
       let newRedeemResponse = RedeemResponse(
         results: deviceResults,
-        entitlements: []
+        customerInfo: clearedCustomerInfo
       )
 
       write(newRedeemResponse, forType: LatestRedeemResponse.self)
 
-      if !existingWebEntitlements.isEmpty {
-        let deviceEntitlements = Superwall.shared.entitlements.activeDeviceEntitlements
+      // Only update subscription status if we had active web entitlements before cleanup.
+      // Note: internallySetSubscriptionStatus already checks if there's an external
+      // purchase controller and returns early if so, making the developer responsible
+      // for updating subscription status.
+      if !existingActiveWebEntitlements.isEmpty {
+        let deviceCustomerInfo = read(LatestDeviceCustomerInfo.self) ?? .blank()
+        let deviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
         Task {
           await Superwall.shared.internallySetSubscriptionStatus(to: .active(deviceEntitlements))
         }

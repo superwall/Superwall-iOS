@@ -44,7 +44,11 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
 
   /// A `Set` of active ``Entitlement`` objects redeemed via the web.
   public var web: Set<Entitlement> {
-    return storage.get(LatestRedeemResponse.self)?.entitlements ?? []
+    let entitlements = storage.get(LatestRedeemResponse.self)?
+      .customerInfo
+      .entitlements
+      .filter { $0.isActive } ?? []
+    return Set(entitlements)
   }
 
   // MARK: - Internal vars
@@ -55,10 +59,6 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
       self.all = Set(entitlementsByProductId.values.joined())
     }
   }
-
-  /// The active device entitlements - doesn't include the web ones like
-  /// ``EntitlementsInfo/active``.
-  var activeDeviceEntitlements: Set<Entitlement> = []
 
   // MARK: - Private vars
   /// The backing variable for ``EntitlementsInfo/active``.
@@ -102,6 +102,22 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   public func byProductId(_ productId: String) -> Set<Entitlement> {
     return queue.sync {
       entitlementsByProductId[productId] ?? []
+    }
+  }
+
+  /// Returns a `Set` of ``Entitlement`` objects belonging to a given set of `productId`s.
+  ///
+  /// - Parameter productIds: A `Set` of `String`s representing product identifiers.
+  /// - Returns: A `Set` of ``Entitlement`` objects.
+  public func byProductIds(_ productIds: Set<String>) -> Set<Entitlement> {
+    return queue.sync {
+      var entitlements: Set<Entitlement> = []
+      for productId in productIds {
+        if let productEntitlements = entitlementsByProductId[productId] {
+          entitlements.formUnion(productEntitlements)
+        }
+      }
+      return entitlements
     }
   }
 

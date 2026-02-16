@@ -109,7 +109,7 @@ class CustomURLSession {
           "api_key": auth ?? "N/A",
           "url": request.url?.absoluteString ?? "unknown",
           "message": "Unable to decode response to type \(Response.self)",
-          "info": String(decoding: data, as: UTF8.self),
+          "info": String(data: data, encoding: .utf8) ?? "",
           "request_duration": requestDuration
         ]
       )

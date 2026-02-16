@@ -154,6 +154,7 @@ class PaywallLogicTests: XCTestCase {
     let products = [Product(
       name: "primary",
       type: .appStore(.init(id: productId)),
+      id: productId,
       entitlements: []
     )]
 
@@ -188,6 +189,7 @@ class PaywallLogicTests: XCTestCase {
     let products = [Product(
       name: "secondary",
       type: .appStore(.init(id: productId)),
+      id: productId,
       entitlements: []
     )]
 
@@ -213,7 +215,9 @@ class PaywallLogicTests: XCTestCase {
 
     let expectedProductVariables = [ProductVariable(
       name: "secondary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasIntroOffer: false
     )]
     XCTAssertFalse(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)
@@ -224,7 +228,9 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [Product(
       name: "primary",
-      type: .appStore(.init(id: productId)), entitlements: []
+      type: .appStore(.init(id: productId)),
+      id: productId,
+      entitlements: []
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
@@ -255,7 +261,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasIntroOffer: true
     )]
 
     XCTAssertFalse(response.isFreeTrialAvailable)
@@ -267,7 +275,9 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [Product(
       name: "primary",
-      type: .appStore(.init(id: productId)), entitlements: []
+      type: .appStore(.init(id: productId)),
+      id: productId,
+      entitlements: []
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
       testSubscriptionPeriod: MockSubscriptionPeriod()
@@ -296,7 +306,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasIntroOffer: true
     )]
 
     XCTAssertTrue(response.isFreeTrialAvailable)
@@ -308,7 +320,8 @@ class PaywallLogicTests: XCTestCase {
     let productId = "id1"
     let products = [Product(
       name: "primary",
-      type: .appStore(.init(id: productId)), 
+      type: .appStore(.init(id: productId)),
+      id: productId,
       entitlements: []
     )]
     let mockIntroPeriod = MockIntroductoryPeriod(
@@ -338,7 +351,9 @@ class PaywallLogicTests: XCTestCase {
     // Then
     let expectedProductVariables = [ProductVariable(
       name: "primary",
-      attributes: product.attributesJson
+      attributes: product.attributesJson,
+      id: productId,
+      hasIntroOffer: true
     )]
     XCTAssertTrue(response.isFreeTrialAvailable)
     XCTAssertEqual(response.productVariables, expectedProductVariables)

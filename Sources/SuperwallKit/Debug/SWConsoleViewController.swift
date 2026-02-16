@@ -91,6 +91,7 @@ final class SWConsoleViewController: UIViewController {
     let index = productPicker.selectedRow(inComponent: 0)
 
     tableViewCellData = []
+    guard products.count > index else { return }
     let product = products[index]
     for i in product.attributes {
       tableViewCellData.append(i)

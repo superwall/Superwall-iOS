@@ -28,6 +28,7 @@ struct Config: Codable, Equatable {
     }
   }
   var preloading: PaywallPreloading?
+  var iosAppId: String?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -79,8 +80,9 @@ struct Config: Codable, Equatable {
     case featureFlags = "toggles"
     case preloadingDisabled = "disablePreload"
     case attribution = "attributionOptions"
-    case products
+    case products = "productsV3"
     case web2appConfig
+    case iosAppId
     case preloading
   }
 
@@ -97,16 +99,17 @@ struct Config: Codable, Equatable {
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
     preloading = try values.decodeIfPresent(PaywallPreloading.self, forKey: .preloading)
+    iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
     requestId = try values.decodeIfPresent(String.self, forKey: .requestId)
 
-    let appStoreProductItems = try values.decodeIfPresent(
+    let products = try values.decodeIfPresent(
       [Throwable<Product>].self,
       forKey: .products
     ) ?? []
-    products = appStoreProductItems.compactMap { try? $0.result.get() }
+    self.products = products.compactMap { try? $0.result.get() }
   }
 
   func encode(to encoder: Encoder) throws {
