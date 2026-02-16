@@ -24,12 +24,14 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
   func handleStripeCheckoutStart(checkoutContextId: String, productId: String)
+  func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     swCheckoutId: String,
     checkoutContextId: String,
     productId: String
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  func revealWebViewBehindSpinner()
 }
 
 @MainActor
@@ -213,9 +215,13 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case let .stripeCheckoutSubmit(_, productId):
+    case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
         eventName: "stripe_checkout_submit",
+        productId: productId
+      )
+      delegate?.handleStripeCheckoutSubmit(
+        checkoutContextId: checkoutContextId,
         productId: productId
       )
     case let .stripeCheckoutFail(_, productId):
@@ -400,7 +406,15 @@ final class PaywallMessageHandler: WebEventDelegate {
 
         let delay = self?.delegate?.paywall.presentation.delay ?? 0
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
-          self?.delegate?.loadingState = .ready
+          guard let delegate = self?.delegate else { return }
+          if delegate.loadingState == .manualLoading {
+            // Web content loaded while spinner is showing (e.g. Stripe
+            // recovery poll). Reveal the web view behind the spinner
+            // but keep the spinner visible until the poll finishes.
+            delegate.revealWebViewBehindSpinner()
+          } else {
+            delegate.loadingState = .ready
+          }
         }
       }
 

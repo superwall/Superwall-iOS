@@ -315,6 +315,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
+    await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
 
     let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
     let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
@@ -325,6 +326,30 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       demandTier: demandTier
     )
     await Superwall.shared.track(paywallOpen)
+  }
+
+  nonisolated private func maybeRecoverPendingStripeCheckoutOnPaywallOpen() async {
+    let shouldShowLoading = await webEntitlementRedeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen()
+    guard shouldShowLoading else {
+      return
+    }
+
+    await MainActor.run {
+      self.loadingState = .manualLoading
+    }
+
+    // If another poll is already in-flight (e.g. cold-launch init task),
+    // wait for it to finish rather than returning early. This ensures
+    // WE always clean up the spinner we set above.
+    let redeemed = await webEntitlementRedeemer.pollOrWaitForActiveStripePoll()
+
+    if !redeemed {
+      await MainActor.run {
+        if self.loadingState == .manualLoading {
+          self.loadingState = .ready
+        }
+      }
+    }
   }
 
   nonisolated private func trackClose() async {
@@ -440,6 +465,28 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - State Handling
 
+  /// Reveals the web view content behind the spinner overlay when the web
+  /// view finishes loading while a manual spinner (e.g. Stripe recovery) is
+  /// active. Animates the shimmer away and fades in the web view, but keeps
+  /// the spinner visible so the user knows a background operation is ongoing.
+  func revealWebViewBehindSpinner() {
+    guard shimmerView != nil else { return }
+    showRefreshButtonAfterTimeout(false)
+    UIView.animate(
+      withDuration: 0.6,
+      delay: 0.25,
+      animations: {
+        self.shimmerView?.alpha = 0.0
+        self.webView.alpha = 1.0
+        self.webView.transform = .identity
+      },
+      completion: { [weak self] _ in
+        self?.shimmerView?.removeFromSuperview()
+        self?.shimmerView = nil
+      }
+    )
+  }
+
   /// Hides or displays the paywall spinner.
   ///
   /// - Parameter isHidden: A `Bool` indicating whether to show or hide the spinner.
@@ -472,11 +519,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     case .ready:
       let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
       let spinnerDidShow = oldValue == .loadingPurchase || oldValue == .manualLoading
-      webView.transform = spinnerDidShow ? .identity : translation
+      let shimmerStillVisible = shimmerView != nil
+      webView.transform = spinnerDidShow && !shimmerStillVisible ? .identity : translation
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
-      if !spinnerDidShow {
+      if !spinnerDidShow || shimmerStillVisible {
         UIView.animate(
           withDuration: 0.6,
           delay: 0.25,
@@ -1143,9 +1191,11 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     #endif
   }
 
-  func handleStripeCheckoutStart(checkoutContextId: String, productId: String) {
+  func handleStripeCheckoutStart(checkoutContextId _: String, productId _: String) {}
+
+  func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
     Task {
-      await webEntitlementRedeemer.registerStripeCheckoutStart(
+      await webEntitlementRedeemer.registerStripeCheckoutSubmit(
         contextId: checkoutContextId,
         productId: productId
       )
@@ -1171,7 +1221,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
-    _ = checkoutContextId // Context is persisted by start/complete and intentionally not cleared on abandon.
+    _ = checkoutContextId // Context is persisted by submit/complete and intentionally not cleared on abandon.
     didReceiveStripeCheckoutAbandonMessage = true
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
