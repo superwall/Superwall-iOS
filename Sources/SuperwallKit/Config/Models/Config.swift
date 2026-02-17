@@ -129,6 +129,8 @@ struct Config: Codable, Equatable {
 
     try featureFlags.encode(to: encoder)
     try container.encodeIfPresent(requestId, forKey: .requestId)
+    try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
+    try container.encodeIfPresent(iosAppId, forKey: .iosAppId)
   }
 
   init(

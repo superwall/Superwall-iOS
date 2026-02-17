@@ -1,17 +1,17 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 23/06/2022.
 //
 // swiftlint:disable all
 
-import XCTest
+import UIKit
+import Testing
 import Combine
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
-final class NetworkTests: XCTestCase {
+struct NetworkTests {
   func configWrapper(
     urlSession: CustomURLSessionMock,
     injectedApplicationStatePublisher: AnyPublisher<UIApplication.State, Never>,
@@ -35,26 +35,27 @@ final class NetworkTests: XCTestCase {
   }
 
   // MARK: - Config
-  func test_config_inBackground() async {
+  @Test func config_inBackground() async {
     let dependencyContainer = DependencyContainer()
     let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let publisher = CurrentValueSubject<UIApplication.State, Never>(.background)
       .eraseToAnyPublisher()
-    let expectation = expectation(description: "config completed")
-    expectation.isInverted = true
+
+    var didComplete = false
     configWrapper(
       urlSession: urlSession,
       injectedApplicationStatePublisher: publisher
     ) {
-      expectation.fulfill()
+      didComplete = true
     }
 
-    await fulfillment(of: [expectation], timeout: 0.4)
+    try? await Task.sleep(nanoseconds: 400_000_000)
 
-    XCTAssertFalse(urlSession.didRequest)
+    #expect(!didComplete)
+    #expect(!urlSession.didRequest)
   }
 
-  func test_config_inForeground() async {
+  @Test func config_inForeground() async {
     let dependencyContainer = DependencyContainer()
     let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let network = Network(
@@ -70,10 +71,10 @@ final class NetworkTests: XCTestCase {
       maxRetry: 0,
       isRetryingCallback: { _ in }
     )
-    XCTAssertTrue(urlSession.didRequest)
+    #expect(urlSession.didRequest)
   }
 
-  func test_config_inBackgroundThenForeground() async {
+  @Test func config_inBackgroundThenForeground() async {
     let dependencyContainer = DependencyContainer()
     let urlSession = CustomURLSessionMock(factory: dependencyContainer)
     let network = Network(
@@ -90,6 +91,6 @@ final class NetworkTests: XCTestCase {
       maxRetry: 0,
       isRetryingCallback: { _ in }
     )
-    XCTAssertTrue(urlSession.didRequest)
+    #expect(urlSession.didRequest)
   }
 }

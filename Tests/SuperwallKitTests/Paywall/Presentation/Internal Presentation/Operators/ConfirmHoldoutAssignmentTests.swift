@@ -1,18 +1,17 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 05/12/2022.
 //
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 import Combine
 
-final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
-  var cancellables: [AnyCancellable] = []
-
-  func test_confirmHoldoutAssignment_notHoldout() async {
+@Suite(.serialized)
+struct ConfirmHoldoutAssignmentOperatorTests {
+  @Test func confirmHoldoutAssignment_notHoldout() async {
     let dependencyContainer = DependencyContainer()
 
     let configManager = ConfigManagerMock(
@@ -42,10 +41,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_noConfirmableAssignments() async {
+  @Test func confirmHoldoutAssignment_holdout_noConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -73,10 +72,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_hasConfirmableAssignments() async {
+  @Test func confirmHoldoutAssignment_holdout_hasConfirmableAssignments() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -105,10 +104,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertTrue(configManager.confirmedAssignment)
+    #expect(configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_getPresentationResult() async {
+  @Test func confirmHoldoutAssignment_holdout_getPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -137,10 +136,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertTrue(configManager.confirmedAssignment)
+    #expect(configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_alreadySentToServer() async {
+  @Test func confirmHoldoutAssignment_holdout_alreadySentToServer() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -169,10 +168,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_handleImplicitTrigger() async {
+  @Test func confirmHoldoutAssignment_holdout_handleImplicitTrigger() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -201,10 +200,10 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertTrue(configManager.confirmedAssignment)
+    #expect(configManager.confirmedAssignment)
   }
 
-  func test_confirmHoldoutAssignment_holdout_paywallDeclineCheck() async {
+  @Test func confirmHoldoutAssignment_holdout_paywallDeclineCheck() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -233,6 +232,6 @@ final class ConfirmHoldoutAssignmentOperatorTests: XCTestCase {
       from: input,
       dependencyContainer: dependencyContainer
     )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 }

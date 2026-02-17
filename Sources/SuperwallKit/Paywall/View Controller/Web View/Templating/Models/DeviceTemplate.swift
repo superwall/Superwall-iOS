@@ -64,6 +64,7 @@ struct DeviceTemplate: Codable {
   var platformWrapperVersion: String?
   var swiftVersion: String
   var compilerVersion: String
+  var localResourceIds: String
   var deviceId: String
 
   func toDictionary() -> [String: Any] {
