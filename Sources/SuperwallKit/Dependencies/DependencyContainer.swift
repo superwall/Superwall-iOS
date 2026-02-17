@@ -57,7 +57,13 @@ final class DependencyContainer {
       storage: storage,
       delegateAdapter: delegateAdapter
     )
-    let options = options ?? SuperwallOptions()
+    var options = options ?? SuperwallOptions()
+
+    // In UI test environments, always bypass the app transaction check
+    if TestModeManager.isUITestEnvironment {
+      options.shouldBypassAppTransactionCheck = true
+    }
+
     productsManager = ProductsManager(
       entitlementsInfo: entitlementsInfo,
       storeKitVersion: options.storeKitVersion

@@ -28,7 +28,7 @@ struct TestModeManagerTests {
         TestStoreUser(type: .userId, value: "test_user")
       ])
 
-    manager.evaluateTestMode(config: config)
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     #expect(manager.isTestMode == true)
     #expect(manager.testModeReason != nil)
@@ -45,7 +45,7 @@ struct TestModeManagerTests {
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
 
-    manager.evaluateTestMode(config: config)
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     #expect(manager.isTestMode == true)
   }
@@ -60,7 +60,7 @@ struct TestModeManagerTests {
         TestStoreUser(type: .userId, value: "nonexistent_user")
       ])
 
-    manager.evaluateTestMode(config: config)
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     #expect(manager.isTestMode == false)
     #expect(manager.testModeReason == nil)
@@ -79,7 +79,7 @@ struct TestModeManagerTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    manager.evaluateTestMode(config: activeConfig)
+    manager.evaluateTestMode(config: activeConfig, options: SuperwallOptions())
     #expect(manager.isTestMode == true)
 
     // Simulate user selecting entitlements and free trial override
@@ -100,7 +100,7 @@ struct TestModeManagerTests {
     // Now deactivate test mode (user removed from dashboard)
     let inactiveConfig = Config.stub()
       .setting(\.testModeUserIds, to: [])
-    manager.evaluateTestMode(config: inactiveConfig)
+    manager.evaluateTestMode(config: inactiveConfig, options: SuperwallOptions())
 
     // Verify all state is cleaned up
     #expect(manager.isTestMode == false)
@@ -133,18 +133,166 @@ struct TestModeManagerTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    manager.evaluateTestMode(config: config)
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set some state
     manager.setEntitlements(Set(["premium"]))
     manager.freeTrialOverride = .forceAvailable
 
     // Re-evaluate with the same config (still active)
-    manager.evaluateTestMode(config: config)
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // State should be preserved
     #expect(manager.isTestMode == true)
     #expect(manager.testEntitlementIds == Set(["premium"]))
     #expect(manager.freeTrialOverride == .forceAvailable)
+  }
+
+  // MARK: - DebugModeBehavior Tests
+
+  @Test
+  func debugModeBehavior_never_disablesTestMode() {
+    let dependencyContainer = DependencyContainer()
+    let identityManager = dependencyContainer.identityManager!
+    let manager = dependencyContainer.testModeManager!
+
+    identityManager.identify(userId: "test_user", options: nil)
+
+    // Config that would normally match
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .userId, value: "test_user")
+      ])
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .never
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    #expect(manager.isTestMode == false)
+    #expect(manager.testModeReason == nil)
+  }
+
+  @Test
+  func debugModeBehavior_always_enablesTestMode() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    // Config with no matching users
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .always
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    #expect(manager.isTestMode == true)
+    if case .debugOption = manager.testModeReason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .debugOption reason, got \(String(describing: manager.testModeReason))")
+    }
+  }
+
+  @Test
+  func debugModeBehavior_whenEnabledForUser_activatesOnConfigMatch() {
+    let dependencyContainer = DependencyContainer()
+    let identityManager = dependencyContainer.identityManager!
+    let manager = dependencyContainer.testModeManager!
+
+    identityManager.identify(userId: "test_user", options: nil)
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .userId, value: "test_user")
+      ])
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .whenEnabledForUser
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    #expect(manager.isTestMode == true)
+    if case .configMatch = manager.testModeReason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .configMatch reason, got \(String(describing: manager.testModeReason))")
+    }
+  }
+
+  @Test
+  func debugModeBehavior_whenEnabledForUser_doesNotActivateOnBundleIdMismatch() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    // Config with a bundle ID that won't match (but no user match)
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .whenEnabledForUser
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    #expect(manager.isTestMode == false)
+    #expect(manager.testModeReason == nil)
+  }
+
+  @Test
+  func debugModeBehavior_automatic_activatesOnConfigMatch() {
+    let dependencyContainer = DependencyContainer()
+    let identityManager = dependencyContainer.identityManager!
+    let manager = dependencyContainer.testModeManager!
+
+    identityManager.identify(userId: "test_user", options: nil)
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .userId, value: "test_user")
+      ])
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .automatic
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    #expect(manager.isTestMode == true)
+    if case .configMatch = manager.testModeReason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .configMatch reason, got \(String(describing: manager.testModeReason))")
+    }
+  }
+
+  @Test
+  func debugModeBehavior_automatic_activatesOnBundleIdMismatch() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    // Config with a bundle ID that won't match and no user match
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    let options = SuperwallOptions()
+    options.debugModeBehavior = .automatic
+
+    manager.evaluateTestMode(config: config, options: options)
+
+    // Note: In test runner environment, isUITestEnvironment may be true (XCTestCase exists),
+    // which would cause automatic mode to skip. We check both possibilities.
+    if TestModeManager.isUITestEnvironment {
+      // In a test runner, automatic mode skips test mode activation
+      #expect(manager.isTestMode == false)
+    } else {
+      #expect(manager.isTestMode == true)
+      if case .bundleIdMismatch = manager.testModeReason {
+        // Expected
+      } else {
+        #expect(Bool(false), "Expected .bundleIdMismatch reason, got \(String(describing: manager.testModeReason))")
+      }
+    }
   }
 }

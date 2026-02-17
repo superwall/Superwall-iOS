@@ -25,7 +25,7 @@ struct SubscriptionStatusResolutionTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    testModeManager.evaluateTestMode(config: config)
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set a test mode override
     let overrideEntitlement = Entitlement(id: "test_premium")
@@ -51,7 +51,7 @@ struct SubscriptionStatusResolutionTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    testModeManager.evaluateTestMode(config: config)
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set override to inactive
     testModeManager.overriddenSubscriptionStatus = .inactive
@@ -116,7 +116,7 @@ struct SubscriptionStatusResolutionTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    testModeManager.evaluateTestMode(config: config)
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
     #expect(testModeManager.isTestMode == true)
     #expect(testModeManager.overriddenSubscriptionStatus == nil)
 
@@ -141,7 +141,7 @@ struct SubscriptionStatusResolutionTests {
       .setting(\.testModeUserIds, to: [
         TestStoreUser(type: .aliasId, value: aliasId)
       ])
-    testModeManager.evaluateTestMode(config: config)
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set a test mode override
     let overrideInfo = CustomerInfo(
