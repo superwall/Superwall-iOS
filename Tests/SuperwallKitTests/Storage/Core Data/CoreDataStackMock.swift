@@ -9,7 +9,6 @@
 import CoreData
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 final class CoreDataStackMock: CoreDataStack {
   init(useInMemoryStore: Bool = true) {
     // Create persistent container

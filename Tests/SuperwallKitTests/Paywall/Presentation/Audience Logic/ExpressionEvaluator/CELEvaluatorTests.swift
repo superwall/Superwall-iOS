@@ -7,11 +7,12 @@
 // swiftlint:disable all
 
 import Foundation
-import XCTest
+import Testing
 @testable import SuperwallKit
 
-final class CELEvaluatorTests: XCTestCase {
-  func testEvaluateExpression_expressionMatchesAll() async {
+@Suite(.serialized)
+struct CELEvaluatorTests {
+  @Test func evaluateExpression_expressionMatchesAll() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -26,10 +27,10 @@ final class CELEvaluatorTests: XCTestCase {
       placementData: .stub()
     )
 
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 
-  func testEvaluateExpression_expressionTrue() async  {
+  @Test func evaluateExpression_expressionTrue() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -44,10 +45,10 @@ final class CELEvaluatorTests: XCTestCase {
       placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
     )
 
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 
-  func testEvaluateExpression_expression_withOccurrence() async  {
+  @Test func evaluateExpression_expression_withOccurrence() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -64,10 +65,10 @@ final class CELEvaluatorTests: XCTestCase {
       placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
     )
 
-    XCTAssertEqual(result, .match(audience: rule, unsavedOccurrence: occurrence))
+    #expect(result == .match(audience: rule, unsavedOccurrence: occurrence))
   }
 
-  func testEvaluateExpression_expressionParams() async {
+  @Test func evaluateExpression_expressionParams() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -81,10 +82,10 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 
-  func testEvaluateExpression_expressionDeviceTrue() async {
+  @Test func evaluateExpression_expressionDeviceTrue() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -98,10 +99,10 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 
-  func testEvaluateExpression_expressionDeviceFalse() async {
+  @Test func evaluateExpression_expressionDeviceFalse() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -115,10 +116,10 @@ final class CELEvaluatorTests: XCTestCase {
         fromAudienceFilter: rule,
       placementData: PlacementData(name: "ss", parameters: ["a": "b"], createdAt: Date())
     )
-    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
+    #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 
-  func testEvaluateExpression_expressionFalse() async {
+  @Test func evaluateExpression_expressionFalse() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -132,10 +133,10 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: .stub()
     )
-    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
+    #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 
-  func testEvaluateExpression_noEntitlements_match() async {
+  @Test func evaluateExpression_noEntitlements_match() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.inactive)
@@ -150,10 +151,10 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: .stub()
     )
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 
-  func testEvaluateExpression_noEntitlements_noMatch() async {
+  @Test func evaluateExpression_noEntitlements_noMatch() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.stub()]))
@@ -167,10 +168,10 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: .stub()
     )
-    XCTAssertEqual(result, .noMatch(source: .expression, experimentId: rule.experiment.id))
+    #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 
-  func testEvaluateExpression_containsSpecificEntitlement() async {
+  @Test func evaluateExpression_containsSpecificEntitlement() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(.active([.init(id: "bronze")]))
@@ -184,9 +185,9 @@ final class CELEvaluatorTests: XCTestCase {
       fromAudienceFilter: rule,
       placementData: .stub()
     )
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
-  func testEvaluateExpression_passingInDecimal() async {
+  @Test func evaluateExpression_passingInDecimal() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
     let evaluator = CELEvaluator(
@@ -202,6 +203,6 @@ final class CELEvaluatorTests: XCTestCase {
       placementData: PlacementData(name: "ss", parameters: [:], createdAt: Date())
     )
 
-    XCTAssertEqual(result, .match(audience: rule))
+    #expect(result == .match(audience: rule))
   }
 }

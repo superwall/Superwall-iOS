@@ -10,6 +10,7 @@ import Testing
 @testable import SuperwallKit
 import Foundation
 
+@Suite(.serialized)
 struct LocalFileSchemeHandlerTests {
 
   // MARK: - Scheme Tests

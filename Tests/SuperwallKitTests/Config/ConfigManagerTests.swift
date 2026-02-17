@@ -9,9 +9,9 @@
 @testable import SuperwallKit
 import Testing
 
+@Suite(.serialized)
 struct ConfigManagerTests {
   @Test
-  @available(iOS 14.0, *)
   func refreshConfiguration() async {
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
@@ -44,7 +44,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 14.0, *)
   func configEncodedCorrectly() async {
     let dependencyContainer = DependencyContainer()
 
@@ -74,7 +73,6 @@ struct ConfigManagerTests {
 
   // MARK: - Confirm Assignments
   @Test
-  @available(iOS 16.0, *)
   func confirmAssignment() async {
     let experimentId = "abc"
     let variantId = "def"
@@ -110,7 +108,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func confirmAssignmentUpdateNewVariant() async {
     let experimentId = "abc"
     let variantId = "def"
@@ -148,7 +145,6 @@ struct ConfigManagerTests {
   // MARK: - Load Assignments
 
   @Test
-  @available(iOS 16.0, *)
   func loadAssignmentsNoConfig() async {
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
@@ -181,7 +177,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 14.0, *)
   func loadAssignmentsNoTriggers() async {
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
@@ -209,7 +204,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 14.0, *)
   func loadAssignmentsSaveAssignmentsFromServer() async {
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
@@ -262,7 +256,6 @@ struct ConfigManagerTests {
   // MARK: - Fetch Configuration
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationAsyncPathSubscribedWithCache() async throws {
     // Given: User is subscribed and has cached config
     let storage = StorageMock()
@@ -327,7 +320,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationSyncPathNotSubscribed() async {
     // Given: User is not subscribed
     let storage = StorageMock()
@@ -375,7 +367,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationSyncPathNoCachedConfig() async {
     // Given: No cached config (first launch)
     let storage = StorageMock()
@@ -421,7 +412,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationSyncPathSubscribedButNoCachedConfig() async {
     // Given: User is subscribed but no cached config
     let storage = StorageMock()
@@ -471,7 +461,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationSyncPathCachedConfigButNotSubscribed() async {
     // Given: Has cached config but user is not subscribed
     let storage = StorageMock()
@@ -526,7 +515,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 16.0, *)
   func fetchConfigurationFallbackToCachedConfigOnNetworkError() async {
     // Given: Has cached config with enableConfigRefresh feature flag
     let storage = StorageMock()
