@@ -198,7 +198,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       break
     case let .stripeCheckoutStart(checkoutContextId, productId):
       trackStripeCheckoutEvent(
-        eventName: "stripe_checkout_start",
+        state: .start,
         productId: productId
       )
       delegate?.handleStripeCheckoutStart(
@@ -207,7 +207,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case let .stripeCheckoutComplete(swCheckoutId, checkoutContextId, productId):
       trackStripeCheckoutEvent(
-        eventName: "stripe_checkout_complete",
+        state: .complete,
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
@@ -217,7 +217,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
-        eventName: "stripe_checkout_submit",
+        state: .submit,
         productId: productId
       )
       delegate?.handleStripeCheckoutSubmit(
@@ -226,7 +226,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case let .stripeCheckoutFail(_, productId):
       trackStripeCheckoutEvent(
-        eventName: "stripe_checkout_fail",
+        state: .fail,
         productId: productId
       )
       // No-op: don't clear checkout context on failure
@@ -542,20 +542,19 @@ final class PaywallMessageHandler: WebEventDelegate {
   }
 
   private func trackStripeCheckoutEvent(
-    eventName: String,
+    state: InternalSuperwallEvent.StripeCheckout.State,
     productId: String
   ) {
-    let params: [String: Any] = [
-      "store": "STRIPE",
-      "product_identifier": productId
-    ]
+    guard let delegate = delegate else { return }
+    let paywallInfo = delegate.info
+    let placementData = delegate.request?.presentationInfo.placementData
 
     Task {
-      let event = UserInitiatedPlacement.Track(
-        rawName: eventName,
-        canImplicitlyTriggerPaywall: false,
-        audienceFilterParams: params,
-        isFeatureGatable: false
+      let event = InternalSuperwallEvent.StripeCheckout(
+        state: state,
+        productId: productId,
+        paywallInfo: paywallInfo,
+        placementData: placementData
       )
       await Superwall.shared.track(event)
     }

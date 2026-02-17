@@ -876,6 +876,46 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct StripeCheckout: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case submit
+      case complete
+      case fail
+    }
+    let state: State
+    let productId: String
+    let paywallInfo: PaywallInfo
+    let placementData: PlacementData?
+
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo.audienceFilterParams()
+    }
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .stripeCheckoutStart(paywallInfo: paywallInfo)
+      case .submit:
+        return .stripeCheckoutSubmit(paywallInfo: paywallInfo)
+      case .complete:
+        return .stripeCheckoutComplete(paywallInfo: paywallInfo)
+      case .fail:
+        return .stripeCheckoutFail(paywallInfo: paywallInfo)
+      }
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "is_triggered_from_event": placementData != nil,
+        "store": "STRIPE",
+        "product_identifier": productId
+      ]
+      params += await paywallInfo.placementParams()
+      return params
+    }
+  }
+
   enum ConfigCacheStatus: String {
     case cached = "CACHED"
     case notCached = "NOT_CACHED"

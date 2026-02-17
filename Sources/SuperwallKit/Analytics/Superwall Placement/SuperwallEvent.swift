@@ -259,6 +259,18 @@ public enum SuperwallEvent {
   /// When paywall preloading completes.
   case paywallPreloadComplete(paywallCount: Int)
 
+  /// When a Stripe checkout session starts.
+  case stripeCheckoutStart(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout form is submitted.
+  case stripeCheckoutSubmit(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout session completes.
+  case stripeCheckoutComplete(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout session fails.
+  case stripeCheckoutFail(paywallInfo: PaywallInfo)
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -444,6 +456,14 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallPreloadStart)
     case .paywallPreloadComplete:
       return .init(objcEvent: .paywallPreloadComplete)
+    case .stripeCheckoutStart:
+      return .init(objcEvent: .stripeCheckoutStart)
+    case .stripeCheckoutSubmit:
+      return .init(objcEvent: .stripeCheckoutSubmit)
+    case .stripeCheckoutComplete:
+      return .init(objcEvent: .stripeCheckoutComplete)
+    case .stripeCheckoutFail:
+      return .init(objcEvent: .stripeCheckoutFail)
     }
   }
 }
