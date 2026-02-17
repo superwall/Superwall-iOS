@@ -1,48 +1,47 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 05/12/2022.
 //
 
-import XCTest
+import Foundation
+import Testing
 @testable import SuperwallKit
 import Combine
 
-@available(iOS 14.0, *)
-final class HandleTriggerResultOperatorTests: XCTestCase {
+@Suite(.serialized)
+final class HandleTriggerResultOperatorTests {
   var cancellables: [AnyCancellable] = []
 
-  func test_handleTriggerResult_paywall() async {
+  @Test func handleTriggerResult_paywall() async {
     let input = AudienceFilterEvaluationOutcome(
       triggerResult: .paywall(.init(id: "", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "")))
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.isInverted = true
 
-    statePublisher.sink { state in
-      stateExpectation.fulfill()
+    await confirmation(expectedCount: 0) { stateConfirmation in
+      statePublisher.sink { state in
+        stateConfirmation()
+      }
+      .store(in: &cancellables)
+
+      do {
+        _ = try await Superwall.shared.getExperiment(
+          request: .stub(),
+          audienceOutcome: input,
+          debugInfo: [:],
+          paywallStatePublisher: statePublisher,
+          storage: StorageMock()
+        )
+      } catch {
+        Issue.record()
+      }
     }
-    .store(in: &cancellables)
-
-    do {
-      _ = try await Superwall.shared.getExperiment(
-        request: .stub(),
-        audienceOutcome: input,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher,
-        storage: StorageMock()
-      )
-    } catch {
-      XCTFail()
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_holdout() async {
+  @Test func handleTriggerResult_holdout() async {
     //TODO: THis doesn't take into account activateSession
     let experimentId = "abc"
     let input = AudienceFilterEvaluationOutcome(
@@ -50,158 +49,152 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
 
-    statePublisher.sink { completion in
-      switch completion {
-      case .finished:
-        stateExpectation.fulfill()
-      default:
-        break
-      }
-    } receiveValue: { state in
-      switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .holdout(let experiment):
-          XCTAssertEqual(experiment.id, experimentId)
-          stateExpectation.fulfill()
+    await confirmation(expectedCount: 2) { stateConfirmation in
+      statePublisher.sink { completion in
+        switch completion {
+        case .finished:
+          stateConfirmation()
         default:
           break
         }
-      default:
-        break
+      } receiveValue: { state in
+        switch state {
+        case .skipped(let reason):
+          switch reason {
+          case .holdout(let experiment):
+            #expect(experiment.id == experimentId)
+            stateConfirmation()
+          default:
+            break
+          }
+        default:
+          break
+        }
+      }
+      .store(in: &cancellables)
+
+      do {
+        _ = try await Superwall.shared.getExperiment(
+          request: .stub(),
+          audienceOutcome: input,
+          debugInfo: [:],
+          paywallStatePublisher: statePublisher,
+          storage: StorageMock()
+        )
+        Issue.record("Should fail")
+      } catch {
+        if let error = error as? PresentationPipelineError,
+          case .holdout = error {
+
+        } else {
+          Issue.record("Wrong error type")
+        }
       }
     }
-    .store(in: &cancellables)
-
-    do {
-      _ = try await Superwall.shared.getExperiment(
-        request: .stub(),
-        audienceOutcome: input,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher,
-        storage: StorageMock()
-      )
-      XCTFail("Should fail")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-        case .holdout = error {
-
-      } else {
-        XCTFail("Wrong error type")
-      }
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_noRuleMatch() async {
+  @Test func handleTriggerResult_noRuleMatch() async {
     let input = AudienceFilterEvaluationOutcome(
       triggerResult: .noAudienceMatch([])
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
 
-    statePublisher.sink { completion in
-      switch completion {
-      case .finished:
-        stateExpectation.fulfill()
-      default:
-        break
-      }
-    } receiveValue: { state in
-      switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .noAudienceMatch:
-          stateExpectation.fulfill()
+    await confirmation(expectedCount: 2) { stateConfirmation in
+      statePublisher.sink { completion in
+        switch completion {
+        case .finished:
+          stateConfirmation()
         default:
           break
         }
-      default:
-        break
+      } receiveValue: { state in
+        switch state {
+        case .skipped(let reason):
+          switch reason {
+          case .noAudienceMatch:
+            stateConfirmation()
+          default:
+            break
+          }
+        default:
+          break
+        }
+      }
+      .store(in: &cancellables)
+
+      do {
+        _ = try await Superwall.shared.getExperiment(
+          request: .stub(),
+          audienceOutcome: input,
+          debugInfo: [:],
+          paywallStatePublisher: statePublisher,
+          storage: StorageMock()
+        )
+        Issue.record("Should fail")
+      } catch {
+        if let error = error as? PresentationPipelineError,
+          case .noAudienceMatch = error {
+
+        } else {
+          Issue.record("Wrong error type")
+        }
       }
     }
-    .store(in: &cancellables)
-
-    do {
-      _ = try await Superwall.shared.getExperiment(
-        request: .stub(),
-        audienceOutcome: input,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher,
-        storage: StorageMock()
-      )
-      XCTFail("Should fail")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-        case .noAudienceMatch = error {
-
-      } else {
-        XCTFail("Wrong error type")
-      }
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_eventNotFound() async {
+  @Test func handleTriggerResult_eventNotFound() async {
     let input = AudienceFilterEvaluationOutcome(
       triggerResult: .placementNotFound
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
 
-    statePublisher.sink { completion in
-      switch completion {
-      case .finished:
-        stateExpectation.fulfill()
-      default:
-        break
-      }
-    } receiveValue: { state in
-      switch state {
-      case .skipped(let reason):
-        switch reason {
-        case .placementNotFound:
-          stateExpectation.fulfill()
+    await confirmation(expectedCount: 2) { stateConfirmation in
+      statePublisher.sink { completion in
+        switch completion {
+        case .finished:
+          stateConfirmation()
         default:
           break
         }
-      default:
-        break
+      } receiveValue: { state in
+        switch state {
+        case .skipped(let reason):
+          switch reason {
+          case .placementNotFound:
+            stateConfirmation()
+          default:
+            break
+          }
+        default:
+          break
+        }
+      }
+      .store(in: &cancellables)
+
+      do {
+        _ = try await Superwall.shared.getExperiment(
+          request: .stub(),
+          audienceOutcome: input,
+          debugInfo: [:],
+          paywallStatePublisher: statePublisher,
+          storage: StorageMock()
+        )
+        Issue.record("Should fail")
+      } catch {
+        if let error = error as? PresentationPipelineError,
+          case .placementNotFound = error {
+
+        } else {
+          Issue.record("Wrong error type")
+        }
       }
     }
-    .store(in: &cancellables)
-
-    do {
-      _ = try await Superwall.shared.getExperiment(
-        request: .stub(),
-        audienceOutcome: input,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher,
-        storage: StorageMock()
-      )
-      XCTFail("Should fail")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-        case .placementNotFound = error {
-
-      } else {
-        XCTFail("Wrong error type")
-      }
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
-  func test_handleTriggerResult_error() async {
+  @Test func handleTriggerResult_error() async {
     let outputError = NSError(
       domain: "Test",
       code: 1
@@ -211,45 +204,43 @@ final class HandleTriggerResultOperatorTests: XCTestCase {
     )
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
 
-    statePublisher.sink { completion in
-      switch completion {
-      case .finished:
-        stateExpectation.fulfill()
-      default:
-        break
+    await confirmation(expectedCount: 2) { stateConfirmation in
+      statePublisher.sink { completion in
+        switch completion {
+        case .finished:
+          stateConfirmation()
+        default:
+          break
+        }
+      } receiveValue: { state in
+        switch state {
+        case .presentationError(let error):
+          #expect(error as NSError == outputError)
+          stateConfirmation()
+        default:
+          break
+        }
       }
-    } receiveValue: { state in
-      switch state {
-      case .presentationError(let error):
-        XCTAssertEqual(error as NSError, outputError)
-        stateExpectation.fulfill()
-      default:
-        break
+      .store(in: &cancellables)
+
+      do {
+        _ = try await Superwall.shared.getExperiment(
+          request: .stub(),
+          audienceOutcome: input,
+          debugInfo: [:],
+          paywallStatePublisher: statePublisher,
+          storage: StorageMock()
+        )
+        Issue.record("Should fail")
+      } catch {
+        if let error = error as? PresentationPipelineError,
+           case .noPaywallViewController = error {
+
+        } else {
+          Issue.record("Wrong error type")
+        }
       }
     }
-    .store(in: &cancellables)
-
-    do {
-      _ = try await Superwall.shared.getExperiment(
-        request: .stub(),
-        audienceOutcome: input,
-        debugInfo: [:],
-        paywallStatePublisher: statePublisher,
-        storage: StorageMock()
-      )
-      XCTFail("Should fail")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-         case .noPaywallViewController = error {
-
-      } else {
-        XCTFail("Wrong error type")
-      }
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

@@ -8,7 +8,6 @@
 import CoreData
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 final class CoreDataManagerFakeDataMock: CoreDataManager {
   var internalOccurrenceCount: Int
 

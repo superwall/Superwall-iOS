@@ -12,6 +12,21 @@ import Foundation
 @Suite
 @MainActor
 struct PaywallMessageHandlerTests {
+  private func waitForJsHandling(
+    in webView: FakeWebView,
+    timeoutNanoseconds: UInt64 = 5_000_000_000,
+    pollIntervalNanoseconds: UInt64 = 20_000_000
+  ) async -> Bool {
+    let maxPolls = Int(timeoutNanoseconds / pollIntervalNanoseconds)
+    for _ in 0..<maxPolls {
+      if webView.willHandleJs {
+        return true
+      }
+      try? await Task.sleep(nanoseconds: pollIntervalNanoseconds)
+    }
+    return webView.willHandleJs
+  }
+
   @Test
   func handleTemplateParams() async {
     let dependencyContainer = DependencyContainer()
@@ -34,9 +49,8 @@ struct PaywallMessageHandlerTests {
     messageHandler.delegate = delegate
     messageHandler.handle(.templateParamsAndUserAttributes)
 
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
-
-    #expect(webView.willHandleJs == true)
+    let didHandleJs = await waitForJsHandling(in: webView)
+    #expect(didHandleJs == true)
   }
 
   @Test
@@ -61,10 +75,9 @@ struct PaywallMessageHandlerTests {
     messageHandler.delegate = delegate
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
 
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
-
+    let didHandleJs = await waitForJsHandling(in: webView)
     #expect(delegate.paywall.paywalljsVersion == "2")
-    #expect(webView.willHandleJs == true)
+    #expect(didHandleJs == true)
   }
 
   @Test
@@ -364,11 +377,10 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.requestPermission(permissionType: permissionType, requestId: requestId))
 
-    // Wait for async task to complete
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
+    let didHandleJs = await waitForJsHandling(in: webView)
 
     #expect(fakePermissions.requestedPermissions == [.notification])
-    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+    #expect(didHandleJs == true) // Should have sent permission_result back
   }
 
   @Test
@@ -397,11 +409,10 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.requestPermission(permissionType: .notification, requestId: "test-456"))
 
-    // Wait for async task to complete
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
+    let didHandleJs = await waitForJsHandling(in: webView)
 
     #expect(fakePermissions.requestedPermissions == [.notification])
-    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+    #expect(didHandleJs == true) // Should have sent permission_result back
   }
 
   // MARK: - Purchase Message Decoding Tests

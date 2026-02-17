@@ -1,46 +1,47 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 26/06/2024.
 //
 // swiftlint:disable all
 
-import XCTest
+import UIKit
+import Testing
 @testable import SuperwallKit
 
-final class PaywallManagerLogicTests: XCTestCase {
-  func testHandleCachedPaywall_isNotForPresentation() {
+struct PaywallManagerLogicTests {
+  @Test func handleCachedPaywall_isNotForPresentation() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub(),
       oldPaywall: .stub(),
       isPreloading: false,
       isForPresentation: false
     )
-    XCTAssertTrue(outcomes.isEmpty)
+    #expect(outcomes.isEmpty)
   }
 
-  func testHandleCachedPaywall_samePaywallURLs_isPreloading() {
+  @Test func handleCachedPaywall_samePaywallURLs_isPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub(),
       oldPaywall: .stub(),
       isPreloading: true,
       isForPresentation: false
     )
-    XCTAssertTrue(outcomes.isEmpty)
+    #expect(outcomes.isEmpty)
   }
 
-  func testHandleCachedPaywall_samePaywallURLs_isNotPreloading() {
+  @Test func handleCachedPaywall_samePaywallURLs_isNotPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub(),
       oldPaywall: .stub(),
       isPreloading: false,
       isForPresentation: true
     )
-    XCTAssertEqual(outcomes, [.setDelegate, .updatePaywall])
+    #expect(outcomes == [.setDelegate, .updatePaywall])
   }
 
-  func testHandleCachedPaywall_diffPaywallURLs_isNotPreloading() {
+  @Test func handleCachedPaywall_diffPaywallURLs_isNotPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
       oldPaywall: .stub()
@@ -48,10 +49,10 @@ final class PaywallManagerLogicTests: XCTestCase {
       isPreloading: false,
       isForPresentation: true
     )
-    XCTAssertEqual(outcomes, [.replacePaywall, .loadWebView, .setDelegate])
+    #expect(outcomes == [.replacePaywall, .loadWebView, .setDelegate])
   }
 
-  func testHandleCachedPaywall_diffPaywallURLs_isPreloading() {
+  @Test func handleCachedPaywall_diffPaywallURLs_isPreloading() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
       oldPaywall: .stub()
@@ -59,6 +60,6 @@ final class PaywallManagerLogicTests: XCTestCase {
       isPreloading: true,
       isForPresentation: true
     )
-    XCTAssertEqual(outcomes, [.replacePaywall, .loadWebView])
+    #expect(outcomes == [.replacePaywall, .loadWebView])
   }
 }
