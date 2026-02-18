@@ -9,36 +9,6 @@
 import Foundation
 import UIKit
 
-struct PendingStripeCheckoutPollState: Codable, Equatable {
-  static let defaultForegroundAttempts = 5
-
-  let checkoutContextId: String
-  let productId: String
-  let remainingForegroundAttempts: Int
-  let updatedAt: Date
-
-  init(
-    checkoutContextId: String,
-    productId: String,
-    remainingForegroundAttempts: Int = defaultForegroundAttempts,
-    updatedAt: Date = Date()
-  ) {
-    self.checkoutContextId = checkoutContextId
-    self.productId = productId
-    self.remainingForegroundAttempts = remainingForegroundAttempts
-    self.updatedAt = updatedAt
-  }
-
-  func consumingForegroundAttempt() -> PendingStripeCheckoutPollState {
-    PendingStripeCheckoutPollState(
-      checkoutContextId: checkoutContextId,
-      productId: productId,
-      remainingForegroundAttempts: max(remainingForegroundAttempts - 1, 0),
-      updatedAt: updatedAt
-    )
-  }
-}
-
 actor WebEntitlementRedeemer {
   private unowned let network: Network
   private unowned let storage: Storage
@@ -178,7 +148,7 @@ actor WebEntitlementRedeemer {
       clearPendingStripeCheckoutState()
       return false
     }
-    guard !hasStripePendingTimedOut(state) else {
+    if hasStripePendingTimedOut(state) {
       clearPendingStripeCheckoutState()
       return false
     }
@@ -238,8 +208,7 @@ actor WebEntitlementRedeemer {
     awaitingCheckoutComplete = false
 
     if let existingState = pendingStripeCheckoutState,
-      existingState.checkoutContextId == contextId
-    {
+      existingState.checkoutContextId == contextId {
       savePendingStripeCheckoutState(
         .init(
           checkoutContextId: contextId,
@@ -584,8 +553,7 @@ actor WebEntitlementRedeemer {
       if case .success(_, let redemptionInfo) = codeResult,
         let product = redemptionInfo.paywallInfo?.product,
         product.trialPeriodDays > 0,
-        let paywallVc = superwall.paywallViewController
-      {
+        let paywallVc = superwall.paywallViewController {
         let paywallInfo = await paywallVc.info
         let notifications = paywallInfo.localNotifications.filter {
           $0.type == .trialStarted
@@ -600,8 +568,7 @@ actor WebEntitlementRedeemer {
       if let paywallVc = superwall.paywallViewController,
         !paywallEntitlementIds.isEmpty,
         paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
-        superwallOptions.paywalls.automaticallyDismiss
-      {
+        superwallOptions.paywalls.automaticallyDismiss {
         await superwall.dismiss(paywallVc, result: .restored)
       }
 
@@ -789,8 +756,7 @@ actor WebEntitlementRedeemer {
     while !Task.isCancelled {
       if let state = pendingStripeCheckoutState,
         state.checkoutContextId == contextId,
-        hasStripePendingTimedOut(state)
-      {
+        hasStripePendingTimedOut(state) {
         clearPendingStripeCheckoutState()
         return .noRedemptionFound
       }
@@ -896,8 +862,7 @@ actor WebEntitlementRedeemer {
   ) async {
     if !isFirstTime {
       if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
-        ?? factory.makeEntitlementsMaxAge()
-      {
+        ?? factory.makeEntitlementsMaxAge() {
         if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
           let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
           // Only proceed if a certain amount of time has elapsed
@@ -989,8 +954,7 @@ actor WebEntitlementRedeemer {
           // If the restored entitlements cover the paywall entitlements, track and dismiss
           let activeEntitlementsIds = Set(activeEntitlements.map { $0.id })
           if !paywallEntitlementIds.isEmpty,
-            paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty
-          {
+            paywallEntitlementIds.subtracting(activeEntitlementsIds).isEmpty {
             let trackedEvent = await InternalSuperwallEvent.Restore(
               state: .complete,
               paywallInfo: paywallVc.info

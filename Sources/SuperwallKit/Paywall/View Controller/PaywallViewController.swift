@@ -282,7 +282,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         webView.topAnchor.constraint(equalTo: view.topAnchor),
-        webView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
       ])
     }
 
@@ -305,7 +305,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       exitButton.leadingAnchor.constraint(
         equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
       exitButton.widthAnchor.constraint(equalToConstant: 55),
-      exitButton.heightAnchor.constraint(equalToConstant: 55),
+      exitButton.heightAnchor.constraint(equalToConstant: 55)
     ])
   }
 
@@ -394,8 +394,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     loadingState = .loadingURL
 
     if let paywallArchiveManager = self.paywallArchiveManager,
-      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest)
-    {
+      paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
       Task {
         if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
           loadWebViewFromArchive(url: url)
@@ -609,7 +608,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       shimmerView.leadingAnchor.constraint(equalTo: shimmerSuperview.leadingAnchor),
       shimmerView.trailingAnchor.constraint(equalTo: shimmerSuperview.trailingAnchor),
       shimmerView.topAnchor.constraint(equalTo: shimmerSuperview.topAnchor),
-      shimmerView.bottomAnchor.constraint(equalTo: shimmerSuperview.bottomAnchor),
+      shimmerView.bottomAnchor.constraint(equalTo: shimmerSuperview.bottomAnchor)
     ])
     self.shimmerView = shimmerView
     Task {
@@ -636,7 +635,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         loadingViewController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
         loadingViewController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         loadingViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
-        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+        loadingViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor)
       ])
       self.loadingViewController = loadingViewController
     } else {
@@ -722,8 +721,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   ) {
     if Superwall.shared.isPaywallPresented
       || presenter is PaywallViewController
-      || isBeingPresented
-    {
+      || isBeingPresented {
       return completion(false)
     }
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
@@ -746,8 +744,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
     if let override = override,
-      override != .none
-    {
+      override != .none {
       presentationStyle = override
     } else {
       presentationStyle = paywall.presentation.style
@@ -763,12 +760,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       transitioningDelegate = transitionDelegate
     case .fullscreenNoAnimation:
       modalPresentationStyle = .overFullScreen
-    case .drawer(let height, let cornerRadius):
+    case let .drawer(height, cornerRadius):
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
         if #available(iOS 16.0, *),
-          UIDevice.current.userInterfaceIdiom == .phone
-        {
+          UIDevice.current.userInterfaceIdiom == .phone {
           let heightRatio = height / 100
           sheetPresentationController?.detents = [
             .custom { context in
@@ -802,8 +798,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       if presentedView.layer.cornerRadius > 0 {
         targetView = presentedView
       } else if let superview = presentedView.superview,
-        superview.layer.cornerRadius > 0
-      {
+        superview.layer.cornerRadius > 0 {
         targetView = superview
       } else {
         targetView = presentedView
@@ -811,8 +806,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
       let systemRadius = targetView.layer.cornerRadius
       if drawerDeviceCornerRadius == nil || drawerDeviceCornerRadius == 0,
-        systemRadius > 0
-      {
+        systemRadius > 0 {
         drawerDeviceCornerRadius = systemRadius
       }
       let bottomRadius = drawerDeviceCornerRadius ?? systemRadius
@@ -922,7 +916,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
-      backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
     ])
 
     // Add tap gesture to dismiss on background tap
@@ -978,7 +972,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
       containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
       popupWidthConstraint,
-      popupHeightConstraint,
+      popupHeightConstraint
     ])
 
     // Set webview constraints within container - fill the container exactly
@@ -994,7 +988,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       webView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
       webView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
       webView.topAnchor.constraint(equalTo: containerView.topAnchor),
-      webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor),
+      webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
     ])
   }
 
@@ -1053,8 +1047,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     var model: [Action] = []
     if let actionTitle = actionTitle,
-      let action = action
-    {
+      let action = action {
       model = [Action(title: actionTitle, call: action)]
     }
 
@@ -1158,8 +1151,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         // 3. No stripe checkout abandon message was received
         if !self.didRedeemSucceedDuringCheckout,
           !self.isCheckoutDismissedProgrammatically,
-          !self.didReceiveStripeCheckoutAbandonMessage
-        {
+          !self.didReceiveStripeCheckoutAbandonMessage {
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             Task {
@@ -1370,8 +1362,7 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac
-    {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
     }
 
@@ -1513,8 +1504,7 @@ extension PaywallViewController {
     }
 
     if #available(iOS 15.0, *),
-      !deviceHelper.isMac
-    {
+      !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(true)  // ignore-xcode-12
     }
 
@@ -1562,8 +1552,7 @@ extension PaywallViewController {
         if case .paywall = presentationResult,
           !presentedByPaywallDecline,
           !presentedByTransactionAbandon,
-          !presentedByTransactionFail
-        {
+          !presentedByTransactionFail {
           // If a paywall_decline trigger is active and the current paywall wasn't presented
           // by paywall_decline, transaction_abandon, or transaction_fail, it lands here so
           // as not to dismiss the paywall. track() will do that before presenting the next paywall.

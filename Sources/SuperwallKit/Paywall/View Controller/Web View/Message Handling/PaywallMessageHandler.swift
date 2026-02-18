@@ -136,7 +136,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case .transactionComplete(let trialEndDate, let productIdentifier):
+    case let .transactionComplete(trialEndDate, productIdentifier):
       Task {
         // Send transaction_complete to trigger post-purchase actions
         let transactionComplete = SuperwallEventObjc.transactionComplete.description
@@ -183,19 +183,19 @@ final class PaywallMessageHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case .purchase(productId: let id, shouldDismiss: let shouldDismiss):
+    case let .purchase(productId: id, shouldDismiss: shouldDismiss):
       purchaseProduct(withId: id, shouldDismiss: shouldDismiss)
     case .custom(data: let name):
       handleCustomEvent(name)
-    case .customPlacement(name: let name, params: let params):
+    case let .customPlacement(name: name, params: params):
       handleCustomPlacement(name: name, params: params)
-    case .userAttributesUpdated(attributes: let attributes):
+    case let .userAttributesUpdated(attributes: attributes):
       handleUserAttributesUpdated(attributes: attributes)
     case .initiateWebCheckout:
       // No-op: This is only here for backwards compatibility so that we don't log
       // and error when decoding the message.
       break
-    case .stripeCheckoutStart(let checkoutContextId, let productId):
+    case let .stripeCheckoutStart(checkoutContextId, productId):
       trackStripeCheckoutEvent(
         state: .start,
         productId: productId
@@ -204,7 +204,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case .stripeCheckoutComplete(_, let checkoutContextId, let productId):
+    case let .stripeCheckoutComplete(checkoutContextId, productId):
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
@@ -213,7 +213,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case .stripeCheckoutSubmit(let checkoutContextId, let productId):
+    case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
         state: .submit,
         productId: productId
@@ -222,19 +222,20 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case .stripeCheckoutFail(_, let productId):
+    case let .stripeCheckoutFail(_, productId):
       trackStripeCheckoutEvent(
         state: .fail,
         productId: productId
       )
     // No-op: don't clear checkout context on failure
-    case .stripeCheckoutAbandon(let checkoutContextId, let productId):
+    case let .stripeCheckoutAbandon(checkoutContextId, productId):
       delegate?.handleStripeCheckoutAbandon(
+        checkoutContextId: checkoutContextId,
         productId: productId
       )
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
-    case .scheduleNotification(let type, let title, let subtitle, let body, let delay):
+    case let .scheduleNotification(type, title, subtitle, body, delay):
       let notification = LocalNotification(
         type: type,
         title: title,
@@ -243,13 +244,13 @@ final class PaywallMessageHandler: WebEventDelegate {
         delay: delay
       )
       delegate?.eventDidOccur(.scheduleNotification(notification: notification))
-    case .requestPermission(let permissionType, let requestId):
+    case let .requestPermission(permissionType, requestId):
       handleRequestPermission(
         permissionType: permissionType,
         requestId: requestId,
         paywall: paywall
       )
-    case .requestCallback(let requestId, let name, let behavior, let variables):
+    case let .requestCallback(requestId, name, behavior, variables):
       handleRequestCallback(
         requestId: requestId,
         name: name,
@@ -270,7 +271,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     var event: [String: Any] = [
       "event_name": placement,
       "paywall_id": paywall.databaseId,
-      "paywall_identifier": paywall.identifier,
+      "paywall_identifier": paywall.identifier
     ]
     event.merge(payload) { _, new in new }
 
@@ -568,7 +569,7 @@ final class PaywallMessageHandler: WebEventDelegate {
     var info: [String: Any] = [
       "self": self,
       "Superwall.shared.paywallViewController": paywallDebugDescription,
-      "event": eventName,
+      "event": eventName
     ]
     if let userInfo = userInfo {
       info = info.merging(userInfo)
@@ -667,7 +668,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         payload: [
           "permission_type": permissionType.rawValue,
           "request_id": requestId,
-          "status": status.rawValue,
+          "status": status.rawValue
         ]
       )
     }
@@ -739,7 +740,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       "event_name": "callback_result",
       "request_id": requestId,
       "name": name,
-      "status": status.rawValue,
+      "status": status.rawValue
     ]
     if let data {
       payload["data"] = data

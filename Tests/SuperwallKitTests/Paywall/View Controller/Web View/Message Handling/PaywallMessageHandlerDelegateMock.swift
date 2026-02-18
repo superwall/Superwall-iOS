@@ -46,7 +46,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var didOpenPaymentSheet = false
   var stripeCheckoutStart: (checkoutContextId: String, productId: String)?
   var stripeCheckoutSubmit: (checkoutContextId: String, productId: String)?
-  var stripeCheckoutComplete: (swCheckoutId: String, checkoutContextId: String, productId: String)?
+  var stripeCheckoutComplete: (checkoutContextId: String, productId: String)?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
 
   var request: PresentationRequest?
@@ -103,11 +103,10 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   }
 
   func handleStripeCheckoutComplete(
-    swCheckoutId: String,
     checkoutContextId: String,
     productId: String
   ) {
-    stripeCheckoutComplete = (swCheckoutId, checkoutContextId, productId)
+    stripeCheckoutComplete = (checkoutContextId, productId)
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {

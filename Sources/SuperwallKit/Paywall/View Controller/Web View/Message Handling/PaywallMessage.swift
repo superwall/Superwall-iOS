@@ -42,6 +42,7 @@ enum ReviewType: String, Decodable {
   case external
 }
 
+// swiftlint:disable:next type_body_length
 enum PaywallMessage: Decodable, Equatable {
   case onReady(paywallJsVersion: String)
 	case templateParamsAndUserAttributes
@@ -58,7 +59,6 @@ enum PaywallMessage: Decodable, Equatable {
   case initiateWebCheckout(contextId: String)
   case stripeCheckoutStart(checkoutContextId: String, productId: String)
   case stripeCheckoutComplete(
-    swCheckoutId: String,
     checkoutContextId: String,
     productId: String
   )
@@ -139,7 +139,6 @@ enum PaywallMessage: Decodable, Equatable {
     case reviewType
     case browserType
     case checkoutContextId
-    case swCheckoutId
     case type
     case title
     case subtitle
@@ -232,11 +231,9 @@ enum PaywallMessage: Decodable, Equatable {
           return
         }
       case .stripeCheckoutComplete:
-        if let swCheckoutId = try? values.decode(String.self, forKey: .swCheckoutId),
-          let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
           let productId = try? values.decode(String.self, forKey: .productId) {
           self = .stripeCheckoutComplete(
-            swCheckoutId: swCheckoutId,
             checkoutContextId: checkoutContextId,
             productId: productId
           )

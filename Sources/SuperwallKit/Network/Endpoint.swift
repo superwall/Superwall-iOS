@@ -378,7 +378,7 @@ extension Endpoint where
 
     return Endpoint(
       components: Components(
-        host: .web2app,
+        host: .subscriptionsApi,
         path: "checkout/session/poll-redemption-result",
         bodyData: bodyData
       ),

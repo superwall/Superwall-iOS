@@ -619,7 +619,6 @@ struct PaywallMessageHandlerTests {
     let message = wrapped.payload.messages.first
 
     #expect(message == .stripeCheckoutComplete(
-      swCheckoutId: "sw_123",
       checkoutContextId: "ctx_123",
       productId: "prod_123"
     ))
@@ -747,13 +746,11 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(
       .stripeCheckoutComplete(
-        swCheckoutId: "sw_123",
         checkoutContextId: "ctx_123",
         productId: "prod_123"
       )
     )
 
-    #expect(delegate.stripeCheckoutComplete?.swCheckoutId == "sw_123")
     #expect(delegate.stripeCheckoutComplete?.checkoutContextId == "ctx_123")
     #expect(delegate.stripeCheckoutComplete?.productId == "prod_123")
   }
