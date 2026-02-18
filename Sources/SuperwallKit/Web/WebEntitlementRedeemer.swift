@@ -10,12 +10,12 @@ import Foundation
 import UIKit
 
 actor WebEntitlementRedeemer {
-  private unowned let network: Network
-  private unowned let storage: Storage
-  private unowned let entitlementsInfo: EntitlementsInfo
-  private unowned let delegate: SuperwallDelegateAdapter
-  private unowned let purchaseController: PurchaseController
-  private unowned let receiptManager: ReceiptManager
+  private let network: Network
+  private let storage: Storage
+  private let entitlementsInfo: EntitlementsInfo
+  private let delegate: SuperwallDelegateAdapter
+  private let purchaseController: PurchaseController
+  private let receiptManager: ReceiptManager
   private unowned let factory: Factory
   private let notificationScheduler: NotificationScheduling
   private let stripePendingPollIntervalNs: UInt64
@@ -158,7 +158,7 @@ actor WebEntitlementRedeemer {
   /// Either starts a new poll or waits for an existing in-flight poll to
   /// finish. Returns `true` if the checkout was redeemed.
   func pollOrWaitForActiveStripePoll() async -> Bool {
-    guard let pendingState = pendingStripeCheckoutState else {
+    if pendingStripeCheckoutState == nil {
       return false
     }
 
