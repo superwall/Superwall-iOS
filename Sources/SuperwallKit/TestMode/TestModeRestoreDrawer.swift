@@ -4,8 +4,6 @@
 //
 //  Created by Claude on 2026-02-09.
 //
-// swiftlint:disable file_length
-
 import UIKit
 
 /// The result of a test mode restore interaction.
@@ -43,7 +41,6 @@ enum TestModeRestoreDrawer {
 
 // MARK: - TestModeRestoreViewController
 
-// swiftlint:disable:next type_body_length
 private final class TestModeRestoreViewController: UIViewController {
   private let availableEntitlements: [String]
   private let completion: (TestModeRestoreResult) -> Void
@@ -181,7 +178,6 @@ private final class TestModeRestoreViewController: UIViewController {
 
   // MARK: - Layout
 
-  // swiftlint:disable:next function_body_length
   private func layoutUI() {
     view.addSubview(testModeLabel)
     view.addSubview(closeButton)
@@ -309,7 +305,6 @@ private final class TestModeRestoreViewController: UIViewController {
       self?.completion(.restored(entitlements))
     }
   }
-
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
