@@ -798,13 +798,14 @@ struct PaywallMessageHandlerTests {
     messageHandler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
 
     #expect(delegate.stripeCheckoutStart == nil)
+    #expect(delegate.stripeCheckoutSubmit == nil)
     #expect(delegate.stripeCheckoutComplete == nil)
     #expect(delegate.stripeCheckoutAbandon == nil)
     #expect(delegate.eventDidOccur == nil)
   }
 
   @Test
-  func handleStripeCheckoutSubmit_isNoOp() {
+  func handleStripeCheckoutSubmit_forwardsToDelegate() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -826,9 +827,7 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.stripeCheckoutSubmit(checkoutContextId: "ctx_123", productId: "prod_123"))
 
-    #expect(delegate.stripeCheckoutStart == nil)
-    #expect(delegate.stripeCheckoutComplete == nil)
-    #expect(delegate.stripeCheckoutAbandon == nil)
-    #expect(delegate.eventDidOccur == nil)
+    #expect(delegate.stripeCheckoutSubmit?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutSubmit?.productId == "prod_123")
   }
 }
