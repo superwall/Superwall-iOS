@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 07/11/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
 
@@ -250,6 +251,12 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a Stripe checkout session fails.
   case stripeCheckoutFail
 
+  /// When the test mode modal is opened.
+  case testModeModalOpen
+
+  /// When the test mode modal is closed.
+  case testModeModalClose
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -408,6 +415,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "stripeCheckout_complete"
     case .stripeCheckoutFail:
       return "stripeCheckout_fail"
+    case .testModeModalOpen:
+      return "testModeModal_open"
+    case .testModeModalClose:
+      return "testModeModal_close"
     }
   }
 }

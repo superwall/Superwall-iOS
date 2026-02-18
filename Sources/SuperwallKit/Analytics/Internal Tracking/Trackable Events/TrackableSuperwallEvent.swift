@@ -1118,6 +1118,30 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct TestModeModalOpen: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .testModeModalOpen
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
+  struct TestModeModalClose: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .testModeModalClose
+    let entitlements: Set<Entitlement>
+    let freeTrialOverride: String
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "free_trial_override": freeTrialOverride
+      ]
+      for entitlement in entitlements.sorted(by: { $0.id < $1.id }) {
+        let prefix = "entitlement_\(entitlement.id)"
+        params["\(prefix)_state"] = entitlement.state?.rawValue ?? "inactive"
+        params["\(prefix)_offer_type"] = entitlement.offerType?.rawValue ?? "none"
+      }
+      return params
+    }
+  }
+
   enum PaywallPreloadState {
     case start
     case complete

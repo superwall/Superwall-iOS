@@ -9,7 +9,6 @@
 import Foundation
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 final class StorageMock: Storage {
   var internalCachedTransactions: [StoreTransaction]
   var internalConfirmedAssignments: Set<Assignment>?

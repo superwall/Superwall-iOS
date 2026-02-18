@@ -6,7 +6,6 @@
 import UIKit
 import AVFoundation
 
-
 final class SWLocalResourcesViewController: UICollectionViewController {
   private var resources: [(id: String, url: URL)] = []
 

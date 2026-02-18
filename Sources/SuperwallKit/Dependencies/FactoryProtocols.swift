@@ -157,6 +157,8 @@ protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
+  var isTestMode: Bool { get }
+  var testModeFreeTrialOverride: FreeTrialOverride { get }
 }
 
 protocol ConfigAttributesFactory: AnyObject {

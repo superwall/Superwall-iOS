@@ -185,6 +185,14 @@ enum DisableVerbosePlacements: Storable {
   typealias Value = Bool
 }
 
+enum IsTestModeActiveSubscription: Storable {
+  static var key: String {
+    "store.isTestModeActiveSubscription"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
 enum LatestConfig: Storable {
   static var key: String {
     "store.config"

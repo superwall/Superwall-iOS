@@ -1,18 +1,19 @@
 //
 //  PaywallCacheTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 09/03/2022.
 //
 
 // swiftlint:disable all
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 
-class PaywallViewControllerCacheTests: XCTestCase {
+struct PaywallViewControllerCacheTests {
+  @Test
   @MainActor
-  func testSaveAndRetrievePaywall() throws {
+  func saveAndRetrievePaywall() throws {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.localeIdentifier
@@ -33,11 +34,12 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let cachedPaywall = paywallCache.getPaywallViewController(forKey: key)
 
     // Then
-    XCTAssertEqual(cachedPaywall, paywall)
+    #expect(cachedPaywall == paywall)
   }
 
+  @Test
   @MainActor
-  func testSaveAndRemovePaywall_withId() {
+  func saveAndRemovePaywall_withId() {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.localeIdentifier
@@ -57,18 +59,19 @@ class PaywallViewControllerCacheTests: XCTestCase {
 
     var cachedPaywall = paywallCache.getPaywallViewController(forKey: key)
 
-    XCTAssertEqual(cachedPaywall, paywall)
+    #expect(cachedPaywall == paywall)
 
     paywallCache.removePaywallViewController(forKey: key)
 
     // Then
     cachedPaywall = paywallCache.getPaywallViewController(forKey: key)
 
-    XCTAssertNil(cachedPaywall)
+    #expect(cachedPaywall == nil)
   }
 
+  @Test
   @MainActor
-  func testClearCache() {
+  func clearCache() {
     // Given
     let dependencyContainer = DependencyContainer()
     let locale = dependencyContainer.deviceHelper.localeIdentifier
@@ -101,8 +104,8 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let cachedPaywall1 = paywallCache.getPaywallViewController(forKey: key1)
     let cachedPaywall2 = paywallCache.getPaywallViewController(forKey: key2)
 
-    XCTAssertEqual(cachedPaywall1, paywall1)
-    XCTAssertEqual(cachedPaywall2, paywall2)
+    #expect(cachedPaywall1 == paywall1)
+    #expect(cachedPaywall2 == paywall2)
 
     paywallCache.removeAll()
 
@@ -110,7 +113,7 @@ class PaywallViewControllerCacheTests: XCTestCase {
     let nilPaywall1 = paywallCache.getPaywallViewController(forKey: key1)
     let nilPaywall2 = paywallCache.getPaywallViewController(forKey: key2)
 
-    XCTAssertNil(nilPaywall1)
-    XCTAssertNil(nilPaywall2)
+    #expect(nilPaywall1 == nil)
+    #expect(nilPaywall2 == nil)
   }
 }

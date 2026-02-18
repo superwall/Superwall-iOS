@@ -117,6 +117,8 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       return "video/webm"
     case "avi":
       return "video/x-msvideo"
+    case "hevc", "h265":
+      return "video/hevc"
 
     // Audio
     case "mp3":
@@ -139,6 +141,16 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       return "image/webp"
     case "svg":
       return "image/svg+xml"
+    case "heic":
+      return "image/heic"
+    case "heif":
+      return "image/heif"
+    case "avif":
+      return "image/avif"
+    case "bmp":
+      return "image/bmp"
+    case "tif", "tiff":
+      return "image/tiff"
 
     // Other
     case "json":

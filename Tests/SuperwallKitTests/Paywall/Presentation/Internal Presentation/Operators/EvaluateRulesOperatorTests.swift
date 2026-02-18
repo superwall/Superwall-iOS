@@ -1,18 +1,17 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 05/12/2022.
 //
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 import Combine
 
-final class EvaluateRulesOperatorTests: XCTestCase {
-  var cancellables: [AnyCancellable] = []
-
-  func test_evaluateRules_isDebugger() async {
+@Suite(.serialized)
+struct EvaluateRulesOperatorTests {
+  @Test func evaluateRules_isDebugger() async {
     let dependencyContainer = DependencyContainer()
     let identifier = "abc"
 
@@ -27,24 +26,24 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
-      XCTAssertNil(output.assignment)
+      #expect(output.assignment == nil)
 
       switch output.triggerResult {
       case .paywall(let experiment):
-        XCTAssertEqual(experiment.id, identifier)
-        XCTAssertEqual(experiment.groupId, "")
-        XCTAssertEqual(experiment.variant.id, "")
-        XCTAssertEqual(experiment.variant.type, .treatment)
-        XCTAssertEqual(experiment.variant.paywallId, identifier)
+        #expect(experiment.id == identifier)
+        #expect(experiment.groupId == "")
+        #expect(experiment.variant.id == "")
+        #expect(experiment.variant.type == .treatment)
+        #expect(experiment.variant.paywallId == identifier)
       default:
-        XCTFail("Wrong trigger result")
+        Issue.record("Wrong trigger result")
       }
     } catch {
-      XCTFail("Shouldn't throw")
+      Issue.record("Shouldn't throw")
     }
   }
 
-  func test_evaluateRules_isNotDebugger() async {
+  @Test func evaluateRules_isNotDebugger() async {
     let dependencyContainer = DependencyContainer()
     let request = dependencyContainer.makePresentationRequest(
       .explicitTrigger(.stub()),
@@ -57,16 +56,16 @@ final class EvaluateRulesOperatorTests: XCTestCase {
       let output = try await Superwall.shared.evaluateAudienceFilter(
         from: request
       )
-      XCTAssertNil(output.assignment)
+      #expect(output.assignment == nil)
 
       switch output.triggerResult {
       case .placementNotFound:
         break
       default:
-        XCTFail("Wrong trigger result")
+        Issue.record("Wrong trigger result")
       }
     } catch {
-      XCTFail("Shouldn't throw")
+      Issue.record("Shouldn't throw")
     }
   }
 }

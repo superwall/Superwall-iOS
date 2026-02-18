@@ -1,25 +1,25 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 16/08/2023.
 //
 
+import Foundation
 @testable import SuperwallKit
-import XCTest
+import Testing
 
-@available(iOS 14.0, *)
-final class SurveyTests: XCTestCase {
-  func test_shouldAssignHoldout_debuggerLaunched() {
+struct SurveyTests {
+  @Test func shouldAssignHoldout_debuggerLaunched() {
     let survey = Survey.stub()
     let isHoldout = survey.shouldAssignHoldout(
       isDebuggerLaunched: true,
       storage: StorageMock()
     )
-    XCTAssertFalse(isHoldout)
+    #expect(!isHoldout)
   }
 
-  func test_shouldAssignHoldout_presentationProbabilityZero() {
+  @Test func shouldAssignHoldout_presentationProbabilityZero() {
     let survey = Survey(
       id: UUID().uuidString,
       assignmentKey: "abc",
@@ -35,10 +35,10 @@ final class SurveyTests: XCTestCase {
       isDebuggerLaunched: false,
       storage: StorageMock()
     )
-    XCTAssertTrue(isHoldout)
+    #expect(isHoldout)
   }
 
-  func test_shouldAssignHoldout_presentationProbabilityOne() {
+  @Test func shouldAssignHoldout_presentationProbabilityOne() {
     let survey = Survey(
       id: UUID().uuidString,
       assignmentKey: "abc",
@@ -54,10 +54,10 @@ final class SurveyTests: XCTestCase {
       isDebuggerLaunched: false,
       storage: StorageMock()
     )
-    XCTAssertFalse(isHoldout)
+    #expect(!isHoldout)
   }
 
-  func test_shouldAssignHoldout_presentationProbabilityPointFive() {
+  @Test func shouldAssignHoldout_presentationProbabilityPointFive() {
     let survey = Survey(
       id: UUID().uuidString,
       assignmentKey: "abc",
@@ -77,17 +77,17 @@ final class SurveyTests: XCTestCase {
       storage: StorageMock(),
       randomiser: random(in:)
     )
-    XCTAssertTrue(isHoldout)
+    #expect(isHoldout)
   }
 
-  func test_hasSeenSurvey_noAssignmentKey() {
+  @Test func hasSeenSurvey_noAssignmentKey() {
     let survey: Survey = .stub()
     let storage = StorageMock()
     let hasSeen = survey.hasSeenSurvey(storage: storage)
-    XCTAssertFalse(hasSeen)
+    #expect(!hasSeen)
   }
 
-  func test_hasSeenSurvey_sameAssignmentKey() {
+  @Test func hasSeenSurvey_sameAssignmentKey() {
     let survey = Survey(
       id: UUID().uuidString,
       assignmentKey: "abc",
@@ -102,10 +102,10 @@ final class SurveyTests: XCTestCase {
     let existingAssignmentKey = "abc"
     let storage = StorageMock(internalSurveyAssignmentKey: existingAssignmentKey)
     let hasSeen = survey.hasSeenSurvey(storage: storage)
-    XCTAssertTrue(hasSeen)
+    #expect(hasSeen)
   }
 
-  func test_hasSeenSurvey_diffAssignmentKey() {
+  @Test func hasSeenSurvey_diffAssignmentKey() {
     let survey = Survey(
       id: UUID().uuidString,
       assignmentKey: "cde",
@@ -120,6 +120,6 @@ final class SurveyTests: XCTestCase {
     let existingAssignmentKey = "abc"
     let storage = StorageMock(internalSurveyAssignmentKey: existingAssignmentKey)
     let hasSeen = survey.hasSeenSurvey(storage: storage)
-    XCTAssertFalse(hasSeen)
+    #expect(!hasSeen)
   }
 }
