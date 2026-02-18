@@ -30,10 +30,12 @@ public enum SubscriptionStatus: Equatable, Codable {
   }
 
   /// A convenience boolean indicating whether the subscription status is active.
+  ///
+  /// Returns `true` only if there is at least one active entitlement.
   public var isActive: Bool {
     switch self {
-    case .active:
-      return true
+    case .active(let entitlements):
+      return entitlements.contains { $0.isActive }
     default:
       return false
     }
@@ -41,8 +43,9 @@ public enum SubscriptionStatus: Equatable, Codable {
 
   func toObjc() -> SubscriptionStatusObjc {
     switch self {
-    case .active:
-      return .active
+    case .active(let entitlements):
+      // Only return .active if there's at least one active entitlement
+      return entitlements.contains { $0.isActive } ? .active : .inactive
     case .inactive:
       return .inactive
     case .unknown:
@@ -55,8 +58,9 @@ public enum SubscriptionStatus: Equatable, Codable {
 extension SubscriptionStatus: CustomStringConvertible {
   public var description: String {
     switch self {
-    case .active:
-      return "ACTIVE"
+    case .active(let entitlements):
+      // Only show as ACTIVE if there's at least one active entitlement
+      return entitlements.contains { $0.isActive } ? "ACTIVE" : "INACTIVE"
     case .inactive:
       return "INACTIVE"
     case .unknown:

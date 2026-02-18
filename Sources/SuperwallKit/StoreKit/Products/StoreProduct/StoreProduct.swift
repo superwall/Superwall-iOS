@@ -384,6 +384,10 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     self.init(SK2StoreProduct(sk2Product: sk2Product, entitlements: entitlements))
   }
 
+  convenience init(testProduct: TestStoreProduct) {
+    self.init(testProduct)
+  }
+
   /// Creates a blank StoreProduct with empty/default values.
   static func blank() -> StoreProduct {
     return StoreProduct(BlankStoreProduct())
