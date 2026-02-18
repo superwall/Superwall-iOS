@@ -1,17 +1,16 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 20/01/2023.
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 import WebKit
 
-@available(iOS 16.0, *)
-final class RawWebMessageHandlerTests: XCTestCase {
+struct RawWebMessageHandlerTests {
   class MockWKScriptMessage: WKScriptMessage {
     private var internalBody: Any
 
@@ -32,8 +31,9 @@ final class RawWebMessageHandlerTests: XCTestCase {
     }
   }
 
+  @Test
   @MainActor
-  func test_userContentController() async {
+  func userContentController() async {
     let delegate = MockWebEventDelegate()
     let rawWebMessageHandler = RawWebMessageHandler(delegate: delegate)
     let body = """
@@ -45,8 +45,8 @@ final class RawWebMessageHandlerTests: XCTestCase {
       WKUserContentController(),
       didReceive: message
     )
-    
+
     try? await Task.sleep(nanoseconds: UInt64(10 * 1_000_000))
-    XCTAssertEqual(delegate.handledMessages, [.onReady(paywallJsVersion: "2023-01-12")])
+    #expect(delegate.handledMessages == [.onReady(paywallJsVersion: "2023-01-12")])
   }
 }

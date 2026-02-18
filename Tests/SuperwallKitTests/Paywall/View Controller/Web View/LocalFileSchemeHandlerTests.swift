@@ -10,6 +10,7 @@ import Testing
 @testable import SuperwallKit
 import Foundation
 
+@Suite(.serialized)
 struct LocalFileSchemeHandlerTests {
 
   // MARK: - Scheme Tests
@@ -107,8 +108,14 @@ struct LocalFileSchemeHandlerTests {
       ("test.png", "hero-png", "image/png"),
       ("test.jpg", "hero-jpg", "image/jpeg"),
       ("test.webp", "hero-webp", "image/webp"),
+      ("test.heic", "hero-heic", "image/heic"),
+      ("test.heif", "hero-heif", "image/heif"),
+      ("test.avif", "hero-avif", "image/avif"),
+      ("test.bmp", "hero-bmp", "image/bmp"),
+      ("test.tiff", "hero-tiff", "image/tiff"),
       ("test.json", "hero-json", "application/json"),
       ("test.mov", "hero-mov", "video/quicktime"),
+      ("test.hevc", "hero-hevc", "video/hevc"),
     ]
 
     for (filename, resourceId, expectedMime) in cases {

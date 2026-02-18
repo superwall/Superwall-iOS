@@ -1,19 +1,19 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 06/12/2022.
 //
 
-import XCTest
+import Testing
+import UIKit
 @testable import SuperwallKit
 import Combine
 
-final class StorePresentationObjectsOperatorTests: XCTestCase {
-  var cancellables: [AnyCancellable] = []
-
-  @MainActor
-  func test_storePresentationObjects() {
+@Suite(.serialized)
+struct StorePresentationObjectsOperatorTests {
+  @Test @MainActor
+  func storePresentationObjects() {
     let dependencyContainer = DependencyContainer()
 
     let request = PresentationRequest.stub()
@@ -35,6 +35,6 @@ final class StorePresentationObjectsOperatorTests: XCTestCase {
       featureGatingBehavior: .gated
     )
 
-    XCTAssertNotNil(Superwall.shared.presentationItems.last)
+    #expect(Superwall.shared.presentationItems.last != nil)
   }
 }

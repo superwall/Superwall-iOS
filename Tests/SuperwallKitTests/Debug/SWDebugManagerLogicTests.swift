@@ -1,16 +1,17 @@
 //
 //  SWDebugManagerLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 20/04/2022.
 //
 // swiftlint:disable all
 
-import XCTest
+import Foundation
+import Testing
 @testable import SuperwallKit
 
-class SWDebugManagerLogicTests: XCTestCase {
-  func testGetQueryItemValue_noQueryItems() {
+struct SWDebugManagerLogicTests {
+  @Test func getQueryItemValue_noQueryItems() {
     // Given
     let url = URL(string: "https://google.com")!
 
@@ -18,10 +19,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .token)
 
     // Then
-    XCTAssertNil(value)
+    #expect(value == nil)
   }
 
-  func testGetQueryItemValue_superwallDebug() {
+  @Test func getQueryItemValue_superwallDebug() {
     // Given
     let url = URL(string: "myapp://?superwall_debug=true")!
 
@@ -29,10 +30,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .superwallDebug)
 
     // Then
-    XCTAssertEqual(value, "true")
+    #expect(value == "true")
   }
 
-  func testGetQueryItemValue_superwallDebug_nil() {
+  @Test func getQueryItemValue_superwallDebug_nil() {
     // Given
     let url = URL(string: "myapp://?paywall_id=123")!
 
@@ -40,10 +41,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .superwallDebug)
 
     // Then
-    XCTAssertNil(value)
+    #expect(value == nil)
   }
 
-  func testGetQueryItemValue_paywallId() {
+  @Test func getQueryItemValue_paywallId() {
     // Given
     let url = URL(string: "myapp://?superwall_debug=true&paywall_id=123")!
 
@@ -51,10 +52,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .paywallId)
 
     // Then
-    XCTAssertEqual(value, "123")
+    #expect(value == "123")
   }
 
-  func testGetQueryItemValue_paywallId_nil() {
+  @Test func getQueryItemValue_paywallId_nil() {
     // Given
     let url = URL(string: "myapp://?superwall_debug=true")!
 
@@ -62,10 +63,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .paywallId)
 
     // Then
-    XCTAssertNil(value)
+    #expect(value == nil)
   }
 
-  func testGetQueryItemValue_token() {
+  @Test func getQueryItemValue_token() {
     // Given
     let url = URL(string: "myapp://?superwall_debug=true&paywall_id=123&token=abcdef123")!
 
@@ -73,10 +74,10 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .token)
 
     // Then
-    XCTAssertEqual(value, "abcdef123")
+    #expect(value == "abcdef123")
   }
 
-  func testGetQueryItemValue_token_nil() {
+  @Test func getQueryItemValue_token_nil() {
     // Given
     let url = URL(string: "myapp://?superwall_debug=true&paywall_id=123")!
 
@@ -84,6 +85,6 @@ class SWDebugManagerLogicTests: XCTestCase {
     let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .token)
 
     // Then
-    XCTAssertNil(value)
+    #expect(value == nil)
   }
 }
