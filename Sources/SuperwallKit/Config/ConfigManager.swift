@@ -402,7 +402,7 @@ class ConfigManager {
     // Evaluate test mode before loading products
     let testModeManager = factory.makeTestModeManager()
     let wasTestMode = testModeManager.isTestMode
-    testModeManager.evaluateTestMode(config: config)
+    testModeManager.evaluateTestMode(config: config, options: options)
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 

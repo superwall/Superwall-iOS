@@ -117,10 +117,8 @@ final class TestModeTransactionHandler {
     var seen = Set<String>()
     var uniqueEntitlementIds: [String] = []
     for product in testModeManager.products {
-      for entitlement in product.entitlements {
-        if seen.insert(entitlement.identifier).inserted {
-          uniqueEntitlementIds.append(entitlement.identifier)
-        }
+      for entitlement in product.entitlements where seen.insert(entitlement.identifier).inserted {
+        uniqueEntitlementIds.append(entitlement.identifier)
       }
     }
 
