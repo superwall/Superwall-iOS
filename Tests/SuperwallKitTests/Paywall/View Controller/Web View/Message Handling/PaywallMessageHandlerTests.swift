@@ -697,33 +697,6 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
-  func handleStripeCheckoutStart_forwardsToDelegate() {
-    let dependencyContainer = DependencyContainer()
-    let messageHandler = PaywallMessageHandler(
-      receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler(),
-      customCallbackRegistry: dependencyContainer.customCallbackRegistry
-    )
-    let webView = FakeWebView(
-      isMac: false,
-      messageHandler: messageHandler,
-      isOnDeviceCacheEnabled: true,
-      factory: dependencyContainer
-    )
-    let delegate = PaywallMessageHandlerDelegateMock(
-      paywallInfo: .stub(),
-      webView: webView
-    )
-    messageHandler.delegate = delegate
-
-    messageHandler.handle(.stripeCheckoutStart(checkoutContextId: "ctx_123", productId: "prod_123"))
-
-    #expect(delegate.stripeCheckoutStart?.checkoutContextId == "ctx_123")
-    #expect(delegate.stripeCheckoutStart?.productId == "prod_123")
-  }
-
-  @Test
   func handleStripeCheckoutComplete_forwardsToDelegate() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(

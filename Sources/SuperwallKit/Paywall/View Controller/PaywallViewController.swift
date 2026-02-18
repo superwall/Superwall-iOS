@@ -1193,8 +1193,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     #endif
   }
 
-  func handleStripeCheckoutStart(checkoutContextId _: String, productId _: String) {}
-
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
     Task {
       await webEntitlementRedeemer.registerStripeCheckoutSubmit(

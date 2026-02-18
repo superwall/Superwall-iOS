@@ -23,7 +23,6 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariExternal(_ url: URL)
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
-  func handleStripeCheckoutStart(checkoutContextId: String, productId: String)
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
@@ -195,13 +194,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       // No-op: This is only here for backwards compatibility so that we don't log
       // and error when decoding the message.
       break
-    case let .stripeCheckoutStart(checkoutContextId, productId):
+    case let .stripeCheckoutStart(_, productId):
       trackStripeCheckoutEvent(
         state: .start,
-        productId: productId
-      )
-      delegate?.handleStripeCheckoutStart(
-        checkoutContextId: checkoutContextId,
         productId: productId
       )
     case let .stripeCheckoutComplete(checkoutContextId, productId):

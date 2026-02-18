@@ -116,9 +116,6 @@ actor WebEntitlementRedeemer {
     // Also check once on SDK initialization so pending Stripe checkouts can be
     // recovered on cold launch.
     Task {
-      guard factory.makeConfigManager() != nil else {
-        return
-      }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
   }
@@ -260,6 +257,8 @@ actor WebEntitlementRedeemer {
     await superwall.track(event)
   }
 
+  /// Polls for the redemption result of a pending Stripe checkout, if one exists,
+  /// decrementing the remaining foreground attempts and clearing state when exhausted.
   func pollPendingStripeCheckoutOnForegroundIfNeeded() async {
     guard let pendingState = pendingStripeCheckoutState else {
       return
@@ -812,10 +811,9 @@ actor WebEntitlementRedeemer {
     }
   }
 
+  /// Called on foreground. Polls for pending Stripe checkout redemption (showing a
+  /// loading spinner on the paywall if needed) and then refreshes web entitlements.
   private func handleForegroundPolling() async {
-    if factory.makeConfigManager() == nil {
-      return
-    }
     let superwall = superwall ?? Superwall.shared
     let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
 
