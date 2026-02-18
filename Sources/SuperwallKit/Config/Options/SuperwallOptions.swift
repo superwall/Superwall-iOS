@@ -37,9 +37,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// ```
   public var localResources: [String: URL] = [:]
 
-  /// Controls when the SDK enters debug/test mode.
-  @objc(SWKDebugModeBehavior)
-  public enum DebugModeBehavior: Int, Encodable, CustomStringConvertible {
+  /// Controls when the SDK enters test mode.
+  @objc(SWKTestModeBehavior)
+  public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
     /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
     /// mismatch is detected, but never during UI tests.
     case automatic
@@ -284,7 +284,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
 
-  /// Controls when the SDK enters debug/test mode. Defaults to `.automatic`.
+  /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
   ///   a bundle ID mismatch is detected, but never during UI tests.
@@ -292,7 +292,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///   user via the dashboard.
   /// - `.never`: Test mode is never activated, regardless of configuration.
   /// - `.always`: Test mode is always activated, regardless of configuration.
-  public var debugModeBehavior: DebugModeBehavior = .automatic
+  public var testModeBehavior: TestModeBehavior = .automatic
 
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
@@ -340,7 +340,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case maxConfigRetryCount
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
-    case debugModeBehavior
+    case testModeBehavior
   }
 
   public override init() {
@@ -375,7 +375,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
-    try container.encode(debugModeBehavior.description, forKey: .debugModeBehavior)
+    try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
   }
 
   func toDictionary() -> [String: Any] {

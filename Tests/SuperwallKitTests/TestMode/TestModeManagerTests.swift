@@ -148,10 +148,10 @@ struct TestModeManagerTests {
     #expect(manager.freeTrialOverride == .forceAvailable)
   }
 
-  // MARK: - DebugModeBehavior Tests
+  // MARK: - TestModeBehavior Tests
 
   @Test
-  func debugModeBehavior_never_disablesTestMode() {
+  func testModeBehavior_never_disablesTestMode() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
     let manager = dependencyContainer.testModeManager!
@@ -165,7 +165,7 @@ struct TestModeManagerTests {
       ])
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .never
+    options.testModeBehavior = .never
 
     manager.evaluateTestMode(config: config, options: options)
 
@@ -174,7 +174,7 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func debugModeBehavior_always_enablesTestMode() {
+  func testModeBehavior_always_enablesTestMode() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
 
@@ -183,20 +183,20 @@ struct TestModeManagerTests {
       .setting(\.testModeUserIds, to: [])
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .always
+    options.testModeBehavior = .always
 
     manager.evaluateTestMode(config: config, options: options)
 
     #expect(manager.isTestMode == true)
-    if case .debugOption = manager.testModeReason {
+    if case .testModeOption = manager.testModeReason {
       // Expected
     } else {
-      #expect(Bool(false), "Expected .debugOption reason, got \(String(describing: manager.testModeReason))")
+      #expect(Bool(false), "Expected .testModeOption reason, got \(String(describing: manager.testModeReason))")
     }
   }
 
   @Test
-  func debugModeBehavior_whenEnabledForUser_activatesOnConfigMatch() {
+  func testModeBehavior_whenEnabledForUser_activatesOnConfigMatch() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
     let manager = dependencyContainer.testModeManager!
@@ -209,7 +209,7 @@ struct TestModeManagerTests {
       ])
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .whenEnabledForUser
+    options.testModeBehavior = .whenEnabledForUser
 
     manager.evaluateTestMode(config: config, options: options)
 
@@ -222,7 +222,7 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func debugModeBehavior_whenEnabledForUser_doesNotActivateOnBundleIdMismatch() {
+  func testModeBehavior_whenEnabledForUser_doesNotActivateOnBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
 
@@ -232,7 +232,7 @@ struct TestModeManagerTests {
       .setting(\.bundleIdConfig, to: "com.some.other.bundle")
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .whenEnabledForUser
+    options.testModeBehavior = .whenEnabledForUser
 
     manager.evaluateTestMode(config: config, options: options)
 
@@ -241,7 +241,7 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func debugModeBehavior_automatic_activatesOnConfigMatch() {
+  func testModeBehavior_automatic_activatesOnConfigMatch() {
     let dependencyContainer = DependencyContainer()
     let identityManager = dependencyContainer.identityManager!
     let manager = dependencyContainer.testModeManager!
@@ -254,7 +254,7 @@ struct TestModeManagerTests {
       ])
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .automatic
+    options.testModeBehavior = .automatic
 
     manager.evaluateTestMode(config: config, options: options)
 
@@ -267,7 +267,7 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func debugModeBehavior_automatic_activatesOnBundleIdMismatch() {
+  func testModeBehavior_automatic_activatesOnBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
 
@@ -277,22 +277,15 @@ struct TestModeManagerTests {
       .setting(\.bundleIdConfig, to: "com.some.other.bundle")
 
     let options = SuperwallOptions()
-    options.debugModeBehavior = .automatic
+    options.testModeBehavior = .automatic
 
     manager.evaluateTestMode(config: config, options: options)
 
-    // Note: In test runner environment, isUITestEnvironment may be true (XCTestCase exists),
-    // which would cause automatic mode to skip. We check both possibilities.
-    if TestModeManager.isUITestEnvironment {
-      // In a test runner, automatic mode skips test mode activation
-      #expect(manager.isTestMode == false)
+    #expect(manager.isTestMode == true)
+    if case .bundleIdMismatch = manager.testModeReason {
+      // Expected
     } else {
-      #expect(manager.isTestMode == true)
-      if case .bundleIdMismatch = manager.testModeReason {
-        // Expected
-      } else {
-        #expect(Bool(false), "Expected .bundleIdMismatch reason, got \(String(describing: manager.testModeReason))")
-      }
+      #expect(Bool(false), "Expected .bundleIdMismatch reason, got \(String(describing: manager.testModeReason))")
     }
   }
 }

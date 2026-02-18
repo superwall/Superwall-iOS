@@ -33,8 +33,8 @@ enum TestModeReason: Sendable {
   /// The user's alias ID matched a test store user from the config.
   case configMatch
 
-  /// Debug mode is always enabled via SuperwallOptions.
-  case debugOption
+  /// Test mode is always enabled via SuperwallOptions.
+  case testModeOption
 
   /// The app's bundle ID doesn't match the config's `bundleIds.ios`.
   case bundleIdMismatch(expected: String, actual: String)
@@ -43,8 +43,8 @@ enum TestModeReason: Sendable {
     switch self {
     case .configMatch:
       return "User is in test mode (enabled from dashboard)"
-    case .debugOption:
-      return "Debug mode is always enabled via SuperwallOptions"
+    case .testModeOption:
+      return "Test mode is always enabled via SuperwallOptions"
     case let .bundleIdMismatch(expected, actual):
       return "Bundle ID mismatch: expected \(expected), got \(actual)"
     }
@@ -82,8 +82,15 @@ final class TestModeManager {
   /// overridden with this value.
   var overriddenCustomerInfo: CustomerInfo?
 
-  /// Whether the process is running inside a UI test environment.
-  static let isUITestEnvironment: Bool = NSClassFromString("XCTestCase") != nil
+  /// Whether the process is running inside a test environment.
+  /// Returns `false` when `SUPERWALL_UNIT_TESTS` launch argument is present
+  /// (used by internal unit tests to avoid skipping test mode).
+  static let isTestEnvironment: Bool = {
+    if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
+      return false
+    }
+    return NSClassFromString("XCTestCase") != nil
+  }()
 
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
@@ -100,9 +107,9 @@ final class TestModeManager {
   }
 
   /// Evaluates whether the current user should be in test mode based on the config
-  /// and the `debugModeBehavior` option. Called on every config refresh.
+  /// and the `testModeBehavior` option. Called on every config refresh.
   func evaluateTestMode(config: Config, options: SuperwallOptions) {
-    switch options.debugModeBehavior {
+    switch options.testModeBehavior {
     case .never:
       isTestMode = false
       testModeReason = nil
@@ -111,7 +118,7 @@ final class TestModeManager {
 
     case .always:
       isTestMode = true
-      testModeReason = .debugOption
+      testModeReason = .testModeOption
       return
 
     case .whenEnabledForUser:
@@ -124,7 +131,7 @@ final class TestModeManager {
 
     case .automatic:
       // Skip entirely if in UI tests
-      if Self.isUITestEnvironment {
+      if Self.isTestEnvironment {
         isTestMode = false
         testModeReason = nil
         clearTestModeState()

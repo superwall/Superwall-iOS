@@ -59,8 +59,8 @@ final class DependencyContainer {
     )
     var options = options ?? SuperwallOptions()
 
-    // In UI test environments, always bypass the app transaction check
-    if TestModeManager.isUITestEnvironment {
+    // In test environments, always bypass the app transaction check
+    if TestModeManager.isTestEnvironment {
       options.shouldBypassAppTransactionCheck = true
     }
 
