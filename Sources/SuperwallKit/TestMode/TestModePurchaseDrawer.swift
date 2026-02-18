@@ -62,13 +62,25 @@ private final class TestModePurchaseViewController: UIViewController {
 
   // MARK: - Header Views
 
-  private lazy var testModeLabel: UILabel = {
-    let label = UILabel()
-    label.translatesAutoresizingMaskIntoConstraints = false
-    label.text = "🧪 Test Mode"
-    label.textColor = .black
-    label.font = .systemFont(ofSize: 20, weight: .semibold)
-    return label
+  private static let darkBackgroundColor = UIColor(red: 13 / 255, green: 15 / 255, blue: 18 / 255, alpha: 1)
+
+  private lazy var headerView: UIView = {
+    let view = UIView()
+    view.translatesAutoresizingMaskIntoConstraints = false
+    view.backgroundColor = Self.darkBackgroundColor
+    return view
+  }()
+
+  private lazy var logoImageView: UIImageView = {
+    let imageView = UIImageView()
+    imageView.translatesAutoresizingMaskIntoConstraints = false
+    imageView.image = UIImage(
+      named: "SuperwallKit_superwall_logo",
+      in: Bundle.module,
+      compatibleWith: nil
+    )
+    imageView.contentMode = .scaleAspectFit
+    return imageView
   }()
 
   private lazy var closeButton: UIButton = {
@@ -77,8 +89,8 @@ private final class TestModePurchaseViewController: UIViewController {
     let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
     let xImage = UIImage(systemName: "xmark", withConfiguration: config)
     button.setImage(xImage, for: .normal)
-    button.tintColor = UIColor.black.withAlphaComponent(0.5)
-    button.backgroundColor = UIColor.black.withAlphaComponent(0.08)
+    button.tintColor = UIColor.white.withAlphaComponent(0.7)
+    button.backgroundColor = UIColor.white.withAlphaComponent(0.12)
     button.layer.cornerRadius = 18
     button.addTarget(self, action: #selector(closeTapped), for: .touchUpInside)
     return button
@@ -89,7 +101,7 @@ private final class TestModePurchaseViewController: UIViewController {
   private lazy var productCard: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = .white
+    view.backgroundColor = .secondarySystemGroupedBackground
     view.layer.cornerRadius = 20
     return view
   }()
@@ -98,7 +110,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "Product Identifier"
-    label.textColor = UIColor.black.withAlphaComponent(0.5)
+    label.textColor = .secondaryLabel
     label.font = .systemFont(ofSize: 11)
     return label
   }()
@@ -107,7 +119,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = product.productIdentifier
-    label.textColor = .black
+    label.textColor = .label
     label.font = .systemFont(ofSize: 17, weight: .semibold)
     label.numberOfLines = 0
     return label
@@ -116,7 +128,7 @@ private final class TestModePurchaseViewController: UIViewController {
   private lazy var dividerView: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+    view.backgroundColor = .separator
     return view
   }()
 
@@ -129,7 +141,7 @@ private final class TestModePurchaseViewController: UIViewController {
     } else {
       label.isHidden = true
     }
-    label.textColor = .black
+    label.textColor = .label
     label.font = .systemFont(ofSize: 17, weight: .bold)
     return label
   }()
@@ -138,7 +150,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "then"
-    label.textColor = UIColor.black.withAlphaComponent(0.5)
+    label.textColor = .secondaryLabel
     label.font = .systemFont(ofSize: 13)
     label.isHidden = !showFreeTrial
     return label
@@ -153,7 +165,7 @@ private final class TestModePurchaseViewController: UIViewController {
       priceText += " per \(period)"
     }
     label.text = priceText
-    label.textColor = .black
+    label.textColor = .label
     label.font = .systemFont(ofSize: 17, weight: .bold)
     return label
   }()
@@ -162,7 +174,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "One-time charge"
-    label.textColor = UIColor.black.withAlphaComponent(0.5)
+    label.textColor = .secondaryLabel
     label.font = .systemFont(ofSize: 13)
     label.isHidden = !product.period.isEmpty
     return label
@@ -171,7 +183,7 @@ private final class TestModePurchaseViewController: UIViewController {
   private lazy var secondDividerView: UIView = {
     let view = UIView()
     view.translatesAutoresizingMaskIntoConstraints = false
-    view.backgroundColor = UIColor.black.withAlphaComponent(0.1)
+    view.backgroundColor = .separator
     return view
   }()
 
@@ -179,7 +191,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = entitlements.count == 1 ? "Unlocks Entitlement" : "Unlocks Entitlements"
-    label.textColor = UIColor.black.withAlphaComponent(0.5)
+    label.textColor = .secondaryLabel
     label.font = .systemFont(ofSize: 11)
     return label
   }()
@@ -189,10 +201,10 @@ private final class TestModePurchaseViewController: UIViewController {
     label.translatesAutoresizingMaskIntoConstraints = false
     if entitlements.isEmpty {
       label.text = "No entitlements"
-      label.textColor = UIColor.black.withAlphaComponent(0.5)
+      label.textColor = .secondaryLabel
     } else {
       label.text = entitlements.joined(separator: ", ")
-      label.textColor = .black
+      label.textColor = .label
     }
     label.font = .systemFont(ofSize: 15, weight: .medium)
     label.numberOfLines = 0
@@ -229,7 +241,7 @@ private final class TestModePurchaseViewController: UIViewController {
     let label = UILabel()
     label.translatesAutoresizingMaskIntoConstraints = false
     label.text = "This is a simulated purchase. No real transaction will occur."
-    label.textColor = UIColor.black.withAlphaComponent(0.4)
+    label.textColor = .tertiaryLabel
     label.font = .systemFont(ofSize: 12)
     label.textAlignment = .center
     label.numberOfLines = 0
@@ -286,9 +298,10 @@ private final class TestModePurchaseViewController: UIViewController {
 
   // swiftlint:disable:next function_body_length
   private func layoutUI() {
-    // Add header views
-    view.addSubview(testModeLabel)
-    view.addSubview(closeButton)
+    // Add header container with logo left, close button right
+    view.addSubview(headerView)
+    headerView.addSubview(logoImageView)
+    headerView.addSubview(closeButton)
 
     // Add product card and its contents
     view.addSubview(productCard)
@@ -309,18 +322,26 @@ private final class TestModePurchaseViewController: UIViewController {
     view.addSubview(disclaimerLabel)
 
     NSLayoutConstraint.activate([
-      // Test Mode label - top left
-      testModeLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 28),
-      testModeLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+      // Header container - spans full width at top
+      headerView.topAnchor.constraint(equalTo: view.topAnchor),
+      headerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      headerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
 
-      // Close button - top right
-      closeButton.centerYAnchor.constraint(equalTo: testModeLabel.centerYAnchor),
-      closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+      // Superwall logo - left
+      logoImageView.leadingAnchor.constraint(equalTo: headerView.leadingAnchor, constant: 20),
+      logoImageView.topAnchor.constraint(equalTo: headerView.topAnchor, constant: 20),
+      logoImageView.bottomAnchor.constraint(equalTo: headerView.bottomAnchor, constant: -16),
+      logoImageView.widthAnchor.constraint(equalToConstant: 120),
+      logoImageView.heightAnchor.constraint(equalToConstant: 38),
+
+      // Close button - right side of header
+      closeButton.centerYAnchor.constraint(equalTo: logoImageView.centerYAnchor),
+      closeButton.trailingAnchor.constraint(equalTo: headerView.trailingAnchor, constant: -20),
       closeButton.widthAnchor.constraint(equalToConstant: 36),
       closeButton.heightAnchor.constraint(equalToConstant: 36),
 
       // Product card
-      productCard.topAnchor.constraint(equalTo: testModeLabel.bottomAnchor, constant: 24),
+      productCard.topAnchor.constraint(equalTo: headerView.bottomAnchor, constant: 16),
       productCard.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
       productCard.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16),
 
