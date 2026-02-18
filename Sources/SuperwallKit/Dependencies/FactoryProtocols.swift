@@ -78,8 +78,6 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
-
-  func makeConfigManager() -> ConfigManager?
 }
 
 protocol IdentityFactory: AnyObject {
@@ -166,6 +164,7 @@ protocol ConfigAttributesFactory: AnyObject {
 }
 
 protocol WebEntitlementFactory: AnyObject {
+  func makeIsContainerReady() -> Bool
   func makeDeviceId() -> String
   func makeAppUserId() -> String?
   func makeAliasId() -> String

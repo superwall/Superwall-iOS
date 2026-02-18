@@ -484,10 +484,6 @@ extension DependencyContainer: ConfigManagerFactory {
       deviceLocale: deviceInfo.locale
     )
   }
-
-  func makeConfigManager() -> ConfigManager? {
-    return configManager
-  }
 }
 
 // MARK: - StoreTransactionFactory
@@ -624,6 +620,14 @@ extension DependencyContainer: ConfigAttributesFactory {
 
 // MARK: WebEntitlementFactory
 extension DependencyContainer: WebEntitlementFactory {
+  /// Properties like `deviceHelper` are implicitly unwrapped optionals set after
+  /// init. Tests create a bare `DependencyContainer` without fully configuring it,
+  /// so background tasks in `WebEntitlementRedeemer` must check this before
+  /// accessing factory methods to avoid a nil dereference.
+  func makeIsContainerReady() -> Bool {
+    return configManager != nil
+  }
+
   func makeDeviceId() -> String {
     return "$SuperwallDevice:\(deviceHelper.vendorId)"
   }

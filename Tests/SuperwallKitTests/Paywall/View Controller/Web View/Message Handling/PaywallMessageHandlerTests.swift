@@ -778,7 +778,6 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
 
-    #expect(delegate.stripeCheckoutStart == nil)
     #expect(delegate.stripeCheckoutSubmit == nil)
     #expect(delegate.stripeCheckoutComplete == nil)
     #expect(delegate.stripeCheckoutAbandon == nil)

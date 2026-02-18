@@ -23,8 +23,15 @@ final class NotificationSchedulerMock: NotificationScheduling {
   }
 }
 
+@Suite(.serialized)
 struct WebEntitlementRedeemerTests {
   let dependencyContainer = DependencyContainer()
+
+  init() {
+    // Clear any pending stripe checkout state left on disk by a previous test
+    // to prevent the WebEntitlementRedeemer init Task from triggering unexpected saves.
+    dependencyContainer.storage.delete(PendingStripeCheckoutPollStorage.self)
+  }
 
   @Test("First redemption of code")
   func testRedeem_withCode_firstRedemption_savesCodeAndTracksEvents() async {

@@ -21,13 +21,12 @@ actor WebEntitlementRedeemer {
   private let stripePendingPollIntervalNs: UInt64
   private let stripePendingPollTimeoutNs: UInt64
   private var isProcessing = false
-  private var activeStripePollContextId: String?
+  private var hasActiveStripePoll = false
   private var awaitingCheckoutComplete = false
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
-    & ConfigManagerFactory
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
 
@@ -114,8 +113,10 @@ actor WebEntitlementRedeemer {
     )
 
     // Also check once on SDK initialization so pending Stripe checkouts can be
-    // recovered on cold launch.
+    // recovered on cold launch. Guard on factory readiness to avoid accessing
+    // dependencies (e.g. deviceHelper) before the container is fully set up.
     Task {
+      guard factory.makeIsContainerReady() else { return }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
   }
@@ -131,10 +132,6 @@ actor WebEntitlementRedeemer {
         productId: productId
       )
     )
-  }
-
-  func hasActiveStripePoll() -> Bool {
-    activeStripePollContextId != nil
   }
 
   func shouldShowStripeRecoveryLoadingOnPaywallOpen() -> Bool {
@@ -161,9 +158,9 @@ actor WebEntitlementRedeemer {
 
     // If there's already an active poll (e.g. from cold-launch init task),
     // wait for it to finish rather than skipping.
-    if activeStripePollContextId != nil {
+    if hasActiveStripePoll {
       let waitStart = DispatchTime.now().uptimeNanoseconds
-      while activeStripePollContextId != nil {
+      while hasActiveStripePoll {
         if Task.isCancelled {
           return false
         }
@@ -398,15 +395,13 @@ actor WebEntitlementRedeemer {
   }
 
   private func trackRedemptionStart(type: RedeemType, superwall: Superwall) async {
-    guard case .code = type else {
-      if case .existingCodes = type {
-        let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
-        await superwall.track(startEvent)
-      }
-      return
+    switch type {
+    case .code, .existingCodes:
+      let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
+      await superwall.track(startEvent)
+    case .integrationAttributes:
+      break
     }
-    let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
-    await superwall.track(startEvent)
   }
 
   private func prepareUIForRedemption(type: RedeemType, superwall: Superwall) async {
@@ -426,12 +421,12 @@ actor WebEntitlementRedeemer {
   ) async {
     storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-    if case .code = type {
+    switch type {
+    case .code, .existingCodes:
       let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
       await superwall.track(completeEvent)
-    } else if case .existingCodes = type {
-      let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
-      await superwall.track(completeEvent)
+    case .integrationAttributes:
+      break
     }
 
     let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
@@ -442,24 +437,10 @@ actor WebEntitlementRedeemer {
 
     storage.save(response, forType: LatestRedeemResponse.self)
 
-    // Merge device and web CustomerInfo
-    // If using an external purchase controller, also preserve entitlements that came from it
-    let mergedCustomerInfo: CustomerInfo
-    if factory.makeHasExternalPurchaseController() {
-      let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
-      mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
-        storage: storage,
-        subscriptionStatus: subscriptionStatus
-      )
-    } else {
-      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
-    }
-
-    // Update Superwall's CustomerInfo with the merged result
-    await MainActor.run {
-      superwall.customerInfo = mergedCustomerInfo
-    }
+    _ = await mergeAndApplyCustomerInfo(
+      webCustomerInfo: response.customerInfo,
+      superwall: superwall
+    )
 
     await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
 
@@ -516,6 +497,32 @@ actor WebEntitlementRedeemer {
     }
 
     return (allEntitlements, paywallEntitlementIds)
+  }
+
+  /// Merges device and web entitlements into a single `CustomerInfo`, applying
+  /// external purchase controller logic when needed, and assigns it to
+  /// `superwall.customerInfo`.
+  private func mergeAndApplyCustomerInfo(
+    webCustomerInfo: CustomerInfo,
+    superwall: Superwall
+  ) async -> CustomerInfo {
+    let mergedCustomerInfo: CustomerInfo
+    if factory.makeHasExternalPurchaseController() {
+      let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
+      mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: storage,
+        subscriptionStatus: subscriptionStatus
+      )
+    } else {
+      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+    }
+
+    await MainActor.run {
+      superwall.customerInfo = mergedCustomerInfo
+    }
+
+    return mergedCustomerInfo
   }
 
   private func updateSubscriptionStatus(
@@ -659,12 +666,12 @@ actor WebEntitlementRedeemer {
     latestRedeemResponse: RedeemResponse?,
     superwall: Superwall
   ) async {
-    if case .code = type {
+    switch type {
+    case .code, .existingCodes:
       let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
       await superwall.track(event)
-    } else if case .existingCodes = type {
-      let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
-      await superwall.track(event)
+    case .integrationAttributes:
+      break
     }
 
     if case .code(let code) = type {
@@ -725,7 +732,7 @@ actor WebEntitlementRedeemer {
     storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
-  private func createPollRedemptionRequest(
+  private func makePollRedemptionRequest(
     contextId: String
   ) -> PollRedemptionResultRequest {
     return PollRedemptionResultRequest(
@@ -740,16 +747,16 @@ actor WebEntitlementRedeemer {
     productId: String,
     trigger: StripePollTrigger
   ) async -> StripePollOutcome {
-    if activeStripePollContextId != nil {
+    if hasActiveStripePoll {
       return .skippedInFlight
     }
 
-    activeStripePollContextId = contextId
+    hasActiveStripePoll = true
     defer {
-      activeStripePollContextId = nil
+      hasActiveStripePoll = false
     }
 
-    let request = createPollRedemptionRequest(contextId: contextId)
+    let request = makePollRedemptionRequest(contextId: contextId)
     let startedAt = DispatchTime.now().uptimeNanoseconds
 
     while !Task.isCancelled {
@@ -814,6 +821,7 @@ actor WebEntitlementRedeemer {
   /// Called on foreground. Polls for pending Stripe checkout redemption (showing a
   /// loading spinner on the paywall if needed) and then refreshes web entitlements.
   private func handleForegroundPolling() async {
+    guard factory.makeIsContainerReady() else { return }
     let superwall = superwall ?? Superwall.shared
     let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
 
@@ -909,27 +917,11 @@ actor WebEntitlementRedeemer {
           return
         }
 
-        // Merge device and web CustomerInfo
-        // If using an external purchase controller, also preserve entitlements that came from it
-        let mergedCustomerInfo: CustomerInfo
-        if factory.makeHasExternalPurchaseController() {
-          let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
-          mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
-            storage: storage,
-            subscriptionStatus: subscriptionStatus
-          )
-        } else {
-          let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-          mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
-        }
+        let mergedCustomerInfo = await mergeAndApplyCustomerInfo(
+          webCustomerInfo: response.customerInfo,
+          superwall: superwall
+        )
 
-        // Update Superwall's CustomerInfo with the merged result
-        await MainActor.run {
-          superwall.customerInfo = mergedCustomerInfo
-        }
-
-        // Sets the subscription status internally if no external PurchaseController
-        // Use the merged entitlements from CustomerInfo (already prioritized)
         let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
         if activeEntitlements.isEmpty {
           await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
