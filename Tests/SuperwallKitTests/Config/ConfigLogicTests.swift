@@ -1143,7 +1143,7 @@ struct ConfigLogicTests {
   }
 
   // MARK: - getActiveTreatmentPaywallIds
-  func test_getActiveTreatmentPaywallIds() async {
+  @Test func test_getActiveTreatmentPaywallIds() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1182,7 +1182,7 @@ struct ConfigLogicTests {
     #expect(ids == [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_holdout() async {
+  @Test func test_getActiveTreatmentPaywallIds_holdout() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1221,7 +1221,7 @@ struct ConfigLogicTests {
     #expect(ids.isEmpty)
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() async {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1260,7 +1260,7 @@ struct ConfigLogicTests {
     #expect(ids == [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() async {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
