@@ -26,15 +26,15 @@ extension JSONDecoder {
     return decoder
   }()
 
-  /// Decoder for Web2App endpoints that handles millisecond timestamps.
+  /// Decoder for SubscriptionsApi endpoints that handles millisecond timestamps.
   ///
   /// This decoder supports dates in two formats:
   /// - Milliseconds since epoch (Int64): Common in Java/JavaScript APIs
   /// - ISO8601 strings: Standard date format
   ///
-  /// Note: This is specifically for Web2App endpoints which return CustomerInfo
+  /// Note: This is specifically for subscriptionsAPI endpoints which return CustomerInfo
   /// with dates as milliseconds since epoch.
-  static let web2App: JSONDecoder = {
+  static let subscriptionsApi: JSONDecoder = {
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .custom { decoder in
       let container = try decoder.singleValueContainer()

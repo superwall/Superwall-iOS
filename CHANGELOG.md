@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.14.0
+
+### Enhancements
+
+- Adds support for "Test Mode", which allows you to simulate in-app purchases without involving StoreKit. Test Mode can be enabled through the Superwall dashboard by marking specific users as test store users, or activates automatically when a bundle ID mismatch is detected. When active, a configuration modal lets you select starting entitlements and override free trial availability. Purchases are simulated with a UI that lets users complete, abandon, or fail transactions, with all purchase events firing normally for end-to-end paywall testing.
+
 ## 4.13.0
 
 ### Enhancements

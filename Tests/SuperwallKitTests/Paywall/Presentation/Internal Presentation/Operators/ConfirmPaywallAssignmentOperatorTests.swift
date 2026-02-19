@@ -1,19 +1,18 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 06/12/2022.
 //
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 import Combine
 
-final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
-  var cancellables: [AnyCancellable] = []
-
-  @MainActor
-  func test_confirmPaywallAssignment_debuggerLaunched() async {
+@Suite(.serialized)
+struct ConfirmPaywallAssignmentOperatorTests {
+  @Test @MainActor
+  func confirmPaywallAssignment_debuggerLaunched() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -36,11 +35,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: true,
       dependencyContainer: dependencyContainer
      )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_noAssignment() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_noAssignment() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -64,11 +63,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_confirmAssignment() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_confirmAssignment() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -97,11 +96,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-   XCTAssertTrue(configManager.confirmedAssignment)
+   #expect(configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_confirmAssignment_isSentToServer() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_confirmAssignment_isSentToServer() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -130,11 +129,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-   XCTAssertFalse(configManager.confirmedAssignment)
+   #expect(!configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_getPresentationResult() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_getPresentationResult() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -163,11 +162,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-   XCTAssertTrue(configManager.confirmedAssignment)
+   #expect(configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_handleImplicitTrigger() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_handleImplicitTrigger() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -196,11 +195,11 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-    XCTAssertTrue(configManager.confirmedAssignment)
+    #expect(configManager.confirmedAssignment)
   }
 
-  @MainActor
-  func test_confirmPaywallAssignment_paywallDeclineCheck() async {
+  @Test @MainActor
+  func confirmPaywallAssignment_paywallDeclineCheck() async {
     let dependencyContainer = DependencyContainer()
     let configManager = ConfigManagerMock(
       options: SuperwallOptions(),
@@ -229,6 +228,6 @@ final class ConfirmPaywallAssignmentOperatorTests: XCTestCase {
       isDebuggerLaunched: false,
       dependencyContainer: dependencyContainer
      )
-    XCTAssertFalse(configManager.confirmedAssignment)
+    #expect(!configManager.confirmedAssignment)
   }
 }

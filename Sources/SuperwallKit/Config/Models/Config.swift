@@ -29,6 +29,8 @@ struct Config: Codable, Equatable {
   }
   var preloading: PaywallPreloading?
   var iosAppId: String?
+  var bundleIdConfig: String?
+  var testModeUserIds: [TestStoreUser]?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -84,6 +86,8 @@ struct Config: Codable, Equatable {
     case web2appConfig
     case iosAppId
     case preloading
+    case bundleIdConfig
+    case testModeUserIds
   }
 
   init(from decoder: Decoder) throws {
@@ -100,6 +104,8 @@ struct Config: Codable, Equatable {
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
     preloading = try values.decodeIfPresent(PaywallPreloading.self, forKey: .preloading)
     iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
+    bundleIdConfig = try values.decodeIfPresent(String.self, forKey: .bundleIdConfig)
+    testModeUserIds = try values.decodeIfPresent([TestStoreUser].self, forKey: .testModeUserIds)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -135,6 +141,8 @@ struct Config: Codable, Equatable {
     try container.encodeIfPresent(requestId, forKey: .requestId)
     try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
     try container.encodeIfPresent(iosAppId, forKey: .iosAppId)
+    try container.encodeIfPresent(bundleIdConfig, forKey: .bundleIdConfig)
+    try container.encodeIfPresent(testModeUserIds, forKey: .testModeUserIds)
   }
 
   init(

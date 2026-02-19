@@ -41,6 +41,7 @@ final class DependencyContainer {
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
+  var testModeManager: TestModeManager!
   let permissionHandler = PermissionHandler()
   let customCallbackRegistry = CustomCallbackRegistry()
   // swiftlint:enable implicitly_unwrapped_optional
@@ -56,7 +57,13 @@ final class DependencyContainer {
       storage: storage,
       delegateAdapter: delegateAdapter
     )
-    let options = options ?? SuperwallOptions()
+    var options = options ?? SuperwallOptions()
+
+    // In test environments, always bypass the app transaction check
+    if TestModeManager.isTestEnvironment {
+      options.shouldBypassAppTransactionCheck = true
+    }
+
     productsManager = ProductsManager(
       entitlementsInfo: entitlementsInfo,
       storeKitVersion: options.storeKitVersion
@@ -150,6 +157,14 @@ final class DependencyContainer {
       }
     }
 
+    testModeManager = TestModeManager(
+      identityManager: identityManager,
+      deviceHelper: deviceHelper,
+      storage: storage
+    )
+
+    deviceHelper.testModeManager = testModeManager
+
     appSessionManager = AppSessionManager(
       configManager: configManager,
       identityManager: identityManager,
@@ -207,6 +222,13 @@ extension DependencyContainer: TransactionManagerFactory {
   }
 }
 
+// MARK: - TestModeManagerFactory
+extension DependencyContainer: TestModeManagerFactory {
+  func makeTestModeManager() -> TestModeManager {
+    return testModeManager
+  }
+}
+
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
@@ -231,6 +253,9 @@ extension DependencyContainer: DeviceHelperFactory {
   }
 
   func makeIsSandbox() -> Bool {
+    if testModeManager.isTestMode {
+      return true
+    }
     return deviceHelper.isSandbox == "true"
   }
 
@@ -560,7 +585,26 @@ extension DependencyContainer: ReceiptFactory {
   }
 
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
+    // Check test mode override first
+    if testModeManager.isTestMode {
+      switch testModeManager.freeTrialOverride {
+      case .useDefault:
+        break
+      case .forceAvailable:
+        return true
+      case .forceUnavailable:
+        return false
+      }
+    }
     return await receiptManager.isFreeTrialAvailable(for: product)
+  }
+
+  var isTestMode: Bool {
+    testModeManager.isTestMode
+  }
+
+  var testModeFreeTrialOverride: FreeTrialOverride {
+    testModeManager.freeTrialOverride
   }
 }
 

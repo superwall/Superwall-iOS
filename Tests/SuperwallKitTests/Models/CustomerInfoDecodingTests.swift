@@ -11,7 +11,7 @@ import Foundation
 
 @Suite("CustomerInfo Milliseconds Decoding Tests")
 struct CustomerInfoDecodingTests {
-  @Test("Decode SubscriptionTransaction with milliseconds using web2App decoder")
+  @Test("Decode SubscriptionTransaction with milliseconds using subscriptionsApi decoder")
   func testSubscriptionTransactionMillisecondsDecoding() throws {
     let json = """
     {
@@ -30,7 +30,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let transaction = try decoder.decode(SubscriptionTransaction.self, from: data)
 
     // Verify dates are correctly decoded from milliseconds
@@ -47,7 +47,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.subscriptionGroupId == "12345678")
   }
 
-  @Test("Decode SubscriptionTransaction with ISO8601 dates using web2App decoder")
+  @Test("Decode SubscriptionTransaction with ISO8601 dates using subscriptionsApi decoder")
   func testSubscriptionTransactionISO8601Decoding() throws {
     let json = """
     {
@@ -65,7 +65,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let transaction = try decoder.decode(SubscriptionTransaction.self, from: data)
 
     #expect(transaction.transactionId == "123456")
@@ -76,7 +76,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.subscriptionGroupId == nil)
   }
 
-  @Test("Decode NonSubscriptionTransaction with milliseconds using web2App decoder")
+  @Test("Decode NonSubscriptionTransaction with milliseconds using subscriptionsApi decoder")
   func testNonSubscriptionTransactionMillisecondsDecoding() throws {
     let json = """
     {
@@ -90,7 +90,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let transaction = try decoder.decode(NonSubscriptionTransaction.self, from: data)
 
     let expectedPurchaseDate = Date(timeIntervalSince1970: 1704067200.0)
@@ -102,7 +102,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.isRevoked == false)
   }
 
-  @Test("Decode NonSubscriptionTransaction with ISO8601 dates using web2App decoder")
+  @Test("Decode NonSubscriptionTransaction with ISO8601 dates using subscriptionsApi decoder")
   func testNonSubscriptionTransactionISO8601Decoding() throws {
     let json = """
     {
@@ -116,7 +116,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let transaction = try decoder.decode(NonSubscriptionTransaction.self, from: data)
 
     #expect(transaction.transactionId == "789012")
@@ -125,7 +125,7 @@ struct CustomerInfoDecodingTests {
     #expect(transaction.isRevoked == false)
   }
 
-  @Test("Decode Entitlement with milliseconds using web2App decoder")
+  @Test("Decode Entitlement with milliseconds using subscriptionsApi decoder")
   func testEntitlementMillisecondsDecoding() throws {
     let json = """
     {
@@ -143,7 +143,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let entitlement = try decoder.decode(Entitlement.self, from: data)
 
     let expectedStartsAt = Date(timeIntervalSince1970: 1704067200.0)
@@ -158,7 +158,7 @@ struct CustomerInfoDecodingTests {
     #expect(entitlement.willRenew == true)
   }
 
-  @Test("Decode Entitlement with ISO8601 dates using web2App decoder")
+  @Test("Decode Entitlement with ISO8601 dates using subscriptionsApi decoder")
   func testEntitlementISO8601Decoding() throws {
     let json = """
     {
@@ -176,7 +176,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let entitlement = try decoder.decode(Entitlement.self, from: data)
 
     #expect(entitlement.id == "premium")
@@ -184,7 +184,7 @@ struct CustomerInfoDecodingTests {
     #expect(entitlement.willRenew == true)
   }
 
-  @Test("Decode CustomerInfo with milliseconds using web2App decoder")
+  @Test("Decode CustomerInfo with milliseconds using subscriptionsApi decoder")
   func testCustomerInfoMillisecondsDecoding() throws {
     let json = """
     {
@@ -222,7 +222,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let customerInfo = try decoder.decode(CustomerInfo.self, from: data)
 
     #expect(customerInfo.subscriptions.count == 1)
@@ -256,7 +256,7 @@ struct CustomerInfoDecodingTests {
     """
 
     let data = json.data(using: .utf8)!
-    let decoder = JSONDecoder.web2App
+    let decoder = JSONDecoder.subscriptionsApi
     let customerInfo = try decoder.decode(CustomerInfo.self, from: data)
 
     // Verify no transactions

@@ -174,17 +174,18 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
-      if case let .active(entitlements) = subscriptionStatus {
-        if entitlements.isEmpty {
-          subscriptionStatus = .inactive
-          return
-        }
+      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
+      if resolved != subscriptionStatus {
+        subscriptionStatus = resolved
+        return
       }
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
       // When using an external purchase controller, update CustomerInfo.entitlements
-      // to reflect the entitlements from the purchase controller
-      if dependencyContainer.makeHasExternalPurchaseController() {
+      // to reflect the entitlements from the purchase controller.
+      // Skip this in test mode — test mode manages its own CustomerInfo.
+      if dependencyContainer.makeHasExternalPurchaseController(),
+        dependencyContainer.testModeManager?.isTestMode != true {
         customerInfo = CustomerInfo.forExternalPurchaseController(
           storage: dependencyContainer.storage,
           subscriptionStatus: subscriptionStatus
@@ -199,7 +200,14 @@ public final class Superwall: NSObject, ObservableObject {
   /// you can use the delegate method ``SuperwallDelegate/customerInfoDidChange(from:to:)``
   /// or await an `AsyncStream` of changes via ``Superwall/customerInfoStream``.
   @Published
-  public var customerInfo: CustomerInfo = .blank()
+  public var customerInfo: CustomerInfo = .blank() {
+    didSet {
+      let resolved = resolvedCustomerInfo(customerInfo)
+      if resolved != customerInfo {
+        customerInfo = resolved
+      }
+    }
+  }
 
   /// An `AsyncStream` of ``customerInfo`` changes, starting from the last known value.
   ///
@@ -369,6 +377,34 @@ public final class Superwall: NSObject, ObservableObject {
         self?._enqueuedIntegrationAttributes?.merge(newAttributes) { _, new in new }
       }
     }
+  }
+
+  // MARK: - Value Resolution
+
+  private func resolvedSubscriptionStatus(
+    _ status: SubscriptionStatus
+  ) -> SubscriptionStatus {
+    if let testModeManager = dependencyContainer.testModeManager,
+      testModeManager.isTestMode,
+      let override = testModeManager.overriddenSubscriptionStatus {
+      return override
+    }
+    if case .active(let entitlements) = status,
+      entitlements.isEmpty {
+      return .inactive
+    }
+    return status
+  }
+
+  private func resolvedCustomerInfo(
+    _ info: CustomerInfo
+  ) -> CustomerInfo {
+    if let testModeManager = dependencyContainer.testModeManager,
+      testModeManager.isTestMode,
+      let override = testModeManager.overriddenCustomerInfo {
+      return override
+    }
+    return info
   }
 
   // MARK: - Private Functions

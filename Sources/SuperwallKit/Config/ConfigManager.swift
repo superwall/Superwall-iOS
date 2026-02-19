@@ -51,6 +51,8 @@ class ConfigManager {
     & AudienceFilterAttributesFactory
     & ReceiptFactory
     & DeviceHelperFactory
+    & TestModeManagerFactory
+    & HasExternalPurchaseControllerFactory
   private let factory: Factory
 
   init(
@@ -149,8 +151,9 @@ class ConfigManager {
       let cachedConfig = storage.get(LatestConfig.self)
       let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
 
+      let isTestModeSubscription = storage.get(IsTestModeActiveSubscription.self) ?? false
       let isSubscribed: Bool
-      if case .active = cachedSubsStatus {
+      if case .active = cachedSubsStatus, !isTestModeSubscription {
         isSubscribed = true
       } else {
         isSubscribed = false
@@ -236,13 +239,14 @@ class ConfigManager {
       // Fetch config synchronously
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActive: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self) {
-        isActive = true
+      let isActiveSubscription: Bool
+      if case .active = storage.get(SubscriptionStatusKey.self),
+        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
+        isActiveSubscription = true
       } else {
-        isActive = false
+        isActiveSubscription = false
       }
-      let timeout: TimeInterval = isActive ? 0.5 : 1
+      let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       if let cachedConfig = cachedConfig,
         enableConfigRefresh {
@@ -289,13 +293,14 @@ class ConfigManager {
       // Fetch enrichment with timeout for sync path
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActive: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self) {
-        isActive = true
+      let isActiveSubscription: Bool
+      if case .active = storage.get(SubscriptionStatusKey.self),
+        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
+        isActiveSubscription = true
       } else {
-        isActive = false
+        isActiveSubscription = false
       }
-      let timeout: TimeInterval = isActive ? 0.5 : 1
+      let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       let cachedEnrichment = storage.get(LatestEnrichment.self)
 
@@ -394,12 +399,48 @@ class ConfigManager {
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
 
-    await factory.loadPurchasedProducts(config: config)
-    Task {
-      await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+    // Evaluate test mode before loading products
+    let testModeManager = factory.makeTestModeManager()
+    let wasTestMode = testModeManager.isTestMode
+    testModeManager.evaluateTestMode(config: config, options: options)
+    let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
+    let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
+
+    if testModeManager.isTestMode {
+      // In test mode, fetch products from API instead of StoreKit
+      await fetchTestModeProducts(testModeManager: testModeManager)
+    } else {
+      // If test mode was just turned off, reset subscription status
+      // so stale test entitlements don't persist. Skip when using an
+      // external purchase controller — it owns the status and
+      // loadPurchasedProducts / the controller itself will restore it.
+      if testModeJustDeactivated,
+        !factory.makeHasExternalPurchaseController() {
+        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.customerInfo = CustomerInfo(
+          subscriptions: [],
+          nonSubscriptions: [],
+          entitlements: []
+        )
+      }
+      await factory.loadPurchasedProducts(config: config)
+    }
+
+    if !testModeManager.isTestMode {
+      Task {
+        await webEntitlementRedeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
+      }
     }
     if isFirstTime {
       await checkForTouchesBeganTrigger(in: config.triggers)
+    }
+
+    // Show test mode alert if it's the first time OR if test mode just became active
+    let shouldShowTestModeAlert = isFirstTime || testModeJustActivated
+    if shouldShowTestModeAlert,
+      testModeManager.isTestMode,
+      let reason = testModeManager.testModeReason {
+      await presentTestModeModal(reason: reason, config: config)
     }
   }
 
@@ -623,5 +664,102 @@ class ConfigManager {
       paywallCount: paywallCount
     )
     await Superwall.shared.track(preloadComplete)
+  }
+
+  // MARK: - Test Mode
+
+  private func fetchTestModeProducts(testModeManager: TestModeManager) async {
+    do {
+      let response = try await network.getSuperwallProducts()
+      testModeManager.setProducts(response.data)
+
+      // Also populate storeKitManager.productsById with test products
+      for superwallProduct in response.data {
+        let entitlements = Set(superwallProduct.entitlements.map {
+          Entitlement(id: $0.identifier)
+        })
+        let testProduct = TestStoreProduct(
+          superwallProduct: superwallProduct,
+          entitlements: entitlements
+        )
+        let storeProduct = StoreProduct(testProduct: testProduct)
+        await storeKitManager.setProduct(storeProduct, forIdentifier: superwallProduct.identifier)
+      }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .superwallCore,
+        message: "Test mode: failed to fetch products",
+        error: error
+      )
+    }
+  }
+
+  @MainActor
+  private func presentTestModeModal(reason: TestModeReason, config: Config) async {
+    guard
+      let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+      let rootVC = windowScene.windows.first?.rootViewController
+    else {
+      return
+    }
+
+    let testModeManager = factory.makeTestModeManager()
+    let identityManager = testModeManager.identityManager
+    let userId = identityManager.userId
+    let isIdentified = identityManager.isLoggedIn
+    let hasPurchaseController = factory.makeHasExternalPurchaseController()
+
+    let allEntitlementIds = config.products.flatMap { $0.entitlements.map { $0.id } }
+    let availableEntitlements = Array(Set(allEntitlementIds)).sorted()
+
+    await Superwall.shared.track(InternalSuperwallEvent.TestModeModalOpen())
+
+    let result = await TestModeModal.present(
+      reason: reason,
+      userId: userId,
+      isIdentified: isIdentified,
+      hasPurchaseController: hasPurchaseController,
+      availableEntitlements: availableEntitlements,
+      initialFreeTrialOverride: testModeManager.freeTrialOverride,
+      apiKey: storage.apiKey,
+      networkEnvironment: options.networkEnvironment,
+      from: rootVC
+    )
+
+    await Superwall.shared.track(InternalSuperwallEvent.TestModeModalClose(
+      entitlements: result.entitlements,
+      freeTrialOverride: result.freeTrialOverride.rawValue
+    ))
+
+    // Set the selected entitlements on the test mode manager
+    let entitlementIds = Set(result.entitlements.map { $0.id })
+    testModeManager.setEntitlements(entitlementIds)
+
+    // Apply the free trial override
+    testModeManager.freeTrialOverride = result.freeTrialOverride
+
+    // Create test mode CustomerInfo with selected entitlements
+    // This is separate from real device purchases
+    let testModeCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: Array(result.entitlements)
+    )
+    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
+    Superwall.shared.customerInfo = testModeCustomerInfo
+
+    // Update subscription status based on whether any entitlements are active
+    let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
+    if hasActiveEntitlements {
+      let status = SubscriptionStatus.active(result.entitlements)
+      testModeManager.overriddenSubscriptionStatus = status
+      Superwall.shared.subscriptionStatus = status
+      storage.save(true, forType: IsTestModeActiveSubscription.self)
+    } else {
+      testModeManager.overriddenSubscriptionStatus = .inactive
+      Superwall.shared.subscriptionStatus = .inactive
+      storage.save(false, forType: IsTestModeActiveSubscription.self)
+    }
   }
 }

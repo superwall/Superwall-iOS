@@ -259,6 +259,12 @@ public enum SuperwallEvent {
   /// When paywall preloading completes.
   case paywallPreloadComplete(paywallCount: Int)
 
+  /// When the test mode modal is opened.
+  case testModeModalOpen
+
+  /// When the test mode modal is closed.
+  case testModeModalClose
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -444,6 +450,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallPreloadStart)
     case .paywallPreloadComplete:
       return .init(objcEvent: .paywallPreloadComplete)
+    case .testModeModalOpen:
+      return .init(objcEvent: .testModeModalOpen)
+    case .testModeModalClose:
+      return .init(objcEvent: .testModeModalClose)
     }
   }
 }
