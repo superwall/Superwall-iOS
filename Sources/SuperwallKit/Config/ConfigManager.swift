@@ -580,24 +580,32 @@ class ConfigManager {
         return
       }
 
-      // If we have a preloading schedule, stagger the preloading based on placements.
-      if let preloading = config.preloading {
-        for step in preloading.schedule {
-          let placements = Set(step.placements.map { $0.placement })
-          await preloadPaywalls(for: placements)
-          try? await Task.sleep(nanoseconds: UInt64(step.delay * 1_000_000))
+      // If there's a prioritized campaign, preload its paywalls first.
+      if let prioritizedCampaignId = config.prioritizedCampaignId {
+        let prioritizedTriggers = config.triggers.filter { trigger in
+          trigger.audiences.contains { $0.experiment.groupId == prioritizedCampaignId }
         }
-      } else {
-        // Otherwise preload all as normal.
-        var paywallIds = await getTreatmentPaywallIds(from: config.triggers)
+        if !prioritizedTriggers.isEmpty {
+          var prioritizedIds = await getTreatmentPaywallIds(from: Set(prioritizedTriggers))
+          if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+            prioritizedIds.remove(presentedPaywallId)
+          }
+          await self.preloadPaywalls(withIdentifiers: prioritizedIds)
 
-        // Do not preload the presented paywall. This is because if config refreshes, we
-        // don't want to refresh the presented paywall until it's dismissed and presented again.
-        if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
-          paywallIds.remove(presentedPaywallId)
+          // Delay before preloading the rest to avoid contention.
+          try? await Task.sleep(nanoseconds: 5_000_000_000)
         }
-        await self.preloadPaywalls(withIdentifiers: paywallIds)
       }
+
+      // Then preload all remaining paywalls.
+      var paywallIds = await getTreatmentPaywallIds(from: config.triggers)
+
+      // Do not preload the presented paywall. This is because if config refreshes, we
+      // don't want to refresh the presented paywall until it's dismissed and presented again.
+      if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+        paywallIds.remove(presentedPaywallId)
+      }
+      await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
   }
 

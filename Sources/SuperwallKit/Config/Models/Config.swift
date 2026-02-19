@@ -27,7 +27,7 @@ struct Config: Codable, Equatable {
       }
     }
   }
-  var preloading: PaywallPreloading?
+  var prioritizedCampaignId: String?
   var iosAppId: String?
   var bundleIdConfig: String?
   var testModeUserIds: [TestStoreUser]?
@@ -85,7 +85,7 @@ struct Config: Codable, Equatable {
     case products = "productsV3"
     case web2appConfig
     case iosAppId
-    case preloading
+    case prioritizedCampaignId
     case bundleIdConfig
     case testModeUserIds
   }
@@ -102,7 +102,7 @@ struct Config: Codable, Equatable {
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
-    preloading = try values.decodeIfPresent(PaywallPreloading.self, forKey: .preloading)
+    prioritizedCampaignId = try values.decodeIfPresent(String.self, forKey: .prioritizedCampaignId)
     iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
     bundleIdConfig = try values.decodeIfPresent(String.self, forKey: .bundleIdConfig)
     testModeUserIds = try values.decodeIfPresent([TestStoreUser].self, forKey: .testModeUserIds)
@@ -128,7 +128,7 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
-    try container.encodeIfPresent(preloading, forKey: .preloading)
+    try container.encodeIfPresent(prioritizedCampaignId, forKey: .prioritizedCampaignId)
 
     if !products.isEmpty {
       try container.encode(products, forKey: .products)

@@ -73,7 +73,7 @@ struct ConfigManagerTests {
 
   @Test
   @available(iOS 14.0, *)
-  func configWithPreloadingEncodedCorrectly() async {
+  func configWithPrioritizedCampaignIdEncodedCorrectly() async {
     let dependencyContainer = DependencyContainer()
 
     let paywall = Paywall.stub()
@@ -95,23 +95,7 @@ struct ConfigManagerTests {
       attribution: .init(appleSearchAds: .init(enabled: true)),
       products: paywall.products
     )
-    config.preloading = PaywallPreloading(
-      schedule: [
-        PreloadingStep(
-          placements: [
-            PreloadablePlacement(placement: "onboarding"),
-            PreloadablePlacement(placement: "feature_gate")
-          ],
-          delay: 0
-        ),
-        PreloadingStep(
-          placements: [
-            PreloadablePlacement(placement: "settings")
-          ],
-          delay: 5000
-        )
-      ]
-    )
+    config.prioritizedCampaignId = "42"
     dependencyContainer.storage.save(config, forType: LatestConfig.self)
     let newConfig = dependencyContainer.storage.get(LatestConfig.self)
     #expect(config == newConfig)

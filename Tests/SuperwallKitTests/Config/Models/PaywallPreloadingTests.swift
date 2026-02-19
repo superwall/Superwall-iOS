@@ -1,5 +1,5 @@
 //
-//  PaywallPreloadingTests.swift
+//  PrioritizedCampaignTests.swift
 //  SuperwallKit
 //
 //  Created by Yusuf Tör on 12/02/2026.
@@ -10,96 +10,98 @@
 import Testing
 import Foundation
 
-struct PaywallPreloadingTests {
+struct PrioritizedCampaignTests {
+  private let togglesJson = """
+  [
+    { "key": "enable_expression_params", "enabled": true },
+    { "key": "enable_postback", "enabled": true },
+    { "key": "disable_verbose_events", "enabled": true },
+    { "key": "enable_multiple_paywall_urls", "enabled": false },
+    { "key": "enable_config_refresh_v2", "enabled": false }
+  ]
+  """
+
   @Test
-  func decodesScheduleWithMultipleSteps() throws {
+  func decodesConfigWithPrioritizedCampaignId() throws {
     let json = """
     {
-      "schedule": [
-        {
-          "placements": [
-            { "placement": "onboarding" },
-            { "placement": "feature_gate" }
-          ],
-          "delayMs": 0
-        },
-        {
-          "placements": [
-            { "placement": "settings" }
-          ],
-          "delayMs": 5000
-        }
-      ]
+      "buildId": "abc",
+      "triggerOptions": [],
+      "paywallResponses": [],
+      "logLevel": 0,
+      "localization": { "locales": [] },
+      "appSessionTimeoutMs": 3600000,
+      "toggles": \(togglesJson),
+      "disablePreload": { "all": false, "triggers": [] },
+      "prioritizedCampaignId": "42"
     }
     """.data(using: .utf8)!
 
-    let preloading = try JSONDecoder().decode(PaywallPreloading.self, from: json)
+    let config = try JSONDecoder().decode(Config.self, from: json)
 
-    #expect(preloading.schedule.count == 2)
-
-    let firstStep = preloading.schedule[0]
-    #expect(firstStep.placements.count == 2)
-    #expect(firstStep.placements[0].placement == "onboarding")
-    #expect(firstStep.placements[1].placement == "feature_gate")
-    #expect(firstStep.delay == 0)
-
-    let secondStep = preloading.schedule[1]
-    #expect(secondStep.placements.count == 1)
-    #expect(secondStep.placements[0].placement == "settings")
-    #expect(secondStep.delay == 5000)
+    #expect(config.prioritizedCampaignId == "42")
   }
 
   @Test
-  func decodesEmptySchedule() throws {
+  func decodesConfigWithNullPrioritizedCampaignId() throws {
     let json = """
     {
-      "schedule": []
+      "buildId": "abc",
+      "triggerOptions": [],
+      "paywallResponses": [],
+      "logLevel": 0,
+      "localization": { "locales": [] },
+      "appSessionTimeoutMs": 3600000,
+      "toggles": \(togglesJson),
+      "disablePreload": { "all": false, "triggers": [] },
+      "prioritizedCampaignId": null
     }
     """.data(using: .utf8)!
 
-    let preloading = try JSONDecoder().decode(PaywallPreloading.self, from: json)
+    let config = try JSONDecoder().decode(Config.self, from: json)
 
-    #expect(preloading.schedule.isEmpty)
+    #expect(config.prioritizedCampaignId == nil)
   }
 
   @Test
-  func encodesAndDecodesRoundTrip() throws {
-    let preloading = PaywallPreloading(
-      schedule: [
-        PreloadingStep(
-          placements: [
-            PreloadablePlacement(placement: "onboarding"),
-            PreloadablePlacement(placement: "feature_gate")
-          ],
-          delay: 3000
-        ),
-        PreloadingStep(
-          placements: [
-            PreloadablePlacement(placement: "settings")
-          ],
-          delay: 10000
-        )
-      ]
-    )
-
-    let data = try JSONEncoder().encode(preloading)
-    let decoded = try JSONDecoder().decode(PaywallPreloading.self, from: data)
-
-    #expect(preloading == decoded)
-  }
-
-  @Test
-  func delayMsKeyMapsToDelay() throws {
+  func decodesConfigWithoutPrioritizedCampaignId() throws {
     let json = """
     {
-      "placements": [{ "placement": "test" }],
-      "delayMs": 2500
+      "buildId": "abc",
+      "triggerOptions": [],
+      "paywallResponses": [],
+      "logLevel": 0,
+      "localization": { "locales": [] },
+      "appSessionTimeoutMs": 3600000,
+      "toggles": \(togglesJson),
+      "disablePreload": { "all": false, "triggers": [] }
     }
     """.data(using: .utf8)!
 
-    let step = try JSONDecoder().decode(PreloadingStep.self, from: json)
+    let config = try JSONDecoder().decode(Config.self, from: json)
 
-    #expect(step.delay == 2500)
-    #expect(step.placements.first?.placement == "test")
+    #expect(config.prioritizedCampaignId == nil)
+  }
+
+  @Test
+  func encodesAndDecodesRoundTripWithPrioritizedCampaignId() throws {
+    var config: Config = .stub()
+    config.prioritizedCampaignId = "99"
+
+    let data = try JSONEncoder().encode(config)
+    let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+    #expect(decoded.prioritizedCampaignId == "99")
+  }
+
+  @Test
+  func encodesAndDecodesRoundTripWithNilPrioritizedCampaignId() throws {
+    var config: Config = .stub()
+    config.prioritizedCampaignId = nil
+
+    let data = try JSONEncoder().encode(config)
+    let decoded = try JSONDecoder().decode(Config.self, from: data)
+
+    #expect(decoded.prioritizedCampaignId == nil)
   }
 }
