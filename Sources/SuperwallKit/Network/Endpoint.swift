@@ -372,6 +372,19 @@ extension Endpoint where
       method: .post
     )
   }
+
+  static func pollRedemptionResult(request: PollRedemptionResultRequest) -> Self {
+    let bodyData = try? JSONEncoder().encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .subscriptionsApi,
+        path: "checkout/session/poll-redemption-result",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
 }
 
 extension Endpoint where

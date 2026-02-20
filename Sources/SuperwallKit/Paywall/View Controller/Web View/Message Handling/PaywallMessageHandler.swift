@@ -23,6 +23,13 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariExternal(_ url: URL)
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
+  func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
+  func handleStripeCheckoutComplete(
+    checkoutContextId: String,
+    productId: String
+  )
+  func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  func revealWebViewBehindSpinner()
 }
 
 @MainActor
@@ -187,6 +194,40 @@ final class PaywallMessageHandler: WebEventDelegate {
       // No-op: This is only here for backwards compatibility so that we don't log
       // and error when decoding the message.
       break
+    case let .stripeCheckoutStart(_, productId):
+      trackStripeCheckoutEvent(
+        state: .start,
+        productId: productId
+      )
+    case let .stripeCheckoutComplete(checkoutContextId, productId):
+      trackStripeCheckoutEvent(
+        state: .complete,
+        productId: productId
+      )
+      delegate?.handleStripeCheckoutComplete(
+        checkoutContextId: checkoutContextId,
+        productId: productId
+      )
+    case let .stripeCheckoutSubmit(checkoutContextId, productId):
+      trackStripeCheckoutEvent(
+        state: .submit,
+        productId: productId
+      )
+      delegate?.handleStripeCheckoutSubmit(
+        checkoutContextId: checkoutContextId,
+        productId: productId
+      )
+    case let .stripeCheckoutFail(_, productId):
+      trackStripeCheckoutEvent(
+        state: .fail,
+        productId: productId
+      )
+    // No-op: don't clear checkout context on failure
+    case let .stripeCheckoutAbandon(checkoutContextId, productId):
+      delegate?.handleStripeCheckoutAbandon(
+        checkoutContextId: checkoutContextId,
+        productId: productId
+      )
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
     case let .scheduleNotification(type, title, subtitle, body, delay):
@@ -212,7 +253,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         variables: variables,
         paywall: paywall
       )
-    case let .hapticFeedback(hapticType):
+    case .hapticFeedback(let hapticType):
       triggerHapticFeedback(hapticType)
     }
   }
@@ -252,8 +293,8 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func passMessageToWebView(_ base64String: String) {
     let messageScript = """
-    window.paywall.accept64('\(base64String)');
-    """
+      window.paywall.accept64('\(base64String)');
+      """
 
     Logger.debug(
       logLevel: .debug,
@@ -277,8 +318,8 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   func getState() async -> [String: Any] {
     let messageScript = """
-    window.app.getAllState();
-    """
+      window.app.getAllState();
+      """
 
     Logger.debug(
       logLevel: .debug,
@@ -332,9 +373,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       factory: factory
     )
     let scriptSrc = """
-    window.paywall.accept64('\(templates)');
-    window.paywall.accept64('\(htmlSubstitutions)');
-    """
+      window.paywall.accept64('\(templates)');
+      window.paywall.accept64('\(htmlSubstitutions)');
+      """
 
     Logger.debug(
       logLevel: .debug,
@@ -358,13 +399,21 @@ final class PaywallMessageHandler: WebEventDelegate {
 
         let delay = self?.delegate?.paywall.presentation.delay ?? 0
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(delay)) {
-          self?.delegate?.loadingState = .ready
+          guard let delegate = self?.delegate else { return }
+          if delegate.loadingState == .manualLoading {
+            // Web content loaded while spinner is showing (e.g. Stripe
+            // recovery poll). Reveal the web view behind the spinner
+            // but keep the spinner visible until the poll finishes.
+            delegate.revealWebViewBehindSpinner()
+          } else {
+            delegate.loadingState = .ready
+          }
         }
       }
 
       // block selection
       let selectionString =
-      // swiftlint:disable:next line_length
+        // swiftlint:disable:next line_length
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none} .w-webflow-badge { display: none !important; }'; "
         + "var head = document.head || document.getElementsByTagName('head')[0]; "
         + "var style = document.createElement('style'); style.type = 'text/css'; "
@@ -378,7 +427,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       self.delegate?.webView.configuration.userContentController.addUserScript(selectionScript)
 
       let preventSelection =
-      // swiftlint:disable:next line_length
+        // swiftlint:disable:next line_length
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
@@ -485,6 +534,25 @@ final class PaywallMessageHandler: WebEventDelegate {
     delegate?.eventDidOccur(.userAttributesUpdated(attributes: attributes))
   }
 
+  private func trackStripeCheckoutEvent(
+    state: InternalSuperwallEvent.StripeCheckout.State,
+    productId: String
+  ) {
+    guard let delegate = delegate else { return }
+    let paywallInfo = delegate.info
+    let placementData = delegate.request?.presentationInfo.placementData
+
+    Task {
+      let event = InternalSuperwallEvent.StripeCheckout(
+        state: state,
+        productId: productId,
+        paywallInfo: paywallInfo,
+        placementData: placementData
+      )
+      await Superwall.shared.track(event)
+    }
+  }
+
   private func detectHiddenPaywallEvent(
     _ eventName: String,
     userInfo: [String: Any]? = nil
@@ -524,38 +592,38 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Triggers haptic feedback based on the type specified from the paywall editor.
   private func triggerHapticFeedback(_ hapticType: String) {
     #if !os(visionOS)
-    switch hapticType {
-    case "light":
-      let generator = UIImpactFeedbackGenerator(style: .light)
-      generator.prepare()
-      generator.impactOccurred()
-    case "medium":
-      let generator = UIImpactFeedbackGenerator(style: .medium)
-      generator.prepare()
-      generator.impactOccurred()
-    case "heavy":
-      let generator = UIImpactFeedbackGenerator(style: .heavy)
-      generator.prepare()
-      generator.impactOccurred()
-    case "success":
-      let generator = UINotificationFeedbackGenerator()
-      generator.prepare()
-      generator.notificationOccurred(.success)
-    case "warning":
-      let generator = UINotificationFeedbackGenerator()
-      generator.prepare()
-      generator.notificationOccurred(.warning)
-    case "error":
-      let generator = UINotificationFeedbackGenerator()
-      generator.prepare()
-      generator.notificationOccurred(.error)
-    case "selection":
-      let generator = UISelectionFeedbackGenerator()
-      generator.prepare()
-      generator.selectionChanged()
-    default:
-      break
-    }
+      switch hapticType {
+      case "light":
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+      case "medium":
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.prepare()
+        generator.impactOccurred()
+      case "heavy":
+        let generator = UIImpactFeedbackGenerator(style: .heavy)
+        generator.prepare()
+        generator.impactOccurred()
+      case "success":
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.success)
+      case "warning":
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.warning)
+      case "error":
+        let generator = UINotificationFeedbackGenerator()
+        generator.prepare()
+        generator.notificationOccurred(.error)
+      case "selection":
+        let generator = UISelectionFeedbackGenerator()
+        generator.prepare()
+        generator.selectionChanged()
+      default:
+        break
+      }
     #endif
   }
 
@@ -580,7 +648,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       let status = await permissionHandler.requestPermission(permissionType)
 
       // Track permission result event
-      let resultState: InternalSuperwallEvent.PermissionState = status == .granted ? .granted : .denied
+      let resultState: InternalSuperwallEvent.PermissionState =
+        status == .granted ? .granted : .denied
       let resultEvent = InternalSuperwallEvent.Permission(
         state: resultState,
         permissionName: permissionName,
@@ -612,12 +681,13 @@ final class PaywallMessageHandler: WebEventDelegate {
     let paywallIdentifier = paywall.identifier
 
     // Emit the event for listeners
-    delegate?.eventDidOccur(.requestCallback(
-      name: name,
-      behavior: behavior,
-      requestId: requestId,
-      variables: variables
-    ))
+    delegate?.eventDidOccur(
+      .requestCallback(
+        name: name,
+        behavior: behavior,
+        requestId: requestId,
+        variables: variables
+      ))
 
     Task {
       let callbackHandler = customCallbackRegistry.getHandler(paywallIdentifier: paywallIdentifier)

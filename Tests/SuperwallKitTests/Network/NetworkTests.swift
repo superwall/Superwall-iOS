@@ -93,4 +93,32 @@ struct NetworkTests {
     )
     #expect(urlSession.didRequest)
   }
+
+  @Test func pollRedemptionResult_endpointBuildsRequest() async throws {
+    let dependencyContainer = DependencyContainer()
+    let request = PollRedemptionResultRequest(
+      checkoutContextId: "ctx_123",
+      deviceId: "device_123",
+      appUserId: "user_123"
+    )
+    let endpoint = Endpoint<EndpointKinds.SubscriptionsAPI, RedeemResponse>.pollRedemptionResult(request: request)
+
+    let urlRequest = await endpoint.makeRequest(
+      with: SuperwallRequestData(factory: dependencyContainer),
+      factory: dependencyContainer
+    )
+
+    #expect(urlRequest?.httpMethod == "POST")
+    #expect(
+      urlRequest?.url?.absoluteString.contains(
+        "/subscriptions-api/public/v1/checkout/session/poll-redemption-result"
+      ) == true
+    )
+
+    let bodyData = try #require(urlRequest?.httpBody)
+    let bodyJson = try #require(try JSONSerialization.jsonObject(with: bodyData) as? [String: Any])
+    #expect(bodyJson["checkoutContextId"] as? String == "ctx_123")
+    #expect(bodyJson["deviceId"] as? String == "device_123")
+    #expect(bodyJson["appUserId"] as? String == "user_123")
+  }
 }

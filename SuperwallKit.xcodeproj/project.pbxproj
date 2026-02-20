@@ -119,6 +119,7 @@
 		3313CD30A969731960FC32BF /* PaywallOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1439A212719AA2EA8BEA357 /* PaywallOverrides.swift */; };
 		339F1D07DB57DBEC46940DB6 /* CheckoutWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */; };
 		342593FCA24FBEA77FE472C7 /* SK2ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */; };
+		3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */; };
 		35597883CB038DBEE63E162B /* EventData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86D76FB5809C3B8122778A9 /* EventData.swift */; };
 		369677E9A6E8754CFD20714D /* TrackingParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764012CF0C0972240A73E3CF /* TrackingParameters.swift */; };
 		36B598D26A38D50CC713FD73 /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641BC3C3F8AC2D6E1EF44D55 /* ProductsManager.swift */; };
@@ -824,6 +825,7 @@
 		76D61D89D2905A8747E37458 /* InterfaceStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InterfaceStyle.swift; sourceTree = "<group>"; };
 		787764B249892BBCA1088235 /* StorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageTests.swift; sourceTree = "<group>"; };
 		78C15CF29C17FE1EE3BFDEDC /* SubscriptionStatusResolutionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusResolutionTests.swift; sourceTree = "<group>"; };
+		797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingStripeCheckoutPollState.swift; sourceTree = "<group>"; };
 		79E2143AD65D151AE7A4BF0F /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
 		7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DispatchQueueBacked.swift; sourceTree = "<group>"; };
 		7B1CE50799F517D3D52A1BB9 /* PostbackAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostbackAssignment.swift; sourceTree = "<group>"; };
@@ -2867,6 +2869,7 @@
 		E7A87DE5237B7AEDCCDA998C /* Web */ = {
 			isa = PBXGroup;
 			children = (
+				797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */,
 				22919EFD263425D38E7D9D38 /* WebEntitlementRedeemer.swift */,
 			);
 			path = Web;
@@ -3472,6 +3475,7 @@
 				B10030CC414C2C341487F4B8 /* PaywallViewControllerDelegateAdapter.swift in Sources */,
 				3824D48F8E0AF35EEBED8FF4 /* PaywallViewControllerWrapper.swift in Sources */,
 				BF9ADF5761C34F584EC416B1 /* PaywallWebEvent.swift in Sources */,
+				3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */,
 				E4A66E2235F7FE594EA82A06 /* PermissionHandler+Camera.swift in Sources */,
 				9735942D34369DA4412F8B63 /* PermissionHandler+Microphone.swift in Sources */,
 				746FCA3A2499F7BAF653F205 /* PermissionHandler+Notification.swift in Sources */,
