@@ -267,6 +267,38 @@ struct TestModeManagerTests {
   }
 
   @Test
+  func testModeBehavior_automatic_doesNotActivateWhenBundleIdIsPrefix() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    // Simulate an app extension whose bundle ID has the config bundle ID as a prefix
+    let actualBundleId = Bundle.main.bundleIdentifier ?? ""
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: actualBundleId)
+
+    let options = SuperwallOptions()
+    options.testModeBehavior = .automatic
+
+    // When the config bundle ID exactly matches, test mode should NOT activate
+    manager.evaluateTestMode(config: config, options: options)
+    #expect(manager.isTestMode == false)
+
+    // Now set the config bundle ID to a prefix of the actual bundle ID
+    // (simulating the extension case where actual = "com.app.widget" and config = "com.app")
+    if actualBundleId.contains(".") {
+      let prefix = String(actualBundleId[..<actualBundleId.lastIndex(of: ".")!])
+      let prefixConfig = Config.stub()
+        .setting(\.testModeUserIds, to: [])
+        .setting(\.bundleIdConfig, to: prefix)
+
+      manager.evaluateTestMode(config: prefixConfig, options: options)
+      #expect(manager.isTestMode == false)
+      #expect(manager.testModeReason == nil)
+    }
+  }
+
+  @Test
   func testModeBehavior_automatic_activatesOnBundleIdMismatch() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!

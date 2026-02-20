@@ -175,10 +175,13 @@ final class TestModeManager {
 
   /// Checks if the app's bundle ID differs from the config's expected bundle ID.
   /// Returns `true` and activates test mode if a mismatch is found.
+  /// App extensions are allowed because their bundle ID uses the main app's
+  /// bundle ID as a prefix (e.g., `com.example.app.widget-extension`).
   private func checkBundleIdMismatch(config: Config) -> Bool {
     if let expectedBundleId = config.bundleIdConfig,
       let actualBundleId = Bundle.main.bundleIdentifier,
-      expectedBundleId != actualBundleId {
+      expectedBundleId != actualBundleId,
+      !actualBundleId.hasPrefix(expectedBundleId + ".") {
       isTestMode = true
       testModeReason = .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
       return true
