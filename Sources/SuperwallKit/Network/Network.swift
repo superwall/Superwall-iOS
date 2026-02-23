@@ -334,6 +334,13 @@ class Network {
     )
   }
 
+  func pollRedemptionResult(request: PollRedemptionResultRequest) async throws -> RedeemResponse {
+    return try await urlSession.request(
+      .pollRedemptionResult(request: request),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
+
   func getEntitlements(
     appUserId: String?,
     deviceId: String

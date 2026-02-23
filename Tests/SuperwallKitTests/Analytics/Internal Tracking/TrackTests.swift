@@ -377,7 +377,7 @@ struct TrackingTests {
       result.parameters.audienceFilterParams["$event_name"] as! String == "subscriptionStatus_didChange")
     #expect(result.parameters.audienceFilterParams["$status"] as! String == "ACTIVE")
     #expect(
-      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined())
+      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined(separator: ","))
   }
 
   @Test func subscriptionStatusDidChange_hasTwoEntitlements() async {
@@ -390,7 +390,7 @@ struct TrackingTests {
       result.parameters.audienceFilterParams["$event_name"] as! String == "subscriptionStatus_didChange")
     #expect(result.parameters.audienceFilterParams["$status"] as! String == "ACTIVE")
     #expect(
-      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined())
+      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined(separator: ","))
   }
 
   @Test func subscriptionStatusDidChange_noEntitlements() async {

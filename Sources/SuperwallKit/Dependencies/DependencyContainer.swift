@@ -57,7 +57,7 @@ final class DependencyContainer {
       storage: storage,
       delegateAdapter: delegateAdapter
     )
-    var options = options ?? SuperwallOptions()
+    let options = options ?? SuperwallOptions()
 
     // In test environments, always bypass the app transaction check
     if TestModeManager.isTestEnvironment {
@@ -435,7 +435,7 @@ extension DependencyContainer: ApiFactory {
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
       "X-Retry-Count": "\(configManager.configRetryCount)",
-      "X-Entitlements": Superwall.shared.entitlements.active.map { $0.id }.joined(),
+      "X-Entitlements": entitlementsInfo.active.map { $0.id }.joined(separator: ","),
       "Content-Type": "application/json"
     ]
     return headers
@@ -483,10 +483,6 @@ extension DependencyContainer: ConfigManagerFactory {
       config: configManager.config,
       deviceLocale: deviceInfo.locale
     )
-  }
-
-  func makeConfigManager() -> ConfigManager? {
-    return configManager
   }
 }
 
@@ -624,6 +620,14 @@ extension DependencyContainer: ConfigAttributesFactory {
 
 // MARK: WebEntitlementFactory
 extension DependencyContainer: WebEntitlementFactory {
+  /// Properties like `deviceHelper` are implicitly unwrapped optionals set after
+  /// init. Tests create a bare `DependencyContainer` without fully configuring it,
+  /// so background tasks in `WebEntitlementRedeemer` must check this before
+  /// accessing factory methods to avoid a nil dereference.
+  func makeIsContainerReady() -> Bool {
+    return configManager != nil
+  }
+
   func makeDeviceId() -> String {
     return "$SuperwallDevice:\(deviceHelper.vendorId)"
   }

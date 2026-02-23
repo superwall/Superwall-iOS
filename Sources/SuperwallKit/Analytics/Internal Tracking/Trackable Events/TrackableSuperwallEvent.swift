@@ -299,7 +299,7 @@ enum InternalSuperwallEvent {
       ]
       if case let .active(entitlements) = status {
         params += [
-          "active_entitlement_ids": entitlements.map(\.id).joined()
+          "active_entitlement_ids": entitlements.map(\.id).joined(separator: ",")
         ]
       }
       return params
@@ -871,6 +871,46 @@ enum InternalSuperwallEvent {
       if case .missingProducts(let identifiers) = state {
         params["missing_products"] = Array(identifiers).joined(separator: ",")
       }
+      params += await paywallInfo.placementParams()
+      return params
+    }
+  }
+
+  struct StripeCheckout: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case submit
+      case complete
+      case fail
+    }
+    let state: State
+    let productId: String
+    let paywallInfo: PaywallInfo
+    let placementData: PlacementData?
+
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo.audienceFilterParams()
+    }
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .stripeCheckoutStart(paywallInfo: paywallInfo)
+      case .submit:
+        return .stripeCheckoutSubmit(paywallInfo: paywallInfo)
+      case .complete:
+        return .stripeCheckoutComplete(paywallInfo: paywallInfo)
+      case .fail:
+        return .stripeCheckoutFail(paywallInfo: paywallInfo)
+      }
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "is_triggered_from_event": placementData != nil,
+        "store": "STRIPE",
+        "product_identifier": productId
+      ]
       params += await paywallInfo.placementParams()
       return params
     }

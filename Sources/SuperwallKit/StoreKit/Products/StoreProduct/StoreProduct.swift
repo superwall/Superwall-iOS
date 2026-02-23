@@ -392,11 +392,16 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   static func blank() -> StoreProduct {
     return StoreProduct(BlankStoreProduct())
   }
+
+  /// Creates a blank StoreProduct with a specific product identifier.
+  static func blank(productIdentifier: String) -> StoreProduct {
+    return StoreProduct(BlankStoreProduct(productIdentifier: productIdentifier))
+  }
 }
 
 // MARK: - Blank StoreProduct Implementation
 private struct BlankStoreProduct: StoreProductType {
-  var productIdentifier: String { "" }
+  let productIdentifier: String
   var entitlements: Set<Entitlement> { [] }
   var price: Decimal { 0 }
   var subscriptionGroupIdentifier: String? { nil }
@@ -446,4 +451,8 @@ private struct BlankStoreProduct: StoreProductType {
   var isFamilyShareable: Bool { false }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String { "" }
+
+  init(productIdentifier: String = "") {
+    self.productIdentifier = productIdentifier
+  }
 }
