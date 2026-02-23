@@ -94,6 +94,64 @@ struct NetworkTests {
     #expect(urlSession.didRequest)
   }
 
+  // MARK: - Headers
+
+  @Test func headers_xEntitlements_isCommaSeparatedString() async {
+    let dependencyContainer = DependencyContainer()
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [
+      Entitlement(id: "pro"),
+      Entitlement(id: "premium"),
+      Entitlement(id: "gold")
+    ]
+    superwall.subscriptionStatus = .active(entitlements)
+
+    let request = URLRequest(url: URL(string: "https://example.com")!)
+    let headers = await dependencyContainer.makeHeaders(
+      fromRequest: request,
+      isForDebugging: false,
+      requestId: "test-request-id"
+    )
+
+    let entitlementsHeader = headers["X-Entitlements"] ?? ""
+    let headerIds = Set(entitlementsHeader.split(separator: ",").map(String.init))
+    #expect(headerIds == Set(["pro", "premium", "gold"]))
+  }
+
+  @Test func headers_xEntitlements_emptyWhenNoActiveEntitlements() async {
+    let dependencyContainer = DependencyContainer()
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    superwall.subscriptionStatus = .inactive
+
+    let request = URLRequest(url: URL(string: "https://example.com")!)
+    let headers = await dependencyContainer.makeHeaders(
+      fromRequest: request,
+      isForDebugging: false,
+      requestId: "test-request-id"
+    )
+
+    let entitlementsHeader = headers["X-Entitlements"]
+    #expect(entitlementsHeader == "")
+  }
+
+  @Test func headers_xEntitlements_singleEntitlement() async {
+    let dependencyContainer = DependencyContainer()
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    superwall.subscriptionStatus = .active([Entitlement(id: "pro")])
+
+    let request = URLRequest(url: URL(string: "https://example.com")!)
+    let headers = await dependencyContainer.makeHeaders(
+      fromRequest: request,
+      isForDebugging: false,
+      requestId: "test-request-id"
+    )
+
+    #expect(headers["X-Entitlements"] == "pro")
+  }
+
   @Test func pollRedemptionResult_endpointBuildsRequest() async throws {
     let dependencyContainer = DependencyContainer()
     let request = PollRedemptionResultRequest(

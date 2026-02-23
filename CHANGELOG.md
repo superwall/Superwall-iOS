@@ -13,6 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes issue with compiling on Xcode 26.4 beta.
+- Fixes dashboard display of multiple active entitlements.
 
 ## 4.13.0
 

@@ -299,7 +299,7 @@ enum InternalSuperwallEvent {
       ]
       if case let .active(entitlements) = status {
         params += [
-          "active_entitlement_ids": entitlements.map(\.id).joined()
+          "active_entitlement_ids": entitlements.map(\.id).joined(separator: ",")
         ]
       }
       return params

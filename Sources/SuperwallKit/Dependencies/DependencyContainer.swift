@@ -57,7 +57,7 @@ final class DependencyContainer {
       storage: storage,
       delegateAdapter: delegateAdapter
     )
-    var options = options ?? SuperwallOptions()
+    let options = options ?? SuperwallOptions()
 
     // In test environments, always bypass the app transaction check
     if TestModeManager.isTestEnvironment {
@@ -435,7 +435,7 @@ extension DependencyContainer: ApiFactory {
       "X-Static-Config-Build-Id": configManager.config?.buildId ?? "",
       "X-Current-Time": Date().isoString,
       "X-Retry-Count": "\(configManager.configRetryCount)",
-      "X-Entitlements": Superwall.shared.entitlements.active.map { $0.id }.joined(),
+      "X-Entitlements": entitlementsInfo.active.map { $0.id }.joined(separator: ","),
       "Content-Type": "application/json"
     ]
     return headers
