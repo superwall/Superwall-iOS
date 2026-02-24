@@ -36,7 +36,7 @@ jobs:
         uses: xavierLowmiller/xcodegen-action@1.2.3
       - name: Build visionOS
         run: |
-          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk xrsimulator -destination 'generic/platform=visionOS Simulator' build
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk xrsimulator build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
 
   build-maccatalyst:
     runs-on: macos-26
