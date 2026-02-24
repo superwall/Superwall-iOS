@@ -22,6 +22,7 @@ actor WebEntitlementRedeemer {
   private let stripePendingPollTimeoutNs: UInt64
   private var isProcessing = false
   private var hasActiveStripePoll = false
+  private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
@@ -152,9 +153,10 @@ actor WebEntitlementRedeemer {
   /// Either starts a new poll or waits for an existing in-flight poll to
   /// finish. Returns `true` if the checkout was redeemed.
   func pollOrWaitForActiveStripePoll() async -> Bool {
-    if pendingStripeCheckoutState == nil {
+    guard let pendingState = pendingStripeCheckoutState else {
       return false
     }
+    let waitingContextId = pendingState.checkoutContextId
 
     // If there's already an active poll (e.g. from cold-launch init task),
     // wait for it to finish rather than skipping.
@@ -169,6 +171,10 @@ actor WebEntitlementRedeemer {
           return false
         }
         try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+      }
+      if let completed = lastCompletedStripePollResult,
+        completed.contextId == waitingContextId {
+        return completed.outcome == .redeemed
       }
       return false
     }
@@ -752,8 +758,10 @@ actor WebEntitlementRedeemer {
     }
 
     hasActiveStripePoll = true
+    var finalOutcome: StripePollOutcome = .noRedemptionFound
     defer {
       hasActiveStripePoll = false
+      lastCompletedStripePollResult = (contextId: contextId, outcome: finalOutcome)
     }
 
     let request = makePollRedemptionRequest(contextId: contextId)
@@ -778,25 +786,30 @@ actor WebEntitlementRedeemer {
             superwall: superwall,
             callbackMode: .pollFakeCompatibility
           )
-          return .redeemed
+          finalOutcome = .redeemed
+          return finalOutcome
         }
 
         switch response.status {
         case .failed:
           clearPendingStripeCheckoutState()
-          return .checkoutFailed
+          finalOutcome = .checkoutFailed
+          return finalOutcome
         case .pending:
           let elapsed = DispatchTime.now().uptimeNanoseconds - startedAt
           if elapsed >= stripePendingPollTimeoutNs {
-            return .noRedemptionFound
+            finalOutcome = .noRedemptionFound
+            return finalOutcome
           }
           try? await Task.sleep(nanoseconds: stripePendingPollIntervalNs)
           continue
         case .complete:
           clearPendingStripeCheckoutState()
-          return .noRedemptionFound
+          finalOutcome = .noRedemptionFound
+          return finalOutcome
         case .none:
-          return .noRedemptionFound
+          finalOutcome = .noRedemptionFound
+          return finalOutcome
         }
       } catch {
         Logger.debug(
@@ -805,10 +818,12 @@ actor WebEntitlementRedeemer {
           message: "Stripe poll-redemption-result request failed",
           error: error
         )
-        return .requestFailed
+        finalOutcome = .requestFailed
+        return finalOutcome
       }
     }
-    return .noRedemptionFound
+    finalOutcome = .noRedemptionFound
+    return finalOutcome
   }
 
   @objc

@@ -114,6 +114,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
+  private var previousStripeCheckoutTask: Task<Void, Never>?
+
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
 
@@ -1194,8 +1197,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
-    Task {
-      await webEntitlementRedeemer.registerStripeCheckoutSubmit(
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.registerStripeCheckoutSubmit(
         contextId: checkoutContextId,
         productId: productId
       )
@@ -1210,8 +1213,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     loadingState = .manualLoading
     closeSafari()
 
-    Task {
-      await webEntitlementRedeemer.handleStripeCheckoutComplete(
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
         contextId: checkoutContextId,
         productId: productId
       )
@@ -1223,8 +1226,22 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
 
-    Task {
-      await webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+    }
+  }
+
+  private func enqueueStripeCheckoutTask(
+    _ operation: @escaping (PaywallViewController) async -> Void
+  ) {
+    // Assign the current Stripe task while capturing the previous one.
+    previousStripeCheckoutTask = Task { [weak self, previousStripeCheckoutTask] in
+      // Wait until the previous task is finished before continuing.
+      await previousStripeCheckoutTask?.value
+      guard let self else {
+        return
+      }
+      await operation(self)
     }
   }
 

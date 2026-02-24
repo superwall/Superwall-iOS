@@ -2175,6 +2175,139 @@ struct WebEntitlementRedeemerTests {
     #expect(mockStorage.get(PendingStripeCheckoutPollStorage.self) == nil)
   }
 
+  @Test("pollOrWaitForActiveStripePoll returns true when waiting on active poll that redeems")
+  func testPollOrWait_waitsForActivePollAndReturnsRedeemed() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let redeemResult = RedemptionResult.success(
+      code: "code_wait",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(RedeemResponse(results: [], customerInfo: .blank(), status: .pending)),
+      .success(
+        RedeemResponse(
+          results: [redeemResult],
+          customerInfo: CustomerInfo(
+            subscriptions: [],
+            nonSubscriptions: [],
+            entitlements: Array(entitlements)
+          )
+        )
+      )
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      stripePendingPollIntervalNs: 500_000_000,
+      stripePendingPollTimeoutNs: 5_000_000_000,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_wait", productId: "prod_wait")
+
+    async let activePollResult: Bool = redeemer.pollPendingStripeCheckoutOnPaywallOpenIfNeeded()
+
+    for _ in 0..<50 where mockNetwork.pollRedemptionResultCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+
+    let waitingResult = await redeemer.pollOrWaitForActiveStripePoll()
+    _ = await activePollResult
+
+    #expect(waitingResult == true)
+    #expect(mockNetwork.pollRedemptionResultCallCount >= 1)
+  }
+
+  @Test("pollOrWaitForActiveStripePoll ignores redeemed result from different context")
+  func testPollOrWait_waitsForActivePollDifferentContext_returnsFalse() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let redeemResult = RedemptionResult.success(
+      code: "code_old",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(RedeemResponse(results: [], customerInfo: .blank(), status: .pending)),
+      .success(
+        RedeemResponse(
+          results: [redeemResult],
+          customerInfo: CustomerInfo(
+            subscriptions: [],
+            nonSubscriptions: [],
+            entitlements: Array(entitlements)
+          )
+        )
+      )
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      stripePendingPollIntervalNs: 1_000_000_000,
+      stripePendingPollTimeoutNs: 5_000_000_000,
+      superwall: superwall
+    )
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_old", productId: "prod_old")
+    async let activePollResult: Bool = redeemer.pollPendingStripeCheckoutOnPaywallOpenIfNeeded()
+
+    for _ in 0..<50 where mockNetwork.pollRedemptionResultCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_new", productId: "prod_new")
+    let waitingResult = await redeemer.pollOrWaitForActiveStripePoll()
+    _ = await activePollResult
+
+    #expect(waitingResult == false)
+  }
+
   @Test("Stripe checkout complete preserves existing foreground attempts for same context")
   func testStripeCheckoutComplete_preservesExistingAttempts() async {
     guard #available(iOS 14.0, *) else {
