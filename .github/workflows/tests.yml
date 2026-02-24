@@ -25,3 +25,27 @@ jobs:
       - name: Run Tests
         run: |
           xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=latest,name=iPhone 17 Pro' test
+
+  build-visionos:
+    runs-on: macos-26
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.2.3
+      - name: Build visionOS
+        run: |
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk xrsimulator -destination 'generic/platform=visionOS Simulator' build
+
+  build-maccatalyst:
+    runs-on: macos-26
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.2.3
+      - name: Build Mac Catalyst
+        run: |
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -destination 'generic/platform=macOS,variant=Mac Catalyst' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
