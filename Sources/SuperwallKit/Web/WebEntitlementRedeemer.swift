@@ -6,26 +6,49 @@
 //
 // swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
-import UIKit
 import Foundation
+import UIKit
 
 actor WebEntitlementRedeemer {
-  private unowned let network: Network
-  private unowned let storage: Storage
-  private unowned let entitlementsInfo: EntitlementsInfo
-  private unowned let delegate: SuperwallDelegateAdapter
-  private unowned let purchaseController: PurchaseController
-  private unowned let receiptManager: ReceiptManager
+  private let network: Network
+  private let storage: Storage
+  private let entitlementsInfo: EntitlementsInfo
+  private let delegate: SuperwallDelegateAdapter
+  private let purchaseController: PurchaseController
+  private let receiptManager: ReceiptManager
   private unowned let factory: Factory
   private let notificationScheduler: NotificationScheduling
+  private let stripePendingPollIntervalNs: UInt64
+  private let stripePendingPollTimeoutNs: UInt64
   private var isProcessing = false
+  private var hasActiveStripePoll = false
+  private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
+  private var awaitingCheckoutComplete = false
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
-    & ConfigManagerFactory
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
+
+  private enum StripePollTrigger: String {
+    case checkoutComplete = "checkout_complete"
+    case paywallOpen = "paywall_open"
+    case foreground = "foreground"
+  }
+
+  private enum StripePollOutcome {
+    case redeemed
+    case checkoutFailed
+    case noRedemptionFound
+    case requestFailed
+    case skippedInFlight
+  }
+
+  private enum RedemptionCallbackMode {
+    case legacy
+    case pollFakeCompatibility
+  }
 
   var isCurrentlyProcessing: Bool {
     isProcessing
@@ -66,6 +89,8 @@ actor WebEntitlementRedeemer {
     receiptManager: ReceiptManager,
     factory: Factory,
     notificationScheduler: NotificationScheduling = NotificationScheduler.shared,
+    stripePendingPollIntervalNs: UInt64 = 1_500_000_000,
+    stripePendingPollTimeoutNs: UInt64 = 60_000_000_000,
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -77,6 +102,8 @@ actor WebEntitlementRedeemer {
     self.notificationScheduler = notificationScheduler
     self.superwall = superwall
     self.receiptManager = receiptManager
+    self.stripePendingPollIntervalNs = stripePendingPollIntervalNs
+    self.stripePendingPollTimeoutNs = stripePendingPollTimeoutNs
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -85,6 +112,190 @@ actor WebEntitlementRedeemer {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+
+    // Also check once on SDK initialization so pending Stripe checkouts can be
+    // recovered on cold launch. Guard on factory readiness to avoid accessing
+    // dependencies (e.g. deviceHelper) before the container is fully set up.
+    Task {
+      guard factory.makeIsContainerReady() else { return }
+      await pollPendingStripeCheckoutOnForegroundIfNeeded()
+    }
+  }
+
+  func registerStripeCheckoutSubmit(
+    contextId: String,
+    productId: String
+  ) {
+    awaitingCheckoutComplete = true
+    savePendingStripeCheckoutState(
+      .init(
+        checkoutContextId: contextId,
+        productId: productId
+      )
+    )
+  }
+
+  func shouldShowStripeRecoveryLoadingOnPaywallOpen() -> Bool {
+    guard let state = pendingStripeCheckoutState else {
+      return false
+    }
+    guard state.remainingForegroundAttempts > 0 else {
+      clearPendingStripeCheckoutState()
+      return false
+    }
+    if hasStripePendingTimedOut(state) {
+      clearPendingStripeCheckoutState()
+      return false
+    }
+    return true
+  }
+
+  /// Either starts a new poll or waits for an existing in-flight poll to
+  /// finish. Returns `true` if the checkout was redeemed.
+  func pollOrWaitForActiveStripePoll() async -> Bool {
+    guard let pendingState = pendingStripeCheckoutState else {
+      return false
+    }
+    let waitingContextId = pendingState.checkoutContextId
+
+    // If there's already an active poll (e.g. from cold-launch init task),
+    // wait for it to finish rather than skipping.
+    if hasActiveStripePoll {
+      let waitStart = DispatchTime.now().uptimeNanoseconds
+      while hasActiveStripePoll {
+        if Task.isCancelled {
+          return false
+        }
+        let elapsed = DispatchTime.now().uptimeNanoseconds - waitStart
+        if elapsed >= stripePendingPollTimeoutNs {
+          return false
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+      }
+      if let completed = lastCompletedStripePollResult,
+        completed.contextId == waitingContextId {
+        return completed.outcome == .redeemed
+      }
+      return false
+    }
+
+    // No active poll — start our own.
+    return await pollPendingStripeCheckoutOnPaywallOpenIfNeeded()
+  }
+
+  func pollPendingStripeCheckoutOnPaywallOpenIfNeeded() async -> Bool {
+    guard let pendingState = pendingStripeCheckoutState else {
+      return false
+    }
+    guard pendingState.remainingForegroundAttempts > 0 else {
+      clearPendingStripeCheckoutState()
+      return false
+    }
+
+    let outcome = await pollStripeRedemptionResult(
+      contextId: pendingState.checkoutContextId,
+      productId: pendingState.productId,
+      trigger: .paywallOpen
+    )
+
+    return outcome == .redeemed
+  }
+
+  func handleStripeCheckoutComplete(
+    contextId: String,
+    productId: String
+  ) async {
+    awaitingCheckoutComplete = false
+
+    if let existingState = pendingStripeCheckoutState,
+      existingState.checkoutContextId == contextId {
+      savePendingStripeCheckoutState(
+        .init(
+          checkoutContextId: contextId,
+          productId: productId,
+          remainingForegroundAttempts: existingState.remainingForegroundAttempts
+        )
+      )
+    } else {
+      savePendingStripeCheckoutState(
+        .init(
+          checkoutContextId: contextId,
+          productId: productId
+        )
+      )
+    }
+
+    let outcome = await pollStripeRedemptionResult(
+      contextId: contextId,
+      productId: productId,
+      trigger: .checkoutComplete
+    )
+
+    // Don't hide spinner if another poll is in-flight — it will handle the
+    // loading state when it finishes.
+    if outcome != .redeemed, outcome != .skippedInFlight {
+      let superwall = self.superwall ?? Superwall.shared
+      await MainActor.run {
+        superwall.paywallViewController?.loadingState = .ready
+      }
+    }
+  }
+
+  func handleStripeCheckoutAbandon(productId: String) async {
+    awaitingCheckoutComplete = false
+    let superwall = superwall ?? Superwall.shared
+    let product = StoreProduct.blank(productIdentifier: productId)
+    let paywallInfo = await MainActor.run { superwall.paywallViewController?.info ?? .empty() }
+
+    let event = InternalSuperwallEvent.Transaction(
+      state: .abandon(product),
+      paywallInfo: paywallInfo,
+      product: nil,
+      transaction: nil,
+      source: .internal,
+      isObserved: false,
+      storeKitVersion: nil,
+      store: .stripe
+    )
+    await superwall.track(event)
+  }
+
+  /// Polls for the redemption result of a pending Stripe checkout, if one exists,
+  /// decrementing the remaining foreground attempts and clearing state when exhausted.
+  func pollPendingStripeCheckoutOnForegroundIfNeeded() async {
+    guard let pendingState = pendingStripeCheckoutState else {
+      return
+    }
+    guard pendingState.remainingForegroundAttempts > 0 else {
+      clearPendingStripeCheckoutState()
+      return
+    }
+
+    let outcome = await pollStripeRedemptionResult(
+      contextId: pendingState.checkoutContextId,
+      productId: pendingState.productId,
+      trigger: .foreground
+    )
+
+    // Consume foreground attempts after each trigger completes, except when skipped
+    // due to an existing in-flight poll.
+    if outcome == .skippedInFlight {
+      return
+    }
+
+    guard
+      let latestState = pendingStripeCheckoutState,
+      latestState.checkoutContextId == pendingState.checkoutContextId
+    else {
+      return
+    }
+
+    let updatedState = latestState.consumingForegroundAttempt()
+    if updatedState.remainingForegroundAttempts <= 0 {
+      clearPendingStripeCheckoutState()
+    } else {
+      savePendingStripeCheckoutState(updatedState)
+    }
   }
 
   func redeem(
@@ -132,7 +343,8 @@ actor WebEntitlementRedeemer {
       await handleRedemptionSuccess(
         response: response,
         type: type,
-        superwall: superwall
+        superwall: superwall,
+        callbackMode: .legacy
       )
     } catch {
       await handleRedemptionFailure(
@@ -189,15 +401,13 @@ actor WebEntitlementRedeemer {
   }
 
   private func trackRedemptionStart(type: RedeemType, superwall: Superwall) async {
-    guard case .code = type else {
-      if case .existingCodes = type {
-        let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
-        await superwall.track(startEvent)
-      }
-      return
+    switch type {
+    case .code, .existingCodes:
+      let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
+      await superwall.track(startEvent)
+    case .integrationAttributes:
+      break
     }
-    let startEvent = InternalSuperwallEvent.Redemption(state: .start, type: type)
-    await superwall.track(startEvent)
   }
 
   private func prepareUIForRedemption(type: RedeemType, superwall: Superwall) async {
@@ -212,16 +422,17 @@ actor WebEntitlementRedeemer {
   private func handleRedemptionSuccess(
     response: RedeemResponse,
     type: RedeemType,
-    superwall: Superwall
+    superwall: Superwall,
+    callbackMode: RedemptionCallbackMode
   ) async {
     storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
-    if case .code = type {
+    switch type {
+    case .code, .existingCodes:
       let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
       await superwall.track(completeEvent)
-    } else if case .existingCodes = type {
-      let completeEvent = InternalSuperwallEvent.Redemption(state: .complete, type: type)
-      await superwall.track(completeEvent)
+    case .integrationAttributes:
+      break
     }
 
     let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
@@ -232,24 +443,10 @@ actor WebEntitlementRedeemer {
 
     storage.save(response, forType: LatestRedeemResponse.self)
 
-    // Merge device and web CustomerInfo
-    // If using an external purchase controller, also preserve entitlements that came from it
-    let mergedCustomerInfo: CustomerInfo
-    if factory.makeHasExternalPurchaseController() {
-      let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
-      mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
-        storage: storage,
-        subscriptionStatus: subscriptionStatus
-      )
-    } else {
-      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
-    }
-
-    // Update Superwall's CustomerInfo with the merged result
-    await MainActor.run {
-      superwall.customerInfo = mergedCustomerInfo
-    }
+    _ = await mergeAndApplyCustomerInfo(
+      webCustomerInfo: response.customerInfo,
+      superwall: superwall
+    )
 
     await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
 
@@ -259,7 +456,8 @@ actor WebEntitlementRedeemer {
         response: response,
         allEntitlementIds: Set(allEntitlements.map { $0.id }),
         paywallEntitlementIds: paywallEntitlementIds,
-        superwall: superwall
+        superwall: superwall,
+        callbackMode: callbackMode
       )
     }
   }
@@ -271,7 +469,8 @@ actor WebEntitlementRedeemer {
   ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
     let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
     let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
-    let combinedEntitlements = Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
+    let combinedEntitlements =
+      Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
     let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
     var paywallEntitlementIds: Set<String> = []
@@ -306,12 +505,39 @@ actor WebEntitlementRedeemer {
     return (allEntitlements, paywallEntitlementIds)
   }
 
+  /// Merges device and web entitlements into a single `CustomerInfo`, applying
+  /// external purchase controller logic when needed, and assigns it to
+  /// `superwall.customerInfo`.
+  private func mergeAndApplyCustomerInfo(
+    webCustomerInfo: CustomerInfo,
+    superwall: Superwall
+  ) async -> CustomerInfo {
+    let mergedCustomerInfo: CustomerInfo
+    if factory.makeHasExternalPurchaseController() {
+      let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
+      mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: storage,
+        subscriptionStatus: subscriptionStatus
+      )
+    } else {
+      let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+    }
+
+    await MainActor.run {
+      superwall.customerInfo = mergedCustomerInfo
+    }
+
+    return mergedCustomerInfo
+  }
+
   private func updateSubscriptionStatus(
     with allEntitlements: Set<Entitlement>,
     superwall: Superwall
   ) async {
     let activeEntitlements = allEntitlements.filter { $0.isActive }
-    let status: SubscriptionStatus = activeEntitlements.isEmpty ? .inactive : .active(activeEntitlements)
+    let status: SubscriptionStatus =
+      activeEntitlements.isEmpty ? .inactive : .active(activeEntitlements)
     await superwall.internallySetSubscriptionStatus(to: status, superwall: superwall)
   }
 
@@ -320,7 +546,8 @@ actor WebEntitlementRedeemer {
     response: RedeemResponse,
     allEntitlementIds: Set<String>,
     paywallEntitlementIds: Set<String>,
-    superwall: Superwall
+    superwall: Superwall,
+    callbackMode: RedemptionCallbackMode
   ) async {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
 
@@ -328,6 +555,12 @@ actor WebEntitlementRedeemer {
     let showConfirmation = superwallOptions.paywalls.shouldShowWebPurchaseConfirmationAlert
 
     func afterRedeem() async {
+      if callbackMode == .pollFakeCompatibility {
+        await self.delegate.willRedeemLink()
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        await self.delegate.didRedeemLink(result: codeResult)
+      }
+
       // Schedule free trial notification if applicable
       if case .success(_, let redemptionInfo) = codeResult,
         let product = redemptionInfo.paywallInfo?.product,
@@ -354,11 +587,13 @@ actor WebEntitlementRedeemer {
       await MainActor.run {
         superwall.paywallViewController?.loadingState = .ready
       }
-      await self.delegate.didRedeemLink(result: codeResult)
+
+      if callbackMode == .legacy {
+        await self.delegate.didRedeemLink(result: codeResult)
+      }
     }
 
-    if showConfirmation,
-      let paywallVc = superwall.paywallViewController {
+    if showConfirmation {
       let title = LocalizationLogic.localizedBundle().localizedString(
         forKey: "purchase_success_title",
         value: nil,
@@ -375,19 +610,60 @@ actor WebEntitlementRedeemer {
         table: nil
       )
 
-      await paywallVc.presentAlert(
-        title: title,
-        message: message,
-        closeActionTitle: closeActionTitle,
-        onClose: {
-          Task {
-            await afterRedeem()
+      if let paywallVc = await MainActor.run(body: { superwall.paywallViewController }) {
+        await paywallVc.presentAlert(
+          title: title,
+          message: message,
+          closeActionTitle: closeActionTitle,
+          onClose: {
+            Task { [weak self] in
+              await afterRedeem()
+              await self?.clearPendingStripeCheckoutState()
+            }
           }
-        }
-      )
+        )
+      } else {
+        await presentAlertOnTopViewController(
+          title: title,
+          message: message,
+          closeActionTitle: closeActionTitle,
+          onClose: {
+            Task { [weak self] in
+              await afterRedeem()
+              await self?.clearPendingStripeCheckoutState()
+            }
+          }
+        )
+      }
     } else {
       await afterRedeem()
+      clearPendingStripeCheckoutState()
     }
+  }
+
+  @MainActor
+  private func presentAlertOnTopViewController(
+    title: String,
+    message: String,
+    closeActionTitle: String,
+    onClose: (() -> Void)?
+  ) {
+    guard let topVc = UIViewController.topMostViewController else {
+      onClose?()
+      return
+    }
+    guard topVc.presentedViewController == nil else {
+      onClose?()
+      return
+    }
+    let alertController = AlertControllerFactory.make(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      onClose: onClose,
+      sourceView: topVc.view
+    )
+    topVc.present(alertController, animated: true)
   }
 
   private func handleRedemptionFailure(
@@ -396,15 +672,15 @@ actor WebEntitlementRedeemer {
     latestRedeemResponse: RedeemResponse?,
     superwall: Superwall
   ) async {
-    if case .code = type {
+    switch type {
+    case .code, .existingCodes:
       let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
       await superwall.track(event)
-    } else if case .existingCodes = type {
-      let event = InternalSuperwallEvent.Redemption(state: .fail, type: type)
-      await superwall.track(event)
+    case .integrationAttributes:
+      break
     }
 
-    if case let .code(code) = type {
+    if case .code(let code) = type {
       if let paywallVc = superwall.paywallViewController {
         await trackRestorationFailure(
           paywallViewController: paywallVc,
@@ -450,14 +726,154 @@ actor WebEntitlementRedeemer {
     )
   }
 
+  private var pendingStripeCheckoutState: PendingStripeCheckoutPollState? {
+    storage.get(PendingStripeCheckoutPollStorage.self)
+  }
+
+  private func savePendingStripeCheckoutState(_ state: PendingStripeCheckoutPollState) {
+    storage.save(state, forType: PendingStripeCheckoutPollStorage.self)
+  }
+
+  private func clearPendingStripeCheckoutState() {
+    storage.delete(PendingStripeCheckoutPollStorage.self)
+  }
+
+  private func makePollRedemptionRequest(
+    contextId: String
+  ) -> PollRedemptionResultRequest {
+    return PollRedemptionResultRequest(
+      checkoutContextId: contextId,
+      deviceId: factory.makeDeviceId(),
+      appUserId: factory.makeAppUserId()
+    )
+  }
+
+  private func pollStripeRedemptionResult(
+    contextId: String,
+    productId: String,
+    trigger: StripePollTrigger
+  ) async -> StripePollOutcome {
+    if hasActiveStripePoll {
+      return .skippedInFlight
+    }
+
+    hasActiveStripePoll = true
+    var finalOutcome: StripePollOutcome = .noRedemptionFound
+    defer {
+      hasActiveStripePoll = false
+      lastCompletedStripePollResult = (contextId: contextId, outcome: finalOutcome)
+    }
+
+    let request = makePollRedemptionRequest(contextId: contextId)
+    let startedAt = DispatchTime.now().uptimeNanoseconds
+
+    while !Task.isCancelled {
+      if let state = pendingStripeCheckoutState,
+        state.checkoutContextId == contextId,
+        hasStripePendingTimedOut(state) {
+        clearPendingStripeCheckoutState()
+        return .noRedemptionFound
+      }
+
+      do {
+        let response = try await network.pollRedemptionResult(request: request)
+
+        if let code = response.results.first?.code {
+          let superwall = superwall ?? Superwall.shared
+          await handleRedemptionSuccess(
+            response: response,
+            type: .code(code),
+            superwall: superwall,
+            callbackMode: .pollFakeCompatibility
+          )
+          finalOutcome = .redeemed
+          return finalOutcome
+        }
+
+        switch response.status {
+        case .failed:
+          clearPendingStripeCheckoutState()
+          finalOutcome = .checkoutFailed
+          return finalOutcome
+        case .pending:
+          let elapsed = DispatchTime.now().uptimeNanoseconds - startedAt
+          if elapsed >= stripePendingPollTimeoutNs {
+            finalOutcome = .noRedemptionFound
+            return finalOutcome
+          }
+          try? await Task.sleep(nanoseconds: stripePendingPollIntervalNs)
+          continue
+        case .complete:
+          clearPendingStripeCheckoutState()
+          finalOutcome = .noRedemptionFound
+          return finalOutcome
+        case .none:
+          finalOutcome = .noRedemptionFound
+          return finalOutcome
+        }
+      } catch {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .webEntitlements,
+          message: "Stripe poll-redemption-result request failed",
+          error: error
+        )
+        finalOutcome = .requestFailed
+        return finalOutcome
+      }
+    }
+    finalOutcome = .noRedemptionFound
+    return finalOutcome
+  }
+
   @objc
   nonisolated private func handleAppForeground() {
     Task {
-      if await factory.makeConfigManager() == nil {
-        return
-      }
-      await pollWebEntitlements()
+      await self.handleForegroundPolling()
     }
+  }
+
+  /// Called on foreground. Polls for pending Stripe checkout redemption (showing a
+  /// loading spinner on the paywall if needed) and then refreshes web entitlements.
+  private func handleForegroundPolling() async {
+    guard factory.makeIsContainerReady() else { return }
+    let superwall = superwall ?? Superwall.shared
+    let hasVisiblePaywall = await MainActor.run { superwall.paywallViewController != nil }
+
+    // If the checkout sheet is still open inside the paywall (checkout_submit
+    // fired but checkout_complete hasn't yet), skip the foreground stripe poll.
+    // checkout_complete will show the spinner and start polling when the sheet
+    // closes.
+    if hasVisiblePaywall, awaitingCheckoutComplete {
+      await pollWebEntitlements()
+      return
+    }
+
+    let shouldShowLoading = hasVisiblePaywall && shouldShowStripeRecoveryLoadingOnPaywallOpen()
+
+    if shouldShowLoading {
+      await MainActor.run {
+        superwall.paywallViewController?.loadingState = .manualLoading
+      }
+    }
+
+    await pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    if shouldShowLoading {
+      await MainActor.run {
+        if superwall.paywallViewController?.loadingState == .manualLoading {
+          superwall.paywallViewController?.loadingState = .ready
+        }
+      }
+    }
+
+    await pollWebEntitlements()
+  }
+
+  private func hasStripePendingTimedOut(_ state: PendingStripeCheckoutPollState) -> Bool {
+    let elapsed = Date().timeIntervalSince(state.updatedAt)
+    let timeoutSeconds = TimeInterval(stripePendingPollTimeoutNs) / 1_000_000_000
+    return elapsed >= timeoutSeconds
   }
 
   // swiftlint:disable:next cyclomatic_complexity
@@ -466,7 +882,8 @@ actor WebEntitlementRedeemer {
     isFirstTime: Bool = false
   ) async {
     if !isFirstTime {
-      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge ?? factory.makeEntitlementsMaxAge() {
+      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
+        ?? factory.makeEntitlementsMaxAge() {
         if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
           let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
           // Only proceed if a certain amount of time has elapsed
@@ -483,7 +900,8 @@ actor WebEntitlementRedeemer {
     }
 
     do {
-      let existingWebEntitlements = Set(storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
+      let existingWebEntitlements = Set(
+        storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
@@ -514,27 +932,11 @@ actor WebEntitlementRedeemer {
           return
         }
 
-        // Merge device and web CustomerInfo
-        // If using an external purchase controller, also preserve entitlements that came from it
-        let mergedCustomerInfo: CustomerInfo
-        if factory.makeHasExternalPurchaseController() {
-          let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
-          mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
-            storage: storage,
-            subscriptionStatus: subscriptionStatus
-          )
-        } else {
-          let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-          mergedCustomerInfo = deviceCustomerInfo.merging(with: response.customerInfo)
-        }
+        let mergedCustomerInfo = await mergeAndApplyCustomerInfo(
+          webCustomerInfo: response.customerInfo,
+          superwall: superwall
+        )
 
-        // Update Superwall's CustomerInfo with the merged result
-        await MainActor.run {
-          superwall.customerInfo = mergedCustomerInfo
-        }
-
-        // Sets the subscription status internally if no external PurchaseController
-        // Use the merged entitlements from CustomerInfo (already prioritized)
         let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
         if activeEntitlements.isEmpty {
           await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)

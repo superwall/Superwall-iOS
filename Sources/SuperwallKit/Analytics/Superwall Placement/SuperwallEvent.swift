@@ -84,7 +84,11 @@ public enum SuperwallEvent {
   /// this won't be `nil`. However, it could be `nil` if you are using a ``PurchaseController``
   /// and the transaction object couldn't be detected after you return `.purchased` in ``PurchaseController/purchase(product:)``.
   case transactionComplete(
-    transaction: StoreTransaction?, product: StoreProduct, type: TransactionType, paywallInfo: PaywallInfo)
+    transaction: StoreTransaction?,
+    product: StoreProduct,
+    type: TransactionType,
+    paywallInfo: PaywallInfo
+  )
 
   /// When the user successfully completes a transaction for a subscription product with no introductory offers.
   case subscriptionStart(product: StoreProduct, paywallInfo: PaywallInfo)
@@ -258,6 +262,24 @@ public enum SuperwallEvent {
 
   /// When paywall preloading completes.
   case paywallPreloadComplete(paywallCount: Int)
+
+  /// When a Stripe checkout session starts.
+  case stripeCheckoutStart(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout form is submitted.
+  case stripeCheckoutSubmit(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout session completes.
+  case stripeCheckoutComplete(paywallInfo: PaywallInfo)
+
+  /// When a Stripe checkout session fails.
+  case stripeCheckoutFail(paywallInfo: PaywallInfo)
+
+  /// When the test mode modal is opened.
+  case testModeModalOpen
+
+  /// When the test mode modal is closed.
+  case testModeModalClose
 
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
@@ -444,6 +466,18 @@ extension SuperwallEvent {
       return .init(objcEvent: .paywallPreloadStart)
     case .paywallPreloadComplete:
       return .init(objcEvent: .paywallPreloadComplete)
+    case .stripeCheckoutStart:
+      return .init(objcEvent: .stripeCheckoutStart)
+    case .stripeCheckoutSubmit:
+      return .init(objcEvent: .stripeCheckoutSubmit)
+    case .stripeCheckoutComplete:
+      return .init(objcEvent: .stripeCheckoutComplete)
+    case .stripeCheckoutFail:
+      return .init(objcEvent: .stripeCheckoutFail)
+    case .testModeModalOpen:
+      return .init(objcEvent: .testModeModalOpen)
+    case .testModeModalClose:
+      return .init(objcEvent: .testModeModalClose)
     }
   }
 }

@@ -209,7 +209,7 @@ enum ConfigLogic {
     }
   }
 
-  static func getAllActiveTreatmentPaywallIds(
+  static func getActiveTreatmentPaywallIds(
     fromTriggers triggers: Set<Trigger>,
     assignments: Set<Assignment>,
     expressionEvaluator: ExpressionEvaluating
@@ -256,27 +256,6 @@ enum ConfigLogic {
       }
       return nil
     })
-
-    return identifiers
-  }
-
-  static func getActiveTreatmentPaywallIds(
-    forTriggers triggers: Set<Trigger>,
-    assignments: Set<Assignment>
-  ) -> Set<String> {
-    let groupedTriggerAudiences = getAudienceFiltersPerCampaign(from: triggers)
-    let triggerExperimentIds = groupedTriggerAudiences.flatMap { $0.map { $0.experiment.id } }
-
-    var identifiers = Set<String>()
-    for experimentId in triggerExperimentIds {
-      guard let variant = assignments.first(where: { $0.experimentId == experimentId })?.variant else {
-        continue
-      }
-      if variant.type == .treatment,
-        let paywallId = variant.paywallId {
-        identifiers.insert(paywallId)
-      }
-    }
 
     return identifiers
   }

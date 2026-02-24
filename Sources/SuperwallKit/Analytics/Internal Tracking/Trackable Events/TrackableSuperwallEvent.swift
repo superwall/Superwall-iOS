@@ -299,7 +299,7 @@ enum InternalSuperwallEvent {
       ]
       if case let .active(entitlements) = status {
         params += [
-          "active_entitlement_ids": entitlements.map(\.id).joined()
+          "active_entitlement_ids": entitlements.map(\.id).joined(separator: ",")
         ]
       }
       return params
@@ -876,6 +876,46 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct StripeCheckout: TrackableSuperwallEvent {
+    enum State {
+      case start
+      case submit
+      case complete
+      case fail
+    }
+    let state: State
+    let productId: String
+    let paywallInfo: PaywallInfo
+    let placementData: PlacementData?
+
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo.audienceFilterParams()
+    }
+
+    var superwallEvent: SuperwallEvent {
+      switch state {
+      case .start:
+        return .stripeCheckoutStart(paywallInfo: paywallInfo)
+      case .submit:
+        return .stripeCheckoutSubmit(paywallInfo: paywallInfo)
+      case .complete:
+        return .stripeCheckoutComplete(paywallInfo: paywallInfo)
+      case .fail:
+        return .stripeCheckoutFail(paywallInfo: paywallInfo)
+      }
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "is_triggered_from_event": placementData != nil,
+        "store": "STRIPE",
+        "product_identifier": productId
+      ]
+      params += await paywallInfo.placementParams()
+      return params
+    }
+  }
+
   enum ConfigCacheStatus: String {
     case cached = "CACHED"
     case notCached = "NOT_CACHED"
@@ -1075,6 +1115,30 @@ enum InternalSuperwallEvent {
         "count": count,
         "type": type.rawValue
       ]
+    }
+  }
+
+  struct TestModeModalOpen: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .testModeModalOpen
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
+  struct TestModeModalClose: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .testModeModalClose
+    let entitlements: Set<Entitlement>
+    let freeTrialOverride: String
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "free_trial_override": freeTrialOverride
+      ]
+      for entitlement in entitlements.sorted(by: { $0.id < $1.id }) {
+        let prefix = "entitlement_\(entitlement.id)"
+        params["\(prefix)_state"] = entitlement.state?.rawValue ?? "inactive"
+        params["\(prefix)_offer_type"] = entitlement.offerType?.rawValue ?? "none"
+      }
+      return params
     }
   }
 

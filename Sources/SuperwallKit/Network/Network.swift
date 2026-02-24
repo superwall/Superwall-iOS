@@ -334,6 +334,13 @@ class Network {
     )
   }
 
+  func pollRedemptionResult(request: PollRedemptionResultRequest) async throws -> RedeemResponse {
+    return try await urlSession.request(
+      .pollRedemptionResult(request: request),
+      data: SuperwallRequestData(factory: factory)
+    )
+  }
+
   func getEntitlements(
     appUserId: String?,
     deviceId: String
@@ -360,5 +367,27 @@ class Network {
       ),
       data: SuperwallRequestData(factory: factory)
     ).tokensByProductId
+  }
+
+  /// Fetches all products from the subscriptions API.
+  /// The application is inferred from the SDK's public API key.
+  ///
+  /// - Returns: A response containing all products for this application.
+  func getSuperwallProducts() async throws -> SuperwallProductsResponse {
+    do {
+      let response: SuperwallProductsResponse = try await urlSession.request(
+        .superwallProducts(),
+        data: SuperwallRequestData(factory: factory)
+      )
+      return response
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /v1/products",
+        error: error
+      )
+      throw error
+    }
   }
 }
