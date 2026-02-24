@@ -115,10 +115,68 @@ extension Superwall {
     internallyRegister(placement: placement, params: params, handler: handler)
   }
 
+  // MARK: - Web Checkout
+
+  /// Opens a web checkout (e.g. Stripe) directly, skipping the intermediate paywall UI.
+  ///
+  /// Use this for web2app flows where the user has already seen a purchase offer in your
+  /// web funnel and you want to go straight to the checkout sheet.
+  ///
+  /// The paywall configured on the Superwall dashboard for this placement must auto-trigger
+  /// the purchase action on page load (e.g. via custom JavaScript that immediately fires the
+  /// checkout event).
+  ///
+  /// - Parameters:
+  ///   - placement: The name of the placement configured on the Superwall dashboard.
+  ///   - params: Optional parameters to pass with the placement. Defaults to `nil`.
+  ///   - handler: An optional handler for paywall presentation status updates. Defaults to `nil`.
+  ///   - feature: A completion block containing a feature that you wish to paywall.
+  public func openWebCheckout(
+    forPlacement placement: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil,
+    feature: @escaping () -> Void
+  ) {
+    internallyRegister(
+      placement: placement,
+      params: params,
+      handler: handler,
+      paywallOverrides: PaywallOverrides(checkoutOnly: true),
+      feature: feature
+    )
+  }
+
+  /// Opens a web checkout (e.g. Stripe) directly, skipping the intermediate paywall UI.
+  ///
+  /// Use this for web2app flows where the user has already seen a purchase offer in your
+  /// web funnel and you want to go straight to the checkout sheet.
+  ///
+  /// The paywall configured on the Superwall dashboard for this placement must auto-trigger
+  /// the purchase action on page load (e.g. via custom JavaScript that immediately fires the
+  /// checkout event).
+  ///
+  /// - Parameters:
+  ///   - placement: The name of the placement configured on the Superwall dashboard.
+  ///   - params: Optional parameters to pass with the placement. Defaults to `nil`.
+  ///   - handler: An optional handler for paywall presentation status updates. Defaults to `nil`.
+  public func openWebCheckout(
+    forPlacement placement: String,
+    params: [String: Any]? = nil,
+    handler: PaywallPresentationHandler? = nil
+  ) {
+    internallyRegister(
+      placement: placement,
+      params: params,
+      handler: handler,
+      paywallOverrides: PaywallOverrides(checkoutOnly: true)
+    )
+  }
+
   private func internallyRegister(
     placement: String,
     params: [String: Any]? = nil,
     handler: PaywallPresentationHandler? = nil,
+    paywallOverrides: PaywallOverrides? = nil,
     feature completion: (() -> Void)? = nil
   ) {
     let publisher = PassthroughSubject<PaywallState, Never>()
@@ -204,7 +262,7 @@ extension Superwall {
       await self?.trackAndPresentPaywall(
         forPlacement: placement,
         params: params,
-        paywallOverrides: nil,
+        paywallOverrides: paywallOverrides,
         isFeatureGatable: completion != nil,
         publisher: publisher
       )

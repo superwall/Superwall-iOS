@@ -148,6 +148,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// A loading spinner that appears when making a purchase.
   private var loadingViewController: LoadingViewController?
 
+  /// Whether this paywall is in checkout-only mode (webview hidden, only checkout sheet shown).
+  var isCheckoutOnly: Bool {
+    return request?.paywallOverrides?.checkoutOnly ?? false
+  }
+
+  /// A native loading spinner shown in checkout-only mode while the webview loads invisibly.
+  private var checkoutOnlySpinner: UIActivityIndicatorView?
+
   /// A shimmer view that appears when loading the webpage.
   private var shimmerView: ShimmerView?
 
@@ -453,6 +461,19 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   func loadingStateDidChange(from oldValue: PaywallLoadingState) {
+    // In checkout-only mode, keep the webview hidden and skip shimmer/loading animations.
+    if isCheckoutOnly {
+      switch loadingState {
+      case .loadingPurchase, .manualLoading:
+        addLoadingView()
+      case .ready:
+        hideLoadingView()
+      default:
+        break
+      }
+      return
+    }
+
     switch loadingState {
     case .unknown:
       break
@@ -596,6 +617,33 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
     loadingViewController.hide()
+  }
+
+  // MARK: - Checkout-Only Mode
+
+  /// Configures the view for checkout-only mode: hides the webview and shows a native spinner.
+  private func setupCheckoutOnlyMode() {
+    webView.alpha = 0
+    refreshPaywallButton.isHidden = true
+    exitButton.isHidden = true
+    view.backgroundColor = .systemBackground
+
+    let spinner = UIActivityIndicatorView(style: .large)
+    spinner.translatesAutoresizingMaskIntoConstraints = false
+    spinner.startAnimating()
+    view.addSubview(spinner)
+    NSLayoutConstraint.activate([
+      spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor)
+    ])
+    checkoutOnlySpinner = spinner
+  }
+
+  /// Removes the checkout-only spinner.
+  private func removeCheckoutOnlySpinner() {
+    checkoutOnlySpinner?.stopAnimating()
+    checkoutOnlySpinner?.removeFromSuperview()
+    checkoutOnlySpinner = nil
   }
 
   // MARK: - Timeout
@@ -1023,6 +1071,9 @@ extension PaywallViewController: SWWebViewDelegate {
     guard isActive else {
       return
     }
+    if isCheckoutOnly {
+      removeCheckoutOnlySpinner()
+    }
     dismiss(
       result: .declined,
       closeReason: .webViewFailedToLoad
@@ -1072,12 +1123,18 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openPaymentSheet(_ url: URL) {
     #if !os(visionOS)
+    // In checkout-only mode, remove the spinner before presenting checkout
+    if isCheckoutOnly {
+      removeCheckoutOnlySpinner()
+    }
+
     // Reset flags when opening checkout
     didRedeemSucceedDuringCheckout = false
     isCheckoutDismissedProgrammatically = false
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
 
+    let isCheckoutOnlyMode = isCheckoutOnly
     let checkoutVC = CheckoutWebViewController(url: url)
     // Store reference to communicate redemption state
     self.currentCheckoutVC = checkoutVC
@@ -1089,6 +1146,15 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       // (programmatic dismissal happens when redemption starts, which sets manualLoading)
       if !self.isCheckoutDismissedProgrammatically {
         self.loadingState = .ready
+      }
+
+      // In checkout-only mode, auto-dismiss the invisible paywall when checkout closes
+      if isCheckoutOnlyMode, !self.didRedeemSucceedDuringCheckout {
+        self.dismiss(
+          result: .declined,
+          closeReason: .systemLogic
+        )
+        return
       }
 
       // Only track abandon if:
@@ -1323,7 +1389,11 @@ extension PaywallViewController {
         isModalInPresentation = true
       }
     }
-    addShimmerView(onPresent: true)
+    if isCheckoutOnly {
+      setupCheckoutOnlyMode()
+    } else {
+      addShimmerView(onPresent: true)
+    }
 
     view.alpha = 1.0
     view.transform = .identity

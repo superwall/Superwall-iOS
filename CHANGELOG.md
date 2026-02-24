@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for local images and videos in paywalls.
 - Schedules trial notifications after purchasing Stripe products.
+- Added `openWebCheckout(forPlacement:)` method and `checkoutOnly` option on `PaywallOverrides` for web2app flows. This allows skipping the intermediate paywall UI and going directly to the Stripe checkout sheet.
 
 ### Fixes
 

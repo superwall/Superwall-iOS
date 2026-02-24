@@ -32,6 +32,14 @@ public final class PaywallOverrides: NSObject, Sendable {
   /// Sets a custom presentation style for the paywall.
   public let presentationStyle: PaywallPresentationStyle
 
+  /// When `true`, the paywall webview loads invisibly and only the checkout sheet
+  /// (e.g. Stripe) is presented to the user. Use this for web2app flows where the
+  /// user has already seen a purchase offer and you want to skip the intermediate paywall.
+  ///
+  /// The paywall configured in the Superwall dashboard must auto-trigger the purchase
+  /// action on page load for this to work correctly.
+  public let checkoutOnly: Bool
+
   // Objective-C compatibility properties (stored privately)
   private let _presentationStyleObjc: PaywallPresentationStyleObjc
   private let _drawerHeight: NSNumber?
@@ -62,7 +70,8 @@ public final class PaywallOverrides: NSObject, Sendable {
   ///   - presentationStyleOverride: A ``PaywallPresentationStyle`` enum that specifies the presentation style for the paywall.
   public init(
     productsByName: [String: StoreProduct] = [:],
-    presentationStyleOverride: PaywallPresentationStyle = .none
+    presentationStyleOverride: PaywallPresentationStyle = .none,
+    checkoutOnly: Bool = false
   ) {
     self.productsByName = productsByName
     self.presentationStyle = presentationStyleOverride
@@ -70,6 +79,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self._drawerHeight = presentationStyleOverride.drawerHeight
     self._drawerCornerRadius = presentationStyleOverride.drawerCornerRadius
     self.featureGatingBehavior = nil
+    self.checkoutOnly = checkoutOnly
   }
 
   /// Override the default behavior and products of a paywall (Objective-C compatible).
@@ -106,6 +116,7 @@ public final class PaywallOverrides: NSObject, Sendable {
       cornerRadius: 15
     )
     self.featureGatingBehavior = nil
+    self.checkoutOnly = false
   }
 
   /// Override the default behavior and products of a paywall (Objective-C compatible).
@@ -146,6 +157,7 @@ public final class PaywallOverrides: NSObject, Sendable {
       cornerRadius: drawerCornerRadius
     )
     self.featureGatingBehavior = nil
+    self.checkoutOnly = false
   }
 
   /// Internal init used for overriding the feature gating behavior for implicitly triggered paywalls.
@@ -156,6 +168,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self._drawerHeight = nil
     self._drawerCornerRadius = nil
     self.featureGatingBehavior = featureGatingBehavior
+    self.checkoutOnly = false
   }
 
   /// Override the default behavior and products of a paywall.
@@ -186,6 +199,7 @@ public final class PaywallOverrides: NSObject, Sendable {
     self._drawerHeight = nil
     self._drawerCornerRadius = nil
     self.featureGatingBehavior = nil
+    self.checkoutOnly = false
   }
 }
 
