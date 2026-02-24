@@ -280,3 +280,11 @@ enum AppTransactionIdSent: Storable {
   static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = Bool
 }
+
+enum LastApiKey: Storable {
+  static var key: String {
+    "store.lastApiKey"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
+}

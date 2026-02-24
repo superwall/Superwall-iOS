@@ -71,6 +71,36 @@ struct ConfigManagerTests {
     #expect(config == newConfig)
   }
 
+  @Test
+  @available(iOS 14.0, *)
+  func configWithPrioritizedCampaignIdEncodedCorrectly() async {
+    let dependencyContainer = DependencyContainer()
+
+    let paywall = Paywall.stub()
+      .setting(\.products, to: [.init(name: "abc", type: .appStore(.init(id: "abc")), id: "abc", entitlements: [.stub()])])
+    var config: Config = Config(
+      buildId: "buildId",
+      triggers: [
+        .init(
+          placementName: "event",
+          audiences: [.stub()]
+        )
+      ],
+      paywalls: [paywall],
+      logLevel: 2,
+      locales: ["fr"],
+      appSessionTimeout: 2202,
+      featureFlags: .stub(),
+      preloadingDisabled: .stub(),
+      attribution: .init(appleSearchAds: .init(enabled: true)),
+      products: paywall.products
+    )
+    config.prioritizedCampaignId = "42"
+    dependencyContainer.storage.save(config, forType: LatestConfig.self)
+    let newConfig = dependencyContainer.storage.get(LatestConfig.self)
+    #expect(config == newConfig)
+  }
+
   // MARK: - Confirm Assignments
   @Test
   func confirmAssignment() async {

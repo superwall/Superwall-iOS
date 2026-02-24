@@ -214,6 +214,7 @@
 		68FF8D03BAD0F2BE33B9C976 /* ProductPurchaserSK1Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618BF4D10B7D87FAF8FB48CD /* ProductPurchaserSK1Tests.swift */; };
 		698646693937FE5DFD307EE9 /* TestModeModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C8FD734F57A50B6EAFBF833 /* TestModeModalViewController.swift */; };
 		69D24C6E0411E512FECF7258 /* Attribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B42460730F1CDB856A35CFA /* Attribution.swift */; };
+		69F7D9CC12CBC367735DE213 /* PaywallPreloadingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D570217FF965FF087585931C /* PaywallPreloadingTests.swift */; };
 		6B01DA1FF5FE0240089DEB36 /* StoreTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE7B78DEECD91AFD89B39F9D /* StoreTransaction.swift */; };
 		6BA614F410A95F36CBA42F93 /* EntitlementProcessorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3DAD767490972EA30257F9 /* EntitlementProcessorTests.swift */; };
 		6C752C1F0F303B77FB243D10 /* LocalFileSchemeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7A8FDBB0F8D450288C3FEA0 /* LocalFileSchemeHandlerTests.swift */; };
@@ -1053,6 +1054,7 @@
 		D449672964023589DA5535E3 /* String+MD5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+MD5.swift"; sourceTree = "<group>"; };
 		D4F676D3A0F5B540052D36B1 /* PublicGetPresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicGetPresentationResult.swift; sourceTree = "<group>"; };
 		D561728FDB68F572D5E33223 /* PermissionsHandler+Contacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionsHandler+Contacts.swift"; sourceTree = "<group>"; };
+		D570217FF965FF087585931C /* PaywallPreloadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPreloadingTests.swift; sourceTree = "<group>"; };
 		D5BF66C3986E287B7B2F5E27 /* SKProductSubscriptionPeriodMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SKProductSubscriptionPeriodMock.swift; sourceTree = "<group>"; };
 		D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyShowCondition.swift; sourceTree = "<group>"; };
 		D6340ACDA40937ACAC66FA3D /* EntitlementPriorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementPriorityTests.swift; sourceTree = "<group>"; };
@@ -2759,6 +2761,7 @@
 		D2F0473222CAED185C710736 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				D570217FF965FF087585931C /* PaywallPreloadingTests.swift */,
 				655E5AE73EF5723A28D2EADD /* SurveyTests.swift */,
 			);
 			path = Models;
@@ -3209,6 +3212,7 @@
 				C5A1C6E1DB61246348A88768 /* PaywallManagerMock.swift in Sources */,
 				A138759EEB6B669C19FB5AFF /* PaywallMessageHandlerDelegateMock.swift in Sources */,
 				E0DA50D9E75BADFBBABB8768 /* PaywallMessageHandlerTests.swift in Sources */,
+				69F7D9CC12CBC367735DE213 /* PaywallPreloadingTests.swift in Sources */,
 				DB7858A959C145FA32F6C9EC /* PaywallPresentationInfoTests.swift in Sources */,
 				702CEF940451FCB4AF354D90 /* PaywallPresentationStyleTests.swift in Sources */,
 				4B0E203D477E48611797047C /* PaywallViewControllerCacheTests.swift in Sources */,

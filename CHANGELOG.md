@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds support for "Test Mode", which allows you to simulate in-app purchases without involving StoreKit. Test Mode can be enabled through the Superwall dashboard by marking specific users as test store users, or activates automatically when a bundle ID mismatch is detected. When active, a configuration modal lets you select starting entitlements and override free trial availability. Purchases are simulated with a UI that lets users complete, abandon, or fail transactions, with all purchase events firing normally for end-to-end paywall testing.
+- Adds prioritized campaign preloading. When a campaign is marked as prioritized in the dashboard, its paywalls are preloaded before all others.
 - Adds Stripe checkout message handling for `stripe_checkout_start`, `stripe_checkout_submit`, `stripe_checkout_complete`, `stripe_checkout_fail`, and `stripe_checkout_abandon`.
 - Adds SDK-side analytics tracking for Stripe checkout lifecycle events (`start`, `submit`, `complete`, `fail`) with `store` and `product_identifier` payload fields.
 
@@ -21,6 +22,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for local images and videos in paywalls.
 - Schedules trial notifications after purchasing Stripe products.
+- Adds ability to group placements into preloading stages.
 
 ### Fixes
 

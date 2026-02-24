@@ -105,7 +105,22 @@ class Storage {
 
   func configure(apiKey: String) {
     updateSdkVersion()
+    clearCachesIfApiKeyChanged(newApiKey: apiKey)
     self.apiKey = apiKey
+  }
+
+  private func clearCachesIfApiKeyChanged(newApiKey: String) {
+    let previousApiKey = cache.read(LastApiKey.self)
+
+    if let previousApiKey, previousApiKey != newApiKey {
+      cache.delete(LatestConfig.self)
+      cache.delete(LatestEnrichment.self)
+      cache.delete(IsTestModeActiveSubscription.self)
+    }
+
+    if previousApiKey != newApiKey {
+      cache.write(newApiKey, forType: LastApiKey.self)
+    }
   }
 
   private func migrateData() {

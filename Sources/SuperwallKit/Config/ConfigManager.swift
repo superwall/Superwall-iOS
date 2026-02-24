@@ -534,7 +534,7 @@ class ConfigManager {
   }
 
   // MARK: - Preloading Paywalls
-  private func getTreatmentPaywallIds(from triggers: Set<Trigger>) -> Set<String> {
+  private func getTreatmentPaywallIds(from triggers: Set<Trigger>) async -> Set<String> {
     guard let config = configState.value.getConfig() else {
       return []
     }
@@ -546,9 +546,10 @@ class ConfigManager {
       return []
     }
     let assignments = storage.getAssignments()
-    return ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: preloadableTriggers,
-      assignments: assignments
+    return await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: preloadableTriggers,
+      assignments: assignments,
+      expressionEvaluator: expressionEvaluator
     )
   }
 
@@ -578,22 +579,32 @@ class ConfigManager {
       else {
         return
       }
-      let triggers = ConfigLogic.filterTriggers(
-        config.triggers,
-        removing: config.preloadingDisabled
-      )
-      let assignments = self.storage.getAssignments()
-      var paywallIds = await ConfigLogic.getAllActiveTreatmentPaywallIds(
-        fromTriggers: triggers,
-        assignments: assignments,
-        expressionEvaluator: expressionEvaluator
-      )
+
+      // If there's a prioritized campaign, preload its paywalls first.
+      if let prioritizedCampaignId = config.prioritizedCampaignId {
+        let prioritizedTriggers = config.triggers.filter { trigger in
+          trigger.audiences.contains { $0.experiment.groupId == prioritizedCampaignId }
+        }
+        if !prioritizedTriggers.isEmpty {
+          var prioritizedIds = await getTreatmentPaywallIds(from: Set(prioritizedTriggers))
+          if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+            prioritizedIds.remove(presentedPaywallId)
+          }
+          await self.preloadPaywalls(withIdentifiers: prioritizedIds)
+
+          // Delay before preloading the rest to avoid contention.
+          try? await Task.sleep(nanoseconds: 5_000_000_000)
+        }
+      }
+
+      // Then preload all remaining paywalls.
+      var paywallIds = await getTreatmentPaywallIds(from: config.triggers)
+
       // Do not preload the presented paywall. This is because if config refreshes, we
       // don't want to refresh the presented paywall until it's dismissed and presented again.
       if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
-
       await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
   }
@@ -609,10 +620,12 @@ class ConfigManager {
       return
     }
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
-    let triggerPaywallIdentifiers = getTreatmentPaywallIds(from: triggersToPreload)
-    await preloadPaywalls(
-      withIdentifiers: triggerPaywallIdentifiers
-    )
+    var paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
+    // Do not preload the presented paywall.
+    if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
+      paywallIds.remove(presentedPaywallId)
+    }
+    await preloadPaywalls(withIdentifiers: paywallIds)
   }
 
   /// Preloads paywalls referenced by triggers.

@@ -829,7 +829,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -866,7 +866,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -906,7 +906,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .noMatch(.stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -945,8 +945,8 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(.stub()))
 
-
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -995,7 +995,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1028,7 +1028,7 @@ struct ConfigLogicTests {
     ])
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1071,7 +1071,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1134,7 +1134,7 @@ struct ConfigLogicTests {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
@@ -1143,7 +1143,7 @@ struct ConfigLogicTests {
   }
 
   // MARK: - getActiveTreatmentPaywallIds
-  @Test func getActiveTreatmentPaywallIds() {
+  @Test func test_getActiveTreatmentPaywallIds() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1174,14 +1174,15 @@ struct ConfigLogicTests {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     #expect(ids == [paywallId1])
   }
 
-  @Test func getActiveTreatmentPaywallIds_holdout() {
+  @Test func test_getActiveTreatmentPaywallIds_holdout() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1212,14 +1213,15 @@ struct ConfigLogicTests {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     #expect(ids.isEmpty)
   }
 
-  @Test func getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1250,14 +1252,15 @@ struct ConfigLogicTests {
         isSentToServer: false
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     #expect(ids == [paywallId1])
   }
 
-  @Test func getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1301,9 +1304,10 @@ struct ConfigLogicTests {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
     #expect(ids == [paywallId1])
   }
