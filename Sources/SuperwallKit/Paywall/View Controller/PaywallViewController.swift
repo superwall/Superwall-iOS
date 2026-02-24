@@ -1186,19 +1186,23 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       self.isCheckoutDismissedProgrammatically = false
     }
 
-    checkoutVC.modalPresentationStyle = .pageSheet
-    if #available(iOS 15.0, *) {
-      if let sheet = checkoutVC.sheetPresentationController {
-        sheet.detents = [.medium(), .large()]
-        sheet.prefersGrabberVisible = true
-        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
-        sheet.prefersEdgeAttachedInCompactHeight = true
-        sheet.preferredCornerRadius = 62
+    if isCheckoutOnlyMode {
+      checkoutVC.modalPresentationStyle = .overFullScreen
+    } else {
+      checkoutVC.modalPresentationStyle = .pageSheet
+      if #available(iOS 15.0, *) {
+        if let sheet = checkoutVC.sheetPresentationController {
+          sheet.detents = [.medium(), .large()]
+          sheet.prefersGrabberVisible = true
+          // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+          sheet.prefersEdgeAttachedInCompactHeight = true
+          sheet.preferredCornerRadius = 62
+        }
       }
     }
     self.isSafariVCPresented = true
     loadingState = .loadingPurchase
-    present(checkoutVC, animated: true)
+    present(checkoutVC, animated: !isCheckoutOnlyMode)
     #endif
   }
 
