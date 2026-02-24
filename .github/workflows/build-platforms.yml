@@ -14,18 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-visionos:
-    runs-on: macos-26
-
-    steps:
-      - name: Git Checkout
-        uses: actions/checkout@v3
-      - name: xcodegen
-        uses: xavierLowmiller/xcodegen-action@1.2.3
-      - name: Build visionOS
-        run: |
-          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -sdk xrsimulator build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" ARCHS=arm64 ONLY_ACTIVE_ARCH=YES EXCLUDED_ARCHS=x86_64
-
   build-maccatalyst:
     runs-on: macos-26
 
