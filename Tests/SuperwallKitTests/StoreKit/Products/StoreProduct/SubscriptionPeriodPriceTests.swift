@@ -75,7 +75,7 @@ struct SubscriptionPeriodPriceTests {
     let period = SubscriptionPeriod(value: 1, unit: .year)
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(99.99))
 
-    // 99.99 / 52 = 1.923... rounds to 1.92
+    // 99.99 / 52 = 1.923... rounds down to 1.92
     #expect(weeklyPrice == Decimal(string: "1.92"))
   }
 

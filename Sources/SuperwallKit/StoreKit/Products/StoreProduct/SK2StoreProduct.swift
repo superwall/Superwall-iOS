@@ -292,7 +292,7 @@ struct SK2StoreProduct: StoreProductType {
 
     switch subscriptionPeriod.unit {
     case .year:
-      periods = Decimal(52 * numberOfUnits)
+      periods = Decimal(365) / Decimal(7) * Decimal(numberOfUnits)
     case .month:
       periods = Decimal(52) / Decimal(12) * Decimal(numberOfUnits)
     case .week:
