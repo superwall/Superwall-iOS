@@ -331,7 +331,7 @@ struct StripeProductType: StoreProductType {
     var periods: Decimal = 1.0
 
     if subscriptionPeriod.unit == .year {
-      periods = Decimal(365) / Decimal(7) * Decimal(numberOfUnits)
+      periods = Decimal(52 * numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .month {
