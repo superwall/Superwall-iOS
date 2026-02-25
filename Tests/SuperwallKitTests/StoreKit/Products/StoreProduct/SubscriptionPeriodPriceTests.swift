@@ -30,12 +30,12 @@ struct SubscriptionPeriodPriceTests {
 
   @Test("Daily price for monthly subscription")
   func testDailyPriceForMonthlySubscription() {
-    // $9.99/month should be ~$0.33/day (9.99 / 30)
+    // $9.99/month should be ~$0.32/day ((9.99 * 12) / 365)
     let period = SubscriptionPeriod(value: 1, unit: .month)
     let dailyPrice = period.pricePerDay(withTotalPrice: Decimal(9.99))
 
-    // 9.99 / 30 = 0.333 rounds down to 0.33
-    #expect(dailyPrice == Decimal(string: "0.33"))
+    // (9.99 * 12) / 365 = 0.328... rounds down to 0.32
+    #expect(dailyPrice == Decimal(string: "0.32"))
   }
 
   @Test("Daily price for weekly subscription")
@@ -44,7 +44,7 @@ struct SubscriptionPeriodPriceTests {
     let period = SubscriptionPeriod(value: 1, unit: .week)
     let dailyPrice = period.pricePerDay(withTotalPrice: Decimal(4.99))
 
-    // 4.99 / 7 = 0.712... rounds down to 0.71
+    // 4.99 / (365/52) = 0.710... rounds down to 0.71
     #expect(dailyPrice == Decimal(string: "0.71"))
   }
 
@@ -63,7 +63,7 @@ struct SubscriptionPeriodPriceTests {
     let period = SubscriptionPeriod(value: 3, unit: .month)
     let dailyPrice = period.pricePerDay(withTotalPrice: Decimal(24.99))
 
-    // 24.99 / 90 = 0.2776... rounds down to 0.27
+    // 24.99 / 91.25 = 0.2738... rounds down to 0.27
     #expect(dailyPrice == Decimal(string: "0.27"))
   }
 
@@ -71,22 +71,43 @@ struct SubscriptionPeriodPriceTests {
 
   @Test("Weekly price for yearly subscription")
   func testWeeklyPriceForYearlySubscription() {
-    // $99.99/year should be ~$1.92/week (99.99 / 52)
+    // $99.99/year should be ~$1.91/week (99.99 / (365/7))
     let period = SubscriptionPeriod(value: 1, unit: .year)
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(99.99))
 
-    // 99.99 / 52 = 1.923... rounds down to 1.92
-    #expect(weeklyPrice == Decimal(string: "1.92"))
+    // 99.99 / (365/7) = 1.917... rounds down to 1.91
+    #expect(weeklyPrice == Decimal(string: "1.91"))
+  }
+
+  @Test("Yearly plan weekly and monthly prices match editor rounding")
+  func testYearlyPlanEditorParity() {
+    let period = SubscriptionPeriod(value: 1, unit: .year)
+
+    let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(89.99))
+    let monthlyPrice = period.pricePerMonth(withTotalPrice: Decimal(89.99))
+
+    #expect(weeklyPrice == Decimal(string: "1.72"))
+    #expect(monthlyPrice == Decimal(string: "7.49"))
   }
 
   @Test("Weekly price for monthly subscription")
   func testWeeklyPriceForMonthlySubscription() {
-    // $9.99/month should be ~$2.49/week (9.99 / 4)
+    // $9.99/month should be ~$2.30/week ((9.99 * 12) / 52)
     let period = SubscriptionPeriod(value: 1, unit: .month)
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(9.99))
 
-    // 9.99 / 4 = 2.4975 rounds down to 2.49
-    #expect(weeklyPrice == Decimal(string: "2.49"))
+    // (9.99 * 12) / 52 = 2.305... rounds down to 2.30
+    #expect(weeklyPrice == Decimal(string: "2.30"))
+  }
+
+  @Test("Weekly price annualizes monthly products before dividing by 52")
+  func testWeeklyPriceAnnualizedFromMonthlySubscription() {
+    // $29.99/month should be ~$6.92/week ((29.99 * 12) / 52)
+    let period = SubscriptionPeriod(value: 1, unit: .month)
+    let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(29.99))
+
+    // (29.99 * 12) / 52 = 6.920... rounds down to 6.92
+    #expect(weeklyPrice == Decimal(string: "6.92"))
   }
 
   @Test("Weekly price for weekly subscription")
