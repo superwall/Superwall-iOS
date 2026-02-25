@@ -251,6 +251,11 @@ struct SK2StoreProduct: StoreProductType {
     return "\(periodDays)"
   }
 
+  private func roundedPrice(_ amount: Decimal) -> Decimal {
+    (amount as NSDecimalNumber)
+      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
+  }
+
   var dailyPrice: String {
     guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
       return "n/a"
@@ -264,16 +269,16 @@ struct SK2StoreProduct: StoreProductType {
     case .year:
       periods = Decimal(365 * numberOfUnits)
     case .month:
-      periods = Decimal(30 * numberOfUnits)
+      periods = Decimal(365) / Decimal(12) * Decimal(numberOfUnits)
     case .week:
-      periods = Decimal(7 * numberOfUnits)
+      periods = Decimal(365) / Decimal(52) * Decimal(numberOfUnits)
     case .day:
       periods = Decimal(numberOfUnits)
     @unknown default:
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var weeklyPrice: String {
@@ -287,18 +292,18 @@ struct SK2StoreProduct: StoreProductType {
 
     switch subscriptionPeriod.unit {
     case .year:
-      periods = Decimal(52 * numberOfUnits)
+      periods = Decimal(365) / Decimal(7) * Decimal(numberOfUnits)
     case .month:
-      periods = Decimal(4 * numberOfUnits)
+      periods = Decimal(52) / Decimal(12) * Decimal(numberOfUnits)
     case .week:
       periods = Decimal(numberOfUnits)
     case .day:
-      periods = Decimal(numberOfUnits) / Decimal(7)
+      periods = Decimal(numberOfUnits) * Decimal(52) / Decimal(365)
     @unknown default:
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var monthlyPrice: String {
@@ -316,14 +321,14 @@ struct SK2StoreProduct: StoreProductType {
     case .month:
       periods = Decimal(1 * numberOfUnits)
     case .week:
-      periods = Decimal(numberOfUnits) / Decimal(4)
+      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(52)
     case .day:
-      periods = Decimal(numberOfUnits) / Decimal(30)
+      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(365)
     @unknown default:
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var yearlyPrice: String {
@@ -348,7 +353,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var hasFreeTrial: Bool {
