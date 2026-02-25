@@ -139,7 +139,7 @@ extension StoreProductDiscount {
       case .day: return Decimal(52) / Decimal(365)
       case .week: return 1
       case .month: return Decimal(52) / Decimal(12)
-      case .year: return Decimal(365) / Decimal(7)
+      case .year: return 52
       }
     case .month:
       switch subscriptionPeriod.unit {

@@ -71,22 +71,22 @@ struct SubscriptionPeriodPriceTests {
 
   @Test("Weekly price for yearly subscription")
   func testWeeklyPriceForYearlySubscription() {
-    // $99.99/year should be ~$1.91/week (99.99 / (365/7))
+    // $99.99/year should be ~$1.92/week (99.99 / 52)
     let period = SubscriptionPeriod(value: 1, unit: .year)
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(99.99))
 
-    // 99.99 / (365/7) = 1.917... rounds down to 1.91
-    #expect(weeklyPrice == Decimal(string: "1.91"))
+    // 99.99 / 52 = 1.923... rounds to 1.92
+    #expect(weeklyPrice == Decimal(string: "1.92"))
   }
 
-  @Test("Yearly plan weekly and monthly prices match editor rounding")
-  func testYearlyPlanEditorParity() {
+  @Test("Yearly plan weekly and monthly prices use annualized conversion")
+  func testYearlyPlanAnnualizedConversion() {
     let period = SubscriptionPeriod(value: 1, unit: .year)
 
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(89.99))
     let monthlyPrice = period.pricePerMonth(withTotalPrice: Decimal(89.99))
 
-    #expect(weeklyPrice == Decimal(string: "1.72"))
+    #expect(weeklyPrice == Decimal(string: "1.73"))
     #expect(monthlyPrice == Decimal(string: "7.49"))
   }
 

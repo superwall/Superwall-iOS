@@ -204,7 +204,7 @@ struct TestStoreProduct: StoreProductType {
     case .day: weeks = Decimal(subscriptionValue) * Decimal(52) / Decimal(365)
     case .week: weeks = Decimal(subscriptionValue)
     case .month: weeks = Decimal(52) / Decimal(12) * Decimal(subscriptionValue)
-    case .year: weeks = Decimal(365) / Decimal(7) * Decimal(subscriptionValue)
+    case .year: weeks = Decimal(52 * subscriptionValue)
     @unknown default: weeks = 1
     }
     let rounded = roundedPrice(price / weeks)
