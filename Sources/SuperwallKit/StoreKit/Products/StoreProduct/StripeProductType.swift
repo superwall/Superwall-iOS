@@ -274,6 +274,11 @@ struct StripeProductType: StoreProductType {
     return "\(periodDays)"
   }
 
+  private func roundedPrice(_ amount: Decimal) -> Decimal {
+    (amount as NSDecimalNumber)
+      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
+  }
+
   var dailyPrice: String {
     if price == 0.00 {
       return "$0.00"
@@ -295,18 +300,19 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .month {
-      periods = Decimal(30 * numberOfUnits)
+      periods = Decimal(365) / Decimal(12) * Decimal(numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .week {
-      periods = Decimal(numberOfUnits) / Decimal(7)
+      periods = Decimal(365) / Decimal(52) * Decimal(numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .day {
       periods = Decimal(numberOfUnits) / Decimal(1)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: inputPrice / periods)) ?? "n/a"
+    let rounded = roundedPrice(inputPrice / periods)
+    return numberFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
   var weeklyPrice: String {
@@ -329,7 +335,7 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .month {
-      periods = Decimal(4 * numberOfUnits)
+      periods = Decimal(52) / Decimal(12) * Decimal(numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .week {
@@ -337,10 +343,11 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .day {
-      periods = Decimal(numberOfUnits) / Decimal(7)
+      periods = Decimal(numberOfUnits) * Decimal(52) / Decimal(365)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: price / periods)) ?? "n/a"
+    let rounded = roundedPrice(price / periods)
+    return numberFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
   var monthlyPrice: String {
@@ -368,14 +375,15 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .week {
-      periods = Decimal(numberOfUnits) / Decimal(4)
+      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(52)
     }
 
     if subscriptionPeriod.unit == .day {
-      periods = Decimal(numberOfUnits) / Decimal(30)
+      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(365)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: price / periods)) ?? "n/a"
+    let rounded = roundedPrice(price / periods)
+    return numberFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
   var yearlyPrice: String {
@@ -410,7 +418,8 @@ struct StripeProductType: StoreProductType {
       periods = Decimal(numberOfUnits) / Decimal(365)
     }
 
-    return numberFormatter.string(from: NSDecimalNumber(decimal: price / periods)) ?? "n/a"
+    let rounded = roundedPrice(price / periods)
+    return numberFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
   var hasFreeTrial: Bool {
