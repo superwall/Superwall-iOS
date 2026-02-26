@@ -2,12 +2,6 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.14.1
-
-### Fixes
-
-- Improved sandbox environment detection by using `AppTransaction.environment` (iOS 16+) instead of relying solely on the receipt URL path. This fixes incorrect `isSandbox` values for apps using Stripe or other non-StoreKit purchase flows, including during App Review.
-
 ## 4.14.0
 
 ### Enhancements
@@ -21,6 +15,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes issue with compiling on Xcode 26.4 beta.
 - Fixes dashboard display of multiple active entitlements.
+- Makes `device.isSandbox` more reliable.
 
 ## 4.13.0
 

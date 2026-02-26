@@ -94,7 +94,7 @@ actor ReceiptManager {
           .unverified(let transaction, _):
           Self.appTransactionId = transaction.appTransactionID
           Self.appId = transaction.appID
-          Self.isSandboxEnvironment = transaction.environment == .sandbox
+          Self.isSandboxEnvironment = transaction.environment == .sandbox || transaction.environment == .xcode
           if Superwall.isInitialized {
             registerAppTransactionIdIfNeeded()
             Superwall.shared.dequeueIntegrationAttributes()
