@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.14.1
 
+### Enhancements
+
+- Localizes all alerts into 41 languages.
+
 ### Fixes
 
 - Makes `device.isSandbox` more reliable.
