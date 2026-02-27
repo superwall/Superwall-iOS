@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "확인";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "웹에서 복원하시겠습니까?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "App Store 구독이 복원되었습니다. 웹에서 추가 구독을 확인하시겠습니까?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "구독을 찾을 수 없음";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "App Store 구독을 찾을 수 없습니다. 웹에서 확인하시겠습니까?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "예";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "취소";

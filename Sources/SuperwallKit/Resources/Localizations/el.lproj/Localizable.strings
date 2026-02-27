@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Επαναφορά μέσω διαδικτύου;";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Οι συνδρομές σας στο App Store επαναφέρθηκαν. Θέλετε να ελέγξετε για περισσότερες στο διαδίκτυο;";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Δεν βρέθηκε συνδρομή";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Δεν βρέθηκε συνδρομή στο App Store. Θέλετε να ελέγξετε στο διαδίκτυο;";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ναι";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Ακύρωση";

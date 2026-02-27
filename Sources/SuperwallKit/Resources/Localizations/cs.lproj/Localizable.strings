@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Obnovit přes web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Vaše předplatné z App Store bylo obnoveno. Chcete zkontrolovat další na webu?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Předplatné nenalezeno";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Nebylo nalezeno žádné předplatné z App Store. Chcete zkontrolovat na webu?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ano";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Zrušit";

@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Khôi phục qua web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Các gói đăng ký App Store của bạn đã được khôi phục. Bạn có muốn kiểm tra thêm trên web không?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Không tìm thấy gói đăng ký";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Không tìm thấy gói đăng ký App Store. Bạn có muốn kiểm tra trên web không?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Có";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Hủy";

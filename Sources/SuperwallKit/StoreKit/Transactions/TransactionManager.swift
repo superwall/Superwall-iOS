@@ -238,21 +238,42 @@ final class TransactionManager {
         } else {
           // Otherwise ask whether they'd like to try restoring from the web.
           let hasEntitlements = !Superwall.shared.entitlements.active.isEmpty
+          let bundle = LocalizationLogic.localizedBundle()
 
-          let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
-          let noSubsText = "No App Store subscription found, would you like to check on the web?"
+          let title = bundle.localizedString(
+            forKey: hasEntitlements ? "restore_web_has_subs_title" : "restore_web_no_subs_title",
+            value: nil,
+            table: nil
+          )
+          let message = bundle.localizedString(
+            forKey: hasEntitlements ? "restore_web_has_subs_message" : "restore_web_no_subs_message",
+            value: nil,
+            table: nil
+          )
+          let actionTitle = bundle.localizedString(
+            forKey: "restore_web_action_yes",
+            value: nil,
+            table: nil
+          )
+          let closeActionTitle = bundle.localizedString(
+            forKey: "restore_web_action_cancel",
+            value: nil,
+            table: nil
+          )
 
           paywallViewController.presentAlert(
-            title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
-            message: hasEntitlements ? hasSubsText : noSubsText,
-            actionTitle: "Yes",
-            closeActionTitle: "Cancel"
-          ) {
-            guard let sharedApplication = UIApplication.sharedApplication else {
-              return
+            title: title,
+            message: message,
+            actionTitle: actionTitle,
+            closeActionTitle: closeActionTitle,
+            // swiftlint:disable:next trailing_closure
+            action: {
+              guard let sharedApplication = UIApplication.sharedApplication else {
+                return
+              }
+              sharedApplication.open(restoreUrl)
             }
-            sharedApplication.open(restoreUrl)
-          }
+          )
           return .webRestore
         }
       }

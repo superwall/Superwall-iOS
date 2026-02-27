@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "حسناً";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "استعادة عبر الويب؟";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "تم استعادة اشتراكات App Store الخاصة بك. هل ترغب في التحقق من المزيد عبر الويب؟";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "لم يتم العثور على اشتراك";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "لم يتم العثور على اشتراك في App Store، هل ترغب في التحقق عبر الويب؟";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "نعم";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "إلغاء";

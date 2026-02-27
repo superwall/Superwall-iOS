@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "V redu";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Obnoviti prek spleta?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Vaše naročnine iz App Store so bile obnovljene. Želite preveriti še na spletu?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Naročnina ni najdena";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Naročnina iz App Store ni bila najdena. Želite preveriti na spletu?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Da";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Prekliči";

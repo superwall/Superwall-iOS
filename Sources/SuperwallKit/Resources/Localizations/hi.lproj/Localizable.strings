@@ -6,3 +6,21 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "ठीक है";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "वेब से पुनर्स्थापित करें?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "आपकी App Store सदस्यताएँ पुनर्स्थापित कर दी गई हैं। क्या आप वेब पर और जाँचना चाहेंगे?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "कोई सदस्यता नहीं मिली";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "App Store पर कोई सदस्यता नहीं मिली, क्या आप वेब पर जाँचना चाहेंगे?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "हाँ";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "रद्द करें";
