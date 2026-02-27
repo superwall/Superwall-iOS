@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Odustani";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Došlo je do pogreške";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Čeka se odobrenje";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Hvala! Ova kupnja čeka odobrenje vašeg roditelja. Molimo pokušajte ponovno nakon što bude odobrena.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gotovo";

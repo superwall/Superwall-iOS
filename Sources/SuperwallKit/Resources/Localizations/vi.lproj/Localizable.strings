@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Hủy";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Đã xảy ra lỗi";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Đang chờ phê duyệt";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Cảm ơn bạn! Giao dịch mua này đang chờ phê duyệt từ phụ huynh của bạn. Vui lòng thử lại sau khi được phê duyệt.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Xong";

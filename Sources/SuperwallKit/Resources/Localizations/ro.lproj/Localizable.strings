@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Anulare";
+
+/* Purchase error alert title */
+"purchase_error_title" = "A apărut o eroare";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Se așteaptă aprobarea";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Mulțumim! Această achiziție așteaptă aprobarea părintelui dvs. Vă rugăm să încercați din nou după aprobare.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gata";

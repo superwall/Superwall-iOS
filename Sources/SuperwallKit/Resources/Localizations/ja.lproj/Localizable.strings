@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "キャンセル";
+
+/* Purchase error alert title */
+"purchase_error_title" = "エラーが発生しました";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "承認待ち";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "ありがとうございます！この購入は保護者の承認待ちです。承認後にもう一度お試しください。";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "完了";

@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Peruuta";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Tapahtui virhe";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Odottaa hyväksyntää";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Kiitos! Tämä ostos odottaa vanhempasi hyväksyntää. Yritä uudelleen, kun se on hyväksytty.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Valmis";

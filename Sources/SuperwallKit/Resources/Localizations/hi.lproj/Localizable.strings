@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "रद्द करें";
+
+/* Purchase error alert title */
+"purchase_error_title" = "एक त्रुटि हुई";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "स्वीकृति की प्रतीक्षा";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "धन्यवाद! यह खरीदारी आपके अभिभावक की स्वीकृति की प्रतीक्षा में है। कृपया स्वीकृति मिलने के बाद पुनः प्रयास करें।";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "पूर्ण";

@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Отмена";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Произошла ошибка";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Ожидание одобрения";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Спасибо! Эта покупка ожидает одобрения вашего родителя. Пожалуйста, попробуйте снова после одобрения.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Готово";

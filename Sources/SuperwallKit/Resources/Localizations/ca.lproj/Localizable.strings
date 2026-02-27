@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Cancel·lar";
+
+/* Purchase error alert title */
+"purchase_error_title" = "S'ha produït un error";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Esperant l'aprovació";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Gràcies! Aquesta compra està pendent d'aprovació del teu pare o mare. Si us plau, torna-ho a provar un cop sigui aprovada.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Fet";

@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Zrušit";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Došlo k chybě";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Čeká se na schválení";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Děkujeme! Tento nákup čeká na schválení od vašeho rodiče. Zkuste to prosím znovu, jakmile bude schválen.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Hotovo";

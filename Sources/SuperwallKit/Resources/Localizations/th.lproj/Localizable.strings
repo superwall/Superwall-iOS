@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "ยกเลิก";
+
+/* Purchase error alert title */
+"purchase_error_title" = "เกิดข้อผิดพลาด";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "รอการอนุมัติ";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "ขอบคุณ! การซื้อนี้อยู่ระหว่างรอการอนุมัติจากผู้ปกครองของคุณ กรุณาลองอีกครั้งหลังจากได้รับการอนุมัติ";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "เสร็จสิ้น";

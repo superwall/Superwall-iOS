@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Annuleren";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Er is een fout opgetreden";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Wachten op goedkeuring";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Bedankt! Deze aankoop wacht op goedkeuring van uw ouder. Probeer het opnieuw zodra deze is goedgekeurd.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gereed";

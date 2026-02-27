@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Batal";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Terjadi kesalahan";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Menunggu Persetujuan";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Terima kasih! Pembelian ini menunggu persetujuan dari orang tua Anda. Silakan coba lagi setelah disetujui.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Selesai";

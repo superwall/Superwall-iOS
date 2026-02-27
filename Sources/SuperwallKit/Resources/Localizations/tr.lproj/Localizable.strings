@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "İptal";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Bir hata oluştu";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Onay Bekleniyor";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Teşekkürler! Bu satın alma ebeveyn onayı bekliyor. Lütfen onaylandıktan sonra tekrar deneyin.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Bitti";

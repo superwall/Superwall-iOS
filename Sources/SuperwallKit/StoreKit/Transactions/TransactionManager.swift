@@ -142,8 +142,13 @@ final class TransactionManager {
         case .observing:
           break
         case .purchasing(let purchaseSource):
+          let bundle = LocalizationLogic.localizedBundle()
           await presentAlert(
-            title: "An error occurred",
+            title: bundle.localizedString(
+              forKey: "purchase_error_title",
+              value: nil,
+              table: nil
+            ),
             message: error.safeLocalizedDescription,
             source: purchaseSource.toGenericSource()
           )
@@ -878,10 +883,18 @@ final class TransactionManager {
       await Superwall.shared.track(trackedEvent)
     }
 
+    let bundle = LocalizationLogic.localizedBundle()
     await presentAlert(
-      title: "Waiting for Approval",
-      message:
-        "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
+      title: bundle.localizedString(
+        forKey: "purchase_pending_title",
+        value: nil,
+        table: nil
+      ),
+      message: bundle.localizedString(
+        forKey: "purchase_pending_message",
+        value: nil,
+        table: nil
+      ),
       source: source.toGenericSource()
     )
   }
@@ -892,12 +905,17 @@ final class TransactionManager {
     closeActionTitle: String? = nil,
     source: GenericSource
   ) async {
+    let resolvedCloseTitle = closeActionTitle ?? LocalizationLogic.localizedBundle().localizedString(
+      forKey: "alert_action_done",
+      value: nil,
+      table: nil
+    )
     switch source {
     case .internal(let paywallViewController):
       await paywallViewController.presentAlert(
         title: title,
         message: message,
-        closeActionTitle: closeActionTitle ?? "Done"
+        closeActionTitle: resolvedCloseTitle
       )
     case .external:
       guard let topMostViewController = await UIViewController.topMostViewController else {
@@ -912,7 +930,7 @@ final class TransactionManager {
       let alertController = await AlertControllerFactory.make(
         title: title,
         message: message,
-        closeActionTitle: closeActionTitle ?? "Done",
+        closeActionTitle: resolvedCloseTitle,
         sourceView: topMostViewController.view
       )
       await topMostViewController.present(alertController, animated: true)

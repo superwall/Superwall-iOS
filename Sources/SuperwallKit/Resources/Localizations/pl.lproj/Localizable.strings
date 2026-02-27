@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Anuluj";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Wystąpił błąd";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Oczekiwanie na zatwierdzenie";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Dziękujemy! Ten zakup oczekuje na zatwierdzenie przez rodzica. Spróbuj ponownie po zatwierdzeniu.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gotowe";

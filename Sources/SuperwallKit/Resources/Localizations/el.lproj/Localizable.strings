@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Ακύρωση";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Παρουσιάστηκε σφάλμα";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Αναμονή για έγκριση";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Ευχαριστούμε! Αυτή η αγορά εκκρεμεί έγκριση από τον γονέα σας. Παρακαλούμε δοκιμάστε ξανά μόλις εγκριθεί.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Τέλος";

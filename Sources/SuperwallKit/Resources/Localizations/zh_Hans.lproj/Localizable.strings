@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "取消";
+
+/* Purchase error alert title */
+"purchase_error_title" = "发生错误";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "等待审批";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "谢谢！此购买正在等待您的家长审批。请在审批通过后重试。";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "完成";

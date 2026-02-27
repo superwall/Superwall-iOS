@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Mégse";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Hiba történt";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Jóváhagyásra vár";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Köszönjük! Ez a vásárlás szülői jóváhagyásra vár. Kérjük, próbálja újra, miután jóváhagyták.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Kész";

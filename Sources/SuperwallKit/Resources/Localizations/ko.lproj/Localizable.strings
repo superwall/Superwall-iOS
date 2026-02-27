@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "취소";
+
+/* Purchase error alert title */
+"purchase_error_title" = "오류가 발생했습니다";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "승인 대기 중";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "감사합니다! 이 구매는 보호자의 승인을 기다리고 있습니다. 승인 후 다시 시도해 주세요.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "완료";

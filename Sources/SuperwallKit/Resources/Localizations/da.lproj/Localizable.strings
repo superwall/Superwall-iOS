@@ -24,3 +24,15 @@
 
 /* Web restore alert – cancel action */
 "restore_web_action_cancel" = "Annuller";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Der opstod en fejl";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Afventer godkendelse";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Tak! Dette køb afventer godkendelse fra din forælder. Prøv venligst igen, når det er godkendt.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Færdig";
