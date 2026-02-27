@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Pulihkan melalui web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Langganan App Store anda telah dipulihkan. Adakah anda ingin menyemak lagi di web?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Langganan Tidak Ditemui";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Langganan App Store tidak ditemui. Adakah anda ingin menyemak di web?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ya";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Batal";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Ralat berlaku";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Menunggu Kelulusan";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Terima kasih! Pembelian ini sedang menunggu kelulusan daripada ibu bapa anda. Sila cuba lagi selepas ia diluluskan.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Selesai";

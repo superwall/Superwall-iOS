@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.14.1
+
+### Enhancements
+
+- Localizes all alerts into 41 languages.
+
+### Fixes
+
+- Makes `device.isSandbox` more reliable.
+- Fixes the web restore alert not showing the "Yes" action button and "Cancel" incorrectly triggering the restore action.
+
 ## 4.14.0
 
 ### Enhancements
@@ -15,7 +26,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes issue with compiling on Xcode 26.4 beta.
 - Fixes dashboard display of multiple active entitlements.
-- Makes `device.isSandbox` more reliable.
 
 ## 4.13.0
 

@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "ตกลง";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "กู้คืนผ่านเว็บ?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "การสมัครสมาชิก App Store ของคุณถูกกู้คืนแล้ว คุณต้องการตรวจสอบเพิ่มเติมบนเว็บหรือไม่?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "ไม่พบการสมัครสมาชิก";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "ไม่พบการสมัครสมาชิก App Store คุณต้องการตรวจสอบบนเว็บหรือไม่?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "ใช่";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "ยกเลิก";
+
+/* Purchase error alert title */
+"purchase_error_title" = "เกิดข้อผิดพลาด";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "รอการอนุมัติ";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "ขอบคุณ! การซื้อนี้อยู่ระหว่างรอการอนุมัติจากผู้ปกครองของคุณ กรุณาลองอีกครั้งหลังจากได้รับการอนุมัติ";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "เสร็จสิ้น";

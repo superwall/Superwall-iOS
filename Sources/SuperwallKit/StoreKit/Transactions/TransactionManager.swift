@@ -142,8 +142,13 @@ final class TransactionManager {
         case .observing:
           break
         case .purchasing(let purchaseSource):
+          let bundle = LocalizationLogic.localizedBundle()
           await presentAlert(
-            title: "An error occurred",
+            title: bundle.localizedString(
+              forKey: "purchase_error_title",
+              value: nil,
+              table: nil
+            ),
             message: error.safeLocalizedDescription,
             source: purchaseSource.toGenericSource()
           )
@@ -238,21 +243,42 @@ final class TransactionManager {
         } else {
           // Otherwise ask whether they'd like to try restoring from the web.
           let hasEntitlements = !Superwall.shared.entitlements.active.isEmpty
+          let bundle = LocalizationLogic.localizedBundle()
 
-          let hasSubsText = "Your App Store subscriptions were restored. Would you like to check for more on the web?"
-          let noSubsText = "No App Store subscription found, would you like to check on the web?"
+          let title = bundle.localizedString(
+            forKey: hasEntitlements ? "restore_web_has_subs_title" : "restore_web_no_subs_title",
+            value: nil,
+            table: nil
+          )
+          let message = bundle.localizedString(
+            forKey: hasEntitlements ? "restore_web_has_subs_message" : "restore_web_no_subs_message",
+            value: nil,
+            table: nil
+          )
+          let actionTitle = bundle.localizedString(
+            forKey: "restore_web_action_yes",
+            value: nil,
+            table: nil
+          )
+          let closeActionTitle = bundle.localizedString(
+            forKey: "restore_web_action_cancel",
+            value: nil,
+            table: nil
+          )
 
           paywallViewController.presentAlert(
-            title: hasEntitlements ? "Restore via the web?" : "No Subscription Found",
-            message: hasEntitlements ? hasSubsText : noSubsText,
-            actionTitle: "Yes",
-            closeActionTitle: "Cancel"
-          ) {
-            guard let sharedApplication = UIApplication.sharedApplication else {
-              return
+            title: title,
+            message: message,
+            actionTitle: actionTitle,
+            closeActionTitle: closeActionTitle,
+            // swiftlint:disable:next trailing_closure
+            action: {
+              guard let sharedApplication = UIApplication.sharedApplication else {
+                return
+              }
+              sharedApplication.open(restoreUrl)
             }
-            sharedApplication.open(restoreUrl)
-          }
+          )
           return .webRestore
         }
       }
@@ -857,10 +883,18 @@ final class TransactionManager {
       await Superwall.shared.track(trackedEvent)
     }
 
+    let bundle = LocalizationLogic.localizedBundle()
     await presentAlert(
-      title: "Waiting for Approval",
-      message:
-        "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.",
+      title: bundle.localizedString(
+        forKey: "purchase_pending_title",
+        value: nil,
+        table: nil
+      ),
+      message: bundle.localizedString(
+        forKey: "purchase_pending_message",
+        value: nil,
+        table: nil
+      ),
       source: source.toGenericSource()
     )
   }
@@ -871,12 +905,17 @@ final class TransactionManager {
     closeActionTitle: String? = nil,
     source: GenericSource
   ) async {
+    let resolvedCloseTitle = closeActionTitle ?? LocalizationLogic.localizedBundle().localizedString(
+      forKey: "alert_action_done",
+      value: nil,
+      table: nil
+    )
     switch source {
     case .internal(let paywallViewController):
       await paywallViewController.presentAlert(
         title: title,
         message: message,
-        closeActionTitle: closeActionTitle ?? "Done"
+        closeActionTitle: resolvedCloseTitle
       )
     case .external:
       guard let topMostViewController = await UIViewController.topMostViewController else {
@@ -891,7 +930,7 @@ final class TransactionManager {
       let alertController = await AlertControllerFactory.make(
         title: title,
         message: message,
-        closeActionTitle: closeActionTitle ?? "Done",
+        closeActionTitle: resolvedCloseTitle,
         sourceView: topMostViewController.view
       )
       await topMostViewController.present(alertController, animated: true)
