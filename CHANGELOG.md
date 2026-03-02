@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Makes `device.isSandbox` more reliable.
 - Fixes the web restore alert not showing the "Yes" action button and "Cancel" incorrectly triggering the restore action.
+- Fixes a rare issue where a user's subscription could remain active after a refund, preventing paywalls from being shown.
 
 ## 4.14.0
 
