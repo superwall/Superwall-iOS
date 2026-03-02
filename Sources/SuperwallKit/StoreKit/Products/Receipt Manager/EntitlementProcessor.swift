@@ -394,13 +394,11 @@ enum EntitlementProcessor {
         if let entitlements = finalEntitlementsByProductId[productId] {
           var updatedEntitlements: Set<Entitlement> = []
           for entitlement in entitlements where entitlement.id == entitlementId {
-            // Revoked: authoritative override required. Apple may not set
-            // revocationDate on every transaction under the same
-            // originalTransactionId, so the first pass can incorrectly
-            // return isActive = true for a refunded subscription.
-            //
-            // Expired: redundant but defensive — the first pass already
-            // computes isActive = false when expirationDate <= now.
+            // The subscription-level state from subscriptionStatus is
+            // authoritative. The first pass may incorrectly compute
+            // isActive = true when Transaction.all contains a transaction
+            // without revocationDate or with a future expirationDate, even
+            // though the subscription as a whole is revoked or expired.
             let resolvedIsActive: Bool
             if state == .revoked || state == .expired {
               resolvedIsActive = false
