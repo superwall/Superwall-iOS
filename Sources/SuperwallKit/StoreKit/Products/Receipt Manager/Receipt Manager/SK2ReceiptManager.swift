@@ -169,7 +169,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
     for purchase in purchases {
       let productEntitlements = entitlementsByProductId[purchase.id] ?? []
       let allRevokedOrExpired = !productEntitlements.isEmpty && productEntitlements.allSatisfy {
-        $0.state == .revoked || $0.state == .expired
+        !$0.isActive
       }
       if allRevokedOrExpired && purchase.isActive {
         correctedPurchases.insert(
