@@ -394,10 +394,23 @@ enum EntitlementProcessor {
         if let entitlements = finalEntitlementsByProductId[productId] {
           var updatedEntitlements: Set<Entitlement> = []
           for entitlement in entitlements where entitlement.id == entitlementId {
+            // If the subscription-level state is revoked or expired, override
+            // isActive to false. The subscription status from StoreKit is the
+            // authoritative source — individual transactions in Transaction.all
+            // may not have revocationDate set even though the subscription as a
+            // whole has been revoked (e.g. refund applied to a different
+            // transaction under the same originalTransactionId).
+            let resolvedIsActive: Bool
+            if state == .revoked || state == .expired {
+              resolvedIsActive = false
+            } else {
+              resolvedIsActive = entitlement.isActive
+            }
+
             let updatedEntitlement = Entitlement(
               id: entitlement.id,
               type: entitlement.type,
-              isActive: entitlement.isActive,
+              isActive: resolvedIsActive,
               productIds: entitlement.productIds,
               latestProductId: entitlement.latestProductId,
               store: entitlement.store,
