@@ -394,12 +394,13 @@ enum EntitlementProcessor {
         if let entitlements = finalEntitlementsByProductId[productId] {
           var updatedEntitlements: Set<Entitlement> = []
           for entitlement in entitlements where entitlement.id == entitlementId {
-            // If the subscription-level state is revoked or expired, override
-            // isActive to false. The subscription status from StoreKit is the
-            // authoritative source — individual transactions in Transaction.all
-            // may not have revocationDate set even though the subscription as a
-            // whole has been revoked (e.g. refund applied to a different
-            // transaction under the same originalTransactionId).
+            // Revoked: authoritative override required. Apple may not set
+            // revocationDate on every transaction under the same
+            // originalTransactionId, so the first pass can incorrectly
+            // return isActive = true for a refunded subscription.
+            //
+            // Expired: redundant but defensive — the first pass already
+            // computes isActive = false when expirationDate <= now.
             let resolvedIsActive: Bool
             if state == .revoked || state == .expired {
               resolvedIsActive = false
