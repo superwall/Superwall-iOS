@@ -71,6 +71,11 @@ extension PaywallRequestManager {
             guard product.hasFreeTrial else {
               return false
             }
+            // Stripe products don't have StoreKit subscription groups,
+            // so check entitlement history instead.
+            if product.product is StripeProductType {
+              return await !self.hasEverHadEntitlement(for: product)
+            }
             let hasActiveIntro = await self.hasActiveIntroOffer(
               inSubscriptionGroup: product.subscriptionGroupIdentifier
             )
@@ -78,6 +83,10 @@ extension PaywallRequestManager {
           case .ineligible:
             return false
           case .automatic:
+            if product.product is StripeProductType {
+              guard product.hasFreeTrial else { return false }
+              return await !self.hasEverHadEntitlement(for: product)
+            }
             return await self.factory.isFreeTrialAvailable(for: product)
           }
         }
@@ -191,5 +200,31 @@ extension PaywallRequestManager {
         subscription.subscriptionGroupId == subscriptionGroupId &&
         subscription.offerType == .trial
     }
+  }
+
+  /// Checks if the user has ever had any of the entitlements associated with the given product.
+  ///
+  /// This uses entitlement data from `customerInfo` which includes both active and inactive
+  /// entitlements. Config-only entitlements (never purchased) have `latestProductId == nil`,
+  /// while entitlements from actual transactions/redemptions have a non-nil `latestProductId`.
+  /// Manually granted Superwall entitlements have `store == .superwall` without a product ID.
+  /// Used for Stripe products where StoreKit subscription group checks don't apply.
+  private func hasEverHadEntitlement(for product: StoreProduct) async -> Bool {
+    let productEntitlementIds = Set(product.entitlements.map { $0.id })
+    guard !productEntitlementIds.isEmpty else {
+      return false
+    }
+    let entitlements = await MainActor.run {
+      Superwall.shared.customerInfo.entitlements
+    }
+    // Only consider entitlements with actual transaction history.
+    // EntitlementProcessor adds config entitlements as placeholders with
+    // latestProductId == nil when there are no transactions for them.
+    let userEntitlementIds = Set(
+      entitlements
+        .filter { $0.latestProductId != nil || $0.store == .superwall }
+        .map { $0.id }
+    )
+    return !productEntitlementIds.isDisjoint(with: userEntitlementIds)
   }
 }
