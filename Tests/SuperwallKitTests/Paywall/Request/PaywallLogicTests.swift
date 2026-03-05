@@ -134,29 +134,20 @@ struct PaywallLogicTests {
     #expect(hash == "\(eventName)_\(locale)_abc")
   }
 
-  // MARK: - getVariablesAndFreeTrial
+  // MARK: - getProductVariables
   @Test
-  func getVariablesAndFreeTrial_noProducts() async {
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+  func getProductVariables_noProducts() {
+    let response = PaywallLogic.getProductVariables(
       productItems: [],
-      productsById: [:],
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: [:]
     )
 
-    let expectation = ProductProcessingOutcome(
-      productVariables: [],
-      swProducts: [],
-      isFreeTrialAvailable: false
-    )
-
-    #expect(response.isFreeTrialAvailable == expectation.isFreeTrialAvailable)
     #expect(response.productVariables.isEmpty)
     #expect(response.swProducts.isEmpty)
   }
 
   @Test
-  func getVariablesAndFreeTrial_productNotFound() async {
+  func getProductVariables_productNotFound() {
     let productId = "id1"
     let products = [Product(
       name: "primary",
@@ -172,26 +163,17 @@ struct PaywallLogicTests {
     )
     let productsById = [skProductId: StoreProduct(sk1Product: skProduct, entitlements: [])]
 
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: productsById
     )
 
-    let expectation = ProductProcessingOutcome(
-      productVariables: [],
-      swProducts: [],
-      isFreeTrialAvailable: false
-    )
-
-    #expect(response.isFreeTrialAvailable == expectation.isFreeTrialAvailable)
     #expect(response.productVariables.isEmpty)
     #expect(response.swProducts.isEmpty)
   }
 
   @Test
-  func getVariablesAndFreeTrial_secondaryProduct() async {
+  func getProductVariables_secondaryProduct() {
     // Given
     let productId = "id1"
     let products = [Product(
@@ -212,27 +194,23 @@ struct PaywallLogicTests {
     let productsById = [productId: product]
 
     // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: productsById
     )
 
     // Then
-
     let expectedProductVariables = [ProductVariable(
       name: "secondary",
       attributes: product.attributesJson,
       id: productId,
       hasIntroOffer: false
     )]
-    #expect(!response.isFreeTrialAvailable)
     #expect(response.productVariables == expectedProductVariables)
   }
 
   @Test
-  func getVariablesAndFreeTrial_primaryProductHasPurchased_noOverride() async {
+  func getProductVariables_primaryProductWithIntroOffer() {
     // Given
     let productId = "id1"
     let products = [Product(
@@ -256,15 +234,10 @@ struct PaywallLogicTests {
     )
     let productsById = [productId: product]
 
-
     // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in
-        return false
-      }
+      productsById: productsById
     )
 
     // Then
@@ -274,99 +247,6 @@ struct PaywallLogicTests {
       id: productId,
       hasIntroOffer: true
     )]
-
-    #expect(!response.isFreeTrialAvailable)
-    #expect(response.productVariables == expectedProductVariables)
-  }
-
-  @Test
-  func getVariablesAndFreeTrial_primaryProductHasntPurchased_noOverride() async {
-    // Given
-    let productId = "id1"
-    let products = [Product(
-      name: "primary",
-      type: .appStore(.init(id: productId)),
-      id: productId,
-      entitlements: []
-    )]
-    let mockIntroPeriod = MockIntroductoryPeriod(
-      testSubscriptionPeriod: MockSubscriptionPeriod()
-    )
-    let product = StoreProduct(
-      sk1Product:
-        MockSkProduct(
-          productIdentifier: productId,
-          introPeriod: mockIntroPeriod,
-          price: 1.99
-        ),
-      entitlements: []
-    )
-    let productsById = [productId: product]
-
-    // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in
-        return true
-      }
-    )
-
-    // Then
-    let expectedVariables = [ProductVariable(
-      name: "primary",
-      attributes: product.attributesJson,
-      id: productId,
-      hasIntroOffer: true
-    )]
-
-    #expect(response.isFreeTrialAvailable)
-    #expect(response.productVariables == expectedVariables)
-  }
-
-  @Test
-  func getVariablesAndFreeTrial_primaryProductHasPurchased_withOverride() async {
-    // Given
-    let productId = "id1"
-    let products = [Product(
-      name: "primary",
-      type: .appStore(.init(id: productId)),
-      id: productId,
-      entitlements: []
-    )]
-    let mockIntroPeriod = MockIntroductoryPeriod(
-      testSubscriptionPeriod: MockSubscriptionPeriod()
-    )
-    let product = StoreProduct(
-      sk1Product:
-        MockSkProduct(
-          productIdentifier: productId,
-          introPeriod: mockIntroPeriod,
-          price: 1.99
-        ),
-      entitlements: []
-    )
-    let productsById = [productId: product]
-
-    // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: true,
-      isFreeTrialAvailable: { _ in
-        return false
-      }
-    )
-
-    // Then
-    let expectedProductVariables = [ProductVariable(
-      name: "primary",
-      attributes: product.attributesJson,
-      id: productId,
-      hasIntroOffer: true
-    )]
-    #expect(response.isFreeTrialAvailable)
     #expect(response.productVariables == expectedProductVariables)
   }
 }

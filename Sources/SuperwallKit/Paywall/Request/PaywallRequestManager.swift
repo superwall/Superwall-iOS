@@ -70,13 +70,13 @@ actor PaywallRequestManager {
 
     if var paywall = paywallsByHash[requestHash],
       !request.isDebuggerLaunched {
-      paywall = updatePaywall(paywall, for: request)
+      paywall = await updatePaywall(paywall, for: request)
       return paywall
     }
 
     if let existingTask = activeTasks[requestHash] {
       var paywall = try await existingTask.value
-      paywall = updatePaywall(paywall, for: request)
+      paywall = await updatePaywall(paywall, for: request)
       return paywall
     }
 
@@ -100,7 +100,7 @@ actor PaywallRequestManager {
     activeTasks[requestHash] = task
 
     var paywall = try await task.value
-    paywall = updatePaywall(paywall, for: request)
+    paywall = await updatePaywall(paywall, for: request)
 
     return paywall
   }
@@ -108,13 +108,14 @@ actor PaywallRequestManager {
   private func updatePaywall(
     _ paywall: Paywall,
     for request: PaywallRequest
-  ) -> Paywall {
+  ) async -> Paywall {
     var paywall = paywall
     paywall.experiment = request.responseIdentifiers.experiment
     paywall.presentationSourceType = request.presentationSourceType
     if let featureGating = request.overrides.featureGatingBehavior {
       paywall.featureGating = featureGating
     }
+    paywall = await refreshFreeTrialAvailability(for: paywall, request: request)
     return paywall
   }
 

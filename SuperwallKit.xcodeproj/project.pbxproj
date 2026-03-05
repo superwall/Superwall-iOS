@@ -191,6 +191,7 @@
 		5DDABDA8ECE4A96BDFCEF4B0 /* ArchivalManifestDownloaded.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0895B5C0A26AA7FD3C0178 /* ArchivalManifestDownloaded.swift */; };
 		5DE5CE789559545FF1A8AD12 /* AppStoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18E059F7745769ABCA0F2A99 /* AppStoreProduct.swift */; };
 		5E05FDE4F45BD5B0DF6AFB9F /* ActivityIndicatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFB0A38F634286F61572C51 /* ActivityIndicatorView.swift */; };
+		5E51E14716E29C9B88B8A6F2 /* StripeTrialEligibilityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA72EEA12B281C235816CA44 /* StripeTrialEligibilityTests.swift */; };
 		5EF4EE04BAA930A2CC4379A1 /* RawWebMessageHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC91544C3B7D209A8D51397F /* RawWebMessageHandlerTests.swift */; };
 		5F1F480AA12C8D17B179D96B /* PaywallViewControllerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = A453816DBA43C08410D12DE6 /* PaywallViewControllerMock.swift */; };
 		5FB78EB52A12BA704AD3AE31 /* EventsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEFDA9310B29A0C918D7A292 /* EventsResponse.swift */; };
@@ -1097,6 +1098,7 @@
 		E7F1150DA75C81CB3815F2F4 /* ConfigurationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationStatus.swift; sourceTree = "<group>"; };
 		E815C43EB5A02E48B618DD9F /* CheckDebuggerPresentationOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckDebuggerPresentationOperatorTests.swift; sourceTree = "<group>"; };
 		E99E395C17FD374F74AAFF81 /* IntroOfferTokenManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroOfferTokenManager.swift; sourceTree = "<group>"; };
+		EA72EEA12B281C235816CA44 /* StripeTrialEligibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeTrialEligibilityTests.swift; sourceTree = "<group>"; };
 		EAECE41BF5F3184C8D79F1CC /* IntroOfferTokenManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroOfferTokenManagerTests.swift; sourceTree = "<group>"; };
 		EB1B228FB279EA92C35C7394 /* CoreDataManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManagerMock.swift; sourceTree = "<group>"; };
 		EB8F4169717A629E15CEB9C7 /* PurchaseControllerObjcAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseControllerObjcAdapter.swift; sourceTree = "<group>"; };
@@ -2669,6 +2671,7 @@
 			isa = PBXGroup;
 			children = (
 				8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */,
+				EA72EEA12B281C235816CA44 /* StripeTrialEligibilityTests.swift */,
 				C5DBF410102721FC5D440DF8 /* Mocks */,
 			);
 			path = Request;
@@ -3236,6 +3239,7 @@
 				713A1F9D9861C6A1E5EB9174 /* StorageTests.swift in Sources */,
 				701B1B586B6C1E3F0B3AF560 /* StoreKitManagerTests.swift in Sources */,
 				F5F8C2E02A057DA15C2936AB /* StorePresentationObjectsOperatorTests.swift in Sources */,
+				5E51E14716E29C9B88B8A6F2 /* StripeTrialEligibilityTests.swift in Sources */,
 				097719E21BBD153BA6FD6785 /* SubscriptionPeriodPriceTests.swift in Sources */,
 				E9F892ABB9BDA85F4794E3CF /* SubscriptionStatusResolutionTests.swift in Sources */,
 				89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */,
