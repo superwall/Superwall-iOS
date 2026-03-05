@@ -13,7 +13,7 @@ import Testing
 /// Tests for Stripe trial eligibility logic.
 ///
 /// Stripe products are not fetched into `productsById` (which only contains
-/// App Store products), so `getVariablesAndFreeTrial` skips them. Trial
+/// App Store products), so `getProductVariables` skips them. Trial
 /// eligibility for Stripe products is determined separately using the
 /// `StripeProduct.trialDays` property and entitlement history checks.
 ///
@@ -412,110 +412,6 @@ struct StripeTrialEligibilityTests {
     )
 
     #expect(!result)
-  }
-
-  // MARK: - Stripe Products Skipped by getVariablesAndFreeTrial
-
-  @Test
-  func getVariablesAndFreeTrial_skipsStripeProducts() async {
-    // Stripe products are not in productsById, so getVariablesAndFreeTrial
-    // should not set isFreeTrialAvailable for them
-    let productItem = makeStripeProductItem(
-      trialDays: 7,
-      entitlements: [Entitlement(id: "premium", type: .serviceLevel, isActive: false)]
-    )
-
-    let result = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: [productItem],
-      productsById: [:],
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in true }
-    )
-
-    // The closure is never called because Stripe product isn't in productsById
-    #expect(!result.isFreeTrialAvailable)
-  }
-
-  // MARK: - Mixed Paywall (App Store + Stripe)
-
-  @Test
-  func mixedPaywall_appStoreEligible_stripeAlsoPresent() async {
-    // App Store product with free trial
-    let mockIntroPeriod = MockIntroductoryPeriod(
-      testSubscriptionPeriod: MockSubscriptionPeriod()
-    )
-    let skProduct = MockSkProduct(
-      productIdentifier: "app_store_product_1",
-      introPeriod: mockIntroPeriod,
-      subscriptionGroupIdentifier: "group_1",
-      price: 9.99
-    )
-    let appStoreProduct = StoreProduct(
-      sk1Product: skProduct,
-      entitlements: []
-    )
-    let appStoreItem = SuperwallKit.Product(
-      name: "primary",
-      type: .appStore(.init(id: "app_store_product_1")),
-      id: "app_store_product_1",
-      entitlements: []
-    )
-    let stripeItem = makeStripeProductItem(
-      trialDays: 7,
-      entitlements: [Entitlement(id: "premium", type: .serviceLevel, isActive: false)]
-    )
-    let productsById = [appStoreItem.id: appStoreProduct]
-
-    // App Store product sets isFreeTrialAvailable via the closure
-    let result = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: [appStoreItem, stripeItem],
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in true }
-    )
-
-    // App Store product sets it to true; Stripe check wouldn't even run
-    // because isFreeTrialAvailable is already true
-    #expect(result.isFreeTrialAvailable)
-  }
-
-  // MARK: - Override Tests
-
-  @Test
-  func override_true_winsOverStripeCheck() async {
-    let productItem = makeStripeProductItem(
-      trialDays: 7,
-      entitlements: [Entitlement(id: "premium", type: .serviceLevel, isActive: false)]
-    )
-
-    // Override set to true
-    let result = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: [productItem],
-      productsById: [:],
-      isFreeTrialAvailableOverride: true,
-      isFreeTrialAvailable: { _ in false }
-    )
-
-    #expect(result.isFreeTrialAvailable)
-  }
-
-  @Test
-  func override_false_winsOverStripeCheck() async {
-    let productItem = makeStripeProductItem(
-      trialDays: 7,
-      entitlements: [Entitlement(id: "premium", type: .serviceLevel, isActive: false)]
-    )
-
-    // Override set to false — Stripe check should not run in AddPaywallProducts
-    // because request.overrides.isFreeTrial != nil
-    let result = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: [productItem],
-      productsById: [:],
-      isFreeTrialAvailableOverride: false,
-      isFreeTrialAvailable: { _ in true }
-    )
-
-    #expect(!result.isFreeTrialAvailable)
   }
 
   // MARK: - StripeProduct Decoding

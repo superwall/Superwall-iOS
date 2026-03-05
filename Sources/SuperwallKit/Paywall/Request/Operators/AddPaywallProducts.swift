@@ -4,8 +4,6 @@
 //
 //  Created by Yusuf Tör on 12/05/2023.
 //
-// swiftlint:disable trailing_closure
-
 import Foundation
 
 extension PaywallRequestManager {
@@ -44,12 +42,9 @@ extension PaywallRequestManager {
 
       paywall.products = result.productItems
 
-      // Trial eligibility is handled by refreshFreeTrialAvailability in updatePaywall.
-      let outcome = await PaywallLogic.getVariablesAndFreeTrial(
+      let outcome = PaywallLogic.getProductVariables(
         productItems: result.productItems,
-        productsById: result.productsById,
-        isFreeTrialAvailableOverride: nil,
-        isFreeTrialAvailable: { _ in false }
+        productsById: result.productsById
       )
       paywall.productVariables = outcome.productVariables
 
