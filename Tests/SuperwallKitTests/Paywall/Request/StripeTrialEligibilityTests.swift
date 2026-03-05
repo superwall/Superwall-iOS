@@ -76,6 +76,9 @@ struct StripeTrialEligibilityTests {
         trialDays > 0 else {
         continue
       }
+      if productItem.entitlements.isEmpty {
+        continue
+      }
 
       let hasEntitlement = Self.hasEverHadEntitlement(
         forProductEntitlements: productItem.entitlements,
@@ -360,30 +363,21 @@ struct StripeTrialEligibilityTests {
   // MARK: - No Entitlements Configured
 
   @Test
-  func stripeProduct_noEntitlementsConfigured_eligible() {
+  func stripeProduct_noEntitlementsConfigured_notEligible() {
     // Stripe product with trial days but no entitlements configured
     let productItem = makeStripeProductItem(
       trialDays: 7,
       entitlements: []
     )
 
-    // User has some entitlement history
-    let userEntitlement = Entitlement(
-      id: "premium",
-      type: .serviceLevel,
-      isActive: true,
-      latestProductId: "other_product",
-      store: .stripe
-    )
-
     let result = checkStripeTrialEligibility(
       productItems: [productItem],
       introOfferEligibility: .eligible,
-      userEntitlements: [userEntitlement]
+      userEntitlements: []
     )
 
-    // hasEverHadEntitlement returns false when productEntitlementIds is empty
-    #expect(result)
+    // Can't determine past subscription history without entitlements
+    #expect(!result)
   }
 
   // MARK: - Test Mode Entitlements
