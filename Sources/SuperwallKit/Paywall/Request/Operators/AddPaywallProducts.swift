@@ -141,13 +141,7 @@ extension PaywallRequestManager {
   ) async -> Paywall {
     var paywall = paywall
 
-    // If an override is set, use it directly
-    if let override = request.overrides.isFreeTrial {
-      paywall.isFreeTrialAvailable = override
-      return paywall
-    }
-
-    // Test mode overrides apply to all product types
+    // Test mode overrides take highest precedence
     if factory.isTestMode {
       switch factory.testModeFreeTrialOverride {
       case .forceAvailable:
@@ -159,6 +153,12 @@ extension PaywallRequestManager {
       case .useDefault:
         break
       }
+    }
+
+    // If a developer override is set, use it directly
+    if let override = request.overrides.isFreeTrial {
+      paywall.isFreeTrialAvailable = override
+      return paywall
     }
 
     // Check App Store products
