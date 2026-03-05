@@ -282,16 +282,16 @@ extension PaywallRequestManager {
     productItems: [Product],
     introOfferEligibility: IntroOfferEligibility
   ) async -> Bool {
-    if introOfferEligibility == .ineligible {
-      return false
-    }
-
     if factory.isTestMode {
       switch factory.testModeFreeTrialOverride {
       case .forceAvailable: return true
       case .forceUnavailable: return false
       case .useDefault: break
       }
+    }
+
+    if introOfferEligibility == .ineligible {
+      return false
     }
 
     for productItem in productItems {
