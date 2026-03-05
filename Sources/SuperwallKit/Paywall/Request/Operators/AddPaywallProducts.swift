@@ -252,12 +252,18 @@ extension PaywallRequestManager {
     forProductEntitlements productEntitlements: Set<Entitlement>
   ) async -> Bool {
     let productEntitlementIds = Set(productEntitlements.map { $0.id })
-    guard !productEntitlementIds.isEmpty else {
+    if productEntitlementIds.isEmpty {
       return false
     }
-    let entitlements = await MainActor.run {
-      Superwall.shared.customerInfo.entitlements
+    let customerInfo = await MainActor.run {
+      Superwall.shared.customerInfo
     }
+    // If customer info hasn't loaded yet, assume the user has had the
+    // entitlement to avoid falsely offering a trial.
+    if customerInfo.isPlaceholder {
+      return true
+    }
+    let entitlements = customerInfo.entitlements
     // Only consider entitlements with actual transaction history or that are
     // currently active. EntitlementProcessor adds config entitlements as
     // placeholders with latestProductId == nil when there are no transactions

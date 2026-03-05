@@ -44,7 +44,7 @@ struct StripeTrialEligibilityTests {
     userEntitlements: [Entitlement]
   ) -> Bool {
     let productEntitlementIds = Set(productEntitlements.map { $0.id })
-    guard !productEntitlementIds.isEmpty else {
+    if productEntitlementIds.isEmpty {
       return false
     }
     let userEntitlementIds = Set(
@@ -530,13 +530,13 @@ struct StripeTrialEligibilityTests {
   func stripeProduct_decodesTrialDays() throws {
     let json = """
     {
-      "productIdentifier": "stripe_prod_123",
+      "product_identifier": "stripe_prod_123",
       "store": "STRIPE",
-      "trialDays": 14
+      "trial_days": 14
     }
     """
     let data = json.data(using: .utf8)!
-    let product = try JSONDecoder().decode(StripeProduct.self, from: data)
+    let product = try JSONDecoder.fromSnakeCase.decode(StripeProduct.self, from: data)
     #expect(product.id == "stripe_prod_123")
     #expect(product.trialDays == 14)
   }
@@ -545,12 +545,12 @@ struct StripeTrialEligibilityTests {
   func stripeProduct_decodesWithoutTrialDays() throws {
     let json = """
     {
-      "productIdentifier": "stripe_prod_123",
+      "product_identifier": "stripe_prod_123",
       "store": "STRIPE"
     }
     """
     let data = json.data(using: .utf8)!
-    let product = try JSONDecoder().decode(StripeProduct.self, from: data)
+    let product = try JSONDecoder.fromSnakeCase.decode(StripeProduct.self, from: data)
     #expect(product.id == "stripe_prod_123")
     #expect(product.trialDays == nil)
   }
