@@ -31,7 +31,6 @@ extension PaywallRequestManager {
     return paywall
   }
 
-  // swiftlint:disable:next function_body_length
   private func getProducts(for paywall: Paywall, request: PaywallRequest) async throws -> Paywall {
     var paywall = paywall
 
@@ -48,51 +47,10 @@ extension PaywallRequestManager {
       let outcome = await PaywallLogic.getVariablesAndFreeTrial(
         productItems: result.productItems,
         productsById: result.productsById,
-        isFreeTrialAvailableOverride: request.overrides.isFreeTrial,
-        isFreeTrialAvailable: { [weak self] product in
-          guard let self = self else { return false }
-
-          // Check test mode override first - it takes precedence over all other logic
-          if self.factory.isTestMode {
-            switch self.factory.testModeFreeTrialOverride {
-            case .forceAvailable:
-              return true
-            case .forceUnavailable:
-              return false
-            case .useDefault:
-              break
-            }
-          }
-
-          switch paywall.introOfferEligibility {
-          case .eligible:
-            // Only show free trial if product has one AND user
-            // doesn't have an active intro offer in the subscription group
-            guard product.hasFreeTrial else {
-              return false
-            }
-            // Stripe products don't have StoreKit subscription groups,
-            // so check entitlement history instead.
-            if product.product is StripeProductType {
-              return await !self.hasEverHadEntitlement(for: product)
-            }
-            let hasActiveIntro = await self.hasActiveIntroOffer(
-              inSubscriptionGroup: product.subscriptionGroupIdentifier
-            )
-            return !hasActiveIntro
-          case .ineligible:
-            return false
-          case .automatic:
-            if product.product is StripeProductType {
-              guard product.hasFreeTrial else { return false }
-              return await !self.hasEverHadEntitlement(for: product)
-            }
-            return await self.factory.isFreeTrialAvailable(for: product)
-          }
-        }
+        isFreeTrialAvailableOverride: nil,
+        isFreeTrialAvailable: { _ in false }
       )
       paywall.productVariables = outcome.productVariables
-      paywall.isFreeTrialAvailable = outcome.isFreeTrialAvailable
 
       return paywall
     } catch {
@@ -175,6 +133,87 @@ extension PaywallRequestManager {
     return paywall
   }
 
+  // MARK: - Free Trial Refresh
+
+  /// Recalculates `isFreeTrialAvailable` for a paywall.
+  ///
+  /// This is called both for freshly loaded paywalls and cached paywalls to ensure
+  /// trial eligibility reflects the user's current entitlement/subscription state.
+  func refreshFreeTrialAvailability(
+    for paywall: Paywall,
+    request: PaywallRequest
+  ) async -> Paywall {
+    var paywall = paywall
+
+    // If an override is set, use it directly
+    if let override = request.overrides.isFreeTrial {
+      paywall.isFreeTrialAvailable = override
+      return paywall
+    }
+
+    // Check App Store products
+    let productsById = await storeKitManager.productsById
+    var isFreeTrialAvailable = false
+
+    for productItem in paywall.products {
+      guard let storeProduct = productsById[productItem.id] else {
+        continue
+      }
+
+      if !isFreeTrialAvailable {
+        isFreeTrialAvailable = await checkAppStoreTrialEligibility(
+          for: storeProduct,
+          introOfferEligibility: paywall.introOfferEligibility
+        )
+      }
+    }
+
+    paywall.isFreeTrialAvailable = isFreeTrialAvailable
+
+    // Check Stripe products for trial eligibility (they're not in productsById
+    // so the loop above skips them)
+    if !paywall.isFreeTrialAvailable {
+      paywall.isFreeTrialAvailable = await checkStripeTrialEligibility(
+        productItems: paywall.products,
+        introOfferEligibility: paywall.introOfferEligibility
+      )
+    }
+
+    return paywall
+  }
+
+  /// Checks App Store trial eligibility for a single product.
+  private func checkAppStoreTrialEligibility(
+    for product: StoreProduct,
+    introOfferEligibility: IntroOfferEligibility
+  ) async -> Bool {
+    if factory.isTestMode {
+      switch factory.testModeFreeTrialOverride {
+      case .forceAvailable:
+        return true
+      case .forceUnavailable:
+        return false
+      case .useDefault:
+        break
+      }
+    }
+
+    switch introOfferEligibility {
+    case .eligible:
+      guard product.hasFreeTrial else {
+        return false
+      }
+      let hasActiveIntro = await hasActiveIntroOffer(
+        inSubscriptionGroup: product.subscriptionGroupIdentifier
+      )
+      return !hasActiveIntro
+    case .ineligible:
+      return false
+    case .automatic:
+      return await factory.isFreeTrialAvailable(for: product)
+    }
+  }
+
   // MARK: - Intro Offer Check
 
   /// Checks if the user has an active intro offer (e.g., free trial) in the given subscription group.
@@ -202,29 +241,77 @@ extension PaywallRequestManager {
     }
   }
 
-  /// Checks if the user has ever had any of the entitlements associated with the given product.
+  /// Checks if the user has ever had any of the given entitlements.
   ///
   /// This uses entitlement data from `customerInfo` which includes both active and inactive
   /// entitlements. Config-only entitlements (never purchased) have `latestProductId == nil`,
   /// while entitlements from actual transactions/redemptions have a non-nil `latestProductId`.
   /// Manually granted Superwall entitlements have `store == .superwall` without a product ID.
   /// Used for Stripe products where StoreKit subscription group checks don't apply.
-  private func hasEverHadEntitlement(for product: StoreProduct) async -> Bool {
-    let productEntitlementIds = Set(product.entitlements.map { $0.id })
+  private func hasEverHadEntitlement(
+    forProductEntitlements productEntitlements: Set<Entitlement>
+  ) async -> Bool {
+    let productEntitlementIds = Set(productEntitlements.map { $0.id })
     guard !productEntitlementIds.isEmpty else {
       return false
     }
     let entitlements = await MainActor.run {
       Superwall.shared.customerInfo.entitlements
     }
-    // Only consider entitlements with actual transaction history.
-    // EntitlementProcessor adds config entitlements as placeholders with
-    // latestProductId == nil when there are no transactions for them.
+    // Only consider entitlements with actual transaction history or that are
+    // currently active. EntitlementProcessor adds config entitlements as
+    // placeholders with latestProductId == nil when there are no transactions
+    // for them. Active entitlements are also included to handle test mode,
+    // where entitlements may not have a latestProductId set.
     let userEntitlementIds = Set(
       entitlements
-        .filter { $0.latestProductId != nil || $0.store == .superwall }
+        .filter { $0.latestProductId != nil || $0.store == .superwall || $0.isActive }
         .map { $0.id }
     )
     return !productEntitlementIds.isDisjoint(with: userEntitlementIds)
+  }
+
+  // MARK: - Stripe Trial Eligibility
+
+  /// Checks Stripe products for trial eligibility.
+  ///
+  /// Stripe products are not fetched into `productsById` (which only contains App Store products),
+  /// so `getVariablesAndFreeTrial` skips them. This method handles Stripe trial eligibility
+  /// separately by checking the `trialDays` property on the `StripeProduct` model.
+  private func checkStripeTrialEligibility(
+    productItems: [Product],
+    introOfferEligibility: IntroOfferEligibility
+  ) async -> Bool {
+    if introOfferEligibility == .ineligible {
+      return false
+    }
+
+    if factory.isTestMode {
+      switch factory.testModeFreeTrialOverride {
+      case .forceAvailable: return true
+      case .forceUnavailable: return false
+      case .useDefault: break
+      }
+    }
+
+    for productItem in productItems {
+      guard case .stripe(let stripeProduct) = productItem.type else {
+        continue
+      }
+      guard let trialDays = stripeProduct.trialDays else {
+        continue
+      }
+      guard trialDays > 0 else {
+        continue
+      }
+
+      let hasEntitlement = await hasEverHadEntitlement(
+        forProductEntitlements: productItem.entitlements
+      )
+      if !hasEntitlement {
+        return true
+      }
+    }
+    return false
   }
 }
