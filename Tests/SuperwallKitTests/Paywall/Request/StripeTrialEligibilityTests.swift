@@ -532,7 +532,7 @@ struct StripeTrialEligibilityTests {
     {
       "productIdentifier": "stripe_prod_123",
       "store": "STRIPE",
-      "trial_days": 14
+      "trialDays": 14
     }
     """
     let data = json.data(using: .utf8)!
