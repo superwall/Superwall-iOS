@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Localizes all alerts into 41 languages.
+- Makes sure to refresh free trial eligibility on every paywall open.
 
 ### Fixes
 

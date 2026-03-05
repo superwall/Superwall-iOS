@@ -44,6 +44,7 @@ extension PaywallRequestManager {
 
       paywall.products = result.productItems
 
+      // Trial eligibility is handled by refreshFreeTrialAvailability in updatePaywall.
       let outcome = await PaywallLogic.getVariablesAndFreeTrial(
         productItems: result.productItems,
         productsById: result.productsById,
@@ -151,6 +152,20 @@ extension PaywallRequestManager {
       return paywall
     }
 
+    // Test mode overrides apply to all product types
+    if factory.isTestMode {
+      switch factory.testModeFreeTrialOverride {
+      case .forceAvailable:
+        paywall.isFreeTrialAvailable = true
+        return paywall
+      case .forceUnavailable:
+        paywall.isFreeTrialAvailable = false
+        return paywall
+      case .useDefault:
+        break
+      }
+    }
+
     // Check App Store products
     let productsById = await storeKitManager.productsById
     var isFreeTrialAvailable = false
@@ -188,17 +203,6 @@ extension PaywallRequestManager {
     for product: StoreProduct,
     introOfferEligibility: IntroOfferEligibility
   ) async -> Bool {
-    if factory.isTestMode {
-      switch factory.testModeFreeTrialOverride {
-      case .forceAvailable:
-        return true
-      case .forceUnavailable:
-        return false
-      case .useDefault:
-        break
-      }
-    }
-
     switch introOfferEligibility {
     case .eligible:
       guard product.hasFreeTrial else {
@@ -289,14 +293,6 @@ extension PaywallRequestManager {
     productItems: [Product],
     introOfferEligibility: IntroOfferEligibility
   ) async -> Bool {
-    if factory.isTestMode {
-      switch factory.testModeFreeTrialOverride {
-      case .forceAvailable: return true
-      case .forceUnavailable: return false
-      case .useDefault: break
-      }
-    }
-
     if introOfferEligibility == .ineligible {
       return false
     }
