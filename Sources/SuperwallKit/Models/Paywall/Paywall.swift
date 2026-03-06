@@ -465,6 +465,7 @@ struct Paywall: Codable {
     presentationSourceType = paywall.presentationSourceType
     experiment = paywall.experiment
     featureGating = paywall.featureGating
+    presentationId = paywall.presentationId
   }
 }
 
