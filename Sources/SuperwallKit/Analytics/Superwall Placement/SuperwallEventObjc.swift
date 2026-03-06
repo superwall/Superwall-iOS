@@ -257,6 +257,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the test mode modal is closed.
   case testModeModalClose
 
+  /// When a user navigates to a page in a multi-page paywall.
+  case paywallPageView
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -419,6 +422,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "testModeModal_open"
     case .testModeModalClose:
       return "testModeModal_close"
+    case .paywallPageView:
+      return "paywallPageView"
     }
   }
 }

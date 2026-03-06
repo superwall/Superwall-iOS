@@ -468,6 +468,43 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct PaywallPageView: TrackableSuperwallEvent {
+    var superwallEvent: SuperwallEvent {
+      return .paywallPageView(paywallInfo: paywallInfo)
+    }
+    let paywallInfo: PaywallInfo
+    let pageNodeId: String
+    let pageIndex: Int
+    let pageName: String
+    let navigationNodeId: String
+    let previousPageNodeId: String?
+    let previousPageIndex: Int?
+    let navigationType: String
+    let timeOnPreviousPageMs: Int?
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var params = await paywallInfo.placementParams()
+      params["page_node_id"] = pageNodeId
+      params["page_index"] = pageIndex
+      params["page_name"] = pageName
+      params["navigation_node_id"] = navigationNodeId
+      params["navigation_type"] = navigationType
+      if let previousPageNodeId = previousPageNodeId {
+        params["previous_page_node_id"] = previousPageNodeId
+      }
+      if let previousPageIndex = previousPageIndex {
+        params["previous_page_index"] = previousPageIndex
+      }
+      if let timeOnPreviousPageMs = timeOnPreviousPageMs {
+        params["time_on_previous_page_ms"] = timeOnPreviousPageMs
+      }
+      return params
+    }
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo.audienceFilterParams()
+    }
+  }
+
   struct PaywallClose: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .paywallClose(paywallInfo: paywallInfo)

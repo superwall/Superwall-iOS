@@ -74,6 +74,17 @@ enum PaywallMessage: Decodable, Equatable {
     variables: JSON?
   )
   case hapticFeedback(hapticType: String)
+  // swiftlint:disable:next enum_case_associated_values_count
+  case pageView(
+    pageNodeId: String,
+    pageIndex: Int,
+    pageName: String,
+    navigationNodeId: String,
+    previousPageNodeId: String?,
+    previousPageIndex: Int?,
+    type: String,
+    timeOnPreviousPageMs: Int?
+  )
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -121,6 +132,7 @@ enum PaywallMessage: Decodable, Equatable {
     case requestPermission = "request_permission"
     case requestCallback = "request_callback"
     case hapticFeedback = "haptic_feedback"
+    case pageView = "page_view"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -149,6 +161,13 @@ enum PaywallMessage: Decodable, Equatable {
     case behavior
     case variables
     case hapticType
+    case pageNodeId
+    case pageIndex
+    case pageName
+    case navigationNodeId
+    case previousPageNodeId
+    case previousPageIndex
+    case timeOnPreviousPageMs
   }
 
   enum PaywallMessageError: Error {
@@ -310,6 +329,26 @@ enum PaywallMessage: Decodable, Equatable {
           self = .hapticFeedback(hapticType: hapticType)
           return
         }
+      case .pageView:
+        let pageNodeId = try values.decode(String.self, forKey: .pageNodeId)
+        let pageIndex = try values.decode(Int.self, forKey: .pageIndex)
+        let pageName = try values.decode(String.self, forKey: .pageName)
+        let navigationNodeId = try values.decode(String.self, forKey: .navigationNodeId)
+        let previousPageNodeId = try? values.decode(String.self, forKey: .previousPageNodeId)
+        let previousPageIndex = try? values.decode(Int.self, forKey: .previousPageIndex)
+        let type = try values.decode(String.self, forKey: .type)
+        let timeOnPreviousPageMs = try? values.decode(Int.self, forKey: .timeOnPreviousPageMs)
+        self = .pageView(
+          pageNodeId: pageNodeId,
+          pageIndex: pageIndex,
+          pageName: pageName,
+          navigationNodeId: navigationNodeId,
+          previousPageNodeId: previousPageNodeId,
+          previousPageIndex: previousPageIndex,
+          type: type,
+          timeOnPreviousPageMs: timeOnPreviousPageMs
+        )
+        return
       }
     }
 
