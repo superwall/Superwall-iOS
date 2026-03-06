@@ -22,11 +22,11 @@ struct PageViewMessageTests {
     {
       "event_name": "page_view",
       "page_node_id": "node_123",
-      "page_index": 2,
+      "flow_position": 2,
       "page_name": "Pricing",
       "navigation_node_id": "nav_456",
       "previous_page_node_id": "node_789",
-      "previous_page_index": 1,
+      "previous_flow_position": 1,
       "type": "forward",
       "time_on_previous_page_ms": 5000
     }
@@ -34,13 +34,13 @@ struct PageViewMessageTests {
 
     let message = try decodeMessage(json)
 
-    if case let .pageView(pageNodeId, pageIndex, pageName, navigationNodeId, previousPageNodeId, previousPageIndex, type, timeOnPreviousPageMs) = message {
+    if case let .pageView(pageNodeId, flowPosition, pageName, navigationNodeId, previousPageNodeId, previousFlowPosition, type, timeOnPreviousPageMs) = message {
       #expect(pageNodeId == "node_123")
-      #expect(pageIndex == 2)
+      #expect(flowPosition == 2)
       #expect(pageName == "Pricing")
       #expect(navigationNodeId == "nav_456")
       #expect(previousPageNodeId == "node_789")
-      #expect(previousPageIndex == 1)
+      #expect(previousFlowPosition == 1)
       #expect(type == "forward")
       #expect(timeOnPreviousPageMs == 5000)
     } else {
@@ -53,7 +53,7 @@ struct PageViewMessageTests {
     {
       "event_name": "page_view",
       "page_node_id": "node_first",
-      "page_index": 0,
+      "flow_position": 0,
       "page_name": "Welcome",
       "navigation_node_id": "nav_entry",
       "type": "entry"
@@ -62,13 +62,13 @@ struct PageViewMessageTests {
 
     let message = try decodeMessage(json)
 
-    if case let .pageView(pageNodeId, pageIndex, pageName, navigationNodeId, previousPageNodeId, previousPageIndex, type, timeOnPreviousPageMs) = message {
+    if case let .pageView(pageNodeId, flowPosition, pageName, navigationNodeId, previousPageNodeId, previousFlowPosition, type, timeOnPreviousPageMs) = message {
       #expect(pageNodeId == "node_first")
-      #expect(pageIndex == 0)
+      #expect(flowPosition == 0)
       #expect(pageName == "Welcome")
       #expect(navigationNodeId == "nav_entry")
       #expect(previousPageNodeId == nil)
-      #expect(previousPageIndex == nil)
+      #expect(previousFlowPosition == nil)
       #expect(type == "entry")
       #expect(timeOnPreviousPageMs == nil)
     } else {
@@ -81,11 +81,11 @@ struct PageViewMessageTests {
     {
       "event_name": "page_view",
       "page_node_id": "node_100",
-      "page_index": 0,
+      "flow_position": 0,
       "page_name": "Home",
       "navigation_node_id": "nav_back",
       "previous_page_node_id": "node_200",
-      "previous_page_index": 1,
+      "previous_flow_position": 1,
       "type": "back",
       "time_on_previous_page_ms": 1200
     }
@@ -105,7 +105,7 @@ struct PageViewMessageTests {
     {
       "event_name": "page_view",
       "page_node_id": "node_auto",
-      "page_index": 3,
+      "flow_position": 3,
       "page_name": "Auto Page",
       "navigation_node_id": "nav_auto",
       "type": "auto_transition"
@@ -131,11 +131,11 @@ struct PageViewMessageTests {
     let event = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "node_abc",
-      pageIndex: 1,
+      flowPosition: 1,
       pageName: "Pricing",
       navigationNodeId: "nav_xyz",
       previousPageNodeId: "node_prev",
-      previousPageIndex: 0,
+      previousFlowPosition: 0,
       navigationType: "forward",
       timeOnPreviousPageMs: 3000
     )
@@ -144,12 +144,12 @@ struct PageViewMessageTests {
 
     // Page view specific params
     #expect(params["page_node_id"] as? String == "node_abc")
-    #expect(params["page_index"] as? Int == 1)
+    #expect(params["flow_position"] as? Int == 1)
     #expect(params["page_name"] as? String == "Pricing")
     #expect(params["navigation_node_id"] as? String == "nav_xyz")
     #expect(params["navigation_type"] as? String == "forward")
     #expect(params["previous_page_node_id"] as? String == "node_prev")
-    #expect(params["previous_page_index"] as? Int == 0)
+    #expect(params["previous_flow_position"] as? Int == 0)
     #expect(params["time_on_previous_page_ms"] as? Int == 3000)
 
     // Inherited from placementParams (presentation_id)
@@ -165,11 +165,11 @@ struct PageViewMessageTests {
     let event = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "node_first",
-      pageIndex: 0,
+      flowPosition: 0,
       pageName: "Welcome",
       navigationNodeId: "nav_entry",
       previousPageNodeId: nil,
-      previousPageIndex: nil,
+      previousFlowPosition: nil,
       navigationType: "entry",
       timeOnPreviousPageMs: nil
     )
@@ -179,7 +179,7 @@ struct PageViewMessageTests {
     #expect(params["page_node_id"] as? String == "node_first")
     #expect(params["navigation_type"] as? String == "entry")
     #expect(params["previous_page_node_id"] == nil)
-    #expect(params["previous_page_index"] == nil)
+    #expect(params["previous_flow_position"] == nil)
     #expect(params["time_on_previous_page_ms"] == nil)
   }
 
@@ -189,11 +189,11 @@ struct PageViewMessageTests {
     let event = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "node_abc",
-      pageIndex: 0,
+      flowPosition: 0,
       pageName: "Page",
       navigationNodeId: "nav_1",
       previousPageNodeId: nil,
-      previousPageIndex: nil,
+      previousFlowPosition: nil,
       navigationType: "entry",
       timeOnPreviousPageMs: nil
     )
@@ -210,11 +210,11 @@ struct PageViewMessageTests {
     let event = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "n",
-      pageIndex: 0,
+      flowPosition: 0,
       pageName: "P",
       navigationNodeId: "nav",
       previousPageNodeId: nil,
-      previousPageIndex: nil,
+      previousFlowPosition: nil,
       navigationType: "entry",
       timeOnPreviousPageMs: nil
     )
@@ -232,11 +232,11 @@ struct PageViewMessageTests {
     let event = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "n",
-      pageIndex: 0,
+      flowPosition: 0,
       pageName: "P",
       navigationNodeId: "nav",
       previousPageNodeId: nil,
-      previousPageIndex: nil,
+      previousFlowPosition: nil,
       navigationType: "entry",
       timeOnPreviousPageMs: nil
     )
@@ -261,11 +261,11 @@ struct PageViewMessageTests {
     let pageViewEvent = InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
       pageNodeId: "node1",
-      pageIndex: 0,
+      flowPosition: 0,
       pageName: "Page",
       navigationNodeId: "nav1",
       previousPageNodeId: nil,
-      previousPageIndex: nil,
+      previousFlowPosition: nil,
       navigationType: "entry",
       timeOnPreviousPageMs: nil
     )
@@ -292,9 +292,9 @@ struct PageViewMessageTests {
 
     let pageViewParams = await InternalSuperwallEvent.PaywallPageView(
       paywallInfo: info,
-      pageNodeId: "n", pageIndex: 0, pageName: "P",
+      pageNodeId: "n", flowPosition: 0, pageName: "P",
       navigationNodeId: "nav",
-      previousPageNodeId: nil, previousPageIndex: nil,
+      previousPageNodeId: nil, previousFlowPosition: nil,
       navigationType: "entry", timeOnPreviousPageMs: nil
     ).getSuperwallParameters()
 

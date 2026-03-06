@@ -77,11 +77,11 @@ enum PaywallMessage: Decodable, Equatable {
   // swiftlint:disable:next enum_case_associated_values_count
   case pageView(
     pageNodeId: String,
-    pageIndex: Int,
+    flowPosition: Int,
     pageName: String,
     navigationNodeId: String,
     previousPageNodeId: String?,
-    previousPageIndex: Int?,
+    previousFlowPosition: Int?,
     type: String,
     timeOnPreviousPageMs: Int?
   )
@@ -162,11 +162,11 @@ enum PaywallMessage: Decodable, Equatable {
     case variables
     case hapticType
     case pageNodeId
-    case pageIndex
+    case flowPosition
     case pageName
     case navigationNodeId
     case previousPageNodeId
-    case previousPageIndex
+    case previousFlowPosition
     case timeOnPreviousPageMs
   }
 
@@ -331,20 +331,20 @@ enum PaywallMessage: Decodable, Equatable {
         }
       case .pageView:
         let pageNodeId = try values.decode(String.self, forKey: .pageNodeId)
-        let pageIndex = try values.decode(Int.self, forKey: .pageIndex)
+        let flowPosition = try values.decode(Int.self, forKey: .flowPosition)
         let pageName = try values.decode(String.self, forKey: .pageName)
         let navigationNodeId = try values.decode(String.self, forKey: .navigationNodeId)
         let previousPageNodeId = try? values.decode(String.self, forKey: .previousPageNodeId)
-        let previousPageIndex = try? values.decode(Int.self, forKey: .previousPageIndex)
+        let previousFlowPosition = try? values.decode(Int.self, forKey: .previousFlowPosition)
         let type = try values.decode(String.self, forKey: .type)
         let timeOnPreviousPageMs = try? values.decode(Int.self, forKey: .timeOnPreviousPageMs)
         self = .pageView(
           pageNodeId: pageNodeId,
-          pageIndex: pageIndex,
+          flowPosition: flowPosition,
           pageName: pageName,
           navigationNodeId: navigationNodeId,
           previousPageNodeId: previousPageNodeId,
-          previousPageIndex: previousPageIndex,
+          previousFlowPosition: previousFlowPosition,
           type: type,
           timeOnPreviousPageMs: timeOnPreviousPageMs
         )

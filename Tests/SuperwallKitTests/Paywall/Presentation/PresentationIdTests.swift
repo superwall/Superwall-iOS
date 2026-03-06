@@ -147,18 +147,18 @@ struct PresentationIdTests {
     // Simulate: page_view events as user navigates
     let pageView1Params = await InternalSuperwallEvent.PaywallPageView(
       paywallInfo: paywall.getInfo(fromPlacement: nil),
-      pageNodeId: "page1", pageIndex: 0, pageName: "Welcome",
+      pageNodeId: "page1", flowPosition: 0, pageName: "Welcome",
       navigationNodeId: "nav1",
-      previousPageNodeId: nil, previousPageIndex: nil,
+      previousPageNodeId: nil, previousFlowPosition: nil,
       navigationType: "entry", timeOnPreviousPageMs: nil
     ).getSuperwallParameters()
     #expect(pageView1Params["presentation_id"] as? String == presentationId)
 
     let pageView2Params = await InternalSuperwallEvent.PaywallPageView(
       paywallInfo: paywall.getInfo(fromPlacement: nil),
-      pageNodeId: "page2", pageIndex: 1, pageName: "Pricing",
+      pageNodeId: "page2", flowPosition: 1, pageName: "Pricing",
       navigationNodeId: "nav2",
-      previousPageNodeId: "page1", previousPageIndex: 0,
+      previousPageNodeId: "page1", previousFlowPosition: 0,
       navigationType: "forward", timeOnPreviousPageMs: 4500
     ).getSuperwallParameters()
     #expect(pageView2Params["presentation_id"] as? String == presentationId)
@@ -166,9 +166,9 @@ struct PresentationIdTests {
     // Simulate: user goes back
     let pageView3Params = await InternalSuperwallEvent.PaywallPageView(
       paywallInfo: paywall.getInfo(fromPlacement: nil),
-      pageNodeId: "page1", pageIndex: 0, pageName: "Welcome",
+      pageNodeId: "page1", flowPosition: 0, pageName: "Welcome",
       navigationNodeId: "nav3",
-      previousPageNodeId: "page2", previousPageIndex: 1,
+      previousPageNodeId: "page2", previousFlowPosition: 1,
       navigationType: "back", timeOnPreviousPageMs: 2000
     ).getSuperwallParameters()
     #expect(pageView3Params["presentation_id"] as? String == presentationId)
@@ -231,9 +231,9 @@ struct PresentationIdTests {
 
     let pageViewParams2 = await InternalSuperwallEvent.PaywallPageView(
       paywallInfo: paywall.getInfo(fromPlacement: nil),
-      pageNodeId: "p1", pageIndex: 0, pageName: "Page",
+      pageNodeId: "p1", flowPosition: 0, pageName: "Page",
       navigationNodeId: "n1",
-      previousPageNodeId: nil, previousPageIndex: nil,
+      previousPageNodeId: nil, previousFlowPosition: nil,
       navigationType: "entry", timeOnPreviousPageMs: nil
     ).getSuperwallParameters()
     #expect(pageViewParams2["presentation_id"] as? String == secondPresentationId)
@@ -263,9 +263,9 @@ struct PresentationIdTests {
       let pageViewInfo = paywall.getInfo(fromPlacement: nil)
       let pageViewParams = await InternalSuperwallEvent.PaywallPageView(
         paywallInfo: pageViewInfo,
-        pageNodeId: "p\(i)", pageIndex: 0, pageName: "Page \(i)",
+        pageNodeId: "p\(i)", flowPosition: 0, pageName: "Page \(i)",
         navigationNodeId: "n\(i)",
-        previousPageNodeId: nil, previousPageIndex: nil,
+        previousPageNodeId: nil, previousFlowPosition: nil,
         navigationType: "entry", timeOnPreviousPageMs: nil
       ).getSuperwallParameters()
 
