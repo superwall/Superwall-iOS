@@ -241,7 +241,7 @@ struct PageViewMessageTests {
       timeOnPreviousPageMs: nil
     )
 
-    #expect(event.superwallEvent.description == "paywallPageView")
+    #expect(event.superwallEvent.description == "paywall_page_view")
   }
 
   // MARK: - PresentationId in PageView events

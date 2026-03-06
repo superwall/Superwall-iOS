@@ -423,7 +423,7 @@ public enum SuperwallEventObjc: Int, CaseIterable {
     case .testModeModalClose:
       return "testModeModal_close"
     case .paywallPageView:
-      return "paywallPageView"
+      return "paywall_page_view"
     }
   }
 }
