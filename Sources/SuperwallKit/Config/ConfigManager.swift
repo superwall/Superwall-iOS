@@ -590,7 +590,7 @@ class ConfigManager {
           if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
             prioritizedIds.remove(presentedPaywallId)
           }
-          await self.preloadPaywalls(withIdentifiers: prioritizedIds)
+          await self.preloadPaywalls(withIdentifiers: prioritizedIds, config: config)
 
           // Delay before preloading the rest to avoid contention.
           try? await Task.sleep(nanoseconds: 5_000_000_000)
@@ -605,7 +605,7 @@ class ConfigManager {
       if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
-      await self.preloadPaywalls(withIdentifiers: paywallIds)
+      await self.preloadPaywalls(withIdentifiers: paywallIds, config: config)
     }
   }
 
@@ -625,17 +625,30 @@ class ConfigManager {
     if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
       paywallIds.remove(presentedPaywallId)
     }
-    await preloadPaywalls(withIdentifiers: paywallIds)
+    await preloadPaywalls(withIdentifiers: paywallIds, config: config)
   }
 
   /// Preloads paywalls referenced by triggers.
-  private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
+  private func preloadPaywalls(
+    withIdentifiers paywallIdentifiers: Set<String>,
+    config: Config
+  ) async {
     let paywallCount = paywallIdentifiers.count
     let preloadStart = InternalSuperwallEvent.PaywallPreload(
       state: .start,
       paywallCount: paywallCount
     )
     await Superwall.shared.track(preloadStart)
+
+    // Batch-prefetch all App Store product IDs in a single StoreKit call
+    // so that individual per-paywall fetches hit the warm cache.
+    let allProductIds = config.paywalls
+      .filter { paywallIdentifiers.contains($0.identifier) }
+      .flatMap { $0.appStoreProductIds }
+    let uniqueProductIds = Set(allProductIds)
+    if !uniqueProductIds.isEmpty {
+      await storeKitManager.prefetchProducts(identifiers: uniqueProductIds)
+    }
 
     await withTaskGroup(of: Void.self) { group in
       for identifier in paywallIdentifiers {

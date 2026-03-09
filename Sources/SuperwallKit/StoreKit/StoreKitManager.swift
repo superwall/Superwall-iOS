@@ -181,6 +181,11 @@ actor StoreKitManager {
     return (productsById, productItems)
   }
 
+  /// Prefetches products by identifiers in a single StoreKit call to warm the cache.
+  func prefetchProducts(identifiers: Set<String>) async {
+    _ = try? await productsManager.products(identifiers: identifiers)
+  }
+
   func preloadOverrides(_ overrides: [ProductOverride]) async {
     let allIds: Set<String> = Set(overrides.compactMap {
       if case .byId(let id) = $0 {
