@@ -571,7 +571,7 @@ actor WebEntitlementRedeemer {
           let product = StoreProduct.blank(
             productIdentifier: paywallInfo.productIds.first ?? ""
           )
-          await Superwall.shared.track(
+          await superwall.track(
             InternalSuperwallEvent.FreeTrialStart(
               paywallInfo: paywallInfo,
               product: product,
