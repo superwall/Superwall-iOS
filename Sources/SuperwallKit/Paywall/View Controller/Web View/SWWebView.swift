@@ -238,6 +238,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    activeProcessTerminationRetryCount = 0
     completion?(nil)
   }
 
