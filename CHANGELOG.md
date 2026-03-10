@@ -16,6 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a rare issue where a user's subscription could remain active after a refund, preventing paywalls from being shown.
 - Fixes trial eligibility for Stripe products.
 - Fixes an issue where `transaction_complete` could be missing transaction information when a crossgrade occurred while using a purchase controller.
+- Fixes terminated webviews refreshing in a loop on low RAM devices.
 
 ## 4.14.0
 
