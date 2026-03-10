@@ -569,7 +569,7 @@ actor WebEntitlementRedeemer {
         let paywallInfo = await paywallVc.info
         if paywallInfo.isFreeTrialAvailable {
           let product = StoreProduct.blank(
-            productIdentifier: paywallInfo.productIds.first ?? ""
+            productIdentifier: redemptionProduct.identifier
           )
           await superwall.track(
             InternalSuperwallEvent.FreeTrialStart(
