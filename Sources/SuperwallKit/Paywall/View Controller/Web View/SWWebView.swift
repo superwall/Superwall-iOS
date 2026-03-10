@@ -45,6 +45,8 @@ class SWWebView: WKWebView {
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
   private let enableIframeNavigation: Bool
+  private var activeProcessTerminationRetryCount = 0
+  private let maxActiveProcessTerminationRetries = 3
 
   init(
     isMac: Bool,
@@ -235,6 +237,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    activeProcessTerminationRetryCount = 0
     completion?(nil)
   }
 
@@ -255,12 +258,12 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    if delegate?.isActive == true {
-      // The user is looking at this paywall - reload immediately.
+    if delegate?.isActive == true,
+      activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
+      activeProcessTerminationRetryCount += 1
       webView.reload()
     } else {
-      // Background/preloaded WebView - mark for reload when next presented.
-      // PaywallViewController.viewWillAppear checks didFailToLoad.
+      activeProcessTerminationRetryCount = 0
       loadingHandler.didFailToLoad = true
     }
 
