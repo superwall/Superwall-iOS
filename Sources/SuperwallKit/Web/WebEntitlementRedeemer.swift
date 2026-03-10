@@ -562,7 +562,9 @@ actor WebEntitlementRedeemer {
       }
 
       // Track free trial start and schedule notification if applicable
-      if case .success = codeResult,
+      if case .success(_, let redemptionInfo) = codeResult,
+        let product = redemptionInfo.paywallInfo?.product,
+        product.trialPeriodDays > 0,
         let paywallVc = superwall.paywallViewController {
         let paywallInfo = await paywallVc.info
         if paywallInfo.isFreeTrialAvailable {
