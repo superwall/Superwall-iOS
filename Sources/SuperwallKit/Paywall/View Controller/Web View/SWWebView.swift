@@ -263,7 +263,6 @@ extension SWWebView: WKNavigationDelegate {
       activeProcessTerminationRetryCount += 1
       webView.reload()
     } else {
-      activeProcessTerminationRetryCount = 0
       loadingHandler.didFailToLoad = true
     }
 
