@@ -1255,6 +1255,10 @@ struct WebEntitlementRedeemerTests {
     #expect(mockNotificationScheduler.scheduledNotifications.first?.type == .trialStarted)
     #expect(mockNotificationScheduler.scheduledPaywallId != nil)
 
+    // Verify freeTrialStart event was dispatched to delegate
+    let events = mockDelegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(events.contains(SuperwallEventObjc.freeTrialStart))
+
     // Verify delegate received success result
     if case .success = mockDelegate.receivedResult {} else {
       Issue.record("should have been a success")
@@ -1436,6 +1440,10 @@ struct WebEntitlementRedeemerTests {
     // Verify notifications were NOT scheduled because trialPeriodDays == 0
     #expect(mockNotificationScheduler.scheduledNotifications.isEmpty)
     #expect(mockNotificationScheduler.scheduledPaywallId == nil)
+
+    // Verify freeTrialStart event was NOT dispatched
+    let events = mockDelegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.freeTrialStart))
   }
 
   @Test("Does not schedule trial notification when isFreeTrialAvailable is false even with trialPeriodDays > 0")
@@ -1610,6 +1618,10 @@ struct WebEntitlementRedeemerTests {
     // Verify notifications were NOT scheduled because isFreeTrialAvailable is false
     #expect(mockNotificationScheduler.scheduledNotifications.isEmpty)
     #expect(mockNotificationScheduler.scheduledPaywallId == nil)
+
+    // Verify freeTrialStart event was NOT dispatched
+    let events = mockDelegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.freeTrialStart))
   }
 
   @Test("Does not schedule trial notification when isFreeTrialAvailable is true but trialPeriodDays is 0")
@@ -1784,6 +1796,10 @@ struct WebEntitlementRedeemerTests {
     // Verify notifications were NOT scheduled because trialPeriodDays == 0
     #expect(mockNotificationScheduler.scheduledNotifications.isEmpty)
     #expect(mockNotificationScheduler.scheduledPaywallId == nil)
+
+    // Verify freeTrialStart event was NOT dispatched
+    let events = mockDelegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.freeTrialStart))
   }
 
   @Test("ExistingCodes redemptions not blocked when paywall is open")
