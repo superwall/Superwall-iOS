@@ -148,6 +148,7 @@ class SWWebView: WKWebView {
   }
 
   func loadURL(from paywall: Paywall) async {
+    activeProcessTerminationRetryCount = 0
     let didLoad = await loadingHandler.loadURL(
       paywallUrlConfig: paywall.urlConfig,
       paywallUrl: paywall.url
@@ -262,6 +263,7 @@ extension SWWebView: WKNavigationDelegate {
       activeProcessTerminationRetryCount += 1
       webView.reload()
     } else if delegate?.isActive == true {
+      loadingHandler.didFailToLoad = true
       delegate?.webViewDidFail()
     } else {
       loadingHandler.didFailToLoad = true
