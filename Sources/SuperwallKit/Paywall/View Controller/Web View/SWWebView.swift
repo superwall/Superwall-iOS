@@ -237,7 +237,6 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-    activeProcessTerminationRetryCount = 0
     completion?(nil)
   }
 
@@ -262,6 +261,8 @@ extension SWWebView: WKNavigationDelegate {
       activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
       activeProcessTerminationRetryCount += 1
       webView.reload()
+    } else if delegate?.isActive == true {
+      delegate?.webViewDidFail()
     } else {
       loadingHandler.didFailToLoad = true
     }
