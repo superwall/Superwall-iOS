@@ -6,6 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds `currentEntitlements` fallback for transaction retrieval on iOS 18.4+, improving purchase detection for crossgrades and Family Sharing.
+
 - Localizes all alerts into 41 languages.
 - Makes sure to refresh free trial eligibility on every paywall open.
 
