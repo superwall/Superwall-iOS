@@ -14,7 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Makes `device.isSandbox` more reliable.
 - Fixes the web restore alert not showing the "Yes" action button and "Cancel" incorrectly triggering the restore action.
 - Fixes a rare issue where a user's subscription could remain active after a refund, preventing paywalls from being shown.
-- Fixes trial eligibility for Stripe products.
+- Fixes trial eligibility for Stripe paywalls and tracks `freeTrial_start`.
 - Fixes an issue where `transaction_complete` could be missing transaction information when a crossgrade occurred while using a purchase controller.
 - Fixes terminated webviews refreshing in a loop on low RAM devices.
 
