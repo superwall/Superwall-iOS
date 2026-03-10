@@ -34,7 +34,8 @@ extension Transaction {
     for productId: String,
     since purchaseDate: Date
   ) async -> VerificationResult<Transaction>? {
-    if #available(iOS 18.4, *) {
+    #if compiler(>=6.1)
+    if #available(iOS 18.4, visionOS 2.4, *) {
       var best: VerificationResult<Transaction>?
 
       for await result in Transaction.currentEntitlements(for: productId) {
@@ -54,6 +55,7 @@ extension Transaction {
 
       return best
     }
+    #endif
 
     let verificationResult = await Transaction.currentEntitlement(for: productId)
 
