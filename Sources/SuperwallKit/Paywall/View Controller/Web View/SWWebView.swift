@@ -11,6 +11,7 @@ import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
+  var isActive: Bool { get }
   func webViewDidFail()
 }
 
@@ -44,14 +45,6 @@ class SWWebView: WKWebView {
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
   private let enableIframeNavigation: Bool
-
-  /// Tracks the number of times the WebView process has terminated and been reloaded.
-  /// Used to prevent infinite reload loops on memory-constrained devices.
-  private var processTerminationRetryCount = 0
-
-  /// Maximum number of automatic reloads after process termination.
-  /// After this limit, the WebView will be reloaded when presented instead.
-  private let maxProcessTerminationRetries = 1
 
   init(
     isMac: Bool,
@@ -242,8 +235,6 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-    // Reset retry count on successful load
-    processTerminationRetryCount = 0
     completion?(nil)
   }
 
@@ -264,15 +255,12 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    // Only reload if we haven't exceeded the retry limit.
-    // This prevents infinite reload loops on memory-constrained devices
-    // where iOS keeps terminating the WebView process.
-    if processTerminationRetryCount < maxProcessTerminationRetries {
-      processTerminationRetryCount += 1
+    if delegate?.isActive == true {
+      // The user is looking at this paywall - reload immediately.
       webView.reload()
     } else {
-      // Mark as failed so the WebView will be reloaded when presented again
-      // via PaywallViewController.viewWillAppear checking didFailToLoad.
+      // Background/preloaded WebView - mark for reload when next presented.
+      // PaywallViewController.viewWillAppear checks didFailToLoad.
       loadingHandler.didFailToLoad = true
     }
 

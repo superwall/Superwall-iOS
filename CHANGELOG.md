@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.14.2
+
+### Fixes
+
+- Fixes WebView process termination handling to use presentation state instead of a retry counter. Previously, the counter reset on every successful load, allowing infinite kill-reload loops on memory-constrained devices. Now, actively-presenting paywalls always reload immediately, while background/preloaded paywalls defer reloading until next presentation.
+
 ## 4.14.1
 
 ### Enhancements
