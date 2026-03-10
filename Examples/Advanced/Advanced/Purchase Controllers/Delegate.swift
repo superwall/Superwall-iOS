@@ -10,15 +10,6 @@ import RevenueCat
 import SuperwallKit
 
 final class Delegate: SuperwallDelegate {
-  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
-    switch eventInfo.event {
-    case let .transactionComplete(transaction, product, type, paywallInfo):
-      debugPrint("[Delegate] transactionComplete — transactionId: \(transaction?.storeTransactionId ?? "nil"), product: \(product.productIdentifier), type: \(type)")
-    default:
-      break
-    }
-  }
-
   // The user tapped on a deep link to redeem a code
   func willRedeemLink() {
     print("[!] willRedeemLink")
