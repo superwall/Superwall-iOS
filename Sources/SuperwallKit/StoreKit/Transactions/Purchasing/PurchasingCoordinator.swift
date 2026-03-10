@@ -80,6 +80,19 @@ actor PurchasingCoordinator {
       return nil
     }
 
+    func getCurrentEntitlementTransaction() async -> StoreTransaction? {
+      if #available(iOS 15.0, *) {
+        if let verificationResult = await Transaction.currentEntitlement(
+          for: productId,
+          since: purchaseDate
+        ) {
+          let transaction = verificationResult.unsafePayloadValue
+          return await factory.makeStoreTransaction(from: transaction)
+        }
+      }
+      return nil
+    }
+
     if let transaction = await getLatestSK2Transaction() {
       return transaction
     }
@@ -107,6 +120,10 @@ actor PurchasingCoordinator {
       return transaction
     }
 
+    if let transaction = await getCurrentEntitlementTransaction() {
+      return transaction
+    }
+
     // If still no transaction, wait 500ms and try again before returning nil.
     try? await Task.sleep(nanoseconds: 500_000_000)
 
@@ -115,6 +132,12 @@ actor PurchasingCoordinator {
     }
 
     if let transaction = await getLatestSK2Transaction() {
+      return transaction
+    }
+
+    // Retry currentEntitlement after the delay,
+    // as the crossgrade transaction may have settled.
+    if let transaction = await getCurrentEntitlementTransaction() {
       return transaction
     }
 
