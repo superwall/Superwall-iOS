@@ -304,6 +304,11 @@ extension PaywallRequestManager {
       }
       // Can't determine past subscription history without entitlements.
       if productItem.entitlements.isEmpty {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .paywallProducts,
+          message: "Stripe product \(stripeProduct.id) has trialDays > 0 but no entitlements — skipping trial eligibility check."
+        )
         continue
       }
 
