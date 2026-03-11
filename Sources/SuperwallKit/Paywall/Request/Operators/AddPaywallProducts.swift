@@ -170,11 +170,11 @@ extension PaywallRequestManager {
         continue
       }
 
-      isFreeTrialAvailable = await checkAppStoreTrialEligibility(
+      if await checkAppStoreTrialEligibility(
         for: storeProduct,
         introOfferEligibility: paywall.introOfferEligibility
-      )
-      if isFreeTrialAvailable {
+      ) {
+        isFreeTrialAvailable = true
         break
       }
     }

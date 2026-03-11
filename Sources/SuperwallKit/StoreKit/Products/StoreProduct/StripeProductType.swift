@@ -274,7 +274,6 @@ struct StripeProductType: StoreProductType {
     return "\(periodDays)"
   }
 
-
   var dailyPrice: String {
     if price == 0.00 {
       return "$0.00"

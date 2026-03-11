@@ -174,7 +174,6 @@ struct TestStoreProduct: StoreProductType {
     return formatter
   }
 
-
   var dailyPrice: String {
     guard price != 0, let unit = subscriptionUnit else {
       return priceFormatter.string(from: 0) ?? "$0.00"

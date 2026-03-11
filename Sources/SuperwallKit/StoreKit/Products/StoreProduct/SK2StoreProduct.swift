@@ -251,7 +251,6 @@ struct SK2StoreProduct: StoreProductType {
     return "\(periodDays)"
   }
 
-
   var dailyPrice: String {
     guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
       return "n/a"
