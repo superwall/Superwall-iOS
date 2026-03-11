@@ -78,10 +78,6 @@ class ReceiptManagerTests: XCTestCase {
     XCTAssertNil(purchasedSubscriptionGroupIds)
   }
 
-  func test_isFreeTrialAvailable() {
-
-  }
-
   func test_isSandboxEnvironment_defaultsToNil() {
     // Reset to default state
     ReceiptManager.isSandboxEnvironment = nil
