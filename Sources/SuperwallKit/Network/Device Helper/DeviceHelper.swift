@@ -192,6 +192,13 @@ class DeviceHelper {
       return "true"
     #else
 
+    // Prefer AppTransaction.environment (iOS 16+) when available,
+    // as it reliably detects sandbox for all purchase types including
+    // Stripe and non-StoreKit flows.
+    if let isSandbox = ReceiptManager.isSandboxEnvironment {
+      return "\(isSandbox)"
+    }
+
     guard let url = Bundle.main.appStoreReceiptURL else {
       return "false"
     }

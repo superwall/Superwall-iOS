@@ -130,29 +130,29 @@ extension StoreProductDiscount {
     case .day:
       switch subscriptionPeriod.unit {
       case .day: return 1
-      case .week: return 7
-      case .month: return 30
+      case .week: return Decimal(365) / Decimal(52)
+      case .month: return Decimal(365) / Decimal(12)
       case .year: return 365
       }
     case .week:
       switch subscriptionPeriod.unit {
-      case .day: return 1 / 7
+      case .day: return Decimal(52) / Decimal(365)
       case .week: return 1
-      case .month: return 4
+      case .month: return Decimal(52) / Decimal(12)
       case .year: return 52
       }
     case .month:
       switch subscriptionPeriod.unit {
-      case .day: return 1 / 30
-      case .week: return 1 / 4
+      case .day: return Decimal(12) / Decimal(365)
+      case .week: return Decimal(12) / Decimal(52)
       case .month: return 1
       case .year: return 12
       }
     case .year:
       switch subscriptionPeriod.unit {
-      case .day: return 1 / 365
-      case .week: return 1 / 52
-      case .month: return 1 / 12
+      case .day: return Decimal(1) / Decimal(365)
+      case .week: return Decimal(1) / Decimal(52)
+      case .month: return Decimal(1) / Decimal(12)
       case .year: return 1
       }
     }

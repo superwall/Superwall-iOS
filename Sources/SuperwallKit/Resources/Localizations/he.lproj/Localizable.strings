@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "אישור";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "לשחזר דרך האינטרנט?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "המנויים שלך מ-App Store שוחזרו. האם ברצונך לבדוק עוד באינטרנט?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "לא נמצא מנוי";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "לא נמצא מנוי ב-App Store. האם ברצונך לבדוק באינטרנט?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "כן";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "ביטול";
+
+/* Purchase error alert title */
+"purchase_error_title" = "אירעה שגיאה";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "ממתין לאישור";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "תודה! רכישה זו ממתינה לאישור מההורה שלך. אנא נסה שוב לאחר שתאושר.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "סיום";

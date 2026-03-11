@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Obnovit přes web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Vaše předplatné z App Store bylo obnoveno. Chcete zkontrolovat další na webu?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Předplatné nenalezeno";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Nebylo nalezeno žádné předplatné z App Store. Chcete zkontrolovat na webu?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ano";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Zrušit";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Došlo k chybě";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Čeká se na schválení";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Děkujeme! Tento nákup čeká na schválení od vašeho rodiče. Zkuste to prosím znovu, jakmile bude schválen.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Hotovo";

@@ -20,7 +20,6 @@ struct ResponseIdentifiers: Equatable {
 struct ProductProcessingOutcome {
   var productVariables: [ProductVariable]
   var swProducts: [SWProduct]
-  var isFreeTrialAvailable: Bool
 }
 
 enum PaywallLogic {
@@ -98,15 +97,12 @@ enum PaywallLogic {
     }
   }
 
-  static func getVariablesAndFreeTrial(
+  static func getProductVariables(
     productItems: [Product],
-    productsById: [String: StoreProduct],
-    isFreeTrialAvailableOverride: Bool?,
-    isFreeTrialAvailable: @escaping (StoreProduct) async -> Bool
-  ) async -> ProductProcessingOutcome {
+    productsById: [String: StoreProduct]
+  ) -> ProductProcessingOutcome {
     var productVariables: [ProductVariable] = []
     var swProducts: [SWProduct] = []
-    var eligibleForIntroOffer = false
 
     for productItem in productItems {
       guard let storeProduct = productsById[productItem.id] else {
@@ -125,22 +121,11 @@ enum PaywallLogic {
           )
         )
       }
-
-      // Check for a free trial only if we haven't already found one
-      if !eligibleForIntroOffer {
-        eligibleForIntroOffer = await isFreeTrialAvailable(storeProduct)
-      }
-    }
-
-    // use the override if it is set
-    if let freeTrialOverride = isFreeTrialAvailableOverride {
-      eligibleForIntroOffer = freeTrialOverride
     }
 
     return ProductProcessingOutcome(
       productVariables: productVariables,
-      swProducts: swProducts,
-      isFreeTrialAvailable: eligibleForIntroOffer
+      swProducts: swProducts
     )
   }
 }

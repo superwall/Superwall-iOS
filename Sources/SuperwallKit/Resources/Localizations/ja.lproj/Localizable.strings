@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "ウェブから復元しますか？";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "App Storeのサブスクリプションが復元されました。ウェブで他のサブスクリプションを確認しますか？";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "サブスクリプションが見つかりません";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "App Storeのサブスクリプションが見つかりませんでした。ウェブで確認しますか？";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "はい";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "キャンセル";
+
+/* Purchase error alert title */
+"purchase_error_title" = "エラーが発生しました";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "承認待ち";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "ありがとうございます！この購入は保護者の承認待ちです。承認後にもう一度お試しください。";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "完了";
