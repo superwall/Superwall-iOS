@@ -1136,7 +1136,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       didRedeemSucceedDuringCheckout = false
       isCheckoutDismissedProgrammatically = false
       didReceiveStripeCheckoutAbandonMessage = false
-      lastStripeCheckoutProductId = nil
       transactionAbandonWorkItem?.cancel()
       transactionAbandonWorkItem = nil
 

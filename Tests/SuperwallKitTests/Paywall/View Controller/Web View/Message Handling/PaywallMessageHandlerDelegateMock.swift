@@ -93,7 +93,11 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     didOpenPaymentSheet = true
   }
 
-  func handleStripeCheckoutStart(productId: String) {}
+  var stripeCheckoutStartProductId: String?
+
+  func handleStripeCheckoutStart(productId: String) {
+    stripeCheckoutStartProductId = productId
+  }
 
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
     stripeCheckoutSubmit = (checkoutContextId, productId)
