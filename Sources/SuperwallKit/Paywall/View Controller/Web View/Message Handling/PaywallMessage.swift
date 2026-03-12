@@ -50,7 +50,7 @@ enum PaywallMessage: Decodable, Equatable {
   case restore
   case openUrl(_ url: URL)
   case openUrlInSafari(_ url: URL)
-  case openPaymentSheet(_ url: URL)
+  case openPaymentSheet(_ url: URL, productId: String?)
   case openDeepLink(url: URL)
   case purchase(productId: String, shouldDismiss: Bool)
   case custom(data: String)
@@ -184,7 +184,12 @@ enum PaywallMessage: Decodable, Equatable {
             // On visionOS, always use openUrl instead of payment sheet
             self = .openUrl(url)
           #else
-            self = browserType == "payment_sheet" ? .openPaymentSheet(url) : .openUrl(url)
+            if browserType == "payment_sheet" {
+              let productId = try? values.decode(String.self, forKey: .productId)
+              self = .openPaymentSheet(url, productId: productId)
+            } else {
+              self = .openUrl(url)
+            }
           #endif
           return
         }

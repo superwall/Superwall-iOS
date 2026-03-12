@@ -1130,12 +1130,13 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 
 // MARK: - PaywallMessageHandlerDelegate
 extension PaywallViewController: PaywallMessageHandlerDelegate {
-  func openPaymentSheet(_ url: URL) {
+  func openPaymentSheet(_ url: URL, productId: String?) {
     #if !os(visionOS)
       // Reset flags when opening checkout
       didRedeemSucceedDuringCheckout = false
       isCheckoutDismissedProgrammatically = false
       didReceiveStripeCheckoutAbandonMessage = false
+      lastStripeCheckoutProductId = productId
       transactionAbandonWorkItem?.cancel()
       transactionAbandonWorkItem = nil
 
@@ -1200,10 +1201,6 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       loadingState = .loadingPurchase
       present(checkoutVC, animated: true)
     #endif
-  }
-
-  func handleStripeCheckoutStart(productId: String) {
-    lastStripeCheckoutProductId = productId
   }
 
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {

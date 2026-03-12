@@ -22,8 +22,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func presentSafariInApp(_ url: URL)
   func presentSafariExternal(_ url: URL)
   func requestReview(type: ReviewType)
-  func openPaymentSheet(_ url: URL)
-  func handleStripeCheckoutStart(productId: String)
+  func openPaymentSheet(_ url: URL, productId: String?)
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
@@ -177,8 +176,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       openUrl(url)
     case .openUrlInSafari(let url):
       openUrlInSafari(url)
-    case .openPaymentSheet(let url):
-      openPaymentSheet(url)
+    case let .openPaymentSheet(url, productId):
+      openPaymentSheet(url, productId: productId)
     case .openDeepLink(let url):
       openDeepLink(url)
     case .restore:
@@ -200,7 +199,6 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .start,
         productId: productId
       )
-      delegate?.handleStripeCheckoutStart(productId: productId)
     case let .stripeCheckoutComplete(checkoutContextId, productId):
       trackStripeCheckoutEvent(
         state: .complete,
@@ -476,13 +474,13 @@ final class PaywallMessageHandler: WebEventDelegate {
     delegate?.presentSafariExternal(url)
   }
 
-  private func openPaymentSheet(_ url: URL) {
+  private func openPaymentSheet(_ url: URL, productId: String?) {
     detectHiddenPaywallEvent(
       "openPaymentSheet",
       userInfo: ["url": url]
     )
     hapticFeedback()
-    delegate?.openPaymentSheet(url)
+    delegate?.openPaymentSheet(url, productId: productId)
   }
 
   private func openDeepLink(_ url: URL) {

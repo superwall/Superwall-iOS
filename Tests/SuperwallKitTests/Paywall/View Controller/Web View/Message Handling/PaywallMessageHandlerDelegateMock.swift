@@ -89,14 +89,11 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     didRequestReview = true
   }
 
-  func openPaymentSheet(_ url: URL) {
+  var openPaymentSheetProductId: String?
+
+  func openPaymentSheet(_ url: URL, productId: String?) {
     didOpenPaymentSheet = true
-  }
-
-  var stripeCheckoutStartProductId: String?
-
-  func handleStripeCheckoutStart(productId: String) {
-    stripeCheckoutStartProductId = productId
+    openPaymentSheetProductId = productId
   }
 
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
