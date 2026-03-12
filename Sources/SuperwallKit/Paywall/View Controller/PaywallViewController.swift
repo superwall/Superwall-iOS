@@ -1160,11 +1160,12 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         if !self.didRedeemSucceedDuringCheckout,
           !self.isCheckoutDismissedProgrammatically,
           !self.didReceiveStripeCheckoutAbandonMessage {
+          let abandonProductId = self.lastStripeCheckoutProductId ?? ""
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             Task {
               let event = InternalSuperwallEvent.Transaction(
-                state: .abandon(StoreProduct.blank(productIdentifier: self.lastStripeCheckoutProductId ?? "")),
+                state: .abandon(StoreProduct.blank(productIdentifier: abandonProductId)),
                 paywallInfo: self.info,
                 product: nil,
                 transaction: nil,
