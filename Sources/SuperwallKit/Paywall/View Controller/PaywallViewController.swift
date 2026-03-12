@@ -114,6 +114,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// The product ID from the most recent stripe_checkout_start message, used as a fallback
+  /// when the user swipe-dismisses the checkout sheet before stripe_checkout_abandon fires.
+  private var lastStripeCheckoutProductId: String?
+
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private var previousStripeCheckoutTask: Task<Void, Never>?
 
@@ -1132,6 +1136,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       didRedeemSucceedDuringCheckout = false
       isCheckoutDismissedProgrammatically = false
       didReceiveStripeCheckoutAbandonMessage = false
+      lastStripeCheckoutProductId = nil
       transactionAbandonWorkItem?.cancel()
       transactionAbandonWorkItem = nil
 
@@ -1159,7 +1164,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
             guard let self = self else { return }
             Task {
               let event = InternalSuperwallEvent.Transaction(
-                state: .abandon(StoreProduct.blank()),
+                state: .abandon(StoreProduct.blank(productIdentifier: self.lastStripeCheckoutProductId ?? "")),
                 paywallInfo: self.info,
                 product: nil,
                 transaction: nil,
@@ -1178,6 +1183,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         self.didRedeemSucceedDuringCheckout = false
         self.isCheckoutDismissedProgrammatically = false
         self.didReceiveStripeCheckoutAbandonMessage = false
+        self.lastStripeCheckoutProductId = nil
       }
 
       checkoutVC.modalPresentationStyle = .pageSheet
@@ -1194,6 +1200,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       loadingState = .loadingPurchase
       present(checkoutVC, animated: true)
     #endif
+  }
+
+  func handleStripeCheckoutStart(productId: String) {
+    lastStripeCheckoutProductId = productId
   }
 
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
