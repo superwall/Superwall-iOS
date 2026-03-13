@@ -614,8 +614,8 @@ final class TransactionManager {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async {
-    // Generate a custom transaction ID for custom products before purchase.
-    if product.isCustomProduct, product.customTransactionId == nil {
+    // Always regenerate the custom transaction ID before a new purchase attempt.
+    if product.isCustomProduct {
       product.customTransactionId = UUID().uuidString
     }
 
