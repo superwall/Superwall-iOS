@@ -53,6 +53,7 @@ public enum SuperwallProductPlatform: String, Decodable, Sendable {
   case stripe
   case paddle
   case superwall
+  case custom
 }
 
 /// Price information for a product.

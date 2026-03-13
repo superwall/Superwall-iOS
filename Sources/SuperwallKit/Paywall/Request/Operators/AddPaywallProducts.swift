@@ -1,6 +1,7 @@
+// swiftlint:disable file_length
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 12/05/2023.
 //
@@ -32,6 +33,13 @@ extension PaywallRequestManager {
   private func getProducts(for paywall: Paywall, request: PaywallRequest) async throws -> Paywall {
     var paywall = paywall
 
+    // Pre-populate custom products from the Superwall API before fetching
+    // App Store products so they're already cached in productsById.
+    let customProducts = paywall.customProducts
+    if !customProducts.isEmpty {
+      await fetchAndCacheCustomProducts(customProducts)
+    }
+
     do {
       let result = try await storeKitManager.getProducts(
         forPaywall: paywall,
@@ -42,9 +50,18 @@ extension PaywallRequestManager {
 
       paywall.products = result.productItems
 
+      // Merge custom products into productsById so they appear in
+      // product variables and templating.
+      var mergedProductsById = result.productsById
+      for product in customProducts {
+        if let cached = await storeKitManager.productsById[product.id] {
+          mergedProductsById[product.id] = cached
+        }
+      }
+
       let outcome = PaywallLogic.getProductVariables(
         productItems: result.productItems,
-        productsById: result.productsById
+        productsById: mergedProductsById
       )
       paywall.productVariables = outcome.productVariables
 
@@ -68,6 +85,44 @@ extension PaywallRequestManager {
         )
       }
       return paywall
+    }
+  }
+
+  // MARK: - Custom Products
+
+  /// Fetches custom products from the Superwall API and caches them in
+  /// `storeKitManager.productsById` so they can be used for templating.
+  private func fetchAndCacheCustomProducts(_ customProducts: [Product]) async {
+    let customProductIds = Set(customProducts.map { $0.id })
+    // Skip if all custom products are already cached.
+    let cachedIds = await Set(storeKitManager.productsById.keys)
+    if customProductIds.isSubset(of: cachedIds) {
+      return
+    }
+
+    do {
+      let response = try await network.getSuperwallProducts()
+      for superwallProduct in response.data where customProductIds.contains(superwallProduct.identifier) {
+        let entitlements = Set(superwallProduct.entitlements.map {
+          Entitlement(id: $0.identifier)
+        })
+        let testProduct = TestStoreProduct(
+          superwallProduct: superwallProduct,
+          entitlements: entitlements
+        )
+        let storeProduct = StoreProduct(customProduct: testProduct)
+        await storeKitManager.setProduct(
+          storeProduct,
+          forIdentifier: superwallProduct.identifier
+        )
+      }
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .productsManager,
+        message: "Failed to fetch custom products from API",
+        error: error
+      )
     }
   }
 
@@ -186,6 +241,16 @@ extension PaywallRequestManager {
     if !paywall.isFreeTrialAvailable {
       paywall.isFreeTrialAvailable = await checkStripeTrialEligibility(
         productItems: paywall.products,
+        introOfferEligibility: paywall.introOfferEligibility
+      )
+    }
+
+    // Check custom products for trial eligibility using the same entitlement-based
+    // approach as Stripe products.
+    if !paywall.isFreeTrialAvailable {
+      paywall.isFreeTrialAvailable = await checkCustomTrialEligibility(
+        productItems: paywall.products,
+        productsById: productsById,
         introOfferEligibility: paywall.introOfferEligibility
       )
     }
@@ -317,6 +382,39 @@ extension PaywallRequestManager {
       )
       if !hasEntitlement {
         return true
+      }
+    }
+    return false
+  }
+
+  // MARK: - Custom Trial Eligibility
+
+  /// Checks custom products for trial eligibility using the cached StoreProduct data.
+  private func checkCustomTrialEligibility(
+    productItems: [Product],
+    productsById: [String: StoreProduct],
+    introOfferEligibility: IntroOfferEligibility
+  ) async -> Bool {
+    if introOfferEligibility == .ineligible {
+      return false
+    }
+
+    for productItem in productItems {
+      if case .custom = productItem.type {
+        guard let storeProduct = productsById[productItem.id] else {
+          continue
+        }
+        if storeProduct.hasFreeTrial {
+          if productItem.entitlements.isEmpty {
+            continue
+          }
+          let hasEntitlement = await hasEverHadEntitlement(
+            forProductEntitlements: productItem.entitlements
+          )
+          if !hasEntitlement {
+            return true
+          }
+        }
       }
     }
     return false

@@ -67,6 +67,11 @@ struct Paywall: Codable {
     return PaywallLogic.getAppStoreProducts(from: products)
   }
 
+  /// The custom products associated with the paywall.
+  var customProducts: [Product] {
+    return PaywallLogic.getCustomProducts(from: products)
+  }
+
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
 

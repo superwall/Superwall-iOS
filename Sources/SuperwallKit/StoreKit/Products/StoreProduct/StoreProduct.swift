@@ -45,6 +45,15 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// ```
   public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
 
+  /// Whether this product is a custom product backed by the Superwall API.
+  nonisolated(unsafe) var isCustomProduct = false
+
+  /// A pre-generated transaction ID for custom products.
+  ///
+  /// This is set before purchase and used as the `originalTransactionIdentifier`
+  /// in the resulting `CustomStoreTransaction`.
+  nonisolated(unsafe) var customTransactionId: String?
+
   /// A `Set` of ``Entitlements`` associated with the product.
   public var entitlements: Set<Entitlement> {
     product.entitlements
@@ -386,6 +395,11 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
 
   convenience init(testProduct: TestStoreProduct) {
     self.init(testProduct)
+  }
+
+  convenience init(customProduct: TestStoreProduct) {
+    self.init(customProduct)
+    self.isCustomProduct = true
   }
 
   /// Creates a blank StoreProduct with empty/default values.

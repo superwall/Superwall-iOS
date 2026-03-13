@@ -614,6 +614,11 @@ final class TransactionManager {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async {
+    // Generate a custom transaction ID for custom products before purchase.
+    if product.isCustomProduct, product.customTransactionId == nil {
+      product.customTransactionId = UUID().uuidString
+    }
+
     let isFreeTrialAvailable = await receiptManager.isFreeTrialAvailable(for: product)
 
     var isObserved = false
@@ -695,6 +700,34 @@ final class TransactionManager {
       let source = await coordinator.source,
       let product = await coordinator.product
     else {
+      return
+    }
+
+    // For custom products, create a CustomStoreTransaction instead of
+    // querying StoreKit. Skip receipt loading since there's no App Store receipt.
+    if product.isCustomProduct, let customTxnId = product.customTransactionId {
+      let customTransaction = CustomStoreTransaction(
+        customTransactionId: customTxnId,
+        productIdentifier: product.productIdentifier
+      )
+      let transaction = await factory.makeStoreTransaction(from: customTransaction)
+      await trackTransactionDidSucceed(transaction)
+
+      if case let .internal(_, paywallViewController, shouldDismiss) = source {
+        let superwallOptions = factory.makeSuperwallOptions()
+        let shouldDismissPaywall = superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
+        if shouldDismissPaywall {
+          await Superwall.shared.dismiss(
+            paywallViewController,
+            result: .purchased(product)
+          )
+        }
+        if !shouldDismissPaywall {
+          await MainActor.run {
+            paywallViewController.togglePaywallSpinner(isHidden: true)
+          }
+        }
+      }
       return
     }
 
