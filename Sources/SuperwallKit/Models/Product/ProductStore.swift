@@ -25,11 +25,11 @@ public enum ProductStore: Int, Codable, Sendable {
   /// A manually granted entitlement from the Superwall dashboard.
   case superwall
 
-  /// A custom product for use with an external purchase controller.
-  case custom
-
   /// Other/Unknown store.
   case other
+
+  /// A custom product for use with an external purchase controller.
+  case custom
 
   /// Returns the string representation of the product store (e.g., "APP_STORE", "STRIPE")
   public var description: String {
