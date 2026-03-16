@@ -255,7 +255,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case .hapticFeedback(let hapticType):
       triggerHapticFeedback(hapticType)
-    case let .pageView(pageNodeId, flowPosition, pageName, navigationNodeId, previousPageNodeId, previousFlowPosition, type, timeOnPreviousPageMs):
+    case let .pageView(
+      pageNodeId,
+      flowPosition,
+      pageName,
+      navigationNodeId,
+      previousPageNodeId,
+      previousFlowPosition,
+      type,
+      timeOnPreviousPageMs
+    ):
       guard let delegate = delegate else { return }
       let paywallInfo = delegate.info
       Task {

@@ -470,7 +470,15 @@ enum InternalSuperwallEvent {
 
   struct PaywallPageView: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
-      return .paywallPageView(paywallInfo: paywallInfo)
+      return .paywallPageView(
+        paywallInfo: paywallInfo,
+        pageInfo: PaywallPageViewInfo(
+          pageNodeId: pageNodeId,
+          pageIndex: flowPosition,
+          pageName: pageName,
+          navigationType: navigationType
+        )
+      )
     }
     let paywallInfo: PaywallInfo
     let pageNodeId: String

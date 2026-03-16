@@ -219,8 +219,12 @@ struct PageViewMessageTests {
       timeOnPreviousPageMs: nil
     )
 
-    if case .paywallPageView(let eventInfo) = event.superwallEvent {
+    if case .paywallPageView(let eventInfo, let pageInfo) = event.superwallEvent {
       #expect(eventInfo === info)
+      #expect(pageInfo.pageNodeId == "page1")
+      #expect(pageInfo.pageIndex == 0)
+      #expect(pageInfo.pageName == "Page 1")
+      #expect(pageInfo.navigationType == "entry")
     } else {
       Issue.record("Expected .paywallPageView")
     }

@@ -330,25 +330,26 @@ enum PaywallMessage: Decodable, Equatable {
           return
         }
       case .pageView:
-        let pageNodeId = try values.decode(String.self, forKey: .pageNodeId)
-        let flowPosition = try values.decode(Int.self, forKey: .flowPosition)
-        let pageName = try values.decode(String.self, forKey: .pageName)
-        let navigationNodeId = try values.decode(String.self, forKey: .navigationNodeId)
-        let previousPageNodeId = try? values.decode(String.self, forKey: .previousPageNodeId)
-        let previousFlowPosition = try? values.decode(Int.self, forKey: .previousFlowPosition)
-        let type = try values.decode(String.self, forKey: .type)
-        let timeOnPreviousPageMs = try? values.decode(Int.self, forKey: .timeOnPreviousPageMs)
-        self = .pageView(
-          pageNodeId: pageNodeId,
-          flowPosition: flowPosition,
-          pageName: pageName,
-          navigationNodeId: navigationNodeId,
-          previousPageNodeId: previousPageNodeId,
-          previousFlowPosition: previousFlowPosition,
-          type: type,
-          timeOnPreviousPageMs: timeOnPreviousPageMs
-        )
-        return
+        if let pageNodeId = try? values.decode(String.self, forKey: .pageNodeId),
+          let flowPosition = try? values.decode(Int.self, forKey: .flowPosition),
+          let pageName = try? values.decode(String.self, forKey: .pageName),
+          let navigationNodeId = try? values.decode(String.self, forKey: .navigationNodeId),
+          let type = try? values.decode(String.self, forKey: .type) {
+          let previousPageNodeId = try? values.decode(String.self, forKey: .previousPageNodeId)
+          let previousFlowPosition = try? values.decode(Int.self, forKey: .previousFlowPosition)
+          let timeOnPreviousPageMs = try? values.decode(Int.self, forKey: .timeOnPreviousPageMs)
+          self = .pageView(
+            pageNodeId: pageNodeId,
+            flowPosition: flowPosition,
+            pageName: pageName,
+            navigationNodeId: navigationNodeId,
+            previousPageNodeId: previousPageNodeId,
+            previousFlowPosition: previousFlowPosition,
+            type: type,
+            timeOnPreviousPageMs: timeOnPreviousPageMs
+          )
+          return
+        }
       }
     }
 
