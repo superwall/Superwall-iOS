@@ -15,7 +15,8 @@ extension PaywallRequestManager {
       paywallId: request.responseIdentifiers.paywallId,
       placement: request.placementData
     )
-    let paywall = try await getPaywallResponse(from: request)
+    var paywall = try await getPaywallResponse(from: request)
+    paywall.presentationId = UUID().uuidString
 
     let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
     await trackResponseLoaded(

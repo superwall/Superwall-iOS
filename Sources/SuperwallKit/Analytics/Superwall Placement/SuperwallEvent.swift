@@ -281,6 +281,12 @@ public enum SuperwallEvent {
   /// When the test mode modal is closed.
   case testModeModalClose
 
+  /// When a user navigates to a page in a multi-page paywall.
+  case paywallPageView(
+    paywallInfo: PaywallInfo,
+    data: PageViewData
+  )
+
   var canImplicitlyTriggerPaywall: Bool {
     switch self {
     case .appInstall,
@@ -478,6 +484,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .testModeModalOpen)
     case .testModeModalClose:
       return .init(objcEvent: .testModeModalClose)
+    case .paywallPageView:
+      return .init(objcEvent: .paywallPageView)
     }
   }
 }
