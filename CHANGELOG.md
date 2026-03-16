@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.14.2
+
+### Enhancements
+
+- Adds multipage paywall navigation tracking by tracking a `paywall_page_view` event, which contains information about the page view.
+
 ## 4.14.1
 
 ### Enhancements
