@@ -16,21 +16,6 @@ public typealias SuperwallPlacement = SuperwallEvent
 /// Analytical events that are automatically tracked by Superwall.
 ///
 /// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallEvent(withInfo:)-50exd``.
-/// Contains page-specific details for a multi-page paywall page view.
-public struct PaywallPageViewInfo {
-  /// The unique identifier for the page node.
-  public let pageNodeId: String
-
-  /// The zero-based index of the page in the paywall flow.
-  public let pageIndex: Int
-
-  /// The display name of the page.
-  public let pageName: String
-
-  /// How the user navigated to the page (e.g. "entry", "swipe", "tap").
-  public let navigationType: String
-}
-
 public enum SuperwallEvent {
   /// When the user is first seen in the app, regardless of whether the user is logged in or not.
   case firstSeen
