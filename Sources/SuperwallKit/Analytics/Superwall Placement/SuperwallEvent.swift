@@ -284,7 +284,7 @@ public enum SuperwallEvent {
   /// When a user navigates to a page in a multi-page paywall.
   case paywallPageView(
     paywallInfo: PaywallInfo,
-    pageInfo: PaywallPageViewInfo
+    data: PageViewData
   )
 
   var canImplicitlyTriggerPaywall: Bool {

@@ -472,38 +472,26 @@ enum InternalSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .paywallPageView(
         paywallInfo: paywallInfo,
-        pageInfo: PaywallPageViewInfo(
-          pageNodeId: pageNodeId,
-          pageIndex: flowPosition,
-          pageName: pageName,
-          navigationType: navigationType
-        )
+        data: data
       )
     }
     let paywallInfo: PaywallInfo
-    let pageNodeId: String
-    let flowPosition: Int
-    let pageName: String
-    let navigationNodeId: String
-    let previousPageNodeId: String?
-    let previousFlowPosition: Int?
-    let navigationType: String
-    let timeOnPreviousPageMs: Int?
+    let data: PageViewData
 
     func getSuperwallParameters() async -> [String: Any] {
       var params = await paywallInfo.placementParams()
-      params["page_node_id"] = pageNodeId
-      params["flow_position"] = flowPosition
-      params["page_name"] = pageName
-      params["navigation_node_id"] = navigationNodeId
-      params["navigation_type"] = navigationType
-      if let previousPageNodeId = previousPageNodeId {
+      params["page_node_id"] = data.pageNodeId
+      params["flow_position"] = data.flowPosition
+      params["page_name"] = data.pageName
+      params["navigation_node_id"] = data.navigationNodeId
+      params["navigation_type"] = data.type
+      if let previousPageNodeId = data.previousPageNodeId {
         params["previous_page_node_id"] = previousPageNodeId
       }
-      if let previousFlowPosition = previousFlowPosition {
+      if let previousFlowPosition = data.previousFlowPosition {
         params["previous_flow_position"] = previousFlowPosition
       }
-      if let timeOnPreviousPageMs = timeOnPreviousPageMs {
+      if let timeOnPreviousPageMs = data.timeOnPreviousPageMs {
         params["time_on_previous_page_ms"] = timeOnPreviousPageMs
       }
       return params

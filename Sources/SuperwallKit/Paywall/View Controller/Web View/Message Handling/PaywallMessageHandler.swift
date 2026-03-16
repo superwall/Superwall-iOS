@@ -255,29 +255,13 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case .hapticFeedback(let hapticType):
       triggerHapticFeedback(hapticType)
-    case let .pageView(
-      pageNodeId,
-      flowPosition,
-      pageName,
-      navigationNodeId,
-      previousPageNodeId,
-      previousFlowPosition,
-      type,
-      timeOnPreviousPageMs
-    ):
+    case .pageView(let data):
       guard let delegate = delegate else { return }
       let paywallInfo = delegate.info
       Task {
         let event = InternalSuperwallEvent.PaywallPageView(
           paywallInfo: paywallInfo,
-          pageNodeId: pageNodeId,
-          flowPosition: flowPosition,
-          pageName: pageName,
-          navigationNodeId: navigationNodeId,
-          previousPageNodeId: previousPageNodeId,
-          previousFlowPosition: previousFlowPosition,
-          navigationType: type,
-          timeOnPreviousPageMs: timeOnPreviousPageMs
+          data: data
         )
         await Superwall.shared.track(event)
       }
