@@ -64,10 +64,9 @@ struct PresentationIdTests {
     let info = paywall.getInfo(fromPlacement: nil)
 
     let params = await info.placementParams()
-    // When presentationId is nil, it should still be present as a key (via `as Any`)
-    // but the value should be nil/NSNull
-    let value = params["presentation_id"]
-    #expect(value is NSNull || value == nil || "\(value!)" == "Optional(nil)")
+    // presentationId is nil, cast as Any into the dict so the key exists
+    // but the underlying value is Optional<String>.none
+    #expect(params["presentation_id"] as? String == nil)
   }
 
   // MARK: - PresentationId consistency across info calls
