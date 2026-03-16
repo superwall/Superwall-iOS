@@ -197,6 +197,13 @@ extension SubscriptionPeriod {
   )
 }
 
+extension Decimal {
+  func roundedPrice() -> Decimal {
+    (self as NSDecimalNumber)
+      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
+  }
+}
+
 private extension SubscriptionPeriod.Unit {
   static func from(sk1PeriodUnit: SK1Product.PeriodUnit) -> Self? {
     switch sk1PeriodUnit {

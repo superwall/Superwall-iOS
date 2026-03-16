@@ -251,11 +251,6 @@ struct SK2StoreProduct: StoreProductType {
     return "\(periodDays)"
   }
 
-  private func roundedPrice(_ amount: Decimal) -> Decimal {
-    (amount as NSDecimalNumber)
-      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
-  }
-
   var dailyPrice: String {
     guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
       return "n/a"
@@ -278,7 +273,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var weeklyPrice: String {
@@ -303,7 +298,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var monthlyPrice: String {
@@ -328,7 +323,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var yearlyPrice: String {
@@ -353,7 +348,7 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return roundedPrice(inputPrice / periods).formatted(underlyingSK2Product.priceFormatStyle)
+    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   var hasFreeTrial: Bool {

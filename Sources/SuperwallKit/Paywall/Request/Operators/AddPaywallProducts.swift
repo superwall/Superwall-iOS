@@ -170,11 +170,11 @@ extension PaywallRequestManager {
         continue
       }
 
-      isFreeTrialAvailable = await checkAppStoreTrialEligibility(
+      if await checkAppStoreTrialEligibility(
         for: storeProduct,
         introOfferEligibility: paywall.introOfferEligibility
-      )
-      if isFreeTrialAvailable {
+      ) {
+        isFreeTrialAvailable = true
         break
       }
     }
@@ -304,6 +304,11 @@ extension PaywallRequestManager {
       }
       // Can't determine past subscription history without entitlements.
       if productItem.entitlements.isEmpty {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .productsManager,
+          message: "Stripe product \(stripeProduct.id) has trialDays > 0 but no entitlements — skipping trial eligibility check."
+        )
         continue
       }
 

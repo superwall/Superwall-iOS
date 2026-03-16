@@ -174,11 +174,6 @@ struct TestStoreProduct: StoreProductType {
     return formatter
   }
 
-  private func roundedPrice(_ amount: Decimal) -> Decimal {
-    (amount as NSDecimalNumber)
-      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
-  }
-
   var dailyPrice: String {
     guard price != 0, let unit = subscriptionUnit else {
       return priceFormatter.string(from: 0) ?? "$0.00"
@@ -191,7 +186,7 @@ struct TestStoreProduct: StoreProductType {
     case .year: days = Decimal(365 * subscriptionValue)
     @unknown default: days = 1
     }
-    let rounded = roundedPrice(price / days)
+    let rounded = (price / days).roundedPrice()
     return priceFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
@@ -207,7 +202,7 @@ struct TestStoreProduct: StoreProductType {
     case .year: weeks = Decimal(52 * subscriptionValue)
     @unknown default: weeks = 1
     }
-    let rounded = roundedPrice(price / weeks)
+    let rounded = (price / weeks).roundedPrice()
     return priceFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
@@ -223,7 +218,7 @@ struct TestStoreProduct: StoreProductType {
     case .year: months = Decimal(12 * subscriptionValue)
     @unknown default: months = 1
     }
-    let rounded = roundedPrice(price / months)
+    let rounded = (price / months).roundedPrice()
     return priceFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
@@ -239,7 +234,7 @@ struct TestStoreProduct: StoreProductType {
     case .year: years = Decimal(subscriptionValue)
     @unknown default: years = 1
     }
-    let rounded = roundedPrice(price / years)
+    let rounded = (price / years).roundedPrice()
     return priceFormatter.string(from: NSDecimalNumber(decimal: rounded)) ?? "n/a"
   }
 
