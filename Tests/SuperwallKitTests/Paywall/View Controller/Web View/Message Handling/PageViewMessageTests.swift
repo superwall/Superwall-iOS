@@ -41,7 +41,7 @@ struct PageViewMessageTests {
       #expect(data.navigationNodeId == "nav_456")
       #expect(data.previousPageNodeId == "node_789")
       #expect(data.previousFlowPosition == 1)
-      #expect(data.type == "forward")
+      #expect(data.navigationType == "forward")
       #expect(data.timeOnPreviousPageMs == 5000)
     } else {
       Issue.record("Expected .pageView but got \(message)")
@@ -69,7 +69,7 @@ struct PageViewMessageTests {
       #expect(data.navigationNodeId == "nav_entry")
       #expect(data.previousPageNodeId == nil)
       #expect(data.previousFlowPosition == nil)
-      #expect(data.type == "entry")
+      #expect(data.navigationType == "entry")
       #expect(data.timeOnPreviousPageMs == nil)
     } else {
       Issue.record("Expected .pageView but got \(message)")
@@ -94,7 +94,7 @@ struct PageViewMessageTests {
     let message = try decodeMessage(json)
 
     if case .pageView(let data) = message {
-      #expect(data.type == "back")
+      #expect(data.navigationType == "back")
     } else {
       Issue.record("Expected .pageView but got \(message)")
     }
@@ -115,7 +115,7 @@ struct PageViewMessageTests {
     let message = try decodeMessage(json)
 
     if case .pageView(let data) = message {
-      #expect(data.type == "auto_transition")
+      #expect(data.navigationType == "auto_transition")
     } else {
       Issue.record("Expected .pageView but got \(message)")
     }
@@ -130,7 +130,7 @@ struct PageViewMessageTests {
     navigationNodeId: String = "nav",
     previousPageNodeId: String? = nil,
     previousFlowPosition: Int? = nil,
-    type: String = "entry",
+    navigationType: String = "entry",
     timeOnPreviousPageMs: Int? = nil
   ) -> PageViewData {
     return PageViewData(
@@ -140,7 +140,7 @@ struct PageViewMessageTests {
       navigationNodeId: navigationNodeId,
       previousPageNodeId: previousPageNodeId,
       previousFlowPosition: previousFlowPosition,
-      type: type,
+      navigationType: navigationType,
       timeOnPreviousPageMs: timeOnPreviousPageMs
     )
   }
@@ -159,7 +159,7 @@ struct PageViewMessageTests {
         navigationNodeId: "nav_xyz",
         previousPageNodeId: "node_prev",
         previousFlowPosition: 0,
-        type: "forward",
+        navigationType: "forward",
         timeOnPreviousPageMs: 3000
       )
     )
@@ -227,7 +227,7 @@ struct PageViewMessageTests {
       #expect(data.pageNodeId == "n")
       #expect(data.flowPosition == 0)
       #expect(data.pageName == "P")
-      #expect(data.type == "entry")
+      #expect(data.navigationType == "entry")
     } else {
       Issue.record("Expected .paywallPageView")
     }

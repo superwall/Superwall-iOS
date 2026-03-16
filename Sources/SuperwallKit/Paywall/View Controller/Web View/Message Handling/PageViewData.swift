@@ -27,9 +27,21 @@ public struct PageViewData: Decodable, Equatable {
   /// The flow position of the previous page, if any.
   public let previousFlowPosition: Int?
 
-  /// How the user navigated to the page (e.g. "entry", "forward", "back").
-  public let type: String
+  /// How the user navigated to the page. Possible values:
+  /// `"entry"`, `"forward"`, `"back"`, `"auto_transition"`.
+  public let navigationType: String
 
   /// Time spent on the previous page in milliseconds, if any.
   public let timeOnPreviousPageMs: Int?
+
+  private enum CodingKeys: String, CodingKey {
+    case pageNodeId
+    case flowPosition
+    case pageName
+    case navigationNodeId
+    case previousPageNodeId
+    case previousFlowPosition
+    case navigationType = "type"
+    case timeOnPreviousPageMs
+  }
 }

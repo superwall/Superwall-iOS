@@ -484,7 +484,7 @@ enum InternalSuperwallEvent {
       params["flow_position"] = data.flowPosition
       params["page_name"] = data.pageName
       params["navigation_node_id"] = data.navigationNodeId
-      params["navigation_type"] = data.type
+      params["navigation_type"] = data.navigationType
       if let previousPageNodeId = data.previousPageNodeId {
         params["previous_page_node_id"] = previousPageNodeId
       }

@@ -150,7 +150,7 @@ struct PresentationIdTests {
         pageNodeId: "page1", flowPosition: 0, pageName: "Welcome",
         navigationNodeId: "nav1",
         previousPageNodeId: nil, previousFlowPosition: nil,
-        type: "entry", timeOnPreviousPageMs: nil
+        navigationType: "entry", timeOnPreviousPageMs: nil
       )
     ).getSuperwallParameters()
     #expect(pageView1Params["presentation_id"] as? String == presentationId)
@@ -161,7 +161,7 @@ struct PresentationIdTests {
         pageNodeId: "page2", flowPosition: 1, pageName: "Pricing",
         navigationNodeId: "nav2",
         previousPageNodeId: "page1", previousFlowPosition: 0,
-        type: "forward", timeOnPreviousPageMs: 4500
+        navigationType: "forward", timeOnPreviousPageMs: 4500
       )
     ).getSuperwallParameters()
     #expect(pageView2Params["presentation_id"] as? String == presentationId)
@@ -173,7 +173,7 @@ struct PresentationIdTests {
         pageNodeId: "page1", flowPosition: 0, pageName: "Welcome",
         navigationNodeId: "nav3",
         previousPageNodeId: "page2", previousFlowPosition: 1,
-        type: "back", timeOnPreviousPageMs: 2000
+        navigationType: "back", timeOnPreviousPageMs: 2000
       )
     ).getSuperwallParameters()
     #expect(pageView3Params["presentation_id"] as? String == presentationId)
@@ -240,7 +240,7 @@ struct PresentationIdTests {
         pageNodeId: "p1", flowPosition: 0, pageName: "Page",
         navigationNodeId: "n1",
         previousPageNodeId: nil, previousFlowPosition: nil,
-        type: "entry", timeOnPreviousPageMs: nil
+        navigationType: "entry", timeOnPreviousPageMs: nil
       )
     ).getSuperwallParameters()
     #expect(pageViewParams2["presentation_id"] as? String == secondPresentationId)
@@ -274,7 +274,7 @@ struct PresentationIdTests {
           pageNodeId: "p\(i)", flowPosition: 0, pageName: "Page \(i)",
           navigationNodeId: "n\(i)",
           previousPageNodeId: nil, previousFlowPosition: nil,
-          type: "entry", timeOnPreviousPageMs: nil
+          navigationType: "entry", timeOnPreviousPageMs: nil
         )
       ).getSuperwallParameters()
 
