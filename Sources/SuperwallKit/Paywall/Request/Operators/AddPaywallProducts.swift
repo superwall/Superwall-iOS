@@ -93,9 +93,22 @@ extension PaywallRequestManager {
   /// Fetches custom products from the Superwall API and caches them in
   /// `storeKitManager.productsById` so they can be used for templating.
   private func fetchAndCacheCustomProducts(_ customProducts: [Product]) async {
-    let customProductsById = Dictionary(
-      uniqueKeysWithValues: customProducts.map { ($0.id, $0) }
-    )
+    var duplicateCustomProductIds = Set<String>()
+    let customProductsById = customProducts.reduce(into: [String: Product]()) { result, product in
+      if result.updateValue(product, forKey: product.id) != nil {
+        duplicateCustomProductIds.insert(product.id)
+      }
+    }
+
+    if !duplicateCustomProductIds.isEmpty {
+      let duplicateIds = duplicateCustomProductIds.sorted().joined(separator: ", ")
+      Logger.debug(
+        logLevel: .warn,
+        scope: .productsManager,
+        message: "Paywall contains duplicate custom product ids: \(duplicateIds). Using the last occurrence."
+      )
+    }
+
     let cachedProductsById = await storeKitManager.productsById
     let idsNeedingRefresh = Set(
       customProductsById.compactMap { id, productItem in
