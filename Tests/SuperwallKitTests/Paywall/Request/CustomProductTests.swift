@@ -130,7 +130,7 @@ struct CustomProductTests {
     let data = json.data(using: .utf8)!
     let store = try JSONDecoder().decode(ProductStore.self, from: data)
     #expect(store == .custom)
-    #expect(store.description == "custom")
+    #expect(store.description == "CUSTOM")
   }
 
   // MARK: - PaywallLogic.getCustomProducts

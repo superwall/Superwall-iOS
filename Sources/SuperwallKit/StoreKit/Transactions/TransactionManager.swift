@@ -705,7 +705,8 @@ final class TransactionManager {
 
     // For custom products, create a CustomStoreTransaction instead of
     // querying StoreKit. Skip receipt loading since there's no App Store receipt.
-    if product.isCustomProduct, let customTxnId = product.customTransactionId {
+    if product.isCustomProduct,
+      let customTxnId = product.customTransactionId {
       let customTransaction = CustomStoreTransaction(
         customTransactionId: customTxnId,
         productIdentifier: product.productIdentifier
