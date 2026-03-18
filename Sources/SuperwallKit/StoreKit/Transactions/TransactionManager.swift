@@ -614,7 +614,12 @@ final class TransactionManager {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async {
-    let isFreeTrialAvailable = await receiptManager.isFreeTrialAvailable(for: product)
+    // Always regenerate the custom transaction ID before a new purchase attempt.
+    if product.isCustomProduct {
+      product.customTransactionId = UUID().uuidString
+    }
+
+    let isFreeTrialAvailable = await isFreeTrialAvailable(for: product)
 
     var isObserved = false
     if case .observeFunc = purchaseSource {
@@ -688,6 +693,45 @@ final class TransactionManager {
     )
   }
 
+  private func isFreeTrialAvailable(for product: StoreProduct) async -> Bool {
+    if product.isCustomProduct {
+      return await isCustomProductFreeTrialAvailable(for: product)
+    }
+
+    return await receiptManager.isFreeTrialAvailable(for: product)
+  }
+
+  /// Custom products don't have StoreKit intro-offer state, so use entitlement history
+  /// to decide whether a trial should count as available.
+  private func isCustomProductFreeTrialAvailable(for product: StoreProduct) async -> Bool {
+    guard product.hasFreeTrial else {
+      return false
+    }
+
+    if product.entitlements.isEmpty {
+      return false
+    }
+
+    let customerInfo = await MainActor.run {
+      Superwall.shared.customerInfo
+    }
+
+    // If customer info hasn't loaded yet, assume the user has already had the
+    // entitlement to avoid falsely counting a trial.
+    if customerInfo.isPlaceholder {
+      return false
+    }
+
+    let productEntitlementIds = Set(product.entitlements.map(\.id))
+    let userEntitlementIds = Set(
+      customerInfo.entitlements
+        .filter { $0.latestProductId != nil || $0.store == .superwall || $0.isActive }
+        .map(\.id)
+    )
+
+    return productEntitlementIds.isDisjoint(with: userEntitlementIds)
+  }
+
   /// Dismisses the view controller, if the developer hasn't disabled the option.
   func didPurchase() async {
     let coordinator = factory.makePurchasingCoordinator()
@@ -697,12 +741,10 @@ final class TransactionManager {
     else {
       return
     }
+    let purchaseDate = await coordinator.purchaseDate
 
     switch source {
     case let .internal(_, paywallViewController, shouldDismiss):
-      guard let product = await coordinator.product else {
-        return
-      }
       Logger.debug(
         logLevel: .debug,
         scope: .transactions,
@@ -714,32 +756,17 @@ final class TransactionManager {
         error: nil
       )
 
-      let purchasingCoordinator = factory.makePurchasingCoordinator()
-      let transaction = await purchasingCoordinator.getLatestTransaction(
-        forProductId: product.productIdentifier,
-        factory: factory
+      let transaction = await latestTransaction(
+        for: product,
+        purchaseDate: purchaseDate
       )
-
-      // Skip receipt loading in test mode - we've already set the subscription status
-      let testModeManager = factory.makeTestModeManager()
-      if !testModeManager.isTestMode {
-        await receiptManager.loadPurchasedProducts(config: nil)
-      }
+      await loadPurchasedProductsIfNeeded(for: product)
       await trackTransactionDidSucceed(transaction)
-
-      let superwallOptions = factory.makeSuperwallOptions()
-      let shouldDismissPaywall = superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
-      if shouldDismissPaywall {
-        await Superwall.shared.dismiss(
-          paywallViewController,
-          result: .purchased(product)
-        )
-      }
-      if !shouldDismissPaywall {
-        await MainActor.run {
-          paywallViewController.togglePaywallSpinner(isHidden: true)
-        }
-      }
+      await finalizeInternalPurchase(
+        for: product,
+        paywallViewController: paywallViewController,
+        shouldDismiss: shouldDismiss
+      )
     case .purchaseFunc,
       .observeFunc:
       Logger.debug(
@@ -752,15 +779,71 @@ final class TransactionManager {
         error: nil
       )
 
-      let purchasingCoordinator = factory.makePurchasingCoordinator()
-      let transaction = await purchasingCoordinator.getLatestTransaction(
-        forProductId: product.productIdentifier,
-        factory: factory
+      let transaction = await latestTransaction(
+        for: product,
+        purchaseDate: purchaseDate
       )
-
-      await receiptManager.loadPurchasedProducts(config: nil)
-
+      await loadPurchasedProductsIfNeeded(for: product)
       await trackTransactionDidSucceed(transaction)
+    }
+  }
+
+  private func latestTransaction(
+    for product: StoreProduct,
+    purchaseDate: Date?
+  ) async -> StoreTransaction? {
+    if product.isCustomProduct,
+      let customTxnId = product.customTransactionId {
+      let customTransaction = CustomStoreTransaction(
+        customTransactionId: customTxnId,
+        productIdentifier: product.productIdentifier,
+        purchaseDate: purchaseDate ?? Date()
+      )
+      return await factory.makeStoreTransaction(from: customTransaction)
+    }
+
+    let purchasingCoordinator = factory.makePurchasingCoordinator()
+    return await purchasingCoordinator.getLatestTransaction(
+      forProductId: product.productIdentifier,
+      factory: factory
+    )
+  }
+
+  private func loadPurchasedProductsIfNeeded(for product: StoreProduct) async {
+    guard !shouldSkipReceiptLoading(for: product) else {
+      return
+    }
+
+    await receiptManager.loadPurchasedProducts(config: nil)
+  }
+
+  private func shouldSkipReceiptLoading(for product: StoreProduct) -> Bool {
+    if product.isCustomProduct {
+      return true
+    }
+
+    // Test mode already sets subscription state without StoreKit/receipt data.
+    return factory.makeTestModeManager().isTestMode
+  }
+
+  private func finalizeInternalPurchase(
+    for product: StoreProduct,
+    paywallViewController: PaywallViewController,
+    shouldDismiss: Bool
+  ) async {
+    let superwallOptions = factory.makeSuperwallOptions()
+    let shouldDismissPaywall = superwallOptions.paywalls.automaticallyDismiss && shouldDismiss
+
+    if shouldDismissPaywall {
+      await Superwall.shared.dismiss(
+        paywallViewController,
+        result: .purchased(product)
+      )
+      return
+    }
+
+    await MainActor.run {
+      paywallViewController.togglePaywallSpinner(isHidden: true)
     }
   }
 

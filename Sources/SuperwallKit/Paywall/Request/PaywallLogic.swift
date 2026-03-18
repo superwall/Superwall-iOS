@@ -46,6 +46,15 @@ enum PaywallLogic {
     }
   }
 
+  static func getCustomProducts(from products: [Product]) -> [Product] {
+    return products.filter {
+      if case .custom = $0.type {
+        return true
+      }
+      return false
+    }
+  }
+
   static func handlePaywallError(
     _ error: Error,
     forPlacement placement: PlacementData?,
