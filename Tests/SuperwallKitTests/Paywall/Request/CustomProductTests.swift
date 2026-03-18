@@ -26,12 +26,13 @@ struct CustomProductTests {
       subscription: SuperwallProductSubscription(
         period: .month,
         periodCount: 1,
-        trialPeriodDays: trialPeriodDays
+        trialPeriodDays: trialPeriodDays,
+        trialPeriodPrice: nil
       ),
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: entitlements
     )
@@ -221,7 +222,7 @@ struct CustomProductTests {
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )
@@ -230,7 +231,7 @@ struct CustomProductTests {
     #expect(!storeProduct.isCustomProduct)
   }
 
-  // MARK: - TestStoreProduct attribute computation
+  // MARK: - APIStoreProduct attribute computation
 
   @Test
   func testStoreProduct_computesPrice() {
@@ -242,12 +243,13 @@ struct CustomProductTests {
       subscription: SuperwallProductSubscription(
         period: .month,
         periodCount: 1,
-        trialPeriodDays: nil
+        trialPeriodDays: nil,
+        trialPeriodPrice: nil
       ),
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )
@@ -267,12 +269,13 @@ struct CustomProductTests {
       subscription: SuperwallProductSubscription(
         period: .year,
         periodCount: 1,
-        trialPeriodDays: 14
+        trialPeriodDays: 14,
+        trialPeriodPrice: nil
       ),
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )
@@ -296,7 +299,7 @@ struct CustomProductTests {
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )
@@ -466,7 +469,7 @@ struct CustomProductTests {
     )
   }
 
-  /// Helper to create a StoreProduct backed by a TestStoreProduct with trial.
+  /// Helper to create a StoreProduct backed by an APIStoreProduct with trial.
   private func makeCustomStoreProductForTrialEligibility(
     id: String = "custom_prod_1",
     trialDays: Int? = nil
@@ -479,12 +482,13 @@ struct CustomProductTests {
       subscription: SuperwallProductSubscription(
         period: .month,
         periodCount: 1,
-        trialPeriodDays: trialDays
+        trialPeriodDays: trialDays,
+        trialPeriodPrice: nil
       ),
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )
@@ -675,12 +679,13 @@ struct CustomProductTests {
       subscription: SuperwallProductSubscription(
         period: .month,
         periodCount: 1,
-        trialPeriodDays: nil
+        trialPeriodDays: nil,
+        trialPeriodPrice: nil
       ),
       entitlements: [],
       storefront: "USA"
     )
-    let testProduct = TestStoreProduct(
+    let testProduct = APIStoreProduct(
       superwallProduct: superwallProduct,
       entitlements: []
     )

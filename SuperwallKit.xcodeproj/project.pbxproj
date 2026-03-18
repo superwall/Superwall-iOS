@@ -339,7 +339,7 @@
 		A59E22688D68CBE09FF78D57 /* IntroOfferEligibilityRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AEAA8E3B5F51848523AE61 /* IntroOfferEligibilityRequest.swift */; };
 		A646BB605400E4BDD321F389 /* SurveyShowCondition.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */; };
 		A6917A68A4342B1BC41B8DE9 /* UIWindow+SwizzleSendEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D275ED98D2EE298F06708AF /* UIWindow+SwizzleSendEvent.swift */; };
-		A6E214D4B9B79C72E1E28212 /* TestStoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4998307C63AC04F4CC87F119 /* TestStoreProduct.swift */; };
+		A6E214D4B9B79C72E1E28212 /* APIStoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4998307C63AC04F4CC87F119 /* APIStoreProduct.swift */; };
 		A73497BB3DCD881318A5CD86 /* ConfigLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D7F499B2CBFFF0A61F8D72 /* ConfigLogicTests.swift */; };
 		A74BBEF8CCF5A35AB19BB70C /* ProductPurchaserLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A413B6FF46B130D90A428B4 /* ProductPurchaserLogic.swift */; };
 		A78DC9BD71DD85831025D620 /* SuperwallGraveyard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D36898353ABCE620BA7AEE59 /* SuperwallGraveyard.swift */; };
@@ -720,7 +720,7 @@
 		481D47E5121C521DDA268609 /* TriggerRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRule.swift; sourceTree = "<group>"; };
 		4827295A4E093CAEE2207DDF /* ConfigResponseLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigResponseLogicTests.swift; sourceTree = "<group>"; };
 		498D6155C2B8B18E7F3D0E79 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
-		4998307C63AC04F4CC87F119 /* TestStoreProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStoreProduct.swift; sourceTree = "<group>"; };
+		4998307C63AC04F4CC87F119 /* APIStoreProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIStoreProduct.swift; sourceTree = "<group>"; };
 		49E522F5BCABB3A95B97549E /* PurchaseError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseError.swift; sourceTree = "<group>"; };
 		4B001199B53C314F25788603 /* PassableValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PassableValue.swift; sourceTree = "<group>"; };
 		4B1DC32C4ABB60B8323E5D28 /* AsyncSequence+Extract.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AsyncSequence+Extract.swift"; sourceTree = "<group>"; };
@@ -2724,7 +2724,7 @@
 				F5A959F1F550446C980DC5E5 /* StoreProductType.swift */,
 				6DE89E115B095A63FAC09719 /* StripeProductType.swift */,
 				D1443B535E6E1D572A74733F /* SubscriptionPeriod.swift */,
-				4998307C63AC04F4CC87F119 /* TestStoreProduct.swift */,
+				4998307C63AC04F4CC87F119 /* APIStoreProduct.swift */,
 				10A0D5F687A5EF3EE39B4DCA /* Discount */,
 			);
 			path = StoreProduct;
@@ -3657,7 +3657,7 @@
 				9C92AA4586E7013F37C03294 /* TestModePurchaseDrawer.swift in Sources */,
 				3A4A22150A6EB1C234BAC722 /* TestModeRestoreDrawer.swift in Sources */,
 				999CEB0F1A2C8A7CAEE831BB /* TestModeTransactionHandler.swift in Sources */,
-				A6E214D4B9B79C72E1E28212 /* TestStoreProduct.swift in Sources */,
+				A6E214D4B9B79C72E1E28212 /* APIStoreProduct.swift in Sources */,
 				EA50607230AA07B509E90E10 /* TestStoreUser.swift in Sources */,
 				31DE588B2B4A26745C33753C /* ThrowableDecodable.swift in Sources */,
 				6FE965326C139AB101BAC1CF /* Trackable.swift in Sources */,
