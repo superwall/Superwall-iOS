@@ -419,6 +419,11 @@ extension PaywallRequestManager {
         }
         if storeProduct.hasFreeTrial {
           if productItem.entitlements.isEmpty {
+            Logger.debug(
+              logLevel: .warn,
+              scope: .productsManager,
+              message: "Custom product \(productItem.id) has a free trial but no entitlements — skipping trial eligibility check."
+            )
             continue
           }
           let hasEntitlement = await hasEverHadEntitlement(

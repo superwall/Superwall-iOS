@@ -793,12 +793,11 @@ final class TransactionManager {
     purchaseDate: Date?
   ) async -> StoreTransaction? {
     if product.isCustomProduct,
-      let customTxnId = product.customTransactionId,
-      let purchaseDate {
+      let customTxnId = product.customTransactionId {
       let customTransaction = CustomStoreTransaction(
         customTransactionId: customTxnId,
         productIdentifier: product.productIdentifier,
-        purchaseDate: purchaseDate
+        purchaseDate: purchaseDate ?? Date()
       )
       return await factory.makeStoreTransaction(from: customTransaction)
     }
