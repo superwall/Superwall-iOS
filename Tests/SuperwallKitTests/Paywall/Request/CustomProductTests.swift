@@ -467,7 +467,7 @@ struct CustomProductTests {
   }
 
   /// Helper to create a StoreProduct backed by a TestStoreProduct with trial.
-  private func makeCustomStoreProduct(
+  private func makeCustomStoreProductForTrialEligibility(
     id: String = "custom_prod_1",
     trialDays: Int? = nil
   ) -> StoreProduct {
@@ -501,7 +501,7 @@ struct CustomProductTests {
     let productItem = makeCustomProductItem(
       entitlements: [premiumEntitlement]
     )
-    let storeProduct = makeCustomStoreProduct(trialDays: 7)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: 7)
 
     let result = checkCustomTrialEligibility(
       productItems: [productItem],
@@ -523,7 +523,7 @@ struct CustomProductTests {
     let productItem = makeCustomProductItem(
       entitlements: [premiumEntitlement]
     )
-    let storeProduct = makeCustomStoreProduct(trialDays: 7)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: 7)
 
     let userEntitlement = Entitlement(
       id: "premium",
@@ -553,7 +553,7 @@ struct CustomProductTests {
     let productItem = makeCustomProductItem(
       entitlements: [premiumEntitlement]
     )
-    let storeProduct = makeCustomStoreProduct(trialDays: nil)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: nil)
 
     let result = checkCustomTrialEligibility(
       productItems: [productItem],
@@ -575,7 +575,7 @@ struct CustomProductTests {
     let productItem = makeCustomProductItem(
       entitlements: [premiumEntitlement]
     )
-    let storeProduct = makeCustomStoreProduct(trialDays: 7)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: 7)
 
     let result = checkCustomTrialEligibility(
       productItems: [productItem],
@@ -590,7 +590,7 @@ struct CustomProductTests {
   @Test
   func customTrialEligibility_noEntitlementsConfigured_skipsProduct() {
     let productItem = makeCustomProductItem(entitlements: [])
-    let storeProduct = makeCustomStoreProduct(trialDays: 7)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: 7)
 
     let result = checkCustomTrialEligibility(
       productItems: [productItem],
@@ -634,7 +634,7 @@ struct CustomProductTests {
     let productItem = makeCustomProductItem(
       entitlements: [premiumEntitlement]
     )
-    let storeProduct = makeCustomStoreProduct(trialDays: 7)
+    let storeProduct = makeCustomStoreProductForTrialEligibility(trialDays: 7)
 
     // Config-only placeholder: no latestProductId, no store, not active
     let placeholderEntitlement = Entitlement(
