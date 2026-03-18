@@ -393,11 +393,11 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     self.init(SK2StoreProduct(sk2Product: sk2Product, entitlements: entitlements))
   }
 
-  convenience init(testProduct: TestStoreProduct) {
+  convenience init(testProduct: APIStoreProduct) {
     self.init(testProduct)
   }
 
-  convenience init(customProduct: TestStoreProduct) {
+  convenience init(customProduct: APIStoreProduct) {
     self.init(customProduct)
     self.isCustomProduct = true
   }

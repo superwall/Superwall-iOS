@@ -1,5 +1,5 @@
 //
-//  TestStoreProduct.swift
+//  APIStoreProduct.swift
 //  SuperwallKit
 //
 //  Created by Yusuf Tör on 2026-01-27.
@@ -12,7 +12,7 @@ import StoreKit
 /// A `StoreProductType` backed by a `SuperwallProduct` from the Superwall API.
 ///
 /// Used for test store products that are not fetched from StoreKit.
-struct TestStoreProduct: StoreProductType {
+struct APIStoreProduct: StoreProductType {
   let superwallProduct: SuperwallProduct
   let entitlements: Set<Entitlement>
 
@@ -261,14 +261,36 @@ struct TestStoreProduct: StoreProductType {
     return formatter.string(from: date)
   }
 
-  var localizedTrialPeriodPrice: String {
-    priceFormatter.string(from: 0) ?? "$0.00"
+  private var rawTrialPeriodPrice: Decimal {
+    guard let amount = superwallProduct.subscription?.trialPeriodPrice?.amount else { return 0 }
+    return Decimal(amount) / 100
   }
 
-  var trialPeriodPrice: Decimal { 0 }
+  var localizedTrialPeriodPrice: String {
+    priceFormatter.string(from: NSDecimalNumber(decimal: rawTrialPeriodPrice)) ?? "$0.00"
+  }
+
+  var trialPeriodPrice: Decimal { rawTrialPeriodPrice }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
-    priceFormatter.string(from: 0) ?? "$0.00"
+    guard rawTrialPeriodPrice != 0, let subUnit = subscriptionUnit else {
+      return priceFormatter.string(from: NSDecimalNumber(decimal: rawTrialPeriodPrice)) ?? "$0.00"
+    }
+    let trialDays = Decimal(superwallProduct.subscription?.trialPeriodDays ?? 0)
+    guard trialDays > 0 else {
+      return priceFormatter.string(from: NSDecimalNumber(decimal: rawTrialPeriodPrice)) ?? "$0.00"
+    }
+    let dailyPrice = rawTrialPeriodPrice / trialDays
+    let multiplier: Decimal
+    switch unit {
+    case .day: multiplier = 1
+    case .week: multiplier = 7
+    case .month: multiplier = Decimal(365) / Decimal(12)
+    case .year: multiplier = 365
+    @unknown default: multiplier = 1
+    }
+    let unitPrice = (dailyPrice * multiplier).roundedPrice()
+    return priceFormatter.string(from: NSDecimalNumber(decimal: unitPrice)) ?? "n/a"
   }
 
   var trialPeriodDays: Int {
@@ -328,7 +350,7 @@ struct TestStoreProduct: StoreProductType {
 
 // MARK: - SWProduct Init
 extension SWProduct {
-  init(product: TestStoreProduct) {
+  init(product: APIStoreProduct) {
     localizedDescription = ""
     localizedTitle = product.superwallProduct.identifier
     price = product.price

@@ -119,7 +119,7 @@ extension PaywallRequestManager {
         guard let productItem = customProductsById[superwallProduct.identifier] else {
           continue
         }
-        let testProduct = TestStoreProduct(
+        let testProduct = APIStoreProduct(
           superwallProduct: superwallProduct,
           entitlements: productItem.entitlements
         )

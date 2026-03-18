@@ -10,6 +10,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `formUnion` override when unioning sets of `Entitlement` objects.
 - Adds multipage paywall navigation tracking by tracking a `paywall_page_view` event, which contains information about the page view.
 
+### Fixes
+
+- Fixes issue where test mode products had trial price data missing.
+
 ## 4.14.1
 
 ### Enhancements
