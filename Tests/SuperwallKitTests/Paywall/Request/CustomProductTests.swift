@@ -13,6 +13,30 @@ import Testing
 /// Tests for custom product model decoding, StoreProduct integration,
 /// custom transaction creation, and trial eligibility.
 struct CustomProductTests {
+  private func makeCustomStoreProduct(
+    id: String = "custom_prod_1",
+    trialPeriodDays: Int = 7,
+    entitlements: Set<Entitlement> = [Entitlement(id: "premium", type: .serviceLevel, isActive: false)]
+  ) -> StoreProduct {
+    let superwallProduct = SuperwallProduct(
+      object: "product",
+      identifier: id,
+      platform: .custom,
+      price: SuperwallProductPrice(amount: 999, currency: "USD"),
+      subscription: SuperwallProductSubscription(
+        period: .month,
+        periodCount: 1,
+        trialPeriodDays: trialPeriodDays
+      ),
+      entitlements: [],
+      storefront: "USA"
+    )
+    let testProduct = TestStoreProduct(
+      superwallProduct: superwallProduct,
+      entitlements: entitlements
+    )
+    return StoreProduct(customProduct: testProduct)
+  }
 
   // MARK: - CustomStoreProduct Decoding
 
@@ -179,24 +203,7 @@ struct CustomProductTests {
 
   @Test
   func storeProduct_customInit_setsIsCustomProduct() {
-    let superwallProduct = SuperwallProduct(
-      object: "product",
-      identifier: "custom_prod_1",
-      platform: .custom,
-      price: SuperwallProductPrice(amount: 999, currency: "USD"),
-      subscription: SuperwallProductSubscription(
-        period: .month,
-        periodCount: 1,
-        trialPeriodDays: 7
-      ),
-      entitlements: [],
-      storefront: "USA"
-    )
-    let testProduct = TestStoreProduct(
-      superwallProduct: superwallProduct,
-      entitlements: []
-    )
-    let storeProduct = StoreProduct(customProduct: testProduct)
+    let storeProduct = makeCustomStoreProduct(entitlements: [])
 
     #expect(storeProduct.isCustomProduct)
     #expect(storeProduct.customTransactionId == nil)
@@ -336,16 +343,61 @@ struct CustomProductTests {
   }
 
   @Test
-  func customStoreTransaction_defaultPurchaseDate() {
-    let before = Date()
-    let transaction = CustomStoreTransaction(
-      customTransactionId: "txn-1",
-      productIdentifier: "prod-1"
-    )
-    let after = Date()
+  func prepareToPurchase_customProduct_marksFreeTrialAvailableWhenUserHasNoPriorEntitlement() async {
+    let dependencyContainer = DependencyContainer()
+    let product = makeCustomStoreProduct()
+    let superwall = Superwall.shared
+    let originalCustomerInfo = superwall.customerInfo
+    defer {
+      superwall.customerInfo = originalCustomerInfo
+    }
 
-    #expect(transaction.transactionDate! >= before)
-    #expect(transaction.transactionDate! <= after)
+    superwall.customerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+
+    await dependencyContainer.transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .purchaseFunc(product)
+    )
+
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    #expect(await coordinator.isFreeTrialAvailable)
+  }
+
+  @Test
+  func prepareToPurchase_customProduct_doesNotMarkFreeTrialAvailableWhenUserHadEntitlement() async {
+    let dependencyContainer = DependencyContainer()
+    let product = makeCustomStoreProduct()
+    let superwall = Superwall.shared
+    let originalCustomerInfo = superwall.customerInfo
+    defer {
+      superwall.customerInfo = originalCustomerInfo
+    }
+
+    superwall.customerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [
+        Entitlement(
+          id: "premium",
+          type: .serviceLevel,
+          isActive: false,
+          latestProductId: "old_product",
+          store: .custom
+        )
+      ]
+    )
+
+    await dependencyContainer.transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .purchaseFunc(product)
+    )
+
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    #expect(!(await coordinator.isFreeTrialAvailable))
   }
 
   // MARK: - Custom Trial Eligibility

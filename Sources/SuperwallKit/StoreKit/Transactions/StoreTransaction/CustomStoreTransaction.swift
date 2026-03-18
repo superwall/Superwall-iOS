@@ -28,7 +28,7 @@ struct CustomStoreTransaction: StoreTransactionType {
   init(
     customTransactionId: String,
     productIdentifier: String,
-    purchaseDate: Date = Date()
+    purchaseDate: Date
   ) {
     self.transactionDate = purchaseDate
     self.originalTransactionIdentifier = customTransactionId

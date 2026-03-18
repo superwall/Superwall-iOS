@@ -93,22 +93,35 @@ extension PaywallRequestManager {
   /// Fetches custom products from the Superwall API and caches them in
   /// `storeKitManager.productsById` so they can be used for templating.
   private func fetchAndCacheCustomProducts(_ customProducts: [Product]) async {
-    let customProductIds = Set(customProducts.map { $0.id })
-    // Skip if all custom products are already cached.
-    let cachedIds = await Set(storeKitManager.productsById.keys)
-    if customProductIds.isSubset(of: cachedIds) {
+    let customProductsById = Dictionary(
+      uniqueKeysWithValues: customProducts.map { ($0.id, $0) }
+    )
+    let cachedProductsById = await storeKitManager.productsById
+    let idsNeedingRefresh = Set(
+      customProductsById.compactMap { id, productItem in
+        guard let cached = cachedProductsById[id] else {
+          return id
+        }
+        guard cached.isCustomProduct else {
+          return id
+        }
+        return cached.entitlements == productItem.entitlements ? nil : id
+      }
+    )
+
+    if idsNeedingRefresh.isEmpty {
       return
     }
 
     do {
       let response = try await network.getSuperwallProducts()
-      for superwallProduct in response.data where customProductIds.contains(superwallProduct.identifier) {
-        let entitlements = Set(superwallProduct.entitlements.map {
-          Entitlement(id: $0.identifier)
-        })
+      for superwallProduct in response.data where idsNeedingRefresh.contains(superwallProduct.identifier) {
+        guard let productItem = customProductsById[superwallProduct.identifier] else {
+          continue
+        }
         let testProduct = TestStoreProduct(
           superwallProduct: superwallProduct,
-          entitlements: entitlements
+          entitlements: productItem.entitlements
         )
         let storeProduct = StoreProduct(customProduct: testProduct)
         await storeKitManager.setProduct(
