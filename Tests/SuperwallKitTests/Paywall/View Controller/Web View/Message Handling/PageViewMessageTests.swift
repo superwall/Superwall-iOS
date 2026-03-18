@@ -1,0 +1,318 @@
+//
+//  PageViewMessageTests.swift
+//
+//  Created by Claude on 2026-03-06.
+//
+// swiftlint:disable all
+
+import Testing
+import Foundation
+@testable import SuperwallKit
+
+struct PageViewMessageTests {
+  private func decodeMessage(_ json: String) throws -> PaywallMessage {
+    let decoder = JSONDecoder()
+    decoder.keyDecodingStrategy = .convertFromSnakeCase
+    let data = json.data(using: .utf8)!
+    return try decoder.decode(PaywallMessage.self, from: data)
+  }
+
+  @Test func decodePageView_allFields() throws {
+    let json = """
+    {
+      "event_name": "page_view",
+      "page_node_id": "node_123",
+      "flow_position": 2,
+      "page_name": "Pricing",
+      "navigation_node_id": "nav_456",
+      "previous_page_node_id": "node_789",
+      "previous_flow_position": 1,
+      "type": "forward",
+      "time_on_previous_page_ms": 5000
+    }
+    """
+
+    let message = try decodeMessage(json)
+
+    if case .pageView(let data) = message {
+      #expect(data.pageNodeId == "node_123")
+      #expect(data.flowPosition == 2)
+      #expect(data.pageName == "Pricing")
+      #expect(data.navigationNodeId == "nav_456")
+      #expect(data.previousPageNodeId == "node_789")
+      #expect(data.previousFlowPosition == 1)
+      #expect(data.navigationType == "forward")
+      #expect(data.timeOnPreviousPageMs == 5000)
+    } else {
+      Issue.record("Expected .pageView but got \(message)")
+    }
+  }
+
+  @Test func decodePageView_optionalFieldsMissing() throws {
+    let json = """
+    {
+      "event_name": "page_view",
+      "page_node_id": "node_first",
+      "flow_position": 0,
+      "page_name": "Welcome",
+      "navigation_node_id": "nav_entry",
+      "type": "entry"
+    }
+    """
+
+    let message = try decodeMessage(json)
+
+    if case .pageView(let data) = message {
+      #expect(data.pageNodeId == "node_first")
+      #expect(data.flowPosition == 0)
+      #expect(data.pageName == "Welcome")
+      #expect(data.navigationNodeId == "nav_entry")
+      #expect(data.previousPageNodeId == nil)
+      #expect(data.previousFlowPosition == nil)
+      #expect(data.navigationType == "entry")
+      #expect(data.timeOnPreviousPageMs == nil)
+    } else {
+      Issue.record("Expected .pageView but got \(message)")
+    }
+  }
+
+  @Test func decodePageView_backNavigation() throws {
+    let json = """
+    {
+      "event_name": "page_view",
+      "page_node_id": "node_100",
+      "flow_position": 0,
+      "page_name": "Home",
+      "navigation_node_id": "nav_back",
+      "previous_page_node_id": "node_200",
+      "previous_flow_position": 1,
+      "type": "back",
+      "time_on_previous_page_ms": 1200
+    }
+    """
+
+    let message = try decodeMessage(json)
+
+    if case .pageView(let data) = message {
+      #expect(data.navigationType == "back")
+    } else {
+      Issue.record("Expected .pageView but got \(message)")
+    }
+  }
+
+  @Test func decodePageView_autoTransition() throws {
+    let json = """
+    {
+      "event_name": "page_view",
+      "page_node_id": "node_auto",
+      "flow_position": 3,
+      "page_name": "Auto Page",
+      "navigation_node_id": "nav_auto",
+      "type": "auto_transition"
+    }
+    """
+
+    let message = try decodeMessage(json)
+
+    if case .pageView(let data) = message {
+      #expect(data.navigationType == "auto_transition")
+    } else {
+      Issue.record("Expected .pageView but got \(message)")
+    }
+  }
+
+  // MARK: - PaywallPageView Event
+
+  private func makePageViewData(
+    pageNodeId: String = "n",
+    flowPosition: Int = 0,
+    pageName: String = "P",
+    navigationNodeId: String = "nav",
+    previousPageNodeId: String? = nil,
+    previousFlowPosition: Int? = nil,
+    navigationType: String = "entry",
+    timeOnPreviousPageMs: Int? = nil
+  ) -> PageViewData {
+    return PageViewData(
+      pageNodeId: pageNodeId,
+      flowPosition: flowPosition,
+      pageName: pageName,
+      navigationNodeId: navigationNodeId,
+      previousPageNodeId: previousPageNodeId,
+      previousFlowPosition: previousFlowPosition,
+      navigationType: navigationType,
+      timeOnPreviousPageMs: timeOnPreviousPageMs
+    )
+  }
+
+  @Test func paywallPageViewEvent_superwallParameters() async {
+    var paywall = Paywall.stub()
+    paywall.presentationId = "test-pres-id"
+    let info = paywall.getInfo(fromPlacement: nil)
+
+    let event = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData(
+        pageNodeId: "node_abc",
+        flowPosition: 1,
+        pageName: "Pricing",
+        navigationNodeId: "nav_xyz",
+        previousPageNodeId: "node_prev",
+        previousFlowPosition: 0,
+        navigationType: "forward",
+        timeOnPreviousPageMs: 3000
+      )
+    )
+
+    let params = await event.getSuperwallParameters()
+
+    // Page view specific params
+    #expect(params["page_node_id"] as? String == "node_abc")
+    #expect(params["flow_position"] as? Int == 1)
+    #expect(params["page_name"] as? String == "Pricing")
+    #expect(params["navigation_node_id"] as? String == "nav_xyz")
+    #expect(params["navigation_type"] as? String == "forward")
+    #expect(params["previous_page_node_id"] as? String == "node_prev")
+    #expect(params["previous_flow_position"] as? Int == 0)
+    #expect(params["time_on_previous_page_ms"] as? Int == 3000)
+
+    // Inherited from placementParams (presentation_id)
+    #expect(params["presentation_id"] as? String == "test-pres-id")
+
+    // Standard paywall params should be present too
+    #expect(params["paywall_identifier"] != nil)
+  }
+
+  @Test func paywallPageViewEvent_optionalParamsOmitted() async {
+    let info = PaywallInfo.stub()
+
+    let event = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData(pageNodeId: "node_first", pageName: "Welcome")
+    )
+
+    let params = await event.getSuperwallParameters()
+
+    #expect(params["page_node_id"] as? String == "node_first")
+    #expect(params["navigation_type"] as? String == "entry")
+    #expect(params["previous_page_node_id"] == nil)
+    #expect(params["previous_flow_position"] == nil)
+    #expect(params["time_on_previous_page_ms"] == nil)
+  }
+
+  @Test func paywallPageViewEvent_audienceFilterParams() {
+    let info = PaywallInfo.stub()
+
+    let event = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData(pageNodeId: "node_abc", pageName: "Page")
+    )
+
+    let filterParams = event.audienceFilterParams
+    // Should contain standard paywall audience filter params
+    #expect(filterParams["paywall_id"] != nil)
+    #expect(filterParams["paywall_name"] != nil)
+  }
+
+  @Test func paywallPageViewEvent_superwallEventCase() {
+    let info = PaywallInfo.stub()
+
+    let event = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData()
+    )
+
+    if case .paywallPageView(let eventInfo, let data) = event.superwallEvent {
+      #expect(eventInfo === info)
+      #expect(data.pageNodeId == "n")
+      #expect(data.flowPosition == 0)
+      #expect(data.pageName == "P")
+      #expect(data.navigationType == "entry")
+    } else {
+      Issue.record("Expected .paywallPageView")
+    }
+  }
+
+  @Test func paywallPageViewEvent_description() {
+    let info = PaywallInfo.stub()
+
+    let event = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData()
+    )
+
+    #expect(event.superwallEvent.description == "paywall_page_view")
+  }
+
+  // MARK: - PresentationId in PageView events
+
+  @Test func paywallPageView_presentationId_matchesPaywallOpen() async {
+    var paywall = Paywall.stub()
+    paywall.presentationId = "shared-pres-id"
+    let info = paywall.getInfo(fromPlacement: nil)
+
+    let openEvent = InternalSuperwallEvent.PaywallOpen(
+      paywallInfo: info,
+      demandScore: nil,
+      demandTier: nil
+    )
+    let openParams = await openEvent.getSuperwallParameters()
+
+    let pageViewEvent = InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData(pageNodeId: "node1", pageName: "Page")
+    )
+    let pageViewParams = await pageViewEvent.getSuperwallParameters()
+
+    let openPresentationId = openParams["presentation_id"] as? String
+    let pageViewPresentationId = pageViewParams["presentation_id"] as? String
+
+    #expect(openPresentationId == "shared-pres-id")
+    #expect(pageViewPresentationId == "shared-pres-id")
+    #expect(openPresentationId == pageViewPresentationId)
+  }
+
+  @Test func presentationId_consistentAcrossAllEventTypes() async {
+    var paywall = Paywall.stub()
+    paywall.presentationId = "lifecycle-id"
+    let info = paywall.getInfo(fromPlacement: nil)
+
+    let openParams = await InternalSuperwallEvent.PaywallOpen(
+      paywallInfo: info,
+      demandScore: nil,
+      demandTier: nil
+    ).getSuperwallParameters()
+
+    let pageViewParams = await InternalSuperwallEvent.PaywallPageView(
+      paywallInfo: info,
+      data: makePageViewData()
+    ).getSuperwallParameters()
+
+    let closeParams = await InternalSuperwallEvent.PaywallClose(
+      paywallInfo: info,
+      surveyPresentationResult: .noShow
+    ).getSuperwallParameters()
+
+    let declineParams = await InternalSuperwallEvent.PaywallDecline(
+      paywallInfo: info
+    ).getSuperwallParameters()
+
+    let webviewLoadParams = await InternalSuperwallEvent.PaywallWebviewLoad(
+      state: .complete,
+      paywallInfo: info
+    ).getSuperwallParameters()
+
+    let allPresentationIds = [
+      openParams["presentation_id"] as? String,
+      pageViewParams["presentation_id"] as? String,
+      closeParams["presentation_id"] as? String,
+      declineParams["presentation_id"] as? String,
+      webviewLoadParams["presentation_id"] as? String,
+    ]
+
+    // All should be the same non-nil value
+    for id in allPresentationIds {
+      #expect(id == "lifecycle-id", "All events in a presentation must share the same presentationId")
+    }
+  }
+}

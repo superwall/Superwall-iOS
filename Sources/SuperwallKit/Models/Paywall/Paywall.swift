@@ -87,6 +87,10 @@ struct Paywall: Codable {
 
   // MARK: - Added by client
 
+  /// A unique identifier for this paywall presentation, used to correlate all events
+  /// within a single presentation lifecycle.
+  var presentationId: String?
+
   var responseLoadingInfo: LoadingInfo
   var webviewLoadingInfo: LoadingInfo
   var shimmerLoadingInfo: LoadingInfo
@@ -429,6 +433,7 @@ struct Paywall: Codable {
       url: url,
       products: products,
       productIds: productIds,
+      presentationId: presentationId,
       fromPlacementData: fromPlacement,
       responseLoadStartTime: responseLoadingInfo.startAt,
       responseLoadCompleteTime: responseLoadingInfo.endAt,
@@ -465,6 +470,7 @@ struct Paywall: Codable {
     presentationSourceType = paywall.presentationSourceType
     experiment = paywall.experiment
     featureGating = paywall.featureGating
+    presentationId = paywall.presentationId
   }
 }
 
