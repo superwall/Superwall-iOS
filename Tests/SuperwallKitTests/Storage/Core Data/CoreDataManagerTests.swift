@@ -650,6 +650,77 @@ class CoreDataManagerTests: XCTestCase {
     XCTAssertEqual(userEventCount, 0, "paywall_decline should be deleted after deleteAllEntities")
   }
 
+  // MARK: - Save and Count on Same Context
+
+  func test_saveAndCountAudienceOccurrence_sameContext() async {
+    let key = "same_context_test"
+    let maxCount = 1
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    let occurrence = TriggerAudienceOccurrence(
+      key: key,
+      maxCount: maxCount,
+      interval: interval
+    )
+
+    // Save via CoreDataManager (uses its own backgroundContext)
+    let saveExpectation = expectation(description: "Saved occurrence")
+    coreDataManager.save(triggerAudienceOccurrence: occurrence) { _ in
+      saveExpectation.fulfill()
+    }
+    await fulfillment(of: [saveExpectation], timeout: 2.0)
+
+    // Count should find the saved occurrence on the same context
+    let count = await coreDataManager.countAudienceOccurrences(for: occurrence)
+    XCTAssertEqual(count, 1, "Count should see the occurrence saved on the same context")
+  }
+
+  func test_saveAndCountAudienceOccurrence_infinity() async {
+    let key = "infinity_context_test"
+    let maxCount = 1
+    let interval: TriggerAudienceOccurrence.Interval = .infinity
+    let occurrence = TriggerAudienceOccurrence(
+      key: key,
+      maxCount: maxCount,
+      interval: interval
+    )
+
+    // Save via CoreDataManager
+    let saveExpectation = expectation(description: "Saved occurrence")
+    coreDataManager.save(triggerAudienceOccurrence: occurrence) { _ in
+      saveExpectation.fulfill()
+    }
+    await fulfillment(of: [saveExpectation], timeout: 2.0)
+
+    // Count should find it immediately
+    let count = await coreDataManager.countAudienceOccurrences(for: occurrence)
+    XCTAssertEqual(count, 1, "Count should see the occurrence saved on the same context")
+  }
+
+  func test_saveMultipleAndCountAudienceOccurrences() async {
+    let key = "multi_save_test"
+    let maxCount = 5
+    let interval: TriggerAudienceOccurrence.Interval = .minutes(60)
+    let occurrence = TriggerAudienceOccurrence(
+      key: key,
+      maxCount: maxCount,
+      interval: interval
+    )
+
+    // Save 3 occurrences via CoreDataManager
+    let saveExpectation = expectation(description: "Saved occurrences")
+    saveExpectation.expectedFulfillmentCount = 3
+    for _ in 0..<3 {
+      coreDataManager.save(triggerAudienceOccurrence: occurrence) { _ in
+        saveExpectation.fulfill()
+      }
+    }
+    await fulfillment(of: [saveExpectation], timeout: 2.0)
+
+    // Count should find all 3
+    let count = await coreDataManager.countAudienceOccurrences(for: occurrence)
+    XCTAssertEqual(count, 3, "Count should see all occurrences saved on the same context")
+  }
+
   func test_countPlacement_concurrent_access() async {
         
     let placementName = "concurrent_test"

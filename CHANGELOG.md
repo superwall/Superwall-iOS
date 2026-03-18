@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.14.3
+
+### Fixes
+
+- Fixed audience occurrence interval limits being bypassed under memory pressure. The occurrence count query was running on a separate Core Data context from the one used to save occurrences, which could return stale results when cross-context propagation was delayed.
+
 ## 4.14.2
 
 ### Enhancements

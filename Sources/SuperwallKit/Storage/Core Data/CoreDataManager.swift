@@ -199,6 +199,10 @@ class CoreDataManager {
   func countAudienceOccurrences(
     for audienceOccurrence: TriggerAudienceOccurrence
   ) async -> Int {
+    guard let backgroundContext = backgroundContext else {
+      return 0
+    }
+
     let fetchRequest = ManagedTriggerRuleOccurrence.fetchRequest()
     fetchRequest.fetchLimit = audienceOccurrence.maxCount
 
@@ -222,17 +226,27 @@ class CoreDataManager {
         date as NSDate,
         audienceOccurrence.key
       )
-
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
     case .infinity:
-      fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", audienceOccurrence.key)
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
+      fetchRequest.predicate = NSPredicate(
+        format: "occurrenceKey == %@",
+        audienceOccurrence.key
+      )
+    }
+
+    return await withCheckedContinuation { continuation in
+      backgroundContext.perform {
+        do {
+          let count = try backgroundContext.count(for: fetchRequest)
           continuation.resume(returning: count)
+        } catch let error as NSError {
+          Logger.debug(
+            logLevel: .error,
+            scope: .coreData,
+            message: "Error counting audience occurrences from Core Data.",
+            info: error.userInfo,
+            error: error
+          )
+          continuation.resume(returning: 0)
         }
       }
     }
@@ -242,6 +256,10 @@ class CoreDataManager {
     _ placementName: String,
     interval: TriggerAudienceOccurrence.Interval
   ) async -> Int {
+    guard let backgroundContext = backgroundContext else {
+      return 0
+    }
+
     let fetchRequest = ManagedEventData.fetchRequest()
 
     switch interval {
@@ -264,17 +282,27 @@ class CoreDataManager {
         date as NSDate,
         placementName
       )
-
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
     case .infinity:
-      fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
+      fetchRequest.predicate = NSPredicate(
+        format: "name == %@",
+        placementName
+      )
+    }
+
+    return await withCheckedContinuation { continuation in
+      backgroundContext.perform {
+        do {
+          let count = try backgroundContext.count(for: fetchRequest)
           continuation.resume(returning: count)
+        } catch let error as NSError {
+          Logger.debug(
+            logLevel: .error,
+            scope: .coreData,
+            message: "Error counting placements from Core Data.",
+            info: error.userInfo,
+            error: error
+          )
+          continuation.resume(returning: 0)
         }
       }
     }
