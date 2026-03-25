@@ -120,7 +120,21 @@ final class AttributionPoster {
       )
 
       let data = await network.sendToken(token)
-      Superwall.shared.setUserAttributes(data)
+      if let data, !data.isEmpty {
+        Superwall.shared.setUserAttributes(data)
+      }
+
+      let matched = !(data?.isEmpty ?? true)
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AttributionMatch(
+          info: AttributionMatchInfo(
+            provider: .appleSearchAds,
+            matched: matched,
+            source: matched ? (data?["acquisition_source"] as? String ?? "apple_search_ads") : nil,
+            reason: data == nil ? "request_failed" : (matched ? nil : "no_attribution")
+          )
+        )
+      )
     } catch {
       await Superwall.shared.track(
         InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))

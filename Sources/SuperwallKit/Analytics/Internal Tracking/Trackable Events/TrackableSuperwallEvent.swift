@@ -108,6 +108,41 @@ enum InternalSuperwallEvent {
     var audienceFilterParams: [String: Any] = [:]
   }
 
+  struct AttributionMatch: TrackableSuperwallEvent {
+    let info: AttributionMatchInfo
+
+    var superwallEvent: SuperwallEvent {
+      return .attributionMatch(info: info)
+    }
+
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+
+    var audienceFilterParams: [String: Any] {
+      var parameters: [String: Any] = [
+        "provider": info.provider.rawValue,
+        "matched": info.matched,
+      ]
+
+      if let source = info.source {
+        parameters["source"] = source
+      }
+      if let confidence = info.confidence {
+        parameters["confidence"] = confidence
+      }
+      if let matchScore = info.matchScore {
+        parameters["match_score"] = matchScore
+      }
+      if let reason = info.reason {
+        parameters["reason"] = reason
+      }
+      if let retryAfterTrackingPermission = info.retryAfterTrackingPermission {
+        parameters["retry_after_tracking_permission"] = retryAfterTrackingPermission
+      }
+
+      return parameters
+    }
+  }
+
   struct IntegrationAttributes: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .integrationAttributes(audienceFilterParams)

@@ -13,6 +13,67 @@ import Foundation
 /// These placement are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallEvent(withInfo:)-50exd``.
 public typealias SuperwallPlacement = SuperwallEvent
 
+/// Information about an install attribution result emitted by Superwall.
+public struct AttributionMatchInfo: Sendable {
+  /// The attribution provider that produced the result.
+  public enum Provider: String, Sendable {
+    /// Superwall's mobile measurement matching flow.
+    case mmp
+    
+    /// Apple Search Ads attribution.
+    case appleSearchAds = "apple_search_ads"
+  }
+
+  /// The provider that produced the attribution result.
+  public let provider: Provider
+
+  /// Whether the attribution attempt resulted in a match.
+  public let matched: Bool
+
+  /// The resolved acquisition source, if one was found.
+  public let source: String?
+
+  /// The confidence label returned by the provider, if available.
+  public let confidence: String?
+
+  /// The numeric match score returned by the provider, if available.
+  public let matchScore: Double?
+
+  /// The reason for a non-match or failure, if available.
+  public let reason: String?
+
+  /// Whether this attribution attempt was a retry after tracking permission was granted.
+  public let retryAfterTrackingPermission: Bool?
+
+  /// Creates a new install attribution result.
+  ///
+  /// - Parameters:
+  ///   - provider: The attribution provider that produced the result.
+  ///   - matched: Whether the attribution attempt matched.
+  ///   - source: The resolved acquisition source, if one was found.
+  ///   - confidence: The provider's confidence label, if available.
+  ///   - matchScore: The provider's numeric match score, if available.
+  ///   - reason: The reason for a non-match or failure, if available.
+  ///   - retryAfterTrackingPermission: Whether the attempt happened after tracking permission was granted.
+  public init(
+    provider: Provider,
+    matched: Bool,
+    source: String? = nil,
+    confidence: String? = nil,
+    matchScore: Double? = nil,
+    reason: String? = nil,
+    retryAfterTrackingPermission: Bool? = nil
+  ) {
+    self.provider = provider
+    self.matched = matched
+    self.source = source
+    self.confidence = confidence
+    self.matchScore = matchScore
+    self.reason = reason
+    self.retryAfterTrackingPermission = retryAfterTrackingPermission
+  }
+}
+
 /// Analytical events that are automatically tracked by Superwall.
 ///
 /// These events are tracked internally by the SDK and sent to the delegate method ``SuperwallDelegate/handleSuperwallEvent(withInfo:)-50exd``.
@@ -104,6 +165,9 @@ public enum SuperwallEvent {
 
   /// When the user attributes are set.
   case userAttributes(_ attributes: [String: Any])
+
+  /// When install attribution is resolved or fails to resolve.
+  case attributionMatch(info: AttributionMatchInfo)
 
   /// When the user purchased a non recurring product.
   case nonRecurringProductPurchase(product: TransactionProduct, paywallInfo: PaywallInfo)
@@ -374,6 +438,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .transactionRestore)
     case .userAttributes:
       return .init(objcEvent: .userAttributes)
+    case .attributionMatch:
+      return .init(objcEvent: .attributionMatch)
     case .nonRecurringProductPurchase:
       return .init(objcEvent: .nonRecurringProductPurchase)
     case .paywallResponseLoadStart:

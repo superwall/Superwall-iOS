@@ -8,6 +8,8 @@
 import Foundation
 
 class Storage {
+  private static let mmpInstallAttributionWindow: TimeInterval = 7 * 24 * 60 * 60
+
   /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 
@@ -207,6 +209,93 @@ class Storage {
       _ = await trackPlacement(appInstall)
     }
     save(true, forType: DidTrackAppInstall.self)
+  }
+
+  func recordMMPInstallAttributionMatch(
+    matchInstall: @escaping () async -> Bool
+  ) {
+    let didCompleteAttributionMatch = get(DidCompleteMMPInstallAttributionMatch.self) ?? false
+    if didCompleteAttributionMatch {
+      return
+    }
+
+    Task { [weak self] in
+      let didCompleteMatch = await matchInstall()
+      guard didCompleteMatch else {
+        return
+      }
+
+      self?.save(true, forType: DidCompleteMMPInstallAttributionMatch.self)
+    }
+  }
+
+  func hasTrackedAppInstall() -> Bool {
+    get(DidTrackAppInstall.self) ?? false
+  }
+
+  func shouldAttemptInitialMMPInstallAttributionMatch(
+    hadTrackedAppInstallBeforeConfigure: Bool,
+    appInstalledAtString: String
+  ) -> Bool {
+    if hadTrackedAppInstallBeforeConfigure {
+      return false
+    }
+
+    guard isMMPInstallAttributionWindowOpen(appInstalledAtString: appInstalledAtString) else {
+      return false
+    }
+
+    save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
+    return true
+  }
+
+  func shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
+    appInstalledAtString: String
+  ) -> Bool {
+    let isEligible = get(IsEligibleForMMPInstallAttributionMatch.self) ?? false
+    guard isEligible else {
+      return false
+    }
+
+    guard isMMPInstallAttributionWindowOpen(appInstalledAtString: appInstalledAtString) else {
+      return false
+    }
+
+    let didCompleteTrackingPermissionMatch =
+      get(DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self) ?? false
+    return !didCompleteTrackingPermissionMatch
+  }
+
+  func recordTrackingPermissionMMPInstallAttributionMatch(
+    matchInstall: @escaping () async -> Bool
+  ) {
+    let didCompleteTrackingPermissionMatch =
+      get(DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self) ?? false
+    if didCompleteTrackingPermissionMatch {
+      return
+    }
+
+    Task { [weak self] in
+      let didCompleteMatch = await matchInstall()
+      guard didCompleteMatch else {
+        return
+      }
+
+      self?.save(true, forType: DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self)
+    }
+  }
+
+  private func isMMPInstallAttributionWindowOpen(appInstalledAtString: String) -> Bool {
+    guard !appInstalledAtString.isEmpty else {
+      return true
+    }
+
+    let formatter = ISO8601DateFormatter()
+    guard let appInstallDate = formatter.date(from: appInstalledAtString) else {
+      return true
+    }
+
+    return Date().timeIntervalSince(appInstallDate) <= Self.mmpInstallAttributionWindow
   }
 
   func clearCachedSessionEvents() {

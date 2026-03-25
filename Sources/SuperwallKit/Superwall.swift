@@ -446,12 +446,27 @@ public final class Superwall: NSObject, ObservableObject {
 
       dependencyContainer.storage.configure(apiKey: apiKey)
 
+      let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
-      _ = await (fetchConfig, configureIdentity)
+      _ = await configureIdentity
+
+      if dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      ) {
+        dependencyContainer.storage.recordMMPInstallAttributionMatch {
+          await dependencyContainer.network.matchMMPInstall(
+            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+            isTrackingPermissionRetry: false
+          )
+        }
+      }
+
+      _ = await fetchConfig
 
       await track(
         InternalSuperwallEvent.ConfigAttributes(
@@ -472,6 +487,59 @@ public final class Superwall: NSObject, ObservableObject {
     listenToConfig()
     listenToSubscriptionStatus()
     listenToCustomerInfo()
+    listenToTrackingPermissionGranted()
+    listenToApplicationDidBecomeActiveForTrackingPermission()
+  }
+
+  private func listenToTrackingPermissionGranted() {
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleTrackingPermissionGranted),
+      name: .superwallTrackingPermissionGranted,
+      object: nil
+    )
+  }
+
+  private func listenToApplicationDidBecomeActiveForTrackingPermission() {
+    guard let notificationName = SystemInfo.applicationDidBecomeActiveNotification else {
+      return
+    }
+
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(handleApplicationDidBecomeActiveForTrackingPermission),
+      name: notificationName,
+      object: nil
+    )
+  }
+
+  @objc
+  private func handleTrackingPermissionGranted() {
+    retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded()
+  }
+
+  @objc
+  private func handleApplicationDidBecomeActiveForTrackingPermission() {
+    guard dependencyContainer.permissionHandler.checkTrackingPermission() == .granted else {
+      return
+    }
+
+    retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded()
+  }
+
+  private func retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded() {
+    guard dependencyContainer.storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
+      appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+    ) else {
+      return
+    }
+
+    dependencyContainer.storage.recordTrackingPermissionMMPInstallAttributionMatch {
+      await self.dependencyContainer.network.matchMMPInstall(
+        idfa: self.dependencyContainer.attributionFetcher.identifierForAdvertisers,
+        isTrackingPermissionRetry: true
+      )
+    }
   }
 
   private func listenToConfig() {

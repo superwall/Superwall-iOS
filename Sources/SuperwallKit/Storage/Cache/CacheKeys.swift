@@ -57,6 +57,30 @@ enum DidTrackAppInstall: Storable {
   typealias Value = Bool
 }
 
+enum DidCompleteMMPInstallAttributionMatch: Storable {
+  static var key: String {
+    "store.didCompleteMMPInstallAttributionMatch"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
+enum IsEligibleForMMPInstallAttributionMatch: Storable {
+  static var key: String {
+    "store.isEligibleForMMPInstallAttributionMatch"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
+enum DidCompleteMMPInstallAttributionMatchAfterTrackingPermission: Storable {
+  static var key: String {
+    "store.didCompleteMMPInstallAttributionMatchAfterTrackingPermission"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
 enum DidTrackFirstSeen: Storable {
   static var key: String {
     "store.didTrackFirstSeen.v2"

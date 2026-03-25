@@ -11,6 +11,8 @@ import AdServices
 #endif
 
 final class AttributionFetcher {
+  private static let zeroAdvertisingIdentifier = "00000000-0000-0000-0000-000000000000"
+
   var integrationAttributes: [String: String] {
     queue.sync {
       _integrationAttributes
@@ -43,7 +45,12 @@ final class AttributionFetcher {
         return nil
       }
 
-      return identifierValue.uuidString
+      let identifier = identifierValue.uuidString
+      if identifier.caseInsensitiveCompare(Self.zeroAdvertisingIdentifier) == .orderedSame {
+        return nil
+      }
+
+      return identifier
     }
     #endif
     return nil

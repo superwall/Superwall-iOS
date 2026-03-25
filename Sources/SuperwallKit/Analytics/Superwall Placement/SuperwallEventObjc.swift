@@ -90,6 +90,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user attributes are set.
   case userAttributes
 
+  /// When install attribution is resolved or fails to resolve.
+  case attributionMatch
+
   /// When the user purchased a non recurring product.
   case nonRecurringProductPurchase
 
@@ -312,6 +315,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "transaction_restore"
     case .userAttributes:
       return "user_attributes"
+    case .attributionMatch:
+      return "attribution_match"
     case .nonRecurringProductPurchase:
       return "nonRecurringProduct_purchase"
     case .paywallResponseLoadStart:

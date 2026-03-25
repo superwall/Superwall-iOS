@@ -227,6 +227,18 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    var mmpHost: String {
+      switch self {
+      case .developer,
+        .custom:
+        return "mmp.superwall.dev"
+      case .local:
+        return "localhost:3045"
+      default:
+        return "mmp.superwall.com"
+      }
+    }
+
     private enum CodingKeys: String, CodingKey {
       case networkEnvironment
       case customDomain
