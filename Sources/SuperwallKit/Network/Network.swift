@@ -450,13 +450,15 @@ class Network {
       result[entry.key] = value
     }
 
+    let vendorId = deviceHelper.vendorId
+
     let request = MMPMatchRequest(
       platform: "ios",
       appUserId: identityManager.appUserId,
-      deviceId: deviceHelper.vendorId,
-      vendorId: deviceHelper.vendorId,
+      deviceId: factory.makeDeviceId(),
+      vendorId: vendorId,
       idfa: idfa,
-      idfv: deviceHelper.vendorId,
+      idfv: vendorId,
       appVersion: deviceHelper.appVersion,
       sdkVersion: sdkVersion,
       osVersion: deviceHelper.osVersion,
