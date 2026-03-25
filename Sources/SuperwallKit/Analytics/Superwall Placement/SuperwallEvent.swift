@@ -19,50 +19,61 @@ public struct AttributionMatchInfo: Sendable {
   public enum Provider: String, Sendable {
     /// Superwall's mobile measurement matching flow.
     case mmp
-    
+
     /// Apple Search Ads attribution.
     case appleSearchAds = "apple_search_ads"
   }
 
-  /// The provider that produced the attribution result.
+  /// The confidence level of the attribution result.
+  public enum Confidence: String, Decodable, Sendable {
+    /// A high-confidence attribution result.
+    case high
+
+    /// A medium-confidence attribution result.
+    case medium
+
+    /// A low-confidence attribution result.
+    case low
+  }
+
+  /// The attribution provider that produced the result.
   public let provider: Provider
 
   /// Whether the attribution attempt resulted in a match.
   public let matched: Bool
 
   /// The resolved acquisition source, if one was found.
+  ///
+  /// For example, `meta` or `apple_search_ads`.
   public let source: String?
 
   /// The confidence label returned by the provider, if available.
-  public let confidence: String?
+  public let confidence: Confidence?
 
-  /// The numeric match score returned by the provider, if available.
+  /// The numeric match score between 0 and 100 returned by the provider, if available.
   public let matchScore: Double?
 
   /// The reason for a non-match or failure, if available.
+  ///
+  /// For example, `below_threshold`, `no_attribution`, or `request_failed`.
   public let reason: String?
-
-  /// Whether this attribution attempt was a retry after tracking permission was granted.
-  public let retryAfterTrackingPermission: Bool?
 
   /// Creates a new install attribution result.
   ///
   /// - Parameters:
-  ///   - provider: The attribution provider that produced the result.
-  ///   - matched: Whether the attribution attempt matched.
-  ///   - source: The resolved acquisition source, if one was found.
-  ///   - confidence: The provider's confidence label, if available.
-  ///   - matchScore: The provider's numeric match score, if available.
-  ///   - reason: The reason for a non-match or failure, if available.
-  ///   - retryAfterTrackingPermission: Whether the attempt happened after tracking permission was granted.
+   ///   - provider: The attribution provider that produced the result.
+   ///   - matched: Whether the attribution attempt matched.
+   ///   - source: The resolved acquisition source, if one was found.
+   ///   - confidence: The provider's confidence label, if available.
+   ///   - matchScore: The provider's numeric match score, if available.
+   ///   - reason: The reason for a non-match or failure, if available.
   public init(
     provider: Provider,
     matched: Bool,
     source: String? = nil,
-    confidence: String? = nil,
+    confidence: Confidence? = nil,
     matchScore: Double? = nil,
-    reason: String? = nil,
-    retryAfterTrackingPermission: Bool? = nil
+    reason: String? = nil
   ) {
     self.provider = provider
     self.matched = matched
@@ -70,7 +81,6 @@ public struct AttributionMatchInfo: Sendable {
     self.confidence = confidence
     self.matchScore = matchScore
     self.reason = reason
-    self.retryAfterTrackingPermission = retryAfterTrackingPermission
   }
 }
 

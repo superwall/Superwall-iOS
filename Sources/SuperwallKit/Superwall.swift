@@ -460,8 +460,7 @@ public final class Superwall: NSObject, ObservableObject {
       ) {
         dependencyContainer.storage.recordMMPInstallAttributionMatch {
           await dependencyContainer.network.matchMMPInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-            isTrackingPermissionRetry: false
+            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers
           )
         }
       }
@@ -536,8 +535,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     dependencyContainer.storage.recordTrackingPermissionMMPInstallAttributionMatch {
       await self.dependencyContainer.network.matchMMPInstall(
-        idfa: self.dependencyContainer.attributionFetcher.identifierForAdvertisers,
-        isTrackingPermissionRetry: true
+        idfa: self.dependencyContainer.attributionFetcher.identifierForAdvertisers
       )
     }
   }

@@ -416,10 +416,7 @@ class Network {
     }
   }
 
-  func matchMMPInstall(
-    idfa: String?,
-    isTrackingPermissionRetry: Bool = false
-  ) async -> Bool {
+  func matchMMPInstall(idfa: String?) async -> Bool {
     guard
       let deviceHelper = factory.deviceHelper,
       let identityManager = factory.identityManager
@@ -505,8 +502,7 @@ class Network {
             source: response.acquisitionAttributes?["acquisition_source"]?.string ?? response.network,
             confidence: response.confidence,
             matchScore: response.matchScore,
-            reason: response.breakdown?["reason"]?.string,
-            retryAfterTrackingPermission: isTrackingPermissionRetry
+            reason: response.breakdown?["reason"]?.string
           )
         )
       )
@@ -528,8 +524,7 @@ class Network {
           info: AttributionMatchInfo(
             provider: .mmp,
             matched: false,
-            reason: "request_failed",
-            retryAfterTrackingPermission: isTrackingPermissionRetry
+            reason: "request_failed"
           )
         )
       )

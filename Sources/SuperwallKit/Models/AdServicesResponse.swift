@@ -33,7 +33,7 @@ struct MMPMatchRequest: Encodable {
 
 struct MMPMatchResponse: Decodable {
   let matched: Bool
-  let confidence: String?
+  let confidence: AttributionMatchInfo.Confidence?
   let matchScore: Double?
   let clickId: Int?
   let linkId: String?

@@ -127,16 +127,13 @@ enum InternalSuperwallEvent {
         parameters["source"] = source
       }
       if let confidence = info.confidence {
-        parameters["confidence"] = confidence
+        parameters["confidence"] = confidence.rawValue
       }
       if let matchScore = info.matchScore {
         parameters["match_score"] = matchScore
       }
       if let reason = info.reason {
         parameters["reason"] = reason
-      }
-      if let retryAfterTrackingPermission = info.retryAfterTrackingPermission {
-        parameters["retry_after_tracking_permission"] = retryAfterTrackingPermission
       }
 
       return parameters
