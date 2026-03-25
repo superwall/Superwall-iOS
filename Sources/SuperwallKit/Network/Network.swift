@@ -474,8 +474,6 @@ class Network {
         data: SuperwallRequestData(factory: factory)
       )
 
-      debugPrint("[Superwall] /api/match response:", response)
-
       Logger.debug(
         logLevel: .debug,
         scope: .network,
@@ -516,8 +514,6 @@ class Network {
         info: ["payload": request],
         error: error
       )
-
-      debugPrint("[Superwall] /api/match error:", error)
 
       await Superwall.shared.track(
         InternalSuperwallEvent.AttributionMatch(
