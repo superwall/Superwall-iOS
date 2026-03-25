@@ -4,6 +4,29 @@ import Combine
 import Foundation
 import StoreKit
 
+private actor TrackingPermissionMMPRetryGate {
+  private enum State {
+    case idle
+    case inFlight
+    case completed
+  }
+
+  private var state: State = .idle
+
+  func tryBegin() -> Bool {
+    guard case .idle = state else {
+      return false
+    }
+
+    state = .inFlight
+    return true
+  }
+
+  func finish(didComplete: Bool) {
+    state = didComplete ? .completed : .idle
+  }
+}
+
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
 /// all its features via instance functions and variables.
@@ -29,6 +52,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// A `Task` that is associated with purchasing. This is used to prevent multiple purchases
   /// from occurring.
   private var purchaseTask: Task<Void, Never>?
+  private let trackingPermissionMMPRetryGate = TrackingPermissionMMPRetryGate()
 
   /// The Objective-C delegate that handles Superwall lifecycle events.
   @available(swift, obsoleted: 1.0)
@@ -527,16 +551,35 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   private func retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded() {
-    guard dependencyContainer.storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-    ) else {
-      return
-    }
+    Task { [weak self] in
+      guard let self else {
+        return
+      }
 
-    dependencyContainer.storage.recordTrackingPermissionMMPInstallAttributionMatch {
-      await self.dependencyContainer.network.matchMMPInstall(
-        idfa: self.dependencyContainer.attributionFetcher.identifierForAdvertisers
+      guard await trackingPermissionMMPRetryGate.tryBegin() else {
+        return
+      }
+
+      let appInstalledAtString = dependencyContainer.deviceHelper.appInstalledAtString
+      guard dependencyContainer.storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
+        appInstalledAtString: appInstalledAtString
+      ) else {
+        await trackingPermissionMMPRetryGate.finish(didComplete: false)
+        return
+      }
+
+      let didCompleteMatch = await dependencyContainer.network.matchMMPInstall(
+        idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers
       )
+
+      if didCompleteMatch {
+        dependencyContainer.storage.save(
+          true,
+          forType: DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self
+        )
+      }
+
+      await trackingPermissionMMPRetryGate.finish(didComplete: didCompleteMatch)
     }
   }
 
