@@ -575,20 +575,20 @@ public final class Superwall: NSObject, ObservableObject {
 
       let advertiserTrackingEnabled =
         dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
-      let didCompleteMatch = await dependencyContainer.network.matchMMPInstall(
+      let didCompleteRequest = await dependencyContainer.network.matchMMPInstall(
         idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
         advertiserTrackingEnabled: advertiserTrackingEnabled,
         applicationTrackingEnabled: true
       )
 
-      if didCompleteMatch {
+      if didCompleteRequest {
         dependencyContainer.storage.save(
           true,
-          forType: DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self
+          forType: DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self
         )
       }
 
-      await trackingPermissionMMPRetryGate.finish(didComplete: didCompleteMatch)
+      await trackingPermissionMMPRetryGate.finish(didComplete: didCompleteRequest)
     }
   }
 

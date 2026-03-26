@@ -214,18 +214,18 @@ class Storage {
   func recordMMPInstallAttributionMatch(
     matchInstall: @escaping () async -> Bool
   ) {
-    let didCompleteAttributionMatch = get(DidCompleteMMPInstallAttributionMatch.self) ?? false
-    if didCompleteAttributionMatch {
+    let didCompleteAttributionRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
+    if didCompleteAttributionRequest {
       return
     }
 
     Task { [weak self] in
-      let didCompleteMatch = await matchInstall()
-      guard didCompleteMatch else {
+      let didCompleteRequest = await matchInstall()
+      guard didCompleteRequest else {
         return
       }
 
-      self?.save(true, forType: DidCompleteMMPInstallAttributionMatch.self)
+      self?.save(true, forType: DidCompleteMMPInstallAttributionRequest.self)
     }
   }
 
@@ -234,11 +234,11 @@ class Storage {
   }
 
   func shouldAttemptInitialMMPInstallAttributionMatch(
-    hadTrackedAppInstallBeforeConfigure: Bool,
+    hadTrackedAppInstallBeforeConfigure _: Bool,
     appInstalledAtString: String
   ) -> Bool {
-    let didCompleteMatch = get(DidCompleteMMPInstallAttributionMatch.self) ?? false
-    if hadTrackedAppInstallBeforeConfigure && didCompleteMatch {
+    let didCompleteRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
+    if didCompleteRequest {
       return false
     }
 
@@ -262,9 +262,9 @@ class Storage {
       return false
     }
 
-    let didCompleteTrackingPermissionMatch =
-      get(DidCompleteMMPInstallAttributionMatchAfterTrackingPermission.self) ?? false
-    return !didCompleteTrackingPermissionMatch
+    let didCompleteTrackingPermissionRequest =
+      get(DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self) ?? false
+    return !didCompleteTrackingPermissionRequest
   }
 
   private func isMMPInstallAttributionWindowOpen(appInstalledAtString: String) -> Bool {

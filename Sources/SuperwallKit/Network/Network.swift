@@ -513,6 +513,7 @@ class Network {
         )
       )
 
+      // A successful response means the request was processed, even if no attribution match was found.
       return true
     } catch {
       Logger.debug(
