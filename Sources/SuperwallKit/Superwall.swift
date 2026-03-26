@@ -376,13 +376,27 @@ public final class Superwall: NSObject, ObservableObject {
     super.init()
   }
 
+  static func makeDependencyContainer(
+    apiKey: String,
+    purchaseController: PurchaseController? = nil,
+    options: SuperwallOptions? = nil
+  ) -> DependencyContainer {
+    let dependencyContainer = DependencyContainer(
+      purchaseController: purchaseController,
+      options: options
+    )
+    dependencyContainer.storage.configure(apiKey: apiKey)
+    return dependencyContainer
+  }
+
   private convenience init(
     apiKey: String,
     purchaseController: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
     completion: (() -> Void)?
   ) {
-    let dependencyContainer = DependencyContainer(
+    let dependencyContainer = Self.makeDependencyContainer(
+      apiKey: apiKey,
       purchaseController: purchaseController,
       options: options
     )
@@ -406,8 +420,6 @@ public final class Superwall: NSObject, ObservableObject {
           }
         #endif
       }
-
-      dependencyContainer.storage.configure(apiKey: apiKey)
 
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 

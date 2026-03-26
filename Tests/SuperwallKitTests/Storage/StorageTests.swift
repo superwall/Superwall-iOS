@@ -10,6 +10,12 @@ import XCTest
 @testable import SuperwallKit
 
 class StorageTests: XCTestCase {
+  func test_makeDependencyContainer_configuresApiKeySynchronously() {
+    let dependencyContainer = Superwall.makeDependencyContainer(apiKey: "pk_test_123")
+
+    XCTAssertEqual(dependencyContainer.storage.apiKey, "pk_test_123")
+  }
+
   func test_overwriteAssignments() {
     let dependencyContainer = DependencyContainer()
     let storage = Storage(factory: dependencyContainer)
@@ -36,4 +42,3 @@ class StorageTests: XCTestCase {
     XCTAssertTrue(retrievedAssignments2.isEmpty)
   }
 }
-
