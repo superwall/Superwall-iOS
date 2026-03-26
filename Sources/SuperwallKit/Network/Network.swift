@@ -342,7 +342,7 @@ class Network {
         return true
       }
 
-      return JSON(currentValue).rawString([:]) != JSON(value).rawString([:])
+      return String(describing: currentValue) != String(describing: value)
     }
 
     guard hasChanges else {
