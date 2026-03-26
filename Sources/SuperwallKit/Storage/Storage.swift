@@ -237,7 +237,8 @@ class Storage {
     hadTrackedAppInstallBeforeConfigure: Bool,
     appInstalledAtString: String
   ) -> Bool {
-    if hadTrackedAppInstallBeforeConfigure {
+    let didCompleteMatch = get(DidCompleteMMPInstallAttributionMatch.self) ?? false
+    if hadTrackedAppInstallBeforeConfigure && didCompleteMatch {
       return false
     }
 

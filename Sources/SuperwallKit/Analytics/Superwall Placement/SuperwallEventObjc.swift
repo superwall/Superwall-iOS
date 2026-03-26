@@ -90,9 +90,6 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When the user attributes are set.
   case userAttributes
 
-  /// When install attribution is resolved or fails to resolve.
-  case attributionMatch
-
   /// When the user purchased a non recurring product.
   case nonRecurringProductPurchase
 
@@ -262,6 +259,9 @@ public enum SuperwallEventObjc: Int, CaseIterable {
 
   /// When a user navigates to a page in a multi-page paywall.
   case paywallPageView
+
+  /// When install attribution is resolved or fails to resolve.
+  case attributionMatch
 
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
