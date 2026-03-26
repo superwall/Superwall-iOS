@@ -482,9 +482,14 @@ public final class Superwall: NSObject, ObservableObject {
         hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
         appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
       ) {
+        let advertiserTrackingEnabled =
+          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+
         dependencyContainer.storage.recordMMPInstallAttributionMatch {
           await dependencyContainer.network.matchMMPInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers
+            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+            advertiserTrackingEnabled: advertiserTrackingEnabled,
+            applicationTrackingEnabled: true
           )
         }
       }
@@ -568,8 +573,12 @@ public final class Superwall: NSObject, ObservableObject {
         return
       }
 
+      let advertiserTrackingEnabled =
+        dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
       let didCompleteMatch = await dependencyContainer.network.matchMMPInstall(
-        idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers
+        idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+        advertiserTrackingEnabled: advertiserTrackingEnabled,
+        applicationTrackingEnabled: true
       )
 
       if didCompleteMatch {

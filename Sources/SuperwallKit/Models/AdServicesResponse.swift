@@ -20,6 +20,8 @@ struct MMPMatchRequest: Encodable {
   let vendorId: String?
   let idfa: String?
   let idfv: String?
+  let advertiserTrackingEnabled: Bool
+  let applicationTrackingEnabled: Bool
   let appVersion: String
   let sdkVersion: String
   let osVersion: String

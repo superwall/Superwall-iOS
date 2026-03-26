@@ -416,7 +416,11 @@ class Network {
     }
   }
 
-  func matchMMPInstall(idfa: String?) async -> Bool {
+  func matchMMPInstall(
+    idfa: String?,
+    advertiserTrackingEnabled: Bool,
+    applicationTrackingEnabled: Bool
+  ) async -> Bool {
     guard
       let deviceHelper = factory.deviceHelper,
       let identityManager = factory.identityManager
@@ -459,6 +463,8 @@ class Network {
       vendorId: vendorId,
       idfa: idfa,
       idfv: vendorId,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
       appVersion: deviceHelper.appVersion,
       sdkVersion: sdkVersion,
       osVersion: deviceHelper.osVersion,
