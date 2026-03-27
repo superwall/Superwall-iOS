@@ -471,6 +471,10 @@ class Network {
       deviceModel: deviceHelper.model,
       deviceLocale: deviceHelper.localeIdentifier,
       deviceLanguageCode: deviceHelper.languageCode,
+      timezoneOffsetSeconds: deviceHelper.timezoneOffsetSeconds,
+      screenWidth: deviceHelper.screenWidth,
+      screenHeight: deviceHelper.screenHeight,
+      devicePixelRatio: deviceHelper.devicePixelRatio,
       bundleId: deviceHelper.bundleId,
       clientTimestamp: Date().isoString,
       metadata: metadata

@@ -28,6 +28,10 @@ struct MMPMatchRequest: Encodable {
   let deviceModel: String
   let deviceLocale: String
   let deviceLanguageCode: String
+  let timezoneOffsetSeconds: Int
+  let screenWidth: Int
+  let screenHeight: Int
+  let devicePixelRatio: Double
   let bundleId: String
   let clientTimestamp: String
   let metadata: [String: String]
