@@ -234,11 +234,16 @@ class Storage {
   }
 
   func shouldAttemptInitialMMPInstallAttributionMatch(
-    hadTrackedAppInstallBeforeConfigure _: Bool,
+    hadTrackedAppInstallBeforeConfigure: Bool,
     appInstalledAtString: String
   ) -> Bool {
     let didCompleteRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
     if didCompleteRequest {
+      return false
+    }
+
+    let isEligible = get(IsEligibleForMMPInstallAttributionMatch.self) ?? false
+    if hadTrackedAppInstallBeforeConfigure && !isEligible {
       return false
     }
 
@@ -272,8 +277,16 @@ class Storage {
       return true
     }
 
+    let formatterWithFractionalSeconds = ISO8601DateFormatter()
+    formatterWithFractionalSeconds.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
     let formatter = ISO8601DateFormatter()
-    guard let appInstallDate = formatter.date(from: appInstalledAtString) else {
+
+    guard
+      let appInstallDate =
+        formatterWithFractionalSeconds.date(from: appInstalledAtString)
+          ?? formatter.date(from: appInstalledAtString)
+    else {
       return true
     }
 

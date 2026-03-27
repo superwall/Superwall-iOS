@@ -112,7 +112,7 @@ actor ReceiptManager {
     }
 
     // Don't register if app transaction ID is nil
-    guard Self.appTransactionId != nil else {
+    if Self.appTransactionId == nil {
       return
     }
 
