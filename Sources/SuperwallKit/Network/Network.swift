@@ -308,7 +308,7 @@ class Network {
     }
   }
 
-  func sendToken(_ token: String) async -> [String: Any] {
+  func sendToken(_ token: String) async -> [String: Any]? {
     do {
       let jsonDict = try await urlSession.request(
         .adServices(token: token),
@@ -323,8 +323,33 @@ class Network {
         info: ["payload": token],
         error: error
       )
-      return [:]
+      return nil
     }
+  }
+
+  private func mergeMMPAcquisitionAttributesIfNeeded(
+    _ acquisitionAttributes: [String: JSON],
+    identityManager: IdentityManager
+  ) {
+    let attributes = convertJSONToDictionary(attribution: acquisitionAttributes)
+    guard !attributes.isEmpty else {
+      return
+    }
+
+    let currentAttributes = identityManager.userAttributes
+    let hasChanges = attributes.contains { key, value in
+      guard let currentValue = currentAttributes[key] else {
+        return true
+      }
+
+      return String(describing: currentValue) != String(describing: value)
+    }
+
+    guard hasChanges else {
+      return
+    }
+
+    Superwall.shared.setUserAttributes(attributes)
   }
 
   func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
@@ -388,6 +413,132 @@ class Network {
         error: error
       )
       throw error
+    }
+  }
+
+  func matchMMPInstall(
+    idfa: String?,
+    advertiserTrackingEnabled: Bool,
+    applicationTrackingEnabled: Bool
+  ) async -> Bool {
+    guard
+      let deviceHelper = factory.deviceHelper,
+      let identityManager = factory.identityManager
+    else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .network,
+        message: "Skipped: /api/match",
+        info: ["reason": "Dependencies unavailable"]
+      )
+      return false
+    }
+
+    let rawMetadata = [
+      "preferredLocaleIdentifier": deviceHelper.preferredLocaleIdentifier,
+      "preferredLanguageCode": deviceHelper.preferredLanguageCode,
+      "preferredRegionCode": deviceHelper.preferredRegionCode,
+      "interfaceType": deviceHelper.interfaceType,
+      "appInstalledAt": deviceHelper.appInstalledAtString,
+      "radioType": deviceHelper.radioType,
+      "isLowPowerModeEnabled": deviceHelper.isLowPowerModeEnabled,
+      "isSandbox": deviceHelper.isSandbox,
+      "platformWrapper": deviceHelper.platformWrapper,
+      "platformWrapperVersion": deviceHelper.platformWrapperVersion
+    ]
+
+    let metadata = rawMetadata.reduce(into: [String: String]()) { result, entry in
+      guard let value = entry.value, !value.isEmpty else {
+        return
+      }
+      result[entry.key] = value
+    }
+
+    let vendorId = deviceHelper.vendorId
+
+    let request = MMPMatchRequest(
+      platform: "ios",
+      appUserId: identityManager.appUserId,
+      deviceId: factory.makeDeviceId(),
+      vendorId: vendorId,
+      idfa: idfa,
+      idfv: vendorId,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
+      appVersion: deviceHelper.appVersion,
+      sdkVersion: sdkVersion,
+      osVersion: deviceHelper.osVersion,
+      deviceModel: deviceHelper.model,
+      deviceLocale: deviceHelper.localeIdentifier,
+      deviceLanguageCode: deviceHelper.languageCode,
+      timezoneOffsetSeconds: deviceHelper.timezoneOffsetSeconds,
+      screenWidth: deviceHelper.screenWidth,
+      screenHeight: deviceHelper.screenHeight,
+      devicePixelRatio: deviceHelper.devicePixelRatio,
+      bundleId: deviceHelper.bundleId,
+      clientTimestamp: Date().isoString,
+      metadata: metadata
+    )
+
+    do {
+      let response: MMPMatchResponse = try await urlSession.request(
+        .matchMMPInstall(request: request),
+        data: SuperwallRequestData(factory: factory)
+      )
+
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Request Completed: /api/match",
+        info: [
+          "matched": response.matched,
+          "confidence": response.confidence as Any,
+          "link_id": response.linkId as Any,
+        ]
+      )
+
+      if let acquisitionAttributes = response.acquisitionAttributes {
+        mergeMMPAcquisitionAttributesIfNeeded(
+          acquisitionAttributes,
+          identityManager: identityManager
+        )
+      }
+
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AttributionMatch(
+          info: AttributionMatchInfo(
+            provider: .mmp,
+            matched: response.matched,
+            source: response.acquisitionAttributes?["acquisition_source"]?.string ?? response.network,
+            confidence: response.confidence,
+            matchScore: response.matchScore,
+            reason: response.breakdown?["reason"]?.string
+          )
+        )
+      )
+
+      // A successful response means the request was processed, even if no attribution match was found.
+      return true
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /api/match",
+        info: ["payload": request],
+        error: error
+      )
+
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AttributionMatch(
+          info: AttributionMatchInfo(
+            provider: .mmp,
+            matched: false,
+            reason: "request_failed"
+          )
+        )
+      )
+
+      return false
     }
   }
 }

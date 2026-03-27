@@ -118,6 +118,22 @@ class DeviceHelper {
     "\(Int(TimeZone.current.secondsFromGMT()))"
   }
 
+  var timezoneOffsetSeconds: Int {
+    TimeZone.current.secondsFromGMT()
+  }
+
+  var screenWidth: Int {
+    Int(UIScreen.main.bounds.width.rounded())
+  }
+
+  var screenHeight: Int {
+    Int(UIScreen.main.bounds.height.rounded())
+  }
+
+  var devicePixelRatio: Double {
+    Double(UIScreen.main.scale)
+  }
+
   var isFirstAppOpen: Bool {
     return !storage.didTrackFirstSession
   }

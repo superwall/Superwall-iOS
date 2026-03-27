@@ -423,3 +423,22 @@ extension Endpoint where
     )
   }
 }
+
+// MARK: - MMP
+extension Endpoint where
+  Kind == EndpointKinds.SubscriptionsAPI,
+  Response == MMPMatchResponse {
+  static func matchMMPInstall(request: MMPMatchRequest) -> Self {
+    let bodyData = try? JSONEncoder().encode(request)
+
+    return Endpoint(
+      retryCount: 2,
+      components: Components(
+        host: .mmp,
+        path: "api/match",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+}

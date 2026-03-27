@@ -57,6 +57,32 @@ enum DidTrackAppInstall: Storable {
   typealias Value = Bool
 }
 
+enum DidCompleteMMPInstallAttributionRequest: Storable {
+  static var key: String {
+    // Preserve the existing cache key so upgrades don't re-run install attribution.
+    "store.didCompleteMMPInstallAttributionMatch"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
+enum IsEligibleForMMPInstallAttributionMatch: Storable {
+  static var key: String {
+    "store.isEligibleForMMPInstallAttributionMatch"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
+enum DidCompleteMMPInstallAttributionRequestAfterTrackingPermission: Storable {
+  static var key: String {
+    // Preserve the existing cache key so upgrades don't re-run the ATT retry path.
+    "store.didCompleteMMPInstallAttributionMatchAfterTrackingPermission"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
 enum DidTrackFirstSeen: Storable {
   static var key: String {
     "store.didTrackFirstSeen.v2"
