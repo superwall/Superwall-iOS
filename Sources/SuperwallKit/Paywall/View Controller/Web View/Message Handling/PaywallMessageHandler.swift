@@ -255,6 +255,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
     case .hapticFeedback(let hapticType):
       triggerHapticFeedback(hapticType)
+    case .pageView(let data):
+      guard let delegate = delegate else { return }
+      let paywallInfo = delegate.info
+      Task {
+        let event = InternalSuperwallEvent.PaywallPageView(
+          paywallInfo: paywallInfo,
+          data: data
+        )
+        await Superwall.shared.track(event)
+      }
     }
   }
 

@@ -74,6 +74,7 @@ enum PaywallMessage: Decodable, Equatable {
     variables: JSON?
   )
   case hapticFeedback(hapticType: String)
+  case pageView(PageViewData)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -121,6 +122,7 @@ enum PaywallMessage: Decodable, Equatable {
     case requestPermission = "request_permission"
     case requestCallback = "request_callback"
     case hapticFeedback = "haptic_feedback"
+    case pageView = "page_view"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -308,6 +310,11 @@ enum PaywallMessage: Decodable, Equatable {
       case .hapticFeedback:
         if let hapticType = try? values.decode(String.self, forKey: .hapticType) {
           self = .hapticFeedback(hapticType: hapticType)
+          return
+        }
+      case .pageView:
+        if let data = try? PageViewData(from: decoder) {
+          self = .pageView(data)
           return
         }
       }

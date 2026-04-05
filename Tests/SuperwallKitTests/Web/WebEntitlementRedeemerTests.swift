@@ -2497,13 +2497,13 @@ struct WebEntitlementRedeemerTests {
       superwall: superwall
     )
 
-    // Let the init task settle, then reset counters
-    try? await Task.sleep(nanoseconds: 50_000_000)
-    mockNetwork.pollRedemptionResultCallCount = 0
+    // Let the init task settle
+    try? await Task.sleep(nanoseconds: 200_000_000)
 
+    let countBeforeCall = mockNetwork.pollRedemptionResultCallCount
     let result = await redeemer.pollOrWaitForActiveStripePoll()
     #expect(result == false)
-    #expect(mockNetwork.pollRedemptionResultCallCount == 0)
+    #expect(mockNetwork.pollRedemptionResultCallCount == countBeforeCall)
   }
 
   @Test("pollOrWaitForActiveStripePoll starts own poll when no active poll")

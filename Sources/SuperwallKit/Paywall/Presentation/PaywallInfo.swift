@@ -135,6 +135,10 @@ public final class PaywallInfo: NSObject {
   /// `.automatic`.
   public let introOfferEligibility: IntroOfferEligibility
 
+  /// A unique identifier for this paywall presentation, used to correlate all events
+  /// within a single presentation lifecycle.
+  public let presentationId: String?
+
   init(
     databaseId: String,
     identifier: String,
@@ -144,6 +148,7 @@ public final class PaywallInfo: NSObject {
     url: URL,
     products: [Product],
     productIds: [String],
+    presentationId: String?,
     fromPlacementData placementData: PlacementData?,
     responseLoadStartTime: Date?,
     responseLoadCompleteTime: Date?,
@@ -182,6 +187,7 @@ public final class PaywallInfo: NSObject {
     self.presentationSourceType = presentationSourceType
     self.experiment = experiment
     self.paywalljsVersion = paywalljsVersion
+    self.presentationId = presentationId
     self.products = products
     self.productIds = productIds
     self.isFreeTrialAvailable = isFreeTrialAvailable
@@ -271,7 +277,8 @@ public final class PaywallInfo: NSObject {
       "close_reason": closeReason.description,
       "is_scroll_enabled": isScrollEnabled as Any,
       "intro_offer_eligibility": introOfferEligibility.description,
-      "app_transaction_id": ReceiptManager.appTransactionId as Any
+      "app_transaction_id": ReceiptManager.appTransactionId as Any,
+      "presentation_id": presentationId as Any
     ]
 
     var loadingVars: [String: Any] = [:]
@@ -356,6 +363,7 @@ extension PaywallInfo: Stubbable {
       url: URL(string: "https://superwall.com")!,
       products: [],
       productIds: [],
+      presentationId: nil,
       fromPlacementData: nil,
       responseLoadStartTime: nil,
       responseLoadCompleteTime: nil,
@@ -398,6 +406,7 @@ extension PaywallInfo: Stubbable {
       url: URL(string: "https://superwall.com")!,
       products: [],
       productIds: [],
+      presentationId: nil,
       fromPlacementData: nil,
       responseLoadStartTime: nil,
       responseLoadCompleteTime: nil,
