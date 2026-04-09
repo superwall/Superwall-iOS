@@ -621,9 +621,9 @@ struct SK2StoreProduct: StoreProductType {
 
   var localizedTrialPeriodPrice: String {
     guard let price = underlyingSK2Product.subscription?.introductoryOffer?.price else {
-      return priceFormatter.string(from: 0.00) ?? "$0.00"
+      return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
     }
-    return priceFormatter.string(from: NSDecimalNumber(decimal: price)) ?? "$0.00"
+    return price.formatted(underlyingSK2Product.priceFormatStyle)
   }
 }
 
