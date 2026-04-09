@@ -608,15 +608,15 @@ struct SK2StoreProduct: StoreProductType {
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
     guard let introductoryDiscount = introductoryDiscount else {
-      return priceFormatter.string(from: 0.00) ?? "$0.00"
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
     if introductoryDiscount.price == 0.00 {
-      return priceFormatter.string(from: 0.00) ?? "$0.00"
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
 
     let introMonthlyPrice = introductoryDiscount.pricePerUnit(unit)
 
-    return priceFormatter.string(from: NSDecimalNumber(decimal: introMonthlyPrice)) ?? "$0.00"
+    return priceFormatter.string(from: NSDecimalNumber(decimal: introMonthlyPrice)) ?? "n/a"
   }
 
   var localizedTrialPeriodPrice: String {
