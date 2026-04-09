@@ -1695,6 +1695,43 @@ struct TrackingTests {
       result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
+  @Test func transaction_abandon() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let productId = "abc"
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: productId),
+      entitlements: [.stub()]
+    )
+    let dependencyContainer = DependencyContainer()
+    let skTransaction = MockSKPaymentTransaction(state: .purchased)
+    let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.Transaction(
+        state: .abandon(product),
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: transaction,
+        source: .external,
+        isObserved: false,
+        storeKitVersion: .storeKit1
+      )
+    )
+
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_abandon")
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_abandon")
+    #expect(
+      result.parameters.audienceFilterParams["abandoned_product_id"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_localized_period"] != nil)
+  }
+
   @Test func transaction_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
