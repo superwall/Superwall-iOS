@@ -1699,7 +1699,10 @@ struct TrackingTests {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
-      sk1Product: MockSkProduct(productIdentifier: productId),
+      sk1Product: MockSkProduct(
+        subscriptionPeriod: SKProductSubscriptionPeriodMock(numberOfUnits: 1, unit: .month),
+        productIdentifier: productId
+      ),
       entitlements: [.stub()]
     )
     let dependencyContainer = DependencyContainer()
@@ -1726,10 +1729,10 @@ struct TrackingTests {
     #expect(
       result.parameters.audienceFilterParams["abandoned_product_id"] as! String == productId)
     #expect(result.parameters.audienceFilterParams["abandoned_product_identifier"] as! String == productId)
-    #expect(result.parameters.audienceFilterParams["abandoned_product_period"] != nil)
-    #expect(result.parameters.audienceFilterParams["abandoned_product_period_months"] != nil)
-    #expect(result.parameters.audienceFilterParams["abandoned_product_period_years"] != nil)
-    #expect(result.parameters.audienceFilterParams["abandoned_product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period"] as? String == "month")
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period_months"] as? String == "1")
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period_years"] as? String == "0")
+    #expect((result.parameters.audienceFilterParams["abandoned_product_localized_period"] as? String)?.isEmpty == false)
   }
 
   @Test func transaction_fail() async {
