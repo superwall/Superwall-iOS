@@ -1539,6 +1539,15 @@ extension PaywallViewController {
     closeReason: PaywallCloseReason,
     completion: (() -> Void)? = nil
   ) {
+    // Ignore redundant dismiss calls after a terminal purchase/restore.
+    switch paywallResult {
+    case .purchased, .restored:
+      completion?()
+      return
+    case .declined, .none:
+      break
+    }
+
     dismissCompletionBlock = completion
     paywallResult = result
     paywall.closeReason = closeReason

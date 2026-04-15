@@ -1,12 +1,11 @@
 //
-//  PaywallViewControllerDrawerTests.swift
+//  PaywallViewControllerTests.swift
 //  SuperwallKitTests
-//
-//  Created by Claude on 08/01/2025.
 //
 
 import Testing
 import Foundation
+import StoreKit
 @testable import SuperwallKit
 
 struct PaywallViewControllerDrawerTests {
@@ -126,5 +125,89 @@ struct PaywallViewControllerDrawerTests {
     #expect(PaywallPresentationStyleObjc.fullscreen.toSwift() == .fullscreen)
     #expect(PaywallPresentationStyleObjc.push.toSwift() == .push)
     #expect(PaywallPresentationStyleObjc.none.toSwift() == .none)
+  }
+}
+
+@MainActor
+struct PaywallViewControllerDismissIdempotencyTests {
+  final class RecordingDelegate: PaywallViewControllerDelegate {
+    nonisolated(unsafe) var results: [PaywallResult] = []
+    func paywall(
+      _ paywall: PaywallViewController,
+      didFinishWith result: PaywallResult,
+      shouldDismiss: Bool
+    ) {
+      results.append(result)
+    }
+  }
+
+  private func makeMock() -> PaywallViewControllerMock {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    return PaywallViewControllerMock(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: nil,
+      paywallArchiveManager: nil
+    )
+  }
+
+  @Test("`.closed` dismiss after a successful purchase is ignored")
+  func closedEventAfterPurchaseIsIgnored() async throws {
+    let paywallVc = makeMock()
+    let recorder = RecordingDelegate()
+    paywallVc.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
+
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: "com.example.test")
+    )
+
+    paywallVc.dismiss(result: .purchased(product), closeReason: .systemLogic)
+    paywallVc.dismiss(result: .declined, closeReason: .manualClose)
+
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(recorder.results.count == 1)
+    if case .purchased = recorder.results.first {
+    } else {
+      Issue.record("Expected delegate to receive .purchased only, got \(recorder.results)")
+    }
+  }
+
+  @Test("`.closed` dismiss after a restore is ignored")
+  func closedEventAfterRestoreIsIgnored() async throws {
+    let paywallVc = makeMock()
+    let recorder = RecordingDelegate()
+    paywallVc.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
+
+    paywallVc.dismiss(result: .restored, closeReason: .systemLogic)
+    paywallVc.dismiss(result: .declined, closeReason: .manualClose)
+
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(recorder.results.count == 1)
+    #expect(recorder.results.first == .restored)
   }
 }
