@@ -43,10 +43,7 @@ struct APIStoreProduct: StoreProductType {
   }
 
   var localizedPrice: String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.currencyCode = superwallProduct.price?.currency.uppercased() ?? "USD"
-    return formatter.string(from: NSDecimalNumber(decimal: price)) ?? "$\(price)"
+    return priceFormatter.string(from: NSDecimalNumber(decimal: price)) ?? "$\(price)"
   }
 
   var currencyCode: String? {
@@ -54,10 +51,7 @@ struct APIStoreProduct: StoreProductType {
   }
 
   var currencySymbol: String? {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.currencyCode = currencyCode ?? "USD"
-    return formatter.currencySymbol
+    priceFormatter.currencySymbol
   }
 
   let subscriptionGroupIdentifier: String? = nil
@@ -168,10 +162,9 @@ struct APIStoreProduct: StoreProductType {
   // MARK: - Computed Prices
 
   private var priceFormatter: NumberFormatter {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .currency
-    formatter.currencyCode = currencyCode ?? "USD"
-    return formatter
+    return priceFormatterProvider.priceFormatterForSK2(
+      withCurrencyCode: currencyCode ?? "USD"
+    )
   }
 
   var dailyPrice: String {

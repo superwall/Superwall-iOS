@@ -486,6 +486,20 @@ final class TransactionManager {
       )
     }
 
+    // Custom products can only be purchased via an external PurchaseController.
+    // Without one, the default SK1/SK2 purchasers have no underlying product to
+    // transact against and bail silently, leaving the paywall stuck.
+    if product.isCustomProduct,
+      !factory.makeHasExternalPurchaseController() {
+      Logger.debug(
+        logLevel: .error,
+        scope: .transactions,
+        message: "Custom product \"\(product.productIdentifier)\" can only be purchased using a PurchaseController. "
+          + "Set one via Superwall.configure(..., purchaseController:) to handle custom product purchases."
+      )
+      return .failed(PurchaseError.productUnavailable)
+    }
+
     // Attach intro offer token if available from the paywall
     if case .internal(_, let paywallViewController, _) = purchaseSource {
       product.introOfferToken = await paywallViewController
