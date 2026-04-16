@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store.
+- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store using the `PurchaseController`.
 - Adds `formUnion` override when unioning sets of `Entitlement` objects.
 - Adds multipage paywall navigation tracking by tracking a `paywall_page_view` event, which contains information about the page view.
 
