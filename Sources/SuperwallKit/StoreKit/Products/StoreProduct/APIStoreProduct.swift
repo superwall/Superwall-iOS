@@ -266,7 +266,10 @@ struct APIStoreProduct: StoreProductType {
   var trialPeriodPrice: Decimal { rawTrialPeriodPrice }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
-    guard rawTrialPeriodPrice != 0, let subUnit = subscriptionUnit else {
+    guard
+      rawTrialPeriodPrice != 0,
+      subscriptionUnit != nil
+    else {
       return priceFormatter.string(from: NSDecimalNumber(decimal: rawTrialPeriodPrice)) ?? "$0.00"
     }
     let trialDays = Decimal(superwallProduct.subscription?.trialPeriodDays ?? 0)
