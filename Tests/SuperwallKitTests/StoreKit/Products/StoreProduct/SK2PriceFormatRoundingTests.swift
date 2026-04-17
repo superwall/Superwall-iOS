@@ -29,13 +29,15 @@ struct SK2PriceFormatRoundingTests {
     let gbp = Locale(identifier: "en_GB")
     let value: Decimal = 4.99
 
+    // Force 0 fraction digits — the shape of storefront-specific rounding that
+    // caused £4.99/week to render as £5 in production.
     let storefrontRoundedStyle = Decimal.FormatStyle.Currency(code: "GBP")
       .locale(gbp)
-      .rounded(rule: .up, increment: 1)
+      .precision(.fractionLength(0))
     let roundedOutput = value.formatted(storefrontRoundedStyle)
     #expect(
-      roundedOutput == "£5.00",
-      "Sanity check: a .rounded(rule: .up, increment: 1) currency style must snap 4.99 to 5.00 (got \(roundedOutput))"
+      roundedOutput == "£5",
+      "Sanity check: a .precision(.fractionLength(0)) currency style must snap 4.99 to £5 (got \(roundedOutput))"
     )
 
     let formatter = PriceFormatterProvider().priceFormatterForSK2(
