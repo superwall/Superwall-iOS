@@ -30,12 +30,19 @@ extension PaywallRequestManager {
     return paywall
   }
 
+  // swiftlint:disable:next function_body_length
   private func getProducts(for paywall: Paywall, request: PaywallRequest) async throws -> Paywall {
     var paywall = paywall
+
+    debugPrint(
+      "[SW-CUSTOM] getProducts start — paywall.products ids+types:",
+      paywall.products.map { "\($0.id)(\($0.type))" }
+    )
 
     // Pre-populate custom products from the Superwall API before fetching
     // App Store products so they're already cached in productsById.
     let customProducts = paywall.customProducts
+    debugPrint("[SW-CUSTOM] customProducts filtered:", customProducts.map { $0.id })
     if !customProducts.isEmpty {
       await fetchAndCacheCustomProducts(customProducts)
     }
@@ -48,20 +55,38 @@ extension PaywallRequestManager {
         isTestMode: factory.isTestMode
       )
 
+      debugPrint(
+        "[SW-CUSTOM] storeKitManager.getProducts returned productItems:",
+        result.productItems.map { "\($0.id)(\($0.type))" }
+      )
+      debugPrint("[SW-CUSTOM] storeKitManager.getProducts returned productsById keys:", Array(result.productsById.keys))
+
       paywall.products = result.productItems
+
+      debugPrint("[SW-CUSTOM] after assign paywall.products:", paywall.products.map { "\($0.id)(\($0.type))" })
 
       // Merge custom products into productsById so they appear in
       // product variables and templating.
       var mergedProductsById = result.productsById
       for product in customProducts {
         if let cached = await storeKitManager.productsById[product.id] {
+          debugPrint("[SW-CUSTOM] merging cached custom product:", product.id, "price:", cached.localizedPrice)
           mergedProductsById[product.id] = cached
+        } else {
+          debugPrint("[SW-CUSTOM] WARN: custom product NOT cached in storeKitManager.productsById:", product.id)
         }
       }
+      debugPrint("[SW-CUSTOM] mergedProductsById keys:", Array(mergedProductsById.keys))
 
       let outcome = PaywallLogic.getProductVariables(
         productItems: result.productItems,
         productsById: mergedProductsById
+      )
+      debugPrint(
+        "[SW-CUSTOM] productVariables count:",
+        outcome.productVariables.count,
+        "names:",
+        outcome.productVariables.map { $0.name }
       )
       paywall.productVariables = outcome.productVariables
 
@@ -92,6 +117,7 @@ extension PaywallRequestManager {
 
   /// Fetches custom products from the Superwall API and caches them in
   /// `storeKitManager.productsById` so they can be used for templating.
+  // swiftlint:disable:next function_body_length
   private func fetchAndCacheCustomProducts(_ customProducts: [Product]) async {
     var duplicateCustomProductIds = Set<String>()
     let customProductsById = customProducts.reduce(into: [String: Product]()) { result, product in
@@ -126,10 +152,14 @@ extension PaywallRequestManager {
       return
     }
 
+    debugPrint("[SW-CUSTOM] fetchAndCacheCustomProducts idsNeedingRefresh:", idsNeedingRefresh)
+
     do {
       let response = try await network.getSuperwallProducts()
+      debugPrint("[SW-CUSTOM] /v1/products response ids:", response.data.map { $0.identifier })
       for superwallProduct in response.data where idsNeedingRefresh.contains(superwallProduct.identifier) {
         guard let productItem = customProductsById[superwallProduct.identifier] else {
+          debugPrint("[SW-CUSTOM] no matching customProductsById for", superwallProduct.identifier)
           continue
         }
         let testProduct = APIStoreProduct(
@@ -137,12 +167,19 @@ extension PaywallRequestManager {
           entitlements: productItem.entitlements
         )
         let storeProduct = StoreProduct(customProduct: testProduct)
+        debugPrint(
+          "[SW-CUSTOM] caching custom product",
+          superwallProduct.identifier,
+          "price:",
+          storeProduct.localizedPrice
+        )
         await storeKitManager.setProduct(
           storeProduct,
           forIdentifier: superwallProduct.identifier
         )
       }
     } catch {
+      debugPrint("[SW-CUSTOM] ERROR fetching /v1/products:", error)
       Logger.debug(
         logLevel: .error,
         scope: .productsManager,

@@ -11,7 +11,9 @@ import StoreKit
 
 /// A `StoreProductType` backed by a `SuperwallProduct` from the Superwall API.
 ///
-/// Used for test store products that are not fetched from StoreKit.
+/// Used for API-backed products that are not fetched from StoreKit — covers both
+/// test store products in test mode and custom products purchased via an external
+/// `PurchaseController`.
 struct APIStoreProduct: StoreProductType {
   let superwallProduct: SuperwallProduct
   let entitlements: Set<Entitlement>
@@ -161,9 +163,27 @@ struct APIStoreProduct: StoreProductType {
 
   // MARK: - Computed Prices
 
+  /// A locale derived from the product's `storefront` country code so
+  /// currency rendering matches what Apple returns for App Store products
+  /// (e.g. USD on any device → `$3.99`, not `US$3.99`). Unrecognized
+  /// storefronts fall back to `en_US` since Superwall products are USD-only
+  /// today.
+  private var storefrontLocale: Locale {
+    if #available(iOS 16.0, *) {
+      let region = Locale.Region(superwallProduct.storefront)
+      if Locale.Region.isoRegions.contains(region) {
+        var components = Locale.Components(languageCode: .english)
+        components.region = region
+        return Locale(components: components)
+      }
+    }
+    return Locale(identifier: "en_US")
+  }
+
   private var priceFormatter: NumberFormatter {
     return priceFormatterProvider.priceFormatterForSK2(
-      withCurrencyCode: currencyCode ?? "USD"
+      withCurrencyCode: currencyCode ?? "USD",
+      locale: storefrontLocale
     )
   }
 

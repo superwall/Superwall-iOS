@@ -497,7 +497,7 @@ final class TransactionManager {
         message: "Custom product \"\(product.productIdentifier)\" can only be purchased using a PurchaseController. "
           + "Set one via Superwall.configure(..., purchaseController:) to handle custom product purchases."
       )
-      return .failed(PurchaseError.productUnavailable)
+      return .failed(PurchaseError.customProductWithoutPurchaseController)
     }
 
     // Attach intro offer token if available from the paywall
