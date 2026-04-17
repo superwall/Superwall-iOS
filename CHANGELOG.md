@@ -2,6 +2,17 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.0
+
+### Enhancements
+
+- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store using the `PurchaseController`.
+- Adds `formUnion` override when unioning sets of `Entitlement` objects.
+
+### Fixes
+
+- Fixes issue where test mode products had trial price data missing.
+
 ## 4.14.2
 
 ### Enhancements

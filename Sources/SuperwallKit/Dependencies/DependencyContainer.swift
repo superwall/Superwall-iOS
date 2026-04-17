@@ -504,6 +504,14 @@ extension DependencyContainer: StoreTransactionFactory {
       appSessionId: appSessionManager.appSession.id
     )
   }
+
+  func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction {
+    return StoreTransaction(
+      transaction: transaction,
+      configRequestId: configManager.config?.requestId ?? "",
+      appSessionId: appSessionManager.appSession.id
+    )
+  }
 }
 
 // MARK: - Options Factory

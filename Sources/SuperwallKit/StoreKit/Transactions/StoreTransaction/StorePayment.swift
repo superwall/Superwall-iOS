@@ -33,4 +33,10 @@ public final class StorePayment: NSObject, Encodable, Sendable {
     self.quantity = transaction.purchasedQuantity
     self.discountIdentifier = nil
   }
+
+  init(productIdentifier: String) {
+    self.productIdentifier = productIdentifier
+    self.quantity = 1
+    self.discountIdentifier = nil
+  }
 }
