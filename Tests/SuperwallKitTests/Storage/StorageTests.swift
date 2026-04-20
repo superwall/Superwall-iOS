@@ -6,17 +6,19 @@
 //
 // swiftlint:disable all
 
-import XCTest
 import Testing
 @testable import SuperwallKit
 
-class StorageTests: XCTestCase {
+@Suite
+struct StorageTests {
+  @Test
   func test_makeDependencyContainer_configuresApiKeySynchronously() {
     let dependencyContainer = Superwall.makeDependencyContainer(apiKey: "pk_test_123")
 
-    XCTAssertEqual(dependencyContainer.storage.apiKey, "pk_test_123")
+    #expect(dependencyContainer.storage.apiKey == "pk_test_123")
   }
 
+  @Test
   func test_overwriteAssignments() {
     let dependencyContainer = DependencyContainer()
     let storage = Storage(factory: dependencyContainer)
@@ -35,12 +37,12 @@ class StorageTests: XCTestCase {
     storage.overwriteAssignments(assignments)
 
     let retrievedAssignments = storage.getAssignments()
-    XCTAssertEqual(retrievedAssignments.first, assignments.first)
+    #expect(retrievedAssignments.first == assignments.first)
 
     storage.reset()
 
     let retrievedAssignments2 = storage.getAssignments()
-    XCTAssertTrue(retrievedAssignments2.isEmpty)
+    #expect(retrievedAssignments2.isEmpty)
   }
 }
 
