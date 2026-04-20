@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Herstellen via het web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Uw App Store-abonnementen zijn hersteld. Wilt u op het web controleren of er meer zijn?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Geen abonnement gevonden";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Geen App Store-abonnement gevonden. Wilt u op het web controleren?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ja";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Annuleren";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Er is een fout opgetreden";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Wachten op goedkeuring";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Bedankt! Deze aankoop wacht op goedkeuring van uw ouder. Probeer het opnieuw zodra deze is goedgekeurd.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gereed";

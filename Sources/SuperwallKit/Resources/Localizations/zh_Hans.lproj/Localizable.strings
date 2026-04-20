@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "确定";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "通过网页恢复？";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "您的 App Store 订阅已恢复。是否要在网页上查看更多？";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "未找到订阅";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "未找到 App Store 订阅，是否要在网页上查看？";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "是";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "取消";
+
+/* Purchase error alert title */
+"purchase_error_title" = "发生错误";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "等待审批";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "谢谢！此购买正在等待您的家长审批。请在审批通过后重试。";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "完成";

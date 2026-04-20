@@ -131,8 +131,8 @@ extension SubscriptionPeriod {
     let periodsPerDay: Decimal = {
       switch self.unit {
       case .day: return 1
-      case .week: return 7
-      case .month: return 30
+      case .week: return Decimal(365) / Decimal(52)
+      case .month: return Decimal(365) / Decimal(12)
       case .year: return 365
       }
     }() * Decimal(value)
@@ -143,25 +143,25 @@ extension SubscriptionPeriod {
   }
 
   func pricePerWeek(withTotalPrice price: Decimal) -> Decimal {
-    let periodsPerDay: Decimal = {
+    let periodsPerWeek: Decimal = {
       switch self.unit {
-      case .day: return 1 / 7
+      case .day: return Decimal(52) / Decimal(365)
       case .week: return 1
-      case .month: return 4
+      case .month: return Decimal(52) / Decimal(12)
       case .year: return 52
       }
     }() * Decimal(value)
 
     return (price as NSDecimalNumber)
-      .dividing(by: periodsPerDay as NSDecimalNumber,
+      .dividing(by: periodsPerWeek as NSDecimalNumber,
         withBehavior: Self.roundingBehavior) as Decimal
   }
 
   func pricePerMonth(withTotalPrice price: Decimal) -> Decimal {
     let periodsPerMonth: Decimal = {
       switch self.unit {
-      case .day: return 1 / 30
-      case .week: return 1 / 4
+      case .day: return Decimal(12) / Decimal(365)
+      case .week: return Decimal(12) / Decimal(52)
       case .month: return 1
       case .year: return 12
       }
@@ -195,6 +195,13 @@ extension SubscriptionPeriod {
     raiseOnUnderflow: false,
     raiseOnDivideByZero: false
   )
+}
+
+extension Decimal {
+  func roundedPrice() -> Decimal {
+    (self as NSDecimalNumber)
+      .rounding(accordingToBehavior: SubscriptionPeriod.roundingBehavior) as Decimal
+  }
 }
 
 private extension SubscriptionPeriod.Unit {

@@ -29,6 +29,31 @@ public typealias SK2Product = StoreKit.Product
 public final class StoreProduct: NSObject, StoreProductType, Sendable {
   let product: StoreProductType
 
+  /// The intro offer eligibility token for this product, if available.
+  ///
+  /// Use this token with StoreKit 2's `.introductoryOfferEligibility(compactJWS:)`
+  /// purchase option to override Apple's automatic eligibility determination.
+  ///
+  /// This property is only populated when purchasing from a Superwall paywall and
+  /// is only applicable on iOS 18.2+.
+  ///
+  /// Example usage in a custom `PurchaseController`:
+  /// ```swift
+  /// if let token = product.introOfferToken {
+  ///   options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+  /// }
+  /// ```
+  public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
+
+  /// Whether this product is a custom product backed by the Superwall API.
+  nonisolated(unsafe) var isCustomProduct = false
+
+  /// A pre-generated transaction ID for custom products.
+  ///
+  /// This is set before purchase and used as the `originalTransactionIdentifier`
+  /// in the resulting `CustomStoreTransaction`.
+  nonisolated(unsafe) var customTransactionId: String?
+
   /// A `Set` of ``Entitlements`` associated with the product.
   public var entitlements: Set<Entitlement> {
     product.entitlements
@@ -368,15 +393,29 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     self.init(SK2StoreProduct(sk2Product: sk2Product, entitlements: entitlements))
   }
 
+  convenience init(testProduct: APIStoreProduct) {
+    self.init(testProduct)
+  }
+
+  convenience init(customProduct: APIStoreProduct) {
+    self.init(customProduct)
+    self.isCustomProduct = true
+  }
+
   /// Creates a blank StoreProduct with empty/default values.
   static func blank() -> StoreProduct {
     return StoreProduct(BlankStoreProduct())
+  }
+
+  /// Creates a blank StoreProduct with a specific product identifier.
+  static func blank(productIdentifier: String) -> StoreProduct {
+    return StoreProduct(BlankStoreProduct(productIdentifier: productIdentifier))
   }
 }
 
 // MARK: - Blank StoreProduct Implementation
 private struct BlankStoreProduct: StoreProductType {
-  var productIdentifier: String { "" }
+  let productIdentifier: String
   var entitlements: Set<Entitlement> { [] }
   var price: Decimal { 0 }
   var subscriptionGroupIdentifier: String? { nil }
@@ -426,4 +465,8 @@ private struct BlankStoreProduct: StoreProductType {
   var isFamilyShareable: Bool { false }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String { "" }
+
+  init(productIdentifier: String = "") {
+    self.productIdentifier = productIdentifier
+  }
 }

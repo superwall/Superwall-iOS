@@ -27,7 +27,10 @@ struct Config: Codable, Equatable {
       }
     }
   }
+  var prioritizedCampaignId: String?
   var iosAppId: String?
+  var bundleIdConfig: String?
+  var testModeUserIds: [TestStoreUser]?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -82,6 +85,9 @@ struct Config: Codable, Equatable {
     case products = "productsV3"
     case web2appConfig
     case iosAppId
+    case prioritizedCampaignId
+    case bundleIdConfig
+    case testModeUserIds
   }
 
   init(from decoder: Decoder) throws {
@@ -96,7 +102,10 @@ struct Config: Codable, Equatable {
     preloadingDisabled = try values.decode(PreloadingDisabled.self, forKey: .preloadingDisabled)
     attribution = try values.decodeIfPresent(Attribution.self, forKey: .attribution)
     web2appConfig = try values.decodeIfPresent(Web2AppConfig.self, forKey: .web2appConfig)
+    prioritizedCampaignId = try values.decodeIfPresent(String.self, forKey: .prioritizedCampaignId)
     iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
+    bundleIdConfig = try values.decodeIfPresent(String.self, forKey: .bundleIdConfig)
+    testModeUserIds = try values.decodeIfPresent([TestStoreUser].self, forKey: .testModeUserIds)
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -119,6 +128,7 @@ struct Config: Codable, Equatable {
     try container.encode(appSessionTimeout, forKey: .appSessionTimeout)
     try container.encode(preloadingDisabled, forKey: .preloadingDisabled)
     try container.encodeIfPresent(attribution, forKey: .attribution)
+    try container.encodeIfPresent(prioritizedCampaignId, forKey: .prioritizedCampaignId)
 
     if !products.isEmpty {
       try container.encode(products, forKey: .products)
@@ -129,6 +139,10 @@ struct Config: Codable, Equatable {
 
     try featureFlags.encode(to: encoder)
     try container.encodeIfPresent(requestId, forKey: .requestId)
+    try container.encodeIfPresent(web2appConfig, forKey: .web2appConfig)
+    try container.encodeIfPresent(iosAppId, forKey: .iosAppId)
+    try container.encodeIfPresent(bundleIdConfig, forKey: .bundleIdConfig)
+    try container.encodeIfPresent(testModeUserIds, forKey: .testModeUserIds)
   }
 
   init(

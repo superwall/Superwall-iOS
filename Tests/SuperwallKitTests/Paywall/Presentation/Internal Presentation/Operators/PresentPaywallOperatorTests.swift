@@ -6,146 +6,149 @@
 //
 
 import Combine
-import XCTest
+import UIKit
+import Testing
 
 @testable import SuperwallKit
 
-final class PresentPaywallOperatorTests: XCTestCase {
+@Suite(.serialized)
+final class PresentPaywallOperatorTests {
   var cancellables: [AnyCancellable] = []
 
+  @Test
   @MainActor
-  func test_presentPaywall_isPresented() async {
+  func presentPaywall_isPresented() async {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
 
-    statePublisher.sink { completion in
-      XCTFail()
-    } receiveValue: { state in
-      switch state {
-      case .presented:
-        stateExpectation.fulfill()
-      default:
-        break
+    await confirmation { confirm in
+      statePublisher.sink { completion in
+        Issue.record()
+      } receiveValue: { state in
+        switch state {
+        case .presented:
+          confirm()
+        default:
+          break
+        }
+      }
+      .store(in: &cancellables)
+      let dependencyContainer = DependencyContainer()
+
+      let messageHandler = PaywallMessageHandler(
+        receiptManager: dependencyContainer.receiptManager,
+        factory: dependencyContainer,
+        permissionHandler: FakePermissionHandler(),
+        customCallbackRegistry: dependencyContainer.customCallbackRegistry
+      )
+      let webView = SWWebView(
+        isMac: false,
+        messageHandler: messageHandler,
+        isOnDeviceCacheEnabled: true,
+        factory: dependencyContainer
+      )
+      let paywallVc = PaywallViewControllerMock(
+        paywall: .stub(),
+        deviceHelper: dependencyContainer.deviceHelper,
+        factory: dependencyContainer,
+        storage: dependencyContainer.storage,
+        network: dependencyContainer.network,
+        webView: webView,
+        webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+        cache: nil,
+        paywallArchiveManager: nil
+      )
+
+      webView.delegate = paywallVc
+      messageHandler.delegate = paywallVc
+
+      paywallVc.shouldPresent = true
+
+      do {
+        _ = try await Superwall.shared.presentPaywallViewController(
+          paywallVc,
+          on: UIViewController(),
+          unsavedOccurrence: nil,
+          debugInfo: [:],
+          request: .stub(),
+          paywallStatePublisher: statePublisher
+        )
+      } catch {
+        Issue.record("Shouldn't fail")
       }
     }
-    .store(in: &cancellables)
-    let dependencyContainer = DependencyContainer()
-
-    let messageHandler = PaywallMessageHandler(
-      receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
-    )
-    let webView = SWWebView(
-      isMac: false,
-      messageHandler: messageHandler,
-      isOnDeviceCacheEnabled: true,
-      factory: dependencyContainer
-    )
-    let paywallVc = PaywallViewControllerMock(
-      paywall: .stub(),
-      deviceHelper: dependencyContainer.deviceHelper,
-      factory: dependencyContainer,
-      storage: dependencyContainer.storage,
-      network: dependencyContainer.network,
-      webView: webView,
-      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
-      cache: nil,
-      paywallArchiveManager: nil
-    )
-
-    webView.delegate = paywallVc
-    messageHandler.delegate = paywallVc
-
-    paywallVc.shouldPresent = true
-
-    do {
-      _ = try await Superwall.shared.presentPaywallViewController(
-        paywallVc,
-        on: UIViewController(),
-        unsavedOccurrence: nil,
-        debugInfo: [:],
-        request: .stub(),
-        paywallStatePublisher: statePublisher
-      )
-    } catch {
-      XCTFail("Shouldn't fail")
-    }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 
+  @Test
   @MainActor
-  func test_presentPaywall_isNotPresented() async {
+  func presentPaywall_isNotPresented() async {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.expectedFulfillmentCount = 2
 
-    statePublisher.sink { completion in
-      switch completion {
-      case .finished:
-        stateExpectation.fulfill()
-      default:
-        break
+    await confirmation(expectedCount: 2) { confirm in
+      statePublisher.sink { completion in
+        switch completion {
+        case .finished:
+          confirm()
+        default:
+          break
+        }
+      } receiveValue: { state in
+        switch state {
+        case .presentationError:
+          confirm()
+        default:
+          break
+        }
       }
-    } receiveValue: { state in
-      switch state {
-      case .presentationError:
-        stateExpectation.fulfill()
-      default:
-        break
-      }
-    }
-    .store(in: &cancellables)
+      .store(in: &cancellables)
 
-    let dependencyContainer = DependencyContainer()
+      let dependencyContainer = DependencyContainer()
 
-    let messageHandler = PaywallMessageHandler(
-      receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
-    )
-    let webView = SWWebView(
-      isMac: false,
-      messageHandler: messageHandler,
-      isOnDeviceCacheEnabled: true,
-      factory: dependencyContainer
-    )
-    let paywallVc = PaywallViewControllerMock(
-      paywall: .stub(),
-      deviceHelper: dependencyContainer.deviceHelper,
-      factory: dependencyContainer,
-      storage: dependencyContainer.storage,
-      network: dependencyContainer.network,
-      webView: webView,
-      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
-      cache: nil,
-      paywallArchiveManager: nil
-    )
-    paywallVc.shouldPresent = false
-    webView.delegate = paywallVc
-    messageHandler.delegate = paywallVc
-
-    do {
-      _ = try await Superwall.shared.presentPaywallViewController(
-        paywallVc,
-        on: UIViewController(),
-        unsavedOccurrence: nil,
-        debugInfo: [:],
-        request: .stub(),
-        paywallStatePublisher: statePublisher
+      let messageHandler = PaywallMessageHandler(
+        receiptManager: dependencyContainer.receiptManager,
+        factory: dependencyContainer,
+        permissionHandler: FakePermissionHandler(),
+        customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
-      XCTFail("Should fail")
-    } catch {
-      if let error = error as? PresentationPipelineError,
-        case .paywallAlreadyPresented = error
-      {
+      let webView = SWWebView(
+        isMac: false,
+        messageHandler: messageHandler,
+        isOnDeviceCacheEnabled: true,
+        factory: dependencyContainer
+      )
+      let paywallVc = PaywallViewControllerMock(
+        paywall: .stub(),
+        deviceHelper: dependencyContainer.deviceHelper,
+        factory: dependencyContainer,
+        storage: dependencyContainer.storage,
+        network: dependencyContainer.network,
+        webView: webView,
+        webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+        cache: nil,
+        paywallArchiveManager: nil
+      )
+      paywallVc.shouldPresent = false
+      webView.delegate = paywallVc
+      messageHandler.delegate = paywallVc
 
-      } else {
-        XCTFail("Wrong error type")
+      do {
+        _ = try await Superwall.shared.presentPaywallViewController(
+          paywallVc,
+          on: UIViewController(),
+          unsavedOccurrence: nil,
+          debugInfo: [:],
+          request: .stub(),
+          paywallStatePublisher: statePublisher
+        )
+        Issue.record("Should fail")
+      } catch {
+        if let error = error as? PresentationPipelineError,
+          case .paywallAlreadyPresented = error
+        {
+
+        } else {
+          Issue.record("Wrong error type")
+        }
       }
     }
-
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
   }
 }

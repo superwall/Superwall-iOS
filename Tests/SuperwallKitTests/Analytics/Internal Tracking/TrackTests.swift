@@ -6,12 +6,13 @@
 //
 // swiftlint:disable all
 
-import XCTest
-
+import Testing
+import Foundation
 @testable import SuperwallKit
 
-final class TrackingTests: XCTestCase {
-  func test_userInitiatedPlacement() async {
+@Suite(.serialized)
+struct TrackingTests {
+  @Test func userInitiatedPlacement() async {
     let eventName = "MyEvent"
     let result = await Superwall.shared.track(
       UserInitiatedPlacement.Track(
@@ -19,97 +20,95 @@ final class TrackingTests: XCTestCase {
         canImplicitlyTriggerPaywall: false,
         isFeatureGatable: false
       ))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertFalse(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertFalse(result.parameters.audienceFilterParams["$is_feature_gatable"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, eventName)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(!(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool))
+    #expect(!(result.parameters.audienceFilterParams["$is_feature_gatable"] as! Bool))
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == eventName)
   }
 
-  func test_appOpen() async {
+  @Test func appOpen() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_open")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "app_open")
   }
 
-  func test_appInstall() async {
+  @Test func appInstall() async {
     let appInstalledAtString = "now"
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: appInstalledAtString, hasExternalPurchaseController: true))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(result.parameters.audienceFilterParams["$using_purchase_controller"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_install")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$application_installed_at"] as! String,
-      appInstalledAtString)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$using_purchase_controller"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "app_install")
+    #expect(
+      result.parameters.audienceFilterParams["$application_installed_at"] as! String == appInstalledAtString)
   }
 
-  func test_appLaunch() async {
+  @Test func appLaunch() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_launch")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "app_launch")
   }
 
-  func test_attributes() async {
+  @Test func attributes() async {
     let appInstalledAtString = "now"
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.UserAttributes(appInstalledAtString: appInstalledAtString))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$application_installed_at"] as! String,
-      appInstalledAtString)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(
+      result.parameters.audienceFilterParams["$application_installed_at"] as! String == appInstalledAtString)
   }
 
-  func test_deepLink() async {
+  @Test func deepLink() async {
     let url = URL(string: "http://superwall.com/test?query=value#fragment")!
     let result = await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: url))
     // "$app_session_id": "B993FB6C-556D-47E0-ADFE-E2E43365D732", "$is_standard_event": false, "$event_name": ""
     print(result)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "deepLink_open")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$url"] as! String, url.absoluteString)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$path"] as! String, url.path)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pathExtension"] as! String, url.pathExtension)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$lastPathComponent"] as! String, url.lastPathComponent
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "deepLink_open")
+    #expect(result.parameters.audienceFilterParams["$url"] as! String == url.absoluteString)
+    #expect(result.parameters.audienceFilterParams["$path"] as! String == url.path)
+    #expect(
+      result.parameters.audienceFilterParams["$pathExtension"] as! String == url.pathExtension)
+    #expect(
+      result.parameters.audienceFilterParams["$lastPathComponent"] as! String == url.lastPathComponent
     )
-    XCTAssertEqual(result.parameters.audienceFilterParams["$host"] as! String, url.host!)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$query"] as! String, url.query!)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$fragment"] as! String, url.fragment!)
+    #expect(result.parameters.audienceFilterParams["$host"] as! String == url.host!)
+    #expect(result.parameters.audienceFilterParams["$query"] as! String == url.query!)
+    #expect(result.parameters.audienceFilterParams["$fragment"] as! String == url.fragment!)
   }
 
-  func test_firstSeen() async {
+  @Test func firstSeen() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "first_seen")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "first_seen")
   }
 
-  func test_appClose() async {
+  @Test func appClose() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.AppClose())
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "app_close")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "app_close")
   }
 
-  func test_sessionStart() async {
+  @Test func sessionStart() async {
     let result = await Superwall.shared.track(InternalSuperwallEvent.SessionStart())
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "session_start")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "session_start")
   }
 
-  func test_surveyResponse() async {
+  @Test func surveyResponse() async {
     // Given
     let survey = Survey.stub()
     let paywallInfo = PaywallInfo.stub()
@@ -124,145 +123,116 @@ final class TrackingTests: XCTestCase {
 
     print(result.parameters.audienceFilterParams)
 
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "survey_response")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$survey_id"] as! String, survey.id)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$survey_selected_option_id"] as! String,
-      survey.options.first!.id)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$survey_assignment_key"] as! String,
-      survey.assignmentKey)
-    XCTAssertNil(result.parameters.audienceFilterParams["$survey_custom_response"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["survey_selected_option_title"] as! String,
-      survey.assignmentKey)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "survey_response")
+    #expect(result.parameters.audienceFilterParams["$survey_id"] as! String == survey.id)
+    #expect(
+      result.parameters.audienceFilterParams["$survey_selected_option_id"] as! String == survey.options.first!.id)
+    #expect(
+      result.parameters.audienceFilterParams["$survey_assignment_key"] as! String == survey.assignmentKey)
+    #expect(result.parameters.audienceFilterParams["$survey_custom_response"] == nil)
+    #expect(
+      result.parameters.audienceFilterParams["survey_selected_option_title"] as! String == survey.assignmentKey)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "survey_response")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["survey_selected_option_title"] as! String,
-      survey.assignmentKey)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "survey_response")
+    #expect(
+      result.parameters.audienceFilterParams["survey_selected_option_title"] as! String == survey.assignmentKey)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
 
-    XCTAssertTrue(result.parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.delegateParams["survey_selected_option_title"] as! String,
-      survey.assignmentKey)
-    XCTAssertEqual(result.parameters.delegateParams["survey_id"] as! String, survey.id)
-    XCTAssertEqual(
-      result.parameters.delegateParams["survey_selected_option_id"] as! String,
-      survey.options.first!.id)
-    XCTAssertEqual(
-      result.parameters.delegateParams["survey_assignment_key"] as! String, survey.assignmentKey)
-    XCTAssertNil(result.parameters.delegateParams["survey_custom_response"])
-    XCTAssertEqual(
-      result.parameters.delegateParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.delegateParams["paywall_identifier"] as! String, paywallInfo.identifier)
-    XCTAssertEqual(result.parameters.delegateParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.delegateParams["paywall_url"] as! String, paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.delegateParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.delegateParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.delegateParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.delegateParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.delegateParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.delegateParams["tertiary_product_id"])
+    #expect(result.parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(
+      result.parameters.delegateParams["survey_selected_option_title"] as! String == survey.assignmentKey)
+    #expect(result.parameters.delegateParams["survey_id"] as! String == survey.id)
+    #expect(
+      result.parameters.delegateParams["survey_selected_option_id"] as! String == survey.options.first!.id)
+    #expect(
+      result.parameters.delegateParams["survey_assignment_key"] as! String == survey.assignmentKey)
+    #expect(result.parameters.delegateParams["survey_custom_response"] == nil)
+    #expect(
+      result.parameters.delegateParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.delegateParams["paywall_identifier"] as! String == paywallInfo.identifier)
+    #expect(result.parameters.delegateParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.delegateParams["paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.delegateParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.delegateParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.delegateParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.delegateParams["primary_product_id"] != nil)
+    #expect(result.parameters.delegateParams["secondary_product_id"] != nil)
+    #expect(result.parameters.delegateParams["tertiary_product_id"] != nil)
   }
 
-  func test_paywallLoad_start() async {
+  @Test func paywallLoad_start() async {
     let eventName = "name"
     let params = ["hello": true]
     let eventData = PlacementData(
@@ -272,14 +242,14 @@ final class TrackingTests: XCTestCase {
     )
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallLoad(state: .start, placementData: eventData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallResponseLoad_start")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallResponseLoad_start")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
   }
 
-  func test_paywallLoad_fail() async {
+  @Test func paywallLoad_fail() async {
     let eventName = "name"
     let params = ["hello": true]
     let eventData = PlacementData(
@@ -289,14 +259,14 @@ final class TrackingTests: XCTestCase {
     )
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallLoad(state: .fail, placementData: eventData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallResponseLoad_fail")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallResponseLoad_fail")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
   }
 
-  func test_paywallLoad_notFound() async {
+  @Test func paywallLoad_notFound() async {
     let eventName = "name"
     let params = ["hello": true]
     let eventData = PlacementData(
@@ -306,15 +276,14 @@ final class TrackingTests: XCTestCase {
     )
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallLoad(state: .notFound, placementData: eventData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallResponseLoad_notFound")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallResponseLoad_notFound")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
   }
 
-  func test_paywallLoad_complete() async {
+  @Test func paywallLoad_complete() async {
     let eventName = "name"
     let params = ["hello": true]
     let eventData = PlacementData(
@@ -326,143 +295,116 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallLoad(
         state: .complete(paywallInfo: paywallInfo), placementData: eventData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallResponseLoad_complete")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallResponseLoad_complete")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String,
-      "paywallResponseLoad_complete")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallResponseLoad_complete")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_subscriptionStatusDidChange_hasOneEntitlement() async {
+  @Test func subscriptionStatusDidChange_hasOneEntitlement() async {
     let entitlements: Set<Entitlement> = [.stub()]
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.SubscriptionStatusDidChange(status: .active([.stub()])))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "subscriptionStatus_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "ACTIVE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String,
-      entitlements.map { $0.id }.joined())
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "subscriptionStatus_didChange")
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "ACTIVE")
+    #expect(
+      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined(separator: ","))
   }
 
-  func test_subscriptionStatusDidChange_hasTwoEntitlements() async {
+  @Test func subscriptionStatusDidChange_hasTwoEntitlements() async {
     let entitlements: Set<Entitlement> = [.stub(), Entitlement(id: "test2", type: .serviceLevel)]
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.SubscriptionStatusDidChange(status: .active(entitlements)))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "subscriptionStatus_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "ACTIVE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String,
-      entitlements.map { $0.id }.joined())
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "subscriptionStatus_didChange")
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "ACTIVE")
+    #expect(
+      result.parameters.audienceFilterParams["$active_entitlement_ids"] as! String == entitlements.map { $0.id }.joined(separator: ","))
   }
 
-  func test_subscriptionStatusDidChange_noEntitlements() async {
+  @Test func subscriptionStatusDidChange_noEntitlements() async {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.SubscriptionStatusDidChange(status: .inactive))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "subscriptionStatus_didChange")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "INACTIVE")
-    XCTAssertNil(result.parameters.audienceFilterParams["$active_entitlement_ids"] as? String)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "subscriptionStatus_didChange")
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "INACTIVE")
+    #expect(result.parameters.audienceFilterParams["$active_entitlement_ids"] as? String == nil)
   }
 
-  func test_triggerFire_noRuleMatch() async {
+  @Test func triggerFire_noRuleMatch() async {
     let triggerName = "My Trigger"
     let unmatchedRules: [UnmatchedAudience] = [
       .init(source: .expression, experimentId: "1"),
@@ -471,83 +413,82 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.TriggerFire(
         triggerResult: .noAudienceMatch(unmatchedRules), triggerName: triggerName))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "no_rule_match")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$unmatched_audience_1"] as! String, "EXPRESSION")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$unmatched_audience_2"] as! String, "OCCURRENCE")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "trigger_fire")
+    #expect(result.parameters.audienceFilterParams["$result"] as! String == "no_rule_match")
+    #expect(result.parameters.audienceFilterParams["$trigger_name"] as! String == triggerName)
+    #expect(
+      result.parameters.audienceFilterParams["$unmatched_audience_1"] as! String == "EXPRESSION")
+    #expect(
+      result.parameters.audienceFilterParams["$unmatched_audience_2"] as! String == "OCCURRENCE")
     // TODO: Missing test for trigger_session_id here. Need to figure out a way to activate it
   }
 
-  func test_triggerFire_holdout() async {
+  @Test func triggerFire_holdout() async {
     let triggerName = "My Trigger"
     let experiment: Experiment = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.TriggerFire(
         triggerResult: .holdout(experiment), triggerName: triggerName))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "holdout")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$variant_id"] as! String, experiment.variant.id)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$experiment_id"] as! String, experiment.id)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "trigger_fire")
+    #expect(result.parameters.audienceFilterParams["$trigger_name"] as! String == triggerName)
+    #expect(result.parameters.audienceFilterParams["$result"] as! String == "holdout")
+    #expect(result.parameters.audienceFilterParams["$trigger_name"] as! String == triggerName)
+    #expect(
+      result.parameters.audienceFilterParams["$variant_id"] as! String == experiment.variant.id)
+    #expect(
+      result.parameters.audienceFilterParams["$experiment_id"] as! String == experiment.id)
   }
 
-  func test_triggerFire_paywall() async {
+  @Test func triggerFire_paywall() async {
     let triggerName = "My Trigger"
     let experiment: Experiment = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.TriggerFire(
         triggerResult: .paywall(experiment), triggerName: triggerName))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "present")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$trigger_name"] as! String, triggerName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$variant_id"] as! String, experiment.variant.id)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
-      experiment.variant.paywallId!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$experiment_id"] as! String, experiment.id)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "trigger_fire")
+    #expect(result.parameters.audienceFilterParams["$trigger_name"] as! String == triggerName)
+    #expect(result.parameters.audienceFilterParams["$result"] as! String == "present")
+    #expect(result.parameters.audienceFilterParams["$trigger_name"] as! String == triggerName)
+    #expect(
+      result.parameters.audienceFilterParams["$variant_id"] as! String == experiment.variant.id)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String == experiment.variant.paywallId!)
+    #expect(
+      result.parameters.audienceFilterParams["$experiment_id"] as! String == experiment.id)
   }
 
-  func test_triggerFire_eventNotFound() async {
+  @Test func triggerFire_eventNotFound() async {
     let triggerName = "My Trigger"
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.TriggerFire(
         triggerResult: .placementNotFound, triggerName: triggerName))
     print(result)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "eventNotFound")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$result"] as! String == "eventNotFound")
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "trigger_fire")
   }
 
-  func test_triggerFire_error() async {
+  @Test func triggerFire_error() async {
     let triggerName = "My Trigger"
     let error = NSError(domain: "com.superwall", code: 400)
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.TriggerFire(triggerResult: .error(error), triggerName: triggerName)
     )
     print(result)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$result"] as! String, "error")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "trigger_fire")
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$result"] as! String == "error")
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "trigger_fire")
   }
 
-  func test_presentationRequest_eventNotFound() async {
+  @Test func presentationRequest_eventNotFound() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -558,22 +499,21 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String, "event_not_found")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "event_not_found")
   }
 
-  func test_presentationRequest_noRuleMatch() async {
+  @Test func presentationRequest_noRuleMatch() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -584,23 +524,22 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String, "no_rule_match")
-    XCTAssertNil(result.parameters.audienceFilterParams["$expression_params"] as? String)
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "no_rule_match")
+    #expect(result.parameters.audienceFilterParams["$expression_params"] as? String == nil)
   }
 
-  func test_presentationRequest_expressionParams() async {
+  @Test func presentationRequest_expressionParams() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.configManager.configState.send(
       .retrieved(.stub().setting(\.featureFlags.enableExpressionParameters, to: true)))
@@ -613,23 +552,22 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String, "no_rule_match")
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$expression_params"] as! String)
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "no_rule_match")
+    #expect(result.parameters.audienceFilterParams["$expression_params"] as? String != nil)
   }
 
-  func test_presentationRequest_alreadyPresented() async {
+  @Test func presentationRequest_alreadyPresented() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -640,23 +578,21 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String,
-      "paywall_already_presented")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "paywall_already_presented")
   }
   // TODO: Add test for expression params
-  func test_presentationRequest_debuggerLaunched() async {
+  @Test func presentationRequest_debuggerLaunched() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -667,22 +603,21 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String, "debugger_presented")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "debugger_presented")
   }
 
-  func test_presentationRequest_noPresenter() async {
+  @Test func presentationRequest_noPresenter() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -693,22 +628,21 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String, "no_presenter")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "no_presenter")
   }
 
-  func test_presentationRequest_noPaywallViewController() async {
+  @Test func presentationRequest_noPaywallViewController() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -719,23 +653,21 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$status_reason"] as! String,
-      "no_paywall_view_controller")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(
+      result.parameters.audienceFilterParams["$status_reason"] as! String == "no_paywall_view_controller")
   }
 
-  func test_presentationRequest_holdout() async {
+  @Test func presentationRequest_holdout() async {
     let dependencyContainer = DependencyContainer()
     let placementData: PlacementData = .stub()
     let event = InternalSuperwallEvent.PresentationRequest(
@@ -746,120 +678,98 @@ final class TrackingTests: XCTestCase {
       factory: dependencyContainer
     )
     let result = await Superwall.shared.track(event)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallPresentationRequest"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPresentationRequest"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$source_event_name"] as! String, placementData.name)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status"] as! String, "no_presentation")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$pipeline_type"] as! String,
-      "getPaywallViewController")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$status_reason"] as! String, "holdout")
+    #expect(
+      result.parameters.audienceFilterParams["$source_event_name"] as! String == placementData.name)
+    #expect(result.parameters.audienceFilterParams["$status"] as! String == "no_presentation")
+    #expect(
+      result.parameters.audienceFilterParams["$pipeline_type"] as! String == "getPaywallViewController")
+    #expect(result.parameters.audienceFilterParams["$status_reason"] as! String == "holdout")
   }
 
-  func test_paywallOpen() async {
+  @Test func paywallOpen() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallOpen(paywallInfo: paywallInfo, demandScore: 80, demandTier: "Platinum"))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presentation_source_type"] as? String,
-      paywallInfo.presentationSourceType)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_open")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int, 80)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandTier"] as! String, "Platinum")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$presentation_source_type"] as? String == paywallInfo.presentationSourceType)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_open")
+    #expect(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int == 80)
+    #expect(result.parameters.audienceFilterParams["$attr_demandTier"] as! String == "Platinum")
 
     // Custom parameters
-    XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_open")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(result.parameters.audienceFilterParams["event_name"] as! String == "paywall_open")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallClose_survey_show() async {
+  @Test func paywallClose_survey_show() async {
     let paywall: Paywall = .stub()
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
@@ -869,101 +779,81 @@ final class TrackingTests: XCTestCase {
         surveyPresentationResult: .show
       )
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_close")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$survey_presentation"] as! String, "show")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_close")
+    #expect(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$survey_presentation"] as! String == "show")
 
     // Custom parameters
-    XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_close")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(result.parameters.audienceFilterParams["event_name"] as! String == "paywall_close")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallClose_survey_noShow() async {
+  @Test func paywallClose_survey_noShow() async {
     let paywall: Paywall = .stub()
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
@@ -973,100 +863,80 @@ final class TrackingTests: XCTestCase {
         surveyPresentationResult: .noShow
       )
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_close")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
-    XCTAssertNil(result.parameters.audienceFilterParams["$survey_presentation"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_close")
+    #expect(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$survey_presentation"] == nil)
 
     // Custom parameters
-    XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_close")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(result.parameters.audienceFilterParams["event_name"] as! String == "paywall_close")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallClose_survey_holdout() async {
+  @Test func paywallClose_survey_holdout() async {
     let paywall: Paywall = .stub()
       .setting(\.surveys, to: [.stub()])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
@@ -1076,101 +946,81 @@ final class TrackingTests: XCTestCase {
         surveyPresentationResult: .holdout
       )
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_close")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$survey_presentation"] as! String, "holdout")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_close")
+    #expect(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$survey_presentation"] as! String == "holdout")
 
     // Custom parameters
-    XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_close")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(result.parameters.audienceFilterParams["event_name"] as! String == "paywall_close")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallClose_noSurvey() async {
+  @Test func paywallClose_noSurvey() async {
     let paywall: Paywall = .stub()
       .setting(\.surveys, to: [])
     let paywallInfo = paywall.getInfo(fromPlacement: .stub())
@@ -1180,196 +1030,156 @@ final class TrackingTests: XCTestCase {
         surveyPresentationResult: .noShow
       )
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_close")
-    XCTAssertFalse(result.parameters.audienceFilterParams["$survey_attached"] as! Bool)
-    XCTAssertNil(result.parameters.audienceFilterParams["$survey_presentation"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_close")
+    #expect(!(result.parameters.audienceFilterParams["$survey_attached"] as! Bool))
+    #expect(result.parameters.audienceFilterParams["$survey_presentation"] == nil)
 
     // Custom parameters
-    XCTAssertEqual(result.parameters.audienceFilterParams["event_name"] as! String, "paywall_close")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(result.parameters.audienceFilterParams["event_name"] as! String == "paywall_close")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallDecline() async {
+  @Test func paywallDecline() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallDecline(paywallInfo: paywallInfo))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywall_decline")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywall_decline")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywall_decline")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywall_decline")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_transaction_start() async {
+  @Test func transaction_start() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -1384,138 +1194,118 @@ final class TrackingTests: XCTestCase {
         state: .start(product), paywallInfo: paywallInfo, product: product,
         transaction: transaction, source: .internal, isObserved: false, storeKitVersion: .storeKit1)
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source"] as! String, "SUPERWALL")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT1")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$source"] as! String == "SUPERWALL")
+    #expect(result.parameters.audienceFilterParams["$store"] as! String == "APP_STORE")
+    #expect(
+      result.parameters.audienceFilterParams["$storekit_version"] as! String == "STOREKIT1")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$original_transaction_identifier"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$config_request_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["$state"] as! String, "PURCHASED")
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "transaction_start")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$original_transaction_identifier"] != nil)
+    #expect(result.parameters.audienceFilterParams["$config_request_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$state"] as! String == "PURCHASED")
+    #expect(result.parameters.audienceFilterParams["$id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_start")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "transaction_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_start")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_transaction_complete() async {
+  @Test func transaction_complete() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -1538,143 +1328,122 @@ final class TrackingTests: XCTestCase {
           demandTier: "Platinum"
         )
     )
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source"] as! String, "SUPERWALL")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT1")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$transaction_type"] as! String,
-      "NON_RECURRING_PRODUCT_PURCHASE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$source"] as! String == "SUPERWALL")
+    #expect(result.parameters.audienceFilterParams["$store"] as! String == "APP_STORE")
+    #expect(
+      result.parameters.audienceFilterParams["$storekit_version"] as! String == "STOREKIT1")
+    #expect(
+      result.parameters.audienceFilterParams["$transaction_type"] as! String == "NON_RECURRING_PRODUCT_PURCHASE")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int, 80)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$attr_demandTier"] as! String, "Platinum")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$original_transaction_identifier"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$config_request_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["$state"] as! String, "PURCHASED")
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "transaction_complete")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$attr_demandScore"] as! Int == 80)
+    #expect(result.parameters.audienceFilterParams["$attr_demandTier"] as! String == "Platinum")
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$original_transaction_identifier"] != nil)
+    #expect(result.parameters.audienceFilterParams["$config_request_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$state"] as! String == "PURCHASED")
+    #expect(result.parameters.audienceFilterParams["$id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_complete")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "transaction_complete")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_complete")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_transaction_restore() async {
+  @Test func transaction_restore() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -1689,139 +1458,119 @@ final class TrackingTests: XCTestCase {
         state: .restore(RestoreType.viaPurchase(transaction)), paywallInfo: paywallInfo,
         product: product, transaction: transaction, source: .internal, isObserved: false,
         storeKitVersion: .storeKit2))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source"] as! String, "SUPERWALL")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT2")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertTrue(result.parameters.audienceFilterParams["$restore_via_purchase_attempt"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$source"] as! String == "SUPERWALL")
+    #expect(result.parameters.audienceFilterParams["$store"] as! String == "APP_STORE")
+    #expect(
+      result.parameters.audienceFilterParams["$storekit_version"] as! String == "STOREKIT2")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(result.parameters.audienceFilterParams["$restore_via_purchase_attempt"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$original_transaction_identifier"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$config_request_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["$state"] as! String, "PURCHASED")
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "transaction_restore")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$original_transaction_identifier"] != nil)
+    #expect(result.parameters.audienceFilterParams["$config_request_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$state"] as! String == "PURCHASED")
+    #expect(result.parameters.audienceFilterParams["$id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_restore")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "transaction_restore")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_restore")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_transaction_timeout() async {
+  @Test func transaction_timeout() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -1835,138 +1584,118 @@ final class TrackingTests: XCTestCase {
       InternalSuperwallEvent.Transaction(
         state: .timeout, paywallInfo: paywallInfo, product: product, transaction: transaction,
         source: .internal, isObserved: false, storeKitVersion: .storeKit1))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source"] as! String, "SUPERWALL")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT1")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$source"] as! String == "SUPERWALL")
+    #expect(result.parameters.audienceFilterParams["$store"] as! String == "APP_STORE")
+    #expect(
+      result.parameters.audienceFilterParams["$storekit_version"] as! String == "STOREKIT1")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$original_transaction_identifier"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$config_request_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["$state"] as! String, "PURCHASED")
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "transaction_timeout")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$original_transaction_identifier"] != nil)
+    #expect(result.parameters.audienceFilterParams["$config_request_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$state"] as! String == "PURCHASED")
+    #expect(result.parameters.audienceFilterParams["$id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_timeout")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "transaction_timeout")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_timeout")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_transaction_fail() async {
+  @Test func transaction_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -1981,135 +1710,115 @@ final class TrackingTests: XCTestCase {
       InternalSuperwallEvent.Transaction(
         state: .fail(error), paywallInfo: paywallInfo, product: product, transaction: transaction,
         source: .external, isObserved: false, storeKitVersion: .storeKit1))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
 
-    XCTAssertEqual(result.parameters.audienceFilterParams["$source"] as! String, "APP")
-    XCTAssertEqual(result.parameters.audienceFilterParams["$store"] as! String, "APP_STORE")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$storekit_version"] as! String, "STOREKIT1")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$source"] as! String == "APP")
+    #expect(result.parameters.audienceFilterParams["$store"] as! String == "APP_STORE")
+    #expect(
+      result.parameters.audienceFilterParams["$storekit_version"] as! String == "STOREKIT1")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertEqual(result.parameters.audienceFilterParams["$message"] as! String, "failed mate")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "transaction_fail")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$message"] as! String == "failed mate")
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "transaction_fail")
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "transaction_fail")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "transaction_fail")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_subscriptionStart() async {
+  @Test func subscriptionStart() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -2122,129 +1831,109 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.SubscriptionStart(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "subscription_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "subscription_start")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "subscription_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "subscription_start")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_freeTrialStart() async {
+  @Test func freeTrialStart() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -2257,129 +1946,109 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.FreeTrialStart(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "freeTrial_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "freeTrial_start")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "freeTrial_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "freeTrial_start")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_nonRecurringProductPurchase() async {
+  @Test func nonRecurringProductPurchase() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
     let product = StoreProduct(
@@ -2392,859 +2061,690 @@ final class TrackingTests: XCTestCase {
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.NonRecurringProductPurchase(
         paywallInfo: paywallInfo, product: product, transaction: transaction))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "nonRecurringProduct_purchase")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "nonRecurringProduct_purchase")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(result.parameters.audienceFilterParams["$product_id"] as! String, productId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$product_identifier"] as! String, productId)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_raw_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_alt"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_localized_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_periodly"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_weekly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_daily_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_monthly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_yearly_price"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_text"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_trial_period_end_date"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_days"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_weeks"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_months"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_period_years"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_locale"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_language_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_code"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$product_currency_symbol"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$product_id"] as! String == productId)
+    #expect(
+      result.parameters.audienceFilterParams["$product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["$product_raw_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_alt"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_localized_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_periodly"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_weekly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_daily_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_monthly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_yearly_price"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_text"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_trial_period_end_date"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_days"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_weeks"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_months"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_period_years"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_locale"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_language_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_code"] != nil)
+    #expect(result.parameters.audienceFilterParams["$product_currency_symbol"] != nil)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String,
-      "nonRecurringProduct_purchase")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "nonRecurringProduct_purchase")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallWebviewLoad_start() async {
+  @Test func paywallWebviewLoad_start() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: paywallInfo))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallWebviewLoad_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallWebviewLoad_start")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallWebviewLoad_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallWebviewLoad_start")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallWebviewLoad_fail() async {
+  @Test func paywallWebviewLoad_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallWebviewLoad(
         state: .fail(NetworkError.unknown, []), paywallInfo: paywallInfo))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallWebviewLoad_fail")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallWebviewLoad_fail")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallWebviewLoad_fail")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallWebviewLoad_fail")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallWebviewLoad_complete() async {
+  @Test func paywallWebviewLoad_complete() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallWebviewLoad(state: .complete, paywallInfo: paywallInfo))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallWebviewLoad_complete")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallWebviewLoad_complete")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallWebviewLoad_complete"
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallWebviewLoad_complete"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallWebviewLoad_timeout() async {
+  @Test func paywallWebviewLoad_timeout() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallWebviewLoad(state: .timeout, paywallInfo: paywallInfo))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallWebviewLoad_timeout"
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallWebviewLoad_timeout"
     )
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallWebviewLoad_timeout")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallWebviewLoad_timeout")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallProductsLoad_start() async {
+  @Test func paywallProductsLoad_start() async {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallProductsLoad(
         state: .start, paywallInfo: paywallInfo, placementData: placementData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallProductsLoad_start")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallProductsLoad_start")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallProductsLoad_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallProductsLoad_start")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallProductsLoad_fail() async {
+  @Test func paywallProductsLoad_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallProductsLoad(
         state: .fail(NetworkError.unknown), paywallInfo: paywallInfo, placementData: placementData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String, "paywallProductsLoad_fail")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallProductsLoad_fail")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String, "paywallProductsLoad_fail")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallProductsLoad_fail")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallProductsLoad_complete() async {
+  @Test func paywallProductsLoad_complete() async {
     let paywallInfo: PaywallInfo = .stub()
     let placementData: PlacementData = .stub()
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallProductsLoad(
         state: .complete, paywallInfo: paywallInfo, placementData: placementData))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallProductsLoad_complete")
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywalljs_version"] as? String,
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallProductsLoad_complete")
+    #expect(result.parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywalljs_version"] as? String ==
       paywallInfo.paywalljsVersion)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_identifier"] as! String,
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
       paywallInfo.identifier)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_url"] as! String,
-      paywallInfo.url.absoluteString)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String,
-      paywallInfo.presentedByPlacementWithId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String,
-      paywallInfo.presentedByPlacementAt)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String,
-      paywallInfo.responseLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String,
-      paywallInfo.responseLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval,
-      paywallInfo.responseLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String,
-      paywallInfo.webViewLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String,
-      paywallInfo.webViewLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval,
-      paywallInfo.webViewLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String,
-      paywallInfo.productsLoadStartTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String,
-      paywallInfo.productsLoadCompleteTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String,
-      paywallInfo.productsLoadFailTime!)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval,
-      paywallInfo.productsLoadDuration)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$tertiary_product_id"])
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_url"] as! String == paywallInfo.url.absoluteString)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_id"] as? String == paywallInfo.presentedByPlacementWithId)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by_event_timestamp"] as? String == paywallInfo.presentedByPlacementAt)
+    #expect(
+      result.parameters.audienceFilterParams["$presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_start_time"] as! String == paywallInfo.responseLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_complete_time"] as! String == paywallInfo.responseLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_response_load_duration"] as? TimeInterval == paywallInfo.responseLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_start_time"] as! String == paywallInfo.webViewLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_complete_time"] as! String == paywallInfo.webViewLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_webview_load_duration"] as? TimeInterval == paywallInfo.webViewLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_start_time"] as! String == paywallInfo.productsLoadStartTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_complete_time"] as! String == paywallInfo.productsLoadCompleteTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_fail_time"] as! String == paywallInfo.productsLoadFailTime!)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_products_load_duration"] as? TimeInterval == paywallInfo.productsLoadDuration)
+    #expect(
+      result.parameters.audienceFilterParams["$is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(result.parameters.audienceFilterParams["$primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$tertiary_product_id"] != nil)
 
     // Custom parameters
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["event_name"] as! String,
-      "paywallProductsLoad_complete")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_id"] as! String, paywallInfo.databaseId)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_name"] as! String, paywallInfo.name)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool,
-      paywallInfo.isFreeTrialAvailable)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["feature_gating"] as! String,
-      FeatureGatingBehavior.nonGated.description)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by"] as! String, paywallInfo.presentedBy)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["paywall_product_ids"] as? String,
-      paywallInfo.productIds.joined(separator: ","))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["primary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["secondary_product_id"])
-    XCTAssertNotNil(result.parameters.audienceFilterParams["tertiary_product_id"])
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["presented_by_event_name"] as? String,
-      paywallInfo.presentedByPlacementWithName)
+    #expect(
+      result.parameters.audienceFilterParams["event_name"] as! String == "paywallProductsLoad_complete")
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_name"] as! String == paywallInfo.name)
+    #expect(
+      result.parameters.audienceFilterParams["is_free_trial_available"] as! Bool == paywallInfo.isFreeTrialAvailable)
+    #expect(
+      result.parameters.audienceFilterParams["feature_gating"] as! String == FeatureGatingBehavior.nonGated.description)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by"] as! String == paywallInfo.presentedBy)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_product_ids"] as? String == paywallInfo.productIds.joined(separator: ","))
+    #expect(result.parameters.audienceFilterParams["primary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["secondary_product_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["tertiary_product_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["presented_by_event_name"] as? String == paywallInfo.presentedByPlacementWithName)
   }
 
-  func test_paywallPreloadStart() async {
+  @Test func paywallPreloadStart() async {
     let paywallCount = 5
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallPreload(state: .start, paywallCount: paywallCount))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallPreload_start")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_count"] as! Int,
-      paywallCount)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPreload_start")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_count"] as! Int == paywallCount)
   }
 
-  func test_paywallPreloadComplete() async {
+  @Test func paywallPreloadComplete() async {
     let paywallCount = 3
     let result = await Superwall.shared.track(
       InternalSuperwallEvent.PaywallPreload(state: .complete, paywallCount: paywallCount))
-    XCTAssertNotNil(result.parameters.audienceFilterParams["$app_session_id"])
-    XCTAssertTrue(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$event_name"] as! String,
-      "paywallPreload_complete")
-    XCTAssertEqual(
-      result.parameters.audienceFilterParams["$paywall_count"] as! Int,
-      paywallCount)
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "paywallPreload_complete")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_count"] as! Int == paywallCount)
   }
 }

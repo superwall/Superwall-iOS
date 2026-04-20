@@ -5,58 +5,64 @@
 //  Created by Yusuf Tör on 06/08/2025.
 //
 
-import XCTest
+import Testing
+import UIKit
 @testable import SuperwallKit
 
-final class PopupTransitionTests: XCTestCase {
-  
-  func test_popupTransitionDelegate_presentingAnimator() {
+@MainActor
+struct PopupTransitionTests {
+
+  @Test
+  func popupTransitionDelegate_presentingAnimator() {
     let delegate = PopupTransitionDelegate()
-    
+
     let presentedVC = UIViewController()
     let presentingVC = UIViewController()
     let sourceVC = UIViewController()
-    
+
     let animator = delegate.animationController(
       forPresented: presentedVC,
       presenting: presentingVC,
       source: sourceVC
     )
-    
-    XCTAssertNotNil(animator)
-    XCTAssertTrue(animator is PopupTransition)
-    
+
+    #expect(animator != nil)
+    #expect(animator is PopupTransition)
+
     if let popupTransition = animator as? PopupTransition {
-      XCTAssertEqual(popupTransition.state, .presenting)
+      #expect(popupTransition.state == .presenting)
     }
   }
-  
-  func test_popupTransitionDelegate_dismissingAnimator() {
+
+  @Test
+  func popupTransitionDelegate_dismissingAnimator() {
     let delegate = PopupTransitionDelegate()
-    
+
     let dismissedVC = UIViewController()
-    
+
     let animator = delegate.animationController(forDismissed: dismissedVC)
-    
-    XCTAssertNotNil(animator)
-    XCTAssertTrue(animator is PopupTransition)
-    
+
+    #expect(animator != nil)
+    #expect(animator is PopupTransition)
+
     if let popupTransition = animator as? PopupTransition {
-      XCTAssertEqual(popupTransition.state, .dismissing)
+      #expect(popupTransition.state == .dismissing)
     }
   }
-  
-  func test_popupTransition_presentingDuration() {
+
+  @Test
+  func popupTransition_presentingDuration() {
     let transition = PopupTransition(state: .presenting)
     let duration = transition.transitionDuration(using: nil)
-    
-    XCTAssertEqual(duration, 0.3)
+
+    #expect(duration == 0.3)
   }
-  
-  func test_popupTransition_dismissingDuration() {
+
+  @Test
+  func popupTransition_dismissingDuration() {
     let transition = PopupTransition(state: .dismissing)
     let duration = transition.transitionDuration(using: nil)
-    
-    XCTAssertEqual(duration, 0.25)
+
+    #expect(duration == 0.25)
   }
 }

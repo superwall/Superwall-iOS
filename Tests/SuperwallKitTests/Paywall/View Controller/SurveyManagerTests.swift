@@ -5,25 +5,25 @@
 //  Created by Yusuf Tör on 31/07/2023.
 //
 
-import XCTest
+import Testing
 
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 @MainActor
-final class SurveyManagerTests: XCTestCase {
-  func test_presentSurveyIfAvailable_paywallDeclined_purchaseSurvey() {
+struct SurveyManagerTests {
+  @Test
+  func presentSurveyIfAvailable_paywallDeclined_purchaseSurvey() async {
     let surveys = [
       Survey.stub()
         .setting(\.presentationCondition, to: .onPurchase)
     ]
-    let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -43,32 +43,34 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      surveys,
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.2)
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        surveys,
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
   }
 
-  func test_presentSurveyIfAvailable_surveyNil() {
-    let expectation = expectation(description: "called completion block")
+  @Test
+  func presentSurveyIfAvailable_surveyNil() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -88,33 +90,34 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      [],
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.2)
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        [],
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
   }
 
-  func test_presentSurveyIfAvailable_loadingState_loadingPurchase() {
-    let expectation = expectation(description: "called completion block")
-    expectation.isInverted = true
+  @Test
+  func presentSurveyIfAvailable_loadingState_loadingPurchase() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -134,32 +137,35 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.presentationCondition, to: .onPurchase)],
-      paywallResult: .purchased(StoreProduct(sk1Product: MockSkProduct())),
-      paywallCloseReason: .systemLogic,
-      using: paywallVc,
-      loadingState: .loadingPurchase,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .show)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.2)
+    await confirmation(expectedCount: 0) { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        [.stub().setting(\.presentationCondition, to: .onPurchase)],
+        paywallResult: .purchased(StoreProduct(sk1Product: MockSkProduct())),
+        paywallCloseReason: .systemLogic,
+        using: paywallVc,
+        loadingState: .loadingPurchase,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .show)
+          completed()
+        }
+      )
+      try? await Task.sleep(nanoseconds: 200_000_000)
+    }
   }
 
-  func test_presentSurveyIfAvailable_loadingState_loadingURL() {
-    let expectation = expectation(description: "called completion block")
+  @Test
+  func presentSurveyIfAvailable_loadingState_loadingURL() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -179,32 +185,34 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.presentationCondition, to: .onManualClose)],
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .loadingURL,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation])
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        [.stub().setting(\.presentationCondition, to: .onManualClose)],
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .loadingURL,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
   }
 
-  func test_presentSurveyIfAvailable_loadingState_manualLoading() {
-    let expectation = expectation(description: "called completion block")
+  @Test
+  func presentSurveyIfAvailable_loadingState_manualLoading() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -224,32 +232,34 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.presentationCondition, to: .onManualClose)],
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .manualLoading,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation])
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        [.stub().setting(\.presentationCondition, to: .onManualClose)],
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .manualLoading,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
   }
 
-  func test_presentSurveyIfAvailable_loadingState_unknown() {
-    let expectation = expectation(description: "called completion block")
+  @Test
+  func presentSurveyIfAvailable_loadingState_unknown() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -269,38 +279,40 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      [.stub().setting(\.presentationCondition, to: .onManualClose)],
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .unknown,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: StorageMock(),
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation])
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        [.stub().setting(\.presentationCondition, to: .onManualClose)],
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .unknown,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: StorageMock(),
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
   }
 
-  func test_presentSurveyIfAvailable_sameAssignmentKey() {
+  @Test
+  func presentSurveyIfAvailable_sameAssignmentKey() async {
     let storageMock = StorageMock(internalSurveyAssignmentKey: "1")
     let surveys = [
       Survey.stub()
         .setting(\.assignmentKey, to: "1")
         .setting(\.presentationCondition, to: .onManualClose)
     ]
-    let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -320,26 +332,28 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      surveys,
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: storageMock,
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .noShow)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.2)
-    XCTAssertFalse(storageMock.didSave)
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        surveys,
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: storageMock,
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .noShow)
+          completed()
+        }
+      )
+    }
+    #expect(!storageMock.didSave)
   }
 
-  func test_presentSurveyIfAvailable_zeroPresentationProbability() {
+  @Test
+  func presentSurveyIfAvailable_zeroPresentationProbability() async {
     let storageMock = StorageMock()
 
     let surveys = [
@@ -348,13 +362,13 @@ final class SurveyManagerTests: XCTestCase {
         .setting(\.presentationCondition, to: .onManualClose)
     ]
 
-    let expectation = expectation(description: "called completion block")
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -374,38 +388,39 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      surveys,
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: storageMock,
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .holdout)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation])
-    XCTAssertTrue(storageMock.didSave)
+    await confirmation { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        surveys,
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: storageMock,
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .holdout)
+          completed()
+        }
+      )
+    }
+    #expect(storageMock.didSave)
   }
 
-  func test_presentSurveyIfAvailable_debuggerLaunched() {
+  @Test
+  func presentSurveyIfAvailable_debuggerLaunched() async {
     let storageMock = StorageMock()
 
     let surveys = [Survey.stub()]
 
-    let expectation = expectation(description: "called completion block")
-    expectation.isInverted = true
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -425,26 +440,29 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      surveys,
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: true,
-      paywallInfo: .stub(),
-      storage: storageMock,
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .show)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.1)
-    XCTAssertFalse(storageMock.didSave)
+    await confirmation(expectedCount: 0) { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        surveys,
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: true,
+        paywallInfo: .stub(),
+        storage: storageMock,
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .show)
+          completed()
+        }
+      )
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
+    #expect(!storageMock.didSave)
   }
 
-  func test_presentSurveyIfAvailable_success() {
+  @Test
+  func presentSurveyIfAvailable_success() async {
     let storageMock = StorageMock()
     storageMock.reset()
 
@@ -454,14 +472,13 @@ final class SurveyManagerTests: XCTestCase {
         .setting(\.presentationCondition, to: .onManualClose)
     ]
 
-    let expectation = expectation(description: "called completion block")
-    expectation.isInverted = true
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -481,21 +498,23 @@ final class SurveyManagerTests: XCTestCase {
       paywallArchiveManager: nil
     )
 
-    SurveyManager.presentSurveyIfAvailable(
-      surveys,
-      paywallResult: .declined,
-      paywallCloseReason: .manualClose,
-      using: paywallVc,
-      loadingState: .ready,
-      isDebuggerLaunched: false,
-      paywallInfo: .stub(),
-      storage: storageMock,
-      factory: dependencyContainer,
-      completion: { result in
-        XCTAssertEqual(result, .show)
-        expectation.fulfill()
-      }
-    )
-    wait(for: [expectation], timeout: 0.1)
+    await confirmation(expectedCount: 0) { completed in
+      SurveyManager.presentSurveyIfAvailable(
+        surveys,
+        paywallResult: .declined,
+        paywallCloseReason: .manualClose,
+        using: paywallVc,
+        loadingState: .ready,
+        isDebuggerLaunched: false,
+        paywallInfo: .stub(),
+        storage: storageMock,
+        factory: dependencyContainer,
+        completion: { result in
+          #expect(result == .show)
+          completed()
+        }
+      )
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
   }
 }

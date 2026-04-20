@@ -159,6 +159,28 @@ actor SK2ReceiptManager: ReceiptManagerType {
       capturedOfferType = offerType
     }
 
+    // Correct purchase active status using subscription-level state.
+    // A refund may revoke the subscription but individual transactions in
+    // Transaction.all may still appear active (no revocationDate). The
+    // entitlement's state from subscriptionStatus is authoritative, so if
+    // all entitlements for a product are revoked/expired we mark the
+    // purchase as inactive.
+    var correctedPurchases: Set<Purchase> = []
+    for purchase in purchases {
+      let productEntitlements = entitlementsByProductId[purchase.id] ?? []
+      let allRevokedOrExpired = !productEntitlements.isEmpty && productEntitlements.allSatisfy {
+        !$0.isActive
+      }
+      if allRevokedOrExpired && purchase.isActive {
+        correctedPurchases.insert(
+          Purchase(id: purchase.id, isActive: false, purchaseDate: purchase.purchaseDate)
+        )
+      } else {
+        correctedPurchases.insert(purchase)
+      }
+    }
+    purchases = correctedPurchases
+
     // Update actor-isolated properties after the async call
     if enableExperimentalDeviceVariables {
       latestSubscriptionState = capturedState

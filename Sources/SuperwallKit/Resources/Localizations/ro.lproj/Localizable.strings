@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Restaurați prin web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Abonamentele dvs. din App Store au fost restaurate. Doriți să verificați și pe web?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Niciun abonament găsit";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Nu a fost găsit niciun abonament din App Store. Doriți să verificați pe web?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Da";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Anulare";
+
+/* Purchase error alert title */
+"purchase_error_title" = "A apărut o eroare";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Se așteaptă aprobarea";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Mulțumim! Această achiziție așteaptă aprobarea părintelui dvs. Vă rugăm să încercați din nou după aprobare.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gata";

@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Palauta webin kautta?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "App Store -tilauksesi on palautettu. Haluatko tarkistaa lisää verkossa?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Tilausta ei löytynyt";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "App Store -tilausta ei löytynyt. Haluatko tarkistaa verkossa?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Kyllä";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Peruuta";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Tapahtui virhe";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Odottaa hyväksyntää";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Kiitos! Tämä ostos odottaa vanhempasi hyväksyntää. Yritä uudelleen, kun se on hyväksytty.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Valmis";

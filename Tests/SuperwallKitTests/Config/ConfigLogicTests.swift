@@ -6,37 +6,37 @@
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
 
 @testable import SuperwallKit
 
-final class ConfigLogicTests: XCTestCase {
+struct ConfigLogicTests {
   // MARK: - Choose Variant
-  func test_chooseVariant_noVariants() {
+  @Test func chooseVariant_noVariants() {
     do {
       let _ = try ConfigLogic.chooseVariant(from: [])
-      XCTFail("Should have produced an error")
+      Issue.record("Should have produced an error")
     } catch let error as ConfigLogic.TriggerAudienceError {
-      XCTAssertEqual(error, ConfigLogic.TriggerAudienceError.noVariantsFound)
+      #expect(error == ConfigLogic.TriggerAudienceError.noVariantsFound)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      Issue.record("Should have produced a no variant error")
     }
   }
 
-  func test_chooseVariant_onlyOneVariant_zeroSum() {
+  @Test func chooseVariant_onlyOneVariant_zeroSum() {
     do {
       let options: [VariantOption] = [
         .stub()
           .setting(\.percentage, to: 0)
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
+      #expect(options.first!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_1PercentSum() {
+  @Test func chooseVariant_1PercentSum() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -47,13 +47,13 @@ final class ConfigLogicTests: XCTestCase {
           .setting(\.percentage, to: 0),
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
+      #expect(options.first!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_manyVariants_zeroSum() {
+  @Test func chooseVariant_manyVariants_zeroSum() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -69,11 +69,11 @@ final class ConfigLogicTests: XCTestCase {
         }
       )
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_oneActiveVariant_chooseFirst() {
+  @Test func chooseVariant_oneActiveVariant_chooseFirst() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -84,13 +84,13 @@ final class ConfigLogicTests: XCTestCase {
           .setting(\.percentage, to: 0),
       ]
       let variant = try ConfigLogic.chooseVariant(from: options)
-      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
+      #expect(options.first!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_99PercentSumVariants_chooseLast() {
+  @Test func chooseVariant_99PercentSumVariants_chooseLast() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -103,17 +103,17 @@ final class ConfigLogicTests: XCTestCase {
       let variant = try ConfigLogic.chooseVariant(
         from: options,
         randomiser: { range in
-          XCTAssertEqual(range, 0..<99)
+          #expect(range == 0..<99)
           return 98
         }
       )
-      XCTAssertEqual(options.last!.toExperimentVariant(), variant)
+      #expect(options.last!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_99PercentSumVariants_chooseMiddle() {
+  @Test func chooseVariant_99PercentSumVariants_chooseMiddle() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -126,17 +126,17 @@ final class ConfigLogicTests: XCTestCase {
       let variant = try ConfigLogic.chooseVariant(
         from: options,
         randomiser: { range in
-          XCTAssertEqual(range, 0..<99)
+          #expect(range == 0..<99)
           return 65
         }
       )
-      XCTAssertEqual(options[1].toExperimentVariant(), variant)
+      #expect(options[1].toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func test_chooseVariant_99PercentSumVariants_chooseFirst() {
+  @Test func chooseVariant_99PercentSumVariants_chooseFirst() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -149,17 +149,17 @@ final class ConfigLogicTests: XCTestCase {
       let variant = try ConfigLogic.chooseVariant(
         from: options,
         randomiser: { range in
-          XCTAssertEqual(range, 0..<99)
+          #expect(range == 0..<99)
           return 0
         }
       )
-      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
+      #expect(options.first!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Shouldn't fail")
+      Issue.record("Shouldn't fail")
     }
   }
 
-  func testChooseVariant_distribution() throws {
+  @Test func chooseVariant_distribution() throws {
     // MARK: Given
     let variants: [VariantOption] = [
       .stub()
@@ -198,19 +198,17 @@ final class ConfigLogicTests: XCTestCase {
     // Define expected percentages
     let expectedPercentages: [String: Double] = ["A": 85.0, "B": 5.0, "C": 5.0, "D": 5.0]
 
-    // Define acceptable margin of error (e.g., ±1%)
+    // Define acceptable margin of error (e.g., +-1%)
     let marginOfError = 1.0
 
     // Assert that each observed percentage is within the acceptable range
     for (variantID, expectedPercentage) in expectedPercentages {
       guard let observedPercentage = observedPercentages[variantID] else {
-        XCTFail("Variant \(variantID) was not selected at all.")
+        Issue.record("Variant \(variantID) was not selected at all.")
         continue
       }
-      XCTAssertEqual(
-        observedPercentage,
-        expectedPercentage,
-        accuracy: marginOfError,
+      #expect(
+        abs(observedPercentage - expectedPercentage) <= marginOfError,
         "Variant \(variantID) selection percentage \(observedPercentage)% is not within \(marginOfError)% of expected \(expectedPercentage)%."
       )
     }
@@ -235,20 +233,20 @@ final class ConfigLogicTests: XCTestCase {
 
   // MARK: - getRulesPerTriggerGroup
 
-  func test_getRulesPerTriggerGroup_noTriggers() {
+  @Test func getRulesPerTriggerGroup_noTriggers() {
     let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [])
-    XCTAssertTrue(rules.isEmpty)
+    #expect(rules.isEmpty)
   }
 
-  func test_getRulesPerTriggerGroup_noRules() {
+  @Test func getRulesPerTriggerGroup_noRules() {
     let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [
       .stub()
         .setting(\.audiences, to: [])
     ])
-    XCTAssertTrue(rules.isEmpty)
+    #expect(rules.isEmpty)
   }
 
-  func test_getRulesPerTriggerGroup_threeTriggersTwoWithSameGroupId() {
+  @Test func getRulesPerTriggerGroup_threeTriggersTwoWithSameGroupId() {
     let trigger1 = Trigger.stub()
       .setting(
         \.audiences,
@@ -273,13 +271,13 @@ final class ConfigLogicTests: XCTestCase {
     let rules = ConfigLogic.getAudienceFiltersPerCampaign(from: [
       trigger1, trigger2, trigger3,
     ])
-    XCTAssertEqual(rules.count, 2)
-    XCTAssertTrue(rules.contains(trigger3.audiences))
-    XCTAssertTrue(rules.contains(trigger1.audiences))
+    #expect(rules.count == 2)
+    #expect(rules.contains(trigger3.audiences))
+    #expect(rules.contains(trigger1.audiences))
   }
 
   // MARK: - Assign Variants
-  func test_assignVariants_noTriggers() {
+  @Test func assignVariants_noTriggers() {
     // Given
     let confirmedAssignments = Set([
       Assignment(
@@ -300,10 +298,10 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(assignments, confirmedAssignments)
+    #expect(assignments == confirmedAssignments)
   }
 
-  func test_chooseVariant_1Percent99Percent_choose1Percent() {
+  @Test func chooseVariant_1Percent99Percent_choose1Percent() {
     do {
       let options: [VariantOption] = [
         .stub()
@@ -314,17 +312,17 @@ final class ConfigLogicTests: XCTestCase {
       let variant = try ConfigLogic.chooseVariant(
         from: options,
         randomiser: { range in
-          XCTAssertEqual(range, 0..<100)
+          #expect(range == 0..<100)
           return 0
         }
       )
-      XCTAssertEqual(options.first!.toExperimentVariant(), variant)
+      #expect(options.first!.toExperimentVariant() == variant)
     } catch {
-      XCTFail("Should have produced a no variant error")
+      Issue.record("Should have produced a no variant error")
     }
   }
 
-  func test_chooseAssignments_noRules() {
+  @Test func chooseAssignments_noRules() {
     // Given
     let confirmedAssignments = Set([
       Assignment(
@@ -347,10 +345,10 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(variant, confirmedAssignments)
+    #expect(variant == confirmedAssignments)
   }
 
-  func test_chooseAssignments_variantAsOfYetUnconfirmed() {
+  @Test func chooseAssignments_variantAsOfYetUnconfirmed() {
     // Given
     let variantId = "abc"
     let paywallId = "edf"
@@ -386,11 +384,11 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // When
-    XCTAssertEqual(variant.count, 1)
-    XCTAssertEqual(variant.first!.variant, variantOption.toExperimentVariant())
+    #expect(variant.count == 1)
+    #expect(variant.first!.variant == variantOption.toExperimentVariant())
   }
 
-  func test_chooseAssignments_variantAlreadyConfirmed() {
+  @Test func chooseAssignments_variantAlreadyConfirmed() {
     // Given
     let variantId = "abc"
     let paywallId = "edf"
@@ -433,11 +431,11 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(assignments.count, 1)
-    XCTAssertEqual(assignments.first!.variant, variantOption.toExperimentVariant())
+    #expect(assignments.count == 1)
+    #expect(assignments.first!.variant == variantOption.toExperimentVariant())
   }
 
-  func test_chooseAssignments_variantAlreadyConfirmed_nowUnavailable() {
+  @Test func chooseAssignments_variantAlreadyConfirmed_nowUnavailable() {
     // Given
     let paywallId = "edf"
     let experimentId = "3"
@@ -483,11 +481,11 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(assignments.count, 1)
-    XCTAssertEqual(assignments.first!.variant, newVariantOption.toExperimentVariant())
+    #expect(assignments.count == 1)
+    #expect(assignments.first!.variant == newVariantOption.toExperimentVariant())
   }
 
-  func test_chooseAssignments_variantAlreadyConfirmed_nowNoVariants() {
+  @Test func chooseAssignments_variantAlreadyConfirmed_nowNoVariants() {
     // Given
     let paywallId = "edf"
     let experimentId = "3"
@@ -525,12 +523,12 @@ final class ConfigLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertTrue(assignments.isEmpty)
+    #expect(assignments.isEmpty)
   }
 
   // MARK: - transferAssignmentsFromServerToDisk
 
-  func test_transferAssignmentsFromServerToDisk_noAssignments() {
+  @Test func transferAssignmentsFromServerToDisk_noAssignments() {
     let variant: Experiment.Variant = .init(id: "def", type: .treatment, paywallId: "ghi")
     let localAssignments = Set([
       Assignment(experimentId: "abc", variant: variant, isSentToServer: false)
@@ -540,10 +538,10 @@ final class ConfigLogicTests: XCTestCase {
       toDisk: localAssignments,
       triggers: [.stub()]
     )
-    XCTAssertEqual(result, localAssignments)
+    #expect(result == localAssignments)
   }
 
-  func test_transferAssignmentsFromServerToDisk_overwriteConfirmedAssignment() {
+  @Test func transferAssignmentsFromServerToDisk_overwriteConfirmedAssignment() {
     let experimentId = "abc"
     let variantId = "def"
 
@@ -590,12 +588,12 @@ final class ConfigLogicTests: XCTestCase {
       triggers: triggers
     )
 
-    XCTAssertEqual(assignments.count, 2, "Should be overriding the assignment by experiment ID, check the equality func")
-    XCTAssertEqual(assignments.first(where: { $0.experimentId == experimentId })!.variant, variantOption.toExperimentVariant())
-    XCTAssertEqual(assignments.first(where: { $0.experimentId == "jkl" })!.variant, unconfirmedVariant)
+    #expect(assignments.count == 2, "Should be overriding the assignment by experiment ID, check the equality func")
+    #expect(assignments.first(where: { $0.experimentId == experimentId })!.variant == variantOption.toExperimentVariant())
+    #expect(assignments.first(where: { $0.experimentId == "jkl" })!.variant == unconfirmedVariant)
   }
 
-  func test_transferAssignmentsFromServerToDisk_multipleAssignments() {
+  @Test func transferAssignmentsFromServerToDisk_multipleAssignments() {
     let experimentId1 = "abc"
     let variantId1 = "def"
 
@@ -657,13 +655,13 @@ final class ConfigLogicTests: XCTestCase {
       toDisk: localAssignments,
       triggers: triggers
     )
-    XCTAssertEqual(result.count, 3)
-    XCTAssertEqual(result.first(where: { $0.experimentId == experimentId1 })?.variant, variantOption1.toExperimentVariant())
-    XCTAssertEqual(result.first(where: { $0.experimentId == experimentId2 })?.variant, variantOption2.toExperimentVariant())
-    XCTAssertEqual(result.first(where: { $0.experimentId == "jkl" })?.variant, unconfirmedVariant)
+    #expect(result.count == 3)
+    #expect(result.first(where: { $0.experimentId == experimentId1 })?.variant == variantOption1.toExperimentVariant())
+    #expect(result.first(where: { $0.experimentId == experimentId2 })?.variant == variantOption2.toExperimentVariant())
+    #expect(result.first(where: { $0.experimentId == "jkl" })?.variant == unconfirmedVariant)
   }
 
-  func test_transferAssignments_noMatchingTrigger() {
+  @Test func transferAssignments_noMatchingTrigger() {
     let variant = Experiment.Variant(id: "v1", type: .treatment, paywallId: "p1")
     let local = Set([Assignment(experimentId: "exp1", variant: variant, isSentToServer: false)])
 
@@ -676,11 +674,11 @@ final class ConfigLogicTests: XCTestCase {
       triggers: triggers
     )
 
-    XCTAssertEqual(result, local)
+    #expect(result == local)
   }
 
   /// Server assignment with no matching trigger is ignored
-  func test_transferAssignments_noMatchingVariant() {
+  @Test func transferAssignments_noMatchingVariant() {
     let trigger = Trigger.stub()
       .setting(\.audiences, to: [
         .stub()
@@ -700,30 +698,30 @@ final class ConfigLogicTests: XCTestCase {
       triggers: [trigger]
     )
 
-    XCTAssertEqual(result, local)
+    #expect(result == local)
   }
 
   // MARK: - getStaticPaywall
 
-  func test_getStaticPaywall_noPaywallId() {
+  @Test func getStaticPaywall_noPaywallId() {
     let response = ConfigLogic.getStaticPaywall(
       withId: nil,
       config: .stub(),
       deviceLocale: "en_GB"
     )
-    XCTAssertNil(response)
+    #expect(response == nil)
   }
 
-  func test_getStaticPaywall_noConfig() {
+  @Test func getStaticPaywall_noConfig() {
     let response = ConfigLogic.getStaticPaywall(
       withId: "abc",
       config: nil,
       deviceLocale: "en_GB"
     )
-    XCTAssertNil(response)
+    #expect(response == nil)
   }
 
-  func test_getStaticPaywall_deviceLocaleSpecifiedInConfig() {
+  @Test func getStaticPaywall_deviceLocaleSpecifiedInConfig() {
     let locale = "en_GB"
     let dependencyContainer = DependencyContainer()
     let response = ConfigLogic.getStaticPaywall(
@@ -732,10 +730,10 @@ final class ConfigLogicTests: XCTestCase {
         .setting(\.locales, to: [locale]),
       deviceLocale: locale
     )
-    XCTAssertNil(response)
+    #expect(response == nil)
   }
 
-  func test_getStaticPaywall_shortLocaleContainsEn() {
+  @Test func getStaticPaywall_shortLocaleContainsEn() {
     let paywallId = "abc"
     let locale = "en_GB"
     let config: Config = .stub()
@@ -754,10 +752,10 @@ final class ConfigLogicTests: XCTestCase {
       deviceLocale: locale
     )
 
-    XCTAssertEqual(response, config.paywalls[1])
+    #expect(response == config.paywalls[1])
   }
 
-  func test_getStaticPaywall_shortLocaleNotContainedInConfig() {
+  @Test func getStaticPaywall_shortLocaleNotContainedInConfig() {
     let paywallId = "abc"
     let locale = "de_DE"
     let config: Config = .stub()
@@ -776,10 +774,10 @@ final class ConfigLogicTests: XCTestCase {
       deviceLocale: locale
     )
 
-    XCTAssertEqual(response, config.paywalls[1])
+    #expect(response == config.paywalls[1])
   }
 
-  func test_getStaticPaywallResponse_shortLocaleContainedInConfig() {
+  @Test func getStaticPaywallResponse_shortLocaleContainedInConfig() {
     let paywallId = "abc"
     let locale = "de_DE"
     let config: Config = .stub()
@@ -798,11 +796,11 @@ final class ConfigLogicTests: XCTestCase {
       deviceLocale: locale
     )
 
-    XCTAssertNil(response)
+    #expect(response == nil)
   }
 
   // MARK: - getAllActiveTreatmentPaywallIds
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_alwaysPreload() async
+  @Test func getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_alwaysPreload() async
   {
     let paywallId1 = "abc"
     let experiment1 = "def"
@@ -831,15 +829,15 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_neverPreload() async
+  @Test func getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_neverPreload() async
   {
     let paywallId1 = "abc"
     let experiment1 = "def"
@@ -868,16 +866,16 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertTrue(ids.isEmpty)
+    #expect(ids.isEmpty)
   }
 
-  func
-    test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesFalse()
+  @Test func
+    getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesFalse()
     async
   {
     let paywallId1 = "abc"
@@ -908,16 +906,16 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .noMatch(.stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertTrue(ids.isEmpty)
+    #expect(ids.isEmpty)
   }
 
-  func
-    test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesTrue()
+  @Test func
+    getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_ifTrue_evaluatesTrue()
     async
   {
     let paywallId1 = "abc"
@@ -948,16 +946,16 @@ final class ConfigLogicTests: XCTestCase {
     let evaluator = ExpressionEvaluatorMock(outcome: .match(.stub()))
 
     
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func
-    test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_multipleTriggerSameGroupId()
+  @Test func
+    getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_treatment_multipleTriggerSameGroupId()
     async
   {
     let paywallId1 = "abc"
@@ -997,15 +995,15 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_holdout() async {
+  @Test func getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_holdout() async {
     let experiment1 = "def"
 
     let triggers: Set<Trigger> = [
@@ -1030,15 +1028,15 @@ final class ConfigLogicTests: XCTestCase {
     ])
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertTrue(ids.isEmpty)
+    #expect(ids.isEmpty)
   }
 
-  func test_getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_filterOldOnes() async {
+  @Test func getAllActiveTreatmentPaywallIds_onlyConfirmedAssignments_filterOldOnes() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let paywallId2 = "efg"
@@ -1073,15 +1071,15 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getAllActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_filterOldOnes() async
+  @Test func getAllActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_filterOldOnes() async
   {
     let paywallId1 = "abc"
     let experiment1 = "def"
@@ -1136,16 +1134,16 @@ final class ConfigLogicTests: XCTestCase {
 
     let evaluator = ExpressionEvaluatorMock(outcome: .match(audience: .stub()))
 
-    let ids = await ConfigLogic.getAllActiveTreatmentPaywallIds(
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
       fromTriggers: triggers,
       assignments: assignments,
       expressionEvaluator: evaluator
     )
-    XCTAssertEqual(ids, [paywallId1, paywallId3])
+    #expect(ids == [paywallId1, paywallId3])
   }
 
   // MARK: - getActiveTreatmentPaywallIds
-  func test_getActiveTreatmentPaywallIds() {
+  @Test func test_getActiveTreatmentPaywallIds() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1176,14 +1174,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_holdout() {
+  @Test func test_getActiveTreatmentPaywallIds_holdout() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1214,14 +1213,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
-    XCTAssertTrue(ids.isEmpty)
+    #expect(ids.isEmpty)
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1252,14 +1252,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: false
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() {
+  @Test func test_getActiveTreatmentPaywallIds_confirmedAndUnconfirmedAssignments_removeDuplicateRules() async {
     let paywallId1 = "abc"
     let experiment1 = "def"
     let experiment2 = "sdf"
@@ -1303,14 +1304,15 @@ final class ConfigLogicTests: XCTestCase {
         isSentToServer: true
       )
     ])
-    let ids = ConfigLogic.getActiveTreatmentPaywallIds(
-      forTriggers: triggers,
-      assignments: assignments
+    let ids = await ConfigLogic.getActiveTreatmentPaywallIds(
+      fromTriggers: triggers,
+      assignments: assignments,
+      expressionEvaluator: ExpressionEvaluatorMock(outcome: .match(.stub()))
     )
-    XCTAssertEqual(ids, [paywallId1])
+    #expect(ids == [paywallId1])
   }
 
-  func test_getTriggerDictionary() {
+  @Test func getTriggerDictionary() {
     let firstTrigger: Trigger = .stub()
       .setting(\.placementName, to: "abc")
 
@@ -1321,12 +1323,12 @@ final class ConfigLogicTests: XCTestCase {
       firstTrigger, secondTrigger,
     ]
     let dictionary = ConfigLogic.getTriggersByPlacementName(from: triggers)
-    XCTAssertEqual(dictionary["abc"], firstTrigger)
-    XCTAssertEqual(dictionary["def"], secondTrigger)
+    #expect(dictionary["abc"] == firstTrigger)
+    #expect(dictionary["def"] == secondTrigger)
   }
   // MARK: - Filter Triggers
 
-  func test_filterTriggers_noTriggers() {
+  @Test func filterTriggers_noTriggers() {
     let disabled = PreloadingDisabled(
       all: true,
       triggers: ["app_open"]
@@ -1335,10 +1337,10 @@ final class ConfigLogicTests: XCTestCase {
       [],
       removing: disabled
     )
-    XCTAssertTrue(triggers.isEmpty)
+    #expect(triggers.isEmpty)
   }
 
-  func test_filterTriggers_disableAll() {
+  @Test func filterTriggers_disableAll() {
     let disabled = PreloadingDisabled(
       all: true,
       triggers: []
@@ -1351,10 +1353,10 @@ final class ConfigLogicTests: XCTestCase {
       triggers,
       removing: disabled
     )
-    XCTAssertTrue(filteredTriggers.isEmpty)
+    #expect(filteredTriggers.isEmpty)
   }
 
-  func test_filterTriggers_disableSome() {
+  @Test func filterTriggers_disableSome() {
     let disabled = PreloadingDisabled(
       all: false,
       triggers: ["app_open"]
@@ -1367,11 +1369,11 @@ final class ConfigLogicTests: XCTestCase {
       triggers,
       removing: disabled
     )
-    XCTAssertEqual(filteredTriggers.count, 1)
-    XCTAssertEqual(filteredTriggers.first!.placementName, "campaign_trigger")
+    #expect(filteredTriggers.count == 1)
+    #expect(filteredTriggers.first!.placementName == "campaign_trigger")
   }
 
-  func test_filterTriggers_disableNone() {
+  @Test func filterTriggers_disableNone() {
     let disabled = PreloadingDisabled(
       all: false,
       triggers: []
@@ -1384,12 +1386,12 @@ final class ConfigLogicTests: XCTestCase {
       triggers,
       removing: disabled
     )
-    XCTAssertEqual(filteredTriggers.count, 2)
+    #expect(filteredTriggers.count == 2)
   }
 
   // MARK: - getRemovedOrChangedPaywalls
 
-  func test_getRemovedOrChangedPaywallIds_allPaywallsRemoved() {
+  @Test func getRemovedOrChangedPaywallIds_allPaywallsRemoved() {
     let paywall = Paywall.stub()
     let oldConfig = Config.stub()
       .setting(\.paywalls, to: [paywall])
@@ -1401,10 +1403,10 @@ final class ConfigLogicTests: XCTestCase {
       newConfig: newConfig
     )
 
-    XCTAssertEqual(result, Set([paywall.identifier]))
+    #expect(result == Set([paywall.identifier]))
   }
 
-  func test_getRemovedOrChangedPaywallIds_noPaywallsRemoved() {
+  @Test func getRemovedOrChangedPaywallIds_noPaywallsRemoved() {
     let oldConfig = Config.stub()
     let newConfig = Config.stub()
 
@@ -1413,10 +1415,10 @@ final class ConfigLogicTests: XCTestCase {
       newConfig: newConfig
     )
 
-    XCTAssertTrue(result.isEmpty)
+    #expect(result.isEmpty)
   }
 
-  func test_getRemovedOrChangedPaywallIds_cacheKeyChanged() {
+  @Test func getRemovedOrChangedPaywallIds_cacheKeyChanged() {
     let oldPaywall = Paywall.stub()
     let newPaywall = Paywall.stub()
       .setting(\.cacheKey, to: "444")
@@ -1431,10 +1433,10 @@ final class ConfigLogicTests: XCTestCase {
       newConfig: newConfig
     )
 
-    XCTAssertEqual(result, Set([oldPaywall.identifier]))
+    #expect(result == Set([oldPaywall.identifier]))
   }
 
-  func test_getRemovedOrChangedPaywallIds_cacheKeyChanged_andOneRemoved() {
+  @Test func getRemovedOrChangedPaywallIds_cacheKeyChanged_andOneRemoved() {
     let removedPaywall = Paywall.stub()
       .setting(\.identifier, to: "3368")
     let oldPaywall = Paywall.stub()
@@ -1451,12 +1453,12 @@ final class ConfigLogicTests: XCTestCase {
       newConfig: newConfig
     )
 
-    XCTAssertEqual(result, Set([oldPaywall.identifier, removedPaywall.identifier]))
+    #expect(result == Set([oldPaywall.identifier, removedPaywall.identifier]))
   }
 
   // MARK: - extractEntitlements
 
-  func test_extractEntitlements_noEntitlements() {
+  @Test func extractEntitlements_noEntitlements() {
     let productId = "123"
     let entitlement = Entitlement.stub()
     let config = Config(
@@ -1480,6 +1482,6 @@ final class ConfigLogicTests: XCTestCase {
     )
     let entitlements = ConfigLogic.extractEntitlements(from: config)
 
-    XCTAssertEqual(entitlements[productId], [entitlement])
+    #expect(entitlements[productId] == [entitlement])
   }
 }

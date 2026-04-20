@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Återställ via webben?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Dina App Store-prenumerationer har återställts. Vill du kontrollera fler på webben?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Ingen prenumeration hittades";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Ingen App Store-prenumeration hittades. Vill du kontrollera på webben?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Ja";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Avbryt";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Ett fel uppstod";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Väntar på godkännande";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Tack! Det här köpet väntar på godkännande från din förälder. Försök igen när det har godkänts.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Klar";

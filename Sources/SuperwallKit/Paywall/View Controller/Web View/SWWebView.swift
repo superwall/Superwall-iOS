@@ -11,6 +11,7 @@ import WebKit
 
 protocol SWWebViewDelegate: AnyObject {
   var info: PaywallInfo { get }
+  var isActive: Bool { get }
   func webViewDidFail()
 }
 
@@ -44,6 +45,8 @@ class SWWebView: WKWebView {
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
   private let enableIframeNavigation: Bool
+  private var activeProcessTerminationRetryCount = 0
+  private let maxActiveProcessTerminationRetries = 3
 
   init(
     isMac: Bool,
@@ -66,6 +69,9 @@ class SWWebView: WKWebView {
     config.allowsAirPlayForMediaPlayback = true
     config.allowsPictureInPictureMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
+
+    // Register custom URL scheme handler for local files (videos, images, etc.)
+    config.setURLSchemeHandler(LocalFileSchemeHandler(), forURLScheme: LocalFileSchemeHandler.scheme)
 
     if featureFlags?.enableSuppressesIncrementalRendering == true {
       config.suppressesIncrementalRendering = true
@@ -142,6 +148,7 @@ class SWWebView: WKWebView {
   }
 
   func loadURL(from paywall: Paywall) async {
+    activeProcessTerminationRetryCount = 0
     let didLoad = await loadingHandler.loadURL(
       paywallUrlConfig: paywall.urlConfig,
       paywallUrl: paywall.url
@@ -231,6 +238,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    activeProcessTerminationRetryCount = 0
     completion?(nil)
   }
 
@@ -251,7 +259,16 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    webView.reload()
+    if delegate?.isActive == true,
+      activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
+      activeProcessTerminationRetryCount += 1
+      webView.reload()
+    } else if delegate?.isActive == true {
+      loadingHandler.didFailToLoad = true
+      delegate?.webViewDidFail()
+    } else {
+      loadingHandler.didFailToLoad = true
+    }
 
     Task {
       guard let paywallInfo = delegate?.info else {

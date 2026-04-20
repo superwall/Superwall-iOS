@@ -15,9 +15,16 @@ struct IntroOfferTokenWrapper: Codable {
   }
 }
 
-struct IntroOfferToken: Codable {
-  let token: String
-  let expiry: Date
+/// A token used to override Apple's automatic intro offer eligibility determination.
+///
+/// Use this token with StoreKit 2's `.introductoryOfferEligibility(compactJWS:)`
+/// purchase option to apply intro offer eligibility on iOS 18.2+.
+public struct IntroOfferToken: Codable, Sendable {
+  /// The JWT token string to pass to StoreKit.
+  public let token: String
+
+  /// The expiration date of the token.
+  public let expiry: Date
 
   enum CodingKeys: String, CodingKey {
     case token
@@ -29,7 +36,7 @@ struct IntroOfferToken: Codable {
     self.expiry = expiry
   }
 
-  init(from decoder: Decoder) throws {
+  public init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     token = try container.decode(String.self, forKey: .token)
 
@@ -37,7 +44,7 @@ struct IntroOfferToken: Codable {
     expiry = Date(timeIntervalSince1970: timestamp / 1000)
   }
 
-  func encode(to encoder: Encoder) throws {
+  public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: CodingKeys.self)
     try container.encode(token, forKey: .token)
     try container.encode(expiry.timeIntervalSince1970 * 1000, forKey: .expiry)

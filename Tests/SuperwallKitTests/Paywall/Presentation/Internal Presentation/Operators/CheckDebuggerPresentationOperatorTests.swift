@@ -1,26 +1,27 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 05/12/2022.
 //
 
-import XCTest
+import Foundation
+import Testing
 @testable import SuperwallKit
 import Combine
 
-final class CheckDebuggerPresentationTests: XCTestCase {
+@Suite(.serialized)
+final class CheckDebuggerPresentationTests {
   var cancellables: [AnyCancellable] = []
 
-  func test_checkDebuggerPresentation_debuggerNotLaunched() {
+  @Test func checkDebuggerPresentation_debuggerNotLaunched() async {
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: false)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.isInverted = true
+    var stateReceived = false
     statePublisher.sink { state in
-      stateExpectation.fulfill()
+      stateReceived = true
     }
     .store(in: &cancellables)
 
@@ -30,13 +31,14 @@ final class CheckDebuggerPresentationTests: XCTestCase {
         paywallStatePublisher: statePublisher
       )
     } catch {
-      XCTFail("Shouldn't have thrown")
+      Issue.record("Shouldn't have thrown")
     }
 
-    wait(for: [stateExpectation], timeout: 0.1)
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(!stateReceived)
   }
 
-  func test_checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
+  @Test func checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
     let dependencyContainer = DependencyContainer()
     let debugViewController = await dependencyContainer.makeDebugViewController(withDatabaseId: "abc")
     let request = PresentationRequest.stub()
@@ -44,10 +46,9 @@ final class CheckDebuggerPresentationTests: XCTestCase {
       .setting(\.presenter, to: debugViewController)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
-    stateExpectation.isInverted = true
+    var stateReceived = false
     statePublisher.sink { state in
-      stateExpectation.fulfill()
+      stateReceived = true
     }
     .store(in: &cancellables)
 
@@ -57,43 +58,47 @@ final class CheckDebuggerPresentationTests: XCTestCase {
         paywallStatePublisher: statePublisher
       )
     } catch {
-      XCTFail("Shouldn't have thrown")
+      Issue.record("Shouldn't have thrown")
     }
 
-    await fulfillment(of: [stateExpectation], timeout: 0.1)
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(!stateReceived)
   }
 
-  func test_checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() {
+  @Test func checkDebuggerPresentation_debuggerLaunched_notPresentingOnDebugger() async {
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
       .setting(\.presenter, to: nil)
 
     let statePublisher = PassthroughSubject<PaywallState, Never>()
-    let stateExpectation = expectation(description: "Output a state")
+    var stateReceived = false
+    var receivedErrorCode: Int?
     statePublisher.sink { state in
       switch state {
       case .presentationError(let error):
-        if (error as NSError).code == 101 {
-          stateExpectation.fulfill()
-        }
+        stateReceived = true
+        receivedErrorCode = (error as NSError).code
       default:
         break
       }
     }
     .store(in: &cancellables)
 
-    let debuggerPresentation = expectation(description: "Output a state")
+    var didThrow = false
     do {
       try Superwall.shared.checkDebuggerPresentation(
         request: request,
         paywallStatePublisher: statePublisher
       )
-      XCTFail("Should have thrown")
+      Issue.record("Should have thrown")
     } catch {
-      debuggerPresentation.fulfill()
+      didThrow = true
     }
 
-    wait(for: [debuggerPresentation, stateExpectation], timeout: 0.1)
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(didThrow)
+    #expect(stateReceived)
+    #expect(receivedErrorCode == 101)
   }
 
   /*

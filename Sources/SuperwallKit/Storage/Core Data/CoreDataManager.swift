@@ -88,6 +88,7 @@ class CoreDataManager {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func deleteAllEntities(completion: (() -> Void)? = nil) {
     guard let backgroundContext = backgroundContext else {
       completion?()
@@ -99,9 +100,13 @@ class CoreDataManager {
       .contains { $0.type == NSInMemoryStoreType } ?? false
 
     backgroundContext.performAndWait {
+      let appLevelEvents = ["app_install", "app_launch"]
+      let excludeAppLevelPredicate = NSPredicate(format: "NOT (name IN %@)", appLevelEvents)
+
       if isInMemory {
         // Use regular delete for in-memory stores
         let eventDataRequest: NSFetchRequest<ManagedEventData> = ManagedEventData.fetchRequest()
+        eventDataRequest.predicate = excludeAppLevelPredicate
         if let eventData = try? backgroundContext.fetch(eventDataRequest) {
           for object in eventData {
             backgroundContext.delete(object)
@@ -135,6 +140,7 @@ class CoreDataManager {
         let eventDataRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(
           entityName: ManagedEventData.entityName
         )
+        eventDataRequest.predicate = excludeAppLevelPredicate
         let deletePlacementDataRequest = NSBatchDeleteRequest(fetchRequest: eventDataRequest)
 
         let occurrenceRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(

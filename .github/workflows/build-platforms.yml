@@ -1,0 +1,27 @@
+name: Build Platforms
+
+on:
+  push:
+    paths:
+      - '.github/workflows/build-platforms.yml'
+      - 'project.yml'
+      - '**/*.swift'
+      - '!Examples/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-maccatalyst:
+    runs-on: macos-26
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: xcodegen
+        uses: xavierLowmiller/xcodegen-action@1.2.3
+      - name: Build Mac Catalyst
+        run: |
+          xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -destination 'generic/platform=macOS,variant=Mac Catalyst' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""

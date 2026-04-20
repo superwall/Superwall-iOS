@@ -6,13 +6,13 @@
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
+import Foundation
 
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
-final class TrackingLogicTests: XCTestCase {
-  func testProcessParameters_superwallEvent_noParams() async {
+struct TrackingLogicTests {
+  @Test func processParameters_superwallEvent_noParams() async {
     // Given
     let event = InternalSuperwallEvent.AppLaunch()
 
@@ -22,8 +22,8 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
   }
   /*
   func testProcessParameters_superwallEvent_noParams_firedTwice() {
@@ -39,12 +39,12 @@ final class TrackingLogicTests: XCTestCase {
       storage: storage
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$count_24h"] as! Int, 2)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.audienceFilterParams["$count_24h"] as! Int == 2)
   }*/
 
-  func testProcessParameters_userEvent_noParams() async {
+  @Test func processParameters_userEvent_noParams() async {
     // Given
     let event = UserInitiatedPlacement.Track(
       rawName: "test",
@@ -58,9 +58,9 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertFalse(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertFalse(parameters.audienceFilterParams["$is_feature_gatable"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(!(parameters.audienceFilterParams["$is_standard_event"] as! Bool))
+    #expect(!(parameters.audienceFilterParams["$is_feature_gatable"] as! Bool))
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
   }
   /*
   func testProcessParameters_userEvent_noParams_firedTwice() {
@@ -79,13 +79,13 @@ final class TrackingLogicTests: XCTestCase {
       storage: storage
     )
 
-    XCTAssertFalse(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$count_24h"] as! Int, 2)
+    #expect(!(parameters.audienceFilterParams["$is_standard_event"] as! Bool))
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.audienceFilterParams["$count_24h"] as! Int == 2)
   }
 */
 
-  func testProcessParameters_paywallLoad() async {
+  @Test func processParameters_paywallLoad() async {
     // Given
     let eventName = "TestName"
     let event = InternalSuperwallEvent.PaywallLoad(
@@ -101,15 +101,15 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertTrue(parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
-    XCTAssertEqual(
-      parameters.audienceFilterParams["$event_name"] as! String, "paywallResponseLoad_start")
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_triggered_from_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_triggered_from_event"] as! Bool)
+    #expect(
+      parameters.audienceFilterParams["$event_name"] as! String == "paywallResponseLoad_start")
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["is_triggered_from_event"] as! Bool)
   }
 
-  func testProcessParameters_attributes_withCustomParams() async {
+  @Test func processParameters_attributes_withCustomParams() async {
     // Given
     let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
@@ -124,18 +124,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! String, "hello")
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, "hello")
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] as! String == "hello")
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] as! String == "hello")
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsDollar() async {
+  @Test func processParameters_superwallEvent_customParams_containsDollar() async {
     // Given
     let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
@@ -150,18 +150,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertNil(parameters.audienceFilterParams["$myCustomParam"])
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertNil(parameters.delegateParams["$myCustomParam"])
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["$myCustomParam"] == nil)
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["$myCustomParam"] == nil)
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containArray() async {
+  @Test func processParameters_superwallEvent_customParams_containArray() async {
     // Given
     let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
@@ -176,18 +176,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertNil(parameters.audienceFilterParams["myCustomParam"])
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertNil(parameters.delegateParams["myCustomParam"])
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] == nil)
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] == nil)
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containDictionary() async {
+  @Test func processParameters_superwallEvent_customParams_containDictionary() async {
     // Given
     let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
@@ -202,18 +202,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! [String: String], ["one": "two"])
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! [String: String], ["one": "two"])
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] as! [String: String] == ["one": "two"])
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] as! [String: String] == ["one": "two"])
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsDate() async {
+  @Test func processParameters_superwallEvent_customParams_containsDate() async {
     // Given
     let date = Date(timeIntervalSince1970: 1_650_534_735)
     let event = InternalSuperwallEvent.UserAttributes(
@@ -229,18 +229,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! String, date.isoString)
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, date.isoString)
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] as! String == date.isoString)
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] as! String == date.isoString)
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_containsUrl() async {
+  @Test func processParameters_superwallEvent_customParams_containsUrl() async {
     // Given
     let url = URL(string: "https://www.google.com")!
     let event = InternalSuperwallEvent.UserAttributes(
@@ -256,18 +256,18 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertEqual(parameters.audienceFilterParams["myCustomParam"] as! String, url.absoluteString)
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.delegateParams["myCustomParam"] as! String, url.absoluteString)
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] as! String == url.absoluteString)
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] as! String == url.absoluteString)
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
-  func testProcessParameters_superwallEvent_customParams_nilValue() async {
+  @Test func processParameters_superwallEvent_customParams_nilValue() async {
     // Given
     let event = InternalSuperwallEvent.UserAttributes(
       appInstalledAtString: "abc",
@@ -282,27 +282,28 @@ final class TrackingLogicTests: XCTestCase {
       appSessionId: "abc"
     )
 
-    XCTAssertTrue(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
-    XCTAssertEqual(parameters.audienceFilterParams["$application_installed_at"] as! String, "abc")
-    XCTAssertEqual(parameters.audienceFilterParams["$event_name"] as! String, "user_attributes")
-    XCTAssertNil(parameters.audienceFilterParams["myCustomParam"])
-    XCTAssertTrue(parameters.audienceFilterParams["otherParam"] as! Bool)
-    XCTAssertTrue(parameters.delegateParams["is_superwall"] as! Bool)
-    XCTAssertEqual(parameters.delegateParams["application_installed_at"] as! String, "abc")
-    XCTAssertNil(parameters.delegateParams["myCustomParam"])
-    XCTAssertTrue(parameters.delegateParams["otherParam"] as! Bool)
+    #expect(parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(parameters.audienceFilterParams["$application_installed_at"] as! String == "abc")
+    #expect(parameters.audienceFilterParams["$event_name"] as! String == "user_attributes")
+    #expect(parameters.audienceFilterParams["myCustomParam"] == nil)
+    #expect(parameters.audienceFilterParams["otherParam"] as! Bool)
+    #expect(parameters.delegateParams["is_superwall"] as! Bool)
+    #expect(parameters.delegateParams["application_installed_at"] as! String == "abc")
+    #expect(parameters.delegateParams["myCustomParam"] == nil)
+    #expect(parameters.delegateParams["otherParam"] as! Bool)
   }
 
   // MARK: - didStartNewSession
 
-  @MainActor
-  func testDidStartNewSession_canTriggerPaywall_paywallAlreadyPresented() async {
+  @Test @MainActor
+  func didStartNewSession_canTriggerPaywall_paywallAlreadyPresented() async {
     let dependencyContainer = DependencyContainer()
 
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
       isMac: false,
@@ -328,80 +329,80 @@ final class TrackingLogicTests: XCTestCase {
       triggers: Set(["app_install"]),
       paywallViewController: paywallVc
     )
-    XCTAssertEqual(outcome, .dontTriggerPaywall)
+    #expect(outcome == .dontTriggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isntTrigger() async {
+  @Test func didStartNewSession_canTriggerPaywall_isntTrigger() async {
     let outcome = await TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: [],
       paywallViewController: nil
     )
-    XCTAssertEqual(outcome, .dontTriggerPaywall)
+    #expect(outcome == .dontTriggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isAllowedInternalEvent() async {
+  @Test func didStartNewSession_canTriggerPaywall_isAllowedInternalEvent() async {
     let outcome = await TrackingLogic.canTriggerPaywall(
       InternalSuperwallEvent.AppInstall(
         appInstalledAtString: "", hasExternalPurchaseController: false),
       triggers: ["app_install"],
       paywallViewController: nil
     )
-    XCTAssertEqual(outcome, .triggerPaywall)
+    #expect(outcome == .triggerPaywall)
   }
 
-  func testDidStartNewSession_canTriggerPaywall_isNotInternalEvent() async {
+  @Test func didStartNewSession_canTriggerPaywall_isNotInternalEvent() async {
     let outcome = await TrackingLogic.canTriggerPaywall(
       UserInitiatedPlacement.Track(
         rawName: "random_event", canImplicitlyTriggerPaywall: true, isFeatureGatable: false),
       triggers: ["random_event"],
       paywallViewController: nil
     )
-    XCTAssertEqual(outcome, .triggerPaywall)
+    #expect(outcome == .triggerPaywall)
   }
 
   // MARK: - CheckNotSuperwallEvent
 
-  func test_checkNotSuperwallEvent_isSuperwallEvent() {
+  @Test func checkNotSuperwallEvent_isSuperwallEvent() {
     do {
       try TrackingLogic.checkNotSuperwallEvent("paywall_open")
-      XCTFail("Should have failed")
+      Issue.record("Should have failed")
     } catch {}
   }
 
-  func test_checkNotSuperwallEvent_isNotSuperwallEvent() {
+  @Test func checkNotSuperwallEvent_isNotSuperwallEvent() {
     do {
       try TrackingLogic.checkNotSuperwallEvent("my_random_event")
     } catch {
-      XCTFail("Should have failed")
+      Issue.record("Should have failed")
     }
   }
 
   // MARK: - isNotDisabledVerboseEvent
 
   // This happens when config is null
-  func test_isNotDisabledVerboseEvent_nullVerboseEvents() {
+  @Test func isNotDisabledVerboseEvent_nullVerboseEvents() {
     let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: nil,
       isSandbox: true
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isSandbox_disabledEvents() {
+  @Test func isNotDisabledVerboseEvent_isSandbox_disabledEvents() {
     let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
       isSandbox: true
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_presentationReq() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_presentationReq() {
     let placement = InternalSuperwallEvent.PresentationRequest(
       placementData: .stub(), type: .presentation, status: .presentation, statusReason: nil,
       factory: DependencyContainer())
@@ -410,10 +411,10 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_presentationReq() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_presentationReq() {
     let placement = InternalSuperwallEvent.PresentationRequest(
       placementData: .stub(), type: .presentation, status: .presentation, statusReason: nil,
       factory: DependencyContainer())
@@ -422,30 +423,30 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadStart() {
     let event = InternalSuperwallEvent.PaywallLoad(state: .start, placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadStart() {
     let event = InternalSuperwallEvent.PaywallLoad(state: .start, placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadComplete() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_paywallLoadComplete() {
     let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -453,10 +454,10 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadComplete() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_paywallLoadComplete() {
     let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -464,10 +465,10 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_productsLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_productsLoadStart() {
     let event = InternalSuperwallEvent.PaywallProductsLoad(
       state: .start, paywallInfo: .stub(), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -475,10 +476,10 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_productsLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_productsLoadStart() {
     let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -486,20 +487,20 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_webviewLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_webviewLoadStart() {
     let event = InternalSuperwallEvent.PaywallWebviewLoad(state: .start, paywallInfo: .stub())
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertFalse(result)
+    #expect(!result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_webviewLoadStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_webviewLoadStart() {
     let event = InternalSuperwallEvent.PaywallLoad(
       state: .complete(paywallInfo: .stub()), placementData: nil)
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
@@ -507,26 +508,26 @@ final class TrackingLogicTests: XCTestCase {
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_sessionStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_noDisabledEvents_sessionStart() {
     let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: false,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 
-  func test_isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_sessionStart() {
+  @Test func isNotDisabledVerboseEvent_isNotSandbox_disabledEvents_sessionStart() {
     let event = InternalSuperwallEvent.SessionStart()
     let result = TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: true,
       isSandbox: false
     )
-    XCTAssertTrue(result)
+    #expect(result)
   }
 }

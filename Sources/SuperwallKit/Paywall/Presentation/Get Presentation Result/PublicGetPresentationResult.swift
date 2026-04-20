@@ -40,6 +40,14 @@ extension Superwall {
     )
   }
 
+  // Private helper to disambiguate overloads for Objective-C wrappers
+  private func _swiftGetPresentationResult(
+    forPlacement placement: String,
+    params: [String: Any]? = nil
+  ) async -> PresentationResult {
+    return await self.getPresentationResult(forPlacement: placement, params: params)
+  }
+
   /// Preemptively gets the result of registering an placement.
   ///
   /// This helps you determine whether a particular placement will present a paywall
@@ -114,7 +122,7 @@ extension Superwall {
     forPlacement placement: String,
     params: [String: Any]? = nil
   ) async -> PresentationResultObjc {
-    let result = await getPresentationResult(forPlacement: placement, params: params)
+    let result: PresentationResult = await _swiftGetPresentationResult(forPlacement: placement, params: params)
     return PresentationResultObjc(trackResult: result)
   }
 
@@ -132,7 +140,7 @@ extension Superwall {
   @objc public func getPresentationResult(
     forPlacement placement: String
   ) async -> PresentationResultObjc {
-    let result = await getPresentationResult(forPlacement: placement, params: nil)
+    let result: PresentationResult = await _swiftGetPresentationResult(forPlacement: placement, params: nil)
     return PresentationResultObjc(trackResult: result)
   }
 }

@@ -1,16 +1,16 @@
 //
 //  ConfigResponseLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 10/03/2022.
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 /*
-class ConfigResponseLogicTests: XCTestCase {
-  func testGetPaywallIds_trigger_treatments() {
+struct ConfigResponseLogicTests {
+  @Test func getPaywallIds_trigger_treatments() {
     let paywallId = "abc"
     let rule = TriggerRule.stub()
       .setting(
@@ -34,10 +34,10 @@ class ConfigResponseLogicTests: XCTestCase {
 
     let outcome = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
-    XCTAssertTrue(outcome.contains(paywallId))
+    #expect(outcome.contains(paywallId))
   }
 
-  func testGetPaywallIds_trigger_holdouts() {
+  @Test func getPaywallIds_trigger_holdouts() {
     let rule = TriggerRule.stub()
       .setting(
         \.experiment,
@@ -58,7 +58,7 @@ class ConfigResponseLogicTests: XCTestCase {
 
     let outcome = ConfigResponseLogic.getPaywallIds(fromTriggers: triggers)
 
-    XCTAssertTrue(outcome.isEmpty)
+    #expect(outcome.isEmpty)
   }
 }
 */

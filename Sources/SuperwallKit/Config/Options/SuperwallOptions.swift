@@ -17,6 +17,52 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
+  /// A mapping of local resource IDs to local file URLs.
+  ///
+  /// Use this to serve paywall assets (images, videos, Lottie animations) from local files
+  /// instead of fetching them over the network. When a paywall references a `localResourceId`,
+  /// the SDK will look up the corresponding URL in this dictionary and serve the file via the
+  /// `swlocal://` URL scheme.
+  ///
+  /// Set this before calling ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``
+  /// to ensure resources are available before any paywall can trigger (e.g. on `app_launch`).
+  ///
+  /// ```swift
+  /// let options = SuperwallOptions()
+  /// options.localResources = [
+  ///   "hero-video": Bundle.main.url(forResource: "onboarding", withExtension: "mp4")!,
+  ///   "hero-image": Bundle.main.url(forResource: "hero", withExtension: "png")!
+  /// ]
+  /// Superwall.configure(apiKey: "your-api-key", options: options)
+  /// ```
+  public var localResources: [String: URL] = [:]
+
+  /// Controls when the SDK enters test mode.
+  @objc(SWKTestModeBehavior)
+  public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
+    /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
+    /// mismatch is detected, but never during UI tests.
+    case automatic
+
+    /// Activates test mode only when specifically enabled for a user via the dashboard.
+    case whenEnabledForUser
+
+    /// Test mode is never activated, regardless of configuration.
+    case never
+
+    /// Test mode is always activated, regardless of configuration.
+    case always
+
+    public var description: String {
+      switch self {
+      case .automatic: return "automatic"
+      case .whenEnabledForUser: return "whenEnabledForUser"
+      case .never: return "never"
+      case .always: return "always"
+      }
+    }
+  }
+
   /// An enum representing the StoreKit versions the SDK should use.
   @objc(SWKStoreKitVersion)
   public enum StoreKitVersion: Int, Encodable, CustomStringConvertible {
@@ -129,12 +175,26 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// The base URL for the Superwall dashboard.
+    var dashboardBaseUrl: String {
+      switch self {
+      case .release, .releaseCandidate:
+        return "https://superwall.com"
+      case .developer:
+        return "https://superwall.dev"
+      case .local:
+        return "http://localhost:3000"
+      case .custom(let domain):
+        return domain
+      }
+    }
+
     var collectorHost: String {
       switch self {
       case .local:
         return "localhost:3000"
       case .custom:
-        return hostDomain
+        return "collector.superwall.dev"
       default:
         return "collector.\(hostDomain)"
       }
@@ -157,7 +217,8 @@ public final class SuperwallOptions: NSObject, Encodable {
 
     var web2AppHost: String {
       switch self {
-      case .developer:
+      case .developer,
+        .custom:
         return "subscriptions-api.superwall.dev"
       case .local:
         return "localhost:3045"
@@ -223,6 +284,16 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
 
+  /// Controls when the SDK enters test mode. Defaults to `.automatic`.
+  ///
+  /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
+  ///   a bundle ID mismatch is detected, but never during UI tests.
+  /// - `.whenEnabledForUser`: Activates test mode only when specifically enabled for a
+  ///   user via the dashboard.
+  /// - `.never`: Test mode is never activated, regardless of configuration.
+  /// - `.always`: Test mode is always activated, regardless of configuration.
+  public var testModeBehavior: TestModeBehavior = .automatic
+
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
@@ -269,6 +340,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case maxConfigRetryCount
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
+    case testModeBehavior
   }
 
   public override init() {
@@ -303,6 +375,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
+    try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
   }
 
   func toDictionary() -> [String: Any] {

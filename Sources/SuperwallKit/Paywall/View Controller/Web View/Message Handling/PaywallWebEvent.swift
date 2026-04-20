@@ -9,7 +9,10 @@ import Foundation
 
 enum PaywallWebEvent: Equatable {
   case closed
-  case initiatePurchase(productId: String)
+  case initiatePurchase(
+    productId: String,
+    shouldDismiss: Bool
+  )
   case initiateRestore
   case custom(string: String)
   case openedURL(url: URL)
@@ -18,4 +21,10 @@ enum PaywallWebEvent: Equatable {
   case customPlacement(name: String, params: JSON)
   case scheduleNotification(notification: LocalNotification)
   case userAttributesUpdated(attributes: JSON)
+  case requestCallback(
+    name: String,
+    behavior: CustomCallbackBehavior,
+    requestId: String,
+    variables: JSON?
+  )
 }

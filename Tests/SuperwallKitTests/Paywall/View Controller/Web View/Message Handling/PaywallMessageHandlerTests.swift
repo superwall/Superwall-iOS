@@ -12,13 +12,29 @@ import Foundation
 @Suite
 @MainActor
 struct PaywallMessageHandlerTests {
+  private func waitForJsHandling(
+    in webView: FakeWebView,
+    timeoutNanoseconds: UInt64 = 5_000_000_000,
+    pollIntervalNanoseconds: UInt64 = 20_000_000
+  ) async -> Bool {
+    let maxPolls = Int(timeoutNanoseconds / pollIntervalNanoseconds)
+    for _ in 0..<maxPolls {
+      if webView.willHandleJs {
+        return true
+      }
+      try? await Task.sleep(nanoseconds: pollIntervalNanoseconds)
+    }
+    return webView.willHandleJs
+  }
+
   @Test
   func handleTemplateParams() async {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -33,9 +49,8 @@ struct PaywallMessageHandlerTests {
     messageHandler.delegate = delegate
     messageHandler.handle(.templateParamsAndUserAttributes)
 
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
-
-    #expect(webView.willHandleJs == true)
+    let didHandleJs = await waitForJsHandling(in: webView)
+    #expect(didHandleJs == true)
   }
 
   @Test
@@ -44,7 +59,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -59,10 +75,9 @@ struct PaywallMessageHandlerTests {
     messageHandler.delegate = delegate
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
 
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
-
+    let didHandleJs = await waitForJsHandling(in: webView)
     #expect(delegate.paywall.paywalljsVersion == "2")
-    #expect(webView.willHandleJs == true)
+    #expect(didHandleJs == true)
   }
 
   @Test
@@ -71,7 +86,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -95,7 +111,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -121,7 +138,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -147,7 +165,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -174,7 +193,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -201,7 +221,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -228,7 +249,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -252,7 +274,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -266,9 +289,12 @@ struct PaywallMessageHandlerTests {
     )
     messageHandler.delegate = delegate
     let productId = "abc"
-    messageHandler.handle(.purchase(productId: productId))
+    messageHandler.handle(.purchase(productId: productId, shouldDismiss: true))
 
-    #expect(delegate.eventDidOccur == .initiatePurchase(productId: productId))
+    #expect(delegate.eventDidOccur == .initiatePurchase(
+      productId: productId,
+      shouldDismiss: true
+    ))
   }
 
   @Test
@@ -277,7 +303,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -302,7 +329,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: FakePermissionHandler()
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -330,7 +358,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: fakePermissions
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -348,11 +377,10 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.requestPermission(permissionType: permissionType, requestId: requestId))
 
-    // Wait for async task to complete
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
+    let didHandleJs = await waitForJsHandling(in: webView)
 
     #expect(fakePermissions.requestedPermissions == [.notification])
-    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+    #expect(didHandleJs == true) // Should have sent permission_result back
   }
 
   @Test
@@ -364,7 +392,8 @@ struct PaywallMessageHandlerTests {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      permissionHandler: fakePermissions
+      permissionHandler: fakePermissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
       isMac: false,
@@ -380,10 +409,405 @@ struct PaywallMessageHandlerTests {
 
     messageHandler.handle(.requestPermission(permissionType: .notification, requestId: "test-456"))
 
-    // Wait for async task to complete
-    try? await Task.sleep(nanoseconds: 1_500_000_000)
+    let didHandleJs = await waitForJsHandling(in: webView)
 
     #expect(fakePermissions.requestedPermissions == [.notification])
-    #expect(webView.willHandleJs == true) // Should have sent permission_result back
+    #expect(didHandleJs == true) // Should have sent permission_result back
+  }
+
+  // MARK: - Purchase Message Decoding Tests
+
+  @Test
+  func decodePurchase_noShouldDismiss_defaultsToTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissFalse() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": false
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: false
+    ))
+  }
+
+  @Test
+  func decodePurchase_shouldDismissTrue() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "purchase",
+            "productIdentifier": "com.test.product",
+            "should_dismiss": true
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .purchase(
+      productId: "com.test.product",
+      shouldDismiss: true
+    ))
+  }
+
+  // MARK: - Haptic Feedback Message Decoding Tests
+
+  @Test
+  func decodeHapticFeedback_medium() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "haptic_feedback",
+            "haptic_type": "medium"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .hapticFeedback(hapticType: "medium"))
+  }
+
+  @Test
+  func decodeHapticFeedback_allTypes() throws {
+    let hapticTypes = ["light", "medium", "heavy", "success", "warning", "error", "selection"]
+
+    for hapticType in hapticTypes {
+      let json = """
+      {
+        "version": 1,
+        "payload": {
+          "events": [
+            {
+              "event_name": "haptic_feedback",
+              "haptic_type": "\(hapticType)"
+            }
+          ]
+        }
+      }
+      """
+      let data = json.data(using: .utf8)!
+      let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+      let message = wrapped.payload.messages.first
+
+      #expect(message == .hapticFeedback(hapticType: hapticType))
+    }
+  }
+
+  @Test
+  func handleHapticFeedback() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    // This should not crash and should not trigger any delegate events
+    messageHandler.handle(.hapticFeedback(hapticType: "medium"))
+
+    // Haptic feedback doesn't trigger delegate events, so we just verify it doesn't crash
+    #expect(delegate.eventDidOccur == nil)
+  }
+
+  @Test
+  func decodeStripeCheckoutStart() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_start",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutStart(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func decodeStripeCheckoutComplete() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_complete",
+            "sw_checkout_id": "sw_123",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutComplete(
+      checkoutContextId: "ctx_123",
+      productId: "prod_123"
+    ))
+  }
+
+  @Test
+  func decodeStripeCheckoutFail() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_fail",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func decodeStripeCheckoutSubmit() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_submit",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutSubmit(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func decodeStripeCheckoutAbandon() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_abandon",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123"
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+    let message = wrapped.payload.messages.first
+
+    #expect(message == .stripeCheckoutAbandon(checkoutContextId: "ctx_123", productId: "prod_123"))
+  }
+
+  @Test
+  func handleStripeCheckoutComplete_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(
+      .stripeCheckoutComplete(
+        checkoutContextId: "ctx_123",
+        productId: "prod_123"
+      )
+    )
+
+    #expect(delegate.stripeCheckoutComplete?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutComplete?.productId == "prod_123")
+  }
+
+  @Test
+  func handleStripeCheckoutAbandon_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutAbandon(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutAbandon?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutAbandon?.productId == "prod_123")
+  }
+
+  @Test
+  func handleStripeCheckoutFail_isNoOp() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutFail(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutSubmit == nil)
+    #expect(delegate.stripeCheckoutComplete == nil)
+    #expect(delegate.stripeCheckoutAbandon == nil)
+    #expect(delegate.eventDidOccur == nil)
+  }
+
+  @Test
+  func handleStripeCheckoutSubmit_forwardsToDelegate() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(.stripeCheckoutSubmit(checkoutContextId: "ctx_123", productId: "prod_123"))
+
+    #expect(delegate.stripeCheckoutSubmit?.checkoutContextId == "ctx_123")
+    #expect(delegate.stripeCheckoutSubmit?.productId == "prod_123")
   }
 }

@@ -8,9 +8,9 @@
 
 import Combine
 import SafariServices
+import StoreKit
 import UIKit
 import WebKit
-import StoreKit
 
 @objc(SWKPaywallViewController)
 public class PaywallViewController: UIViewController, LoadingDelegate {
@@ -110,6 +110,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// Tracks if checkout is being dismissed programmatically (e.g., via closeSafari).
   private var isCheckoutDismissedProgrammatically = false
+
+  /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
+  private var didReceiveStripeCheckoutAbandonMessage = false
+
+  /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
+  private var previousStripeCheckoutTask: Task<Void, Never>?
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
@@ -312,6 +318,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
     await storage.trackPaywallOpen()
     await webView.messageHandler.handle(.paywallOpen)
+    await maybeRecoverPendingStripeCheckoutOnPaywallOpen()
 
     let demandScore = await deviceHelper.enrichment?.device["demandScore"].int
     let demandTier = await deviceHelper.enrichment?.device["demandTier"].string
@@ -322,6 +329,31 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       demandTier: demandTier
     )
     await Superwall.shared.track(paywallOpen)
+  }
+
+  nonisolated private func maybeRecoverPendingStripeCheckoutOnPaywallOpen() async {
+    let shouldShowLoading =
+      await webEntitlementRedeemer.shouldShowStripeRecoveryLoadingOnPaywallOpen()
+    guard shouldShowLoading else {
+      return
+    }
+
+    await MainActor.run {
+      self.loadingState = .manualLoading
+    }
+
+    // If another poll is already in-flight (e.g. cold-launch init task),
+    // wait for it to finish rather than returning early. This ensures
+    // WE always clean up the spinner we set above.
+    let redeemed = await webEntitlementRedeemer.pollOrWaitForActiveStripePoll()
+
+    if !redeemed {
+      await MainActor.run {
+        if self.loadingState == .manualLoading {
+          self.loadingState = .ready
+        }
+      }
+    }
   }
 
   nonisolated private func trackClose() async {
@@ -437,6 +469,28 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - State Handling
 
+  /// Reveals the web view content behind the spinner overlay when the web
+  /// view finishes loading while a manual spinner (e.g. Stripe recovery) is
+  /// active. Animates the shimmer away and fades in the web view, but keeps
+  /// the spinner visible so the user knows a background operation is ongoing.
+  func revealWebViewBehindSpinner() {
+    guard shimmerView != nil else { return }
+    showRefreshButtonAfterTimeout(false)
+    UIView.animate(
+      withDuration: 0.6,
+      delay: 0.25,
+      animations: {
+        self.shimmerView?.alpha = 0.0
+        self.webView.alpha = 1.0
+        self.webView.transform = .identity
+      },
+      completion: { [weak self] _ in
+        self?.shimmerView?.removeFromSuperview()
+        self?.shimmerView = nil
+      }
+    )
+  }
+
   /// Hides or displays the paywall spinner.
   ///
   /// - Parameter isHidden: A `Bool` indicating whether to show or hide the spinner.
@@ -469,11 +523,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     case .ready:
       let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
       let spinnerDidShow = oldValue == .loadingPurchase || oldValue == .manualLoading
-      webView.transform = spinnerDidShow ? .identity : translation
+      let shimmerStillVisible = shimmerView != nil
+      webView.transform = spinnerDidShow && !shimmerStillVisible ? .identity : translation
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
-      if !spinnerDidShow {
+      if !spinnerDidShow || shimmerStillVisible {
         UIView.animate(
           withDuration: 0.6,
           delay: 0.25,
@@ -621,14 +676,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        Task(priority: .utility) {
-          let webviewTimeout = await InternalSuperwallEvent.PaywallWebviewLoad(
-            state: .timeout,
-            paywallInfo: self.info
-          )
-          await Superwall.shared.track(webviewTimeout)
-        }
-
         UIView.springAnimate(withDuration: 2) {
           self.refreshPaywallButton.alpha = 1.0
           self.exitButton.alpha = 1.0
@@ -739,103 +786,103 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   #if !os(visionOS)
-  @available(iOS 16.0, *)
-  private func updateDrawerCornerMaskIfNeeded() {
-    guard
-      UIDevice.current.userInterfaceIdiom == .phone,
-      case let .drawer(_, cornerRadius) = presentationStyle,
-      let sheet = sheetPresentationController,
-      let presentedView = sheet.presentedView ?? view.superview
-    else {
-      return
+    @available(iOS 16.0, *)
+    private func updateDrawerCornerMaskIfNeeded() {
+      guard
+        UIDevice.current.userInterfaceIdiom == .phone,
+        case .drawer(_, let cornerRadius) = presentationStyle,
+        let sheet = sheetPresentationController,
+        let presentedView = sheet.presentedView ?? view.superview
+      else {
+        return
+      }
+
+      let targetView: UIView
+      if presentedView.layer.cornerRadius > 0 {
+        targetView = presentedView
+      } else if let superview = presentedView.superview,
+        superview.layer.cornerRadius > 0 {
+        targetView = superview
+      } else {
+        targetView = presentedView
+      }
+
+      let systemRadius = targetView.layer.cornerRadius
+      if drawerDeviceCornerRadius == nil || drawerDeviceCornerRadius == 0,
+        systemRadius > 0 {
+        drawerDeviceCornerRadius = systemRadius
+      }
+      let bottomRadius = drawerDeviceCornerRadius ?? systemRadius
+      applyDrawerCornerMask(
+        to: targetView,
+        topRadius: CGFloat(cornerRadius),
+        bottomRadius: bottomRadius
+      )
     }
 
-    let targetView: UIView
-    if presentedView.layer.cornerRadius > 0 {
-      targetView = presentedView
-    } else if let superview = presentedView.superview,
-      superview.layer.cornerRadius > 0 {
-      targetView = superview
-    } else {
-      targetView = presentedView
+    private func applyDrawerCornerMask(
+      to targetView: UIView,
+      topRadius: CGFloat,
+      bottomRadius: CGFloat
+    ) {
+      let bounds = targetView.bounds
+      guard
+        bounds.width > 0,
+        bounds.height > 0
+      else {
+        return
+      }
+
+      let maxRadius = min(bounds.width, bounds.height) / 2
+      let clampedTop = min(max(0, topRadius), maxRadius)
+      let clampedBottom = min(max(0, bottomRadius), maxRadius)
+
+      // Build a path with independent top and bottom corner radii.
+      let path = UIBezierPath()
+      path.move(to: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY))
+      path.addLine(to: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY))
+      path.addArc(
+        withCenter: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY + clampedTop),
+        radius: clampedTop,
+        startAngle: -.pi / 2,
+        endAngle: 0,
+        clockwise: true
+      )
+      path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY - clampedBottom))
+      path.addArc(
+        withCenter: CGPoint(x: bounds.maxX - clampedBottom, y: bounds.maxY - clampedBottom),
+        radius: clampedBottom,
+        startAngle: 0,
+        endAngle: .pi / 2,
+        clockwise: true
+      )
+      path.addLine(to: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY))
+      path.addArc(
+        withCenter: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY - clampedBottom),
+        radius: clampedBottom,
+        startAngle: .pi / 2,
+        endAngle: .pi,
+        clockwise: true
+      )
+      path.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY + clampedTop))
+      path.addArc(
+        withCenter: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY + clampedTop),
+        radius: clampedTop,
+        startAngle: .pi,
+        endAngle: 3 * .pi / 2,
+        clockwise: true
+      )
+      path.close()
+
+      let maskLayer = drawerCornerMaskLayer ?? CAShapeLayer()
+      maskLayer.frame = bounds
+      maskLayer.path = path.cgPath
+      targetView.layer.mask = maskLayer
+      drawerCornerMaskLayer = maskLayer
+      if targetView.layer.cornerRadius != 0 {
+        targetView.layer.cornerRadius = 0
+      }
     }
-
-    let systemRadius = targetView.layer.cornerRadius
-    if drawerDeviceCornerRadius == nil || drawerDeviceCornerRadius == 0,
-      systemRadius > 0 {
-      drawerDeviceCornerRadius = systemRadius
-    }
-    let bottomRadius = drawerDeviceCornerRadius ?? systemRadius
-    applyDrawerCornerMask(
-      to: targetView,
-      topRadius: CGFloat(cornerRadius),
-      bottomRadius: bottomRadius
-    )
-  }
-
-  private func applyDrawerCornerMask(
-    to targetView: UIView,
-    topRadius: CGFloat,
-    bottomRadius: CGFloat
-  ) {
-    let bounds = targetView.bounds
-    guard
-      bounds.width > 0,
-      bounds.height > 0
-    else {
-      return
-    }
-
-    let maxRadius = min(bounds.width, bounds.height) / 2
-    let clampedTop = min(max(0, topRadius), maxRadius)
-    let clampedBottom = min(max(0, bottomRadius), maxRadius)
-
-    // Build a path with independent top and bottom corner radii.
-    let path = UIBezierPath()
-    path.move(to: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY))
-    path.addLine(to: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY))
-    path.addArc(
-      withCenter: CGPoint(x: bounds.maxX - clampedTop, y: bounds.minY + clampedTop),
-      radius: clampedTop,
-      startAngle: -.pi / 2,
-      endAngle: 0,
-      clockwise: true
-    )
-    path.addLine(to: CGPoint(x: bounds.maxX, y: bounds.maxY - clampedBottom))
-    path.addArc(
-      withCenter: CGPoint(x: bounds.maxX - clampedBottom, y: bounds.maxY - clampedBottom),
-      radius: clampedBottom,
-      startAngle: 0,
-      endAngle: .pi / 2,
-      clockwise: true
-    )
-    path.addLine(to: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY))
-    path.addArc(
-      withCenter: CGPoint(x: bounds.minX + clampedBottom, y: bounds.maxY - clampedBottom),
-      radius: clampedBottom,
-      startAngle: .pi / 2,
-      endAngle: .pi,
-      clockwise: true
-    )
-    path.addLine(to: CGPoint(x: bounds.minX, y: bounds.minY + clampedTop))
-    path.addArc(
-      withCenter: CGPoint(x: bounds.minX + clampedTop, y: bounds.minY + clampedTop),
-      radius: clampedTop,
-      startAngle: .pi,
-      endAngle: 3 * .pi / 2,
-      clockwise: true
-    )
-    path.close()
-
-    let maskLayer = drawerCornerMaskLayer ?? CAShapeLayer()
-    maskLayer.frame = bounds
-    maskLayer.path = path.cgPath
-    targetView.layer.mask = maskLayer
-    drawerCornerMaskLayer = maskLayer
-    if targetView.layer.cornerRadius != 0 {
-      targetView.layer.cornerRadius = 0
-    }
-  }
   #endif
 
   private func getPopupDimensions() -> PopupDimensions? {
@@ -865,7 +912,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     let backgroundView = UIView()
     backgroundView.backgroundColor = UIColor.black.withAlphaComponent(0.4)
     backgroundView.translatesAutoresizingMaskIntoConstraints = false
-    backgroundView.alpha = 0.0 // Start transparent for animation
+    backgroundView.alpha = 0.0  // Start transparent for animation
     view.insertSubview(backgroundView, at: 0)
 
     NSLayoutConstraint.activate([
@@ -914,9 +961,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     containerView.addSubview(webView)
 
     // Set up size constraints for popup using presentation style dimensions
-    let popupWidthConstraint = containerView.widthAnchor.constraint(equalToConstant: dimensions.width)
+    let popupWidthConstraint = containerView.widthAnchor.constraint(
+      equalToConstant: dimensions.width)
     self.popupWidthConstraint = popupWidthConstraint
-    let popupHeightConstraint = containerView.heightAnchor.constraint(equalToConstant: dimensions.height)
+    let popupHeightConstraint = containerView.heightAnchor.constraint(
+      equalToConstant: dimensions.height)
     self.popupHeightConstraint = popupHeightConstraint
     popupWidthConstraint.priority = UILayoutPriority(999)
     popupHeightConstraint.priority = UILayoutPriority(999)
@@ -945,7 +994,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
     ])
   }
-
 
   @objc private func backgroundTapped() {
     // Custom animation for popup dismissal on background tap
@@ -1049,6 +1097,20 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
     )
   }
 
+  public func presentationControllerDidDismiss(
+    _ presentationController: UIPresentationController
+  ) {
+    // Guard against double-dismiss: if didAttemptToDismiss already
+    // triggered our dismiss(), closeReason will already be set.
+    guard paywall.closeReason == .none else {
+      return
+    }
+    dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+  }
+
   /// Marks that a redeem succeeded while the checkout web view is open.
   /// Cancels any pending transaction abandon tracking.
   func markRedeemInitiated() {
@@ -1066,68 +1128,121 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
 extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openPaymentSheet(_ url: URL) {
     #if !os(visionOS)
-    // Reset flags when opening checkout
-    didRedeemSucceedDuringCheckout = false
-    isCheckoutDismissedProgrammatically = false
+      // Reset flags when opening checkout
+      didRedeemSucceedDuringCheckout = false
+      isCheckoutDismissedProgrammatically = false
+      didReceiveStripeCheckoutAbandonMessage = false
+      transactionAbandonWorkItem?.cancel()
+      transactionAbandonWorkItem = nil
+
+      let checkoutVC = CheckoutWebViewController(url: url)
+      // Store reference to communicate redemption state
+      self.currentCheckoutVC = checkoutVC
+      checkoutVC.onDismiss = { [weak self] in
+        guard let self = self else { return }
+        self.isSafariVCPresented = false
+
+        // Set loadingState to ready unless we programmatically dismissed
+        // (programmatic dismissal happens when redemption starts, which sets manualLoading)
+        if !self.isCheckoutDismissedProgrammatically {
+          self.loadingState = .ready
+        }
+
+        // Only track abandon if:
+        // 1. Redeem did NOT succeed
+        // 2. Dismissal was NOT programmatic (user dismissed it)
+        // 3. No stripe checkout abandon message was received
+        if !self.didRedeemSucceedDuringCheckout,
+          !self.isCheckoutDismissedProgrammatically,
+          !self.didReceiveStripeCheckoutAbandonMessage {
+          let workItem = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            Task {
+              let event = InternalSuperwallEvent.Transaction(
+                state: .abandon(StoreProduct.blank()),
+                paywallInfo: self.info,
+                product: nil,
+                transaction: nil,
+                source: .internal,
+                isObserved: false,
+                storeKitVersion: nil,
+                store: .stripe
+              )
+              await Superwall.shared.track(event)
+            }
+          }
+          self.transactionAbandonWorkItem = workItem
+          DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
+        }
+        // Reset flags after handling
+        self.didRedeemSucceedDuringCheckout = false
+        self.isCheckoutDismissedProgrammatically = false
+        self.didReceiveStripeCheckoutAbandonMessage = false
+      }
+
+      checkoutVC.modalPresentationStyle = .pageSheet
+      if #available(iOS 15.0, *) {
+        if let sheet = checkoutVC.sheetPresentationController {
+          sheet.detents = [.medium(), .large()]
+          sheet.prefersGrabberVisible = true
+          // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+          sheet.prefersEdgeAttachedInCompactHeight = true
+          sheet.preferredCornerRadius = 62
+        }
+      }
+      self.isSafariVCPresented = true
+      loadingState = .loadingPurchase
+      present(checkoutVC, animated: true)
+    #endif
+  }
+
+  func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String) {
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.registerStripeCheckoutSubmit(
+        contextId: checkoutContextId,
+        productId: productId
+      )
+    }
+  }
+
+  func handleStripeCheckoutComplete(
+    checkoutContextId: String,
+    productId: String
+  ) {
+    didReceiveStripeCheckoutAbandonMessage = true
+    loadingState = .manualLoading
+    closeSafari()
+
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
+        contextId: checkoutContextId,
+        productId: productId
+      )
+    }
+  }
+
+  func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
+    didReceiveStripeCheckoutAbandonMessage = true
     transactionAbandonWorkItem?.cancel()
     transactionAbandonWorkItem = nil
 
-    let checkoutVC = CheckoutWebViewController(url: url)
-    // Store reference to communicate redemption state
-    self.currentCheckoutVC = checkoutVC
-    checkoutVC.onDismiss = { [weak self] in
-      guard let self = self else { return }
-      self.isSafariVCPresented = false
-
-      // Set loadingState to ready unless we programmatically dismissed
-      // (programmatic dismissal happens when redemption starts, which sets manualLoading)
-      if !self.isCheckoutDismissedProgrammatically {
-        self.loadingState = .ready
-      }
-
-      // Only track abandon if:
-      // 1. Redeem did NOT succeed
-      // 2. Dismissal was NOT programmatic (user dismissed it)
-      if !self.didRedeemSucceedDuringCheckout,
-        !self.isCheckoutDismissedProgrammatically {
-        let workItem = DispatchWorkItem { [weak self] in
-          guard let self = self else { return }
-          Task {
-            let event = InternalSuperwallEvent.Transaction(
-              state: .abandon(StoreProduct.blank()),
-              paywallInfo: self.info,
-              product: nil,
-              transaction: nil,
-              source: .internal,
-              isObserved: false,
-              storeKitVersion: nil,
-              store: .stripe
-            )
-            await Superwall.shared.track(event)
-          }
-        }
-        self.transactionAbandonWorkItem = workItem
-        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
-      }
-      // Reset flags after handling
-      self.didRedeemSucceedDuringCheckout = false
-      self.isCheckoutDismissedProgrammatically = false
+    enqueueStripeCheckoutTask { paywall in
+      await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
     }
+  }
 
-    checkoutVC.modalPresentationStyle = .pageSheet
-    if #available(iOS 15.0, *) {
-      if let sheet = checkoutVC.sheetPresentationController {
-        sheet.detents = [.medium(), .large()]
-        sheet.prefersGrabberVisible = true
-        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
-        sheet.prefersEdgeAttachedInCompactHeight = true
-        sheet.preferredCornerRadius = 62
+  private func enqueueStripeCheckoutTask(
+    _ operation: @escaping (PaywallViewController) async -> Void
+  ) {
+    // Assign the current Stripe task while capturing the previous one.
+    previousStripeCheckoutTask = Task { [weak self, previousStripeCheckoutTask] in
+      // Wait until the previous task is finished before continuing.
+      await previousStripeCheckoutTask?.value
+      guard let self else {
+        return
       }
+      await operation(self)
     }
-    self.isSafariVCPresented = true
-    loadingState = .loadingPurchase
-    present(checkoutVC, animated: true)
-    #endif
   }
 
   func eventDidOccur(_ paywallEvent: PaywallWebEvent) {
@@ -1217,7 +1332,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         Logger.debug(
           logLevel: .warn,
           scope: .superwallCore,
-          message: "Unable to open external review URL. Please enter your Apple App ID on the Superwall dashboard."
+          message:
+            "Unable to open external review URL. Please enter your Apple App ID on the Superwall dashboard."
         )
         return
       }
@@ -1302,10 +1418,20 @@ extension PaywallViewController {
     // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
     fetchIntroOfferTokens()
 
-    if willShowSurvey {
-      didDisableSwipeForSurvey = true
+    switch presentationStyle {
+    case .modal, .drawer:
+      let shouldShowSurvey = willShowSurvey
       presentationController?.delegate = self
-      isModalInPresentation = true
+      if shouldShowSurvey {
+        didDisableSwipeForSurvey = true
+        isModalInPresentation = true
+      }
+    default:
+      if willShowSurvey {
+        didDisableSwipeForSurvey = true
+        presentationController?.delegate = self
+        isModalInPresentation = true
+      }
     }
     addShimmerView(onPresent: true)
 
@@ -1535,12 +1661,12 @@ extension PaywallViewController {
 }
 
 #if !os(visionOS)
-// MARK: - SFSafariViewControllerDelegate
-extension PaywallViewController: SFSafariViewControllerDelegate {
-  public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
-    isSafariVCPresented = false
+  // MARK: - SFSafariViewControllerDelegate
+  extension PaywallViewController: SFSafariViewControllerDelegate {
+    public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
+      isSafariVCPresented = false
+    }
   }
-}
 #endif
 
 // MARK: - GameControllerDelegate
