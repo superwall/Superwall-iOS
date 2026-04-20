@@ -12,8 +12,8 @@ import Testing
 @Suite
 struct StorageTests {
   @Test
-  func test_makeDependencyContainer_configuresApiKeySynchronously() {
-    let dependencyContainer = Superwall.makeDependencyContainer(apiKey: "pk_test_123")
+  func test_dependencyContainerInit_configuresApiKeySynchronously() {
+    let dependencyContainer = DependencyContainer(apiKey: "pk_test_123")
 
     #expect(dependencyContainer.storage.apiKey == "pk_test_123")
   }
