@@ -71,7 +71,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  var delegate: PaywallViewControllerDelegateAdapter?
+  var delegate: PaywallViewControllerDelegateAdapter? {
+    didSet {
+      syncCustomCallbackRegistration()
+    }
+  }
 
   typealias Factory = TriggerFactory
     & RestoreAccessFactory
@@ -215,6 +219,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private unowned let storage: Storage
   private unowned let deviceHelper: DeviceHelper
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  private unowned let customCallbackRegistry: CustomCallbackRegistry
   private weak var cache: PaywallViewControllerCache?
   private weak var paywallArchiveManager: PaywallArchiveManager?
 
@@ -231,7 +236,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     webView: SWWebView,
     webEntitlementRedeemer: WebEntitlementRedeemer,
     cache: PaywallViewControllerCache?,
-    paywallArchiveManager: PaywallArchiveManager?
+    paywallArchiveManager: PaywallArchiveManager?,
+    customCallbackRegistry: CustomCallbackRegistry
   ) {
     self.cache = cache
     self.paywallArchiveManager = paywallArchiveManager
@@ -248,13 +254,32 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     self.webView = webView
     self.introOfferTokenManager = IntroOfferTokenManager(network: network)
     self.webEntitlementRedeemer = webEntitlementRedeemer
+    self.customCallbackRegistry = customCallbackRegistry
 
     presentationStyle = paywall.presentation.style
     super.init(nibName: nil, bundle: nil)
+    syncCustomCallbackRegistration()
   }
 
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
+  }
+
+  /// Registers or unregisters the delegate's custom callback handler with
+  /// ``CustomCallbackRegistry`` so the paywall webview can invoke it.
+  ///
+  /// `register()` manages registration around its own present/dismiss lifecycle, so this
+  /// path is the one that wires up handlers supplied via
+  /// ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:onCustomCallback:)``.
+  private func syncCustomCallbackRegistration() {
+    if let handler = delegate?.onCustomCallback {
+      customCallbackRegistry.register(
+        paywallIdentifier: paywall.identifier,
+        handler: handler
+      )
+    } else {
+      customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
+    }
   }
 
   public override func viewDidLoad() {
@@ -266,6 +291,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   deinit {
     introOfferTokenManager.stopObservingAppLifecycle()
+    customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
   }
 
   private func configureUI() {

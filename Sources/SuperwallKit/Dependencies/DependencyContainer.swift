@@ -314,7 +314,8 @@ extension DependencyContainer: ViewControllerFactory {
       webView: webView,
       webEntitlementRedeemer: webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: paywallArchiveManager
+      paywallArchiveManager: paywallArchiveManager,
+      customCallbackRegistry: customCallbackRegistry
     )
 
     webView.delegate = paywallViewController

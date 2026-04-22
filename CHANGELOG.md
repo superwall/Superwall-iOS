@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.1
+
+### Enhancements
+
+- Adds an `onCustomCallback` parameter to `getPaywall(forPlacement:params:paywallOverrides:delegate:onCustomCallback:)` so paywalls retrieved for embedding can handle custom webview callbacks. Previously, custom callbacks were only supported via `register()`, which presents in its own `UIWindow`.
+
 ## 4.15.0
 
 ### Enhancements
