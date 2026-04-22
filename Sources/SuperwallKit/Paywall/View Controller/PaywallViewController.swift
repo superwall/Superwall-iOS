@@ -271,14 +271,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// `register()` manages registration around its own present/dismiss lifecycle, so this
   /// path is the one that wires up handlers supplied via
   /// ``Superwall/getPaywall(forPlacement:params:paywallOverrides:delegate:onCustomCallback:)``.
+  private var hasRegisteredCallback = false
+
   private func syncCustomCallbackRegistration() {
     if let handler = delegate?.onCustomCallback {
       customCallbackRegistry.register(
         paywallIdentifier: paywall.identifier,
         handler: handler
       )
-    } else {
+      hasRegisteredCallback = true
+    } else if hasRegisteredCallback {
       customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
+      hasRegisteredCallback = false
     }
   }
 
@@ -291,7 +295,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   deinit {
     introOfferTokenManager.stopObservingAppLifecycle()
-    customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
+    if hasRegisteredCallback {
+      customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
+    }
   }
 
   private func configureUI() {
