@@ -2,6 +2,18 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.0
+
+### Enhancements
+
+- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store using the `PurchaseController`.
+- Adds `formUnion` override when unioning sets of `Entitlement` objects.
+
+### Fixes
+
+- Fixes issue where test mode products had trial price data missing.
+- Fixed computed period prices (`weeklyPrice`, `dailyPrice`, `monthlyPrice`, `yearlyPrice`) displaying incorrectly rounded values on StoreKit 2 in production. For example, a £4.99/week product could show as £5.00/week. This was caused by Apple's `priceFormatStyle` applying storefront-specific rounding to computed values.
+
 ## 4.14.2
 
 ### Enhancements

@@ -28,6 +28,9 @@ public enum ProductStore: Int, Codable, Sendable {
   /// Other/Unknown store.
   case other
 
+  /// A custom product for use with an external purchase controller.
+  case custom
+
   /// Returns the string representation of the product store (e.g., "APP_STORE", "STRIPE")
   public var description: String {
     switch self {
@@ -41,6 +44,8 @@ public enum ProductStore: Int, Codable, Sendable {
       return CodingKeys.playStore.rawValue
     case .superwall:
       return CodingKeys.superwall.rawValue
+    case .custom:
+      return CodingKeys.custom.rawValue
     case .other:
       return CodingKeys.other.rawValue
     }
@@ -52,6 +57,7 @@ public enum ProductStore: Int, Codable, Sendable {
     case paddle = "PADDLE"
     case playStore = "PLAY_STORE"
     case superwall = "SUPERWALL"
+    case custom = "CUSTOM"
     case other = "OTHER"
   }
 
@@ -68,6 +74,8 @@ public enum ProductStore: Int, Codable, Sendable {
       try container.encode(CodingKeys.playStore.rawValue)
     case .superwall:
       try container.encode(CodingKeys.superwall.rawValue)
+    case .custom:
+      try container.encode(CodingKeys.custom.rawValue)
     case .other:
       try container.encode(CodingKeys.other.rawValue)
     }
@@ -88,6 +96,8 @@ public enum ProductStore: Int, Codable, Sendable {
       self = .playStore
     case .superwall:
       self = .superwall
+    case .custom:
+      self = .custom
     case .other:
       self = .other
     case .none:

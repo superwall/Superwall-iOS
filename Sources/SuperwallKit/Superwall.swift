@@ -420,6 +420,7 @@ public final class Superwall: NSObject, ObservableObject {
     completion: (() -> Void)?
   ) {
     let dependencyContainer = DependencyContainer(
+      apiKey: apiKey,
       purchaseController: purchaseController,
       options: options
     )
@@ -443,8 +444,6 @@ public final class Superwall: NSObject, ObservableObject {
           }
         #endif
       }
-
-      dependencyContainer.storage.configure(apiKey: apiKey)
 
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 

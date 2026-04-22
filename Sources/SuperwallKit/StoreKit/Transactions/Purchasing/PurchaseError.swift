@@ -14,6 +14,7 @@ enum PurchaseError: LocalizedError {
   case noTransactionDetected
   case unverifiedTransaction
   case testModeFailure
+  case customProductWithoutPurchaseController
 
   var errorDescription: String? {
     switch self {
@@ -29,6 +30,8 @@ enum PurchaseError: LocalizedError {
       return "An unknown error occurred."
     case .testModeFailure:
       return "Simulated purchase failure (test mode)."
+    case .customProductWithoutPurchaseController:
+      return "Unable to purchase this product."
     }
   }
 }
