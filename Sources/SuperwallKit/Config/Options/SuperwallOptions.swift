@@ -44,6 +44,10 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// Objective-C bridge for ``localResources``. Exposed to ObjC under the name
   /// `localResources` and limited to `URL` values (asset-catalog entries are Swift-only).
+  ///
+  /// The setter replaces only the URL subset of ``localResources``; any
+  /// `CatalogAsset` entries previously registered from Swift are preserved so
+  /// they are not silently dropped by an ObjC assignment.
   @available(swift, obsoleted: 1.0)
   @objc(localResources)
   public var localResourcesObjC: [String: URL] {
@@ -51,7 +55,11 @@ public final class SuperwallOptions: NSObject, Encodable {
       return localResources.compactMapValues { $0 as? URL }
     }
     set {
-      localResources = newValue.mapValues { $0 as AssetResource }
+      var merged: [String: AssetResource] = localResources.filter { !($0.value is URL) }
+      for (key, url) in newValue {
+        merged[key] = url
+      }
+      localResources = merged
     }
   }
 

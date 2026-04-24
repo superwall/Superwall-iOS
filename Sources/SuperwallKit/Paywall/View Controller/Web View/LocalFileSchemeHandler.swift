@@ -7,9 +7,6 @@
 
 import Foundation
 import WebKit
-#if canImport(UIKit)
-import UIKit
-#endif
 #if canImport(UniformTypeIdentifiers)
 import UniformTypeIdentifiers
 #endif
