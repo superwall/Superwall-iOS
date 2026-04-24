@@ -13,6 +13,9 @@ import UIKit
 #if canImport(UniformTypeIdentifiers)
 import UniformTypeIdentifiers
 #endif
+#if canImport(MobileCoreServices)
+import MobileCoreServices
+#endif
 
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
@@ -132,6 +135,12 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     if #available(iOS 14.0, *) {
       if let type = UTType(uti),
         let mime = type.preferredMIMEType {
+        return mime
+      }
+    } else {
+      let cfUTI = uti as CFString
+      if let mime = UTTypeCopyPreferredTagWithClass(cfUTI, kUTTagClassMIMEType)?
+        .takeRetainedValue() as String? {
         return mime
       }
     }
