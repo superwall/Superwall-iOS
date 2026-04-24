@@ -7,6 +7,9 @@
 
 import Foundation
 import WebKit
+#if canImport(UIKit)
+import UIKit
+#endif
 #if canImport(UniformTypeIdentifiers)
 import UniformTypeIdentifiers
 #endif
@@ -111,10 +114,16 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       return try loadFile(at: localURL)
     }
     if let catalog = resource as? CatalogAsset {
-      guard let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) else {
-        throw FileError.fileNotFound("\(key) (data asset \(catalog.name))")
+      if let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) {
+        return (asset.data, mimeType(forUTI: asset.typeIdentifier))
       }
-      return (asset.data, mimeType(forUTI: asset.typeIdentifier))
+      #if canImport(UIKit)
+      if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil),
+        let data = image.pngData() {
+        return (data, "image/png")
+      }
+      #endif
+      throw FileError.fileNotFound("\(key) (asset \(catalog.name))")
     }
     throw FileError.fileNotFound(key)
   }

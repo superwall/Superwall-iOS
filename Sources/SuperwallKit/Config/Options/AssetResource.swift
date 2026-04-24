@@ -24,14 +24,17 @@ public protocol AssetResource {}
 
 extension URL: AssetResource {}
 
-/// An entry in an asset catalog (`.xcassets`) stored as a Data Set.
+/// An entry in an asset catalog (`.xcassets`).
 ///
-/// Resolved at load time via `NSDataAsset(name:bundle:)`, so the raw bytes are
-/// preserved without re-encoding. Use this when you want to ship paywall assets
-/// inside your `.xcassets` instead of as loose files in the bundle.
+/// Resolved at load time by trying `NSDataAsset(name:bundle:)` first (Data Set,
+/// raw bytes preserved with no re-encoding), then falling back to
+/// `UIImage(named:in:compatibleWith:)` re-encoded as PNG (Image Set).
 ///
-/// - Note: Add the asset to your `.xcassets` as a **Data Set** (not an Image Set)
-///   so `NSDataAsset` can read it and the webview receives the bytes verbatim.
+/// Prefer a Data Set if you can — it's lossless and works for any file type
+/// (images, video, Lottie JSON, etc.). The Image Set fallback exists so an
+/// existing `Logo` or icon Image Set "just works" without restructuring your
+/// asset catalog, but be aware: it picks a single scale variant and encodes
+/// to PNG, which can be larger than the original asset.
 public struct CatalogAsset: AssetResource {
   /// The name of the data asset as it appears in the asset catalog.
   public let name: String

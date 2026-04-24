@@ -108,7 +108,7 @@ struct LocalFileSchemeHandlerTests {
     ]
     let url = URL(string: "swlocal://hero-video")!
 
-    #expect(throws: LocalFileSchemeHandler.FileError.fileNotFound("hero-video (data asset ThisAssetDoesNotExist)")) {
+    #expect(throws: LocalFileSchemeHandler.FileError.fileNotFound("hero-video (asset ThisAssetDoesNotExist)")) {
       try handler.loadFile(from: url)
     }
 
