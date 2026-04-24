@@ -113,6 +113,14 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     if let localURL = resource as? URL {
       return try loadFile(at: localURL)
     }
+    #if canImport(UIKit)
+    if let image = resource as? UIImage {
+      guard let data = image.pngData() else {
+        throw FileError.unableToReadFile("\(key) (UIImage pngData nil)")
+      }
+      return (data, "image/png")
+    }
+    #endif
     if let catalog = resource as? CatalogAsset {
       #if canImport(UIKit)
       if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil),

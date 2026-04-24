@@ -234,6 +234,10 @@ private final class LocalResourceCell: UICollectionViewCell {
   func configure(id: String, resource: AssetResource) {
     if let url = resource as? URL {
       configureURL(id: id, url: url)
+    } else if let image = resource as? UIImage {
+      idLabel.text = "\(id) (UIImage)"
+      spinner.stopAnimating()
+      imageView.image = image
     } else if let catalog = resource as? CatalogAsset {
       configureCatalogAsset(id: id, catalog: catalog)
     } else {

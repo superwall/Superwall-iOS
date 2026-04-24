@@ -6,23 +6,33 @@
 //
 
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// A type that can be registered against ``SuperwallOptions/localResources`` and
 /// served to the paywall webview via the `swlocal://` URL scheme.
 ///
-/// `URL` conforms out of the box, so existing call sites registering file URLs
-/// keep working. To register an asset from an `.xcassets` Data Set (the iOS
-/// equivalent of Android's `R.raw.*` resource IDs), use ``CatalogAsset``.
+/// Conforming types:
+/// - `URL` — a file on disk.
+/// - `UIImage` — re-encoded as PNG when served to the webview.
+/// - ``CatalogAsset`` — a deferred lookup against an `.xcassets` entry. Handles
+///   both Image Sets and Data Sets (video, Lottie JSON, etc.).
 ///
 /// ```swift
 /// options.localResources = [
 ///   "hero-image": Bundle.main.url(forResource: "hero", withExtension: "png")!,
+///   "logo":       UIImage(named: "Logo")!,
 ///   "hero-video": CatalogAsset(name: "HeroVideo")
 /// ]
 /// ```
 public protocol AssetResource {}
 
 extension URL: AssetResource {}
+
+#if canImport(UIKit)
+extension UIImage: AssetResource {}
+#endif
 
 /// An entry in an asset catalog (`.xcassets`).
 ///

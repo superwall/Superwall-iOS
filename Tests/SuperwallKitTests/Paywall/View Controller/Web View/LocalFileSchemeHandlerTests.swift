@@ -9,6 +9,7 @@
 import Testing
 @testable import SuperwallKit
 import Foundation
+import UIKit
 
 @Suite(.serialized)
 struct LocalFileSchemeHandlerTests {
@@ -129,6 +130,25 @@ struct LocalFileSchemeHandlerTests {
     let (data, mimeType) = try handler.loadFile(from: url)
     #expect(data == Data("png-bytes".utf8))
     #expect(mimeType == "image/png")
+
+    Superwall.shared.options.localResources = [:]
+  }
+
+  @Test("UIImage conforms to AssetResource and is served as image/png")
+  func loadFileUIImageConformance() throws {
+    let handler = LocalFileSchemeHandler()
+    let renderer = UIGraphicsImageRenderer(size: CGSize(width: 4, height: 4))
+    let image = renderer.image { ctx in
+      UIColor.red.setFill()
+      ctx.fill(CGRect(x: 0, y: 0, width: 4, height: 4))
+    }
+
+    Superwall.shared.options.localResources = ["logo": image]
+    let url = URL(string: "swlocal://logo")!
+
+    let (data, mimeType) = try handler.loadFile(from: url)
+    #expect(mimeType == "image/png")
+    #expect(data == image.pngData())
 
     Superwall.shared.options.localResources = [:]
   }
