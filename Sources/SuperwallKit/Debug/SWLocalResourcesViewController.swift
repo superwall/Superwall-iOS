@@ -270,7 +270,10 @@ private final class LocalResourceCell: UICollectionViewCell {
         self?.spinner.stopAnimating()
         if let image = image {
           self?.imageView.image = image
-        } else if asset == nil {
+        } else if let asset = asset {
+          let byteCount = ByteCountFormatter.string(fromByteCount: Int64(asset.data.count), countStyle: .file)
+          self?.showErrorText("No preview\n\(asset.typeIdentifier) · \(byteCount)")
+        } else {
           self?.showErrorText("Asset not found")
         }
       }

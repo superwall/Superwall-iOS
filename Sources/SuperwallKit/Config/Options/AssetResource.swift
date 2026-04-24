@@ -6,9 +6,6 @@
 //
 
 import Foundation
-#if canImport(UIKit)
-import UIKit
-#endif
 
 /// A type that can be registered against ``SuperwallOptions/localResources`` and
 /// served to the paywall webview via the `swlocal://` URL scheme.
