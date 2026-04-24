@@ -7,6 +7,12 @@
 
 import Foundation
 import WebKit
+#if canImport(UIKit)
+import UIKit
+#endif
+#if canImport(UniformTypeIdentifiers)
+import UniformTypeIdentifiers
+#endif
 
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
@@ -83,7 +89,8 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
 
   // MARK: - File Loading
 
-  /// Loads a file from `SuperwallOptions.localResources` based on the URL host (the localResourceId).
+  /// Loads a file from `SuperwallOptions.localResources` based on the URL host
+  /// (the localResourceId).
   /// - Parameter url: The swlocal:// URL where the host is the localResourceId
   /// - Returns: Tuple of file data and MIME type
   func loadFile(from url: URL) throws -> (Data, String) {
@@ -91,16 +98,44 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       throw FileError.invalidURL
     }
 
-    guard let localURL = Superwall.shared.options.localResources[host] else {
+    guard let resource = Superwall.shared.options.localResources[host] else {
       throw FileError.fileNotFound(host)
     }
 
+    return try load(resource: resource, key: host)
+  }
+
+  /// Resolves an ``AssetResource`` to its data and MIME type.
+  private func load(resource: AssetResource, key: String) throws -> (Data, String) {
+    if let localURL = resource as? URL {
+      return try loadFile(at: localURL)
+    }
+    if let catalog = resource as? CatalogAsset {
+      guard let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) else {
+        throw FileError.fileNotFound("\(key) (data asset \(catalog.name))")
+      }
+      return (asset.data, mimeType(forUTI: asset.typeIdentifier))
+    }
+    throw FileError.fileNotFound(key)
+  }
+
+  private func loadFile(at localURL: URL) throws -> (Data, String) {
     guard let data = try? Data(contentsOf: localURL) else {
       throw FileError.unableToReadFile(localURL.path)
     }
+    return (data, mimeType(for: localURL.pathExtension))
+  }
 
-    let mimeType = self.mimeType(for: localURL.pathExtension)
-    return (data, mimeType)
+  /// Maps a UTI (e.g. `public.png`, `public.mpeg-4`) to a MIME type.
+  /// Falls back to `application/octet-stream` if the UTI can't be resolved.
+  private func mimeType(forUTI uti: String) -> String {
+    if #available(iOS 14.0, *) {
+      if let type = UTType(uti),
+        let mime = type.preferredMIMEType {
+        return mime
+      }
+    }
+    return "application/octet-stream"
   }
 
   // MARK: - MIME Type Detection

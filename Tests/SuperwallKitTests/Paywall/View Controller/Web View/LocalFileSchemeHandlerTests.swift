@@ -98,6 +98,41 @@ struct LocalFileSchemeHandlerTests {
     Superwall.shared.options.localResources = [:]
   }
 
+  // MARK: - AssetResource Tests
+
+  @Test("loadFile throws fileNotFound when CatalogAsset name is missing from bundle")
+  func loadFileMissingCatalogAsset() {
+    let handler = LocalFileSchemeHandler()
+    Superwall.shared.options.localResources = [
+      "hero-video": CatalogAsset(name: "ThisAssetDoesNotExist", bundle: .main)
+    ]
+    let url = URL(string: "swlocal://hero-video")!
+
+    #expect(throws: LocalFileSchemeHandler.FileError.fileNotFound("hero-video (data asset ThisAssetDoesNotExist)")) {
+      try handler.loadFile(from: url)
+    }
+
+    Superwall.shared.options.localResources = [:]
+  }
+
+  @Test("URL conforms to AssetResource and registers via the same dictionary")
+  func loadFileURLConformance() throws {
+    let handler = LocalFileSchemeHandler()
+    let tempDir = FileManager.default.temporaryDirectory
+    let tempFile = tempDir.appendingPathComponent("asset-resource-url.png")
+    try Data("png-bytes".utf8).write(to: tempFile)
+    defer { try? FileManager.default.removeItem(at: tempFile) }
+
+    Superwall.shared.options.localResources = ["hero-image": tempFile]
+    let url = URL(string: "swlocal://hero-image")!
+
+    let (data, mimeType) = try handler.loadFile(from: url)
+    #expect(data == Data("png-bytes".utf8))
+    #expect(mimeType == "image/png")
+
+    Superwall.shared.options.localResources = [:]
+  }
+
   @Test("loadFile detects correct mime types from file extension")
   func loadFileMimeTypes() throws {
     let handler = LocalFileSchemeHandler()
