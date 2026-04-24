@@ -114,15 +114,15 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       return try loadFile(at: localURL)
     }
     if let catalog = resource as? CatalogAsset {
-      if let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) {
-        return (asset.data, mimeType(forUTI: asset.typeIdentifier))
-      }
       #if canImport(UIKit)
       if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil),
         let data = image.pngData() {
         return (data, "image/png")
       }
       #endif
+      if let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) {
+        return (asset.data, mimeType(forUTI: asset.typeIdentifier))
+      }
       throw FileError.fileNotFound("\(key) (asset \(catalog.name))")
     }
     throw FileError.fileNotFound(key)

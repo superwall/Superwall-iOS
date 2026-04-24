@@ -26,15 +26,14 @@ extension URL: AssetResource {}
 
 /// An entry in an asset catalog (`.xcassets`).
 ///
-/// Resolved at load time by trying `NSDataAsset(name:bundle:)` first (Data Set,
-/// raw bytes preserved with no re-encoding), then falling back to
-/// `UIImage(named:in:compatibleWith:)` re-encoded as PNG (Image Set).
+/// Resolved at load time by trying `UIImage(named:in:compatibleWith:)` first
+/// (Image Set, re-encoded as PNG), then falling back to
+/// `NSDataAsset(name:bundle:)` (Data Set, raw bytes preserved with no
+/// re-encoding).
 ///
-/// Prefer a Data Set if you can — it's lossless and works for any file type
-/// (images, video, Lottie JSON, etc.). The Image Set fallback exists so an
-/// existing `Logo` or icon Image Set "just works" without restructuring your
-/// asset catalog, but be aware: it picks a single scale variant and encodes
-/// to PNG, which can be larger than the original asset.
+/// Use a Data Set for non-image content (video, Lottie JSON, etc.) or when
+/// you need lossless bytes. Image Sets work as-is for typical paywall imagery
+/// like logos and icons.
 public struct CatalogAsset: AssetResource {
   /// The name of the data asset as it appears in the asset catalog.
   public let name: String
