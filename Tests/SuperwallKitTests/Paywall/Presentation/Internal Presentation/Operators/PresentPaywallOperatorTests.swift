@@ -55,7 +55,8 @@ final class PresentPaywallOperatorTests {
         webView: webView,
         webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
         cache: nil,
-        paywallArchiveManager: nil
+        paywallArchiveManager: nil,
+        customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
 
       webView.delegate = paywallVc
@@ -124,7 +125,8 @@ final class PresentPaywallOperatorTests {
         webView: webView,
         webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
         cache: nil,
-        paywallArchiveManager: nil
+        paywallArchiveManager: nil,
+        customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
       paywallVc.shouldPresent = false
       webView.delegate = paywallVc
