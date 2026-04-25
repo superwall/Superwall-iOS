@@ -268,6 +268,15 @@ private final class LocalResourceCell: UICollectionViewCell {
     idLabel.text = "\(id) (asset: \(catalog.name))"
     spinner.startAnimating()
     DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+      // Mirror LocalFileSchemeHandler resolution order so Image Sets preview correctly.
+      if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil) {
+        DispatchQueue.main.async {
+          self?.spinner.stopAnimating()
+          self?.imageView.image = image
+        }
+        return
+      }
+
       let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle)
       let image = asset.flatMap { UIImage(data: $0.data) }
       DispatchQueue.main.async {
