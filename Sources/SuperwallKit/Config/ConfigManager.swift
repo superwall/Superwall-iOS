@@ -686,11 +686,11 @@ class ConfigManager {
         let entitlements = Set(superwallProduct.entitlements.map {
           Entitlement(id: $0.identifier)
         })
-        let testProduct = TestStoreProduct(
+        let apiProduct = APIStoreProduct(
           superwallProduct: superwallProduct,
           entitlements: entitlements
         )
-        let storeProduct = StoreProduct(testProduct: testProduct)
+        let storeProduct = StoreProduct(testProduct: apiProduct)
         await storeKitManager.setProduct(storeProduct, forIdentifier: superwallProduct.identifier)
       }
     } catch {

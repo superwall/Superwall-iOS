@@ -24,6 +24,9 @@ extension Superwall {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products and presentation style. Defaults to `nil`.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
+  ///   - onCustomCallback: An optional async block invoked when the paywall webview triggers a custom callback.
+  ///   Return a ``CustomCallbackResult`` to report success or failure back to the webview. Defaults to `nil`, in which
+  ///   case the webview receives a failure result for any custom callbacks.
   ///   - completion: A completion block accepting an optional ``PaywallViewController``, an optional
   ///   ``PaywallSkippedReason`` and an optional `Error`. If the ``PaywallViewController`` couldn't be retrieved
   ///   because its presentation should be skipped, the ``PaywallSkippedReason`` will be non-`nil`. Any errors
@@ -35,6 +38,7 @@ extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     delegate: PaywallViewControllerDelegate,
+    onCustomCallback: ((CustomCallback) async -> CustomCallbackResult)? = nil,
     completion: @escaping (PaywallViewController?, PaywallSkippedReason?, Error?) -> Void
   ) {
     Task { @MainActor in
@@ -43,7 +47,8 @@ extension Superwall {
           forPlacement: placement,
           params: params,
           paywallOverrides: paywallOverrides,
-          delegate: delegate
+          delegate: delegate,
+          onCustomCallback: onCustomCallback
         )
         completion(paywallViewController, nil, nil)
       } catch let reason as PaywallSkippedReason {
@@ -68,6 +73,9 @@ extension Superwall {
   ///   be dropped.
   ///   - paywallOverrides: An optional ``PaywallOverrides`` object whose parameters override the paywall defaults. Use this to override products and presentation style. Defaults to `nil`.
   ///   - delegate: A delegate responsible for handling user interactions with the retrieved ``PaywallViewController``.
+  ///   - onCustomCallback: An optional async block invoked when the paywall webview triggers a custom callback.
+  ///   Return a ``CustomCallbackResult`` to report success or failure back to the webview. Defaults to `nil`, in which
+  ///   case the webview receives a failure result for any custom callbacks.
   ///
   /// - Returns: A ``PaywallViewController`` object.
   /// - Throws: An `Error` explaining why it couldn't get the view controller. If the ``PaywallViewController`` couldn't be retrieved
@@ -80,7 +88,8 @@ extension Superwall {
     forPlacement placement: String,
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
-    delegate: PaywallViewControllerDelegate
+    delegate: PaywallViewControllerDelegate,
+    onCustomCallback: ((CustomCallback) async -> CustomCallbackResult)? = nil
   ) async throws -> PaywallViewController {
     return try await internallyGetPaywall(
       forPlacement: placement,
@@ -88,7 +97,8 @@ extension Superwall {
       paywallOverrides: paywallOverrides,
       delegate: .init(
         swiftDelegate: delegate,
-        objcDelegate: nil
+        objcDelegate: nil,
+        onCustomCallback: onCustomCallback
       )
     )
   }

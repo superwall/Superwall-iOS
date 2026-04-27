@@ -7,7 +7,7 @@ import UIKit
 import AVFoundation
 
 final class SWLocalResourcesViewController: UICollectionViewController {
-  private var resources: [(id: String, url: URL)] = []
+  private var resources: [(id: String, resource: AssetResource)] = []
 
   init() {
     let layout = UICollectionViewFlowLayout()
@@ -53,7 +53,7 @@ final class SWLocalResourcesViewController: UICollectionViewController {
 
     resources = Superwall.shared.options.localResources
       .sorted { $0.key < $1.key }
-      .map { (id: $0.key, url: $0.value) }
+      .map { (id: $0.key, resource: $0.value) }
   }
 
   @objc private func doneTapped() {
@@ -86,7 +86,7 @@ final class SWLocalResourcesViewController: UICollectionViewController {
     // swiftlint:disable:next force_cast
     ) as! LocalResourceCell
     let resource = resources[indexPath.item]
-    cell.configure(id: resource.id, url: resource.url)
+    cell.configure(id: resource.id, resource: resource.resource)
     return cell
   }
 }
@@ -231,7 +231,20 @@ private final class LocalResourceCell: UICollectionViewCell {
     spinner.stopAnimating()
   }
 
-  func configure(id: String, url: URL) {
+  func configure(id: String, resource: AssetResource) {
+    if let url = resource as? URL {
+      configureURL(id: id, url: url)
+    } else if let image = resource as? UIImage {
+      idLabel.text = "\(id) (UIImage)"
+      spinner.stopAnimating()
+      imageView.image = image
+    } else {
+      idLabel.text = id
+      showErrorText("Unsupported resource type")
+    }
+  }
+
+  private func configureURL(id: String, url: URL) {
     let ext = url.pathExtension.lowercased()
     idLabel.text = ext.isEmpty ? id : "\(id).\(ext)"
     spinner.startAnimating()

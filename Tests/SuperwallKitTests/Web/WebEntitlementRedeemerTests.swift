@@ -315,7 +315,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -430,7 +431,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -949,7 +951,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -1122,7 +1125,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -1304,7 +1308,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -1488,7 +1493,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -1666,7 +1672,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"
@@ -1830,7 +1837,8 @@ struct WebEntitlementRedeemerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     cache.save(paywallVc, forKey: "key")
     cache.activePaywallVcKey = "key"

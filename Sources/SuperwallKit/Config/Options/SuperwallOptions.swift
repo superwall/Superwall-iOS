@@ -4,25 +4,33 @@
 //
 //  Created by Yusuf Tör on 11/07/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Options for configuring Superwall, including paywall presentation and appearance.
 ///
 /// Pass an instance of this class to
 /// ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``.
+// swiftlint:disable type_body_length
 @objc(SWKSuperwallOptions)
 @objcMembers
 public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
-  /// A mapping of local resource IDs to local file URLs.
+  /// A mapping of local resource IDs to ``AssetResource`` values.
   ///
-  /// Use this to serve paywall assets (images, videos, Lottie animations) from local files
-  /// instead of fetching them over the network. When a paywall references a `localResourceId`,
-  /// the SDK will look up the corresponding URL in this dictionary and serve the file via the
-  /// `swlocal://` URL scheme.
+  /// Use this to serve paywall assets (images, videos, Lottie animations) from the app
+  /// bundle or an asset catalog instead of fetching them over the network. When a paywall
+  /// references a `localResourceId`, the SDK looks up the corresponding entry here and
+  /// serves it via the `swlocal://` URL scheme.
+  ///
+  /// `URL` conforms to ``AssetResource`` so file-URL call sites keep working. Register an
+  /// `.xcassets` Image Set by passing a `UIImage`.
   ///
   /// Set this before calling ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``
   /// to ensure resources are available before any paywall can trigger (e.g. on `app_launch`).
@@ -30,12 +38,45 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// ```swift
   /// let options = SuperwallOptions()
   /// options.localResources = [
-  ///   "hero-video": Bundle.main.url(forResource: "onboarding", withExtension: "mp4")!,
+  ///   "logo":       UIImage(named: "Logo")!,
   ///   "hero-image": Bundle.main.url(forResource: "hero", withExtension: "png")!
   /// ]
   /// Superwall.configure(apiKey: "your-api-key", options: options)
   /// ```
-  public var localResources: [String: URL] = [:]
+  @nonobjc public var localResources: [String: AssetResource] = [:]
+
+  /// Objective-C bridge for ``localResources``. Accepts `NSURL` and `UIImage` values
+  /// (mirroring the Swift surface); any other value type is dropped.
+  @available(swift, obsoleted: 1.0)
+  @objc(localResources)
+  public var localResourcesObjC: [String: NSObject] {
+    get {
+      return localResources.compactMapValues { resource in
+        if let url = resource as? URL {
+          return url as NSURL
+        }
+        #if canImport(UIKit)
+        if let image = resource as? UIImage {
+          return image
+        }
+        #endif
+        return nil
+      }
+    }
+    set {
+      localResources = newValue.compactMapValues { value in
+        if let url = value as? URL {
+          return url
+        }
+        #if canImport(UIKit)
+        if let image = value as? UIImage {
+          return image
+        }
+        #endif
+        return nil
+      }
+    }
+  }
 
   /// Controls when the SDK enters test mode.
   @objc(SWKTestModeBehavior)

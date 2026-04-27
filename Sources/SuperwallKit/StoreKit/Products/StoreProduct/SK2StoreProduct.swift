@@ -18,6 +18,7 @@ import StoreKit
 
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
+  private let priceFormatterProvider = PriceFormatterProvider()
   let entitlements: Set<Entitlement>
 
   init(
@@ -59,6 +60,16 @@ struct SK2StoreProduct: StoreProductType {
 
   var localizedPrice: String {
     return underlyingSK2Product.price.formatted(underlyingSK2Product.priceFormatStyle)
+  }
+
+  /// A `NumberFormatter` for formatting computed prices (daily, weekly, monthly, yearly).
+  /// Unlike `priceFormatStyle`, this does not apply storefront-specific rounding
+  /// that can cause values like £4.99 to display as £5.00 in production.
+  private var priceFormatter: NumberFormatter {
+    priceFormatterProvider.priceFormatterForSK2(
+      withCurrencyCode: underlyingSK2Product.priceFormatStyle.currencyCode,
+      locale: underlyingSK2Product.priceFormatStyle.locale
+    )
   }
 
   var localizedSubscriptionPeriod: String {
@@ -273,7 +284,8 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    let result = (inputPrice / periods).roundedPrice()
+    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 
   var weeklyPrice: String {
@@ -298,7 +310,8 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    let result = (inputPrice / periods).roundedPrice()
+    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 
   var monthlyPrice: String {
@@ -323,7 +336,8 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    let result = (inputPrice / periods).roundedPrice()
+    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 
   var yearlyPrice: String {
@@ -348,7 +362,8 @@ struct SK2StoreProduct: StoreProductType {
       periods = Decimal(numberOfUnits)
     }
 
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    let result = (inputPrice / periods).roundedPrice()
+    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 
   var hasFreeTrial: Bool {
@@ -593,15 +608,15 @@ struct SK2StoreProduct: StoreProductType {
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
     guard let introductoryDiscount = introductoryDiscount else {
-      return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
     if introductoryDiscount.price == 0.00 {
-      return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
 
     let introMonthlyPrice = introductoryDiscount.pricePerUnit(unit)
 
-    return introMonthlyPrice.formatted(underlyingSK2Product.priceFormatStyle)
+    return priceFormatter.string(from: NSDecimalNumber(decimal: introMonthlyPrice)) ?? "n/a"
   }
 
   var localizedTrialPeriodPrice: String {
