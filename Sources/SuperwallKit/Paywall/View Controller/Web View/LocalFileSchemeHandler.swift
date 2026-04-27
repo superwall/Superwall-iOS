@@ -30,6 +30,11 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   /// The custom URL scheme for local files
   static let scheme = "swlocal"
 
+  #if canImport(UIKit)
+  /// Caches PNG-encoded bytes per `UIImage` so repeat webview requests skip re-encoding.
+  private let imageDataCache = NSCache<UIImage, NSData>()
+  #endif
+
   /// Errors that can occur during file loading
   enum FileError: LocalizedError, Equatable {
     case invalidURL
@@ -109,9 +114,13 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     }
     #if canImport(UIKit)
     if let image = resource as? UIImage {
+      if let cached = imageDataCache.object(forKey: image) {
+        return (cached as Data, "image/png")
+      }
       guard let data = image.pngData() else {
         throw FileError.unableToReadFile("\(key) (UIImage pngData nil)")
       }
+      imageDataCache.setObject(data as NSData, forKey: image)
       return (data, "image/png")
     }
     #endif

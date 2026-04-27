@@ -45,8 +45,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// ```
   @nonobjc public var localResources: [String: AssetResource] = [:]
 
-  /// Objective-C bridge for ``localResources``. Accepts `NSURL` and `UIImage` values;
-  /// any other type is dropped.
+  /// Objective-C bridge for ``localResources``. Accepts `NSURL` and `UIImage` values
+  /// (mirroring the Swift surface); any other value type is dropped.
   @available(swift, obsoleted: 1.0)
   @objc(localResources)
   public var localResourcesObjC: [String: NSObject] {
