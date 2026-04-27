@@ -238,8 +238,6 @@ private final class LocalResourceCell: UICollectionViewCell {
       idLabel.text = "\(id) (UIImage)"
       spinner.stopAnimating()
       imageView.image = image
-    } else if let catalog = resource as? CatalogAsset {
-      configureCatalogAsset(id: id, catalog: catalog)
     } else {
       idLabel.text = id
       showErrorText("Unsupported resource type")
@@ -260,35 +258,6 @@ private final class LocalResourceCell: UICollectionViewCell {
       spinner.stopAnimating()
       if !FileManager.default.fileExists(atPath: url.path) {
         showErrorText("File not found")
-      }
-    }
-  }
-
-  private func configureCatalogAsset(id: String, catalog: CatalogAsset) {
-    idLabel.text = "\(id) (asset: \(catalog.name))"
-    spinner.startAnimating()
-    DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-      // Mirror LocalFileSchemeHandler resolution order so Image Sets preview correctly.
-      if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil) {
-        DispatchQueue.main.async {
-          self?.spinner.stopAnimating()
-          self?.imageView.image = image
-        }
-        return
-      }
-
-      let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle)
-      let image = asset.flatMap { UIImage(data: $0.data) }
-      DispatchQueue.main.async {
-        self?.spinner.stopAnimating()
-        if let image = image {
-          self?.imageView.image = image
-        } else if let asset = asset {
-          let byteCount = ByteCountFormatter.string(fromByteCount: Int64(asset.data.count), countStyle: .file)
-          self?.showErrorText("No preview\n\(asset.typeIdentifier) · \(byteCount)")
-        } else {
-          self?.showErrorText("Asset not found")
-        }
       }
     }
   }

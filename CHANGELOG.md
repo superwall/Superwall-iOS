@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds an `onCustomCallback` parameter to `getPaywall`.
-- `SuperwallOptions.localResources` now accepts `AssetResource` values, so paywall assets can be registered from an asset catalog (`.xcassets` Data Sets) via `CatalogAsset(name:bundle:)` in addition to file URLs. `URL` conforms to `AssetResource`, so existing call sites are unaffected.
+- `SuperwallOptions.localResources` now accepts UIImage's from xcasset files, e.g. `UIImage(named: "my-image")`.
 
 ## 4.15.0
 

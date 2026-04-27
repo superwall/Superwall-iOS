@@ -10,12 +10,6 @@ import WebKit
 #if canImport(UIKit)
 import UIKit
 #endif
-#if canImport(UniformTypeIdentifiers)
-import UniformTypeIdentifiers
-#endif
-#if canImport(MobileCoreServices)
-import MobileCoreServices
-#endif
 
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
@@ -121,18 +115,6 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       return (data, "image/png")
     }
     #endif
-    if let catalog = resource as? CatalogAsset {
-      #if canImport(UIKit)
-      if let image = UIImage(named: catalog.name, in: catalog.bundle, compatibleWith: nil),
-        let data = image.pngData() {
-        return (data, "image/png")
-      }
-      #endif
-      if let asset = NSDataAsset(name: catalog.name, bundle: catalog.bundle) {
-        return (asset.data, mimeType(forUTI: asset.typeIdentifier))
-      }
-      throw FileError.fileNotFound("\(key) (asset \(catalog.name))")
-    }
     throw FileError.fileNotFound(key)
   }
 
@@ -141,24 +123,6 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       throw FileError.unableToReadFile(localURL.path)
     }
     return (data, mimeType(for: localURL.pathExtension))
-  }
-
-  /// Maps a UTI (e.g. `public.png`, `public.mpeg-4`) to a MIME type.
-  /// Falls back to `application/octet-stream` if the UTI can't be resolved.
-  private func mimeType(forUTI uti: String) -> String {
-    if #available(iOS 14.0, *) {
-      if let type = UTType(uti),
-        let mime = type.preferredMIMEType {
-        return mime
-      }
-    } else {
-      let cfUTI = uti as CFString
-      if let mime = UTTypeCopyPreferredTagWithClass(cfUTI, kUTTagClassMIMEType)?
-        .takeRetainedValue() as String? {
-        return mime
-      }
-    }
-    return "application/octet-stream"
   }
 
   // MARK: - MIME Type Detection
