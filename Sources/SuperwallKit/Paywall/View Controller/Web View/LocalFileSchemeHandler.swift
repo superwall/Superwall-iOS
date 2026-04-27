@@ -32,7 +32,8 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
 
   #if canImport(UIKit)
   /// Caches PNG-encoded bytes per `UIImage` so repeat webview requests skip re-encoding.
-  private let imageDataCache = NSCache<UIImage, NSData>()
+  /// Shared across handler instances so reuse across paywalls also hits the cache.
+  private static let imageDataCache = NSCache<UIImage, NSData>()
   #endif
 
   /// Errors that can occur during file loading
@@ -114,13 +115,13 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     }
     #if canImport(UIKit)
     if let image = resource as? UIImage {
-      if let cached = imageDataCache.object(forKey: image) {
+      if let cached = Self.imageDataCache.object(forKey: image) {
         return (cached as Data, "image/png")
       }
       guard let data = image.pngData() else {
         throw FileError.unableToReadFile("\(key) (UIImage pngData nil)")
       }
-      imageDataCache.setObject(data as NSData, forKey: image)
+      Self.imageDataCache.setObject(data as NSData, forKey: image)
       return (data, "image/png")
     }
     #endif
