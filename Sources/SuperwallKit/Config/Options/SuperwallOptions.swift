@@ -7,6 +7,9 @@
 // swiftlint:disable file_length
 
 import Foundation
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Options for configuring Superwall, including paywall presentation and appearance.
 ///
@@ -26,8 +29,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// references a `localResourceId`, the SDK looks up the corresponding entry here and
   /// serves it via the `swlocal://` URL scheme.
   ///
-  /// `URL` conforms to ``AssetResource`` so file-URL call sites keep working. Register
-  /// entries from an `.xcassets` Data Set with ``CatalogAsset``.
+  /// `URL` conforms to ``AssetResource`` so file-URL call sites keep working. Register an
+  /// `.xcassets` Image Set by passing a `UIImage`.
   ///
   /// Set this before calling ``Superwall/configure(apiKey:purchaseController:options:completion:)-52tke``
   /// to ensure resources are available before any paywall can trigger (e.g. on `app_launch`).
@@ -35,23 +38,43 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// ```swift
   /// let options = SuperwallOptions()
   /// options.localResources = [
-  ///   "hero-video": CatalogAsset(name: "OnboardingHero"),
+  ///   "logo":       UIImage(named: "Logo")!,
   ///   "hero-image": Bundle.main.url(forResource: "hero", withExtension: "png")!
   /// ]
   /// Superwall.configure(apiKey: "your-api-key", options: options)
   /// ```
   @nonobjc public var localResources: [String: AssetResource] = [:]
 
-  /// Objective-C bridge for ``localResources``. Exposed to ObjC under the name
-  /// `localResources` and limited to `URL` values (asset-catalog entries are Swift-only).
+  /// Objective-C bridge for ``localResources``. Accepts `NSURL` and `UIImage` values;
+  /// any other type is dropped.
   @available(swift, obsoleted: 1.0)
   @objc(localResources)
-  public var localResourcesObjC: [String: URL] {
+  public var localResourcesObjC: [String: NSObject] {
     get {
-      return localResources.compactMapValues { $0 as? URL }
+      return localResources.compactMapValues { resource in
+        if let url = resource as? URL {
+          return url as NSURL
+        }
+        #if canImport(UIKit)
+        if let image = resource as? UIImage {
+          return image
+        }
+        #endif
+        return nil
+      }
     }
     set {
-      localResources = newValue.mapValues { $0 as AssetResource }
+      localResources = newValue.compactMapValues { value in
+        if let url = value as? URL {
+          return url
+        }
+        #if canImport(UIKit)
+        if let image = value as? UIImage {
+          return image
+        }
+        #endif
+        return nil
+      }
     }
   }
 
