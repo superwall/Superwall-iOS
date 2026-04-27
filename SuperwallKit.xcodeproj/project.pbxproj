@@ -443,6 +443,7 @@
 		CE43399599386456DCCD1FDC /* FakeLocationAuthorizationStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3529B422EB2D09B69265B591 /* FakeLocationAuthorizationStatusTests.swift */; };
 		CE5307A037FCFD8CB8380EB5 /* GetPaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3781CF21200CD2333F6779A /* GetPaywallManager.swift */; };
 		CE821667CB6676EA02510FE9 /* TrackingManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78C5C57C3C92444EBAC2E38 /* TrackingManagerProxy.swift */; };
+		CE85C4CC2D3E98738F2C37E7 /* AssetResource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23307BBFD80385233DDD4C43 /* AssetResource.swift */; };
 		CEF9BBFFE0D64A011A59FB4C /* TestModeManagerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17DB6AB272712E9350966E4 /* TestModeManagerFactory.swift */; };
 		CF2064883604B915C8768FC5 /* ASIdManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF989B3D90DC3D88FACC4D45 /* ASIdManagerProxy.swift */; };
 		CF3683E2AD703237EC0CE22E /* PaywallProducts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C95DABA23C6CBEF0AAA63C0 /* PaywallProducts.swift */; };
@@ -647,6 +648,7 @@
 		22439CFFFC5166F34D0DA524 /* WebViewURLConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewURLConfig.swift; sourceTree = "<group>"; };
 		22919EFD263425D38E7D9D38 /* WebEntitlementRedeemer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEntitlementRedeemer.swift; sourceTree = "<group>"; };
 		22D96B4C9B546F7B0EC73397 /* PaywallViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerWrapper.swift; sourceTree = "<group>"; };
+		23307BBFD80385233DDD4C43 /* AssetResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetResource.swift; sourceTree = "<group>"; };
 		236900A8A8F95CE92E612458 /* IdentityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityManager.swift; sourceTree = "<group>"; };
 		2378D0EF4F79DDF0BC45B389 /* FakeLocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeLocationManager.swift; sourceTree = "<group>"; };
 		23886A83274F67B1DCB8573A /* SWWebViewLoadingHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebViewLoadingHandlerTests.swift; sourceTree = "<group>"; };
@@ -2906,6 +2908,7 @@
 		E7D208EAB24A633EB74B1E31 /* Options */ = {
 			isa = PBXGroup;
 			children = (
+				23307BBFD80385233DDD4C43 /* AssetResource.swift */,
 				B1A64CCBCB23CC1715DF79AC /* PaywallOptions.swift */,
 				CFDA311A030FDFC45AEE248A /* SuperwallOptions.swift */,
 			);
@@ -3323,6 +3326,7 @@
 				9DC74748B0DC9DA519E70FE6 /* Array+Capability.swift in Sources */,
 				F8E799A3A83A2758D6EAA385 /* Array+Guarded.swift in Sources */,
 				B0B0AD9409CEFE7CA8225146 /* Array+SafeRemove.swift in Sources */,
+				CE85C4CC2D3E98738F2C37E7 /* AssetResource.swift in Sources */,
 				2428529A6B2B6E873DEC22E8 /* Assignment.swift in Sources */,
 				75083E470EB6E25E01F4F28B /* AsyncSequence+Extract.swift in Sources */,
 				69D24C6E0411E512FECF7258 /* Attribution.swift in Sources */,
