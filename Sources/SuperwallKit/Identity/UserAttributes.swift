@@ -119,7 +119,7 @@ extension Superwall {
         Logger.debug(
           logLevel: .warn,
           scope: .identityManager,
-          message: "Invalid email user attribute \"\(stringValue)\" — sending null to server"
+          message: "Invalid email user attribute — sending null to server"
         )
         return nil
       }
