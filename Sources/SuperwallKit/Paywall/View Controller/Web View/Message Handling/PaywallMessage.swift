@@ -42,6 +42,7 @@ enum ReviewType: String, Decodable {
   case external
 }
 
+// swiftlint:disable:next type_body_length
 enum PaywallMessage: Decodable, Equatable {
   case onReady(paywallJsVersion: String)
 	case templateParamsAndUserAttributes
@@ -56,8 +57,24 @@ enum PaywallMessage: Decodable, Equatable {
   case customPlacement(name: String, params: JSON)
   case userAttributesUpdated(attributes: JSON)
   case initiateWebCheckout(contextId: String)
+  case stripeCheckoutStart(checkoutContextId: String, productId: String)
+  case stripeCheckoutComplete(
+    checkoutContextId: String,
+    productId: String
+  )
+  case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
+  case stripeCheckoutFail(checkoutContextId: String, productId: String)
+  case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
+  case requestCallback(
+    requestId: String,
+    name: String,
+    behavior: CustomCallbackBehavior,
+    variables: JSON?
+  )
+  case hapticFeedback(hapticType: String)
+  case pageView(PageViewData)
 
   // All cases below here are sent from device to paywall
   case paywallClose
@@ -95,9 +112,17 @@ enum PaywallMessage: Decodable, Equatable {
     case customPlacement = "custom_placement"
     case userAttributesUpdated = "user_attribute_updated"
     case initiateWebCheckout = "initiate_web_checkout"
+    case stripeCheckoutStart = "stripe_checkout_start"
+    case stripeCheckoutComplete = "stripe_checkout_complete"
+    case stripeCheckoutSubmit = "stripe_checkout_submit"
+    case stripeCheckoutFail = "stripe_checkout_fail"
+    case stripeCheckoutAbandon = "stripe_checkout_abandon"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
+    case requestCallback = "request_callback"
+    case hapticFeedback = "haptic_feedback"
+    case pageView = "page_view"
   }
 
   // Everyone write to eventName, other may use the remaining keys
@@ -123,6 +148,9 @@ enum PaywallMessage: Decodable, Equatable {
     case delay
     case permissionType
     case requestId
+    case behavior
+    case variables
+    case hapticType
   }
 
   enum PaywallMessageError: Error {
@@ -195,6 +223,51 @@ enum PaywallMessage: Decodable, Equatable {
           self = .initiateWebCheckout(contextId: checkoutContextId)
           return
         }
+      case .stripeCheckoutStart:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutStart(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutComplete:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutComplete(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutSubmit:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutSubmit(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutFail:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutFail(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
+      case .stripeCheckoutAbandon:
+        if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
+          let productId = try? values.decode(String.self, forKey: .productId) {
+          self = .stripeCheckoutAbandon(
+            checkoutContextId: checkoutContextId,
+            productId: productId
+          )
+          return
+        }
       case .requestStoreReview:
         if let reviewType = try? values.decode(ReviewType.self, forKey: .reviewType) {
           self = .requestStoreReview(reviewType)
@@ -219,6 +292,29 @@ enum PaywallMessage: Decodable, Equatable {
         if let permissionType = try? values.decode(PermissionType.self, forKey: .permissionType),
           let requestId = try? values.decode(String.self, forKey: .requestId) {
           self = .requestPermission(permissionType: permissionType, requestId: requestId)
+          return
+        }
+      case .requestCallback:
+        if let requestId = try? values.decode(String.self, forKey: .requestId),
+          let name = try? values.decode(String.self, forKey: .name),
+          let behavior = try? values.decode(CustomCallbackBehavior.self, forKey: .behavior) {
+          let variables = try? values.decode(JSON.self, forKey: .variables)
+          self = .requestCallback(
+            requestId: requestId,
+            name: name,
+            behavior: behavior,
+            variables: variables
+          )
+          return
+        }
+      case .hapticFeedback:
+        if let hapticType = try? values.decode(String.self, forKey: .hapticType) {
+          self = .hapticFeedback(hapticType: hapticType)
+          return
+        }
+      case .pageView:
+        if let data = try? PageViewData(from: decoder) {
+          self = .pageView(data)
           return
         }
       }

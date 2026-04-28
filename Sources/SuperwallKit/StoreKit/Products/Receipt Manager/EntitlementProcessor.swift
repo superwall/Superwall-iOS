@@ -394,10 +394,22 @@ enum EntitlementProcessor {
         if let entitlements = finalEntitlementsByProductId[productId] {
           var updatedEntitlements: Set<Entitlement> = []
           for entitlement in entitlements where entitlement.id == entitlementId {
+            // The subscription-level state from subscriptionStatus is
+            // authoritative. The first pass may incorrectly compute
+            // isActive = true when Transaction.all contains a transaction
+            // without revocationDate or with a future expirationDate, even
+            // though the subscription as a whole is revoked or expired.
+            let resolvedIsActive: Bool
+            if state == .revoked || state == .expired {
+              resolvedIsActive = false
+            } else {
+              resolvedIsActive = entitlement.isActive
+            }
+
             let updatedEntitlement = Entitlement(
               id: entitlement.id,
               type: entitlement.type,
-              isActive: entitlement.isActive,
+              isActive: resolvedIsActive,
               productIds: entitlement.productIds,
               latestProductId: entitlement.latestProductId,
               store: entitlement.store,

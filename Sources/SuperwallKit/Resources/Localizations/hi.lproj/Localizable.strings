@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "ठीक है";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "वेब से पुनर्स्थापित करें?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "आपकी App Store सदस्यताएँ पुनर्स्थापित कर दी गई हैं। क्या आप वेब पर और जाँचना चाहेंगे?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "कोई सदस्यता नहीं मिली";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "App Store पर कोई सदस्यता नहीं मिली, क्या आप वेब पर जाँचना चाहेंगे?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "हाँ";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "रद्द करें";
+
+/* Purchase error alert title */
+"purchase_error_title" = "एक त्रुटि हुई";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "स्वीकृति की प्रतीक्षा";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "धन्यवाद! यह खरीदारी आपके अभिभावक की स्वीकृति की प्रतीक्षा में है। कृपया स्वीकृति मिलने के बाद पुनः प्रयास करें।";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "पूर्ण";

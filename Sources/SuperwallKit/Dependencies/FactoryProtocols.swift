@@ -78,8 +78,6 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
-
-  func makeConfigManager() -> ConfigManager?
 }
 
 protocol IdentityFactory: AnyObject {
@@ -133,6 +131,8 @@ protocol StoreTransactionFactory: AnyObject {
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
+
+  func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction
 }
 
 protocol OptionsFactory: AnyObject {
@@ -157,6 +157,8 @@ protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
+  var isTestMode: Bool { get }
+  var testModeFreeTrialOverride: FreeTrialOverride { get }
 }
 
 protocol ConfigAttributesFactory: AnyObject {
@@ -164,6 +166,7 @@ protocol ConfigAttributesFactory: AnyObject {
 }
 
 protocol WebEntitlementFactory: AnyObject {
+  func makeIsContainerReady() -> Bool
   func makeDeviceId() -> String
   func makeAppUserId() -> String?
   func makeAliasId() -> String

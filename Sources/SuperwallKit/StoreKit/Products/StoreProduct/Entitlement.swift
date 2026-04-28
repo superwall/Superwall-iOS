@@ -478,4 +478,12 @@ public extension Set where Element == Entitlement {
     let combined = Array(self) + Array(other)
     return Entitlement.mergePrioritized(combined)
   }
+
+  /// Updates this set with the elements of the given set, using priority logic.
+  ///
+  /// When entitlements with the same ID exist in both sets, keeps the higher priority one
+  /// and merges their productIds.
+  mutating func formUnion(_ other: Set<Entitlement>) {
+    self = union(other)
+  }
 }

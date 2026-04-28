@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "U redu";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Vratiti putem weba?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Vaše pretplate iz App Storea su vraćene. Želite li provjeriti još na webu?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Pretplata nije pronađena";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Pretplata iz App Storea nije pronađena. Želite li provjeriti na webu?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Da";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Odustani";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Došlo je do pogreške";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Čeka se odobrenje";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Hvala! Ova kupnja čeka odobrenje vašeg roditelja. Molimo pokušajte ponovno nakon što bude odobrena.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gotovo";

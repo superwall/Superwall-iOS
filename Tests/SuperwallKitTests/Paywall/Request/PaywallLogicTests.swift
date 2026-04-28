@@ -1,19 +1,19 @@
 //
 //  PaywallLogicTests.swift
-//  
+//
 //
 //  Created by Yusuf Tör on 17/03/2022.
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
 @testable import SuperwallKit
 import StoreKit
 
-@available(iOS 14.0, *)
-class PaywallLogicTests: XCTestCase {
+struct PaywallLogicTests {
   // MARK: - Request Hash
-  func testRequestHash_withIdentifierNoEvent() {
+  @Test
+  func requestHash_withIdentifierNoEvent() {
     // Given
     let id = "myid"
     let locale = "en_US"
@@ -26,10 +26,11 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "\(id)_\(locale)_")
+    #expect(hash == "\(id)_\(locale)_")
   }
 
-  func testRequestHash_withIdentifierWithEvent() {
+  @Test
+  func requestHash_withIdentifierWithEvent() {
     // Given
     let id = "myid"
     let locale = "en_US"
@@ -44,10 +45,11 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "\(id)_\(locale)_")
+    #expect(hash == "\(id)_\(locale)_")
   }
 
-  func testRequestHash_withIdentifierWithEventAndProducts() {
+  @Test
+  func requestHash_withIdentifierWithEventAndProducts() {
     // Given
     let id = "myid"
     let locale = "en_US"
@@ -71,10 +73,11 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "\(id)_\(locale)_abcdef")
+    #expect(hash == "\(id)_\(locale)_abcdef")
   }
 
-  func testRequestHash_noIdentifierWithEvent() {
+  @Test
+  func requestHash_noIdentifierWithEvent() {
     // Given
     let locale = "en_US"
     let eventName = "MyEvent"
@@ -89,10 +92,11 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "\(eventName)_\(locale)_")
+    #expect(hash == "\(eventName)_\(locale)_")
   }
 
-  func testRequestHash_noIdentifierNoEvent() {
+  @Test
+  func requestHash_noIdentifierNoEvent() {
     // Given
     let locale = "en_US"
 
@@ -103,10 +107,11 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "$called_manually_\(locale)_")
+    #expect(hash == "$called_manually_\(locale)_")
   }
 
-  func testRequestHash_noIdentifierWithEventAndProducts() {
+  @Test
+  func requestHash_noIdentifierWithEventAndProducts() {
     // Given
     let locale = "en_US"
     let eventName = "MyEvent"
@@ -126,30 +131,23 @@ class PaywallLogicTests: XCTestCase {
     )
 
     // Then
-    XCTAssertEqual(hash, "\(eventName)_\(locale)_abc")
+    #expect(hash == "\(eventName)_\(locale)_abc")
   }
 
-  // MARK: - getVariablesAndFreeTrial
-  func testGetVariablesAndFreeTrial_noProducts() async {
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+  // MARK: - getProductVariables
+  @Test
+  func getProductVariables_noProducts() {
+    let response = PaywallLogic.getProductVariables(
       productItems: [],
-      productsById: [:],
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: [:]
     )
 
-    let expectation = ProductProcessingOutcome(
-      productVariables: [],
-      swProducts: [],
-      isFreeTrialAvailable: false
-    )
-
-    XCTAssertEqual(response.isFreeTrialAvailable, expectation.isFreeTrialAvailable)
-    XCTAssertTrue(response.productVariables.isEmpty)
-    XCTAssertTrue(response.swProducts.isEmpty)
+    #expect(response.productVariables.isEmpty)
+    #expect(response.swProducts.isEmpty)
   }
 
-  func testGetVariablesAndFreeTrial_productNotFound() async {
+  @Test
+  func getProductVariables_productNotFound() {
     let productId = "id1"
     let products = [Product(
       name: "primary",
@@ -165,25 +163,17 @@ class PaywallLogicTests: XCTestCase {
     )
     let productsById = [skProductId: StoreProduct(sk1Product: skProduct, entitlements: [])]
 
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: productsById
     )
 
-    let expectation = ProductProcessingOutcome(
-      productVariables: [],
-      swProducts: [],
-      isFreeTrialAvailable: false
-    )
-
-    XCTAssertEqual(response.isFreeTrialAvailable, expectation.isFreeTrialAvailable)
-    XCTAssertTrue(response.productVariables.isEmpty)
-    XCTAssertTrue(response.swProducts.isEmpty)
+    #expect(response.productVariables.isEmpty)
+    #expect(response.swProducts.isEmpty)
   }
 
-  func testGetVariablesAndFreeTrial_secondaryProduct() async {
+  @Test
+  func getProductVariables_secondaryProduct() {
     // Given
     let productId = "id1"
     let products = [Product(
@@ -204,26 +194,23 @@ class PaywallLogicTests: XCTestCase {
     let productsById = [productId: product]
 
     // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { product in return false }
+      productsById: productsById
     )
 
     // Then
-
     let expectedProductVariables = [ProductVariable(
       name: "secondary",
       attributes: product.attributesJson,
       id: productId,
       hasIntroOffer: false
     )]
-    XCTAssertFalse(response.isFreeTrialAvailable)
-    XCTAssertEqual(response.productVariables, expectedProductVariables)
+    #expect(response.productVariables == expectedProductVariables)
   }
 
-  func testGetVariablesAndFreeTrial_primaryProductHasPurchased_noOverride() async {
+  @Test
+  func getProductVariables_primaryProductWithIntroOffer() {
     // Given
     let productId = "id1"
     let products = [Product(
@@ -236,52 +223,6 @@ class PaywallLogicTests: XCTestCase {
       testSubscriptionPeriod: MockSubscriptionPeriod()
     )
 
-    let product = StoreProduct(
-      sk1Product:
-        MockSkProduct(
-          productIdentifier: productId,
-          introPeriod: mockIntroPeriod,
-          price: 1.99
-        ), 
-      entitlements: []
-    )
-    let productsById = [productId: product]
-
-    
-    // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in
-        return false
-      }
-    )
-
-    // Then
-    let expectedProductVariables = [ProductVariable(
-      name: "primary",
-      attributes: product.attributesJson,
-      id: productId,
-      hasIntroOffer: true
-    )]
-
-    XCTAssertFalse(response.isFreeTrialAvailable)
-    XCTAssertEqual(response.productVariables, expectedProductVariables)
-  }
-
-  func testGetVariablesAndFreeTrial_primaryProductHasntPurchased_noOverride() async {
-    // Given
-    let productId = "id1"
-    let products = [Product(
-      name: "primary",
-      type: .appStore(.init(id: productId)),
-      id: productId,
-      entitlements: []
-    )]
-    let mockIntroPeriod = MockIntroductoryPeriod(
-      testSubscriptionPeriod: MockSubscriptionPeriod()
-    )
     let product = StoreProduct(
       sk1Product:
         MockSkProduct(
@@ -294,58 +235,9 @@ class PaywallLogicTests: XCTestCase {
     let productsById = [productId: product]
 
     // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
+    let response = PaywallLogic.getProductVariables(
       productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: nil,
-      isFreeTrialAvailable: { _ in
-        return true
-      }
-    )
-
-    // Then
-    let expectedVariables = [ProductVariable(
-      name: "primary",
-      attributes: product.attributesJson,
-      id: productId,
-      hasIntroOffer: true
-    )]
-
-    XCTAssertTrue(response.isFreeTrialAvailable)
-    XCTAssertEqual(response.productVariables, expectedVariables)
-  }
-
-  func testGetVariablesAndFreeTrial_primaryProductHasPurchased_withOverride() async {
-    // Given
-    let productId = "id1"
-    let products = [Product(
-      name: "primary",
-      type: .appStore(.init(id: productId)),
-      id: productId,
-      entitlements: []
-    )]
-    let mockIntroPeriod = MockIntroductoryPeriod(
-      testSubscriptionPeriod: MockSubscriptionPeriod()
-    )
-    let product = StoreProduct(
-      sk1Product:
-        MockSkProduct(
-          productIdentifier: productId,
-          introPeriod: mockIntroPeriod,
-          price: 1.99
-        ), 
-      entitlements: []
-    )
-    let productsById = [productId: product]
-
-    // When
-    let response = await PaywallLogic.getVariablesAndFreeTrial(
-      productItems: products,
-      productsById: productsById,
-      isFreeTrialAvailableOverride: true,
-      isFreeTrialAvailable: { _ in
-        return false
-      }
+      productsById: productsById
     )
 
     // Then
@@ -355,7 +247,6 @@ class PaywallLogicTests: XCTestCase {
       id: productId,
       hasIntroOffer: true
     )]
-    XCTAssertTrue(response.isFreeTrialAvailable)
-    XCTAssertEqual(response.productVariables, expectedProductVariables)
+    #expect(response.productVariables == expectedProductVariables)
   }
 }

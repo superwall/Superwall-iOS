@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
+// swiftlint:disable file_length
 
 import Foundation
 
@@ -323,7 +324,7 @@ extension Endpoint where
 
 // MARK: - IntroOfferToken
 extension Endpoint where
-  Kind == EndpointKinds.Web2App,
+  Kind == EndpointKinds.SubscriptionsAPI,
   Response == IntroOfferTokenWrapper {
   static func getIntroOfferToken(
     productIds: [String],
@@ -345,7 +346,7 @@ extension Endpoint where
 
     return Endpoint(
       components: Components(
-        host: .web2app,
+        host: .subscriptionsApi,
         path: "app-store/intro-eligibility/jws",
         bodyData: bodyData
       ),
@@ -355,17 +356,30 @@ extension Endpoint where
 }
 
 
-// MARK: - Web2App
+// MARK: - SubscriptionsAPI
 extension Endpoint where
-  Kind == EndpointKinds.Web2App,
+  Kind == EndpointKinds.SubscriptionsAPI,
   Response == RedeemResponse {
   static func redeem(request: RedeemRequest) -> Self {
     let bodyData = try? JSONEncoder().encode(request)
 
     return Endpoint(
       components: Components(
-        host: .web2app,
+        host: .subscriptionsApi,
         path: "redeem",
+        bodyData: bodyData
+      ),
+      method: .post
+    )
+  }
+
+  static func pollRedemptionResult(request: PollRedemptionResultRequest) -> Self {
+    let bodyData = try? JSONEncoder().encode(request)
+
+    return Endpoint(
+      components: Components(
+        host: .subscriptionsApi,
+        path: "checkout/session/poll-redemption-result",
         bodyData: bodyData
       ),
       method: .post
@@ -374,7 +388,7 @@ extension Endpoint where
 }
 
 extension Endpoint where
-  Kind == EndpointKinds.Web2App,
+  Kind == EndpointKinds.SubscriptionsAPI,
   Response == EntitlementsResponse {
   static func entitlements(
     appUserId: String?,
@@ -384,9 +398,26 @@ extension Endpoint where
 
     return Endpoint(
       components: Components(
-        host: .web2app,
+        host: .subscriptionsApi,
         path: "users/\(appUserId ?? deviceId)/entitlements",
         queryItems: queryItems
+      ),
+      method: .get
+    )
+  }
+}
+
+// MARK: - Superwall Products
+extension Endpoint where
+  Kind == EndpointKinds.SubscriptionsAPI,
+  Response == SuperwallProductsResponse {
+  /// Fetches all products from the subscriptions API.
+  /// The application is inferred from the SDK's public API key.
+  static func superwallProducts() -> Self {
+    return Endpoint(
+      components: Components(
+        host: .subscriptionsApi,
+        path: "products"
       ),
       method: .get
     )

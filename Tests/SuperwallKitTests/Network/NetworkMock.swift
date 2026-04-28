@@ -19,10 +19,15 @@ final class NetworkMock: Network {
   var getEntitlementsResponse: EntitlementsResponse?
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
+  var pollRedemptionResultRequest: PollRedemptionResultRequest?
+  var pollRedemptionResultResponses: [Result<RedeemResponse, Error>] = []
   var getIntroOfferTokenResult: Result<[String: IntroOfferToken], Error>?
   var getIntroOfferTokenCallCount = 0
   var redeemDelay: TimeInterval = 0
   var redeemCallCount = 0
+  var pollRedemptionResultCallCount = 0
+  var onRedeemEntitlements: (() -> Void)?
+  var onPollRedemptionResult: (() -> Void)?
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session
@@ -58,6 +63,7 @@ final class NetworkMock: Network {
   override func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
     redeemRequest = request
     redeemCallCount += 1
+    onRedeemEntitlements?()
 
     if redeemDelay > 0 {
       try? await Task.sleep(nanoseconds: UInt64(redeemDelay * 1_000_000_000))
@@ -78,6 +84,30 @@ final class NetworkMock: Network {
     if let getEntitlementsResponse = getEntitlementsResponse {
       return getEntitlementsResponse
     } else if let redeemError = redeemError {
+      throw redeemError
+    }
+    throw NetworkError.unknown
+  }
+
+  override func pollRedemptionResult(request: PollRedemptionResultRequest) async throws -> RedeemResponse {
+    pollRedemptionResultRequest = request
+    pollRedemptionResultCallCount += 1
+    onPollRedemptionResult?()
+
+    if !pollRedemptionResultResponses.isEmpty {
+      let result = pollRedemptionResultResponses.removeFirst()
+      switch result {
+      case .success(let response):
+        return response
+      case .failure(let error):
+        throw error
+      }
+    }
+
+    if let getWebEntitlementsResponse {
+      return getWebEntitlementsResponse
+    }
+    if let redeemError {
       throw redeemError
     }
     throw NetworkError.unknown

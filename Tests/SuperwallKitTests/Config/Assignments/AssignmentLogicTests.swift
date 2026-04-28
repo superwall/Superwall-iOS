@@ -6,13 +6,13 @@
 //
 // swiftlint:disable all
 
-import XCTest
+import Testing
+import Foundation
 
 @testable import SuperwallKit
 
-@available(iOS 14, *)
-class AssignmentLogicTests: XCTestCase {
-  func testGetOutcome_holdout() async throws {
+struct AssignmentLogicTests {
+  @Test func getOutcome_holdout() async throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -59,11 +59,12 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .holdout(returnedExperiment) = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected a holdout")
+      Issue.record("Incorrect outcome. Expected a holdout")
+      return
     }
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
-    XCTAssertEqual(returnedExperiment.groupId, rawExperiment.groupId)
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
+    #expect(returnedExperiment.id == rawExperiment.id)
+    #expect(returnedExperiment.groupId == rawExperiment.groupId)
+    #expect(returnedExperiment.id == rawExperiment.id)
 
     let expectedConfirmableAssignments = Assignment(
       experimentId: triggerRule.experiment.id,
@@ -71,10 +72,10 @@ class AssignmentLogicTests: XCTestCase {
       isSentToServer: false
     )
     let confirmableAssignments = outcome.assignment!
-    XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
+    #expect(confirmableAssignments == expectedConfirmableAssignments)
   }
 
-  func testGetOutcome_presentIdentifier_unconfirmedAssignmentsOnly() async throws {
+  @Test func getOutcome_presentIdentifier_unconfirmedAssignmentsOnly() async throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -124,12 +125,13 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected a holdout")
+      Issue.record("Incorrect outcome. Expected a holdout")
+      return
     }
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
-    XCTAssertEqual(returnedExperiment.groupId, rawExperiment.groupId)
-    XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
+    #expect(returnedExperiment.id == rawExperiment.id)
+    #expect(returnedExperiment.groupId == rawExperiment.groupId)
+    #expect(returnedExperiment.variant.paywallId == paywallId)
+    #expect(returnedExperiment.id == rawExperiment.id)
 
     let expectedConfirmableAssignments = Assignment(
       experimentId: triggerRule.experiment.id,
@@ -138,10 +140,10 @@ class AssignmentLogicTests: XCTestCase {
     )
     let confirmableAssignments = outcome.assignment!
 
-    XCTAssertEqual(confirmableAssignments, expectedConfirmableAssignments)
+    #expect(confirmableAssignments == expectedConfirmableAssignments)
   }
 
-  func testGetOutcome_presentIdentifier_confirmedAssignmentsOnly() async throws {
+  @Test func getOutcome_presentIdentifier_confirmedAssignmentsOnly() async throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -192,18 +194,19 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected a holdout")
+      Issue.record("Incorrect outcome. Expected a holdout")
+      return
     }
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
-    XCTAssertEqual(returnedExperiment.groupId, rawExperiment.groupId)
-    XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
+    #expect(returnedExperiment.id == rawExperiment.id)
+    #expect(returnedExperiment.groupId == rawExperiment.groupId)
+    #expect(returnedExperiment.variant.paywallId == paywallId)
+    #expect(returnedExperiment.id == rawExperiment.id)
 
     let outcomeAssignment = outcome.assignment
-    XCTAssertEqual(assignment, outcomeAssignment)
+    #expect(assignment == outcomeAssignment)
   }
 
-  func testGetOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition()
+  @Test func getOutcome_presentIdentifier_confirmedAssignmentsAndUnconfirmedAssignmentsRaceCondition()
     async throws
   {
     // MARK: Given
@@ -261,18 +264,19 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case let .paywall(experiment: returnedExperiment) = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected a holdout")
+      Issue.record("Incorrect outcome. Expected a holdout")
+      return
     }
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
-    XCTAssertEqual(returnedExperiment.groupId, rawExperiment.groupId)
-    XCTAssertEqual(returnedExperiment.variant.paywallId, paywallId)
-    XCTAssertEqual(returnedExperiment.id, rawExperiment.id)
+    #expect(returnedExperiment.id == rawExperiment.id)
+    #expect(returnedExperiment.groupId == rawExperiment.groupId)
+    #expect(returnedExperiment.variant.paywallId == paywallId)
+    #expect(returnedExperiment.id == rawExperiment.id)
 
     let assignment = outcome.assignment
-    XCTAssertEqual(assignment?.variant, variant)
+    #expect(assignment?.variant == variant)
   }
 
-  func testGetOutcome_noRuleMatch() async throws {
+  @Test func getOutcome_noRuleMatch() async throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -321,13 +325,14 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .noAudienceMatch = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected noAudienceMatch")
+      Issue.record("Incorrect outcome. Expected noAudienceMatch")
+      return
     }
     let confirmableAssignments = outcome.assignment
-    XCTAssertNil(confirmableAssignments)
+    #expect(confirmableAssignments == nil)
   }
 
-  func testGetOutcome_triggerNotFound() async throws {
+  @Test func getOutcome_triggerNotFound() async throws {
     // MARK: Given
     let eventName = "opened_application"
     let variantId = "7"
@@ -376,10 +381,11 @@ class AssignmentLogicTests: XCTestCase {
 
     // MARK: Then
     guard case .placementNotFound = outcome.triggerResult else {
-      return XCTFail("Incorrect outcome. Expected unknown event")
+      Issue.record("Incorrect outcome. Expected unknown event")
+      return
     }
 
     let confirmableAssignments = outcome.assignment
-    XCTAssertNil(confirmableAssignments)
+    #expect(confirmableAssignments == nil)
   }
 }

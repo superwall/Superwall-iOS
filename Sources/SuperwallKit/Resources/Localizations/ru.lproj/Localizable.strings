@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "ОК";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Восстановить через веб?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Ваши подписки App Store были восстановлены. Хотите проверить наличие других в интернете?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Подписка не найдена";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Подписка App Store не найдена. Хотите проверить в интернете?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Да";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Отмена";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Произошла ошибка";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Ожидание одобрения";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Спасибо! Эта покупка ожидает одобрения вашего родителя. Пожалуйста, попробуйте снова после одобрения.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Готово";

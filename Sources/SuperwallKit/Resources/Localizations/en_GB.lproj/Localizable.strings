@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Restore via the web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Your App Store subscriptions were restored. Would you like to check for more on the web?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "No Subscription Found";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "No App Store subscription found, would you like to check on the web?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Yes";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Cancel";
+
+/* Purchase error alert title */
+"purchase_error_title" = "An error occurred";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Waiting for Approval";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Thank you! This purchase is pending approval from your parent. Please try again once it is approved.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Done";

@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "ОК";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Відновити через веб?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Ваші підписки з App Store було відновлено. Бажаєте перевірити ще в інтернеті?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Підписку не знайдено";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Підписку з App Store не знайдено. Бажаєте перевірити в інтернеті?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Так";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Скасувати";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Сталася помилка";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Очікування схвалення";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Дякуємо! Ця покупка очікує на схвалення від вашого батька чи матері. Будь ласка, спробуйте ще раз після схвалення.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Готово";

@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "OK";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Przywrócić przez internet?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Twoje subskrypcje z App Store zostały przywrócone. Czy chcesz sprawdzić więcej w internecie?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "Nie znaleziono subskrypcji";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "Nie znaleziono subskrypcji z App Store. Czy chcesz sprawdzić w internecie?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Tak";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Anuluj";
+
+/* Purchase error alert title */
+"purchase_error_title" = "Wystąpił błąd";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Oczekiwanie na zatwierdzenie";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Dziękujemy! Ten zakup oczekuje na zatwierdzenie przez rodzica. Spróbuj ponownie po zatwierdzeniu.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Gotowe";

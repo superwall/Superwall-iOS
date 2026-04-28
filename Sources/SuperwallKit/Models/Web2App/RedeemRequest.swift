@@ -19,3 +19,9 @@ struct TransactionReceipt: Encodable {
   let type = "IOS"
   let jwsRepresentation: String
 }
+
+struct PollRedemptionResultRequest: Encodable {
+  let checkoutContextId: String
+  let deviceId: String
+  let appUserId: String?
+}

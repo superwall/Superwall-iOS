@@ -6,3 +6,33 @@
 
 /* Alert action button */
 "purchase_success_action_title" = "D'acord";
+
+/* Web restore alert – title when user has active subscriptions */
+"restore_web_has_subs_title" = "Restaurar des del web?";
+
+/* Web restore alert – message when user has active subscriptions */
+"restore_web_has_subs_message" = "Les teves subscripcions de l'App Store s'han restaurat. Vols comprovar-ne més al web?";
+
+/* Web restore alert – title when no subscriptions found */
+"restore_web_no_subs_title" = "No s'ha trobat cap subscripció";
+
+/* Web restore alert – message when no subscriptions found */
+"restore_web_no_subs_message" = "No s'ha trobat cap subscripció a l'App Store. Vols comprovar-ho al web?";
+
+/* Web restore alert – confirm action */
+"restore_web_action_yes" = "Sí";
+
+/* Web restore alert – cancel action */
+"restore_web_action_cancel" = "Cancel·lar";
+
+/* Purchase error alert title */
+"purchase_error_title" = "S'ha produït un error";
+
+/* Purchase pending approval alert title */
+"purchase_pending_title" = "Esperant l'aprovació";
+
+/* Purchase pending approval alert message */
+"purchase_pending_message" = "Gràcies! Aquesta compra està pendent d'aprovació del teu pare o mare. Si us plau, torna-ho a provar un cop sigui aprovada.";
+
+/* Generic alert dismiss button */
+"alert_action_done" = "Fet";

@@ -32,6 +32,9 @@ actor ReceiptManager {
   private unowned let storage: Storage
   static var appTransactionId: String?
   static var appId: UInt64?
+  /// Set from `AppTransaction.shared` when available (iOS 16+).
+  /// `true` means sandbox, `false` means production, `nil` means not yet determined.
+  static var isSandboxEnvironment: Bool?
 
   init(
     storeKitVersion: SuperwallOptions.StoreKitVersion,
@@ -91,6 +94,7 @@ actor ReceiptManager {
           .unverified(let transaction, _):
           Self.appTransactionId = transaction.appTransactionID
           Self.appId = transaction.appID
+          Self.isSandboxEnvironment = transaction.environment == .sandbox || transaction.environment == .xcode
           if Superwall.isInitialized {
             registerAppTransactionIdIfNeeded()
             Superwall.shared.dequeueIntegrationAttributes()

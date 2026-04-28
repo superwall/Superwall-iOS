@@ -2,6 +2,92 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.1
+
+### Enhancements
+
+- Adds an `onCustomCallback` parameter to `getPaywall`.
+- `SuperwallOptions.localResources` now accepts UIImage's from xcasset files, e.g. `UIImage(named: "my-image")`.
+- Exposes abandoned transaction product params in audience filters.
+
+## 4.15.0
+
+### Enhancements
+
+- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store using the `PurchaseController`.
+- Adds `formUnion` override when unioning sets of `Entitlement` objects.
+
+### Fixes
+
+- Fixes issue where test mode products had trial price data missing.
+- Fixed computed period prices (`weeklyPrice`, `dailyPrice`, `monthlyPrice`, `yearlyPrice`) displaying incorrectly rounded values on StoreKit 2 in production. For example, a £4.99/week product could show as £5.00/week. This was caused by Apple's `priceFormatStyle` applying storefront-specific rounding to computed values.
+
+## 4.14.2
+
+### Enhancements
+
+- Adds multipage paywall navigation tracking by tracking a `paywall_page_view` event, which contains information about the page view.
+
+## 4.14.1
+
+### Enhancements
+
+- Localizes all alerts into 41 languages.
+- Makes sure to refresh free trial eligibility on every paywall open.
+
+### Fixes
+
+- Makes `device.isSandbox` more reliable.
+- Fixes the web restore alert not showing the "Yes" action button and "Cancel" incorrectly triggering the restore action.
+- Fixes a rare issue where a user's subscription could remain active after a refund, preventing paywalls from being shown.
+- Fixes trial eligibility for Stripe paywalls and tracks `freeTrial_start`.
+- Fixes an issue where `transaction_complete` could be missing transaction information when a crossgrade occurred while using a purchase controller.
+- Fixes terminated webviews refreshing in a loop on low RAM devices.
+
+## 4.14.0
+
+### Enhancements
+
+- Adds support for "Test Mode", which allows you to simulate in-app purchases without involving StoreKit. Test Mode can be enabled through the Superwall dashboard by marking specific users as test store users, or activates automatically when a bundle ID mismatch is detected. When active, a configuration modal lets you select starting entitlements and override free trial availability. Purchases are simulated with a UI that lets users complete, abandon, or fail transactions, with all purchase events firing normally for end-to-end paywall testing.
+- Adds prioritized campaign preloading. When a campaign is marked as prioritized in the dashboard, its paywalls are preloaded before all others.
+- Adds Stripe checkout message handling for `stripe_checkout_start`, `stripe_checkout_submit`, `stripe_checkout_complete`, `stripe_checkout_fail`, and `stripe_checkout_abandon`.
+- Adds SDK-side analytics tracking for Stripe checkout lifecycle events (`start`, `submit`, `complete`, `fail`) with `store` and `product_identifier` payload fields.
+
+### Fixes
+
+- Fixes issue with compiling on Xcode 26.4 beta.
+- Fixes dashboard display of multiple active entitlements.
+
+## 4.13.0
+
+### Enhancements
+
+- Adds support for local images and videos in paywalls.
+- Schedules trial notifications after purchasing Stripe products.
+- Adds ability to group placements into preloading stages.
+
+### Fixes
+
+- Fixes race condition relating to the user ID when upgrading from v3 of the SDK to v4.
+- Fixes issue where the Superscript version hadn't been upgraded to 1.0.13 if installed via CocoaPods.
+
+## 4.12.11
+
+### Enhancements
+
+- Adds `appstackId` as an `IntegrationAttribute`.
+
+## 4.12.10
+
+### Enhancements
+
+- Adds native haptic feedback support for paywall buttons. Haptic types can be configured in the paywall editor and include light, medium, heavy, success, warning, error, and selection.
+- Adds `custom callback` action support allowing you to perform an async action and send the result back to the paywall.
+
+### Fixes
+
+- Fixes issue where the `app_install` event was being cleared upon reset, which meant that this couldn't be used with `device.daysSince_app_install` after reset.
+
 ## 4.12.9
 
 ### Fixes

@@ -99,14 +99,16 @@ extension Superwall {
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer,
-          permissionHandler: dependencyContainer.permissionHandler
+          permissionHandler: dependencyContainer.permissionHandler,
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
         ),
         isOnDeviceCacheEnabled: false,
         factory: dependencyContainer
       ),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: dependencyContainer.makeCache(),
-      paywallArchiveManager: dependencyContainer.paywallArchiveManager
+      paywallArchiveManager: dependencyContainer.paywallArchiveManager,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
   }
 

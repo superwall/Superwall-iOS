@@ -209,7 +209,7 @@ enum ConfigLogic {
     }
   }
 
-  static func getAllActiveTreatmentPaywallIds(
+  static func getActiveTreatmentPaywallIds(
     fromTriggers triggers: Set<Trigger>,
     assignments: Set<Assignment>,
     expressionEvaluator: ExpressionEvaluating
@@ -260,27 +260,6 @@ enum ConfigLogic {
     return identifiers
   }
 
-  static func getActiveTreatmentPaywallIds(
-    forTriggers triggers: Set<Trigger>,
-    assignments: Set<Assignment>
-  ) -> Set<String> {
-    let groupedTriggerAudiences = getAudienceFiltersPerCampaign(from: triggers)
-    let triggerExperimentIds = groupedTriggerAudiences.flatMap { $0.map { $0.experiment.id } }
-
-    var identifiers = Set<String>()
-    for experimentId in triggerExperimentIds {
-      guard let variant = assignments.first(where: { $0.experimentId == experimentId })?.variant else {
-        continue
-      }
-      if variant.type == .treatment,
-        let paywallId = variant.paywallId {
-        identifiers.insert(paywallId)
-      }
-    }
-
-    return identifiers
-  }
-
   static func getTriggersByPlacementName(from triggers: Set<Trigger>) -> [String: Trigger] {
     let triggersDictionary = triggers.reduce([String: Trigger]()) { result, trigger in
       var result = result
@@ -327,7 +306,7 @@ enum ConfigLogic {
     from config: Config
   ) -> [String: Set<Entitlement>] {
     return Dictionary(
-      uniqueKeysWithValues: config.products.map { ($0.id, $0.entitlements) }
-    )
+      config.products.map { ($0.id, $0.entitlements) }
+    ) { $0.union($1) }
   }
 }
