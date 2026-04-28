@@ -94,11 +94,39 @@ extension Superwall {
           continue
         }
         if JSONSerialization.isValidJSONObject([key: value]) {
-          customAttributes[key] = value
+          customAttributes[key] = Self.sanitizeAttribute(key: key, value: value)
         }
       }
     }
 
     dependencyContainer.identityManager.mergeUserAttributes(customAttributes)
+  }
+
+  /// Validates attribute values that have server-side schema constraints.
+  ///
+  /// The checkout API rejects `context.identity.email` unless it is either a
+  /// valid email address or `null`. Apps that set a placeholder like `"none"`
+  /// would silently break the Stripe checkout flow, so the SDK parses the
+  /// value through ``Email`` and drops it when invalid.
+  private static func sanitizeAttribute(key: String, value: Any?) -> Any? {
+    guard let stringValue = value as? String else {
+      return value
+    }
+
+    switch key {
+    case "email":
+      guard let email = Email(stringValue) else {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .identityManager,
+          message: "Invalid email user attribute — sending null to server"
+        )
+        return nil
+      }
+      return email.rawValue
+
+    default:
+      return value
+    }
   }
 }

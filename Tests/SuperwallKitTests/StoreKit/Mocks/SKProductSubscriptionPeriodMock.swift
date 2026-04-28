@@ -9,7 +9,22 @@ import Foundation
 import StoreKit
 
 final class SKProductSubscriptionPeriodMock: SKProductSubscriptionPeriod {
+  private let internalNumberOfUnits: Int
+  private let internalUnit: SKProduct.PeriodUnit
+
   override var numberOfUnits: Int {
-    return 1
+    return internalNumberOfUnits
+  }
+
+  override var unit: SKProduct.PeriodUnit {
+    return internalUnit
+  }
+
+  init(
+    numberOfUnits: Int = 1,
+    unit: SKProduct.PeriodUnit = .month
+  ) {
+    self.internalNumberOfUnits = numberOfUnits
+    self.internalUnit = unit
   }
 }

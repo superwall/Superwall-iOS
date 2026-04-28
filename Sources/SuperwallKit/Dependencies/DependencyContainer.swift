@@ -48,11 +48,13 @@ final class DependencyContainer {
   let paywallArchiveManager = PaywallArchiveManager()
 
   init(
+    apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self)
+    storage.configure(apiKey: apiKey)
     entitlementsInfo = EntitlementsInfo(
       storage: storage,
       delegateAdapter: delegateAdapter
@@ -312,7 +314,8 @@ extension DependencyContainer: ViewControllerFactory {
       webView: webView,
       webEntitlementRedeemer: webEntitlementRedeemer,
       cache: cache,
-      paywallArchiveManager: paywallArchiveManager
+      paywallArchiveManager: paywallArchiveManager,
+      customCallbackRegistry: customCallbackRegistry
     )
 
     webView.delegate = paywallViewController

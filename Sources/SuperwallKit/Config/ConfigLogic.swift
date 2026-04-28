@@ -306,8 +306,7 @@ enum ConfigLogic {
     from config: Config
   ) -> [String: Set<Entitlement>] {
     return Dictionary(
-      config.products.map { ($0.id, $0.entitlements) },
-      uniquingKeysWith: { $0.union($1) }
-    )
+      config.products.map { ($0.id, $0.entitlements) }
+    ) { $0.union($1) }
   }
 }
