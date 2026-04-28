@@ -671,10 +671,8 @@ enum InternalSuperwallEvent {
         var params = paywallInfo.audienceFilterParams()
         if let product = product {
           params["abandoned_product_id"] = product.productIdentifier
-          if !product.period.isEmpty {
-            for (key, value) in product.attributes where key != "identifier" {
-              params["abandoned_product_\(key.camelCaseToSnakeCase())"] = value
-            }
+          for (key, value) in product.attributes where key != "identifier" {
+            params["abandoned_product_\(key.camelCaseToSnakeCase())"] = value
           }
         }
         return params

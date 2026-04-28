@@ -1735,6 +1735,39 @@ struct TrackingTests {
     #expect((result.parameters.audienceFilterParams["abandoned_product_localized_period"] as? String)?.isEmpty == false)
   }
 
+  @Test func transaction_abandon_consumable() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let productId = "consumable.coins"
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(
+        productIdentifier: productId,
+        price: NSDecimalNumber(string: "4.99")
+      ),
+      entitlements: [.stub()]
+    )
+    let dependencyContainer = DependencyContainer()
+    let skTransaction = MockSKPaymentTransaction(state: .purchased)
+    let transaction = await dependencyContainer.makeStoreTransaction(from: skTransaction)
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.Transaction(
+        state: .abandon(product),
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: transaction,
+        source: .external,
+        isObserved: false,
+        storeKitVersion: .storeKit1
+      )
+    )
+
+    #expect(result.parameters.audienceFilterParams["abandoned_product_id"] as? String == productId)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_identifier"] == nil)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_raw_price"] as? String == "4.99")
+    #expect((result.parameters.audienceFilterParams["abandoned_product_price"] as? String)?.isEmpty == false)
+    #expect((result.parameters.audienceFilterParams["abandoned_product_currency_code"] as? String)?.isEmpty == false)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_period"] as? String == "")
+  }
+
   @Test func transaction_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"
