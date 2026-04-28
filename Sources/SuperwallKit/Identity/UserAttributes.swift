@@ -108,7 +108,7 @@ extension Superwall {
   /// valid email address or `null`. Apps that set a placeholder like `"none"`
   /// would silently break the Stripe checkout flow, so the SDK parses the
   /// value through ``Email`` and drops it when invalid.
-  static func sanitizeAttribute(key: String, value: Any?) -> Any? {
+  private static func sanitizeAttribute(key: String, value: Any?) -> Any? {
     guard let stringValue = value as? String else {
       return value
     }
