@@ -69,6 +69,7 @@ struct EmailTests {
       "not an email",
       "null",
       "N/A",
+      "user@example.com\n",
     ]
   )
   func `rejects invalid value`(value: String) {
