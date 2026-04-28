@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds an `onCustomCallback` parameter to `getPaywall`.
 - `SuperwallOptions.localResources` now accepts UIImage's from xcasset files, e.g. `UIImage(named: "my-image")`.
+- Exposes abandoned transaction product params in audience filters.
 
 ## 4.15.0
 
