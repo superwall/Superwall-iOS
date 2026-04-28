@@ -1728,7 +1728,7 @@ struct TrackingTests {
       result.parameters.audienceFilterParams["event_name"] as! String == "transaction_abandon")
     #expect(
       result.parameters.audienceFilterParams["abandoned_product_id"] as! String == productId)
-    #expect(result.parameters.audienceFilterParams["abandoned_product_identifier"] as! String == productId)
+    #expect(result.parameters.audienceFilterParams["abandoned_product_identifier"] == nil)
     #expect(result.parameters.audienceFilterParams["abandoned_product_period"] as? String == "month")
     #expect(result.parameters.audienceFilterParams["abandoned_product_period_months"] as? String == "1")
     #expect(result.parameters.audienceFilterParams["abandoned_product_period_years"] as? String == "0")

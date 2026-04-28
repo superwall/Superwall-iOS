@@ -1,13 +1,14 @@
 # CHANGELOG
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
-
+u
 ## 4.15.1
 
 ### Enhancements
 
 - Adds an `onCustomCallback` parameter to `getPaywall`.
 - `SuperwallOptions.localResources` now accepts UIImage's from xcasset files, e.g. `UIImage(named: "my-image")`.
+- Exposes abandoned transaction product params in audience filters.
 
 ## 4.15.0
 
