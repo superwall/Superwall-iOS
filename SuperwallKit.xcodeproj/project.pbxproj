@@ -3149,7 +3149,7 @@
 			);
 			mainGroup = 5CE8CEF97A892FFF3D0D8F06;
 			packageReferences = (
-				8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "Superscript-iOS" */,
+				8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "superscript-ios-next" */,
 			);
 			projectDirPath = "";
 			projectRoot = "";
@@ -4019,12 +4019,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "Superscript-iOS" */ = {
+		8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "superscript-ios-next" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/superwall/Superscript-iOS";
+			repositoryURL = "https://github.com/superwall/superscript-ios-next";
 			requirement = {
 				kind = exactVersion;
-				version = 1.0.13;
+				version = 1.0.14;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -4032,7 +4032,7 @@
 /* Begin XCSwiftPackageProductDependency section */
 		721C720FA8360B9851DE843D /* Superscript */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "Superscript-iOS" */;
+			package = 8DF6D231FF02D65F59962D80 /* XCRemoteSwiftPackageReference "superscript-ios-next" */;
 			productName = Superscript;
 		};
 /* End XCSwiftPackageProductDependency section */
