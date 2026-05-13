@@ -43,11 +43,20 @@ final class AttributionFetcher {
         return nil
       }
 
+      // When ATT hasn't been authorized iOS returns the all-zeros UUID
+      // sentinel. Don't pass that through as an IDFA — it pollutes attribution
+      // payloads with junk that downstream MMPs treat as a real id.
+      if identifierValue == Self.zeroAdvertisingIdentifier {
+        return nil
+      }
+
       return identifierValue.uuidString
     }
     #endif
     return nil
   }
+
+  private static let zeroAdvertisingIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000000")
 
   // should match OS availability in https://developer.apple.com/documentation/ad_services
   @available(iOS 14.3, tvOS 14.3, macOS 11.1, watchOS 6.2, macCatalyst 14.3, *)

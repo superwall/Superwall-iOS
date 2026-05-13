@@ -4,9 +4,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.15.2
 
+### Enhancements
+
+- Improves Apple Search Ads attribution capture rate. The SDK now retries the AdServices token fetch and backend post with backoff when transient errors occur (e.g. when Apple's attribution endpoint isn't ready yet right after install), and only marks the token as successfully posted after the backend confirms. Previously a single transient failure could permanently lose attribution for that install.
+- Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
+
 ### Fixes
 
 - Changes the Superscript spm package repo source to a new lightweight repo meaning that the download of the package is way faster.
+- Fixes a race where two near-simultaneous triggers (config arrival + app foreground) could both start an AdServices token fetch.
 
 ## 4.15.1
 

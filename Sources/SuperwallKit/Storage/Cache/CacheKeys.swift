@@ -217,6 +217,21 @@ enum AdServicesTokenStorage: Storable {
   typealias Value = String
 }
 
+/// Retry bookkeeping for the Apple Search Ads token post.
+///
+/// The presence of an entry under ``AdServicesTokenStorage`` is treated as a
+/// "successfully posted to backend" sentinel. While we're still trying, this
+/// secondary record tracks how many attempts we've made and when, so we can
+/// bound retries (Apple's attribution endpoint only yields useful data within
+/// ~24h of install).
+enum AdServicesAttributionAttemptsStorage: Storable {
+  static var key: String {
+    "store.adServicesAttributionAttempts"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = AdServicesAttributionAttempts
+}
+
 enum SK2TransactionIds: Storable {
   static var key: String {
     "store.syncedSK2TransactionIds"
