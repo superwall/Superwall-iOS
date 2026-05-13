@@ -183,6 +183,12 @@ final class AttributionPoster {
     let token: String
     do {
       token = try await fetchTokenWithBackoff()
+    } catch is CancellationError {
+      // Cancellation means `cancelInFlight` (typically via reset) asked us to
+      // abandon — not a real failure. Don't bookkeep an attempt, especially
+      // because storage may have just been wiped and `existingAttempts` is
+      // stale; writing it would inflate the new user's attempt count.
+      return
     } catch let error as PosterError where error == .permanentlyUnsupported {
       // Don't burn the attempt budget on a device that will never have a token.
       await Superwall.shared.track(
@@ -219,6 +225,8 @@ final class AttributionPoster {
       if !attribution.isEmpty {
         Superwall.shared.setUserAttributes(attribution)
       }
+    } catch is CancellationError {
+      return
     } catch {
       recordFailedAttempt(existing: existingAttempts)
     }
