@@ -24,10 +24,11 @@ final class AttributionPoster {
   /// window without continuing indefinitely.
   private static let maxRetryWindow: TimeInterval = 48 * 60 * 60
 
-  /// In-session retry plan for transient errors at the SDK or network layer.
-  /// Backoff grows so a single bad-network pocket doesn't burn through the
-  /// per-install attempt budget.
-  private static let inSessionBackoff: [TimeInterval] = [2, 6, 15]
+  /// In-session retry plan for transient errors from `AAAttribution.attributionToken()`,
+  /// which can throw `networkError` if called too soon after launch. The HTTP
+  /// post to our backend is already covered by `Task.retrying` inside
+  /// `CustomURLSession`, so we don't add an outer backoff there.
+  private static let tokenFetchBackoff: [TimeInterval] = [2, 6, 15]
 
   private let stateQueue = DispatchQueue(label: "com.superwall.attributionposter.state")
   private var isCollecting = false
@@ -215,7 +216,12 @@ final class AttributionPoster {
     )
 
     do {
-      let response = try await postTokenWithBackoff(token: token)
+      // CustomURLSession already wraps the request in Task.retrying (3
+      // attempts × 5s for the AdServices endpoint, see Endpoint.swift), so
+      // we don't need our own outer backoff here. Persistent failures fall
+      // through to recordFailedAttempt and the next launch picks up via the
+      // cross-launch attempt budget.
+      let response = try await network.sendToken(token)
       if Task.isCancelled {
         return
       }
@@ -257,7 +263,7 @@ final class AttributionPoster {
   @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   private func fetchTokenWithBackoff() async throws -> String {
     var lastError: Error?
-    for delay in [0.0] + Self.inSessionBackoff {
+    for delay in [0.0] + Self.tokenFetchBackoff {
       if delay > 0 {
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       }
@@ -277,29 +283,6 @@ final class AttributionPoster {
       }
     }
     throw lastError ?? PosterError.tokenUnavailable
-  }
-
-  /// Sends the token to our backend, retrying transient failures with
-  /// backoff. `CustomURLSession` already retries the HTTP call internally —
-  /// these retries cover the case where every internal retry fails but a
-  /// short pause yields a different result (e.g. Apple's attribution endpoint
-  /// catching up post-install).
-  private func postTokenWithBackoff(token: String) async throws -> AdServicesResponse {
-    var lastError: Error?
-    for delay in [0.0] + Self.inSessionBackoff {
-      if delay > 0 {
-        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-      }
-      if Task.isCancelled {
-        throw CancellationError()
-      }
-      do {
-        return try await network.sendToken(token)
-      } catch {
-        lastError = error
-      }
-    }
-    throw lastError ?? NetworkError.unknown
   }
 
   private func recordFailedAttempt(existing: AdServicesAttributionAttempts?) {
