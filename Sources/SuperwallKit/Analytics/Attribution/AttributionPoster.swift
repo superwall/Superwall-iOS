@@ -68,12 +68,15 @@ final class AttributionPoster {
 
   @available(iOS 14.3, *)
   private func listenToConfig() {
-    // Don't use `.first` here: if the dashboard flips Apple Search Ads from
-    // disabled to enabled mid-session we still want to react.
+    // Track the enabled flag across config refreshes. `removeDuplicates` has
+    // to see the toggles to detect a transition, so we dedup on the bool
+    // *before* filtering. This fires once when the flag first becomes true,
+    // and again if it goes true → false → true mid-session.
     configManager.configState
       .compactMap { $0.getConfig() }
-      .filter { $0.attribution?.appleSearchAds?.enabled == true }
-      .removeDuplicates { _, _ in true } // only trigger once per process
+      .map { $0.attribution?.appleSearchAds?.enabled == true }
+      .removeDuplicates()
+      .filter { $0 }
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { [weak self] _ in
