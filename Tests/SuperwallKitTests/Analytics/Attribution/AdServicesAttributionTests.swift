@@ -133,4 +133,98 @@ struct AdServicesAttributionTests {
     // Should be a no-op when nothing is in flight, but must not crash.
     dependencyContainer.attributionPoster!.cancelInFlight()
   }
+
+  // MARK: - canStartAttempt guards
+  //
+  // We test the guards by setting up storage state where they should bail,
+  // calling `getAdServicesTokenIfNeeded`, and asserting nothing was written
+  // or mutated. The alternative — passing the canStartAttempt guard — would
+  // make a real network call, so every test in this block must arrange for a
+  // bail. Config is left in `.retrieving` state for most of these because the
+  // tests don't depend on the config-enabled branch; the budget / sentinel
+  // checks short-circuit before the config check is reached only when the
+  // config-enabled guard is also failing — that's still a valid bail, and we
+  // assert "nothing changed" either way.
+
+  @Test
+  func getAdServicesToken_bailsWhenMaxAttemptsReached() async {
+    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
+      return
+    }
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+    let poster = dependencyContainer.attributionPoster!
+
+    storage.delete(AdServicesTokenStorage.self)
+    storage.delete(AdServicesAttributionUnsupportedStorage.self)
+    let saturated = AdServicesAttributionAttempts(
+      count: AttributionPoster.maxAttempts,
+      firstAttemptDate: Date(),
+      lastAttemptDate: Date()
+    )
+    storage.save(saturated, forType: AdServicesAttributionAttemptsStorage.self)
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+
+    await poster.getAdServicesTokenIfNeeded()
+
+    // Attempts record must NOT have been bumped — that would mean we tried
+    // anyway, defeating the cap.
+    #expect(storage.get(AdServicesAttributionAttemptsStorage.self) == saturated)
+    #expect(storage.get(AdServicesTokenStorage.self) == nil)
+
+    storage.delete(AdServicesAttributionAttemptsStorage.self)
+  }
+
+  @Test
+  func getAdServicesToken_bailsWhenRetryWindowExpired() async {
+    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
+      return
+    }
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+    let poster = dependencyContainer.attributionPoster!
+
+    storage.delete(AdServicesTokenStorage.self)
+    storage.delete(AdServicesAttributionUnsupportedStorage.self)
+    let firstAttempt = Date().addingTimeInterval(-AttributionPoster.maxRetryWindow - 60)
+    let expired = AdServicesAttributionAttempts(
+      count: 2,
+      firstAttemptDate: firstAttempt,
+      lastAttemptDate: firstAttempt.addingTimeInterval(30)
+    )
+    storage.save(expired, forType: AdServicesAttributionAttemptsStorage.self)
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+
+    await poster.getAdServicesTokenIfNeeded()
+
+    #expect(storage.get(AdServicesAttributionAttemptsStorage.self) == expired)
+    #expect(storage.get(AdServicesTokenStorage.self) == nil)
+
+    storage.delete(AdServicesAttributionAttemptsStorage.self)
+  }
+
+  @Test
+  func getAdServicesToken_bailsWhenPermanentlyUnsupported() async {
+    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
+      return
+    }
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+    let poster = dependencyContainer.attributionPoster!
+
+    storage.delete(AdServicesTokenStorage.self)
+    storage.delete(AdServicesAttributionAttemptsStorage.self)
+    storage.save(true, forType: AdServicesAttributionUnsupportedStorage.self)
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+
+    await poster.getAdServicesTokenIfNeeded()
+
+    // No attempts record written, no success token written — the unsupported
+    // sentinel is a hard stop.
+    #expect(storage.get(AdServicesAttributionAttemptsStorage.self) == nil)
+    #expect(storage.get(AdServicesTokenStorage.self) == nil)
+    #expect(storage.get(AdServicesAttributionUnsupportedStorage.self) == true)
+
+    storage.delete(AdServicesAttributionUnsupportedStorage.self)
+  }
 }

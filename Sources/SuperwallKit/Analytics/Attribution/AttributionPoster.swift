@@ -16,13 +16,13 @@ final class AttributionPoster {
   /// unhealthy for short periods around install, so we want enough retries to
   /// survive that, but not so many that we keep hammering it for users who
   /// will never have attribution data.
-  private static let maxAttempts = 8
+  static let maxAttempts = 8
 
   /// Maximum window from the first attempt during which we'll keep retrying.
   /// Apple's attribution data is only useful within ~24h of install, so 48h
   /// gives generous slack for the very-first launch happening late in the
   /// window without continuing indefinitely.
-  private static let maxRetryWindow: TimeInterval = 48 * 60 * 60
+  static let maxRetryWindow: TimeInterval = 48 * 60 * 60
 
   /// In-session retry plan for transient errors from `AAAttribution.attributionToken()`,
   /// which can throw `networkError` if called too soon after launch. The HTTP
