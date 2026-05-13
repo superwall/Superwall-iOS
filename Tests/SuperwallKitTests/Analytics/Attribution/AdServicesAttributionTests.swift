@@ -7,7 +7,7 @@ import Foundation
 import Testing
 @testable import SuperwallKit
 
-@Suite
+@Suite(.serialized)
 struct AdServicesAttributionTests {
   // MARK: - AdServicesResponse decoding
 
