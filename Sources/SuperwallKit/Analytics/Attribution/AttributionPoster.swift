@@ -32,6 +32,10 @@ final class AttributionPoster {
   private let stateQueue = DispatchQueue(label: "com.superwall.attributionposter.state")
   private var isCollecting = false
   private var currentTask: Task<Void, Never>?
+  /// Monotonic generation stamped onto each outer call that claims the slot.
+  /// `cancelInFlight` bumps this so a late-completing call's `defer` won't
+  /// clobber the state belonging to a newly started call.
+  private var ownerGeneration: UInt64 = 0
 
   private unowned let storage: Storage
   private unowned let network: Network
@@ -106,6 +110,10 @@ final class AttributionPoster {
       currentTask?.cancel()
       currentTask = nil
       isCollecting = false
+      // Invalidate the in-flight outer call's ownership so its `defer`
+      // becomes a no-op once it unblocks from `await task.value` — otherwise
+      // it would clobber state belonging to a newly started call.
+      ownerGeneration &+= 1
     }
   }
 
@@ -116,18 +124,25 @@ final class AttributionPoster {
   func getAdServicesTokenIfNeeded() async {
     // Single-flight: only one collection at a time. Synchronous check on the
     // state queue avoids the TOCTOU race in the previous implementation.
-    let shouldStart: Bool = stateQueue.sync {
+    // The generation stamp lets the cleanup `defer` detect whether we still
+    // own the slot when we unblock — `cancelInFlight` may have released it
+    // and a new call may have already claimed it.
+    let myGeneration: UInt64? = stateQueue.sync {
       if isCollecting {
-        return false
+        return nil
       }
       isCollecting = true
-      return true
+      ownerGeneration &+= 1
+      return ownerGeneration
     }
-    guard shouldStart else {
+    guard let myGeneration = myGeneration else {
       return
     }
     defer {
       stateQueue.sync {
+        guard ownerGeneration == myGeneration else {
+          return
+        }
         isCollecting = false
         currentTask = nil
       }
