@@ -232,6 +232,19 @@ enum AdServicesAttributionAttemptsStorage: Storable {
   typealias Value = AdServicesAttributionAttempts
 }
 
+/// Set when `AAAttribution.attributionToken()` returns a permanent error
+/// (e.g. `platformNotSupported` / `attributionUnsupported`). Without this,
+/// such devices would re-attempt the SDK call on every launch indefinitely
+/// — the attempt budget doesn't cover them because we intentionally don't
+/// bump it for non-transient errors.
+enum AdServicesAttributionUnsupportedStorage: Storable {
+  static var key: String {
+    "store.adServicesAttributionUnsupported"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Bool
+}
+
 enum SK2TransactionIds: Storable {
   static var key: String {
     "store.syncedSK2TransactionIds"

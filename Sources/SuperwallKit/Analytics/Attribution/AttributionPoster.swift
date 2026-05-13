@@ -157,6 +157,12 @@ final class AttributionPoster {
       return
     }
 
+    // This device permanently can't provide an attribution token (missing
+    // entitlement, unsupported platform). Stop retrying.
+    if storage.get(AdServicesAttributionUnsupportedStorage.self) == true {
+      return
+    }
+
     guard configManager.config?.attribution?.appleSearchAds?.enabled == true else {
       return
     }
@@ -194,7 +200,10 @@ final class AttributionPoster {
       // stale; writing it would inflate the new user's attempt count.
       return
     } catch let error as PosterError where error == .permanentlyUnsupported {
-      // Don't burn the attempt budget on a device that will never have a token.
+      // Don't burn the attempt budget on a device that will never have a
+      // token, but do persist a sentinel so subsequent launches short-circuit
+      // instead of repeating the doomed SDK call indefinitely.
+      storage.save(true, forType: AdServicesAttributionUnsupportedStorage.self)
       await Superwall.shared.track(
         InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))
       )
