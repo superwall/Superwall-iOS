@@ -152,40 +152,62 @@ final class AttributionPoster {
       }
     }
 
-    // Already successfully posted for this install.
-    if storage.get(AdServicesTokenStorage.self) != nil {
-      return
-    }
-
-    // This device permanently can't provide an attribution token (missing
-    // entitlement, unsupported platform). Stop retrying.
-    if storage.get(AdServicesAttributionUnsupportedStorage.self) == true {
-      return
-    }
-
-    guard configManager.config?.attribution?.appleSearchAds?.enabled == true else {
-      return
-    }
-
     let attempts = storage.get(AdServicesAttributionAttemptsStorage.self)
-    if let attempts = attempts {
-      if attempts.count >= Self.maxAttempts {
-        return
-      }
-      if Date().timeIntervalSince(attempts.firstAttemptDate) > Self.maxRetryWindow {
-        return
-      }
+    guard canStartAttempt(currentAttempts: attempts) else {
+      return
     }
 
     await Superwall.shared.track(InternalSuperwallEvent.AdServicesTokenRetrieval(state: .start))
 
-    let task = Task<Void, Never> { [weak self] in
-      await self?.runAttempt(existingAttempts: attempts)
-    }
-    stateQueue.sync {
+    // Re-check ownership, then create and store the task atomically inside
+    // the queue. `cancelInFlight()` may have fired while we were suspended
+    // on the track call above (before `currentTask` was ever stored), in
+    // which case our pre-reset `existingAttempts` snapshot is now stale and
+    // running runAttempt would clobber the new user's freshly reset storage.
+    // Doing the create+store inside the same sync block also prevents
+    // cancelInFlight from running between Task creation and storage, which
+    // would otherwise leave the task uncancellable from the outside.
+    let task: Task<Void, Never>? = stateQueue.sync {
+      guard ownerGeneration == myGeneration else {
+        return nil
+      }
+      let task = Task<Void, Never> { [weak self] in
+        await self?.runAttempt(existingAttempts: attempts)
+      }
       currentTask = task
+      return task
+    }
+    guard let task = task else {
+      return
     }
     await task.value
+  }
+
+  /// Storage and config guards that decide whether it's worth starting a
+  /// fresh attempt. Pulled out of `getAdServicesTokenIfNeeded` so the main
+  /// flow stays under the cyclomatic-complexity budget.
+  private func canStartAttempt(currentAttempts: AdServicesAttributionAttempts?) -> Bool {
+    // Already successfully posted for this install.
+    if storage.get(AdServicesTokenStorage.self) != nil {
+      return false
+    }
+    // This device permanently can't provide an attribution token (missing
+    // entitlement, unsupported platform). Stop retrying.
+    if storage.get(AdServicesAttributionUnsupportedStorage.self) == true {
+      return false
+    }
+    guard configManager.config?.attribution?.appleSearchAds?.enabled == true else {
+      return false
+    }
+    if let attempts = currentAttempts {
+      if attempts.count >= Self.maxAttempts {
+        return false
+      }
+      if Date().timeIntervalSince(attempts.firstAttemptDate) > Self.maxRetryWindow {
+        return false
+      }
+    }
+    return true
   }
 
   @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
