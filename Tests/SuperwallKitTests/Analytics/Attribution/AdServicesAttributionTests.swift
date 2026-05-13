@@ -12,55 +12,26 @@ struct AdServicesAttributionTests {
   // MARK: - AdServicesResponse decoding
 
   @Test
-  func adServicesResponse_decodesFullPayload() throws {
+  func adServicesResponse_decodesBackendSuccessShape() throws {
+    // Matches paywall-next:/apple-search-ads/token success body:
+    //   { "status": "ok", "attribution": { ... } }
+    // We don't model `status`; we just need attribution to decode.
     let json = """
     {
+      "status": "ok",
       "attribution": {
-        "campaignId": 12345,
-        "keywordId": "kw-1"
-      },
-      "eligible": true,
-      "error": null
+        "apple_search_ads_campaign_id": "12345",
+        "apple_search_ads_keyword_id": "kw-1",
+        "acquisition_source": "apple_search_ads"
+      }
     }
     """.data(using: .utf8)!
 
     let decoded = try JSONDecoder().decode(AdServicesResponse.self, from: json)
 
-    #expect(decoded.eligible == true)
-    #expect(decoded.error == nil)
-    #expect(decoded.attribution["campaignId"]?.intValue == 12345)
-    #expect(decoded.attribution["keywordId"]?.stringValue == "kw-1")
-  }
-
-  @Test
-  func adServicesResponse_decodesIneligibleResult() throws {
-    let json = """
-    {
-      "attribution": {},
-      "eligible": false
-    }
-    """.data(using: .utf8)!
-
-    let decoded = try JSONDecoder().decode(AdServicesResponse.self, from: json)
-
-    #expect(decoded.eligible == false)
-    #expect(decoded.error == nil)
-    #expect(decoded.attribution.isEmpty)
-  }
-
-  @Test
-  func adServicesResponse_decodesWithoutOptionalFields() throws {
-    let json = """
-    {
-      "attribution": { "campaignId": 1 }
-    }
-    """.data(using: .utf8)!
-
-    let decoded = try JSONDecoder().decode(AdServicesResponse.self, from: json)
-
-    #expect(decoded.eligible == nil)
-    #expect(decoded.error == nil)
-    #expect(decoded.attribution["campaignId"]?.intValue == 1)
+    #expect(decoded.attribution["apple_search_ads_campaign_id"]?.stringValue == "12345")
+    #expect(decoded.attribution["apple_search_ads_keyword_id"]?.stringValue == "kw-1")
+    #expect(decoded.attribution["acquisition_source"]?.stringValue == "apple_search_ads")
   }
 
   // MARK: - AdServicesAttributionAttempts round-trip

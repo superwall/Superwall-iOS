@@ -249,27 +249,13 @@ final class AttributionPoster {
     do {
       // CustomURLSession already wraps the request in Task.retrying (3
       // attempts × 5s for the AdServices endpoint, see Endpoint.swift), so
-      // we don't need our own outer backoff here. Persistent failures fall
-      // through to recordFailedAttempt and the next launch picks up via the
-      // cross-launch attempt budget.
+      // we don't need our own outer backoff here. Backend error responses
+      // come back as non-2xx and are thrown by Task.retrying — they end up
+      // in the catch below and bump the cross-launch attempt budget.
       let response = try await network.sendToken(token)
       if Task.isCancelled {
         return
       }
-      // A non-nil `error` means the backend (or Apple, via the backend)
-      // couldn't resolve attribution for this token. Treat as a retryable
-      // failure rather than burying it under the success sentinel.
-      if let backendError = response.error {
-        throw NSError(
-          domain: "com.superwall.attributionposter",
-          code: -1,
-          userInfo: [NSLocalizedDescriptionKey: backendError]
-        )
-      }
-      // `eligible == false` is a definitive answer from Apple ("this user
-      // wasn't from Search Ads") — fall through to the success path so we
-      // save the sentinel and stop retrying. Same outcome as a non-empty
-      // attribution; only the user-attribute write is skipped.
       let attribution = convertJSONToDictionary(attribution: response.attribution)
       storage.save(token, forType: AdServicesTokenStorage.self)
       storage.delete(AdServicesAttributionAttemptsStorage.self)

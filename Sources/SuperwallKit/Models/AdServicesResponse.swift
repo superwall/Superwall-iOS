@@ -8,12 +8,10 @@
 import Foundation
 
 struct AdServicesResponse: Decodable {
+  // Backend (`paywall-next:/apple-search-ads/token`) returns
+  // `{ status: "ok", attribution: {...} }` on success. Error states come
+  // back as non-2xx with `{ status: "error", error: "..." }`, but those are
+  // thrown by `CustomURLSession`'s Task.retrying before we ever decode the
+  // body, so we only model the success shape here.
   let attribution: [String: JSON]
-
-  // Apple's attribution endpoint can confirm a user is ineligible (e.g. they
-  // didn't come from a Search Ads campaign). When the backend forwards that
-  // signal we can stop retrying — distinct from a transient failure where the
-  // payload simply hasn't arrived yet.
-  let eligible: Bool?
-  let error: String?
 }
