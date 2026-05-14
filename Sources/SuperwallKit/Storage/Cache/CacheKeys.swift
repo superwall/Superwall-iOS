@@ -209,12 +209,59 @@ enum LatestEnrichment: Storable {
   typealias Value = Enrichment
 }
 
+/// Apple Search Ads attribution is install-scoped — the campaign that drove
+/// the install doesn't change when a user logs out and another user logs in
+/// on the same device. So all the AdServices state lives in
+/// `.appSpecificDocuments`, surviving `reset(duringIdentify:)`. The cached
+/// attribution dict (``AdServicesAttributionDataStorage``) is re-applied to
+/// the new user's attributes after a reset so they pick up the same
+/// `apple_search_ads_*` / `acquisition_*` keys without re-fetching.
 enum AdServicesTokenStorage: Storable {
   static var key: String {
     "store.adServicesToken"
   }
-  static var directory: SearchPathDirectory = .userSpecificDocuments
+  static var directory: SearchPathDirectory = .appSpecificDocuments
   typealias Value = String
+}
+
+/// Retry bookkeeping for the Apple Search Ads token post.
+///
+/// The presence of an entry under ``AdServicesTokenStorage`` is treated as a
+/// "successfully posted to backend" sentinel. While we're still trying, this
+/// secondary record tracks how many attempts we've made and when, so we can
+/// bound retries (Apple's attribution endpoint only yields useful data within
+/// ~24h of install).
+enum AdServicesAttributionAttemptsStorage: Storable {
+  static var key: String {
+    "store.adServicesAttributionAttempts"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = AdServicesAttributionAttempts
+}
+
+/// Set when `AAAttribution.attributionToken()` returns a permanent error
+/// (e.g. `platformNotSupported` / `attributionUnsupported`). Without this,
+/// such devices would re-attempt the SDK call on every launch indefinitely
+/// — the attempt budget doesn't cover them because we intentionally don't
+/// bump it for non-transient errors.
+enum AdServicesAttributionUnsupportedStorage: Storable {
+  static var key: String {
+    "store.adServicesAttributionUnsupported"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Bool
+}
+
+/// The decoded attribution payload from the backend, cached so we can
+/// re-apply it to a new user's attributes after `reset(duringIdentify:)`.
+/// Install-scoped: the same campaign keys apply to whichever user is logged
+/// in on this install.
+enum AdServicesAttributionDataStorage: Storable {
+  static var key: String {
+    "store.adServicesAttributionData"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = [String: JSON]
 }
 
 enum SK2TransactionIds: Storable {

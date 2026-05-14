@@ -2,12 +2,12 @@
   "originHash" : "db362fdf36eaf1c479870b40c7a6c2e2165345c7210ebe36257ee38523125878",
   "pins" : [
     {
-      "identity" : "superscript-ios",
+      "identity" : "superscript-ios-next",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/superwall/Superscript-iOS",
+      "location" : "https://github.com/superwall/superscript-ios-next",
       "state" : {
-        "revision" : "711866edcb62dbd237c24ed3e5fa39fad0db639f",
-        "version" : "1.0.13"
+        "revision" : "abb2c8c96e958aabe11a84df67860ad7bbef3b68",
+        "version" : "1.0.14"
       }
     }
   ],

@@ -43,10 +43,39 @@ final class AttributionFetcher {
         return nil
       }
 
+      // When ATT hasn't been authorized iOS returns the all-zeros UUID
+      // sentinel. Don't pass that through as an IDFA — it pollutes attribution
+      // payloads with junk that downstream MMPs treat as a real id.
+      if identifierValue == Self.zeroAdvertisingIdentifier {
+        return nil
+      }
+
       return identifierValue.uuidString
     }
     #endif
     return nil
+  }
+
+  // Non-optional construction via `init(uuid:)` — `init(uuidString:)` returns
+  // an Optional which would make the equality check silently false-negative
+  // (zero-IDFA passes through unfiltered) if the literal ever failed to parse.
+  private static let zeroAdvertisingIdentifier = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+
+  /// Whether this build/environment can ever produce an AdServices token.
+  /// `false` on builds that didn't link AdServices.framework and on debug
+  /// simulator runs without `SUPERWALL_MOCK_AD_SERVICES_TOKEN`. Lets the
+  /// poster short-circuit before entering its 23s backoff schedule in
+  /// development.
+  var canProduceAdServicesToken: Bool {
+    #if !canImport(AdServices)
+    return false
+    #else
+    #if targetEnvironment(simulator) && DEBUG
+    return ProcessInfo.processInfo.environment["SUPERWALL_MOCK_AD_SERVICES_TOKEN"] != nil
+    #else
+    return true
+    #endif
+    #endif
   }
 
   // should match OS availability in https://developer.apple.com/documentation/ad_services

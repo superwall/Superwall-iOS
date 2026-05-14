@@ -436,15 +436,11 @@ public final class Superwall: NSObject, ObservableObject {
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.
+    //
+    // Note: we don't kick off Apple Search Ads attribution here — it requires
+    // config to be loaded to know whether it's enabled. `AttributionPoster`
+    // subscribes to `configState` and fires automatically once config arrives.
     Task {
-      Task {
-        #if os(iOS) || os(macOS) || os(visionOS)
-          if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-            await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-          }
-        #endif
-      }
-
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
@@ -1028,7 +1024,15 @@ public final class Superwall: NSObject, ObservableObject {
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
   func reset(duringIdentify: Bool) {
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
+    // Cancel any in-flight attribution post before wiping its storage, so a
+    // late-completing post can't race the new user's state.
+    dependencyContainer.attributionPoster.cancelInFlight()
     dependencyContainer.storage.reset()
+
+    // ASA attribution is install-scoped, so re-apply the cached campaign
+    // dict to the new user's attributes after the wipe. AdServices state
+    // itself lives in app-specific storage and is preserved through reset.
+    dependencyContainer.attributionPoster.reapplyCachedAttribution()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

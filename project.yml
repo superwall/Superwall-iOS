@@ -4,8 +4,8 @@ options:
 
 packages:
   Superscript:
-    url: https://github.com/superwall/Superscript-iOS
-    exactVersion: "1.0.13"
+    url: https://github.com/superwall/superscript-ios-next
+    exactVersion: "1.0.14"
 
 targets:
   SuperwallKit:
