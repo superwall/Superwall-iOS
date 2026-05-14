@@ -7,11 +7,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Improves Apple Search Ads attribution capture rate.
-- Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
 
 ### Fixes
 
 - Changes the Superscript spm package repo source to a new lightweight repo meaning that the download of the package is way faster.
+- Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
 
 ## 4.15.1
 
