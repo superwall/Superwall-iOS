@@ -57,8 +57,8 @@ final class AttributionFetcher {
   }
 
   // Non-optional construction via `init(uuid:)` — `init(uuidString:)` returns
-  // an Optional which would make the equality check silently false-positive
-  // if the literal ever failed to parse.
+  // an Optional which would make the equality check silently false-negative
+  // (zero-IDFA passes through unfiltered) if the literal ever failed to parse.
   private static let zeroAdvertisingIdentifier = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
   /// Whether this build/environment can ever produce an AdServices token.
