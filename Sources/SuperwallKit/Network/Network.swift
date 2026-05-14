@@ -308,13 +308,12 @@ class Network {
     }
   }
 
-  func sendToken(_ token: String) async -> [String: Any] {
+  func sendToken(_ token: String) async throws -> AdServicesResponse {
     do {
-      let jsonDict = try await urlSession.request(
+      return try await urlSession.request(
         .adServices(token: token),
         data: SuperwallRequestData(factory: factory)
-      ).attribution
-      return convertJSONToDictionary(attribution: jsonDict)
+      )
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -323,7 +322,7 @@ class Network {
         info: ["payload": token],
         error: error
       )
-      return [:]
+      throw error
     }
   }
 
