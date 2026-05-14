@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Improves Apple Search Ads attribution capture rate. The SDK now retries the AdServices token fetch and backend post with backoff when transient errors occur (e.g. when Apple's attribution endpoint isn't ready yet right after install), and only marks the token as successfully posted after the backend confirms. Previously a single transient failure could permanently lose attribution for that install.
+- Apple Search Ads attribution is now install-scoped: once the campaign data is fetched for a device, it's cached and re-applied to any new user identity on `reset()`/`identify()`. Previously each new user would trigger a fresh fetch, which silently failed past Apple's 24h post-install window. Existing users are migrated transparently on first launch.
 - Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
 
 ### Fixes

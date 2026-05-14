@@ -175,6 +175,41 @@ struct AdServicesAttributionTests {
   }
 
   @Test
+  func attributionData_roundTripsThroughStorage() {
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+
+    storage.delete(AdServicesAttributionDataStorage.self)
+
+    let cached: [String: JSON] = [
+      "apple_search_ads_campaign_id": "campaign-123",
+      "acquisition_source": "apple_search_ads"
+    ]
+    storage.save(cached, forType: AdServicesAttributionDataStorage.self)
+
+    let restored = storage.get(AdServicesAttributionDataStorage.self)
+    #expect(restored?["apple_search_ads_campaign_id"]?.stringValue == "campaign-123")
+    #expect(restored?["acquisition_source"]?.stringValue == "apple_search_ads")
+
+    storage.delete(AdServicesAttributionDataStorage.self)
+  }
+
+  @Test
+  func reapplyCachedAttribution_noCrashWhenNothingCached() {
+    // The user-attribute side effect happens on Superwall.shared (the global
+    // singleton) and is detached from the test's local DependencyContainer,
+    // so asserting on the resulting attributes from inside this test isn't
+    // reliable. Just confirm the no-op path doesn't crash with empty state.
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+    let poster = dependencyContainer.attributionPoster!
+
+    storage.delete(AdServicesAttributionDataStorage.self)
+
+    poster.reapplyCachedAttribution()
+  }
+
+  @Test
   func getAdServicesToken_bailsWhenPermanentlyUnsupported() async {
     guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
       return

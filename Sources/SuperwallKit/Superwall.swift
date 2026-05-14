@@ -1029,6 +1029,11 @@ public final class Superwall: NSObject, ObservableObject {
     dependencyContainer.attributionPoster.cancelInFlight()
     dependencyContainer.storage.reset()
 
+    // ASA attribution is install-scoped, so re-apply the cached campaign
+    // dict to the new user's attributes after the wipe. AdServices state
+    // itself lives in app-specific storage and is preserved through reset.
+    dependencyContainer.attributionPoster.reapplyCachedAttribution()
+
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
     Task {

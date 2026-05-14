@@ -57,6 +57,8 @@ final class AttributionPoster {
     self.configManager = configManager
     self.attributionFetcher = attributionFetcher
 
+    Self.migrateLegacyTokenSentinelIfNeeded(storage: storage)
+
     if #available(iOS 14.3, *) {
       listenToConfig()
     }
@@ -107,6 +109,38 @@ final class AttributionPoster {
       }
     }
     #endif
+  }
+
+  /// Moves the AdServices token sentinel from the legacy user-specific
+  /// location to the new app-specific location on first launch after upgrade.
+  /// Without this, existing users would look "never attributed" and we'd
+  /// hammer Apple with retries even though we already finished for them.
+  private static func migrateLegacyTokenSentinelIfNeeded(storage: Storage) {
+    if storage.get(AdServicesTokenStorage.self) != nil {
+      return
+    }
+    guard let legacyToken = storage.get(LegacyUserScopedAdServicesTokenStorage.self) else {
+      return
+    }
+    storage.save(legacyToken, forType: AdServicesTokenStorage.self)
+    // We don't delete the legacy file — its on-disk key collides with the
+    // new one in the memCache layer, so a delete would evict the entry we
+    // just wrote. The orphan file is ~50 bytes and harmless.
+  }
+
+  /// Re-applies the cached ASA attribution dict to the current user's
+  /// attributes. Called from `reset(duringIdentify:)` after user files are
+  /// wiped so the new user identity inherits the install-scoped campaign
+  /// keys without us re-hitting Apple. No-op if nothing was ever fetched.
+  func reapplyCachedAttribution() {
+    guard let cached = storage.get(AdServicesAttributionDataStorage.self) else {
+      return
+    }
+    let attribution = convertJSONToDictionary(attribution: cached)
+    if attribution.isEmpty {
+      return
+    }
+    Superwall.shared.setUserAttributes(attribution)
   }
 
   /// Cancel any in-flight attempt. Used during reset so we don't race a
@@ -258,10 +292,11 @@ final class AttributionPoster {
       if Task.isCancelled {
         return
       }
-      let attribution = convertJSONToDictionary(attribution: response.attribution)
       storage.save(token, forType: AdServicesTokenStorage.self)
+      storage.save(response.attribution, forType: AdServicesAttributionDataStorage.self)
       storage.delete(AdServicesAttributionAttemptsStorage.self)
 
+      let attribution = convertJSONToDictionary(attribution: response.attribution)
       if !attribution.isEmpty {
         Superwall.shared.setUserAttributes(attribution)
       }
@@ -322,8 +357,15 @@ final class AttributionPoster {
     }
     storage.save(updated, forType: AdServicesAttributionAttemptsStorage.self)
   }
+}
 
-  private static func isPermanentTokenError(_ error: Error) -> Bool {
+private enum PosterError: Error, Equatable {
+  case tokenUnavailable
+  case permanentlyUnsupported
+}
+
+extension AttributionPoster {
+  static func isPermanentTokenError(_ error: Error) -> Bool {
     // AAAttributionErrorCode is not consistently exposed as a typed enum
     // across SDK versions, so match on the NSError domain/code numerically.
     // Codes 2 (.platformNotSupported) and 3 (.attributionUnsupported) are
@@ -333,10 +375,5 @@ final class AttributionPoster {
       return false
     }
     return nsError.code == 2 || nsError.code == 3
-  }
-
-  private enum PosterError: Error, Equatable {
-    case tokenUnavailable
-    case permanentlyUnsupported
   }
 }
