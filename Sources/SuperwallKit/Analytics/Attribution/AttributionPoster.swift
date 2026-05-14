@@ -300,7 +300,10 @@ final class AttributionPoster {
     var lastError: Error?
     for delay in [0.0] + Self.tokenFetchBackoff {
       if delay > 0 {
-        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        // Propagate cancellation from the sleep itself — using `try?` would
+        // swallow CancellationError and force callers waiting up to 15s for
+        // the next post-sleep `Task.isCancelled` check to notice.
+        try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       }
       if Task.isCancelled {
         throw CancellationError()
