@@ -56,7 +56,10 @@ final class AttributionFetcher {
     return nil
   }
 
-  private static let zeroAdvertisingIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000000")
+  // Non-optional construction via `init(uuid:)` — `init(uuidString:)` returns
+  // an Optional which would make the equality check silently false-positive
+  // if the literal ever failed to parse.
+  private static let zeroAdvertisingIdentifier = UUID(uuid: (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
   /// Whether this build/environment can ever produce an AdServices token.
   /// `false` on builds that didn't link AdServices.framework and on debug
