@@ -177,16 +177,12 @@ final class AttributionPoster {
       return
     }
 
-    await Superwall.shared.track(InternalSuperwallEvent.AdServicesTokenRetrieval(state: .start))
-
-    // Re-check ownership, then create and store the task atomically inside
-    // the queue. `cancelInFlight()` may have fired while we were suspended
-    // on the track call above (before `currentTask` was ever stored), in
-    // which case our pre-reset `existingAttempts` snapshot is now stale and
-    // running runAttempt would clobber the new user's freshly reset storage.
-    // Doing the create+store inside the same sync block also prevents
-    // cancelInFlight from running between Task creation and storage, which
-    // would otherwise leave the task uncancellable from the outside.
+    // Atomic ownership re-check + task creation + store. We don't track
+    // `.start` here — it's deferred into `runAttempt` so we don't leak an
+    // unpaired event if cancelInFlight raced us. Creating and storing the
+    // task inside the same sync block also prevents cancelInFlight from
+    // running between Task() and the store, which would leave the task
+    // uncancellable from the outside.
     let task: Task<Void, Never>? = stateQueue.sync {
       guard ownerGeneration == myGeneration else {
         return nil
@@ -216,6 +212,13 @@ final class AttributionPoster {
     if storage.get(AdServicesAttributionUnsupportedStorage.self) == true {
       return false
     }
+    // No-token environment (simulator without SUPERWALL_MOCK_AD_SERVICES_TOKEN,
+    // build without AdServices.framework). Skip without burning an attempt —
+    // the developer might add the env var and relaunch, or this might just
+    // be the simulator path of a build that works on real devices.
+    if !attributionFetcher.canProduceAdServicesToken {
+      return false
+    }
     guard configManager.config?.attribution?.appleSearchAds?.enabled == true else {
       return false
     }
@@ -232,6 +235,14 @@ final class AttributionPoster {
 
   @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   private func runAttempt(existingAttempts: AdServicesAttributionAttempts?) async {
+    // Fire `.start` from inside the task body so the event isn't orphaned if
+    // `cancelInFlight` raced the outer call's ownership re-check. If we're
+    // already cancelled by the time this runs, skip — no `.start`, no orphan.
+    if Task.isCancelled {
+      return
+    }
+    await Superwall.shared.track(InternalSuperwallEvent.AdServicesTokenRetrieval(state: .start))
+
     let token: String
     do {
       token = try await fetchTokenWithBackoff()
@@ -239,7 +250,12 @@ final class AttributionPoster {
       // Cancellation means `cancelInFlight` (typically via reset) asked us to
       // abandon — not a real failure. Don't bookkeep an attempt, especially
       // because storage may have just been wiped and `existingAttempts` is
-      // stale; writing it would inflate the new user's attempt count.
+      // stale; writing it would inflate the new user's attempt count. We
+      // still emit a terminal so the prior `.start` isn't orphaned in
+      // analytics.
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(CancellationError()))
+      )
       return
     } catch let error as PosterError where error == .permanentlyUnsupported {
       // Don't burn the attempt budget on a device that will never have a
@@ -285,6 +301,12 @@ final class AttributionPoster {
         Superwall.shared.setUserAttributes(attribution)
       }
     } catch is CancellationError {
+      // `.complete(token)` was already emitted above, but the post never
+      // finished — emit a terminal `.fail` so the session has an unambiguous
+      // outcome rather than trailing off after `.complete`.
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(CancellationError()))
+      )
       return
     } catch {
       recordFailedAttempt(existing: existingAttempts)

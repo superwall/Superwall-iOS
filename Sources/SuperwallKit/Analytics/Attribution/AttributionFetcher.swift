@@ -58,6 +58,23 @@ final class AttributionFetcher {
 
   private static let zeroAdvertisingIdentifier = UUID(uuidString: "00000000-0000-0000-0000-000000000000")
 
+  /// Whether this build/environment can ever produce an AdServices token.
+  /// `false` on builds that didn't link AdServices.framework and on debug
+  /// simulator runs without `SUPERWALL_MOCK_AD_SERVICES_TOKEN`. Lets the
+  /// poster short-circuit before entering its 23s backoff schedule in
+  /// development.
+  var canProduceAdServicesToken: Bool {
+    #if !canImport(AdServices)
+    return false
+    #else
+    #if targetEnvironment(simulator) && DEBUG
+    return ProcessInfo.processInfo.environment["SUPERWALL_MOCK_AD_SERVICES_TOKEN"] != nil
+    #else
+    return true
+    #endif
+    #endif
+  }
+
   // should match OS availability in https://developer.apple.com/documentation/ad_services
   @available(iOS 14.3, tvOS 14.3, macOS 11.1, watchOS 6.2, macCatalyst 14.3, *)
   var adServicesToken: String? {
