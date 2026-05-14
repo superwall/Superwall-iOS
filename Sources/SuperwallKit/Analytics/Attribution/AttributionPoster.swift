@@ -19,10 +19,12 @@ final class AttributionPoster {
   static let maxAttempts = 8
 
   /// Maximum window from the first attempt during which we'll keep retrying.
-  /// Apple's attribution data is only useful within ~24h of install, so 48h
-  /// gives generous slack for the very-first launch happening late in the
-  /// window without continuing indefinitely.
-  static let maxRetryWindow: TimeInterval = 48 * 60 * 60
+  /// Apple's docs say the attribution token is valid for 24h after it's
+  /// generated and that posts should happen within that window. We generate
+  /// a fresh token on every attempt, but the first attempt's clock is what
+  /// bounds Apple's install-side attribution data — past 24h, even a fresh
+  /// token won't resolve to a campaign.
+  static let maxRetryWindow: TimeInterval = 24 * 60 * 60
 
   /// In-session retry plan for transient errors from `AAAttribution.attributionToken()`,
   /// which can throw `networkError` if called too soon after launch. The HTTP
