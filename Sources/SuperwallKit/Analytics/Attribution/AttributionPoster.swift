@@ -83,7 +83,10 @@ final class AttributionPoster {
       .sink(
         receiveCompletion: { _ in },
         receiveValue: { [weak self] _ in
-          Task {
+          // Match applicationWillEnterForeground's priority: default-priority
+          // tasks can be deferred under load, and attribution is bounded by
+          // Apple's 24h install window.
+          Task(priority: .utility) {
             await self?.getAdServicesTokenIfNeeded()
           }
         }
@@ -360,7 +363,7 @@ extension AttributionPoster {
   /// versions, so we match on the raw code with the constant clearly named.
   private static let platformNotSupportedCode = 3
 
-  static func isPermanentTokenError(_ error: Error) -> Bool {
+  private static func isPermanentTokenError(_ error: Error) -> Bool {
     // Only `platformNotSupported` is permanent — this OS/app config will
     // never produce a token. `networkError` and `internalError` are both
     // transient and should keep retrying within the per-install budget.
