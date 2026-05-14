@@ -57,8 +57,6 @@ final class AttributionPoster {
     self.configManager = configManager
     self.attributionFetcher = attributionFetcher
 
-    Self.migrateLegacyTokenSentinelIfNeeded(storage: storage)
-
     if #available(iOS 14.3, *) {
       listenToConfig()
     }
@@ -109,23 +107,6 @@ final class AttributionPoster {
       }
     }
     #endif
-  }
-
-  /// Moves the AdServices token sentinel from the legacy user-specific
-  /// location to the new app-specific location on first launch after upgrade.
-  /// Without this, existing users would look "never attributed" and we'd
-  /// hammer Apple with retries even though we already finished for them.
-  private static func migrateLegacyTokenSentinelIfNeeded(storage: Storage) {
-    if storage.get(AdServicesTokenStorage.self) != nil {
-      return
-    }
-    guard let legacyToken = storage.get(LegacyUserScopedAdServicesTokenStorage.self) else {
-      return
-    }
-    storage.save(legacyToken, forType: AdServicesTokenStorage.self)
-    // We don't delete the legacy file — its on-disk key collides with the
-    // new one in the memCache layer, so a delete would evict the entry we
-    // just wrote. The orphan file is ~50 bytes and harmless.
   }
 
   /// Re-applies the cached ASA attribution dict to the current user's

@@ -264,20 +264,6 @@ enum AdServicesAttributionDataStorage: Storable {
   typealias Value = [String: JSON]
 }
 
-/// Read-side shim for the pre-install-scoped location of the token sentinel.
-/// Older SDK versions wrote ``AdServicesTokenStorage`` to user-specific
-/// documents. On first launch after upgrade we migrate that value over to the
-/// new app-specific location so existing users aren't re-attempted.
-enum LegacyUserScopedAdServicesTokenStorage: Storable {
-  static var key: String {
-    // Same key string as AdServicesTokenStorage so we hit the same on-disk
-    // filename, just in the legacy directory.
-    "store.adServicesToken"
-  }
-  static var directory: SearchPathDirectory = .userSpecificDocuments
-  typealias Value = String
-}
-
 enum SK2TransactionIds: Storable {
   static var key: String {
     "store.syncedSK2TransactionIds"
