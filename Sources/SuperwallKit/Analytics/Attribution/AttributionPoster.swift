@@ -346,15 +346,25 @@ private enum PosterError: Error, Equatable {
 }
 
 extension AttributionPoster {
+  /// AdServices.framework error code for `platformNotSupported`. From
+  /// Apple's `AAAttribution.h`:
+  ///
+  ///     AAAttributionErrorCodeNetworkError = 1,         // transient
+  ///     AAAttributionErrorCodeInternalError = 2,        // transient
+  ///     AAAttributionErrorCodePlatformNotSupported = 3, // permanent
+  ///
+  /// `NS_ERROR_ENUM` doesn't reliably import as a Swift symbol across SDK
+  /// versions, so we match on the raw code with the constant clearly named.
+  private static let platformNotSupportedCode = 3
+
   static func isPermanentTokenError(_ error: Error) -> Bool {
-    // AAAttributionErrorCode is not consistently exposed as a typed enum
-    // across SDK versions, so match on the NSError domain/code numerically.
-    // Codes 2 (.platformNotSupported) and 3 (.attributionUnsupported) are
-    // permanent on this device; the rest are treated as transient.
+    // Only `platformNotSupported` is permanent — this OS/app config will
+    // never produce a token. `networkError` and `internalError` are both
+    // transient and should keep retrying within the per-install budget.
     let nsError = error as NSError
     guard nsError.domain == "AAAttributionErrorDomain" else {
       return false
     }
-    return nsError.code == 2 || nsError.code == 3
+    return nsError.code == platformNotSupportedCode
   }
 }
