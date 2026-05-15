@@ -131,7 +131,10 @@ extension SubscriptionPeriod {
     let periodsPerDay: Decimal = {
       switch self.unit {
       case .day: return 1
-      case .week: return Decimal(365) / Decimal(52)
+      // A week is exactly 7 days. Don't route through 52/365 — 52 weeks is
+      // only 364 days, so that approximation makes a 1-week product's daily
+      // price disagree with an equivalent 7-day product's.
+      case .week: return 7
       case .month: return Decimal(365) / Decimal(12)
       case .year: return 365
       }
@@ -145,7 +148,9 @@ extension SubscriptionPeriod {
   func pricePerWeek(withTotalPrice price: Decimal) -> Decimal {
     let periodsPerWeek: Decimal = {
       switch self.unit {
-      case .day: return Decimal(52) / Decimal(365)
+      // A day is exactly 1/7 of a week. The old 52/365 made a 7-day product
+      // resolve to 0.997 weeks, inflating its weekly price (e.g. 6.99 → 7.00).
+      case .day: return Decimal(1) / Decimal(7)
       case .week: return 1
       case .month: return Decimal(52) / Decimal(12)
       case .year: return 52

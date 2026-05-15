@@ -119,6 +119,30 @@ struct SubscriptionPeriodPriceTests {
     #expect(weeklyPrice == Decimal(string: "4.99"))
   }
 
+  @Test("Weekly price for a 7-day subscription equals the price")
+  func testWeeklyPriceForSevenDaySubscription() {
+    // A 7-day period IS one week, so the weekly price must equal the price.
+    // Before the day↔week conversion fix this divided by (7 × 52/365) ≈ 0.9973,
+    // giving 6.99 / 0.9973 ≈ 7.009, which truncated to "7.00" — a penny too high.
+    let period = SubscriptionPeriod(value: 7, unit: .day)
+    let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(string: "6.99")!)
+
+    #expect(weeklyPrice == Decimal(string: "6.99"))
+  }
+
+  @Test("7-day and 1-week subscriptions produce the same weekly price")
+  func testSevenDayAndOneWeekWeeklyPriceAreConsistent() {
+    // The two are the same duration — their derived weekly price must match.
+    let price = Decimal(string: "6.99")!
+    let sevenDay = SubscriptionPeriod(value: 7, unit: .day)
+    let oneWeek = SubscriptionPeriod(value: 1, unit: .week)
+
+    #expect(
+      sevenDay.pricePerWeek(withTotalPrice: price)
+        == oneWeek.pricePerWeek(withTotalPrice: price)
+    )
+  }
+
   // MARK: - Monthly Price Tests
 
   @Test("Monthly price for yearly subscription")

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.3
+
+### Fixes
+
+- Fixes computed period prices (`weeklyPrice`, `dailyPrice`) being off by a small amount for products whose subscription period is expressed in days. A 7-day product is exactly one week, but the day↔week conversion went through an approximate `52/365` factor, so a 7-day product priced at e.g. £6.99 could report a `weeklyPrice` of £7.00. Day↔week conversions are now exact.
+
 ## 4.15.2
 
 ### Enhancements

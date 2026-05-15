@@ -277,7 +277,8 @@ struct SK2StoreProduct: StoreProductType {
     case .month:
       periods = Decimal(365) / Decimal(12) * Decimal(numberOfUnits)
     case .week:
-      periods = Decimal(365) / Decimal(52) * Decimal(numberOfUnits)
+      // 7 days per week exactly — not 365/52.
+      periods = Decimal(7) * Decimal(numberOfUnits)
     case .day:
       periods = Decimal(numberOfUnits)
     @unknown default:
@@ -305,7 +306,8 @@ struct SK2StoreProduct: StoreProductType {
     case .week:
       periods = Decimal(numberOfUnits)
     case .day:
-      periods = Decimal(numberOfUnits) * Decimal(52) / Decimal(365)
+      // 7 days per week exactly — a 7-day product is 1 week.
+      periods = Decimal(numberOfUnits) / Decimal(7)
     @unknown default:
       periods = Decimal(numberOfUnits)
     }
