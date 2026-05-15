@@ -263,108 +263,34 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var dailyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(365 * numberOfUnits)
-    case .month:
-      periods = Decimal(365) / Decimal(12) * Decimal(numberOfUnits)
-    case .week:
-      // 7 days per week exactly — not 365/52.
-      periods = Decimal(7) * Decimal(numberOfUnits)
-    case .day:
-      periods = Decimal(numberOfUnits)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    let result = (inputPrice / periods).roundedPrice()
-    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
+    return formattedComputedPrice { $0.pricePerDay(withTotalPrice: $1) }
   }
 
   var weeklyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(52 * numberOfUnits)
-    case .month:
-      periods = Decimal(52) / Decimal(12) * Decimal(numberOfUnits)
-    case .week:
-      periods = Decimal(numberOfUnits)
-    case .day:
-      // 7 days per week exactly — a 7-day product is 1 week.
-      periods = Decimal(numberOfUnits) / Decimal(7)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    let result = (inputPrice / periods).roundedPrice()
-    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
+    return formattedComputedPrice { $0.pricePerWeek(withTotalPrice: $1) }
   }
 
   var monthlyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(12 * numberOfUnits)
-    case .month:
-      periods = Decimal(1 * numberOfUnits)
-    case .week:
-      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(52)
-    case .day:
-      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(365)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    let result = (inputPrice / periods).roundedPrice()
-    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
+    return formattedComputedPrice { $0.pricePerMonth(withTotalPrice: $1) }
   }
 
   var yearlyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    return formattedComputedPrice { $0.pricePerYear(withTotalPrice: $1) }
+  }
+
+  /// Formats a per-period price derived from the *normalized* subscription
+  /// period. `subscriptionPeriod` is built via `SubscriptionPeriod.from(...)`,
+  /// which applies `normalized()` — collapsing StoreKit's occasional `.day × 7`
+  /// into `.week × 1`. Without that, a weekly product reported by StoreKit in
+  /// days would divide by an approximate day↔week factor and report a
+  /// `weeklyPrice` a penny off (e.g. £6.99 → £7.00).
+  private func formattedComputedPrice(
+    _ perPeriod: (SubscriptionPeriod, Decimal) -> Decimal
+  ) -> String {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(numberOfUnits)
-    case .month:
-      periods = Decimal(numberOfUnits) / Decimal(12)
-    case .week:
-      periods = Decimal(numberOfUnits) / Decimal(52)
-    case .day:
-      periods = Decimal(numberOfUnits) / Decimal(365)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    let result = (inputPrice / periods).roundedPrice()
+    let result = perPeriod(subscriptionPeriod, underlyingSK2Product.price)
     return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 

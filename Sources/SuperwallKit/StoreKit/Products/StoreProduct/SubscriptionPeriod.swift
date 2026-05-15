@@ -107,7 +107,7 @@ public final class SubscriptionPeriod: NSObject, Sendable {
   /// Occasionally, StoreKit seems to send back a value 7 days for a 7day trial
   /// instead of a value of 1 week for a trial of 7 days in length.
   /// Source: https://github.com/RevenueCat/react-native-purchases/issues/348
-  private func normalized() -> SubscriptionPeriod {
+  func normalized() -> SubscriptionPeriod {
     switch unit {
     case .day:
       if value.isMultiple(of: 7) {
