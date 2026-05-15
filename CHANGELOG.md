@@ -17,7 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Changes the Superscript spm package repo source to a new lightweight repo meaning that the download of the package is way faster.
+- Changes the Superscript SPM package repo source to a new lightweight repo meaning that the download of the package is way faster.
 
 ## 4.15.1
 
