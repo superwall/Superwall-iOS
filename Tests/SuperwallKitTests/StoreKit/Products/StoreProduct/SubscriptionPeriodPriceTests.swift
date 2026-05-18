@@ -57,6 +57,29 @@ struct SubscriptionPeriodPriceTests {
     #expect(dailyPrice == Decimal(string: "0.99"))
   }
 
+  @Test("Daily price for a 1-week subscription divides by exactly 7")
+  func testDailyPriceForWeeklySubscriptionDividesBySeven() {
+    // A week is exactly 7 days. Before the day↔week fix this divided by
+    // 365/52 ≈ 7.019, giving 7.00 / 7.019 ≈ 0.9973 → "0.99" — a penny too low.
+    let period = SubscriptionPeriod(value: 1, unit: .week)
+    let dailyPrice = period.pricePerDay(withTotalPrice: Decimal(string: "7.00")!)
+
+    #expect(dailyPrice == Decimal(string: "1.00"))
+  }
+
+  @Test("7-day and 1-week subscriptions produce the same daily price")
+  func testSevenDayAndOneWeekDailyPriceAreConsistent() {
+    // The two are the same duration — their derived daily price must match.
+    let price = Decimal(string: "7.00")!
+    let sevenDay = SubscriptionPeriod(value: 7, unit: .day)
+    let oneWeek = SubscriptionPeriod(value: 1, unit: .week)
+
+    #expect(
+      sevenDay.pricePerDay(withTotalPrice: price)
+        == oneWeek.pricePerDay(withTotalPrice: price)
+    )
+  }
+
   @Test("Daily price for multi-month subscription")
   func testDailyPriceForThreeMonthSubscription() {
     // $24.99/3 months should be ~$0.27/day (24.99 / 90)
@@ -117,6 +140,30 @@ struct SubscriptionPeriodPriceTests {
     let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(4.99))
 
     #expect(weeklyPrice == Decimal(string: "4.99"))
+  }
+
+  @Test("Weekly price for a 7-day subscription equals the price")
+  func testWeeklyPriceForSevenDaySubscription() {
+    // A 7-day period IS one week, so the weekly price must equal the price.
+    // Before the day↔week conversion fix this divided by (7 × 52/365) ≈ 0.9973,
+    // giving 6.99 / 0.9973 ≈ 7.009, which truncated to "7.00" — a penny too high.
+    let period = SubscriptionPeriod(value: 7, unit: .day)
+    let weeklyPrice = period.pricePerWeek(withTotalPrice: Decimal(string: "6.99")!)
+
+    #expect(weeklyPrice == Decimal(string: "6.99"))
+  }
+
+  @Test("7-day and 1-week subscriptions produce the same weekly price")
+  func testSevenDayAndOneWeekWeeklyPriceAreConsistent() {
+    // The two are the same duration — their derived weekly price must match.
+    let price = Decimal(string: "6.99")!
+    let sevenDay = SubscriptionPeriod(value: 7, unit: .day)
+    let oneWeek = SubscriptionPeriod(value: 1, unit: .week)
+
+    #expect(
+      sevenDay.pricePerWeek(withTotalPrice: price)
+        == oneWeek.pricePerWeek(withTotalPrice: price)
+    )
   }
 
   // MARK: - Monthly Price Tests
@@ -221,5 +268,47 @@ struct SubscriptionPeriodPriceTests {
 
     // 0.99 / 365 = 0.00271... rounds down to 0.00
     #expect(dailyPrice == Decimal(string: "0.00"))
+  }
+
+  // MARK: - Normalization
+
+  // StoreKit sometimes reports a weekly subscription as `.day × 7` rather than
+  // `.week × 1`. `normalized()` collapses day/month multiples so the computed
+  // price logic (and `SK2StoreProduct`, which routes through it) treats a
+  // 7-day product as exactly one week — otherwise its weekly price came out a
+  // penny high (e.g. £6.99 → £7.00).
+
+  @Test("A 7-day period normalizes to 1 week")
+  func testSevenDayPeriodNormalizesToOneWeek() {
+    let normalized = SubscriptionPeriod(value: 7, unit: .day).normalized()
+
+    #expect(normalized.value == 1)
+    #expect(normalized.unit == .week)
+  }
+
+  @Test("A 14-day period normalizes to 2 weeks")
+  func testFourteenDayPeriodNormalizesToTwoWeeks() {
+    let normalized = SubscriptionPeriod(value: 14, unit: .day).normalized()
+
+    #expect(normalized.value == 2)
+    #expect(normalized.unit == .week)
+  }
+
+  @Test("A non-7-multiple day period stays in days")
+  func testThreeDayPeriodStaysInDays() {
+    let normalized = SubscriptionPeriod(value: 3, unit: .day).normalized()
+
+    #expect(normalized.value == 3)
+    #expect(normalized.unit == .day)
+  }
+
+  @Test("Normalized 7-day period yields a weekly price equal to the price")
+  func testNormalizedSevenDayWeeklyPriceEqualsPrice() {
+    // The full chain: a 7-day period normalizes to 1 week, and the weekly
+    // price of a 1-week product is the price itself.
+    let normalized = SubscriptionPeriod(value: 7, unit: .day).normalized()
+    let weeklyPrice = normalized.pricePerWeek(withTotalPrice: Decimal(string: "6.99")!)
+
+    #expect(weeklyPrice == Decimal(string: "6.99"))
   }
 }
