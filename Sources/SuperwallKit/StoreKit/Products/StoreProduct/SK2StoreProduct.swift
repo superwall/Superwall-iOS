@@ -102,14 +102,14 @@ struct SK2StoreProduct: StoreProductType {
   /// The price to use for this product, routed through the selected billing
   /// plan's pricing term when one is configured and available, otherwise the
   /// underlying SK2 product's price.
-  fileprivate var selectedPrice: Decimal {
+  private var selectedPrice: Decimal {
     return cachedSelectedPrice ?? underlyingSK2Product.price
   }
 
   /// The subscription period to use for this product, routed through the
   /// selected billing plan's pricing term when one is configured and
   /// available, otherwise the underlying SK2 product's subscription period.
-  fileprivate var selectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod? {
+  private var selectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod? {
     return cachedSelectedSubscriptionPeriod ?? underlyingSK2Product.subscription?.subscriptionPeriod
   }
 

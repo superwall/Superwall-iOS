@@ -214,6 +214,10 @@ actor StoreKitManager {
     //    billing plan so price/period accessors route correctly and the
     //    purchase pipeline can pick the plan up later. Two composite entries
     //    sharing an Apple ID get two independent clones.
+    //    Reset the actor-level map so composite entries from a previous
+    //    paywall don't linger (composite IDs encode a paywall-specific
+    //    billing-plan suffix, unlike stable Apple IDs in `productsById`).
+    self.productsByCompositeId = [:]
     var productsByCompositeId: [String: StoreProduct] = [:]
     for productItem in productItems {
       guard case .appStore(let appStoreProduct) = productItem.type,
