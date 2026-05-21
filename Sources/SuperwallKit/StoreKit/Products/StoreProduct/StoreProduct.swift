@@ -27,7 +27,7 @@ public typealias SK2Product = StoreKit.Product
 @objc(SWKStoreProduct)
 @objcMembers
 public final class StoreProduct: NSObject, StoreProductType, Sendable {
-  nonisolated(unsafe) var product: StoreProductType
+  let product: StoreProductType
 
   /// The intro offer eligibility token for this product, if available.
   ///
@@ -48,16 +48,13 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// The Apple billing plan configured on the Superwall Product wrapping this
   /// store product, if any.
   ///
-  /// Set by the SDK when building per-Product `StoreProduct`s for a paywall;
-  /// surfaced publicly so external `PurchaseController` implementations can
-  /// read it and pass `.billingPlanType(...)` to the SK2 purchase options
-  /// themselves. Only meaningful on iOS 26+.
-  ///
-  /// Setting this property re-routes price and period accessors through the
-  /// matching `pricingTerms` entry on the underlying SK2 product.
+  /// Set by the SDK when building per-Product `StoreProduct`s for a paywall
+  /// (via `copyForCompositeProduct`) and surfaced publicly read-only so
+  /// external `PurchaseController` implementations can pass
+  /// `.billingPlanType(...)` to the SK2 purchase options themselves. Only
+  /// meaningful on iOS 26+.
   public var billingPlanType: AppStoreProduct.BillingPlanType? {
-    get { product.billingPlanType }
-    set { product = product.withBillingPlanType(newValue) }
+    product.billingPlanType
   }
 
   /// Whether the billing plan configured on the Superwall Product is

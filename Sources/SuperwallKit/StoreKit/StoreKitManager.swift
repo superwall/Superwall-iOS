@@ -73,30 +73,46 @@ actor StoreKitManager {
     productsByCompositeId: [String: StoreProduct],
     productItems: [Product]
   ) {
-    // In test mode, use cached test products instead of fetching from StoreKit
+    // In test mode, use cached test products instead of fetching from StoreKit.
+    // Cached test products are keyed by Apple identifier, so composite IDs that
+    // include a billing-plan suffix (e.g. `com.app.annual:MONTHLY`) must be
+    // resolved via the inner Apple ID.
     if isTestMode {
-      var testProductsByCompositeId: [String: StoreProduct] = [:]
-      // Test products use unique IDs (no Apple-ID sharing across composite
-      // IDs in test mode), so the composite map mirrors `productsById` for
-      // backwards compatibility with existing test fixtures.
-      for (id, product) in productsById {
-        testProductsByCompositeId[id] = product
-      }
-
       var productItems: [Product] = []
       for original in paywall?.products ?? [] {
-        let id = original.id
-        if let product = testProductsByCompositeId[id] {
+        let cached: StoreProduct?
+        if case .appStore(let appStoreProduct) = original.type {
+          cached = productsById[appStoreProduct.id]
+        } else {
+          cached = productsById[original.id]
+        }
+        if let cached = cached {
           productItems.append(
             Product(
               name: original.name,
               type: original.type,
-              id: id,
-              entitlements: product.entitlements
+              id: original.id,
+              entitlements: cached.entitlements
             )
           )
         } else {
           productItems.append(original)
+        }
+      }
+
+      // Build the composite-ID map. For App Store products, clone the cached
+      // StoreProduct with the slot's billing plan attached so billing-plan
+      // scenarios route correctly in test mode too.
+      var testProductsByCompositeId: [String: StoreProduct] = [:]
+      for productItem in productItems {
+        if case .appStore(let appStoreProduct) = productItem.type,
+          let base = productsById[appStoreProduct.id] {
+          let clone = base.copyForCompositeProduct(
+            billingPlanType: appStoreProduct.billingPlanType
+          )
+          testProductsByCompositeId[productItem.id] = clone
+        } else if let base = productsById[productItem.id] {
+          testProductsByCompositeId[productItem.id] = base
         }
       }
 

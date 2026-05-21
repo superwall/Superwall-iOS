@@ -22,6 +22,13 @@ struct SK2StoreProduct: StoreProductType {
   let entitlements: Set<Entitlement>
   let billingPlanType: AppStoreProduct.BillingPlanType?
 
+  /// Resolved at init from `pricingTerms` to avoid iterating the term list on
+  /// every price/period accessor. `nil` when no billing plan is configured or
+  /// when no matching term exists for the current runtime.
+  private let cachedSelectedPrice: Decimal?
+  private let cachedSelectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod?
+  private let cachedHasMatchedTerm: Bool
+
   init(
     sk2Product: SK2Product,
     entitlements: Set<Entitlement>,
@@ -34,6 +41,23 @@ struct SK2StoreProduct: StoreProductType {
     #endif
     self.entitlements = entitlements
     self.billingPlanType = billingPlanType
+
+    #if compiler(>=6.3)
+    if #available(iOS 26.4, *),
+      let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
+      self.cachedSelectedPrice = term.billingPrice
+      self.cachedSelectedSubscriptionPeriod = term.billingPeriod
+      self.cachedHasMatchedTerm = true
+    } else {
+      self.cachedSelectedPrice = nil
+      self.cachedSelectedSubscriptionPeriod = nil
+      self.cachedHasMatchedTerm = false
+    }
+    #else
+    self.cachedSelectedPrice = nil
+    self.cachedSelectedSubscriptionPeriod = nil
+    self.cachedHasMatchedTerm = false
+    #endif
   }
 
   func withBillingPlanType(
@@ -79,33 +103,24 @@ struct SK2StoreProduct: StoreProductType {
   /// plan's pricing term when one is configured and available, otherwise the
   /// underlying SK2 product's price.
   fileprivate var selectedPrice: Decimal {
-    #if compiler(>=6.2)
-    if #available(iOS 26.4, *),
-      let term = selectedPricingTerm() {
-      return term.billingPrice
-    }
-    #endif
-    return underlyingSK2Product.price
+    return cachedSelectedPrice ?? underlyingSK2Product.price
   }
 
   /// The subscription period to use for this product, routed through the
   /// selected billing plan's pricing term when one is configured and
   /// available, otherwise the underlying SK2 product's subscription period.
   fileprivate var selectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod? {
-    #if compiler(>=6.2)
-    if #available(iOS 26.4, *),
-      let term = selectedPricingTerm() {
-      return term.billingPeriod
-    }
-    #endif
-    return underlyingSK2Product.subscription?.subscriptionPeriod
+    return cachedSelectedSubscriptionPeriod ?? underlyingSK2Product.subscription?.subscriptionPeriod
   }
 
-  #if compiler(>=6.2)
+  #if compiler(>=6.3)
   @available(iOS 26.4, *)
-  fileprivate func selectedPricingTerm() -> StoreKit.Product.SubscriptionInfo.PricingTerms? {
+  private static func findPricingTerm(
+    for billingPlanType: AppStoreProduct.BillingPlanType?,
+    in sk2Product: SK2Product
+  ) -> StoreKit.Product.SubscriptionInfo.PricingTerms? {
     guard let plan = billingPlanType,
-      let terms = underlyingSK2Product.subscription?.pricingTerms else {
+      let terms = sk2Product.subscription?.pricingTerms else {
       return nil
     }
     let target: StoreKit.Product.SubscriptionInfo.BillingPlanType
@@ -121,12 +136,7 @@ struct SK2StoreProduct: StoreProductType {
     guard billingPlanType != nil else {
       return true
     }
-    #if compiler(>=6.2)
-    if #available(iOS 26.4, *) {
-      return selectedPricingTerm() != nil
-    }
-    #endif
-    return false
+    return cachedHasMatchedTerm
   }
 
   /// A `NumberFormatter` for formatting computed prices (daily, weekly, monthly, yearly).

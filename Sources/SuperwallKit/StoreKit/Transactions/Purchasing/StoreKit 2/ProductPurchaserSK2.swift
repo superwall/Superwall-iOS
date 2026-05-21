@@ -100,7 +100,7 @@ final class ProductPurchaserSK2: Purchasing {
       }
       #endif
 
-      #if compiler(>=6.2)
+      #if compiler(>=6.3)
       // Apply the configured Apple billing plan (iOS 26+). If the runtime is
       // older or no plan is configured, the purchase proceeds with Apple's
       // default plan.
