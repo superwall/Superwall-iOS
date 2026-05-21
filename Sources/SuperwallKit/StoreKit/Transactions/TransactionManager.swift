@@ -67,8 +67,9 @@ final class TransactionManager {
       // configured on the Product, otherwise equal to the Apple product ID).
       // Try the composite-keyed map first; fall back to the Apple-ID map for
       // custom and externally cached products that aren't part of a paywall.
-      let resolvedProduct = await storeKitManager.productsByCompositeId[productId]
-        ?? storeKitManager.productsById[productId]
+      let compositeProduct = await storeKitManager.productsByCompositeId[productId]
+      let fallbackProduct = await storeKitManager.productsById[productId]
+      let resolvedProduct = compositeProduct ?? fallbackProduct
       guard let storeProduct = resolvedProduct else {
         Logger.debug(
           logLevel: .error,

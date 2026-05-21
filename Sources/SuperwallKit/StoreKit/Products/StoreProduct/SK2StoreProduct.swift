@@ -80,9 +80,9 @@ struct SK2StoreProduct: StoreProductType {
   /// underlying SK2 product's price.
   fileprivate var selectedPrice: Decimal {
     #if compiler(>=6.2)
-    if #available(iOS 26.0, *),
+    if #available(iOS 26.4, *),
       let term = selectedPricingTerm() {
-      return term.price
+      return term.billingPrice
     }
     #endif
     return underlyingSK2Product.price
@@ -93,22 +93,22 @@ struct SK2StoreProduct: StoreProductType {
   /// available, otherwise the underlying SK2 product's subscription period.
   fileprivate var selectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod? {
     #if compiler(>=6.2)
-    if #available(iOS 26.0, *),
+    if #available(iOS 26.4, *),
       let term = selectedPricingTerm() {
-      return term.subscriptionPeriod
+      return term.billingPeriod
     }
     #endif
     return underlyingSK2Product.subscription?.subscriptionPeriod
   }
 
   #if compiler(>=6.2)
-  @available(iOS 26.0, *)
-  fileprivate func selectedPricingTerm() -> StoreKit.Product.SubscriptionInfo.PricingTerm? {
+  @available(iOS 26.4, *)
+  fileprivate func selectedPricingTerm() -> StoreKit.Product.SubscriptionInfo.PricingTerms? {
     guard let plan = billingPlanType,
       let terms = underlyingSK2Product.subscription?.pricingTerms else {
       return nil
     }
-    let target: StoreKit.Product.SubscriptionInfo.PricingTerm.BillingPlanType
+    let target: StoreKit.Product.SubscriptionInfo.BillingPlanType
     switch plan {
     case .upFront: target = .upFront
     case .monthly: target = .monthly
@@ -122,7 +122,7 @@ struct SK2StoreProduct: StoreProductType {
       return true
     }
     #if compiler(>=6.2)
-    if #available(iOS 26.0, *) {
+    if #available(iOS 26.4, *) {
       return selectedPricingTerm() != nil
     }
     #endif
