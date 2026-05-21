@@ -50,18 +50,19 @@ extension PaywallRequestManager {
 
       paywall.products = result.productItems
 
-      // Merge custom products into productsById so they appear in
-      // product variables and templating.
-      var mergedProductsById = result.productsById
+      // Merge custom products into the composite-keyed map so they appear in
+      // product variables and templating. Custom products have unique IDs,
+      // so composite ID == Apple ID for them and the lookup is direct.
+      var mergedProductsByCompositeId = result.productsByCompositeId
       for product in customProducts {
         if let cached = await storeKitManager.productsById[product.id] {
-          mergedProductsById[product.id] = cached
+          mergedProductsByCompositeId[product.id] = cached
         }
       }
 
       let outcome = PaywallLogic.getProductVariables(
         productItems: result.productItems,
-        productsById: mergedProductsById
+        productsById: mergedProductsByCompositeId
       )
       paywall.productVariables = outcome.productVariables
 
@@ -242,12 +243,24 @@ extension PaywallRequestManager {
       return paywall
     }
 
-    // Check App Store products
-    let productsById = await storeKitManager.productsById
+    // Check App Store products. Lookup uses the composite-keyed map so
+    // billing-plan-specific Superwall Products resolve to the right clone.
+    // Falls back to the Apple-ID-keyed map for products loaded outside the
+    // paywall flow (e.g. preloaded overrides).
+    let productsByCompositeId = await storeKitManager.productsByCompositeId
+    let productsByAppleId = await storeKitManager.productsById
     var isFreeTrialAvailable = false
 
     for productItem in paywall.products {
-      guard let storeProduct = productsById[productItem.id] else {
+      let storeProduct: StoreProduct?
+      if let composite = productsByCompositeId[productItem.id] {
+        storeProduct = composite
+      } else if case .appStore(let appStoreProduct) = productItem.type {
+        storeProduct = productsByAppleId[appStoreProduct.id]
+      } else {
+        storeProduct = productsByAppleId[productItem.id]
+      }
+      guard let storeProduct = storeProduct else {
         continue
       }
 
@@ -272,11 +285,12 @@ extension PaywallRequestManager {
     }
 
     // Check custom products for trial eligibility using the same entitlement-based
-    // approach as Stripe products.
+    // approach as Stripe products. Custom products are looked up by their
+    // unique ID in the Apple-ID-keyed map.
     if !paywall.isFreeTrialAvailable {
       paywall.isFreeTrialAvailable = await checkCustomTrialEligibility(
         productItems: paywall.products,
-        productsById: productsById,
+        productsById: productsByAppleId,
         introOfferEligibility: paywall.introOfferEligibility
       )
     }

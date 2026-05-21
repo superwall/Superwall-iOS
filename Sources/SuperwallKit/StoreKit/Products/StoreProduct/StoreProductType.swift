@@ -135,4 +135,32 @@ protocol StoreProductType: Sendable {
   /// - ``Purchases/eligiblePromotionalOffers(forProduct:)``
   /// - ``StoreProduct/eligiblePromotionalOffers()``
   var discounts: [StoreProductDiscount] { get }
+
+  /// The billing plan configured on the Superwall Product wrapping this store
+  /// product. `nil` for non-App-Store products and for App Store products that
+  /// don't opt into a specific plan.
+  var billingPlanType: AppStoreProduct.BillingPlanType? { get }
+
+  /// Whether the configured `billingPlanType` is available on the current
+  /// runtime (iOS 26+ in supported regions). Defaults to `true` when no plan
+  /// is configured.
+  var isBillingPlanAvailable: Bool { get }
+
+  /// Returns a copy of `self` with the given `billingPlanType` attached. For
+  /// types that don't model billing plans (SK1, custom, etc.), returns `self`.
+  /// Returns the existential type so callers holding `any StoreProductType`
+  /// can re-assign through this method.
+  func withBillingPlanType(
+    _ billingPlanType: AppStoreProduct.BillingPlanType?
+  ) -> any StoreProductType
+}
+
+extension StoreProductType {
+  var billingPlanType: AppStoreProduct.BillingPlanType? { nil }
+  var isBillingPlanAvailable: Bool { true }
+  func withBillingPlanType(
+    _ billingPlanType: AppStoreProduct.BillingPlanType?
+  ) -> any StoreProductType {
+    self
+  }
 }

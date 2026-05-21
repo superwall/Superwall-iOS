@@ -27,7 +27,7 @@ public typealias SK2Product = StoreKit.Product
 @objc(SWKStoreProduct)
 @objcMembers
 public final class StoreProduct: NSObject, StoreProductType, Sendable {
-  let product: StoreProductType
+  nonisolated(unsafe) var product: StoreProductType
 
   /// The intro offer eligibility token for this product, if available.
   ///
@@ -44,6 +44,28 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// }
   /// ```
   public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
+
+  /// The Apple billing plan configured on the Superwall Product wrapping this
+  /// store product, if any.
+  ///
+  /// Set by the SDK when building per-Product `StoreProduct`s for a paywall;
+  /// surfaced publicly so external `PurchaseController` implementations can
+  /// read it and pass `.billingPlanType(...)` to the SK2 purchase options
+  /// themselves. Only meaningful on iOS 26+.
+  ///
+  /// Setting this property re-routes price and period accessors through the
+  /// matching `pricingTerms` entry on the underlying SK2 product.
+  public var billingPlanType: AppStoreProduct.BillingPlanType? {
+    get { product.billingPlanType }
+    set { product = product.withBillingPlanType(newValue) }
+  }
+
+  /// Whether the billing plan configured on the Superwall Product is
+  /// available on the current runtime (iOS 26+ in a supported region).
+  /// Returns `true` when no billing plan is configured.
+  public var isBillingPlanAvailable: Bool {
+    product.isBillingPlanAvailable
+  }
 
   /// Whether this product is a custom product backed by the Superwall API.
   nonisolated(unsafe) var isCustomProduct = false
@@ -115,8 +137,18 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "languageCode": languageCode ?? "n/a",
       "currencyCode": currencyCode ?? "n/a",
       "currencySymbol": currencySymbol ?? "n/a",
-      "identifier": productIdentifier
+      "identifier": productIdentifier,
+      "billingPlanType": billingPlanTypeAttribute,
+      "isBillingPlanAvailable": "\(isBillingPlanAvailable)"
     ]
+  }
+
+  private var billingPlanTypeAttribute: String {
+    switch billingPlanType {
+    case .upFront: return "UP_FRONT"
+    case .monthly: return "MONTHLY"
+    case .none: return ""
+    }
   }
 
   /// The JSON representation of ``attributes``
@@ -363,6 +395,21 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// If `product` is already a wrapped `StoreProduct` then this returns it instead.
   static func from(product: StoreProductType) -> StoreProduct {
     return product as? StoreProduct ?? StoreProduct(product)
+  }
+
+  /// Returns a copy of this `StoreProduct` with the given `billingPlanType`
+  /// attached. Used when the same underlying SK2 product is exposed by two
+  /// Superwall Products that differ only in their billing plan: each Product
+  /// gets its own `StoreProduct` clone so pricing and purchasing route
+  /// independently.
+  func copyForCompositeProduct(
+    billingPlanType: AppStoreProduct.BillingPlanType?
+  ) -> StoreProduct {
+    let copy = StoreProduct(product.withBillingPlanType(billingPlanType))
+    copy.introOfferToken = self.introOfferToken
+    copy.isCustomProduct = self.isCustomProduct
+    copy.customTransactionId = self.customTransactionId
+    return copy
   }
 
   public convenience init(

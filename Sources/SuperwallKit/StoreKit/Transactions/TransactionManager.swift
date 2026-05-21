@@ -63,7 +63,13 @@ final class TransactionManager {
 
     switch purchaseSource {
     case .internal(let productId, _, _):
-      guard let storeProduct = await storeKitManager.productsById[productId] else {
+      // The JS bridge passes `Product.id` (composite when a billing plan is
+      // configured on the Product, otherwise equal to the Apple product ID).
+      // Try the composite-keyed map first; fall back to the Apple-ID map for
+      // custom and externally cached products that aren't part of a paywall.
+      let resolvedProduct = await storeKitManager.productsByCompositeId[productId]
+        ?? storeKitManager.productsById[productId]
+      guard let storeProduct = resolvedProduct else {
         Logger.debug(
           logLevel: .error,
           scope: .transactions,
