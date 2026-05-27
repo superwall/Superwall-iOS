@@ -45,16 +45,29 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// ```
   public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
 
-  /// The Apple billing plan configured on the Superwall Product wrapping this
-  /// store product, if any.
+  /// The Apple billing plan **that will actually be applied at purchase**
+  /// on this device. Returns `nil` when no plan is configured on the
+  /// Superwall Product OR when the configured plan isn't honored by Apple
+  /// here (older OS, US/Singapore for MONTHLY, etc.) — in those cases the
+  /// purchase falls back to Apple's default plan and so does the value
+  /// surfaced here.
   ///
-  /// Set by the SDK when building per-Product `StoreProduct`s for a paywall
-  /// (via `copyForCompositeProduct`) and surfaced publicly read-only so
-  /// external `PurchaseController` implementations can pass
-  /// `.billingPlanType(...)` to the SK2 purchase options themselves. Only
-  /// meaningful on iOS 26+.
+  /// Paywalls / `PurchaseController` implementations can key off this
+  /// directly without separately gating on `isBillingPlanAvailable` — the
+  /// value matches what the price/period accessors are already reporting,
+  /// so copy like "Subscribe with monthly commitment" won't render over
+  /// an upfront-billed purchase.
+  ///
+  /// The dashboard's *intent* (e.g. "this slot was configured MONTHLY")
+  /// is preserved via the slot's `swCompositeProductId` if it's ever
+  /// needed for analytics; use `isBillingPlanAvailable` to distinguish
+  /// "no plan configured" from "configured but unavailable on this
+  /// device."
   public var billingPlanType: AppStoreProduct.BillingPlanType? {
-    product.billingPlanType
+    if product.isBillingPlanAvailable {
+      return product.billingPlanType
+    }
+    return nil
   }
 
   /// Whether the billing plan configured on the Superwall Product is
