@@ -171,10 +171,16 @@ struct SK2StoreProduct: StoreProductType {
   /// The introductory offer for this product, routed through the matched
   /// billing-plan pricing term's `subscriptionOffers` when a plan is
   /// configured (so the MONTHLY plan's intro offer is surfaced rather than
-  /// the SK2 default plan's). Falls back to the legacy
-  /// `subscription?.introductoryOffer` otherwise.
+  /// the SK2 default plan's, and an *absent* intro offer on the chosen
+  /// plan is honored even if a different plan has one). Falls back to the
+  /// legacy `subscription?.introductoryOffer` only when no plan was
+  /// matched — `cachedHasMatchedTerm` gates that explicitly so a nil
+  /// cached offer doesn't silently re-surface the default plan's offer.
   private var selectedIntroductoryOffer: StoreKit.Product.SubscriptionOffer? {
-    return cachedSelectedIntroductoryOffer ?? underlyingSK2Product.subscription?.introductoryOffer
+    if cachedHasMatchedTerm {
+      return cachedSelectedIntroductoryOffer
+    }
+    return underlyingSK2Product.subscription?.introductoryOffer
   }
 
   #if compiler(>=6.3)
