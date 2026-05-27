@@ -22,6 +22,11 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@v3
 
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
       - name: Remove Xcodeproj
         run: |
           rm -r SuperwallKit.xcodeproj
