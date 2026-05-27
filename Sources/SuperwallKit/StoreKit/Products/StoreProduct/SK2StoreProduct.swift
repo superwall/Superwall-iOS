@@ -174,7 +174,7 @@ struct SK2StoreProduct: StoreProductType {
   /// the SK2 default plan's). Falls back to the legacy
   /// `subscription?.introductoryOffer` otherwise.
   private var selectedIntroductoryOffer: StoreKit.Product.SubscriptionOffer? {
-    return cachedSelectedIntroductoryOffer ?? selectedIntroductoryOffer
+    return cachedSelectedIntroductoryOffer ?? underlyingSK2Product.subscription?.introductoryOffer
   }
 
   #if compiler(>=6.3)
