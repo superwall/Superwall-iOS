@@ -203,7 +203,7 @@ struct SK2StoreProduct: StoreProductType {
   #endif
 
   var isBillingPlanAvailable: Bool {
-    guard billingPlanType != nil else {
+    if billingPlanType == nil {
       return true
     }
     return cachedHasMatchedTerm
