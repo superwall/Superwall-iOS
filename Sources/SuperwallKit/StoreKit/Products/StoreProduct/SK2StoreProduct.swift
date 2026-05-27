@@ -45,8 +45,17 @@ struct SK2StoreProduct: StoreProductType {
     #if compiler(>=6.3)
     if #available(iOS 26.4, *),
       let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
-      self.cachedSelectedPrice = term.billingPrice
-      self.cachedSelectedSubscriptionPeriod = term.billingPeriod
+      // Route through `commitmentInfo` rather than `billingPrice` /
+      // `billingPeriod` so an annual product configured with the MONTHLY
+      // billing plan still surfaces as an annual product to the paywall
+      // (period = year, price = annual total). The per-cycle data
+      // (`$3.33` / `month`) is still available via SK2's own accessors if
+      // a paywall needs to render "Billed $X/month with 12-month
+      // commitment" copy. For the UP_FRONT plan, billingPrice equals
+      // commitmentInfo.price and billingPeriod equals commitmentInfo.period,
+      // so the choice doesn't change UP_FRONT behavior.
+      self.cachedSelectedPrice = term.commitmentInfo.price
+      self.cachedSelectedSubscriptionPeriod = term.commitmentInfo.period
       self.cachedHasMatchedTerm = true
     } else {
       self.cachedSelectedPrice = nil
