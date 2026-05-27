@@ -203,8 +203,13 @@ struct SK2StoreProduct: StoreProductType {
   #endif
 
   var isBillingPlanAvailable: Bool {
+    // "Is there a billing plan to use?" — `true` only when a plan is
+    // configured AND the device exposes a matching pricing term. Legacy
+    // products (no plan configured) return `false` so paywall templates
+    // can gate billing-plan-specific copy on `isBillingPlanAvailable`
+    // without separately checking `billingPlanType`.
     if billingPlanType == nil {
-      return true
+      return false
     }
     return cachedHasMatchedTerm
   }

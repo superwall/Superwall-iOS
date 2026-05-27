@@ -70,9 +70,16 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     return nil
   }
 
-  /// Whether the billing plan configured on the Superwall Product is
-  /// available on the current runtime (iOS 26+ in a supported region).
-  /// Returns `true` when no billing plan is configured.
+  /// Whether there's an Apple billing plan to use for this product on
+  /// the current runtime — i.e. a non-null `billingPlanType` is
+  /// configured on the Superwall Product AND the matching pricing term
+  /// is exposed in `Product.SubscriptionInfo.pricingTerms` (iOS 26.4+
+  /// in a supported region).
+  ///
+  /// Returns `false` for legacy products with no billing plan
+  /// configured, so paywall templates can gate billing-plan-specific
+  /// copy on this value alone without separately checking
+  /// `billingPlanType`.
   public var isBillingPlanAvailable: Bool {
     product.isBillingPlanAvailable
   }
