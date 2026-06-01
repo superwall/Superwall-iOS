@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.4
+
+### Enhancements
+
+- Adds support for annual subscriptions that are billed monthly.
+
 ## 4.15.3
 
 ### Fixes

@@ -11,7 +11,7 @@
 //
 // Created by Andrés Boedo on 7/16/21.
 // Updated by Yusuf Tör from Superwall on 11/8/22.
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 import StoreKit
@@ -44,6 +44,45 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// }
   /// ```
   public nonisolated(unsafe) var introOfferToken: IntroOfferToken?
+
+  /// The Apple billing plan **that will actually be applied at purchase**
+  /// on this device. Returns `nil` when no plan is configured on the
+  /// Superwall Product OR when the configured plan isn't honored by Apple
+  /// here (older OS, US/Singapore for MONTHLY, etc.) — in those cases the
+  /// purchase falls back to Apple's default plan and so does the value
+  /// surfaced here.
+  ///
+  /// Paywalls / `PurchaseController` implementations can key off this
+  /// directly without separately gating on `isBillingPlanAvailable` — the
+  /// value matches what the price/period accessors are already reporting,
+  /// so copy like "Subscribe with monthly commitment" won't render over
+  /// an upfront-billed purchase.
+  ///
+  /// The dashboard's *intent* (e.g. "this slot was configured MONTHLY")
+  /// is preserved via the slot's `swCompositeProductId` if it's ever
+  /// needed for analytics; use `isBillingPlanAvailable` to distinguish
+  /// "no plan configured" from "configured but unavailable on this
+  /// device."
+  public var billingPlanType: AppStoreProduct.BillingPlanType? {
+    if product.isBillingPlanAvailable {
+      return product.billingPlanType
+    }
+    return nil
+  }
+
+  /// Whether there's an Apple billing plan to use for this product on
+  /// the current runtime — i.e. a non-null `billingPlanType` is
+  /// configured on the Superwall Product AND the matching pricing term
+  /// is exposed in `Product.SubscriptionInfo.pricingTerms` (iOS 26.4+
+  /// in a supported region).
+  ///
+  /// Returns `false` for legacy products with no billing plan
+  /// configured, so paywall templates can gate billing-plan-specific
+  /// copy on this value alone without separately checking
+  /// `billingPlanType`.
+  public var isBillingPlanAvailable: Bool {
+    product.isBillingPlanAvailable
+  }
 
   /// Whether this product is a custom product backed by the Superwall API.
   nonisolated(unsafe) var isCustomProduct = false
@@ -115,8 +154,18 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
       "languageCode": languageCode ?? "n/a",
       "currencyCode": currencyCode ?? "n/a",
       "currencySymbol": currencySymbol ?? "n/a",
-      "identifier": productIdentifier
+      "identifier": productIdentifier,
+      "billingPlanType": billingPlanTypeAttribute,
+      "isBillingPlanAvailable": "\(isBillingPlanAvailable)"
     ]
+  }
+
+  private var billingPlanTypeAttribute: String {
+    switch billingPlanType {
+    case .upFront: return "UP_FRONT"
+    case .monthly: return "MONTHLY"
+    case .none: return ""
+    }
   }
 
   /// The JSON representation of ``attributes``
@@ -363,6 +412,21 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// If `product` is already a wrapped `StoreProduct` then this returns it instead.
   static func from(product: StoreProductType) -> StoreProduct {
     return product as? StoreProduct ?? StoreProduct(product)
+  }
+
+  /// Returns a copy of this `StoreProduct` with the given `billingPlanType`
+  /// attached. Used when the same underlying SK2 product is exposed by two
+  /// Superwall Products that differ only in their billing plan: each Product
+  /// gets its own `StoreProduct` clone so pricing and purchasing route
+  /// independently.
+  func copyForCompositeProduct(
+    billingPlanType: AppStoreProduct.BillingPlanType?
+  ) -> StoreProduct {
+    let copy = StoreProduct(product.withBillingPlanType(billingPlanType))
+    copy.introOfferToken = self.introOfferToken
+    copy.isCustomProduct = self.isCustomProduct
+    copy.customTransactionId = self.customTransactionId
+    return copy
   }
 
   public convenience init(
