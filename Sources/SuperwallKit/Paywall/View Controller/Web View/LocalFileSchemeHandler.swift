@@ -7,6 +7,9 @@
 
 import Foundation
 import WebKit
+#if canImport(UIKit)
+import UIKit
+#endif
 
 /// Handles custom URL scheme requests for serving local files to the paywall webview.
 ///
@@ -26,6 +29,12 @@ import WebKit
 final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
   /// The custom URL scheme for local files
   static let scheme = "swlocal"
+
+  #if canImport(UIKit)
+  /// Caches PNG-encoded bytes per `UIImage` so repeat webview requests skip re-encoding.
+  /// Shared across handler instances so reuse across paywalls also hits the cache.
+  private static let imageDataCache = NSCache<UIImage, NSData>()
+  #endif
 
   /// Errors that can occur during file loading
   enum FileError: LocalizedError, Equatable {
@@ -83,7 +92,8 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
 
   // MARK: - File Loading
 
-  /// Loads a file from `SuperwallOptions.localResources` based on the URL host (the localResourceId).
+  /// Loads a file from `SuperwallOptions.localResources` based on the URL host
+  /// (the localResourceId).
   /// - Parameter url: The swlocal:// URL where the host is the localResourceId
   /// - Returns: Tuple of file data and MIME type
   func loadFile(from url: URL) throws -> (Data, String) {
@@ -91,16 +101,38 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
       throw FileError.invalidURL
     }
 
-    guard let localURL = Superwall.shared.options.localResources[host] else {
+    guard let resource = Superwall.shared.options.localResources[host] else {
       throw FileError.fileNotFound(host)
     }
 
+    return try load(resource: resource, key: host)
+  }
+
+  /// Resolves an ``AssetResource`` to its data and MIME type.
+  private func load(resource: AssetResource, key: String) throws -> (Data, String) {
+    if let localURL = resource as? URL {
+      return try loadFile(at: localURL)
+    }
+    #if canImport(UIKit)
+    if let image = resource as? UIImage {
+      if let cached = Self.imageDataCache.object(forKey: image) {
+        return (cached as Data, "image/png")
+      }
+      guard let data = image.pngData() else {
+        throw FileError.unableToReadFile("\(key) (UIImage pngData nil)")
+      }
+      Self.imageDataCache.setObject(data as NSData, forKey: image)
+      return (data, "image/png")
+    }
+    #endif
+    throw FileError.fileNotFound(key)
+  }
+
+  private func loadFile(at localURL: URL) throws -> (Data, String) {
     guard let data = try? Data(contentsOf: localURL) else {
       throw FileError.unableToReadFile(localURL.path)
     }
-
-    let mimeType = self.mimeType(for: localURL.pathExtension)
-    return (data, mimeType)
+    return (data, mimeType(for: localURL.pathExtension))
   }
 
   // MARK: - MIME Type Detection

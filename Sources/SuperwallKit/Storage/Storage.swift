@@ -4,6 +4,7 @@
 //
 //  Created by Brian Anglin on 8/3/21.
 //
+// swiftlint:disable type_body_length
 
 import Foundation
 

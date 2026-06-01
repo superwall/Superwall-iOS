@@ -67,6 +67,27 @@ struct Paywall: Codable {
     return PaywallLogic.getAppStoreProducts(from: products)
   }
 
+  /// The deduplicated Apple product identifiers (not composite Product IDs)
+  /// of the paywall's App Store products. Used to fetch SK2 products, since
+  /// `StoreKit.Product.products(for:)` only accepts Apple product
+  /// identifiers — composite IDs like `com.app.annual:MONTHLY` would return
+  /// no products.
+  var appStoreProductIdentifiers: [String] {
+    var seen = Set<String>()
+    return appStoreProducts.compactMap { productItem in
+      guard case .appStore(let appStoreProduct) = productItem.type,
+        seen.insert(appStoreProduct.id).inserted else {
+        return nil
+      }
+      return appStoreProduct.id
+    }
+  }
+
+  /// The custom products associated with the paywall.
+  var customProducts: [Product] {
+    return PaywallLogic.getCustomProducts(from: products)
+  }
+
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
 
@@ -75,9 +96,11 @@ struct Paywall: Codable {
   let introOfferEligibility: IntroOfferEligibility
 
   var productIdsWithIntroOffers: [String] {
-    return productVariables?
+    let ids = productVariables?
       .filter { $0.hasIntroOffer }
       .map { $0.id } ?? []
+    var seen = Set<String>()
+    return ids.filter { seen.insert($0).inserted }
   }
 
   // MARK: - Added by client

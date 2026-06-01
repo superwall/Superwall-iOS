@@ -16,6 +16,7 @@ public final class Product: NSObject, Codable, Sendable {
     case appStore(AppStoreProduct)
     case stripe(StripeProduct)
     case paddle(PaddleProduct)
+    case custom(CustomStoreProduct)
   }
 
   private enum CodingKeys: String, CodingKey {
@@ -61,21 +62,32 @@ public final class Product: NSObject, Codable, Sendable {
         store: .appStore,
         appStoreProduct: product,
         stripeProduct: nil,
-        paddleProduct: nil
+        paddleProduct: nil,
+        customProduct: nil
       )
     case .stripe(let product):
       objcAdapter = .init(
         store: .stripe,
         appStoreProduct: nil,
         stripeProduct: product,
-        paddleProduct: nil
+        paddleProduct: nil,
+        customProduct: nil
       )
     case .paddle(let product):
       objcAdapter = .init(
         store: .paddle,
         appStoreProduct: nil,
         stripeProduct: nil,
-        paddleProduct: product
+        paddleProduct: product,
+        customProduct: nil
+      )
+    case .custom(let product):
+      objcAdapter = .init(
+        store: .custom,
+        appStoreProduct: nil,
+        stripeProduct: nil,
+        paddleProduct: nil,
+        customProduct: product
       )
     }
   }
@@ -95,9 +107,12 @@ public final class Product: NSObject, Codable, Sendable {
       try container.encode(product, forKey: .storeProduct)
     case .paddle(let product):
       try container.encode(product, forKey: .storeProduct)
+    case .custom(let product):
+      try container.encode(product, forKey: .storeProduct)
     }
   }
 
+  // swiftlint:disable:next function_body_length
   public required init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     name = try container.decodeIfPresent(String.self, forKey: .name)
@@ -114,7 +129,8 @@ public final class Product: NSObject, Codable, Sendable {
         store: .appStore,
         appStoreProduct: appStoreProduct,
         stripeProduct: nil,
-        paddleProduct: nil
+        paddleProduct: nil,
+        customProduct: nil
       )
       // Try to decode from swCompositeProductId, fallback to computing from type
       if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
@@ -130,7 +146,8 @@ public final class Product: NSObject, Codable, Sendable {
           store: .stripe,
           appStoreProduct: nil,
           stripeProduct: stripeProduct,
-          paddleProduct: nil
+          paddleProduct: nil,
+          customProduct: nil
         )
         // Try to decode from swCompositeProductId, fallback to computing from type
         if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
@@ -139,19 +156,40 @@ public final class Product: NSObject, Codable, Sendable {
           id = stripeProduct.id
         }
       } catch {
-        let paddleProduct = try container.decode(PaddleProduct.self, forKey: .storeProduct)
-        type = .paddle(paddleProduct)
-        objcAdapter = .init(
-          store: .paddle,
-          appStoreProduct: nil,
-          stripeProduct: nil,
-          paddleProduct: paddleProduct
-        )
-        // Try to decode from swCompositeProductId, fallback to computing from type
-        if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
-          id = decodedId
-        } else {
-          id = paddleProduct.id
+        do {
+          let paddleProduct = try container.decode(PaddleProduct.self, forKey: .storeProduct)
+          type = .paddle(paddleProduct)
+          objcAdapter = .init(
+            store: .paddle,
+            appStoreProduct: nil,
+            stripeProduct: nil,
+            paddleProduct: paddleProduct,
+            customProduct: nil
+          )
+          // Try to decode from swCompositeProductId, fallback to computing from type
+          if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+            id = decodedId
+          } else {
+            id = paddleProduct.id
+          }
+        } catch {
+          let customProduct = try container.decode(
+            CustomStoreProduct.self,
+            forKey: .storeProduct
+          )
+          type = .custom(customProduct)
+          objcAdapter = .init(
+            store: .custom,
+            appStoreProduct: nil,
+            stripeProduct: nil,
+            paddleProduct: nil,
+            customProduct: customProduct
+          )
+          if let decodedId = try? container.decode(String.self, forKey: .swCompositeProductId) {
+            id = decodedId
+          } else {
+            id = customProduct.id
+          }
         }
       }
     }

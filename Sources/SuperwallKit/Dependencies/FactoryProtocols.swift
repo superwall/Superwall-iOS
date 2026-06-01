@@ -133,6 +133,8 @@ protocol StoreTransactionFactory: AnyObject {
 
   @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
+
+  func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction
 }
 
 protocol OptionsFactory: AnyObject {

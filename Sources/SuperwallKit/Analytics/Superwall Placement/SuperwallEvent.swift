@@ -61,12 +61,12 @@ public struct AttributionMatchInfo: Sendable {
   /// Creates a new install attribution result.
   ///
   /// - Parameters:
-   ///   - provider: The attribution provider that produced the result.
-   ///   - matched: Whether the attribution attempt matched.
-   ///   - source: The resolved acquisition source, if one was found.
-   ///   - confidence: The provider's confidence label, if available.
-   ///   - matchScore: The provider's numeric match score, if available.
-   ///   - reason: The reason for a non-match or failure, if available.
+  ///   - provider: The attribution provider that produced the result.
+  ///   - matched: Whether the attribution attempt matched.
+  ///   - source: The resolved acquisition source, if one was found.
+  ///   - confidence: The provider's confidence label, if available.
+  ///   - matchScore: The provider's numeric match score, if available.
+  ///   - reason: The reason for a non-match or failure, if available.
   public init(
     provider: Provider,
     matched: Bool,

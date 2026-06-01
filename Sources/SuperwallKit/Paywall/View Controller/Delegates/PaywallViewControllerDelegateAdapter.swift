@@ -12,16 +12,21 @@ final class PaywallViewControllerDelegateAdapter {
   weak var swiftDelegate: PaywallViewControllerDelegate?
   weak var objcDelegate: PaywallViewControllerDelegateObjc?
 
+  /// An optional handler invoked when the paywall webview triggers a custom callback.
+  let onCustomCallback: ((CustomCallback) async -> CustomCallbackResult)?
+
   var hasObjcDelegate: Bool {
     return objcDelegate != nil
   }
 
   init(
     swiftDelegate: PaywallViewControllerDelegate?,
-    objcDelegate: PaywallViewControllerDelegateObjc?
+    objcDelegate: PaywallViewControllerDelegateObjc?,
+    onCustomCallback: ((CustomCallback) async -> CustomCallbackResult)? = nil
   ) {
     self.swiftDelegate = swiftDelegate
     self.objcDelegate = objcDelegate
+    self.onCustomCallback = onCustomCallback
   }
 
   @MainActor

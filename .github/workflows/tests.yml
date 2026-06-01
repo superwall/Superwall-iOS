@@ -20,6 +20,15 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+      - name: Select Xcode
+        # macos-26 runners ship multiple Xcodes but `xcodebuild` defaults
+        # to whatever the runner image picked at provision time, which
+        # lags behind the latest installed version. The SK2 billing-plan
+        # work needs the iOS 26.4 SDK (`Product.SubscriptionInfo.PricingTerms`),
+        # so pin to the latest stable Xcode the runner has available.
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
       - name: xcodegen
         uses: xavierLowmiller/xcodegen-action@1.2.3
       - name: Run Tests

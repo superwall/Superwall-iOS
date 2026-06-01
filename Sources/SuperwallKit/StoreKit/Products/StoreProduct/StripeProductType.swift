@@ -299,7 +299,8 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .week {
-      periods = Decimal(365) / Decimal(52) * Decimal(numberOfUnits)
+      // 7 days per week exactly — not 365/52.
+      periods = Decimal(7) * Decimal(numberOfUnits)
     }
 
     if subscriptionPeriod.unit == .day {
@@ -338,7 +339,8 @@ struct StripeProductType: StoreProductType {
     }
 
     if subscriptionPeriod.unit == .day {
-      periods = Decimal(numberOfUnits) * Decimal(52) / Decimal(365)
+      // 7 days per week exactly — a 7-day product is 1 week.
+      periods = Decimal(numberOfUnits) / Decimal(7)
     }
 
     let rounded = (price / periods).roundedPrice()

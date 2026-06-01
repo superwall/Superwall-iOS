@@ -18,11 +18,22 @@ import StoreKit
 
 @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
+  private let priceFormatterProvider = PriceFormatterProvider()
   let entitlements: Set<Entitlement>
+  let billingPlanType: AppStoreProduct.BillingPlanType?
+
+  /// Resolved at init from `pricingTerms` to avoid iterating the term list on
+  /// every price/period accessor. `nil` when no billing plan is configured or
+  /// when no matching term exists for the current runtime.
+  private let cachedSelectedPrice: Decimal?
+  private let cachedSelectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod?
+  private let cachedSelectedIntroductoryOffer: StoreKit.Product.SubscriptionOffer?
+  private let cachedHasMatchedTerm: Bool
 
   init(
     sk2Product: SK2Product,
-    entitlements: Set<Entitlement>
+    entitlements: Set<Entitlement>,
+    billingPlanType: AppStoreProduct.BillingPlanType? = nil
   ) {
     #if swift(<5.7)
     self._underlyingSK2Product = sk2Product
@@ -30,6 +41,88 @@ struct SK2StoreProduct: StoreProductType {
     self.underlyingSK2Product = sk2Product
     #endif
     self.entitlements = entitlements
+    self.billingPlanType = billingPlanType
+
+    #if compiler(>=6.3)
+    if #available(iOS 26.4, *),
+      let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
+      // Use the commitment *period* (= year for an annual MONTHLY product)
+      // so the paywall reads as the underlying product (not its billing
+      // cycle), then compute the total commitment price ourselves as
+      // `billingPrice × cycles in commitment`. Apple's `commitmentInfo.price`
+      // empirically returns the per-cycle amount, not the total — computing
+      // from billingPrice + cycle count is robust either way and matches
+      // the merchandising semantics the dashboard already enforces.
+      // For UP_FRONT, billingPeriod == commitmentInfo.period so cycles = 1
+      // and the result equals billingPrice — no change.
+      let cycles = Self.cyclesInCommitment(
+        billingPeriod: term.billingPeriod,
+        commitmentPeriod: term.commitmentInfo.period
+      )
+      self.cachedSelectedPrice = term.billingPrice * Decimal(cycles)
+      self.cachedSelectedSubscriptionPeriod = term.commitmentInfo.period
+      // Intro offers are per-billing-plan on iOS 26.4+: each `PricingTerms`
+      // has its own `subscriptionOffers` array. Pull the plan-specific
+      // introductory offer (if any) so the paywall surfaces the trial /
+      // intro pricing configured against this billing plan rather than
+      // the underlying SK2 product's default-plan offer.
+      self.cachedSelectedIntroductoryOffer =
+        term[offers: .introductory].first
+      self.cachedHasMatchedTerm = true
+    } else {
+      self.cachedSelectedPrice = nil
+      self.cachedSelectedSubscriptionPeriod = nil
+      self.cachedSelectedIntroductoryOffer = nil
+      self.cachedHasMatchedTerm = false
+    }
+    #else
+    self.cachedSelectedPrice = nil
+    self.cachedSelectedSubscriptionPeriod = nil
+    self.cachedSelectedIntroductoryOffer = nil
+    self.cachedHasMatchedTerm = false
+    #endif
+  }
+
+  /// Counts how many billing cycles fit into one commitment period (e.g. 12
+  /// for monthly billing on a yearly commitment). Normalizes both periods
+  /// to a common day count rather than relying on Apple's
+  /// `commitmentInfo.price`, which empirically returns the per-cycle amount.
+  /// Both arguments are typealiases for `StoreKit.Product.SubscriptionPeriod`
+  /// even though Apple names them differently in `BillingPeriod` /
+  /// `CommitmentInfo.period`.
+  private static func cyclesInCommitment(
+    billingPeriod: StoreKit.Product.SubscriptionPeriod,
+    commitmentPeriod: StoreKit.Product.SubscriptionPeriod
+  ) -> Int {
+    let billingDays = daysIn(unit: billingPeriod.unit, value: billingPeriod.value)
+    let commitmentDays = daysIn(unit: commitmentPeriod.unit, value: commitmentPeriod.value)
+    guard billingDays > 0 else { return 1 }
+    let raw = Double(commitmentDays) / Double(billingDays)
+    let rounded = Int(raw.rounded())
+    return max(rounded, 1)
+  }
+
+  private static func daysIn(
+    unit: StoreKit.Product.SubscriptionPeriod.Unit,
+    value: Int
+  ) -> Int {
+    switch unit {
+    case .day: return value
+    case .week: return value * 7
+    case .month: return value * 30
+    case .year: return value * 365
+    @unknown default: return value * 30
+    }
+  }
+
+  func withBillingPlanType(
+    _ billingPlanType: AppStoreProduct.BillingPlanType?
+  ) -> any StoreProductType {
+    return SK2StoreProduct(
+      sk2Product: underlyingSK2Product,
+      entitlements: entitlements,
+      billingPlanType: billingPlanType
+    )
   }
 
   #if swift(<5.7)
@@ -58,11 +151,81 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var localizedPrice: String {
-    return underlyingSK2Product.price.formatted(underlyingSK2Product.priceFormatStyle)
+    return selectedPrice.formatted(underlyingSK2Product.priceFormatStyle)
+  }
+
+  /// The price to use for this product, routed through the selected billing
+  /// plan's pricing term when one is configured and available, otherwise the
+  /// underlying SK2 product's price.
+  private var selectedPrice: Decimal {
+    return cachedSelectedPrice ?? underlyingSK2Product.price
+  }
+
+  /// The subscription period to use for this product, routed through the
+  /// selected billing plan's pricing term when one is configured and
+  /// available, otherwise the underlying SK2 product's subscription period.
+  private var selectedSubscriptionPeriod: StoreKit.Product.SubscriptionPeriod? {
+    return cachedSelectedSubscriptionPeriod ?? underlyingSK2Product.subscription?.subscriptionPeriod
+  }
+
+  /// The introductory offer for this product, routed through the matched
+  /// billing-plan pricing term's `subscriptionOffers` when a plan is
+  /// configured (so the MONTHLY plan's intro offer is surfaced rather than
+  /// the SK2 default plan's, and an *absent* intro offer on the chosen
+  /// plan is honored even if a different plan has one). Falls back to the
+  /// legacy `subscription?.introductoryOffer` only when no plan was
+  /// matched — `cachedHasMatchedTerm` gates that explicitly so a nil
+  /// cached offer doesn't silently re-surface the default plan's offer.
+  private var selectedIntroductoryOffer: StoreKit.Product.SubscriptionOffer? {
+    if cachedHasMatchedTerm {
+      return cachedSelectedIntroductoryOffer
+    }
+    return underlyingSK2Product.subscription?.introductoryOffer
+  }
+
+  #if compiler(>=6.3)
+  @available(iOS 26.4, *)
+  private static func findPricingTerm(
+    for billingPlanType: AppStoreProduct.BillingPlanType?,
+    in sk2Product: SK2Product
+  ) -> StoreKit.Product.SubscriptionInfo.PricingTerms? {
+    guard let plan = billingPlanType,
+      let terms = sk2Product.subscription?.pricingTerms else {
+      return nil
+    }
+    let target: StoreKit.Product.SubscriptionInfo.BillingPlanType
+    switch plan {
+    case .upFront: target = .upFront
+    case .monthly: target = .monthly
+    }
+    return terms.first { $0.billingPlanType == target }
+  }
+  #endif
+
+  var isBillingPlanAvailable: Bool {
+    // "Is there a billing plan to use?" — `true` only when a plan is
+    // configured AND the device exposes a matching pricing term. Legacy
+    // products (no plan configured) return `false` so paywall templates
+    // can gate billing-plan-specific copy on `isBillingPlanAvailable`
+    // without separately checking `billingPlanType`.
+    if billingPlanType == nil {
+      return false
+    }
+    return cachedHasMatchedTerm
+  }
+
+  /// A `NumberFormatter` for formatting computed prices (daily, weekly, monthly, yearly).
+  /// Unlike `priceFormatStyle`, this does not apply storefront-specific rounding
+  /// that can cause values like £4.99 to display as £5.00 in production.
+  private var priceFormatter: NumberFormatter {
+    priceFormatterProvider.priceFormatterForSK2(
+      withCurrencyCode: underlyingSK2Product.priceFormatStyle.currencyCode,
+      locale: underlyingSK2Product.priceFormatStyle.locale
+    )
   }
 
   var localizedSubscriptionPeriod: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return ""
     }
 
@@ -81,7 +244,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var period: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return ""
     }
 
@@ -118,7 +281,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var periodly: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return ""
     }
 
@@ -135,7 +298,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var periodWeeks: Int {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return 0
     }
 
@@ -165,7 +328,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var periodMonths: Int {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return 0
     }
     let numberOfUnits = subscriptionPeriod.value
@@ -194,7 +357,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var periodYears: Int {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return 0
     }
     let numberOfUnits = subscriptionPeriod.value
@@ -223,7 +386,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var periodDays: Int {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let subscriptionPeriod = selectedSubscriptionPeriod else {
       return 0
     }
     let numberOfUnits = subscriptionPeriod.value
@@ -252,111 +415,43 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var dailyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(365 * numberOfUnits)
-    case .month:
-      periods = Decimal(365) / Decimal(12) * Decimal(numberOfUnits)
-    case .week:
-      periods = Decimal(365) / Decimal(52) * Decimal(numberOfUnits)
-    case .day:
-      periods = Decimal(numberOfUnits)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    return formattedComputedPrice { $0.pricePerDay(withTotalPrice: $1) }
   }
 
   var weeklyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(52 * numberOfUnits)
-    case .month:
-      periods = Decimal(52) / Decimal(12) * Decimal(numberOfUnits)
-    case .week:
-      periods = Decimal(numberOfUnits)
-    case .day:
-      periods = Decimal(numberOfUnits) * Decimal(52) / Decimal(365)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    return formattedComputedPrice { $0.pricePerWeek(withTotalPrice: $1) }
   }
 
   var monthlyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
-      return "n/a"
-    }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(12 * numberOfUnits)
-    case .month:
-      periods = Decimal(1 * numberOfUnits)
-    case .week:
-      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(52)
-    case .day:
-      periods = Decimal(numberOfUnits) * Decimal(12) / Decimal(365)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    return formattedComputedPrice { $0.pricePerMonth(withTotalPrice: $1) }
   }
 
   var yearlyPrice: String {
-    guard let subscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    return formattedComputedPrice { $0.pricePerYear(withTotalPrice: $1) }
+  }
+
+  /// Formats a per-period price derived from the *normalized* subscription
+  /// period. `subscriptionPeriod` is built via `SubscriptionPeriod.from(...)`,
+  /// which applies `normalized()` — collapsing StoreKit's occasional `.day × 7`
+  /// into `.week × 1`. Without that, a weekly product reported by StoreKit in
+  /// days would divide by an approximate day↔week factor and report a
+  /// `weeklyPrice` a penny off (e.g. £6.99 → £7.00).
+  private func formattedComputedPrice(
+    _ perPeriod: (SubscriptionPeriod, Decimal) -> Decimal
+  ) -> String {
+    guard let subscriptionPeriod = subscriptionPeriod else {
       return "n/a"
     }
-
-    let numberOfUnits = subscriptionPeriod.value
-    var periods: Decimal = 1.0
-    let inputPrice = underlyingSK2Product.price
-
-    switch subscriptionPeriod.unit {
-    case .year:
-      periods = Decimal(numberOfUnits)
-    case .month:
-      periods = Decimal(numberOfUnits) / Decimal(12)
-    case .week:
-      periods = Decimal(numberOfUnits) / Decimal(52)
-    case .day:
-      periods = Decimal(numberOfUnits) / Decimal(365)
-    @unknown default:
-      periods = Decimal(numberOfUnits)
-    }
-
-    return (inputPrice / periods).roundedPrice().formatted(underlyingSK2Product.priceFormatStyle)
+    let result = perPeriod(subscriptionPeriod, selectedPrice)
+    return priceFormatter.string(from: NSDecimalNumber(decimal: result)) ?? "n/a"
   }
 
   var hasFreeTrial: Bool {
-    return underlyingSK2Product.subscription?.introductoryOffer != nil
+    return selectedIntroductoryOffer != nil
   }
 
   var trialPeriodEndDate: Date? {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return nil
     }
     let numberOfUnits = trialPeriod.value
@@ -400,7 +495,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodDays: Int {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return 0
     }
 
@@ -430,7 +525,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodWeeks: Int {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return 0
     }
     let numberOfUnits = trialPeriod.value
@@ -459,7 +554,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodMonths: Int {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return 0
     }
     let numberOfUnits = trialPeriod.value
@@ -488,7 +583,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodYears: Int {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return 0
     }
     let numberOfUnits = trialPeriod.value
@@ -517,7 +612,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodText: String {
-    guard let trialPeriod = underlyingSK2Product.subscription?.introductoryOffer?.period else {
+    guard let trialPeriod = selectedIntroductoryOffer?.period else {
       return ""
     }
 
@@ -563,7 +658,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var price: Decimal {
-    underlyingSK2Product.price
+    selectedPrice
   }
 
   var isFamilyShareable: Bool {
@@ -571,14 +666,14 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var subscriptionPeriod: SubscriptionPeriod? {
-    guard let skSubscriptionPeriod = underlyingSK2Product.subscription?.subscriptionPeriod else {
+    guard let skSubscriptionPeriod = selectedSubscriptionPeriod else {
       return nil
     }
     return SubscriptionPeriod.from(sk2SubscriptionPeriod: skSubscriptionPeriod)
   }
 
   var introductoryDiscount: StoreProductDiscount? {
-    underlyingSK2Product.subscription?.introductoryOffer
+    selectedIntroductoryOffer
       .flatMap { StoreProductDiscount(sk2Discount: $0, currencyCode: currencyCode) }
   }
 
@@ -588,24 +683,24 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var trialPeriodPrice: Decimal {
-    underlyingSK2Product.subscription?.introductoryOffer?.price ?? 0.00
+    selectedIntroductoryOffer?.price ?? 0.00
   }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String {
     guard let introductoryDiscount = introductoryDiscount else {
-      return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
     if introductoryDiscount.price == 0.00 {
-      return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
+      return priceFormatter.string(from: 0.00) ?? "n/a"
     }
 
     let introMonthlyPrice = introductoryDiscount.pricePerUnit(unit)
 
-    return introMonthlyPrice.formatted(underlyingSK2Product.priceFormatStyle)
+    return priceFormatter.string(from: NSDecimalNumber(decimal: introMonthlyPrice)) ?? "n/a"
   }
 
   var localizedTrialPeriodPrice: String {
-    guard let price = underlyingSK2Product.subscription?.introductoryOffer?.price else {
+    guard let price = selectedIntroductoryOffer?.price else {
       return Decimal(0).formatted(underlyingSK2Product.priceFormatStyle)
     }
     return price.formatted(underlyingSK2Product.priceFormatStyle)
@@ -617,9 +712,11 @@ struct SK2StoreProduct: StoreProductType {
 extension SK2StoreProduct: Hashable {
   static func == (lhs: SK2StoreProduct, rhs: SK2StoreProduct) -> Bool {
     return lhs.underlyingSK2Product == rhs.underlyingSK2Product
+      && lhs.billingPlanType == rhs.billingPlanType
   }
 
   func hash(into hasher: inout Hasher) {
     hasher.combine(self.underlyingSK2Product)
+    hasher.combine(self.billingPlanType)
   }
 }

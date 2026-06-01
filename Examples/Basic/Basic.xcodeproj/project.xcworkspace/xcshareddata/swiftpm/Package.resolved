@@ -3,11 +3,11 @@
     "pins": [
       {
         "package": "Superscript",
-        "repositoryURL": "https://github.com/superwall/Superscript-iOS",
+        "repositoryURL": "https://github.com/superwall/superscript-ios-next",
         "state": {
           "branch": null,
-          "revision": "ce546d7ad70b5ce5f66ea0caffefb0d97be49f34",
-          "version": "1.0.12"
+          "revision": "abb2c8c96e958aabe11a84df67860ad7bbef3b68",
+          "version": "1.0.14"
         }
       }
     ]

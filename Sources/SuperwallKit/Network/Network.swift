@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import Foundation
 import UIKit
@@ -308,13 +308,12 @@ class Network {
     }
   }
 
-  func sendToken(_ token: String) async -> [String: Any]? {
+  func sendToken(_ token: String) async throws -> AdServicesResponse {
     do {
-      let jsonDict = try await urlSession.request(
+      return try await urlSession.request(
         .adServices(token: token),
         data: SuperwallRequestData(factory: factory)
-      ).attribution
-      return convertJSONToDictionary(attribution: jsonDict)
+      )
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -323,7 +322,7 @@ class Network {
         info: ["payload": token],
         error: error
       )
-      return nil
+      throw error
     }
   }
 
@@ -416,6 +415,7 @@ class Network {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func matchMMPInstall(
     idfa: String?,
     advertiserTrackingEnabled: Bool,
@@ -447,7 +447,7 @@ class Network {
       "platformWrapperVersion": deviceHelper.platformWrapperVersion
     ]
 
-    let metadata = rawMetadata.reduce(into: [String: String]()) { result, entry in
+    let metadata: [String: String] = rawMetadata.reduce(into: [:]) { result, entry in
       guard let value = entry.value, !value.isEmpty else {
         return
       }
@@ -493,7 +493,7 @@ class Network {
         info: [
           "matched": response.matched,
           "confidence": response.confidence as Any,
-          "link_id": response.linkId as Any,
+          "link_id": response.linkId as Any
         ]
       )
 

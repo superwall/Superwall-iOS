@@ -40,7 +40,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -87,7 +88,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -134,7 +136,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation(expectedCount: 0) { completed in
@@ -182,7 +185,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -229,7 +233,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -276,7 +281,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -329,7 +335,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -385,7 +392,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation { completed in
@@ -437,7 +445,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation(expectedCount: 0) { completed in
@@ -495,7 +504,8 @@ struct SurveyManagerTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     await confirmation(expectedCount: 0) { completed in

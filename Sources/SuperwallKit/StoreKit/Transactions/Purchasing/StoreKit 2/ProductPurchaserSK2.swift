@@ -82,6 +82,7 @@ final class ProductPurchaserSK2: Purchasing {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func purchase(product: StoreProduct) async -> PurchaseResult {
     guard let sk2Product = product.sk2Product else {
       return .cancelled
@@ -97,6 +98,20 @@ final class ProductPurchaserSK2: Purchasing {
       // This allows overriding Apple's automatic eligibility determination
       if let token = product.introOfferToken {
         options.insert(.introductoryOfferEligibility(compactJWS: token.token))
+      }
+      #endif
+
+      #if compiler(>=6.3)
+      // Apply the configured Apple billing plan (iOS 26+). If the runtime is
+      // older or no plan is configured, the purchase proceeds with Apple's
+      // default plan.
+      if #available(iOS 26.4, *), let plan = product.billingPlanType {
+        let sk2Plan: StoreKit.Product.SubscriptionInfo.BillingPlanType
+        switch plan {
+        case .upFront: sk2Plan = .upFront
+        case .monthly: sk2Plan = .monthly
+        }
+        options.insert(.billingPlanType(sk2Plan))
       }
       #endif
 

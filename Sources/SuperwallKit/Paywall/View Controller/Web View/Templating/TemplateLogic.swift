@@ -18,7 +18,7 @@ enum TemplateLogic {
   ) async -> String {
     let productsTemplate = ProductTemplate(
       eventName: "products",
-      products: TemplatingProductItem.create(from: paywall.appStoreProducts)
+      products: TemplatingProductItem.create(from: paywall.products)
     )
 
     // Dynamically set isSubscribed for each product

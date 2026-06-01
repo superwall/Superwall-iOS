@@ -107,7 +107,8 @@ extension Superwall {
       ),
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: dependencyContainer.makeCache(),
-      paywallArchiveManager: dependencyContainer.paywallArchiveManager
+      paywallArchiveManager: dependencyContainer.paywallArchiveManager,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
   }
 

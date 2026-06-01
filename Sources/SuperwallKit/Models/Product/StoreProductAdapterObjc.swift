@@ -26,15 +26,21 @@ public final class StoreProductAdapterObjc: NSObject, Codable, Sendable {
   /// `paddle`.
   public let paddleProduct: PaddleProduct?
 
+  /// The custom product. This is non-nil if `store` is
+  /// `custom`.
+  public let customProduct: CustomStoreProduct?
+
   init(
     store: ProductStore,
     appStoreProduct: AppStoreProduct?,
     stripeProduct: StripeProduct?,
-    paddleProduct: PaddleProduct?
+    paddleProduct: PaddleProduct?,
+    customProduct: CustomStoreProduct?
   ) {
     self.store = store
     self.appStoreProduct = appStoreProduct
     self.stripeProduct = stripeProduct
     self.paddleProduct = paddleProduct
+    self.customProduct = customProduct
   }
 }

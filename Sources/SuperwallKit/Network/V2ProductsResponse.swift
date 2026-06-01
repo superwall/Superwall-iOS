@@ -53,6 +53,7 @@ public enum SuperwallProductPlatform: String, Decodable, Sendable {
   case stripe
   case paddle
   case superwall
+  case custom
 }
 
 /// Price information for a product.
@@ -75,10 +76,14 @@ public struct SuperwallProductSubscription: Decodable, Sendable {
   /// The number of trial days, if any.
   public let trialPeriodDays: Int?
 
+  /// The trial period price, if any.
+  public let trialPeriodPrice: SuperwallProductPrice?
+
   enum CodingKeys: String, CodingKey {
     case period
     case periodCount = "period_count"
     case trialPeriodDays = "trial_period_days"
+    case trialPeriodPrice = "trial_period_price"
   }
 }
 

@@ -320,7 +320,8 @@ struct TrackingLogicTests {
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       cache: nil,
-      paywallArchiveManager: nil
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
 
     let outcome = await TrackingLogic.canTriggerPaywall(

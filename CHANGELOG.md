@@ -2,11 +2,58 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.15.0
+## 4.16.0
 
 ### Enhancements
 
 - Adds install attribution matching support. If you set up performance marketing integrations on the Superwall dashboard, the SDK will attempt to match the install and track an `attribution_match` event. The attribution properties will be added to user attributes so that they can be used as breakdowns and filters in the charts.
+
+## 4.15.4
+
+### Enhancements
+
+- Adds support for annual subscriptions that are billed monthly.
+
+## 4.15.3
+
+### Fixes
+
+- Fixes computed period prices (`weeklyPrice`, `dailyPrice`) being off by a small amount for products whose subscription period is expressed in days.
+
+## 4.15.2
+
+### Enhancements
+
+- Improves Apple Search Ads attribution capture rate.
+
+### Fixes
+
+- Changes the Superscript spm package repo source to a new lightweight repo meaning that the download of the package is way faster.
+- Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
+
+## 4.15.1
+
+### Enhancements
+
+- Adds an `onCustomCallback` parameter to `getPaywall`.
+- `SuperwallOptions.localResources` now accepts UIImage's from xcasset files, e.g. `UIImage(named: "my-image")`.
+- Exposes abandoned transaction product params in audience filters.
+
+### Fixes
+
+- Sanitizes email user attribute.
+
+## 4.15.0
+
+### Enhancements
+
+- Adds support for custom store products. This allows you to purchase products that are on stores outside of the App Store using the `PurchaseController`.
+- Adds `formUnion` override when unioning sets of `Entitlement` objects.
+
+### Fixes
+
+- Fixes issue where test mode products had trial price data missing.
+- Fixed computed period prices (`weeklyPrice`, `dailyPrice`, `monthlyPrice`, `yearlyPrice`) displaying incorrectly rounded values on StoreKit 2 in production. For example, a £4.99/week product could show as £5.00/week. This was caused by Apple's `priceFormatStyle` applying storefront-specific rounding to computed values.
 
 ## 4.14.2
 
