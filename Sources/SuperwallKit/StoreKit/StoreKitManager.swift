@@ -22,6 +22,18 @@ actor StoreKitManager {
   func setProduct(_ product: StoreProduct, forIdentifier identifier: String) {
     productsById[identifier] = product
   }
+
+  /// Resolves a cached `StoreProduct` for a `Product.id`.
+  ///
+  /// Prefers the composite-keyed map (used when a billing plan is configured
+  /// on the Product) and falls back to the Apple-ID map for custom and
+  /// externally cached products that aren't part of a paywall. Both lookups
+  /// happen in a single actor hop and the fallback is only consulted when the
+  /// composite lookup misses.
+  func product(withId id: String) -> StoreProduct? {
+    return productsByCompositeId[id] ?? productsById[id]
+  }
+
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
@@ -214,10 +226,16 @@ actor StoreKitManager {
     //    billing plan so price/period accessors route correctly and the
     //    purchase pipeline can pick the plan up later. Two composite entries
     //    sharing an Apple ID get two independent clones.
-    //    Reset the actor-level map so composite entries from a previous
-    //    paywall don't linger (composite IDs encode a paywall-specific
-    //    billing-plan suffix, unlike stable Apple IDs in `productsById`).
-    self.productsByCompositeId = [:]
+    //
+    //    Accumulate into the actor-level map rather than resetting it. A
+    //    composite ID (e.g. `com.app.annual:MONTHLY`) maps deterministically
+    //    to a clone of stable base product data plus a fixed billing plan, so
+    //    entries can't go stale across paywalls. Resetting would wipe every
+    //    other paywall's entries, which breaks preloading: all paywalls are
+    //    preloaded into a shared cache and a preloaded paywall is never
+    //    re-resolved when presented, so the purchase pipeline would fail to
+    //    find its billing-plan products. The map is keyed by a finite set of
+    //    Apple-ID × billing-plan combinations, so it stays small.
     var productsByCompositeId: [String: StoreProduct] = [:]
     for productItem in productItems {
       guard case .appStore(let appStoreProduct) = productItem.type,
