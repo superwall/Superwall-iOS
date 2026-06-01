@@ -122,27 +122,42 @@ class DeviceHelper {
     TimeZone.current.secondsFromGMT()
   }
 
-  var screenWidth: Int {
-    #if os(visionOS)
-    return 0
-    #else
-    return Int(UIScreen.main.bounds.width.rounded())
-    #endif
+  /// Screen metrics, cached once at init on the main thread.
+  ///
+  /// `UIScreen` / `UIWindowScene` are main-thread-only (and `UIScreen.main`
+  /// is deprecated), but these are read from background contexts such as
+  /// `matchMMPInstall`. Reading once up front, on the main thread, keeps those
+  /// reads safe instead of touching main-thread-only UIKit off-thread.
+  let screenWidth: Int
+  let screenHeight: Int
+  let devicePixelRatio: Double
+
+  private struct ScreenMetrics {
+    let width: Int
+    let height: Int
+    let scale: Double
   }
 
-  var screenHeight: Int {
+  private static func makeScreenMetrics() -> ScreenMetrics {
     #if os(visionOS)
-    return 0
+    return ScreenMetrics(width: 0, height: 0, scale: 1.0)
     #else
-    return Int(UIScreen.main.bounds.height.rounded())
-    #endif
-  }
-
-  var devicePixelRatio: Double {
-    #if os(visionOS)
-    return 1.0
-    #else
-    return Double(UIScreen.main.scale)
+    let read = { () -> ScreenMetrics in
+      // Prefer the connected window scene's screen; fall back to the
+      // deprecated `UIScreen.main` only when no scene is attached yet.
+      let screen = UIApplication.sharedApplication?
+        .connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .first?
+        .screen ?? UIScreen.main
+      let bounds = screen.bounds
+      return ScreenMetrics(
+        width: Int(bounds.width.rounded()),
+        height: Int(bounds.height.rounded()),
+        scale: Double(screen.scale)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
     #endif
   }
 
@@ -529,6 +544,11 @@ class DeviceHelper {
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+
+    let screenMetrics = Self.makeScreenMetrics()
+    self.screenWidth = screenMetrics.width
+    self.screenHeight = screenMetrics.height
+    self.devicePixelRatio = screenMetrics.scale
   }
 
   func getEnrichment(
