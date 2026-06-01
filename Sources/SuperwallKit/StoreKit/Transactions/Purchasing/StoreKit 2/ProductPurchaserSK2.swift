@@ -82,6 +82,7 @@ final class ProductPurchaserSK2: Purchasing {
     }
   }
 
+  // swiftlint:disable:next function_body_length
   func purchase(product: StoreProduct) async -> PurchaseResult {
     guard let sk2Product = product.sk2Product else {
       return .cancelled
