@@ -10,6 +10,7 @@ import Foundation
 protocol EndpointKind {
   associatedtype RequestData
   static var jsonDecoder: JSONDecoder { get }
+  static var jsonEncoder: JSONEncoder { get }
   static func prepare(
     _ request: inout URLRequest,
     with data: RequestData
@@ -39,6 +40,7 @@ struct SuperwallRequestData {
 enum EndpointKinds {
   enum Superwall: EndpointKind {
     static var jsonDecoder = JSONDecoder.fromSnakeCase
+    static var jsonEncoder = JSONEncoder.toSnakeCase
 
     static func prepare(
       _ request: inout URLRequest,
@@ -61,6 +63,7 @@ enum EndpointKinds {
 
   enum SubscriptionsAPI: EndpointKind {
     static var jsonDecoder = JSONDecoder.subscriptionsApi
+    static var jsonEncoder = JSONEncoder()
 
     static func prepare(
       _ request: inout URLRequest,

@@ -44,7 +44,7 @@ struct SK2StoreProduct: StoreProductType {
     self.billingPlanType = billingPlanType
 
     #if compiler(>=6.3)
-    if #available(iOS 26.4, *),
+    if #available(iOS 26.4, visionOS 26.4, *),
       let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
       // Use the commitment *period* (= year for an annual MONTHLY product)
       // so the paywall reads as the underlying product (not its billing
@@ -184,7 +184,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   #if compiler(>=6.3)
-  @available(iOS 26.4, *)
+  @available(iOS 26.4, visionOS 26.4, *)
   private static func findPricingTerm(
     for billingPlanType: AppStoreProduct.BillingPlanType?,
     in sk2Product: SK2Product

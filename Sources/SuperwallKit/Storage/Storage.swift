@@ -256,6 +256,16 @@ class Storage {
     return true
   }
 
+  /// Whether to re-run the MMP install match after the user grants tracking
+  /// permission.
+  ///
+  /// This intentionally does NOT check `DidCompleteMMPInstallAttributionRequest`.
+  /// The initial match runs before ATT is granted, so it has no real IDFA (the
+  /// all-zeros sentinel is filtered out). Granting permission yields a real
+  /// IDFA, so we re-match to upgrade the earlier probabilistic result into a
+  /// deterministic one — even when the initial match already succeeded. It
+  /// fires at most once, gated by
+  /// `DidCompleteMMPInstallAttributionRequestAfterTrackingPermission`.
   func shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
     appInstalledAtString: String
   ) -> Bool {

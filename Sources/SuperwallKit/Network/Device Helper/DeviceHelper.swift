@@ -123,15 +123,27 @@ class DeviceHelper {
   }
 
   var screenWidth: Int {
-    Int(UIScreen.main.bounds.width.rounded())
+    #if os(visionOS)
+    return 0
+    #else
+    return Int(UIScreen.main.bounds.width.rounded())
+    #endif
   }
 
   var screenHeight: Int {
-    Int(UIScreen.main.bounds.height.rounded())
+    #if os(visionOS)
+    return 0
+    #else
+    return Int(UIScreen.main.bounds.height.rounded())
+    #endif
   }
 
   var devicePixelRatio: Double {
-    Double(UIScreen.main.scale)
+    #if os(visionOS)
+    return 1.0
+    #else
+    return Double(UIScreen.main.scale)
+    #endif
   }
 
   var isFirstAppOpen: Bool {
