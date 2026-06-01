@@ -142,8 +142,9 @@ protocol StoreProductType: Sendable {
   var billingPlanType: AppStoreProduct.BillingPlanType? { get }
 
   /// Whether the configured `billingPlanType` is available on the current
-  /// runtime (iOS 26+ in supported regions). Defaults to `true` when no plan
-  /// is configured.
+  /// runtime (iOS 26+ in supported regions). Defaults to `false` when no plan
+  /// is configured, so paywall templates can gate billing-plan copy on this
+  /// value alone.
   var isBillingPlanAvailable: Bool { get }
 
   /// Returns a copy of `self` with the given `billingPlanType` attached. For
@@ -157,7 +158,7 @@ protocol StoreProductType: Sendable {
 
 extension StoreProductType {
   var billingPlanType: AppStoreProduct.BillingPlanType? { nil }
-  var isBillingPlanAvailable: Bool { true }
+  var isBillingPlanAvailable: Bool { false }
   func withBillingPlanType(
     _ billingPlanType: AppStoreProduct.BillingPlanType?
   ) -> any StoreProductType {
