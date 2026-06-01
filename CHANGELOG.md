@@ -2,15 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.16.0
+## 4.15.4
 
 ### Enhancements
 
-- Added support for Apple's iOS 26 billing plan types on annual subscriptions. Configure two Superwall Products that share an Apple product identifier — one with `billingPlanType = UP_FRONT` and one with `MONTHLY` — to merchandise both plans on the same paywall. The selected plan is rendered with its own price/period from `Product.SubscriptionInfo.pricingTerms` and applied automatically at purchase via `.billingPlanType(...)`. Exposed `StoreProduct.billingPlanType` and `StoreProduct.isBillingPlanAvailable` for custom `PurchaseController` implementations. Two new attributes are surfaced to paywall templates: `billingPlanType` and `isBillingPlanAvailable`.
-
-### Behaviour changes
-
-- `PaywallInfo.productIds` now contains composite Product identifiers (e.g. `com.app.annual:MONTHLY`) for Superwall Products that opt into a billing plan. Apple product identifiers are still available via each entry's `Product.type.appStore.id`.
+- Adds support for annual subscriptions that are billed monthly.
 
 ## 4.15.3
 
