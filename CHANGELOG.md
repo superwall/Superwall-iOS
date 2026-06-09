@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Fixes
+
+- Bumps the declared minimum macOS deployment target from 10.12 to 10.15 in `Package.swift` to match the macOS version required by the SDK's actual code (`Combine`, `async/await`, `UnsafeContinuation`). This makes integration into Mac Catalyst targets fail at resolve time with a clear deployment-target message instead of producing confusing "is only available in macOS 10.15 or newer" errors deep in the source.
+
 ## 4.15.4
 
 ### Enhancements
