@@ -50,7 +50,11 @@ public struct AttributionMatchInfo: Sendable {
   /// The confidence label returned by the provider, if available.
   public let confidence: Confidence?
 
-  /// The numeric match score between 0 and 100 returned by the provider, if available.
+  /// The numeric match score returned by the provider, if available.
+  ///
+  /// Higher values indicate a stronger match. A score is only returned for a
+  /// successful match, so in practice it ranges from the backend's match
+  /// threshold (currently `75`) up to around `117`.
   public let matchScore: Double?
 
   /// The reason for a non-match or failure, if available.
