@@ -8,6 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds support for annual subscriptions that are billed monthly.
 
+### Fixes
+
+- Fixes a crash due to concurrent calls to `preloadAllPaywalls`.
+
 ## 4.15.3
 
 ### Fixes
