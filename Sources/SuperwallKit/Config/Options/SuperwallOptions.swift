@@ -297,12 +297,30 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// - Note: You cannot use ``Superwall/purchase(_:)`` while this is `true`.
   public var shouldObservePurchases = false
 
+  /// Controls which events are sent to the Superwall servers.
+  ///
+  /// Defaults to ``EventTrackingBehavior/all``. Set this to ``EventTrackingBehavior/superwallOnly``
+  /// to suppress user-initiated tracking, trigger fires, and user-attribute updates, or to
+  /// ``EventTrackingBehavior/none`` to stop all event collection (e.g. for GDPR compliance).
+  ///
+  /// You can also change this at runtime via ``Superwall/eventTrackingBehavior``.
+  public var eventTrackingBehavior: EventTrackingBehavior = .all
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
-  /// Set this to `false` to stop external data collection. This will not affect
-  /// your ability to create placements based on properties.
-  public var isExternalDataCollectionEnabled = true
+  /// - Warning: Deprecated. Use ``eventTrackingBehavior`` instead.
+  ///   Setting this to `false` maps to ``EventTrackingBehavior/superwallOnly``;
+  ///   setting it back to `true` maps to ``EventTrackingBehavior/all``.
+  @available(*, deprecated, renamed: "eventTrackingBehavior")
+  public var isExternalDataCollectionEnabled: Bool {
+    get {
+      return eventTrackingBehavior == .all
+    }
+    set {
+      eventTrackingBehavior = newValue ? .all : .superwallOnly
+    }
+  }
 
   /// Sets the device locale identifier to use when evaluating audience filters.
   ///
@@ -374,7 +392,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   public var logging = Logging()
 
   private enum CodingKeys: String, CodingKey {
-    case isExternalDataCollectionEnabled
+    case eventTrackingBehavior
     case localeIdentifier
     case isGameControllerEnabled
     case storeKitVersion
@@ -409,7 +427,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try networkEnvironment.encode(to: encoder)
     try logging.encode(to: encoder)
 
-    try container.encode(isExternalDataCollectionEnabled, forKey: .isExternalDataCollectionEnabled)
+    try container.encode(eventTrackingBehavior.description, forKey: .eventTrackingBehavior)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
     try container.encode(storeKitVersion.description, forKey: .storeKitVersion)

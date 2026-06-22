@@ -76,22 +76,26 @@ actor PlacementsQueue {
     data: JSON,
     from placement: Trackable
   ) {
-    guard externalDataCollectionAllowed(from: placement) else {
+    guard trackingAllowed(from: placement) else {
       return
     }
     elements.append(data)
   }
 
-  private func externalDataCollectionAllowed(from placement: Trackable) -> Bool {
-    if Superwall.shared.options.isExternalDataCollectionEnabled {
+  private func trackingAllowed(from placement: Trackable) -> Bool {
+    switch Superwall.shared.options.eventTrackingBehavior {
+    case .all:
       return true
-    }
-    if placement is InternalSuperwallEvent.TriggerFire
-      || placement is InternalSuperwallEvent.UserAttributes
-      || placement is UserInitiatedPlacement.Track {
+    case .superwallOnly:
+      if placement is InternalSuperwallEvent.TriggerFire
+        || placement is InternalSuperwallEvent.UserAttributes
+        || placement is UserInitiatedPlacement.Track {
+        return false
+      }
+      return true
+    case .none:
       return false
     }
-    return true
   }
 
   func flushInternal(depth: Int = 10) {
