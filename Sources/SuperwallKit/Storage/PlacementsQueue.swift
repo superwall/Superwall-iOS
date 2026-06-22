@@ -98,12 +98,11 @@ actor PlacementsQueue {
     }
   }
 
-  func flushInternal(depth: Int = 10) {
-    if configManager.options.eventTrackingBehavior == .none {
-      elements.removeAll()
-      return
-    }
+  func clearBuffer() {
+    elements.removeAll()
+  }
 
+  func flushInternal(depth: Int = 10) {
     var eventsToSend: [JSON] = []
 
     var i = 0

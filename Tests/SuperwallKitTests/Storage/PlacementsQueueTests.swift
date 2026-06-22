@@ -171,15 +171,12 @@ struct PlacementsQueueTests {
   }
 
   @Test
-  func none_discardsAlreadyBufferedEvents() async throws {
-    // Events enqueued while .all, then behavior switches to .none before flush.
+  func clearBuffer_discardsAllBufferedEvents() async throws {
     let setup = makeQueue(behavior: .all)
     await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
     await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
 
-    // Simulate runtime opt-out before the timer fires.
-    setup.configManager.options.eventTrackingBehavior = .none
-
+    await setup.queue.clearBuffer()
     await setup.queue.flushInternal()
     try await Task.sleep(nanoseconds: 100_000_000)
 
