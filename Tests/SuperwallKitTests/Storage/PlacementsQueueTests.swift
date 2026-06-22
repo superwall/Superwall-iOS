@@ -171,6 +171,19 @@ struct PlacementsQueueTests {
   }
 
   @Test
+  func superwallOnly_setTrackingBehaviorDiscardsBuffer() async throws {
+    let setup = makeQueue(behavior: .all)
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+
+    await setup.queue.setTrackingBehavior(.superwallOnly)
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
+  @Test
   func none_setTrackingBehaviorDiscardsBufferAndBlocksFlush() async throws {
     // Covers both the eager clear and the flush-time guard in one shot.
     let setup = makeQueue(behavior: .all)

@@ -85,7 +85,7 @@ actor PlacementsQueue {
 
   func setTrackingBehavior(_ behavior: EventTrackingBehavior) {
     trackingBehavior = behavior
-    if behavior == .none {
+    if behavior != .all {
       elements.removeAll()
     }
   }
