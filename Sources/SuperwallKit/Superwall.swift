@@ -78,10 +78,8 @@ public final class Superwall: NSObject, ObservableObject {
     set {
       options.eventTrackingBehavior = newValue
 
-      if newValue == .none {
-        Task {
-          await dependencyContainer.placementsQueue.clearBuffer()
-        }
+      Task {
+        await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
       }
 
       let configAttributes = dependencyContainer.makeConfigAttributes()

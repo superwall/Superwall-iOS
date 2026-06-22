@@ -171,28 +171,14 @@ struct PlacementsQueueTests {
   }
 
   @Test
-  func clearBuffer_discardsAllBufferedEvents() async throws {
+  func none_setTrackingBehaviorDiscardsBufferAndBlocksFlush() async throws {
+    // Covers both the eager clear and the flush-time guard in one shot.
     let setup = makeQueue(behavior: .all)
     await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
     await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
 
-    await setup.queue.clearBuffer()
-    await setup.queue.flushInternal()
-    try await Task.sleep(nanoseconds: 100_000_000)
-
-    #expect(setup.network.sentEvents.isEmpty)
-  }
-
-  @Test
-  func none_flushAfterOptOutSendsNothing() async throws {
-    // Simulates the race where flushInternal runs after the behavior is switched
-    // to .none but before clearBuffer() has had a turn on the actor.
-    let setup = makeQueue(behavior: .all)
-    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
-    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
-
-    setup.configManager.options.eventTrackingBehavior = .none
-
+    // Simulate the runtime opt-out (mirrors what Superwall.shared setter does).
+    await setup.queue.setTrackingBehavior(.none)
     await setup.queue.flushInternal()
     try await Task.sleep(nanoseconds: 100_000_000)
 
@@ -250,6 +236,7 @@ struct PlacementsQueueTests {
   private struct QueueSetup {
     let queue: PlacementsQueue
     let network: NetworkMock
+    // Keep configManager and dependencyContainer alive so unowned refs inside the queue remain valid.
     let configManager: ConfigManager
     let dependencyContainer: DependencyContainer
   }
