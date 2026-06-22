@@ -183,6 +183,22 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.isEmpty)
   }
 
+  @Test
+  func none_flushAfterOptOutSendsNothing() async throws {
+    // Simulates the race where flushInternal runs after the behavior is switched
+    // to .none but before clearBuffer() has had a turn on the actor.
+    let setup = makeQueue(behavior: .all)
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+
+    setup.configManager.options.eventTrackingBehavior = .none
+
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
   // MARK: - Deprecated isExternalDataCollectionEnabled backwards compatibility
 
   @Test
