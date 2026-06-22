@@ -236,7 +236,7 @@ struct PlacementsQueueTests {
   private struct QueueSetup {
     let queue: PlacementsQueue
     let network: NetworkMock
-    // Keep configManager and dependencyContainer alive so unowned refs inside the queue remain valid.
+    // Keep network and its dependencyContainer alive; network is the only unowned ref the queue holds.
     let configManager: ConfigManager
     let dependencyContainer: DependencyContainer
   }
