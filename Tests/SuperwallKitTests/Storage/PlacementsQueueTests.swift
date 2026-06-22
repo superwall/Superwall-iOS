@@ -170,6 +170,22 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.isEmpty)
   }
 
+  @Test
+  func none_discardsAlreadyBufferedEvents() async throws {
+    // Events enqueued while .all, then behavior switches to .none before flush.
+    let setup = makeQueue(behavior: .all)
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+
+    // Simulate runtime opt-out before the timer fires.
+    setup.configManager.options.eventTrackingBehavior = .none
+
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
   // MARK: - Deprecated isExternalDataCollectionEnabled backwards compatibility
 
   @Test
