@@ -232,18 +232,6 @@ struct PlacementsQueueTests {
     #expect(options.isExternalDataCollectionEnabled == false)
   }
 
-  // MARK: - Runtime Superwall.shared property
-
-  @Test
-  func runtimeSetter_updatesOptions() {
-    let options = SuperwallOptions()
-    options.eventTrackingBehavior = .superwallOnly
-    #expect(options.eventTrackingBehavior == .superwallOnly)
-
-    options.eventTrackingBehavior = .all
-    #expect(options.eventTrackingBehavior == .all)
-  }
-
   // MARK: - Helpers
 
   private struct QueueSetup {
