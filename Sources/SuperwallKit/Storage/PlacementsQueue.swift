@@ -83,7 +83,7 @@ actor PlacementsQueue {
   }
 
   private func trackingAllowed(from placement: Trackable) -> Bool {
-    switch Superwall.shared.options.eventTrackingBehavior {
+    switch configManager.options.eventTrackingBehavior {
     case .all:
       return true
     case .superwallOnly:

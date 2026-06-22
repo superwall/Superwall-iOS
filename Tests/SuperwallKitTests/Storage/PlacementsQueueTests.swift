@@ -188,6 +188,14 @@ struct PlacementsQueueTests {
   }
 
   @Test
+  func deprecatedFalse_preservesNone() {
+    let options = SuperwallOptions()
+    options.eventTrackingBehavior = .none
+    options.isExternalDataCollectionEnabled = false
+    #expect(options.eventTrackingBehavior == .none)
+  }
+
+  @Test
   func deprecatedGetter_trueWhenAll() {
     let options = SuperwallOptions()
     options.eventTrackingBehavior = .all
@@ -212,11 +220,12 @@ struct PlacementsQueueTests {
 
   @Test
   func runtimeSetter_updatesOptions() {
-    Superwall.shared.eventTrackingBehavior = .superwallOnly
-    #expect(Superwall.shared.options.eventTrackingBehavior == .superwallOnly)
+    let options = SuperwallOptions()
+    options.eventTrackingBehavior = .superwallOnly
+    #expect(options.eventTrackingBehavior == .superwallOnly)
 
-    Superwall.shared.eventTrackingBehavior = .all
-    #expect(Superwall.shared.options.eventTrackingBehavior == .all)
+    options.eventTrackingBehavior = .all
+    #expect(options.eventTrackingBehavior == .all)
   }
 
   // MARK: - Helpers
@@ -229,12 +238,13 @@ struct PlacementsQueueTests {
   }
 
   private func makeQueue(behavior: EventTrackingBehavior) -> QueueSetup {
-    Superwall.shared.options.eventTrackingBehavior = behavior
+    let options = SuperwallOptions()
+    options.eventTrackingBehavior = behavior
 
     let dependencyContainer = DependencyContainer()
-    let network = NetworkMock(options: SuperwallOptions(), factory: dependencyContainer)
+    let network = NetworkMock(options: options, factory: dependencyContainer)
     let configManager = ConfigManager(
-      options: SuperwallOptions(),
+      options: options,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: dependencyContainer.storage,
       network: network,

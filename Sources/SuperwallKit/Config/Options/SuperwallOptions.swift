@@ -310,15 +310,20 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Defaults to `true`.
   ///
   /// - Warning: Deprecated. Use ``eventTrackingBehavior`` instead.
-  ///   Setting this to `false` maps to ``EventTrackingBehavior/superwallOnly``;
-  ///   setting it back to `true` maps to ``EventTrackingBehavior/all``.
+  ///   Setting this to `false` maps to ``EventTrackingBehavior/superwallOnly`` unless the current
+  ///   value is already ``EventTrackingBehavior/none``, in which case `.none` is preserved.
+  ///   Setting it back to `true` maps to ``EventTrackingBehavior/all``.
   @available(*, deprecated, renamed: "eventTrackingBehavior")
   public var isExternalDataCollectionEnabled: Bool {
     get {
       return eventTrackingBehavior == .all
     }
     set {
-      eventTrackingBehavior = newValue ? .all : .superwallOnly
+      if newValue {
+        eventTrackingBehavior = .all
+      } else if eventTrackingBehavior != .none {
+        eventTrackingBehavior = .superwallOnly
+      }
     }
   }
 
