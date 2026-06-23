@@ -138,6 +138,27 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.count == 1)
   }
 
+  @Test
+  func superwallOnly_allowsConfigAttributes() async throws {
+    // ConfigAttributes is a Superwall-internal event, so it is permitted under
+    // .superwallOnly — which is why the `eventTrackingBehavior` setter still
+    // tracks it for .superwallOnly and only skips it for .none.
+    let setup = makeQueue(behavior: .superwallOnly)
+
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: InternalSuperwallEvent.ConfigAttributes(
+        options: SuperwallOptions(),
+        hasExternalPurchaseController: false,
+        hasDelegate: false
+      )
+    )
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(setup.network.sentEvents.count == 1)
+  }
+
   // MARK: - EventTrackingBehavior.none
 
   @Test
@@ -162,6 +183,27 @@ struct PlacementsQueueTests {
       from: InternalSuperwallEvent.TriggerFire(
         triggerResult: .noAudienceMatch([]),
         triggerName: "test"
+      )
+    )
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
+  @Test
+  func none_blocksConfigAttributes() async throws {
+    // Backs up the `eventTrackingBehavior` setter's early return for .none: even
+    // if a config-attributes event reached the queue (losing the Task-ordering
+    // race), the queue still blocks it once the behavior is .none.
+    let setup = makeQueue(behavior: .none)
+
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: InternalSuperwallEvent.ConfigAttributes(
+        options: SuperwallOptions(),
+        hasExternalPurchaseController: false,
+        hasDelegate: false
       )
     )
     await setup.queue.flushInternal()

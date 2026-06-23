@@ -88,6 +88,13 @@ public final class Superwall: NSObject, ObservableObject {
           .passEventTrackingBehaviorToWebView(behavior)
       }
 
+      // When opting out entirely, don't emit the config-attributes event. It
+      // races the `setTrackingBehavior(.none)` Task above, so a flush could
+      // transmit it before the queue's opt-out takes effect.
+      if newValue == .none {
+        return
+      }
+
       let configAttributes = dependencyContainer.makeConfigAttributes()
       Task {
         await track(configAttributes)
