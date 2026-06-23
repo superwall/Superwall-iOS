@@ -82,6 +82,12 @@ public final class Superwall: NSObject, ObservableObject {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
       }
 
+      let behavior = newValue
+      Task { @MainActor [weak self] in
+        self?.paywallViewController?.webView.messageHandler
+          .passEventTrackingBehaviorToWebView(behavior)
+      }
+
       let configAttributes = dependencyContainer.makeConfigAttributes()
       Task {
         await track(configAttributes)
