@@ -132,6 +132,77 @@ struct ReceiptManagerTrialEligibilityTests {
     let product = makeProduct(id: "com.app.lifetime", subscriptionGroup: nil)
     #expect(await manager.isFreeTrialAvailable(for: product) == true)
   }
+
+  // MARK: - Active group computation
+
+  private func subscriptionTransaction(
+    productId: String,
+    group: String?,
+    isActive: Bool
+  ) -> SubscriptionTransaction {
+    return SubscriptionTransaction(
+      transactionId: "txn_\(productId)",
+      productId: productId,
+      purchaseDate: Date(timeIntervalSince1970: 0),
+      willRenew: isActive,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: isActive,
+      expirationDate: nil,
+      subscriptionGroupId: group
+    )
+  }
+
+  @Test("Active group is captured from the transaction even when its product can't be fetched")
+  func activeGroupFromTransactionWhenProductMissing() {
+    // The product (e.g. removed from App Store Connect) isn't in storeProducts, but the
+    // StoreKit 2 transaction still carries the group — so the active group isn't dropped.
+    let snapshot = PurchaseSnapshot(
+      purchases: [Purchase(id: "com.app.silver", isActive: true, purchaseDate: Date(timeIntervalSince1970: 0))],
+      customerInfo: CustomerInfo(
+        subscriptions: [subscriptionTransaction(productId: "com.app.silver", group: "group_A", isActive: true)],
+        nonSubscriptions: [],
+        entitlements: []
+      )
+    )
+    let groups = computeActiveSubscriptionGroupIds(from: snapshot, storeProducts: [])
+    #expect(groups == ["group_A"])
+  }
+
+  @Test("Active group is captured from fetched products (StoreKit 1 path)")
+  func activeGroupFromFetchedProducts() {
+    // StoreKit 1 snapshots have no subscriptions, so the group comes from the fetched product.
+    let snapshot = PurchaseSnapshot(
+      purchases: [Purchase(id: "com.app.silver", isActive: true, purchaseDate: Date(timeIntervalSince1970: 0))],
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+    let storeProducts: Set<StoreProduct> = [
+      StoreProduct(
+        sk1Product: MockSkProduct(productIdentifier: "com.app.silver", subscriptionGroupIdentifier: "group_A")
+      )
+    ]
+    let groups = computeActiveSubscriptionGroupIds(from: snapshot, storeProducts: storeProducts)
+    #expect(groups == ["group_A"])
+  }
+
+  @Test("Inactive subscriptions don't contribute an active group")
+  func inactiveSubscriptionsExcluded() {
+    let snapshot = PurchaseSnapshot(
+      purchases: [Purchase(id: "com.app.silver", isActive: false, purchaseDate: Date(timeIntervalSince1970: 0))],
+      customerInfo: CustomerInfo(
+        subscriptions: [subscriptionTransaction(productId: "com.app.silver", group: "group_A", isActive: false)],
+        nonSubscriptions: [],
+        entitlements: []
+      )
+    )
+    let storeProducts: Set<StoreProduct> = [
+      StoreProduct(
+        sk1Product: MockSkProduct(productIdentifier: "com.app.silver", subscriptionGroupIdentifier: "group_A")
+      )
+    ]
+    #expect(computeActiveSubscriptionGroupIds(from: snapshot, storeProducts: storeProducts).isEmpty)
+  }
 }
 
 /// Minimal `ReceiptManagerType` whose `isEligibleForIntroOffer` is fully controlled,

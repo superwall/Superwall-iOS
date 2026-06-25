@@ -241,12 +241,10 @@ actor ReceiptManager {
     }
 
     // Record which subscription groups the user has an *active* subscription in, so
-    // `isFreeTrialAvailable` can suppress trials on upgrades/crossgrades. Computed from
-    // the fetched products (which carry the group ID on both StoreKit 1 and 2) rather
-    // than the device snapshot, whose `subscriptions` array is empty on StoreKit 1.
+    // `isFreeTrialAvailable` can suppress trials on upgrades/crossgrades.
     activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(
-      forActivePurchasesIn: onDeviceSnapshot.purchases,
-      amongProducts: storeProducts
+      from: onDeviceSnapshot,
+      storeProducts: storeProducts
     )
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
@@ -361,18 +359,24 @@ actor ReceiptManager {
   }
 }
 
-/// Subscription group IDs that have at least one active purchase among `storeProducts`.
-/// File-scoped (it needs no actor state) so it doesn't count toward the actor body length.
-private func computeActiveSubscriptionGroupIds(
-  forActivePurchasesIn purchases: Set<Purchase>,
-  amongProducts storeProducts: Set<StoreProduct>
+/// Subscription group IDs the user currently has an active subscription in, unioned from two
+/// sources so none is dropped: snapshot transactions (StoreKit 2 carries the group ID, so this
+/// survives a delisted product) and active purchases' fetched-product groups (StoreKit 1's only
+/// source). File-scoped so it doesn't count toward the actor body length.
+func computeActiveSubscriptionGroupIds(
+  from snapshot: PurchaseSnapshot,
+  storeProducts: Set<StoreProduct>
 ) -> Set<String> {
-  let activeProductIds = Set(purchases.filter { $0.isActive }.map { $0.id })
-  return Set(
-    storeProducts
-      .filter { activeProductIds.contains($0.productIdentifier) }
-      .compactMap { $0.subscriptionGroupIdentifier }
-  )
+  let transactionGroupIds = snapshot.customerInfo.subscriptions
+    .filter { $0.isActive }
+    .compactMap { $0.subscriptionGroupId }
+
+  let activeProductIds = Set(snapshot.purchases.filter { $0.isActive }.map { $0.id })
+  let productGroupIds = storeProducts
+    .filter { activeProductIds.contains($0.productIdentifier) }
+    .compactMap { $0.subscriptionGroupIdentifier }
+
+  return Set(transactionGroupIds).union(productGroupIds)
 }
 
 final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {
