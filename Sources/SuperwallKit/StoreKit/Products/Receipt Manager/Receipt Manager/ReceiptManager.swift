@@ -30,6 +30,11 @@ actor ReceiptManager {
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   private unowned let factory: Factory
   private unowned let storage: Storage
+  /// Subscription group IDs the user currently has an active subscription in. Computed
+  /// during `loadPurchasedProducts` from the active purchases and their fetched products,
+  /// so it works for both StoreKit 1 and StoreKit 2. Used to suppress free trials on
+  /// upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
+  private var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
   /// Set from `AppTransaction.shared` when available (iOS 16+).
@@ -43,13 +48,15 @@ actor ReceiptManager {
     receiptManager: ReceiptManagerType? = nil, // For testing
     receiptDelegate: ReceiptDelegate?,
     factory: Factory,
-    storage: Storage
+    storage: Storage,
+    activeSubscriptionGroupIds: Set<String> = [] // For testing
   ) {
     self.storeKitVersion = storeKitVersion
     self.shouldBypassAppTransactionCheck = shouldBypassAppTransactionCheck
     self.productsManager = productsManager
     self.factory = factory
     self.storage = storage
+    self.activeSubscriptionGroupIds = activeSubscriptionGroupIds
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -230,19 +237,40 @@ actor ReceiptManager {
       forPaywall: nil,
       placement: nil
     ) else {
+      // Fetch failed: refresh from the snapshot alone so the set still reflects this load.
+      // We assign only *after* the await (here and below), never before, so a re-entrant
+      // `isFreeTrialAvailable` during the suspension can't observe a half-built set.
+      activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
       return
     }
+
+    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: storeProducts)
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 
-  /// Determines whether a free trial is available based on the product the user is purchasing.
+  /// Determines whether a free trial will actually be granted when the user purchases `storeProduct`.
   ///
-  /// A free trial is available if the user hasn't already purchased within the subscription group of the
-  /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
-  /// the outcome will default to whether or not the user has already purchased that product.
+  /// Stricter than raw `isEligibleForIntroOffer` (which only reflects whether the customer ever
+  /// *consumed* an intro in the group): Apple doesn't apply intro offers to upgrades, crossgrades,
+  /// or downgrades, so we also require no active subscription in the product's group. Once the
+  /// existing subscription lapses, a fresh purchase is eligible again.
   func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
-    await manager.isEligibleForIntroOffer(storeProduct)
+    let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
+    if !isEligibleForIntroOffer {
+      return false
+    }
+
+    // Non-subscription products have no subscription group, so the
+    // upgrade/crossgrade/downgrade rule doesn't apply.
+    guard let subscriptionGroupId = storeProduct.subscriptionGroupIdentifier else {
+      return true
+    }
+
+    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`, which always
+    // completes before a paywall opens (config is only marked retrieved after it runs,
+    // and presentation waits for config), so this reflects current subscription state.
+    return !activeSubscriptionGroupIds.contains(subscriptionGroupId)
   }
 
   /// Determines whether the user is subscribed to the given product id.
@@ -321,6 +349,26 @@ actor ReceiptManager {
 
     request.cancel()
   }
+}
+
+/// Subscription group IDs the user currently has an active subscription in, unioned from two
+/// sources so none is dropped: snapshot transactions (StoreKit 2 carries the group ID, so this
+/// survives a delisted product) and active purchases' fetched-product groups (StoreKit 1's only
+/// source). File-scoped so it doesn't count toward the actor body length.
+func computeActiveSubscriptionGroupIds(
+  from snapshot: PurchaseSnapshot,
+  storeProducts: Set<StoreProduct>
+) -> Set<String> {
+  let transactionGroupIds = snapshot.customerInfo.subscriptions
+    .filter { $0.isActive }
+    .compactMap { $0.subscriptionGroupId }
+
+  let activeProductIds = Set(snapshot.purchases.filter { $0.isActive }.map { $0.id })
+  let productGroupIds = storeProducts
+    .filter { activeProductIds.contains($0.productIdentifier) }
+    .compactMap { $0.subscriptionGroupIdentifier }
+
+  return Set(transactionGroupIds).union(productGroupIds)
 }
 
 final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {

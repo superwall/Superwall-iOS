@@ -86,6 +86,46 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Controls which events are sent to the Superwall servers at runtime.
+  ///
+  /// Defaults to ``EventTrackingBehavior/all``. Update this at any point after
+  /// ``configure(apiKey:purchaseController:options:completion:)-52tke`` to change event
+  /// collection dynamically — for example, toggling to ``EventTrackingBehavior/none``
+  /// after the user declines data collection in a GDPR consent flow.
+  ///
+  /// You can also set the initial value via ``SuperwallOptions/eventTrackingBehavior``
+  /// before calling `configure`.
+  public var eventTrackingBehavior: EventTrackingBehavior {
+    get {
+      return options.eventTrackingBehavior
+    }
+    set {
+      options.eventTrackingBehavior = newValue
+
+      Task {
+        await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
+      }
+
+      let behavior = newValue
+      Task { @MainActor [weak self] in
+        self?.paywallViewController?.webView.messageHandler
+          .passEventTrackingBehaviorToWebView(behavior)
+      }
+
+      // When opting out entirely, don't emit the config-attributes event. It
+      // races the `setTrackingBehavior(.none)` Task above, so a flush could
+      // transmit it before the queue's opt-out takes effect.
+      if newValue == .none {
+        return
+      }
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+      }
+    }
+  }
+
   /// Defines the products to override on any paywall by product name.
   ///
   /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on a paywall:
