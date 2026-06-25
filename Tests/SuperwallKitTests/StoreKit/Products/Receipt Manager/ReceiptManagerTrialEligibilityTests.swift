@@ -5,17 +5,17 @@
 // Regression tests for a bug where a paywall showed a free trial that Apple never
 // granted. A customer who had paid for a product in a subscription group since 2017
 // (but never taken a trial) is still reported eligible by StoreKit's
-// `isEligibleForIntroOffer`. When they bought a *different* product in that group
-// while their existing subscription was active, Apple treated it as an upgrade and
-// applied no introductory offer — yet the paywall advertised one.
+// `isEligibleForIntroOffer`. When they bought a *different* product in that group while
+// their existing subscription was active, Apple treated it as an upgrade and applied no
+// introductory offer — yet the paywall advertised one.
 //
-// `ReceiptManager.isFreeTrialAvailable` now additionally requires that there's no
-// active App Store subscription in the product's subscription group, since Apple
-// doesn't apply intro offers to upgrades/crossgrades/downgrades.
+// `ReceiptManager.isFreeTrialAvailable` now also requires that there's no active
+// subscription in the product's subscription group. The set of active groups is computed
+// in `loadPurchasedProducts` from the active purchases and their fetched products (so it
+// works for both StoreKit 1 and 2); these tests seed it directly to isolate the gate.
 //
 
 import Foundation
-import StoreKit
 import Testing
 @testable import SuperwallKit
 
@@ -26,18 +26,8 @@ struct ReceiptManagerTrialEligibilityTests {
 
   private func makeReceiptManager(
     isEligibleForIntroOffer: Bool,
-    deviceSubscriptions: [SubscriptionTransaction]
+    activeSubscriptionGroupIds: Set<String>
   ) -> (manager: ReceiptManager, productsManager: ProductsManager) {
-    let storage: Storage = dependencyContainer.storage
-    storage.save(
-      CustomerInfo(
-        subscriptions: deviceSubscriptions,
-        nonSubscriptions: [],
-        entitlements: []
-      ),
-      forType: LatestDeviceCustomerInfo.self
-    )
-
     let productsFetcher = ProductsFetcherSK1Mock(
       productCompletionResult: .success([]),
       entitlementsInfo: dependencyContainer.entitlementsInfo
@@ -55,7 +45,8 @@ struct ReceiptManagerTrialEligibilityTests {
       receiptManager: MockReceiptManagerType(isEligibleForIntroOffer: isEligibleForIntroOffer),
       receiptDelegate: nil,
       factory: dependencyContainer,
-      storage: storage
+      storage: dependencyContainer.storage,
+      activeSubscriptionGroupIds: activeSubscriptionGroupIds
     )
     return (receiptManager, productsManager)
   }
@@ -72,34 +63,12 @@ struct ReceiptManagerTrialEligibilityTests {
     )
   }
 
-  private func activeSubscription(
-    productId: String,
-    group: String?,
-    isActive: Bool = true,
-    store: ProductStore = .appStore
-  ) -> SubscriptionTransaction {
-    return SubscriptionTransaction(
-      transactionId: "txn_\(productId)",
-      productId: productId,
-      purchaseDate: Date(timeIntervalSince1970: 0),
-      willRenew: isActive,
-      isRevoked: false,
-      isInGracePeriod: false,
-      isInBillingRetryPeriod: false,
-      isActive: isActive,
-      expirationDate: nil,
-      offerType: nil,
-      subscriptionGroupId: group,
-      store: store
-    )
-  }
-
   @Test("No trial when an active subscription exists in the same group (upgrade/crossgrade)")
   func noTrialWhenActiveSubscriptionInSameGroup() async {
     // The reported incident: active Silver in group_A, buying Gold in group_A.
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: true,
-      deviceSubscriptions: [activeSubscription(productId: "com.app.silver", group: "group_A")]
+      activeSubscriptionGroupIds: ["group_A"]
     )
     _ = productsManager
     let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
@@ -108,13 +77,11 @@ struct ReceiptManagerTrialEligibilityTests {
 
   @Test("Trial available once the same-group subscription has lapsed")
   func trialWhenSameGroupSubscriptionInactive() async {
-    // After Silver lapsed, a fresh purchase in the group is a new subscription, so
-    // Apple applies the trial again.
+    // After Silver lapsed it's no longer in the active set, so a fresh purchase in the
+    // group is a new subscription and Apple applies the trial again.
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: true,
-      deviceSubscriptions: [
-        activeSubscription(productId: "com.app.silver", group: "group_A", isActive: false)
-      ]
+      activeSubscriptionGroupIds: []
     )
     _ = productsManager
     let silver = makeProduct(id: "com.app.silver", subscriptionGroup: "group_A")
@@ -125,18 +92,18 @@ struct ReceiptManagerTrialEligibilityTests {
   func trialWhenActiveSubscriptionInDifferentGroup() async {
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: true,
-      deviceSubscriptions: [activeSubscription(productId: "com.app.other", group: "group_B")]
+      activeSubscriptionGroupIds: ["group_B"]
     )
     _ = productsManager
     let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
     #expect(await manager.isFreeTrialAvailable(for: gold) == true)
   }
 
-  @Test("Trial available when there are no subscriptions at all")
-  func trialWhenNoSubscriptions() async {
+  @Test("Trial available when there are no active subscriptions")
+  func trialWhenNoActiveSubscriptions() async {
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: true,
-      deviceSubscriptions: []
+      activeSubscriptionGroupIds: []
     )
     _ = productsManager
     let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
@@ -145,29 +112,25 @@ struct ReceiptManagerTrialEligibilityTests {
 
   @Test("No trial when StoreKit reports the customer is intro-ineligible")
   func noTrialWhenIneligible() async {
-    // Even with no blocking subscription, an ineligible customer gets no trial.
+    // Ineligible short-circuits before the active-subscription check.
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: false,
-      deviceSubscriptions: []
+      activeSubscriptionGroupIds: ["group_A"]
     )
     _ = productsManager
     let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
     #expect(await manager.isFreeTrialAvailable(for: gold) == false)
   }
 
-  @Test("A non-App Store subscription in the group does not block the trial")
-  func nonAppStoreSubscriptionDoesNotBlock() async {
-    // The upgrade rule is an App Store concept; a web/Stripe entitlement in the same
-    // group must not suppress an App Store trial.
+  @Test("A product with no subscription group is unaffected by the active-group check")
+  func trialWhenProductHasNoSubscriptionGroup() async {
     let (manager, productsManager) = makeReceiptManager(
       isEligibleForIntroOffer: true,
-      deviceSubscriptions: [
-        activeSubscription(productId: "com.app.silver", group: "group_A", store: .stripe)
-      ]
+      activeSubscriptionGroupIds: ["group_A"]
     )
     _ = productsManager
-    let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
-    #expect(await manager.isFreeTrialAvailable(for: gold) == true)
+    let product = makeProduct(id: "com.app.lifetime", subscriptionGroup: nil)
+    #expect(await manager.isFreeTrialAvailable(for: product) == true)
   }
 }
 

@@ -30,6 +30,11 @@ actor ReceiptManager {
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   private unowned let factory: Factory
   private unowned let storage: Storage
+  /// Subscription group IDs the user currently has an active subscription in. Computed
+  /// during `loadPurchasedProducts` from the active purchases and their fetched products,
+  /// so it works for both StoreKit 1 and StoreKit 2. Used to suppress free trials on
+  /// upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
+  private var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
   /// Set from `AppTransaction.shared` when available (iOS 16+).
@@ -43,13 +48,15 @@ actor ReceiptManager {
     receiptManager: ReceiptManagerType? = nil, // For testing
     receiptDelegate: ReceiptDelegate?,
     factory: Factory,
-    storage: Storage
+    storage: Storage,
+    activeSubscriptionGroupIds: Set<String> = [] // For testing
   ) {
     self.storeKitVersion = storeKitVersion
     self.shouldBypassAppTransactionCheck = shouldBypassAppTransactionCheck
     self.productsManager = productsManager
     self.factory = factory
     self.storage = storage
+    self.activeSubscriptionGroupIds = activeSubscriptionGroupIds
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
@@ -233,6 +240,15 @@ actor ReceiptManager {
       return
     }
 
+    // Record which subscription groups the user has an *active* subscription in, so
+    // `isFreeTrialAvailable` can suppress trials on upgrades/crossgrades. Computed from
+    // the fetched products (which carry the group ID on both StoreKit 1 and 2) rather
+    // than the device snapshot, whose `subscriptions` array is empty on StoreKit 1.
+    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(
+      forActivePurchasesIn: onDeviceSnapshot.purchases,
+      amongProducts: storeProducts
+    )
+
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 
@@ -246,8 +262,8 @@ actor ReceiptManager {
   /// subscription in the same subscription group, purchasing a product in that group is a
   /// product change and no trial is granted, even though `isEligibleForIntroOffer` is `true`.
   ///
-  /// So we also require that there's no active App Store subscription in the product's group,
-  /// to avoid advertising a free trial that Apple won't honor. (Once the existing subscription
+  /// So we also require that there's no active subscription in the product's group, to
+  /// avoid advertising a free trial that Apple won't honor. (Once the existing subscription
   /// lapses, a fresh purchase is a new subscription and the trial applies again.)
   func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
     let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
@@ -261,13 +277,10 @@ actor ReceiptManager {
       return true
     }
 
-    let deviceSubscriptions = storage.get(LatestDeviceCustomerInfo.self)?.subscriptions ?? []
-    let hasActiveSubscriptionInGroup = deviceSubscriptions.contains { subscription in
-      subscription.store == .appStore
-        && subscription.isActive
-        && subscription.subscriptionGroupId == subscriptionGroupId
-    }
-    return !hasActiveSubscriptionInGroup
+    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`, which always
+    // completes before a paywall opens (config is only marked retrieved after it runs,
+    // and presentation waits for config), so this reflects current subscription state.
+    return !activeSubscriptionGroupIds.contains(subscriptionGroupId)
   }
 
   /// Determines whether the user is subscribed to the given product id.
@@ -346,6 +359,20 @@ actor ReceiptManager {
 
     request.cancel()
   }
+}
+
+/// Subscription group IDs that have at least one active purchase among `storeProducts`.
+/// File-scoped (it needs no actor state) so it doesn't count toward the actor body length.
+private func computeActiveSubscriptionGroupIds(
+  forActivePurchasesIn purchases: Set<Purchase>,
+  amongProducts storeProducts: Set<StoreProduct>
+) -> Set<String> {
+  let activeProductIds = Set(purchases.filter { $0.isActive }.map { $0.id })
+  return Set(
+    storeProducts
+      .filter { activeProductIds.contains($0.productIdentifier) }
+      .compactMap { $0.subscriptionGroupIdentifier }
+  )
 }
 
 final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {
