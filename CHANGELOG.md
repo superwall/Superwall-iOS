@@ -14,7 +14,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes a crash due to concurrent calls to `preloadAllPaywalls`.
 - Fixes an intro offer eligibility mismatch between the paywall and the payment sheet when upgrading/crossgrading/downgrading.
-- Fixes StoreKit 2 introductory offer eligibility being cached for the lifetime of the app process. Eligibility is now re-queried from StoreKit on each check, so it stays correct after the user redeems a trial, after `reset()`, and after user identity switches.
 
 ## 4.15.3
 
