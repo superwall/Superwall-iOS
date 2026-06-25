@@ -230,11 +230,6 @@ actor ReceiptManager {
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
 
-    // Refresh from this load's snapshot first, so the active-group state never describes a
-    // previous load: the transactions carry the group (StoreKit 2) without the fetch below.
-    // (Apple-ID-scoped, so an identity change / `reset()` doesn't require clearing it.)
-    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
-
     let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
@@ -242,10 +237,13 @@ actor ReceiptManager {
       forPaywall: nil,
       placement: nil
     ) else {
+      // Fetch failed: refresh from the snapshot alone so the set still reflects this load.
+      // We assign only *after* the await (here and below), never before, so a re-entrant
+      // `isFreeTrialAvailable` during the suspension can't observe a half-built set.
+      activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
       return
     }
 
-    // A successful fetch enriches the set with product-derived groups (StoreKit 1's source).
     activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: storeProducts)
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
