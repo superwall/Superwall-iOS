@@ -28,7 +28,9 @@ struct PurchaseSnapshot {
 
 @available(iOS 15.0, *)
 actor SK2ReceiptManager: ReceiptManagerType {
-  private var sk2IntroOfferEligibility: [String: Bool]
+  /// Resolves intro-offer eligibility live from StoreKit. Injectable so tests can
+  /// verify eligibility is re-evaluated on every call rather than cached.
+  private let resolveIntroOfferEligibility: @Sendable (StoreProduct) async -> Bool
   var purchases: Set<Purchase>
   var transactionReceipts: [TransactionReceipt]
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
@@ -36,26 +38,29 @@ actor SK2ReceiptManager: ReceiptManagerType {
   var latestSubscriptionState: LatestSubscription.State?
 
   init(
-    sk2IntroOfferEligibility: [String: Bool] = [:],
     purchases: Set<Purchase> = [],
     transactionReceipts: [TransactionReceipt] = [],
     latestSubscriptionPeriodType: LatestSubscription.PeriodType? = nil,
     latestSubscriptionWillAutoRenew: Bool? = nil,
-    latestSubscriptionState: LatestSubscription.State? = nil
+    latestSubscriptionState: LatestSubscription.State? = nil,
+    resolveIntroOfferEligibility: @escaping @Sendable (StoreProduct) async -> Bool
+      = { await SK2ReceiptManager.liveIntroOfferEligibility(for: $0) }
   ) {
-    self.sk2IntroOfferEligibility = sk2IntroOfferEligibility
     self.purchases = purchases
     self.transactionReceipts = transactionReceipts
     self.latestSubscriptionPeriodType = latestSubscriptionPeriodType
     self.latestSubscriptionWillAutoRenew = latestSubscriptionWillAutoRenew
     self.latestSubscriptionState = latestSubscriptionState
+    self.resolveIntroOfferEligibility = resolveIntroOfferEligibility
   }
 
-  func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
-    for storeProduct in storeProducts {
-      sk2IntroOfferEligibility[storeProduct.productIdentifier] = await isEligibleForIntroOffer(storeProduct)
-    }
-  }
+  /// No-op for StoreKit 2.
+  ///
+  /// Eligibility is resolved live in `isEligibleForIntroOffer(_:)` on every call
+  /// rather than pre-warmed into a cache. The previous cache froze eligibility for
+  /// the lifetime of the process — it survived `reset()` and user identity switches —
+  /// which could surface a free trial that Apple would not actually grant.
+  func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
 
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     var purchases: Set<Purchase> = []
@@ -243,12 +248,20 @@ actor SK2ReceiptManager: ReceiptManagerType {
     return latestExpiration
   }
 
+  /// Determines whether `storeProduct` is eligible for an introductory offer.
+  ///
+  /// Always resolved live (never cached): eligibility can change after a purchase
+  /// or a user identity switch via `reset()`, and a stale value would surface a
+  /// free trial that Apple won't grant.
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
+    return await resolveIntroOfferEligibility(storeProduct)
+  }
+
+  /// Live intro-offer eligibility query backed by StoreKit 2. This is the default
+  /// resolver injected into `init`; tests can substitute their own.
+  static func liveIntroOfferEligibility(for storeProduct: StoreProduct) async -> Bool {
     guard let product = storeProduct.product as? SK2StoreProduct else {
       return false
-    }
-    if let eligibility = sk2IntroOfferEligibility[storeProduct.productIdentifier] {
-      return eligibility
     }
     guard product.hasFreeTrial else {
       return false
@@ -258,10 +271,6 @@ actor SK2ReceiptManager: ReceiptManagerType {
       // Technically this is covered in hasFreeTrial, but good for unwrapping subscription
       return false
     }
-    if await renewableSubscription.isEligibleForIntroOffer {
-      // The product is eligible for an introductory offer.
-      return true
-    }
-    return false
+    return await renewableSubscription.isEligibleForIntroOffer
   }
 }

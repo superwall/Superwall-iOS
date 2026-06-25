@@ -13,6 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes a crash due to concurrent calls to `preloadAllPaywalls`.
+- Fixes an intro offer eligibility mismatch between the paywall and the payment sheet when upgrading/crossgrading/downgrading.
 
 ## 4.15.3
 
