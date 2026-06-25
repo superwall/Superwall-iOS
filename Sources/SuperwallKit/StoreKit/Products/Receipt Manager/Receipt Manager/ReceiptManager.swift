@@ -230,6 +230,11 @@ actor ReceiptManager {
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
 
+    // Refresh from this load's snapshot first, so the active-group state never describes a
+    // previous load: the transactions carry the group (StoreKit 2) without the fetch below.
+    // (Apple-ID-scoped, so an identity change / `reset()` doesn't require clearing it.)
+    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
+
     let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
 
     guard let storeProducts = try? await productsManager.products(
@@ -240,29 +245,18 @@ actor ReceiptManager {
       return
     }
 
-    // Record which subscription groups the user has an *active* subscription in, so
-    // `isFreeTrialAvailable` can suppress trials on upgrades/crossgrades.
-    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(
-      from: onDeviceSnapshot,
-      storeProducts: storeProducts
-    )
+    // A successful fetch enriches the set with product-derived groups (StoreKit 1's source).
+    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: storeProducts)
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 
   /// Determines whether a free trial will actually be granted when the user purchases `storeProduct`.
   ///
-  /// This is stricter than raw StoreKit intro-offer eligibility. `isEligibleForIntroOffer`
-  /// only reflects whether the customer has ever *consumed* an intro offer in the product's
-  /// subscription group — it returns `true` for someone who has paid for a product in the
-  /// group but never taken a trial. Apple additionally does **not** apply introductory
-  /// offers to upgrades, crossgrades, or downgrades: if the customer already has an active
-  /// subscription in the same subscription group, purchasing a product in that group is a
-  /// product change and no trial is granted, even though `isEligibleForIntroOffer` is `true`.
-  ///
-  /// So we also require that there's no active subscription in the product's group, to
-  /// avoid advertising a free trial that Apple won't honor. (Once the existing subscription
-  /// lapses, a fresh purchase is a new subscription and the trial applies again.)
+  /// Stricter than raw `isEligibleForIntroOffer` (which only reflects whether the customer ever
+  /// *consumed* an intro in the group): Apple doesn't apply intro offers to upgrades, crossgrades,
+  /// or downgrades, so we also require no active subscription in the product's group. Once the
+  /// existing subscription lapses, a fresh purchase is eligible again.
   func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
     let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
     if !isEligibleForIntroOffer {
