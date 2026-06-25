@@ -236,13 +236,38 @@ actor ReceiptManager {
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
   }
 
-  /// Determines whether a free trial is available based on the product the user is purchasing.
+  /// Determines whether a free trial will actually be granted when the user purchases `storeProduct`.
   ///
-  /// A free trial is available if the user hasn't already purchased within the subscription group of the
-  /// supplied product. If it isn't a subscription-based product or there are other issues retrieving the products,
-  /// the outcome will default to whether or not the user has already purchased that product.
+  /// This is stricter than raw StoreKit intro-offer eligibility. `isEligibleForIntroOffer`
+  /// only reflects whether the customer has ever *consumed* an intro offer in the product's
+  /// subscription group — it returns `true` for someone who has paid for a product in the
+  /// group but never taken a trial. Apple additionally does **not** apply introductory
+  /// offers to upgrades, crossgrades, or downgrades: if the customer already has an active
+  /// subscription in the same subscription group, purchasing a product in that group is a
+  /// product change and no trial is granted, even though `isEligibleForIntroOffer` is `true`.
+  ///
+  /// So we also require that there's no active App Store subscription in the product's group,
+  /// to avoid advertising a free trial that Apple won't honor. (Once the existing subscription
+  /// lapses, a fresh purchase is a new subscription and the trial applies again.)
   func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
-    await manager.isEligibleForIntroOffer(storeProduct)
+    let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
+    if !isEligibleForIntroOffer {
+      return false
+    }
+
+    // Non-subscription products have no subscription group, so the
+    // upgrade/crossgrade/downgrade rule doesn't apply.
+    guard let subscriptionGroupId = storeProduct.subscriptionGroupIdentifier else {
+      return true
+    }
+
+    let deviceSubscriptions = storage.get(LatestDeviceCustomerInfo.self)?.subscriptions ?? []
+    let hasActiveSubscriptionInGroup = deviceSubscriptions.contains { subscription in
+      subscription.store == .appStore
+        && subscription.isActive
+        && subscription.subscriptionGroupId == subscriptionGroupId
+    }
+    return !hasActiveSubscriptionInGroup
   }
 
   /// Determines whether the user is subscribed to the given product id.

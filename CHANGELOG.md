@@ -13,6 +13,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes a crash due to concurrent calls to `preloadAllPaywalls`.
+- Fixes a free trial being shown for a product when the user already has an active subscription in the same subscription group. Apple does not apply introductory offers to upgrades, crossgrades, or downgrades, so the trial was advertised but never granted on purchase. Trial availability now also requires that there's no active App Store subscription in the product's subscription group.
+- Fixes StoreKit 2 introductory offer eligibility being cached for the lifetime of the app process. Eligibility is now re-queried from StoreKit on each check, so it stays correct after the user redeems a trial, after `reset()`, and after user identity switches.
 
 ## 4.15.3
 
