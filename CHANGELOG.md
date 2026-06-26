@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.15.4
+
+### Enhancements
+
+- Adds `singularDeviceId` as an `IntegrationAttribute`.
+
 ## 4.15.3
 
 ### Fixes
