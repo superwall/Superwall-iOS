@@ -73,6 +73,9 @@ public enum IntegrationAttribute: Int {
 
   /// The Appstack identifier.
   case appstackId
+
+  /// The Singular device identifier (SDID).
+  case singularDeviceId
 }
 
 // MARK: - CustomStringConvertible
@@ -123,6 +126,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "customerioId"
     case .appstackId:
       return "appstackId"
+    case .singularDeviceId:
+      return "singularDeviceId"
     }
   }
 }
