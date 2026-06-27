@@ -245,6 +245,45 @@ extension Superwall {
     internallyRegister(placement: placement, params: params)
   }
 
+  // MARK: - Track
+
+  /// Registers an analytics event with Superwall, with no paywall presentation handling and no feature gating.
+  ///
+  /// This is a thin, fire-and-forget convenience alias for ``register(placement:params:handler:)`` with `handler` set to `nil`. Use it to send arbitrary analytics events, which are sent to Superwall and queryable via the Query API.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the analytics event you wish to track.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the audience filters of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
+  public func track(_ event: String, params: [String: Any]? = nil) {
+    register(placement: event, params: params, handler: nil)
+  }
+
+  /// Objective-C-only convenience method. Registers an analytics event with Superwall, with no paywall presentation handling and no feature gating.
+  ///
+  /// This is a thin, fire-and-forget convenience alias for ``register(placement:params:handler:)`` with `handler` set to `nil`. Use it to send arbitrary analytics events, which are sent to Superwall and queryable via the Query API.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the analytics event you wish to track.
+  @available(swift, obsoleted: 1.0)
+  @objc public func track(_ event: String) {
+    register(placement: event)
+  }
+
+  /// Objective-C-only convenience method. Registers an analytics event with Superwall, with no paywall presentation handling and no feature gating.
+  ///
+  /// This is a thin, fire-and-forget convenience alias for ``register(placement:params:handler:)`` with `handler` set to `nil`. Use it to send arbitrary analytics events, which are sent to Superwall and queryable via the Query API.
+  ///
+  /// - Parameters:
+  ///   -  event: The name of the analytics event you wish to track.
+  ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the audience filters of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
+  @available(swift, obsoleted: 1.0)
+  @objc public func track(
+    _ event: String,
+    params: [String: Any]?
+  ) {
+    register(placement: event, params: params)
+  }
+
   private func trackAndPresentPaywall(
     forPlacement placement: String,
     params: [String: Any]? = nil,
