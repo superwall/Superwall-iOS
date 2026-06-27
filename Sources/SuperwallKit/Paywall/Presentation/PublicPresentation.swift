@@ -265,7 +265,7 @@ extension Superwall {
   /// - Parameters:
   ///   -  event: The name of the analytics event you wish to track.
   @available(swift, obsoleted: 1.0)
-  @objc(trackEvent:) public func track(_ event: String) {
+  @objc(trackEvent:) public func track(event: String) {
     register(placement: event)
   }
 
@@ -278,7 +278,7 @@ extension Superwall {
   ///   - params: Optional parameters you'd like to pass with your event. These can be referenced within the audience filters of your campaign. Keys beginning with `$` are reserved for Superwall and will be dropped. Values can be any JSON encodable value, URLs or Dates. Arrays and dictionaries as values are not supported at this time, and will be dropped. Defaults to `nil`.
   @available(swift, obsoleted: 1.0)
   @objc(trackEvent:params:) public func track(
-    _ event: String,
+    event: String,
     params: [String: Any]?
   ) {
     register(placement: event, params: params)
