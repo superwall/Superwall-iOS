@@ -54,6 +54,7 @@ The `Superwall` class is used to access all the features of the SDK. Before usin
 - `PaywallInfo`
 - `SuperwallEvent`
 - `SuperwallEventObjc`
+- `AttributionMatchInfo`
 - `PaywallSkippedReason`
 - `PaywallSkippedReasonObjc`
 - `PaywallViewController`

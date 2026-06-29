@@ -619,8 +619,8 @@ final class TransactionManager {
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
-    await coordinator.setCompletion { result in
-      Task { [weak self] in
+    await coordinator.setCompletion { [weak self] result in
+      Task {
         await self?.handle(
           result: result,
           state: .observing

@@ -121,6 +121,8 @@ protocol ApiFactory: AnyObject {
     requestId: String
   ) async -> [String: String]
 
+  func makeDeviceId() -> String
+
   func makeDefaultComponents(
     host: EndpointHost
   ) -> ApiHostConfig

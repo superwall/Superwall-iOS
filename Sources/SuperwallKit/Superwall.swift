@@ -481,12 +481,31 @@ public final class Superwall: NSObject, ObservableObject {
     // config to be loaded to know whether it's enabled. `AttributionPoster`
     // subscribes to `configState` and fires automatically once config arrives.
     Task {
+      let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
-      _ = await (fetchConfig, configureIdentity)
+      _ = await configureIdentity
+
+      if dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      ) {
+        let advertiserTrackingEnabled =
+          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+
+        dependencyContainer.storage.recordMMPInstallAttributionMatch {
+          await dependencyContainer.mmpAttributionManager.matchInstall(
+            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+            advertiserTrackingEnabled: advertiserTrackingEnabled,
+            applicationTrackingEnabled: true
+          )
+        }
+      }
+
+      _ = await fetchConfig
 
       await track(
         InternalSuperwallEvent.ConfigAttributes(
@@ -1073,6 +1092,12 @@ public final class Superwall: NSObject, ObservableObject {
     // dict to the new user's attributes after the wipe. AdServices state
     // itself lives in app-specific storage and is preserved through reset.
     dependencyContainer.attributionPoster.reapplyCachedAttribution()
+
+    // MMP install attribution is likewise install-scoped. Re-apply the cached
+    // `acquisition_*` payload to the new user rather than re-running the match
+    // — the backend match only succeeds within the 7-day install window, so a
+    // logout after that would otherwise leave the new user without attributes.
+    dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
