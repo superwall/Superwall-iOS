@@ -212,15 +212,21 @@ class Storage {
     save(true, forType: DidTrackAppInstall.self)
   }
 
+  /// Fires the initial install-attribution match and persists completion.
+  ///
+  /// Returns the spawned task (or `nil` if the request was already completed)
+  /// so the caller can let the post-ATT retry await it before sending its
+  /// upgraded request.
+  @discardableResult
   func recordMMPInstallAttributionMatch(
     matchInstall: @escaping () async -> Bool
-  ) {
+  ) -> Task<Void, Never>? {
     let didCompleteAttributionRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
     if didCompleteAttributionRequest {
-      return
+      return nil
     }
 
-    Task { [weak self] in
+    return Task { [weak self] in
       let didCompleteRequest = await matchInstall()
       guard didCompleteRequest else {
         return

@@ -326,31 +326,6 @@ class Network {
     }
   }
 
-  private func mergeMMPAcquisitionAttributesIfNeeded(
-    _ acquisitionAttributes: [String: JSON],
-    identityManager: IdentityManager
-  ) {
-    let attributes = convertJSONToDictionary(attribution: acquisitionAttributes)
-    guard !attributes.isEmpty else {
-      return
-    }
-
-    let currentAttributes = identityManager.userAttributes
-    let hasChanges = attributes.contains { key, value in
-      guard let currentValue = currentAttributes[key] else {
-        return true
-      }
-
-      return String(describing: currentValue) != String(describing: value)
-    }
-
-    guard hasChanges else {
-      return
-    }
-
-    Superwall.shared.setUserAttributes(attributes)
-  }
-
   func redeemEntitlements(request: RedeemRequest) async throws -> RedeemResponse {
     return try await urlSession.request(
       .redeem(request: request),
@@ -415,12 +390,15 @@ class Network {
     }
   }
 
+  /// Transport for the MMP install-attribution match. Builds and sends the
+  /// request and returns the decoded response; the attribution semantics
+  /// (caching, merging attributes, tracking) live in `MMPAttributionManager`.
   // swiftlint:disable:next function_body_length
   func matchMMPInstall(
     idfa: String?,
     advertiserTrackingEnabled: Bool,
     applicationTrackingEnabled: Bool
-  ) async -> Bool {
+  ) async throws -> MMPMatchResponse {
     guard
       let deviceHelper = factory.deviceHelper,
       let identityManager = factory.identityManager
@@ -431,7 +409,7 @@ class Network {
         message: "Skipped: /api/match",
         info: ["reason": "Dependencies unavailable"]
       )
-      return false
+      throw MMPMatchError.dependenciesUnavailable
     }
 
     let rawMetadata = [
@@ -497,28 +475,7 @@ class Network {
         ]
       )
 
-      if let acquisitionAttributes = response.acquisitionAttributes {
-        mergeMMPAcquisitionAttributesIfNeeded(
-          acquisitionAttributes,
-          identityManager: identityManager
-        )
-      }
-
-      await Superwall.shared.track(
-        InternalSuperwallEvent.AttributionMatch(
-          info: AttributionMatchInfo(
-            provider: .mmp,
-            matched: response.matched,
-            source: response.acquisitionAttributes?["acquisition_source"]?.string ?? response.network,
-            confidence: response.confidence,
-            matchScore: response.matchScore,
-            reason: response.breakdown?["reason"]?.string
-          )
-        )
-      )
-
-      // A successful response means the request was processed, even if no attribution match was found.
-      return true
+      return response
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -528,17 +485,7 @@ class Network {
         error: error
       )
 
-      await Superwall.shared.track(
-        InternalSuperwallEvent.AttributionMatch(
-          info: AttributionMatchInfo(
-            provider: .mmp,
-            matched: false,
-            reason: "request_failed"
-          )
-        )
-      )
-
-      return false
+      throw error
     }
   }
 }

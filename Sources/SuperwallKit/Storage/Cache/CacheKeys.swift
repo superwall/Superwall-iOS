@@ -84,6 +84,21 @@ enum DidCompleteMMPInstallAttributionRequestAfterTrackingPermission: Storable {
   typealias Value = Bool
 }
 
+/// The decoded MMP `acquisition_*` payload from the last successful install
+/// match, cached so we can re-apply it to a new user's attributes after
+/// `reset(duringIdentify:)`. Install-scoped: the install source doesn't change
+/// when one user logs out and another logs in on the same device. The backend
+/// match only runs within the 7-day install window, so re-matching after a
+/// reset can't be relied on — caching the resolved payload lets us repopulate
+/// the new user deterministically, without re-hitting the backend.
+enum MMPAcquisitionDataStorage: Storable {
+  static var key: String {
+    "store.mmpAcquisitionData"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = [String: JSON]
+}
+
 enum DidTrackFirstSeen: Storable {
   static var key: String {
     "store.didTrackFirstSeen.v2"

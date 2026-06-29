@@ -4,29 +4,6 @@ import Combine
 import Foundation
 import StoreKit
 
-private actor TrackingPermissionMMPRetryGate {
-  private enum State {
-    case idle
-    case inFlight
-    case completed
-  }
-
-  private var state: State = .idle
-
-  func tryBegin() -> Bool {
-    guard case .idle = state else {
-      return false
-    }
-
-    state = .inFlight
-    return true
-  }
-
-  func finish(didComplete: Bool) {
-    state = didComplete ? .completed : .idle
-  }
-}
-
 /// The primary class for integrating Superwall into your application. After configuring via
 /// ``configure(apiKey:purchaseController:options:completion:)-52tke``, it provides access to
 /// all its features via instance functions and variables.
@@ -520,12 +497,15 @@ public final class Superwall: NSObject, ObservableObject {
         let advertiserTrackingEnabled =
           dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        dependencyContainer.storage.recordMMPInstallAttributionMatch {
-          await dependencyContainer.network.matchMMPInstall(
+        let initialMatchTask = dependencyContainer.storage.recordMMPInstallAttributionMatch {
+          await dependencyContainer.mmpAttributionManager.matchInstall(
             idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
             advertiserTrackingEnabled: advertiserTrackingEnabled,
             applicationTrackingEnabled: true
           )
+        }
+        if let initialMatchTask {
+          await trackingPermissionMMPRetryGate.setInitialMatchTask(initialMatchTask)
         }
       }
 
@@ -610,7 +590,13 @@ public final class Superwall: NSObject, ObservableObject {
 
       let advertiserTrackingEnabled =
         dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
-      let didCompleteRequest = await dependencyContainer.network.matchMMPInstall(
+
+      // Wait for the fire-and-forget initial match to finish first so this
+      // deterministic post-ATT result is written last and isn't overwritten
+      // by the slower pre-ATT request merging its `acquisition_*` attributes.
+      await trackingPermissionMMPRetryGate.awaitInitialMatch()
+
+      let didCompleteRequest = await dependencyContainer.mmpAttributionManager.matchInstall(
         idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
         advertiserTrackingEnabled: advertiserTrackingEnabled,
         applicationTrackingEnabled: true
@@ -1191,6 +1177,12 @@ public final class Superwall: NSObject, ObservableObject {
     // dict to the new user's attributes after the wipe. AdServices state
     // itself lives in app-specific storage and is preserved through reset.
     dependencyContainer.attributionPoster.reapplyCachedAttribution()
+
+    // MMP install attribution is likewise install-scoped. Re-apply the cached
+    // `acquisition_*` payload to the new user rather than re-running the match
+    // — the backend match only succeeds within the 7-day install window, so a
+    // logout after that would otherwise leave the new user without attributes.
+    dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
