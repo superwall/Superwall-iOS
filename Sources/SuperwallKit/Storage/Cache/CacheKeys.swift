@@ -74,16 +74,6 @@ enum IsEligibleForMMPInstallAttributionMatch: Storable {
   typealias Value = Bool
 }
 
-// swiftlint:disable:next type_name
-enum DidCompleteMMPInstallAttributionRequestAfterTrackingPermission: Storable {
-  static var key: String {
-    // Preserve the existing cache key so upgrades don't re-run the ATT retry path.
-    "store.didCompleteMMPInstallAttributionMatchAfterTrackingPermission"
-  }
-  static var directory: SearchPathDirectory = .appSpecificDocuments
-  typealias Value = Bool
-}
-
 /// The decoded MMP `acquisition_*` payload from the last successful install
 /// match, cached so we can re-apply it to a new user's attributes after
 /// `reset(duringIdentify:)`. Install-scoped: the install source doesn't change

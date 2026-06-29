@@ -29,7 +29,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// A `Task` that is associated with purchasing. This is used to prevent multiple purchases
   /// from occurring.
   private var purchaseTask: Task<Void, Never>?
-  private let trackingPermissionMMPRetryGate = TrackingPermissionMMPRetryGate()
 
   /// The Objective-C delegate that handles Superwall lifecycle events.
   @available(swift, obsoleted: 1.0)
@@ -497,15 +496,12 @@ public final class Superwall: NSObject, ObservableObject {
         let advertiserTrackingEnabled =
           dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        let initialMatchTask = dependencyContainer.storage.recordMMPInstallAttributionMatch {
+        dependencyContainer.storage.recordMMPInstallAttributionMatch {
           await dependencyContainer.mmpAttributionManager.matchInstall(
             idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
             advertiserTrackingEnabled: advertiserTrackingEnabled,
             applicationTrackingEnabled: true
           )
-        }
-        if let initialMatchTask {
-          await trackingPermissionMMPRetryGate.setInitialMatchTask(initialMatchTask)
         }
       }
 
@@ -530,87 +526,6 @@ public final class Superwall: NSObject, ObservableObject {
     listenToConfig()
     listenToSubscriptionStatus()
     listenToCustomerInfo()
-    listenToTrackingPermissionGranted()
-    listenToApplicationDidBecomeActiveForTrackingPermission()
-  }
-
-  private func listenToTrackingPermissionGranted() {
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleTrackingPermissionGranted),
-      name: .superwallTrackingPermissionGranted,
-      object: nil
-    )
-  }
-
-  private func listenToApplicationDidBecomeActiveForTrackingPermission() {
-    guard let notificationName = SystemInfo.applicationDidBecomeActiveNotification else {
-      return
-    }
-
-    NotificationCenter.default.addObserver(
-      self,
-      selector: #selector(handleApplicationDidBecomeActiveForTrackingPermission),
-      name: notificationName,
-      object: nil
-    )
-  }
-
-  @objc
-  private func handleTrackingPermissionGranted() {
-    retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded()
-  }
-
-  @objc
-  private func handleApplicationDidBecomeActiveForTrackingPermission() {
-    guard dependencyContainer.permissionHandler.checkTrackingPermission() == .granted else {
-      return
-    }
-
-    retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded()
-  }
-
-  private func retryMMPInstallAttributionMatchAfterTrackingPermissionIfNeeded() {
-    Task { [weak self] in
-      guard let self else {
-        return
-      }
-
-      guard await trackingPermissionMMPRetryGate.tryBegin() else {
-        return
-      }
-
-      let appInstalledAtString = dependencyContainer.deviceHelper.appInstalledAtString
-      guard dependencyContainer.storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-        appInstalledAtString: appInstalledAtString
-      ) else {
-        await trackingPermissionMMPRetryGate.finish(didComplete: false)
-        return
-      }
-
-      let advertiserTrackingEnabled =
-        dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
-
-      // Wait for the fire-and-forget initial match to finish first so this
-      // deterministic post-ATT result is written last and isn't overwritten
-      // by the slower pre-ATT request merging its `acquisition_*` attributes.
-      await trackingPermissionMMPRetryGate.awaitInitialMatch()
-
-      let didCompleteRequest = await dependencyContainer.mmpAttributionManager.matchInstall(
-        idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-        advertiserTrackingEnabled: advertiserTrackingEnabled,
-        applicationTrackingEnabled: true
-      )
-
-      if didCompleteRequest {
-        dependencyContainer.storage.save(
-          true,
-          forType: DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self
-        )
-      }
-
-      await trackingPermissionMMPRetryGate.finish(didComplete: didCompleteRequest)
-    }
   }
 
   private func listenToConfig() {

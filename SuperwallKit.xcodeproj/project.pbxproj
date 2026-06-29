@@ -509,7 +509,6 @@
 		E41B3EF729D9896C7E0FD10C /* PaywallPresentationHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B9E9E16EBDA97E736968496 /* PaywallPresentationHandler.swift */; };
 		E4500792C310C7758974A9CF /* PopupTransitionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1DB28BDC846324DD0CC091 /* PopupTransitionLogic.swift */; };
 		E4A66E2235F7FE594EA82A06 /* PermissionHandler+Camera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21903EACCA9AA13BB10917EC /* PermissionHandler+Camera.swift */; };
-		E563881016B8CAF51A06C8C2 /* TrackingPermissionMMPRetryGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DCE5F47FB4566FB14DD9EAE /* TrackingPermissionMMPRetryGate.swift */; };
 		E60C6D5CB4E0CF3630A98BF0 /* TransactionProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933A87E03A62F412CC6B150C /* TransactionProduct.swift */; };
 		E63A7174E3B98690B073C373 /* JSONEncoder+Superwall.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD778E66506BA51BEB5EE89C /* JSONEncoder+Superwall.swift */; };
 		E63BD2E9AA7F1CCC70C889D5 /* ConfigResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 355B043004EA75053A0524DD /* ConfigResponseTests.swift */; };
@@ -703,7 +702,6 @@
 		2D1DB28BDC846324DD0CC091 /* PopupTransitionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionLogic.swift; sourceTree = "<group>"; };
 		2D3DB70C19B7C07E1750DB8F /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2DAE3B565ECB65BCCFD39A0A /* FileManagerMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerMigrator.swift; sourceTree = "<group>"; };
-		2DCE5F47FB4566FB14DD9EAE /* TrackingPermissionMMPRetryGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingPermissionMMPRetryGate.swift; sourceTree = "<group>"; };
 		2E2027BFC214905CBE589AF2 /* KeypathWritable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeypathWritable.swift; sourceTree = "<group>"; };
 		2F6AFBC7C60A5074ACE8DF88 /* Tracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracking.swift; sourceTree = "<group>"; };
 		2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Superwall.swift; sourceTree = "<group>"; };
@@ -2614,7 +2612,6 @@
 				D8749262F8F31B90DA975B26 /* AttributionTypeFactory.swift */,
 				BB868CF67AB2AE72895F864E /* IntegrationAttribute.swift */,
 				77827761E38CB30B06E3ABF2 /* MMPAttributionManager.swift */,
-				2DCE5F47FB4566FB14DD9EAE /* TrackingPermissionMMPRetryGate.swift */,
 			);
 			path = Attribution;
 			sourceTree = "<group>";
@@ -3748,7 +3745,6 @@
 				E3F2F347326B8D206D341FB6 /* TrackingLogic.swift in Sources */,
 				CE821667CB6676EA02510FE9 /* TrackingManagerProxy.swift in Sources */,
 				369677E9A6E8754CFD20714D /* TrackingParameters.swift in Sources */,
-				E563881016B8CAF51A06C8C2 /* TrackingPermissionMMPRetryGate.swift in Sources */,
 				D0E19F665C7B230BF3FA122D /* TrackingResult.swift in Sources */,
 				8ACC4731031DA94C709915CF /* Transaction+LatestSince.swift in Sources */,
 				38A74D299EDFCA3F0A5261B7 /* TransactionErrorLogic.swift in Sources */,

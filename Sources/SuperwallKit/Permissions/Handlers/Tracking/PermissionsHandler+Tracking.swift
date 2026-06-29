@@ -7,11 +7,6 @@
 
 import Foundation
 
-extension Notification.Name {
-  static let superwallTrackingPermissionGranted =
-    Notification.Name("com.superwall.trackingPermissionGranted")
-}
-
 extension PermissionHandler {
   func checkTrackingPermission() -> PermissionStatus {
     guard #available(iOS 14, macCatalyst 14.0, macOS 11.0, tvOS 14.0, *) else {
@@ -51,10 +46,6 @@ extension PermissionHandler {
 
     let status = await proxy.requestTrackingAuthorization()
     let permissionStatus = status.toTrackingPermissionStatus
-
-    if permissionStatus == .granted {
-      NotificationCenter.default.post(name: .superwallTrackingPermissionGranted, object: nil)
-    }
 
     return permissionStatus
   }

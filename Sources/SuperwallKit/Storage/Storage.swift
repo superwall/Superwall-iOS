@@ -4,7 +4,6 @@
 //
 //  Created by Brian Anglin on 8/3/21.
 //
-// swiftlint:disable type_body_length
 
 import Foundation
 
@@ -214,9 +213,8 @@ class Storage {
 
   /// Fires the initial install-attribution match and persists completion.
   ///
-  /// Returns the spawned task (or `nil` if the request was already completed)
-  /// so the caller can let the post-ATT retry await it before sending its
-  /// upgraded request.
+  /// Returns the spawned task (or `nil` if the request already completed) so
+  /// callers and tests can await the match before inspecting persisted state.
   @discardableResult
   func recordMMPInstallAttributionMatch(
     matchInstall: @escaping () async -> Bool
@@ -262,35 +260,8 @@ class Storage {
     return true
   }
 
-  /// Whether to re-run the MMP install match after the user grants tracking
-  /// permission.
-  ///
-  /// This intentionally does NOT check `DidCompleteMMPInstallAttributionRequest`.
-  /// The initial match runs before ATT is granted, so it has no real IDFA (the
-  /// all-zeros sentinel is filtered out). Granting permission yields a real
-  /// IDFA, so we re-match to upgrade the earlier probabilistic result into a
-  /// deterministic one — even when the initial match already succeeded. It
-  /// fires at most once, gated by
-  /// `DidCompleteMMPInstallAttributionRequestAfterTrackingPermission`.
-  func shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-    appInstalledAtString: String
-  ) -> Bool {
-    let isEligible = get(IsEligibleForMMPInstallAttributionMatch.self) ?? false
-    guard isEligible else {
-      return false
-    }
-
-    guard isMMPInstallAttributionWindowOpen(appInstalledAtString: appInstalledAtString) else {
-      return false
-    }
-
-    let didCompleteTrackingPermissionRequest =
-      get(DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self) ?? false
-    return !didCompleteTrackingPermissionRequest
-  }
-
   private func isMMPInstallAttributionWindowOpen(appInstalledAtString: String) -> Bool {
-    guard !appInstalledAtString.isEmpty else {
+    if appInstalledAtString.isEmpty {
       return true
     }
 

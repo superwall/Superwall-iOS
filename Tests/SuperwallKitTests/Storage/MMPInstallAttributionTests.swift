@@ -123,72 +123,6 @@ struct MMPInstallAttributionTests {
     #expect(result == true)
   }
 
-  // MARK: - Tracking-permission (ATT) retry match
-
-  @Test
-  func trackingPermissionMatch_notEligible_returnsFalse() {
-    let storage = makeStorage()
-
-    let result = storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: installDate(daysAgo: 1)
-    )
-
-    #expect(result == false)
-  }
-
-  @Test
-  func trackingPermissionMatch_eligibleWithinWindow_returnsTrue() {
-    let storage = makeStorage()
-    storage.save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
-
-    let result = storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: installDate(daysAgo: 1)
-    )
-
-    #expect(result == true)
-  }
-
-  @Test
-  func trackingPermissionMatch_runsEvenIfInitialRequestCompleted() {
-    let storage = makeStorage()
-    storage.save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
-    storage.save(true, forType: DidCompleteMMPInstallAttributionRequest.self)
-
-    // The ATT retry intentionally ignores the initial-request flag so it can
-    // upgrade a probabilistic match into a deterministic one once a real IDFA
-    // is available.
-    let result = storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: installDate(daysAgo: 1)
-    )
-
-    #expect(result == true)
-  }
-
-  @Test
-  func trackingPermissionMatch_alreadyCompletedAfterTracking_returnsFalse() {
-    let storage = makeStorage()
-    storage.save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
-    storage.save(true, forType: DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self)
-
-    let result = storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: installDate(daysAgo: 1)
-    )
-
-    #expect(result == false)
-  }
-
-  @Test
-  func trackingPermissionMatch_outsideWindow_returnsFalse() {
-    let storage = makeStorage()
-    storage.save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
-
-    let result = storage.shouldAttemptTrackingPermissionMMPInstallAttributionMatch(
-      appInstalledAtString: installDate(daysAgo: 8)
-    )
-
-    #expect(result == false)
-  }
-
   // MARK: - Reset (logout / new user)
 
   @Test
@@ -198,17 +132,15 @@ struct MMPInstallAttributionTests {
     // Simulate a fully-resolved attribution for the previous user.
     storage.save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
     storage.save(true, forType: DidCompleteMMPInstallAttributionRequest.self)
-    storage.save(true, forType: DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self)
     storage.save(["acquisition_source": JSON("facebook")], forType: MMPAcquisitionDataStorage.self)
 
     storage.reset()
 
-    // MMP attribution is an install-scoped fact: the completion flags,
+    // MMP attribution is an install-scoped fact: the completion flag,
     // eligibility, and the cached `acquisition_*` payload all survive reset.
     // The new user is repopulated from the cache by
     // `Superwall.reset(duringIdentify:)`, not by re-running the backend match.
     #expect(storage.get(DidCompleteMMPInstallAttributionRequest.self) == true)
-    #expect(storage.get(DidCompleteMMPInstallAttributionRequestAfterTrackingPermission.self) == true)
     #expect(storage.get(IsEligibleForMMPInstallAttributionMatch.self) == true)
     #expect(storage.get(MMPAcquisitionDataStorage.self)?["acquisition_source"]?.string == "facebook")
   }
