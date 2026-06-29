@@ -489,10 +489,15 @@ public final class Superwall: NSObject, ObservableObject {
 
       _ = await configureIdentity
 
-      if dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-      ) {
+      // Skip install-attribution matching entirely when the developer has
+      // opted out of all event collection. The `/api/match` call and the
+      // `acquisition_*` attribute writes happen outside the event queue, so
+      // queue-level suppression wouldn't catch them.
+      if dependencyContainer.configManager.options.eventTrackingBehavior != .none,
+        dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+          hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+          appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+        ) {
         let advertiserTrackingEnabled =
           dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
