@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds install attribution matching support. If you set up performance marketing integrations on the Superwall dashboard, the SDK will attempt to match the install and track an `attribution_match` event. The attribution properties will be added to user attributes so that they can be used as breakdowns and filters in the charts.
+- Adds `singularDeviceId` as an `IntegrationAttribute`.
 - Adds support for annual subscriptions that are billed monthly.
 - Added `EventTrackingBehavior` enum and `SuperwallOptions.eventTrackingBehavior` property for GDPR-compliant event collection control. Use `.all` (default) to track everything, `.superwallOnly` to suppress user-initiated tracking, trigger fires, and user-attribute updates while keeping internal SDK events, or `.none` to stop all event collection entirely. The behavior can also be changed at runtime via `Superwall.shared.eventTrackingBehavior`.
 - Deprecated `SuperwallOptions.isExternalDataCollectionEnabled`. Setting it to `false` now maps to `.superwallOnly`; setting it back to `true` maps to `.all`.
