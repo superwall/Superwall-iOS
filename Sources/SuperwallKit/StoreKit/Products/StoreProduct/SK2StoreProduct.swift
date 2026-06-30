@@ -56,8 +56,10 @@ struct SK2StoreProduct: StoreProductType {
       // For UP_FRONT, billingPeriod == commitmentInfo.period so cycles = 1
       // and the result equals billingPrice — no change.
       let cycles = Self.cyclesInCommitment(
-        billingPeriod: term.billingPeriod,
-        commitmentPeriod: term.commitmentInfo.period
+        billingUnit: term.billingPeriod.unit,
+        billingValue: term.billingPeriod.value,
+        commitmentUnit: term.commitmentInfo.period.unit,
+        commitmentValue: term.commitmentInfo.period.value
       )
       self.cachedSelectedPrice = term.billingPrice * Decimal(cycles)
       self.cachedSelectedSubscriptionPeriod = term.commitmentInfo.period
@@ -84,22 +86,69 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   /// Counts how many billing cycles fit into one commitment period (e.g. 12
-  /// for monthly billing on a yearly commitment). Normalizes both periods
-  /// to a common day count rather than relying on Apple's
-  /// `commitmentInfo.price`, which empirically returns the per-cycle amount.
-  /// Both arguments are typealiases for `StoreKit.Product.SubscriptionPeriod`
-  /// even though Apple names them differently in `BillingPeriod` /
-  /// `CommitmentInfo.period`.
-  private static func cyclesInCommitment(
-    billingPeriod: StoreKit.Product.SubscriptionPeriod,
-    commitmentPeriod: StoreKit.Product.SubscriptionPeriod
+  /// for monthly billing on a yearly commitment).
+  ///
+  /// `.month`/`.year` are commensurable (1 year = 12 months) and `.day`/`.week`
+  /// are commensurable (1 week = 7 days), so when both periods fall in the same
+  /// family the count is computed by exact integer division — no calendar
+  /// approximation. Only when the periods straddle the two families (e.g.
+  /// weekly billing on a yearly commitment) do we fall back to a day
+  /// approximation (month = 30 days, year = 365), which is inherently inexact
+  /// but acceptable for those cross-unit pairings.
+  ///
+  /// Takes units/values rather than `StoreKit.Product.SubscriptionPeriod`
+  /// because that type can't be constructed in unit tests.
+  static func cyclesInCommitment(
+    billingUnit: StoreKit.Product.SubscriptionPeriod.Unit,
+    billingValue: Int,
+    commitmentUnit: StoreKit.Product.SubscriptionPeriod.Unit,
+    commitmentValue: Int
   ) -> Int {
-    let billingDays = daysIn(unit: billingPeriod.unit, value: billingPeriod.value)
-    let commitmentDays = daysIn(unit: commitmentPeriod.unit, value: commitmentPeriod.value)
-    guard billingDays > 0 else { return 1 }
-    let raw = Double(commitmentDays) / Double(billingDays)
-    let rounded = Int(raw.rounded())
-    return max(rounded, 1)
+    if let billing = monthsIn(unit: billingUnit, value: billingValue),
+      let commitment = monthsIn(unit: commitmentUnit, value: commitmentValue) {
+      return cycles(billing: billing, commitment: commitment)
+    }
+    if let billing = exactDaysIn(unit: billingUnit, value: billingValue),
+      let commitment = exactDaysIn(unit: commitmentUnit, value: commitmentValue) {
+      return cycles(billing: billing, commitment: commitment)
+    }
+    // Cross-family (e.g. week ↔ year): no exact conversion, approximate by days.
+    return cycles(
+      billing: daysIn(unit: billingUnit, value: billingValue),
+      commitment: daysIn(unit: commitmentUnit, value: commitmentValue)
+    )
+  }
+
+  /// Cycle count from two magnitudes expressed in the same unit. Rounds to
+  /// nearest so the day-approximation fallback degrades gracefully; exact when
+  /// the periods share a unit family.
+  private static func cycles(billing: Int, commitment: Int) -> Int {
+    guard billing > 0 else { return 1 }
+    return max(Int((Double(commitment) / Double(billing)).rounded()), 1)
+  }
+
+  /// Months represented by a `.month`/`.year` period; `nil` for other units.
+  private static func monthsIn(
+    unit: StoreKit.Product.SubscriptionPeriod.Unit,
+    value: Int
+  ) -> Int? {
+    switch unit {
+    case .month: return value
+    case .year: return value * 12
+    default: return nil
+    }
+  }
+
+  /// Exact days for a `.day`/`.week` period; `nil` for calendar-month units.
+  private static func exactDaysIn(
+    unit: StoreKit.Product.SubscriptionPeriod.Unit,
+    value: Int
+  ) -> Int? {
+    switch unit {
+    case .day: return value
+    case .week: return value * 7
+    default: return nil
+    }
   }
 
   private static func daysIn(
