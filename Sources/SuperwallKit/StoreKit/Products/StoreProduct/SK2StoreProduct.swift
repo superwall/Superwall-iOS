@@ -200,7 +200,15 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   var localizedPrice: String {
-    return selectedPrice.formatted(underlyingSK2Product.priceFormatStyle)
+    // A computed commitment total (billing price × cycles) isn't a native App
+    // Store price point, so format it with the NumberFormatter — which doesn't
+    // apply storefront price-point rounding — to preserve the exact sum the
+    // user is charged. This matches the per-period computed accessors. The
+    // native product price keeps Apple's price-point `priceFormatStyle`.
+    if let computedPrice = cachedSelectedPrice {
+      return priceFormatter.string(from: NSDecimalNumber(decimal: computedPrice)) ?? "n/a"
+    }
+    return underlyingSK2Product.price.formatted(underlyingSK2Product.priceFormatStyle)
   }
 
   /// The price to use for this product, routed through the selected billing
