@@ -1,6 +1,6 @@
 //
 //  File.swift
-//  
+//
 //
 //  Created by brian on 8/16/21.
 //
@@ -16,7 +16,8 @@ actor PlacementsQueue {
   private var elements: [JSON] = []
   private var timer: Timer?
   private unowned let network: Network
-  private unowned let configManager: ConfigManager
+  private var trackingBehavior: EventTrackingBehavior
+  private let timerInterval: Double
 
   @MainActor
   private var resignActiveObserver: AnyCancellable?
@@ -31,7 +32,14 @@ actor PlacementsQueue {
     configManager: ConfigManager
   ) {
     self.network = network
-    self.configManager = configManager
+    // Capture synchronously while configManager is guaranteed alive.
+    self.trackingBehavior = configManager.options.eventTrackingBehavior
+    switch configManager.options.networkEnvironment {
+    case .release:
+      self.timerInterval = 20.0
+    default:
+      self.timerInterval = 1.0
+    }
     Task { [weak self] in
       await self?.setupTimer()
       await self?.addObserver()
@@ -39,15 +47,8 @@ actor PlacementsQueue {
   }
 
   private func setupTimer() {
-    let timeInterval: Double
-    switch configManager.options.networkEnvironment {
-    case .release:
-      timeInterval = 20.0
-    default:
-      timeInterval = 1.0
-    }
     let timer = Timer(
-      timeInterval: timeInterval,
+      timeInterval: timerInterval,
       repeats: true
     ) { [weak self] _ in
       guard let self = self else {
@@ -76,25 +77,41 @@ actor PlacementsQueue {
     data: JSON,
     from placement: Trackable
   ) {
-    guard externalDataCollectionAllowed(from: placement) else {
+    guard trackingAllowed(from: placement) else {
       return
     }
     elements.append(data)
   }
 
-  private func externalDataCollectionAllowed(from placement: Trackable) -> Bool {
-    if Superwall.shared.options.isExternalDataCollectionEnabled {
-      return true
+  func setTrackingBehavior(_ behavior: EventTrackingBehavior) {
+    trackingBehavior = behavior
+    if behavior != .all {
+      elements.removeAll()
     }
-    if placement is InternalSuperwallEvent.TriggerFire
-      || placement is InternalSuperwallEvent.UserAttributes
-      || placement is UserInitiatedPlacement.Track {
+  }
+
+  private func trackingAllowed(from placement: Trackable) -> Bool {
+    switch trackingBehavior {
+    case .all:
+      return true
+    case .superwallOnly:
+      if placement is InternalSuperwallEvent.TriggerFire
+        || placement is InternalSuperwallEvent.UserAttributes
+        || placement is UserInitiatedPlacement.Track {
+        return false
+      }
+      return true
+    case .none:
       return false
     }
-    return true
   }
 
   func flushInternal(depth: Int = 10) {
+    if trackingBehavior == .none {
+      elements.removeAll()
+      return
+    }
+
     var eventsToSend: [JSON] = []
 
     var i = 0

@@ -4,6 +4,7 @@
 //
 //  Created by Yusuf Tör on 23/09/2024.
 //
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 import Combine
@@ -234,6 +235,7 @@ final class AttributionPoster {
   }
 
   @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
+  // swiftlint:disable:next function_body_length
   private func runAttempt(existingAttempts: AdServicesAttributionAttempts?) async {
     // Fire `.start` from inside the task body so the event isn't orphaned if
     // `cancelInFlight` raced the outer call's ownership re-check. If we're
@@ -297,9 +299,20 @@ final class AttributionPoster {
       storage.delete(AdServicesAttributionAttemptsStorage.self)
 
       let attribution = convertJSONToDictionary(attribution: response.attribution)
-      if !attribution.isEmpty {
+      let matched = !attribution.isEmpty
+      if matched {
         Superwall.shared.setUserAttributes(attribution)
       }
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AttributionMatch(
+          info: AttributionMatchInfo(
+            provider: .appleSearchAds,
+            matched: matched,
+            source: matched ? (attribution["acquisition_source"] as? String ?? "apple_search_ads") : nil,
+            reason: matched ? nil : "no_attribution"
+          )
+        )
+      )
     } catch is CancellationError {
       // `.complete(token)` was already emitted above, but the post never
       // finished — emit a terminal `.fail` so the session has an unambiguous
@@ -312,6 +325,15 @@ final class AttributionPoster {
       recordFailedAttempt(existing: existingAttempts)
       await Superwall.shared.track(
         InternalSuperwallEvent.AdServicesTokenRetrieval(state: .fail(error))
+      )
+      await Superwall.shared.track(
+        InternalSuperwallEvent.AttributionMatch(
+          info: AttributionMatchInfo(
+            provider: .appleSearchAds,
+            matched: false,
+            reason: "request_failed"
+          )
+        )
       )
     }
   }

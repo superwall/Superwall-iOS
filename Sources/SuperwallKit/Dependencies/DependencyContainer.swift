@@ -38,6 +38,7 @@ final class DependencyContainer {
   var productsManager: ProductsManager!
   var entitlementsInfo: EntitlementsInfo!
   var attributionPoster: AttributionPoster!
+  var mmpAttributionManager: MMPAttributionManager!
   var webEntitlementRedeemer: WebEntitlementRedeemer!
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
@@ -158,6 +159,14 @@ final class DependencyContainer {
         self?.delegateAdapter.userAttributesDidChange(newAttributes: newAttributes)
       }
     }
+
+    // Created after `identityManager` since it reads the current user's
+    // attributes when merging install-attribution results.
+    mmpAttributionManager = MMPAttributionManager(
+      network: network,
+      storage: storage,
+      identityManager: identityManager
+    )
 
     testModeManager = TestModeManager(
       identityManager: identityManager,

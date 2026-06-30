@@ -8,6 +8,8 @@
 import Foundation
 
 class Storage {
+  private static let mmpInstallAttributionWindow: TimeInterval = 7 * 24 * 60 * 60
+
   /// The interface that manages core data.
   let coreDataManager: CoreDataManager
 
@@ -207,6 +209,76 @@ class Storage {
       _ = await trackPlacement(appInstall)
     }
     save(true, forType: DidTrackAppInstall.self)
+  }
+
+  /// Fires the initial install-attribution match and persists completion.
+  ///
+  /// Returns the spawned task (or `nil` if the request already completed) so
+  /// callers and tests can await the match before inspecting persisted state.
+  @discardableResult
+  func recordMMPInstallAttributionMatch(
+    matchInstall: @escaping () async -> Bool
+  ) -> Task<Void, Never>? {
+    let didCompleteAttributionRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
+    if didCompleteAttributionRequest {
+      return nil
+    }
+
+    return Task { [weak self] in
+      let didCompleteRequest = await matchInstall()
+      guard didCompleteRequest else {
+        return
+      }
+
+      self?.save(true, forType: DidCompleteMMPInstallAttributionRequest.self)
+    }
+  }
+
+  func hasTrackedAppInstall() -> Bool {
+    get(DidTrackAppInstall.self) ?? false
+  }
+
+  func shouldAttemptInitialMMPInstallAttributionMatch(
+    hadTrackedAppInstallBeforeConfigure: Bool,
+    appInstalledAtString: String
+  ) -> Bool {
+    let didCompleteRequest = get(DidCompleteMMPInstallAttributionRequest.self) ?? false
+    if didCompleteRequest {
+      return false
+    }
+
+    let isEligible = get(IsEligibleForMMPInstallAttributionMatch.self) ?? false
+    if hadTrackedAppInstallBeforeConfigure && !isEligible {
+      return false
+    }
+
+    guard isMMPInstallAttributionWindowOpen(appInstalledAtString: appInstalledAtString) else {
+      return false
+    }
+
+    save(true, forType: IsEligibleForMMPInstallAttributionMatch.self)
+    return true
+  }
+
+  private func isMMPInstallAttributionWindowOpen(appInstalledAtString: String) -> Bool {
+    if appInstalledAtString.isEmpty {
+      return true
+    }
+
+    let formatterWithFractionalSeconds = ISO8601DateFormatter()
+    formatterWithFractionalSeconds.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+    let formatter = ISO8601DateFormatter()
+
+    guard
+      let appInstallDate =
+        formatterWithFractionalSeconds.date(from: appInstalledAtString)
+          ?? formatter.date(from: appInstalledAtString)
+    else {
+      return true
+    }
+
+    return Date().timeIntervalSince(appInstallDate) <= Self.mmpInstallAttributionWindow
   }
 
   func clearCachedSessionEvents() {

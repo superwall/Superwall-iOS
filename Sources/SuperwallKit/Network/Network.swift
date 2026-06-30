@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 04/03/2022.
 //
-// swiftlint:disable type_body_length
+// swiftlint:disable type_body_length file_length
 
 import Foundation
 import UIKit
@@ -386,6 +386,105 @@ class Network {
         message: "Request Failed: /v1/products",
         error: error
       )
+      throw error
+    }
+  }
+
+  /// Transport for the MMP install-attribution match. Builds and sends the
+  /// request and returns the decoded response; the attribution semantics
+  /// (caching, merging attributes, tracking) live in `MMPAttributionManager`.
+  // swiftlint:disable:next function_body_length
+  func matchMMPInstall(
+    idfa: String?,
+    advertiserTrackingEnabled: Bool,
+    applicationTrackingEnabled: Bool
+  ) async throws -> MMPMatchResponse {
+    guard
+      let deviceHelper = factory.deviceHelper,
+      let identityManager = factory.identityManager
+    else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .network,
+        message: "Skipped: /api/match",
+        info: ["reason": "Dependencies unavailable"]
+      )
+      throw MMPMatchError.dependenciesUnavailable
+    }
+
+    let rawMetadata = [
+      "preferredLocaleIdentifier": deviceHelper.preferredLocaleIdentifier,
+      "preferredLanguageCode": deviceHelper.preferredLanguageCode,
+      "preferredRegionCode": deviceHelper.preferredRegionCode,
+      "interfaceType": deviceHelper.interfaceType,
+      "appInstalledAt": deviceHelper.appInstalledAtString,
+      "radioType": deviceHelper.radioType,
+      "isLowPowerModeEnabled": deviceHelper.isLowPowerModeEnabled,
+      "isSandbox": deviceHelper.isSandbox,
+      "platformWrapper": deviceHelper.platformWrapper,
+      "platformWrapperVersion": deviceHelper.platformWrapperVersion
+    ]
+
+    let metadata: [String: String] = rawMetadata.reduce(into: [:]) { result, entry in
+      guard let value = entry.value, !value.isEmpty else {
+        return
+      }
+      result[entry.key] = value
+    }
+
+    let vendorId = deviceHelper.vendorId
+
+    let request = MMPMatchRequest(
+      platform: "ios",
+      appUserId: identityManager.appUserId,
+      deviceId: factory.makeDeviceId(),
+      vendorId: vendorId,
+      idfa: idfa,
+      idfv: vendorId,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
+      appVersion: deviceHelper.appVersion,
+      sdkVersion: sdkVersion,
+      osVersion: deviceHelper.osVersion,
+      deviceModel: deviceHelper.model,
+      deviceLocale: deviceHelper.localeIdentifier,
+      deviceLanguageCode: deviceHelper.languageCode,
+      timezoneOffsetSeconds: deviceHelper.timezoneOffsetSeconds,
+      screenWidth: deviceHelper.screenWidth,
+      screenHeight: deviceHelper.screenHeight,
+      devicePixelRatio: deviceHelper.devicePixelRatio,
+      bundleId: deviceHelper.bundleId,
+      clientTimestamp: Date().isoString,
+      metadata: metadata
+    )
+
+    do {
+      let response: MMPMatchResponse = try await urlSession.request(
+        .matchMMPInstall(request: request),
+        data: SuperwallRequestData(factory: factory)
+      )
+
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Request Completed: /api/match",
+        info: [
+          "matched": response.matched,
+          "confidence": response.confidence as Any,
+          "link_id": response.linkId as Any
+        ]
+      )
+
+      return response
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /api/match",
+        info: ["payload": request],
+        error: error
+      )
+
       throw error
     }
   }
