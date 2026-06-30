@@ -43,7 +43,7 @@ struct SK2StoreProduct: StoreProductType {
     self.entitlements = entitlements
     self.billingPlanType = billingPlanType
 
-    #if compiler(>=6.3)
+    #if compiler(>=6.3.2)
     if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
       let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
       // Use the commitment *period* (= year for an annual MONTHLY product)
@@ -240,7 +240,7 @@ struct SK2StoreProduct: StoreProductType {
     return underlyingSK2Product.subscription?.introductoryOffer
   }
 
-  #if compiler(>=6.3)
+  #if compiler(>=6.3.2)
   @available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *)
   private static func findPricingTerm(
     for billingPlanType: AppStoreProduct.BillingPlanType?,
