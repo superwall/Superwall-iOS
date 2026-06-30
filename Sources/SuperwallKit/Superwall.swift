@@ -501,6 +501,13 @@ public final class Superwall: NSObject, ObservableObject {
         let advertiserTrackingEnabled =
           dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
+        // We deliberately fire the match once and don't retry after ATT is
+        // granted: the backend matches on IP + device fingerprint + time decay,
+        // not IDFA, so a post-consent re-match wouldn't change the result. And
+        // because matches are time-decayed and reads are latest-wins, a later
+        // retry could only tie or worsen the earlier, better-timed match.
+        // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
+        // matching.)
         dependencyContainer.storage.recordMMPInstallAttributionMatch {
           await dependencyContainer.mmpAttributionManager.matchInstall(
             idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
