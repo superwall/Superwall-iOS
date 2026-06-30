@@ -102,10 +102,10 @@ final class ProductPurchaserSK2: Purchasing {
       #endif
 
       #if compiler(>=6.3)
-      // Apply the configured Apple billing plan (iOS 26.5+). If the runtime is
+      // Apply the configured Apple billing plan (iOS 26+). If the runtime is
       // older or no plan is configured, the purchase proceeds with Apple's
       // default plan.
-      if #available(iOS 26.5, macOS 26.5, tvOS 26.5, watchOS 26.5, visionOS 26.5, *),
+      if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
         let plan = product.billingPlanType {
         let sk2Plan: StoreKit.Product.SubscriptionInfo.BillingPlanType
         switch plan {

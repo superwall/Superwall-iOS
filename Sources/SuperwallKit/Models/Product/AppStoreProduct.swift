@@ -17,7 +17,7 @@ public final class AppStoreProduct: NSObject, Codable, Sendable {
   /// Two Superwall Products that share the same Apple `productIdentifier` but
   /// configure different billing plans (e.g. annual up-front and
   /// monthly-commitment annual) are merchandised as distinct entries on a
-  /// paywall. Available on iOS 26.5+ subscription products with multiple
+  /// paywall. Available on iOS 26.4+ subscription products with multiple
   /// billing plans configured in App Store Connect.
   @objc(SWKBillingPlanType)
   public enum BillingPlanType: Int, Sendable {

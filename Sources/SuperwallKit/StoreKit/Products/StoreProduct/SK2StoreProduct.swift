@@ -44,7 +44,7 @@ struct SK2StoreProduct: StoreProductType {
     self.billingPlanType = billingPlanType
 
     #if compiler(>=6.3)
-    if #available(iOS 26.5, macOS 26.5, tvOS 26.5, watchOS 26.5, visionOS 26.5, *),
+    if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
       let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
       // Use the commitment *period* (= year for an annual MONTHLY product)
       // so the paywall reads as the underlying product (not its billing
@@ -63,7 +63,7 @@ struct SK2StoreProduct: StoreProductType {
       )
       self.cachedSelectedPrice = term.billingPrice * Decimal(cycles)
       self.cachedSelectedSubscriptionPeriod = term.commitmentInfo.period
-      // Intro offers are per-billing-plan on iOS 26.5+: each `PricingTerms`
+      // Intro offers are per-billing-plan on iOS 26.4+: each `PricingTerms`
       // has its own `subscriptionOffers` array. Pull the plan-specific
       // introductory offer (if any) so the paywall surfaces the trial /
       // intro pricing configured against this billing plan rather than
@@ -241,7 +241,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   #if compiler(>=6.3)
-  @available(iOS 26.5, macOS 26.5, tvOS 26.5, watchOS 26.5, visionOS 26.5, *)
+  @available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *)
   private static func findPricingTerm(
     for billingPlanType: AppStoreProduct.BillingPlanType?,
     in sk2Product: SK2Product
