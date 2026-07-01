@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.16.1
+
+### Enhancements
+
+- Clarifies that `IntegrationAttribute.onesignalId` should be set to the OneSignal User ID used by the OneSignal integration.
+
+### Fixes
+
+- Makes sure that the compiler directive is correct for billing plan types so that the SDK builds in Xcode version 26.4.
+
 ## 4.16.0
 
 ### Enhancements
