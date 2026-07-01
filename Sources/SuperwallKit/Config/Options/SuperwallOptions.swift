@@ -410,6 +410,7 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   private enum CodingKeys: String, CodingKey {
     case eventTrackingBehavior
+    case isExternalDataCollectionEnabled
     case localeIdentifier
     case isGameControllerEnabled
     case storeKitVersion
@@ -445,6 +446,10 @@ public final class SuperwallOptions: NSObject, Encodable {
     try logging.encode(to: encoder)
 
     try container.encode(eventTrackingBehavior.description, forKey: .eventTrackingBehavior)
+    // Keep emitting the deprecated `isExternalDataCollectionEnabled` boolean so
+    // backends/dashboards still reading it don't treat opted-out clients as the
+    // default. Mirrors the deprecated property (true only for `.all`).
+    try container.encode(eventTrackingBehavior == .all, forKey: .isExternalDataCollectionEnabled)
     try container.encode(localeIdentifier, forKey: .localeIdentifier)
     try container.encode(isGameControllerEnabled, forKey: .isGameControllerEnabled)
     try container.encode(storeKitVersion.description, forKey: .storeKitVersion)
