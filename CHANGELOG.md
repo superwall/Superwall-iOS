@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.16.1
 
+### Enhancements
+
+- Clarifies that `IntegrationAttribute.onesignalId` should be set to the OneSignal User ID used by the OneSignal integration.
+
 ### Fixes
 
 - Makes sure that the compiler directive is correct for billing plan types so that the SDK builds in Xcode version 26.4.
@@ -16,7 +20,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds support for annual subscriptions that are billed monthly.
 - Added `EventTrackingBehavior` enum and `SuperwallOptions.eventTrackingBehavior` property for GDPR-compliant event collection control. Use `.all` (default) to track everything, `.superwallOnly` to suppress user-initiated tracking, trigger fires, and user-attribute updates while keeping internal SDK events, or `.none` to stop all event collection entirely. The behavior can also be changed at runtime via `Superwall.shared.eventTrackingBehavior`.
 - Deprecated `SuperwallOptions.isExternalDataCollectionEnabled`. Setting it to `false` now maps to `.superwallOnly`; setting it back to `true` maps to `.all`.
-- Clarifies that `IntegrationAttribute.onesignalId` should be set to the OneSignal User ID used by the OneSignal integration.
 
 ### Fixes
 
