@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Enhancements
+
+- Adds the system-wide text size (Dynamic Type) as device attributes. `fontScale` is a numeric multiplier relative to the default text size (~1.0 at the default size, smaller/larger otherwise), and `preferredContentSizeCategory` is the raw native Dynamic Type category string.
+
 ## 4.16.1
 
 ### Enhancements

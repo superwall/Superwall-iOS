@@ -207,6 +207,25 @@ class DeviceHelper {
     #endif
 	}
 
+  var fontScale: Double {
+    #if os(visionOS)
+    return 1.0
+    #else
+    let scaledBodyPointSize = UIFontMetrics.default.scaledValue(for: 17.0)
+    return Double(scaledBodyPointSize / 17.0)
+    #endif
+  }
+
+  var preferredContentSizeCategory: String {
+    #if os(visionOS)
+    return "unspecified"
+    #else
+    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+    return category.rawValue
+    #endif
+  }
+
   var platformWrapper: String?
 
   var platformWrapperVersion: String?
@@ -606,6 +625,8 @@ class DeviceHelper {
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
       interfaceStyle: interfaceStyle,
+      fontScale: fontScale,
+      preferredContentSizeCategory: preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,
