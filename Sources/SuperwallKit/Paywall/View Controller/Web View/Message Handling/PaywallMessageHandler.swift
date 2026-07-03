@@ -301,6 +301,17 @@ final class PaywallMessageHandler: WebEventDelegate {
     await passMessageToWebView(base64Templates)
   }
 
+  func passEventTrackingBehaviorToWebView(_ behavior: EventTrackingBehavior) {
+    let event: [String: Any] = [
+      "event_name": "event_tracking_behavior",
+      "behavior": behavior.description
+    ]
+    guard let jsonData = try? JSONSerialization.data(withJSONObject: [event]) else {
+      return
+    }
+    passMessageToWebView(jsonData.base64EncodedString())
+  }
+
   private func passMessageToWebView(_ base64String: String) {
     let messageScript = """
       window.paywall.accept64('\(base64String)');
@@ -372,6 +383,9 @@ final class PaywallMessageHandler: WebEventDelegate {
         paywallInfo: paywallInfo
       )
       await Superwall.shared.track(webViewLoad)
+
+      let behavior = await Superwall.shared.eventTrackingBehavior
+      await self.passEventTrackingBehaviorToWebView(behavior)
     }
 
     let htmlSubstitutions = paywall.htmlSubstitutions

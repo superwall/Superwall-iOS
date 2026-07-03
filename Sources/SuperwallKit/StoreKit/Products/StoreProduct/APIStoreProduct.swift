@@ -194,7 +194,7 @@ struct APIStoreProduct: StoreProductType {
     let days: Decimal
     switch unit {
     case .day: days = Decimal(subscriptionValue)
-    case .week: days = Decimal(365) / Decimal(52) * Decimal(subscriptionValue)
+    case .week: days = Decimal(7) * Decimal(subscriptionValue)
     case .month: days = Decimal(365) / Decimal(12) * Decimal(subscriptionValue)
     case .year: days = Decimal(365 * subscriptionValue)
     @unknown default: days = 1
@@ -209,7 +209,7 @@ struct APIStoreProduct: StoreProductType {
     }
     let weeks: Decimal
     switch unit {
-    case .day: weeks = Decimal(subscriptionValue) * Decimal(52) / Decimal(365)
+    case .day: weeks = Decimal(subscriptionValue) / Decimal(7)
     case .week: weeks = Decimal(subscriptionValue)
     case .month: weeks = Decimal(52) / Decimal(12) * Decimal(subscriptionValue)
     case .year: weeks = Decimal(52 * subscriptionValue)

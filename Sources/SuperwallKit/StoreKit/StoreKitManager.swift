@@ -8,11 +8,32 @@ actor StoreKitManager {
   /// Retrieves products from storekit.
   private let productsManager: ProductsManager
 
+  /// Cached products keyed by their Apple product identifier. Custom and
+  /// test products live here too, keyed by their unique IDs.
   private(set) var productsById: [String: StoreProduct] = [:]
+
+  /// Cached products keyed by composite Product ID (`Product.id`). When two
+  /// Superwall Products share the same Apple product identifier but differ
+  /// in `billingPlanType`, both entries appear here, each wrapping a
+  /// `StoreProduct` clone with the matching billing plan attached. Built
+  /// from `productsById` during paywall product loading.
+  private(set) var productsByCompositeId: [String: StoreProduct] = [:]
 
   func setProduct(_ product: StoreProduct, forIdentifier identifier: String) {
     productsById[identifier] = product
   }
+
+  /// Resolves a cached `StoreProduct` for a `Product.id`.
+  ///
+  /// Prefers the composite-keyed map (used when a billing plan is configured
+  /// on the Product) and falls back to the Apple-ID map for custom and
+  /// externally cached products that aren't part of a paywall. Both lookups
+  /// happen in a single actor hop and the fallback is only consulted when the
+  /// composite lookup misses.
+  func product(withId id: String) -> StoreProduct? {
+    return productsByCompositeId[id] ?? productsById[id]
+  }
+
   private struct ProductProcessingResult {
     let productIdsToLoad: Set<String>
     let substituteProductsById: [String: StoreProduct]
@@ -35,7 +56,7 @@ actor StoreKitManager {
 
     // Add the StoreProduct attributes for each product at its corresponding index
     paywall.appStoreProducts.forEach { productItem in
-      guard let storeProduct = output.productsById[productItem.id] else {
+      guard let storeProduct = output.productsByCompositeId[productItem.id] else {
         return
       }
 
@@ -61,26 +82,29 @@ actor StoreKitManager {
     substituting substituteProductsByLabel: [String: ProductOverride]? = nil,
     isTestMode: Bool = false
   ) async throws -> (
-    productsById: [String: StoreProduct],
+    productsByCompositeId: [String: StoreProduct],
     productItems: [Product]
   ) {
-    // In test mode, use cached test products instead of fetching from StoreKit
+    // In test mode, use cached test products instead of fetching from StoreKit.
+    // Cached test products are keyed by Apple identifier, so composite IDs that
+    // include a billing-plan suffix (e.g. `com.app.annual:MONTHLY`) must be
+    // resolved via the inner Apple ID.
     if isTestMode {
-      var testProductsById: [String: StoreProduct] = [:]
-      for (id, product) in productsById {
-        testProductsById[id] = product
-      }
-
       var productItems: [Product] = []
       for original in paywall?.products ?? [] {
-        let id = original.id
-        if let product = testProductsById[id] {
+        let cached: StoreProduct?
+        if case .appStore(let appStoreProduct) = original.type {
+          cached = productsById[appStoreProduct.id]
+        } else {
+          cached = productsById[original.id]
+        }
+        if let cached = cached {
           productItems.append(
             Product(
               name: original.name,
               type: original.type,
-              id: id,
-              entitlements: product.entitlements
+              id: original.id,
+              entitlements: cached.entitlements
             )
           )
         } else {
@@ -88,15 +112,34 @@ actor StoreKitManager {
         }
       }
 
-      testProductsById.forEach { id, product in
-        self.productsById[id] = product
+      // Build the composite-ID map. For App Store products, clone the cached
+      // StoreProduct with the slot's billing plan attached so billing-plan
+      // scenarios route correctly in test mode too.
+      var testProductsByCompositeId: [String: StoreProduct] = [:]
+      for productItem in productItems {
+        if case .appStore(let appStoreProduct) = productItem.type,
+          let base = productsById[appStoreProduct.id] {
+          let clone = base.copyForCompositeProduct(
+            billingPlanType: appStoreProduct.billingPlanType
+          )
+          testProductsByCompositeId[productItem.id] = clone
+        } else if let base = productsById[productItem.id] {
+          testProductsByCompositeId[productItem.id] = base
+        }
       }
 
-      return (testProductsById, productItems)
+      testProductsByCompositeId.forEach { id, product in
+        self.productsByCompositeId[id] = product
+      }
+
+      return (testProductsByCompositeId, productItems)
     }
 
-    // 1. Compute fetch IDs = paywall IDs - byProduct IDs + byId IDs
-    let paywallIDs = Set(paywall?.appStoreProductIds ?? [])
+    // 1. Compute fetch IDs (Apple product identifiers, deduped) = paywall
+    //    Apple IDs - byProduct IDs + byId IDs. We fetch by Apple ID, not by
+    //    composite ID, because `StoreKit.Product.products(for:)` only
+    //    accepts Apple product identifiers.
+    let paywallAppleIDs = Set(paywall?.appStoreProductIdentifiers ?? [])
     let byIdIDs: Set<String> = Set(substituteProductsByLabel?.values.compactMap {
       if case .byId(let id) = $0 {
         return id
@@ -111,7 +154,7 @@ actor StoreKitManager {
         return nil
       }
     } ?? [])
-    let idsToFetch = paywallIDs
+    let idsToFetch = paywallAppleIDs
       .subtracting(byProductIDs)
       .union(byIdIDs)
 
@@ -122,7 +165,7 @@ actor StoreKitManager {
       placement: placement
     )
 
-    // 3. Build lookup from identifier → StoreProduct
+    // 3. Build lookup from Apple identifier → StoreProduct
     var productsById = Dictionary(
       uniqueKeysWithValues: fetchedProducts.map { ($0.productIdentifier, $0) }
     )
@@ -173,12 +216,38 @@ actor StoreKitManager {
       }
     }
 
-    // 6. Cache in memory
+    // 6. Cache by Apple ID in memory
     productsById.forEach { id, product in
       self.productsById[id] = product
     }
 
-    return (productsById, productItems)
+    // 7. Build the composite-ID map. For each App Store Product on the
+    //    paywall, clone the underlying StoreProduct and attach the slot's
+    //    billing plan so price/period accessors route correctly and the
+    //    purchase pipeline can pick the plan up later. Two composite entries
+    //    sharing an Apple ID get two independent clones.
+    //
+    //    Accumulate into the actor-level map rather than resetting it. A
+    //    composite ID (e.g. `com.app.annual:MONTHLY`) maps deterministically
+    //    to a clone of stable base product data plus a fixed billing plan, so
+    //    entries can't go stale across paywalls. Resetting would wipe every
+    //    other paywall's entries, which breaks preloading: all paywalls are
+    //    preloaded into a shared cache and a preloaded paywall is never
+    //    re-resolved when presented, so the purchase pipeline would fail to
+    //    find its billing-plan products. The map is keyed by a finite set of
+    //    Apple-ID × billing-plan combinations, so it stays small.
+    var productsByCompositeId: [String: StoreProduct] = [:]
+    for productItem in productItems {
+      guard case .appStore(let appStoreProduct) = productItem.type,
+        let base = productsById[appStoreProduct.id] else {
+        continue
+      }
+      let clone = base.copyForCompositeProduct(billingPlanType: appStoreProduct.billingPlanType)
+      productsByCompositeId[productItem.id] = clone
+      self.productsByCompositeId[productItem.id] = clone
+    }
+
+    return (productsByCompositeId, productItems)
   }
 
   func preloadOverrides(_ overrides: [ProductOverride]) async {

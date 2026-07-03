@@ -45,6 +45,8 @@ extension PermissionHandler {
     }
 
     let status = await proxy.requestTrackingAuthorization()
-    return status.toTrackingPermissionStatus
+    let permissionStatus = status.toTrackingPermissionStatus
+
+    return permissionStatus
   }
 }

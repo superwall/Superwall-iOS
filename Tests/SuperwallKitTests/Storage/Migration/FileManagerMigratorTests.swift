@@ -12,7 +12,7 @@ import Foundation
 
 struct FileManagerMigratorTests {
   @Test
-  func migrateFromV1ToV4() {
+  func migrateFromV1ToV5() {
     let cache = CacheMock()
 
     // Write all possible values to the cache.
@@ -57,9 +57,9 @@ struct FileManagerMigratorTests {
     #expect(newAssignments?.first?.experimentId == experimentId)
     #expect(newAssignments?.first?.variant == variant)
 
-    // Check the new version is v4
+    // Check the new version is v5
     let version = cache.read(Version.self)
-    #expect(version == .v4)
+    #expect(version == .v5)
   }
 
   @Test
@@ -117,5 +117,52 @@ struct FileManagerMigratorTests {
     // Check the new version is v4
     let version = cache.read(Version.self)
     #expect(version == .v4)
+  }
+
+  @Test
+  func migrateAdServicesTokenFromV4ToV5() {
+    let cache = CacheMock()
+
+    // Pre-v5 state: token sentinel in user-specific docs.
+    cache.write("legacy-token", forType: LegacyUserScopedAdServicesTokenStorage.self)
+    cache.write(.v4, forType: Version.self)
+
+    #expect(cache.read(LegacyUserScopedAdServicesTokenStorage.self) == "legacy-token")
+    #expect(cache.read(AdServicesTokenStorage.self) == nil)
+
+    V4Migrator.migrateToNextVersion(cache: cache)
+
+    // Token moved to app-specific, legacy file gone.
+    #expect(cache.read(AdServicesTokenStorage.self) == "legacy-token")
+    #expect(cache.read(LegacyUserScopedAdServicesTokenStorage.self) == nil)
+    #expect(cache.read(Version.self) == .v5)
+  }
+
+  @Test
+  func migrateAdServicesTokenFromV4ToV5_noLegacyData() {
+    let cache = CacheMock()
+    cache.write(.v4, forType: Version.self)
+
+    V4Migrator.migrateToNextVersion(cache: cache)
+
+    // Nothing to migrate — version still bumps to v5.
+    #expect(cache.read(AdServicesTokenStorage.self) == nil)
+    #expect(cache.read(Version.self) == .v5)
+  }
+
+  @Test
+  func migrateAdServicesTokenFromV4ToV5_doesntOverwriteExisting() {
+    let cache = CacheMock()
+
+    // Both legacy and new exist (shouldn't happen in practice, but defend
+    // against it — the new value wins).
+    cache.write("legacy", forType: LegacyUserScopedAdServicesTokenStorage.self)
+    cache.write("current", forType: AdServicesTokenStorage.self)
+    cache.write(.v4, forType: Version.self)
+
+    V4Migrator.migrateToNextVersion(cache: cache)
+
+    #expect(cache.read(AdServicesTokenStorage.self) == "current")
+    #expect(cache.read(Version.self) == .v5)
   }
 }

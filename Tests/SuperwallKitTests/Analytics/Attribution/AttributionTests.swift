@@ -348,7 +348,8 @@ struct AttributionTests {
         .tenjinId: "tenjin-id",
         .posthogUserId: "posthog-user-id",
         .customerioId: "customerio-id",
-        .appstackId: "appstack-id"
+        .appstackId: "appstack-id",
+        .singularDeviceId: "singular-device-id"
       ]
       
       // When
@@ -378,6 +379,7 @@ struct AttributionTests {
       #expect(storedProps["posthogUserId"] as? String == "posthog-user-id")
       #expect(storedProps["customerioId"] as? String == "customerio-id")
       #expect(storedProps["appstackId"] as? String == "appstack-id")
+      #expect(storedProps["singularDeviceId"] as? String == "singular-device-id")
     }
   }
 

@@ -2,6 +2,59 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.16.2
+
+### Enhancements
+
+- Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
+
+## 4.16.1
+
+### Enhancements
+
+- Clarifies that `IntegrationAttribute.onesignalId` should be set to the OneSignal User ID used by the OneSignal integration.
+
+### Fixes
+
+- Makes sure that the compiler directive is correct for billing plan types so that the SDK builds in Xcode version 26.4.
+
+## 4.16.0
+
+### Enhancements
+
+- Adds install attribution matching support. If you set up performance marketing integrations on the Superwall dashboard, the SDK will attempt to match the install and track an `attribution_match` event. The attribution properties will be added to user attributes so that they can be used as breakdowns and filters in the charts.
+- Adds support for annual subscriptions that are billed monthly.
+- Added `EventTrackingBehavior` enum and `SuperwallOptions.eventTrackingBehavior` property for GDPR-compliant event collection control. Use `.all` (default) to track everything, `.superwallOnly` to suppress user-initiated tracking, trigger fires, and user-attribute updates while keeping internal SDK events, or `.none` to stop all event collection entirely. The behavior can also be changed at runtime via `Superwall.shared.eventTrackingBehavior`.
+- Deprecated `SuperwallOptions.isExternalDataCollectionEnabled`. Setting it to `false` now maps to `.superwallOnly`; setting it back to `true` maps to `.all`.
+
+### Fixes
+
+- Fixes a crash due to concurrent calls to `preloadAllPaywalls`.
+- Fixes an intro offer eligibility mismatch between the paywall and the payment sheet when upgrading/crossgrading/downgrading.
+
+## 4.15.4
+
+### Enhancements
+
+- Adds `singularDeviceId` as an `IntegrationAttribute`.
+
+## 4.15.3
+
+### Fixes
+
+- Fixes computed period prices (`weeklyPrice`, `dailyPrice`) being off by a small amount for products whose subscription period is expressed in days.
+
+## 4.15.2
+
+### Enhancements
+
+- Improves Apple Search Ads attribution capture rate.
+
+### Fixes
+
+- Changes the Superscript spm package repo source to a new lightweight repo meaning that the download of the package is way faster.
+- Filters out the all-zeros IDFA sentinel (returned when App Tracking Transparency is denied) so it no longer pollutes the `idfa` attribute on attribution payloads.
+
 ## 4.15.1
 
 ### Enhancements

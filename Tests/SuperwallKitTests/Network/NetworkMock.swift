@@ -11,6 +11,7 @@ import Combine
 
 final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
+  var sentEvents: [EventsRequest] = []
   var getConfigCalled = false
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
@@ -28,6 +29,10 @@ final class NetworkMock: Network {
   var pollRedemptionResultCallCount = 0
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
+
+  override func sendEvents(events: EventsRequest) async {
+    sentEvents.append(events)
+  }
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {
     sentSessionEvents = session

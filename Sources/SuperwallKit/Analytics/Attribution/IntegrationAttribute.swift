@@ -26,7 +26,7 @@ public enum IntegrationAttribute: Int {
   /// The Braze `alias_label` in User Alias Object.
   case brazeAliasLabel
 
-  /// The OneSignal Player identifier for the user.
+  /// The OneSignal User ID (`onesignal_id`) for the user.
   case onesignalId
 
   /// The Facebook Anonymous identifier for the user.
@@ -73,6 +73,9 @@ public enum IntegrationAttribute: Int {
 
   /// The Appstack identifier.
   case appstackId
+
+  /// The Singular device identifier (SDID).
+  case singularDeviceId
 }
 
 // MARK: - CustomStringConvertible
@@ -123,6 +126,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "customerioId"
     case .appstackId:
       return "appstackId"
+    case .singularDeviceId:
+      return "singularDeviceId"
     }
   }
 }

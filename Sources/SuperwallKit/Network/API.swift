@@ -14,6 +14,7 @@ enum EndpointHost {
   case adServices
   case subscriptionsApi
   case paywallsV2
+  case mmp
 }
 
 protocol ApiHostConfig {
@@ -36,6 +37,7 @@ struct Api {
   let adServices: AdServices
   let subscriptionsApi: SubscriptionsAPI
   let paywallsV2: PaywallsV2
+  let mmp: MMP
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     base = Base(networkEnvironment: networkEnvironment)
@@ -44,6 +46,7 @@ struct Api {
     adServices = AdServices(networkEnvironment: networkEnvironment)
     subscriptionsApi = SubscriptionsAPI(networkEnvironment: networkEnvironment)
     paywallsV2 = PaywallsV2(networkEnvironment: networkEnvironment)
+    mmp = MMP(networkEnvironment: networkEnvironment)
   }
 
   func getConfig(host: EndpointHost) -> ApiHostConfig {
@@ -60,6 +63,8 @@ struct Api {
       return subscriptionsApi
     case .paywallsV2:
       return paywallsV2
+    case .mmp:
+      return mmp
     }
   }
 
@@ -121,6 +126,16 @@ struct Api {
     let networkEnvironment: SuperwallOptions.NetworkEnvironment
     var host: String { return networkEnvironment.baseHost }
     var path: String { return "/v2/" }
+
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
+    }
+  }
+
+  struct MMP: ApiHostConfig {
+    let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var host: String { return networkEnvironment.mmpHost }
+    var path: String { return "/" }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment

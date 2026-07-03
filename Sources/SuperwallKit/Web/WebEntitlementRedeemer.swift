@@ -627,8 +627,8 @@ actor WebEntitlementRedeemer {
           title: title,
           message: message,
           closeActionTitle: closeActionTitle,
-          onClose: {
-            Task { [weak self] in
+          onClose: { [weak self] in
+            Task {
               await afterRedeem()
               await self?.clearPendingStripeCheckoutState()
             }
@@ -639,8 +639,8 @@ actor WebEntitlementRedeemer {
           title: title,
           message: message,
           closeActionTitle: closeActionTitle,
-          onClose: {
-            Task { [weak self] in
+          onClose: { [weak self] in
+            Task {
               await afterRedeem()
               await self?.clearPendingStripeCheckoutState()
             }
