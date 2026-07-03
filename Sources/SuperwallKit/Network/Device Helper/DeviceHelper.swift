@@ -207,6 +207,53 @@ class DeviceHelper {
     #endif
 	}
 
+  var fontSize: Int {
+    #if os(visionOS)
+    return 16
+    #else
+    return Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded())
+    #endif
+  }
+
+  var fontScale: Double {
+    #if os(visionOS)
+    return 1.0
+    #else
+    let scale = UIFontMetrics.default.scaledValue(for: 16.0) / 16.0
+    return (scale * 100).rounded() / 100
+    #endif
+  }
+
+  var preferredContentSizeCategory: String {
+    #if os(visionOS)
+    return "unspecified"
+    #else
+    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+    return Self.contentSizeCategoryToken(for: category)
+    #endif
+  }
+
+  /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func contentSizeCategoryToken(for category: UIContentSizeCategory) -> String {
+    switch category {
+    case .extraSmall: return "xSmall"
+    case .small: return "small"
+    case .medium: return "medium"
+    case .large: return "large"
+    case .extraLarge: return "xLarge"
+    case .extraExtraLarge: return "xxLarge"
+    case .extraExtraExtraLarge: return "xxxLarge"
+    case .accessibilityMedium: return "accessibilityMedium"
+    case .accessibilityLarge: return "accessibilityLarge"
+    case .accessibilityExtraLarge: return "accessibilityXLarge"
+    case .accessibilityExtraExtraLarge: return "accessibilityXXLarge"
+    case .accessibilityExtraExtraExtraLarge: return "accessibilityXXXLarge"
+    default: return "unspecified"
+    }
+  }
+
   var platformWrapper: String?
 
   var platformWrapperVersion: String?
@@ -606,6 +653,9 @@ class DeviceHelper {
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
       interfaceStyle: interfaceStyle,
+      fontSize: fontSize,
+      fontScale: fontScale,
+      preferredContentSizeCategory: preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,
