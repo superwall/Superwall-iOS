@@ -78,6 +78,6 @@ struct DeviceHelperTests {
 
   @Test func contentSizeCategoryToken_unknownCategoryIsUnspecified() {
     #expect(DeviceHelper.contentSizeCategoryToken(for: .unspecified) == "unspecified")
-    #expect(DeviceHelper.contentSizeCategoryToken(for: UIContentSizeCategory("someUnknownValue")) == "unspecified")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: UIContentSizeCategory(rawValue: "someUnknownValue")) == "unspecified")
   }
 }
