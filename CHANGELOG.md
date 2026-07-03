@@ -2,11 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## Unreleased
+## 4.16.2
 
 ### Enhancements
 
-- Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, a scale multiplier where `1.0` is the system default (values below 1.0 are smaller, above 1.0 are larger/accessibility sizes); `fontSize`, a normalized integer point/px value where `16` is the system default, scaling up or down with the Dynamic Type setting; and `preferredContentSizeCategory`, a clean Dynamic Type token (e.g. `large`) describing the selected size category.
+- Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
 
 ## 4.16.1
 
