@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds the system-wide text size (Dynamic Type) as a `fontSize` device attribute. It is a normalized integer point/px value where `16` is the system default, scaling up or down as the user changes their Dynamic Type setting.
+- Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, a scale multiplier where `1.0` is the system default (values below 1.0 are smaller, above 1.0 are larger/accessibility sizes); `fontSize`, a normalized integer point/px value where `16` is the system default, scaling up or down with the Dynamic Type setting; and `preferredContentSizeCategory`, a clean Dynamic Type token (e.g. `large`) describing the selected size category.
 
 ## 4.16.1
 
