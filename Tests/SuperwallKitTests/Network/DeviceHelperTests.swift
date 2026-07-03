@@ -8,6 +8,7 @@
 
 import Testing
 import Combine
+import UIKit
 @testable import SuperwallKit
 
 struct DeviceHelperTests {
@@ -57,5 +58,26 @@ struct DeviceHelperTests {
     let version = "3"
     let paddedVersion = DeviceHelper.makePaddedVersion(using: version)
     #expect(paddedVersion == "003")
+  }
+
+  // These tokens are a backend/audience-filter contract and must not change.
+  @Test func contentSizeCategoryToken_mapsEveryCategory() {
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .extraSmall) == "xSmall")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .small) == "small")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .medium) == "medium")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .large) == "large")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .extraLarge) == "xLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .extraExtraLarge) == "xxLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .extraExtraExtraLarge) == "xxxLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .accessibilityMedium) == "accessibilityMedium")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .accessibilityLarge) == "accessibilityLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .accessibilityExtraLarge) == "accessibilityXLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .accessibilityExtraExtraLarge) == "accessibilityXXLarge")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .accessibilityExtraExtraExtraLarge) == "accessibilityXXXLarge")
+  }
+
+  @Test func contentSizeCategoryToken_unknownCategoryIsUnspecified() {
+    #expect(DeviceHelper.contentSizeCategoryToken(for: .unspecified) == "unspecified")
+    #expect(DeviceHelper.contentSizeCategoryToken(for: UIContentSizeCategory("someUnknownValue")) == "unspecified")
   }
 }

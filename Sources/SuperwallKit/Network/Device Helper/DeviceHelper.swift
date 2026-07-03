@@ -230,6 +230,13 @@ class DeviceHelper {
     #else
     let category = UIApplication.sharedApplication?.preferredContentSizeCategory
       ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+    return Self.contentSizeCategoryToken(for: category)
+    #endif
+  }
+
+  /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func contentSizeCategoryToken(for category: UIContentSizeCategory) -> String {
     switch category {
     case .extraSmall: return "xSmall"
     case .small: return "small"
@@ -245,7 +252,6 @@ class DeviceHelper {
     case .accessibilityExtraExtraExtraLarge: return "accessibilityXXXLarge"
     default: return "unspecified"
     }
-    #endif
   }
 
   var platformWrapper: String?
