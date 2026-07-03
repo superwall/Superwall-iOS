@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds the system-wide text size (Dynamic Type) as device attributes. `fontScale` is a numeric multiplier relative to the default text size (~1.0 at the default size, smaller/larger otherwise), and `preferredContentSizeCategory` is the raw native Dynamic Type category string.
+- Adds the system-wide text size (Dynamic Type) as a `fontSize` device attribute. It is a normalized integer point/px value where `16` is the system default, scaling up or down as the user changes their Dynamic Type setting.
 
 ## 4.16.1
 
