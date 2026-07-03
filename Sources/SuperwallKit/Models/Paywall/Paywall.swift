@@ -8,8 +8,25 @@
 
 import UIKit
 
-struct Paywalls: Decodable {
-  var paywalls: [Paywall]
+/// The minimal paywall metadata returned by the V2 resolver endpoint
+/// (`GET /v2/paywalls/resolve`).
+///
+/// The debug/preview deep link carries a numeric paywall database `id`, but the
+/// full-paywall fetch is keyed by `identifier` (slug). This lets the preview
+/// flow translate `id` → `identifier` with a single lookup instead of fetching
+/// every paywall for the app.
+///
+/// Decoded with `JSONDecoder.fromSnakeCase`; the endpoint also returns
+/// `application_id`, which is not needed here and is ignored.
+struct PaywallIdentifierResolution: Decodable {
+  /// The id of the paywall in the database.
+  let id: String
+
+  /// The identifier (slug) of the paywall, used to fetch the full paywall.
+  let identifier: String
+
+  /// The display name of the paywall.
+  let name: String
 }
 
 struct Paywall: Codable {

@@ -118,6 +118,9 @@ final class DebugViewController: UIViewController {
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywall: Paywall?
+  /// Backed the "Your Paywalls" picker. Retained (always empty) now that the
+  /// preview flow resolves a single paywall by id instead of fetching all of
+  /// them; see `pressedPreview`.
   var paywalls: [Paywall] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
@@ -204,22 +207,7 @@ final class DebugViewController: UIViewController {
   func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
-
-    if paywalls.isEmpty {
-      do {
-        paywalls = try await network.getPaywalls()
-        await finishLoadingPreview()
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "Failed to Fetch Paywalls",
-          error: error
-        )
-      }
-    } else {
-      await finishLoadingPreview()
-    }
+    await finishLoadingPreview()
   }
 
 	func finishLoadingPreview() async {
@@ -228,8 +216,22 @@ final class DebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
-			paywallIdentifier = paywallId
+      // Resolve the numeric database id from the deep link to the paywall's
+      // identifier (slug) with a single lookup, rather than fetching every
+      // paywall for the app and filtering in memory.
+      do {
+        let resolution = try await network.resolvePaywallIdentifier(forDatabaseId: paywallDatabaseId)
+        paywallId = resolution.identifier
+        paywallIdentifier = resolution.identifier
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "Failed to Resolve Paywall",
+          error: error
+        )
+        return
+      }
     } else {
       return
     }
@@ -312,6 +314,11 @@ final class DebugViewController: UIViewController {
 
   @objc func pressedPreview() {
     guard let id = paywallDatabaseId else { return }
+
+    // The "Your Paywalls" picker listed every paywall from the (now removed)
+    // fetch-all. Preview opens one specific paywall by id, so there is no list
+    // to choose from; bail out rather than present an empty sheet.
+    guard !paywalls.isEmpty else { return }
 
     let options: [AlertOption] = paywalls.map { paywall in
       var name = paywall.name

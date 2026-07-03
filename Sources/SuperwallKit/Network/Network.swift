@@ -122,21 +122,31 @@ class Network {
     }
   }
 
-  func getPaywalls() async throws -> [Paywall] {
+  /// Resolves a numeric paywall database id to its identifier (slug) so the
+  /// debug/preview flow can fetch a single paywall instead of all of them.
+  ///
+  /// Authenticated with the app's public key (`isForDebugging: false`), which
+  /// `makeHeaders` sends as `Authorization: Bearer <apiKey>`.
+  func resolvePaywallIdentifier(
+    forDatabaseId databaseId: String,
+    retryCount: Int = 6
+  ) async throws -> PaywallIdentifierResolution {
     do {
-      let response = try await urlSession.request(
-        .paywalls(),
+      return try await urlSession.request(
+        .resolvePaywall(
+          byDatabaseId: databaseId,
+          retryCount: retryCount
+        ),
         data: SuperwallRequestData(
           factory: factory,
-          isForDebugging: true
+          isForDebugging: false
         )
       )
-      return response.paywalls
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
-        message: "Request Failed: /paywalls",
+        message: "Request Failed: /v2/paywalls/resolve",
         error: error
       )
       throw error

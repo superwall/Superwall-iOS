@@ -179,4 +179,27 @@ struct NetworkTests {
     #expect(bodyJson["deviceId"] as? String == "device_123")
     #expect(bodyJson["appUserId"] as? String == "user_123")
   }
+
+  @Test func resolvePaywall_endpointBuildsRequest() async throws {
+    let dependencyContainer = DependencyContainer()
+    let endpoint = Endpoint<EndpointKinds.Superwall, PaywallIdentifierResolution>.resolvePaywall(
+      byDatabaseId: "123",
+      retryCount: 6
+    )
+
+    let urlRequest = await endpoint.makeRequest(
+      with: SuperwallRequestData(factory: dependencyContainer, isForDebugging: false),
+      factory: dependencyContainer
+    )
+
+    #expect(urlRequest?.httpMethod == "GET")
+
+    let urlString = try #require(urlRequest?.url?.absoluteString)
+    #expect(urlString.contains("/v2/paywalls/resolve"))
+    #expect(urlString.contains("id=123"))
+
+    // The resolver authenticates with the public key (isForDebugging: false),
+    // so an Authorization header is attached.
+    #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") != nil)
+  }
 }

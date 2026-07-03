@@ -207,15 +207,26 @@ extension Endpoint where
   }
 }
 
-// MARK: - PaywallsResponse
+// MARK: - PaywallIdentifierResolution
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == Paywalls {
-  static func paywalls() -> Self {
+  Response == PaywallIdentifierResolution {
+  /// Resolves a numeric paywall database id to its identifier (slug) via the V2
+  /// resolver endpoint (`GET /v2/paywalls/resolve?id=<id>`).
+  ///
+  /// Used by the debug/preview flow so it no longer has to fetch every paywall
+  /// for the app just to translate a deep-link `paywall_id` into an identifier.
+  /// Authenticated with the app's public key (see `Network.resolvePaywallIdentifier`).
+  static func resolvePaywall(
+    byDatabaseId databaseId: String,
+    retryCount: Int
+  ) -> Self {
     return Endpoint(
+      retryCount: retryCount,
       components: Components(
-        host: .base,
-        path: "paywalls"
+        host: .paywallsV2,
+        path: "paywalls/resolve",
+        queryItems: [URLQueryItem(name: "id", value: databaseId)]
       ),
       method: .get
     )
