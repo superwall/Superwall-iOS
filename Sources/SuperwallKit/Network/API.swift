@@ -120,11 +120,12 @@ struct Api {
     }
   }
 
-  /// The V2 API served under the `/v2/` prefix on the base host
-  /// (e.g. `superwall.com/v2/*`, which is routed to the V2 Worker).
+  /// The Superwall V2 API, served under a `/v2/` path on `api.superwall.com`
+  /// (production) / `api.superwall.dev` (developer). See
+  /// `NetworkEnvironment.apiV2Host`.
   struct PaywallsV2: ApiHostConfig {
     let networkEnvironment: SuperwallOptions.NetworkEnvironment
-    var host: String { return networkEnvironment.baseHost }
+    var host: String { return networkEnvironment.apiV2Host }
     var path: String { return "/v2/" }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
