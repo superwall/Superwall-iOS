@@ -476,6 +476,17 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
     }
+
+    // `didRestore` is only reached on a successful restore, at which point
+    // receipts/entitlements have just been reloaded. Redeem existing codes so a
+    // freshly-restored subscription is linked to the identified user server-side,
+    // mirroring the purchase path in `loadPurchasedProductsIfNeeded`. Skipped in
+    // test mode, which sets subscription state without real receipt data
+    // (SW-5516: always redeem after a successful purchase & restore).
+    guard !factory.makeTestModeManager().isTestMode else {
+      return
+    }
+    await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
   }
 
   private func purchase(
@@ -840,11 +851,10 @@ final class TransactionManager {
     // so a new subscription for an already-identified user isn't linked to them
     // server-side until some other trigger fires. Redeem existing codes here so
     // the freshly-loaded receipts + appTransactionId are always pushed to the
-    // backend right after a native purchase completes. This runs on the purchase
-    // path only (restores go through `didRestore` and don't reach here), and is
-    // gated by `shouldSkipReceiptLoading`, so it skips custom/web products and
-    // test mode. Open question for the backend team: whether generic restores
-    // should also push receipts this way, or whether that would be redundant.
+    // backend right after a native purchase completes. This is the purchase path;
+    // the equivalent redeem for restores lives in `didRestore`. Gated by
+    // `shouldSkipReceiptLoading`, so it skips custom/web products and test mode
+    // (SW-5516: always redeem after a successful purchase & restore).
     await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
   }
 

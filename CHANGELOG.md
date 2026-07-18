@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
-- Triggers a redemption after a successful native purchase so new subscriptions are linked to the user server-side.
+- Triggers a redemption after a successful native purchase or restore so new subscriptions are linked to the user server-side.
 
 ## 4.16.1
 
