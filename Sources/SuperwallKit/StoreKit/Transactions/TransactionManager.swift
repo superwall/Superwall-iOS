@@ -835,6 +835,17 @@ final class TransactionManager {
     }
 
     await receiptManager.loadPurchasedProducts(config: nil)
+
+    // A successful native (App Store) purchase doesn't otherwise hit `/redeem`,
+    // so a new subscription for an already-identified user isn't linked to them
+    // server-side until some other trigger fires. Redeem existing codes here so
+    // the freshly-loaded receipts + appTransactionId are always pushed to the
+    // backend right after a native purchase completes. This runs on the purchase
+    // path only (restores go through `didRestore` and don't reach here), and is
+    // gated by `shouldSkipReceiptLoading`, so it skips custom/web products and
+    // test mode. Open question for the backend team: whether generic restores
+    // should also push receipts this way, or whether that would be redundant.
+    await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
   }
 
   private func shouldSkipReceiptLoading(for product: StoreProduct) -> Bool {
