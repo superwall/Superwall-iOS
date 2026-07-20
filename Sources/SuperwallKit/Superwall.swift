@@ -1050,6 +1050,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// - **`deepLink_open` trigger**: Any deep link can trigger a paywall if you've configured
   ///   a `deepLink_open` trigger in your Superwall dashboard.
   ///
+  /// The first deep link received during the first app session after install is
+  /// also saved as the `firstDeepLinkUrl` user attribute. If you assign deep links
+  /// to your App Store custom product pages, you can use this attribute to break
+  /// down results and filter audiences by the product page that drove the install.
+  ///
   /// This method is designed to work in a handler chain pattern where multiple handlers
   /// process deep links. It returns `true` only for URLs that Superwall will handle,
   /// allowing other handlers to process non-Superwall URLs.
@@ -1110,6 +1115,11 @@ public final class Superwall: NSObject, ObservableObject {
     // — the backend match only succeeds within the 7-day install window, so a
     // logout after that would otherwise leave the new user without attributes.
     dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
+
+    // The first-session deep link is install-scoped too. Re-apply it so the
+    // new user keeps the `firstDeepLinkUrl` attribute used for product page
+    // attribution.
+    dependencyContainer.deepLinkRouter.reapplyFirstSessionDeepLinkAttribute()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

@@ -10,19 +10,29 @@ import Foundation
 import Combine
 
 final class DeepLinkRouter {
+  /// The user attribute key holding the first deep link URL received
+  /// during the first app session after install.
+  static let firstDeepLinkUrlAttributeKey = "firstDeepLinkUrl"
+
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let debugManager: DebugManager
   private unowned let configManager: ConfigManager
+  private unowned let storage: Storage
+  private unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
@@ -54,6 +64,8 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
+    captureFirstSessionDeepLink(deepLinkUrl)
+
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
@@ -74,6 +86,40 @@ final class DeepLinkRouter {
     }
 
     return false
+  }
+
+  /// Captures the first deep link received during the first app session
+  /// as a user attribute.
+  ///
+  /// App Store custom product pages can each specify a deep link, which is
+  /// delivered on the first app open after install. Storing it as a user
+  /// attribute means campaign results can be broken down by custom product
+  /// page.
+  private func captureFirstSessionDeepLink(_ url: URL) {
+    if storage.recordFirstSessionDeepLink(url) {
+      identityManager.mergeUserAttributes(
+        [Self.firstDeepLinkUrlAttributeKey: url.absoluteString]
+      )
+    }
+  }
+
+  /// Re-applies the stored first-session deep link to the current user's
+  /// attributes. Called from `reset(duringIdentify:)` after user files are
+  /// wiped — the deep link is install-scoped, so the new user identity
+  /// inherits it, mirroring Apple Search Ads and MMP install attribution.
+  ///
+  /// - Warning: This must not read `identityManager.userAttributes`:
+  ///   `identify()` triggers the reset from the identity serial queue and the
+  ///   attributes getter is `queue.sync` on that same queue, which would
+  ///   deadlock. The merge is async and idempotent, so it's applied
+  ///   unconditionally.
+  func reapplyFirstSessionDeepLinkAttribute() {
+    guard let urlString = storage.get(FirstSessionDeepLinkURL.self) else {
+      return
+    }
+    identityManager.mergeUserAttributes(
+      [Self.firstDeepLinkUrlAttributeKey: urlString]
+    )
   }
 
   private func listenToConfig() {
