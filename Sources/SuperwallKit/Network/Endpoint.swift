@@ -216,7 +216,9 @@ extension Endpoint where
   ///
   /// Used by the debug/preview flow so it no longer has to fetch every paywall
   /// for the app just to translate a deep-link `paywall_id` into an identifier.
-  /// Authenticated with the app's public key (see `Network.resolvePaywallIdentifier`).
+  /// Authenticated with the debugger's signed preview token (the `sat_` token
+  /// from the deeplink, sent as `Authorization: Bearer <debugKey>`), not the
+  /// app's public key (see `Network.resolvePaywallIdentifier`).
   static func resolvePaywall(
     byDatabaseId databaseId: String,
     retryCount: Int

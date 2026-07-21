@@ -125,8 +125,10 @@ class Network {
   /// Resolves a numeric paywall database id to its identifier (slug) so the
   /// debug/preview flow can fetch a single paywall instead of all of them.
   ///
-  /// Authenticated with the app's public key (`isForDebugging: false`), which
-  /// `makeHeaders` sends as `Authorization: Bearer <apiKey>`.
+  /// Authenticated with the debugger's signed preview token (the `sat_` token
+  /// from the debugger deeplink, stored in `storage.debugKey`) via
+  /// `isForDebugging: true`, which `makeHeaders` sends as
+  /// `Authorization: Bearer <debugKey>` — not the app's public key.
   func resolvePaywallIdentifier(
     forDatabaseId databaseId: String,
     retryCount: Int = 6
@@ -139,7 +141,7 @@ class Network {
         ),
         data: SuperwallRequestData(
           factory: factory,
-          isForDebugging: false
+          isForDebugging: true
         )
       )
     } catch {

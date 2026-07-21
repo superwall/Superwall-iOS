@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Fixes
+
+- Fixes the debugger paywall preview so its resolve request authenticates with the debugger's signed preview token instead of the app's public API key.
+
 ## 4.16.2
 
 ### Enhancements

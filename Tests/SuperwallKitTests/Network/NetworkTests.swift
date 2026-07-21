@@ -182,13 +182,14 @@ struct NetworkTests {
 
   @Test func resolvePaywall_endpointBuildsRequest() async throws {
     let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.debugKey = "sat_test"
     let endpoint = Endpoint<EndpointKinds.Superwall, PaywallIdentifierResolution>.resolvePaywall(
       byDatabaseId: "123",
       retryCount: 6
     )
 
     let urlRequest = await endpoint.makeRequest(
-      with: SuperwallRequestData(factory: dependencyContainer, isForDebugging: false),
+      with: SuperwallRequestData(factory: dependencyContainer, isForDebugging: true),
       factory: dependencyContainer
     )
 
@@ -198,8 +199,9 @@ struct NetworkTests {
     #expect(urlString.contains("/v2/paywalls/resolve"))
     #expect(urlString.contains("id=123"))
 
-    // The resolver authenticates with the public key (isForDebugging: false),
-    // so an Authorization header is attached.
-    #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") != nil)
+    // The resolver authenticates with the debugger's signed preview token
+    // (isForDebugging: true), so the Authorization header carries the
+    // `sat_` debug key as a bearer token, not the app's public key.
+    #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer sat_test")
   }
 }
