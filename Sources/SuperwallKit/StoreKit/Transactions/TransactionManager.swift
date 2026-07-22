@@ -483,7 +483,7 @@ final class TransactionManager {
     // mirroring the purchase path in `loadPurchasedProductsIfNeeded`. Skipped in
     // test mode, which sets subscription state without real receipt data
     // (SW-5516: always redeem after a successful purchase & restore).
-    guard !factory.makeTestModeManager().isTestMode else {
+    if factory.makeTestModeManager().isTestMode {
       return
     }
     await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
@@ -841,7 +841,7 @@ final class TransactionManager {
   }
 
   private func loadPurchasedProductsIfNeeded(for product: StoreProduct) async {
-    guard !shouldSkipReceiptLoading(for: product) else {
+    if shouldSkipReceiptLoading(for: product) {
       return
     }
 
