@@ -486,7 +486,9 @@ final class TransactionManager {
     if factory.makeTestModeManager().isTestMode {
       return
     }
-    await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    Task {
+      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    }
   }
 
   private func purchase(
@@ -855,7 +857,9 @@ final class TransactionManager {
     // the equivalent redeem for restores lives in `didRestore`. Gated by
     // `shouldSkipReceiptLoading`, so it skips custom/web products and test mode
     // (SW-5516: always redeem after a successful purchase & restore).
-    await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    Task {
+      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    }
   }
 
   private func shouldSkipReceiptLoading(for product: StoreProduct) -> Bool {
