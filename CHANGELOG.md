@@ -9,6 +9,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
 - Links subscriptions to the user server-side after successful purchase or restore.
 
+### Fixes
+
+- Fixed network requests retrying on HTTP errors that can never succeed, such as `401 Unauthorized` and `404 Not Found`. These are now surfaced immediately instead of after the full retry schedule, which could take over a minute. Timeouts, rate limits and server errors (`408`, `425`, `429`, `499` and all `5xx`) are still retried as before.
+
 ## 4.16.1
 
 ### Enhancements
