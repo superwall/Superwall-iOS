@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixed network requests retrying on HTTP errors that can never succeed, such as `401 Unauthorized` and `404 Not Found`. These are now surfaced immediately instead of after the full retry schedule, which could take over a minute. Timeouts, rate limits and server errors (`408`, `425`, `429`, `499` and all `5xx`) are still retried as before.
+- Fixed HTTP error responses other than `401` and `404` being reported as decoding failures. A request that fails with, say, `403` or `500` now surfaces a `NetworkError.http(statusCode:)` carrying the status code, and is no longer tracked as a `network_decoding_fail` event.
 
 ## 4.16.1
 
