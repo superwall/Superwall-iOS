@@ -8,13 +8,17 @@
 
 import UIKit
 
-enum NetworkError: LocalizedError {
+enum NetworkError: LocalizedError, Equatable {
   case unknown
   case notAuthenticated
   case decoding
   case notFound
   case invalidUrl
   case noInternet
+
+  /// The server responded with a status code outside the 2xx range that isn't
+  /// covered by a more specific case.
+  case http(statusCode: Int)
 
   var errorDescription: String? {
     switch self {
@@ -24,6 +28,31 @@ enum NetworkError: LocalizedError {
     case .notFound: return NSLocalizedString("Not found", comment: "")
     case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
     case .noInternet: return NSLocalizedString("No Internet", comment: "")
+    case .http(let statusCode):
+      return String(
+        format: NSLocalizedString("HTTP error %d.", comment: ""),
+        statusCode
+      )
+    }
+  }
+
+  /// The error a response with the given status code should surface as, or `nil` if
+  /// the response was successful.
+  static func make(fromStatusCode statusCode: Int) -> NetworkError? {
+    switch statusCode {
+    case 200...299: return nil
+    case 401: return .notAuthenticated
+    case 404: return .notFound
+    default: return .http(statusCode: statusCode)
+    }
+  }
+
+  /// The message logged when a request fails with this error.
+  var logMessage: String {
+    switch self {
+    case .notAuthenticated: return "Unable to Authenticate"
+    case .notFound: return "Not Found"
+    default: return "Request Failed"
     }
   }
 }
@@ -132,36 +161,24 @@ class CustomURLSession {
         requestId = id
       }
 
-      if response.statusCode == 401 {
+      // Any non-2xx response is surfaced as an error. Without this, error responses
+      // fall through to decoding and are reported as `.decoding`, which describes
+      // the wrong failure and logs them as decoding failures.
+      if let error = NetworkError.make(fromStatusCode: response.statusCode) {
         Logger.debug(
           logLevel: .error,
           scope: .network,
-          message: "Unable to Authenticate",
+          message: error.logMessage,
           info: [
             "request": request.debugDescription,
             "api_key": auth ?? "N/A",
             "url": request.url?.absoluteString ?? "unknown",
+            "status_code": response.statusCode,
             "request_id": requestId,
             "request_duration": requestDuration
           ]
         )
-        throw NetworkError.notAuthenticated
-      }
-
-      if response.statusCode == 404 {
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Not Found",
-          info: [
-            "request": request.debugDescription,
-            "api_key": auth ?? "N/A",
-            "url": request.url?.absoluteString ?? "unknown",
-            "request_id": requestId,
-            "request_duration": requestDuration
-          ]
-        )
-        throw NetworkError.notFound
+        throw error
       }
     }
 
