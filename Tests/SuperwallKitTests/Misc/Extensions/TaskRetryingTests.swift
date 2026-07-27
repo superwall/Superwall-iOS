@@ -105,6 +105,14 @@ struct TaskRetryingTests {
   }
 
   @Test(
+    "Does not retry redirects that reach the caller",
+    arguments: [301, 302, 307, 308]
+  )
+  func redirectsAreNotRetried(statusCode: Int) async {
+    #expect(await callCount(forStatusCode: statusCode) == 1)
+  }
+
+  @Test(
     "Retries client errors that may succeed on a retry",
     arguments: [408, 425, 429, 499]
   )

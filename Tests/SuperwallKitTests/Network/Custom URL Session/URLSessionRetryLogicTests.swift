@@ -43,8 +43,15 @@ struct URLSessionRetryLogicTests {
     #expect(!TaskRetryLogic.isTerminal(statusCode: statusCode))
   }
 
-  @Test(arguments: [200, 201, 204, 301, 304])
-  func isTerminal_nonErrors(statusCode: Int) {
+  @Test(arguments: [200, 201, 204, 299])
+  func isTerminal_successfulResponses(statusCode: Int) {
     #expect(!TaskRetryLogic.isTerminal(statusCode: statusCode))
+  }
+
+  /// A redirect only reaches us when `URLSession` couldn't follow it, and it will
+  /// come back the same way every time, so there's nothing to gain from retrying.
+  @Test(arguments: [301, 302, 303, 307, 308])
+  func isTerminal_redirects(statusCode: Int) {
+    #expect(TaskRetryLogic.isTerminal(statusCode: statusCode))
   }
 }
