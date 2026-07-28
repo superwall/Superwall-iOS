@@ -13,6 +13,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
+- Links subscriptions to the user server-side after successful purchase or restore.
+
+### Fixes
+
+- Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
+- Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
 
 ## 4.16.1
 
