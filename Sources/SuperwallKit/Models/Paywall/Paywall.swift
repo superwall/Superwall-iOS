@@ -52,14 +52,15 @@ struct PaywallPreviewListItem: Decodable {
 /// preview token, so the picker can offer alternatives without fetching every
 /// paywall in full. Deliberately carries no presentable paywall JSON.
 ///
-/// Decoded with `JSONDecoder.fromSnakeCase`; the endpoint also returns `object`
-/// and `application_id`, which are not needed here and are ignored.
+/// Decoded with `JSONDecoder.fromSnakeCase`. The endpoint also returns `object`,
+/// `has_more` and `application_id`; none are decoded here. `has_more` in
+/// particular is deliberately omitted rather than declared and ignored — the
+/// picker does not paginate, and a non-optional field nothing reads would turn
+/// any future change in the response shape into a `keyNotFound` that empties the
+/// whole picker.
 struct PaywallPreviewList: Decodable {
   /// The paywalls available to preview, capped server-side.
   let data: [PaywallPreviewListItem]
-
-  /// True when the application has more paywalls than the returned cap.
-  let hasMore: Bool
 }
 
 struct Paywall: Codable {

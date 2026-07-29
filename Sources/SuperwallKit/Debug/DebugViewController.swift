@@ -160,6 +160,12 @@ final class DebugViewController: UIViewController {
     initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
+    // Independent of the preview load on purpose. The picker is most useful
+    // precisely when the requested paywall fails to render — that is when you
+    // want to switch to another one — so it must not sit behind the preview's
+    // success path. Runs concurrently, and only here, so switching paywalls via
+    // the picker doesn't refetch a list that cannot have changed.
+    Task { await loadPreviewPaywalls() }
   }
 
   private func addSubviews() {
@@ -254,7 +260,6 @@ final class DebugViewController: UIViewController {
       self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
       self.activityIndicator.stopAnimating()
       self.addPaywallPreview()
-      await self.loadPreviewPaywalls()
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -317,10 +322,10 @@ final class DebugViewController: UIViewController {
   /// Populates the "Your Paywalls" picker from the application in the debugger's
   /// preview token.
   ///
-  /// Runs after the previewed paywall is on screen so the picker never delays
-  /// the thing the user actually asked for. Best-effort: a failure leaves
-  /// `previewPaywalls` empty and `pressedPreview` simply declines to open, which
-  /// is the behaviour before this was restored.
+  /// Kicked off from `viewDidLoad` alongside — not after — the preview load, so
+  /// the picker is available even when the requested paywall fails to render.
+  /// Best-effort: a failure leaves `previewPaywalls` empty and `pressedPreview`
+  /// declines to open, which is the behaviour before this was restored.
   private func loadPreviewPaywalls() async {
     do {
       let list = try await network.listPreviewPaywalls()
