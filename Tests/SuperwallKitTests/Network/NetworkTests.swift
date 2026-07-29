@@ -204,4 +204,78 @@ struct NetworkTests {
     // `sat_` debug key as a bearer token, not the app's public key.
     #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer sat_test")
   }
+
+  @Test func listPreviewPaywalls_endpointBuildsRequest() async throws {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.debugKey = "sat_test"
+    let endpoint = Endpoint<EndpointKinds.Superwall, PaywallPreviewList>.listPreviewPaywalls(
+      retryCount: 2
+    )
+
+    let urlRequest = await endpoint.makeRequest(
+      with: SuperwallRequestData(factory: dependencyContainer, isForDebugging: true),
+      factory: dependencyContainer
+    )
+
+    #expect(urlRequest?.httpMethod == "GET")
+
+    let urlString = try #require(urlRequest?.url?.absoluteString)
+    #expect(urlString.contains("/v2/paywalls/preview-list"))
+
+    // The application comes from the token's scope server-side, so the picker
+    // must not be sending an id or application_id of its own.
+    #expect(urlString.contains("?") == false)
+
+    // Same auth as the resolver: the debugger's `sat_` preview token as a
+    // bearer, not the app's public key.
+    #expect(urlRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer sat_test")
+  }
+
+  @Test func paywallPreviewList_decodesIgnoringUndeclaredFields() throws {
+    // `object`, `has_more` and `application_id` are returned by the endpoint but
+    // deliberately not declared on the model. Decoding must ignore them rather
+    // than throw, so a change to those fields can never empty the picker.
+    let json = """
+    {
+      "object": "list",
+      "has_more": false,
+      "application_id": "2889",
+      "data": [
+        { "id": "178725", "identifier": "some-slug", "name": "Some Paywall" }
+      ]
+    }
+    """.data(using: .utf8)!
+
+    let list = try JSONDecoder.fromSnakeCase.decode(PaywallPreviewList.self, from: json)
+
+    #expect(list.data.count == 1)
+    #expect(list.data.first?.id == "178725")
+    #expect(list.data.first?.identifier == "some-slug")
+    #expect(list.data.first?.name == "Some Paywall")
+  }
+
+  @Test func paywallPreviewList_decodesWhenUndeclaredFieldsAbsent() throws {
+    // The inverse: `data` alone must decode, so the picker survives the endpoint
+    // dropping fields the SDK never reads.
+    let json = """
+    { "data": [{ "id": "1", "identifier": "s", "name": "N" }] }
+    """.data(using: .utf8)!
+
+    let list = try JSONDecoder.fromSnakeCase.decode(PaywallPreviewList.self, from: json)
+
+    #expect(list.data.count == 1)
+  }
+
+  @Test func paywallPreviewList_decodesEmptyList() throws {
+    // An app with no previewable paywalls returns an empty `data`. That must
+    // decode cleanly — `pressedPreview` then declines to open the picker rather
+    // than the request being treated as a failure.
+    let json = """
+    { "object": "list", "has_more": false, "data": [] }
+    """.data(using: .utf8)!
+
+    let list = try JSONDecoder.fromSnakeCase.decode(PaywallPreviewList.self, from: json)
+
+    #expect(list.data.isEmpty)
+  }
 }
