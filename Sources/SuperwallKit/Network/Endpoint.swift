@@ -235,6 +235,31 @@ extension Endpoint where
   }
 }
 
+// MARK: - PaywallPreviewList
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == PaywallPreviewList {
+  /// Lists the paywalls available to preview for the application in the
+  /// debugger's signed preview token (`GET /v2/paywalls/preview-list`).
+  ///
+  /// Backs the debugger's "Your Paywalls" picker. Returns id/identifier/name
+  /// only — never the presentable paywall JSON — so switching previews costs one
+  /// small request rather than the fetch-all this replaced.
+  ///
+  /// Same auth as `resolvePaywall`: the `sat_` token from the deeplink, sent as
+  /// `Authorization: Bearer <debugKey>` (see `Network.listPreviewPaywalls`).
+  static func listPreviewPaywalls(retryCount: Int) -> Self {
+    return Endpoint(
+      retryCount: retryCount,
+      components: Components(
+        host: .paywallsV2,
+        path: "paywalls/preview-list"
+      ),
+      method: .get
+    )
+  }
+}
+
 // MARK: - ConfigResponse
 extension Endpoint where
   Kind == EndpointKinds.Superwall,

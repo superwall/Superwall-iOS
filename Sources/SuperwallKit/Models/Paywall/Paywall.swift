@@ -29,6 +29,39 @@ struct PaywallIdentifierResolution: Decodable {
   let name: String
 }
 
+/// One row of the debugger's paywall picker, from
+/// `GET /v2/paywalls/preview-list`.
+///
+/// Structurally identical to ``PaywallIdentifierResolution`` — the picker needs
+/// exactly what the resolver returns, for every paywall in the application
+/// rather than one. Kept as its own type so the two endpoints can diverge.
+struct PaywallPreviewListItem: Decodable {
+  /// The id of the paywall in the database.
+  let id: String
+
+  /// The identifier (slug) of the paywall, used to fetch the full paywall.
+  let identifier: String
+
+  /// The display name of the paywall.
+  let name: String
+}
+
+/// The response from `GET /v2/paywalls/preview-list`.
+///
+/// Lists the non-archived paywalls of the application in the debugger's `sat_`
+/// preview token, so the picker can offer alternatives without fetching every
+/// paywall in full. Deliberately carries no presentable paywall JSON.
+///
+/// Decoded with `JSONDecoder.fromSnakeCase`; the endpoint also returns `object`
+/// and `application_id`, which are not needed here and are ignored.
+struct PaywallPreviewList: Decodable {
+  /// The paywalls available to preview, capped server-side.
+  let data: [PaywallPreviewListItem]
+
+  /// True when the application has more paywalls than the returned cap.
+  let hasMore: Bool
+}
+
 struct Paywall: Codable {
   /// The id of the paywall in the database.
   var databaseId: String

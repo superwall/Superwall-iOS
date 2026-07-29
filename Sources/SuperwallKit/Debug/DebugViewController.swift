@@ -75,7 +75,7 @@ final class DebugViewController: UIViewController {
     return button
   }()
 
-  lazy var previewNameButton: SWBounceButton = {
+  lazy var previewPickerButton: SWBounceButton = {
     let button = SWBounceButton()
     button.setTitle("", for: .normal)
     button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
@@ -86,11 +86,14 @@ final class DebugViewController: UIViewController {
     button.setTitleColor(primaryColor, for: .normal)
     button.contentEdgeInsets = UIEdgeInsets(top: 6, left: 10, bottom: 6, right: 10)
     button.translatesAutoresizingMaskIntoConstraints = false
+    button.imageView?.tintColor = primaryColor
     button.layer.cornerRadius = 10
-    // Display-only chip showing the previewed paywall's name. The multi-paywall
-    // picker (a dropdown opened from this chip) was removed when the preview
-    // flow stopped fetching all paywalls, so it no longer responds to taps.
-    button.isUserInteractionEnabled = false
+
+    let image = UIImage(named: "SuperwallKit_down_arrow", in: Bundle.module, compatibleWith: nil)!
+    button.semanticContentAttribute = .forceRightToLeft
+    button.setImage(image, for: .normal)
+    button.imageView?.tintColor = primaryColor
+    button.addTarget(self, action: #selector(pressedPreview), for: .primaryActionTriggered)
     return button
   }()
 
@@ -108,12 +111,18 @@ final class DebugViewController: UIViewController {
     let button = SWBounceButton()
     button.shouldAnimateLightly = true
     button.translatesAutoresizingMaskIntoConstraints = false
+    button.addTarget(self, action: #selector(pressedPreview), for: .primaryActionTriggered)
     return button
   }()
 
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywall: Paywall?
+  /// Backs the "Your Paywalls" picker. Populated from
+  /// `GET /v2/paywalls/preview-list` (id/name/slug only — not the full paywalls
+  /// the pre-#3456 fetch-all returned). Empty when the request fails or the app
+  /// has a single paywall, in which case the picker declines to open.
+  var previewPaywalls: [PaywallPreviewListItem] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
   private var initialLocaleIdentifier: String?
@@ -160,7 +169,7 @@ final class DebugViewController: UIViewController {
     view.addSubview(consoleButton)
     view.addSubview(exitButton)
     view.addSubview(bottomButton)
-    previewContainerView.addSubview(previewNameButton)
+    previewContainerView.addSubview(previewPickerButton)
     view.backgroundColor = lightBackgroundColor
 
     previewContainerView.clipsToBounds = false
@@ -190,9 +199,9 @@ final class DebugViewController: UIViewController {
       bottomButton.widthAnchor.constraint(equalTo: view.layoutMarginsGuide.widthAnchor, constant: -40),
       bottomButton.bottomAnchor.constraint(equalTo: view.layoutMarginsGuide.bottomAnchor, constant: -10),
 
-      previewNameButton.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor, constant: 0),
-      previewNameButton.heightAnchor.constraint(equalToConstant: 26),
-      previewNameButton.centerYAnchor.constraint(equalTo: previewContainerView.bottomAnchor)
+      previewPickerButton.centerXAnchor.constraint(equalTo: previewContainerView.centerXAnchor, constant: 0),
+      previewPickerButton.heightAnchor.constraint(equalToConstant: 26),
+      previewPickerButton.centerYAnchor.constraint(equalTo: previewContainerView.bottomAnchor)
     ])
   }
 
@@ -242,9 +251,10 @@ final class DebugViewController: UIViewController {
       paywall.productVariables = productVariables
 
       self.paywall = paywall
-      self.previewNameButton.setTitle("\(paywall.name)", for: .normal)
+      self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
       self.activityIndicator.stopAnimating()
       self.addPaywallPreview()
+      await self.loadPreviewPaywalls()
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -302,6 +312,63 @@ final class DebugViewController: UIViewController {
     ) {
       child.view.alpha = 1.0
     }
+  }
+
+  /// Populates the "Your Paywalls" picker from the application in the debugger's
+  /// preview token.
+  ///
+  /// Runs after the previewed paywall is on screen so the picker never delays
+  /// the thing the user actually asked for. Best-effort: a failure leaves
+  /// `previewPaywalls` empty and `pressedPreview` simply declines to open, which
+  /// is the behaviour before this was restored.
+  private func loadPreviewPaywalls() async {
+    do {
+      let list = try await network.listPreviewPaywalls()
+      previewPaywalls = list.data
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .debugViewController,
+        message: "Failed to Load Paywall Picker",
+        info: nil,
+        error: error
+      )
+    }
+  }
+
+  @objc func pressedPreview() {
+    guard let id = paywallDatabaseId else { return }
+
+    // Empty when the list request failed. Single-entry when the app has one
+    // paywall — an action sheet offering only what's already on screen is noise,
+    // so bail rather than present it.
+    guard previewPaywalls.count > 1 else { return }
+
+    let options: [AlertOption] = previewPaywalls.map { paywall in
+      var name = paywall.name
+
+      if id == paywall.id {
+        name = "\(name) ✓"
+      }
+
+      let alert = AlertOption(
+        title: name,
+        action: { [weak self] in
+          self?.paywallDatabaseId = paywall.id
+          self?.paywallIdentifier = paywall.identifier
+          Task { await self?.loadPreview() }
+        },
+        style: .default
+      )
+      return alert
+    }
+
+    presentAlert(
+      title: nil,
+      message: "Your Paywalls",
+      options: options,
+      on: previewPickerButton
+    )
   }
 
   @objc func pressedExitButton() {
