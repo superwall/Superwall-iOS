@@ -342,17 +342,19 @@ final class DebugViewController: UIViewController {
   }
 
   @objc func pressedPreview() {
-    guard let id = paywallDatabaseId else { return }
-
-    // Empty when the list request failed. Single-entry when the app has one
-    // paywall — an action sheet offering only what's already on screen is noise,
-    // so bail rather than present it.
-    guard previewPaywalls.count > 1 else { return }
+    // Open whenever there is something to switch *to*. That covers an empty list
+    // (the request failed) and a single-entry list whose one paywall is already
+    // on screen, without gating on `paywallDatabaseId` — which is nil when the
+    // deep link carried no `paywall_id` and nothing rendered. That is precisely
+    // when the picker is most useful, so it must not be inert then.
+    guard previewPaywalls.contains(where: { $0.id != paywallDatabaseId }) else { return }
 
     let options: [AlertOption] = previewPaywalls.map { paywall in
       var name = paywall.name
 
-      if id == paywall.id {
+      // Optional comparison: with no paywall on screen nothing is marked, which
+      // is correct rather than a case to guard against.
+      if paywall.id == paywallDatabaseId {
         name = "\(name) ✓"
       }
 

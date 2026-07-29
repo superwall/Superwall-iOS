@@ -196,7 +196,10 @@ struct NetworkTests {
     #expect(urlRequest?.httpMethod == "GET")
 
     let urlString = try #require(urlRequest?.url?.absoluteString)
-    #expect(urlString.contains("/v2/paywalls/resolve"))
+    // Host and path asserted together: matching the path alone passes whichever
+    // host the endpoint resolved to, which is how the V2 resolver shipped
+    // pointing at the v1 `baseHost` (fixed in b073dda).
+    #expect(urlString.contains("api.superwall.com/v2/paywalls/resolve"))
     #expect(urlString.contains("id=123"))
 
     // The resolver authenticates with the debugger's signed preview token
@@ -220,7 +223,9 @@ struct NetworkTests {
     #expect(urlRequest?.httpMethod == "GET")
 
     let urlString = try #require(urlRequest?.url?.absoluteString)
-    #expect(urlString.contains("/v2/paywalls/preview-list"))
+    // Host included for the same reason as the resolver's test: the path alone
+    // would pass against the v1 `baseHost`.
+    #expect(urlString.contains("api.superwall.com/v2/paywalls/preview-list"))
 
     // The application comes from the token's scope server-side, so the picker
     // must not be sending an id or application_id of its own.
