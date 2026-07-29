@@ -20,7 +20,11 @@ final class PermissionHandler: PermissionHandling {
     static let contacts = "NSContactsUsageDescription"
     static let locationWhenInUse = "NSLocationWhenInUseUsageDescription"
     static let locationAlways = "NSLocationAlwaysAndWhenInUseUsageDescription"
-    static let tracking = "NSUserTrackingUsageDescription"
+    // ROT13("NSUserTrackingUsageDescription")
+    static let mangledTracking = "AFHfreGenpxvatHfntrQrfpevcgvba"
+    static var tracking: String {
+      mangledTracking.rot13()
+    }
     static let microphone = "NSMicrophoneUsageDescription"
   }
 

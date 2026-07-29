@@ -25,8 +25,15 @@ final class TrackingManagerProxy: NSObject {
   static let mangledRequestTrackingSelector =
     "erdhrfgGenpxvatNhgubevmngvbaJvguPbzcyrgvbaUnaqyre:"
 
-  static var trackingManagerClass: AnyClass? {
-    NSClassFromString(mangledTrackingManagerClassName.rot13())
+  private let trackingManagerClass: AnyClass?
+
+  init(
+    trackingManagerClass: AnyClass? = NSClassFromString(
+      TrackingManagerProxy.mangledTrackingManagerClassName.rot13()
+    )
+  ) {
+    self.trackingManagerClass = trackingManagerClass
+    super.init()
   }
 
   @objc var trackingStatusSelectorName: String {
@@ -43,23 +50,27 @@ final class TrackingManagerProxy: NSObject {
   }
 
   func trackingAuthorizationStatus() -> Int {
-    let cls: AnyClass = Self.trackingManagerClass ?? FakeTrackingManager.self
+    guard let trackingManagerClass else {
+      return FakeTrackingAuthorizationStatus.notDetermined.rawValue
+    }
     let sel = NSSelectorFromString(trackingStatusSelectorName)
 
-    guard let imp = Self.classIMP(cls, sel) else {
+    guard let imp = Self.classIMP(trackingManagerClass, sel) else {
       return FakeTrackingAuthorizationStatus.notDetermined.rawValue
     }
 
     typealias Function = @convention(c) (AnyObject, Selector) -> Int
     let function = unsafeBitCast(imp, to: Function.self)
-    return function(cls as AnyObject, sel)
+    return function(trackingManagerClass as AnyObject, sel)
   }
 
-  func requestTrackingAuthorization() async -> Int {
-    let cls: AnyClass = Self.trackingManagerClass ?? FakeTrackingManager.self
+  func requestAuthorization() async -> Int {
+    guard let trackingManagerClass else {
+      return FakeTrackingAuthorizationStatus.notDetermined.rawValue
+    }
     let sel = NSSelectorFromString(requestTrackingSelectorName)
 
-    guard let imp = Self.classIMP(cls, sel) else {
+    guard let imp = Self.classIMP(trackingManagerClass, sel) else {
       return FakeTrackingAuthorizationStatus.notDetermined.rawValue
     }
 
@@ -70,7 +81,7 @@ final class TrackingManagerProxy: NSObject {
 
       typealias Function = @convention(c) (AnyObject, Selector, AnyObject) -> Void
       let function = unsafeBitCast(imp, to: Function.self)
-      function(cls as AnyObject, sel, completion as AnyObject)
+      function(trackingManagerClass as AnyObject, sel, completion as AnyObject)
     }
   }
 }
