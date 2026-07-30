@@ -221,13 +221,16 @@ class DeviceHelper {
 
   private var traitObservers: [NSObjectProtocol] = []
 
-  /// The cached traits, scheduling a refresh so the next read is current.
+  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``, held so it
+  /// can be reused across activations. Typed `Any?` because the protocol is iOS 17+
+  /// and a stored property can't be gated on availability.
+  private var traitChangeRegistration: Any?
+
+  /// The cached traits, refreshed so reads stay current.
   ///
-  /// The notifications alone miss a system appearance change that lands while the
-  /// app stays active — the automatic light/dark switch at sunset — which would
-  /// leave the cache reporting the wrong token until the next foreground. Reads
-  /// happen off the main thread and can't block on it, so the refresh is
-  /// asynchronous: the cache trails a change by one read instead of indefinitely.
+  /// On the main thread the refresh is inline, so the caller sees the live value.
+  /// Off it, the refresh is scheduled and the caller sees the previous value —
+  /// a backstop for the window the trait hook can't cover, not the primary path.
   private var currentUITraits: UITraits {
     refreshUITraits()
     return uiTraits
@@ -235,6 +238,12 @@ class DeviceHelper {
 
   private func refreshUITraits() {
     #if !os(visionOS)
+    // The wrapper's setter and getter share one serial queue, so this write is
+    // ordered ahead of `currentUITraits`' read and the caller sees it.
+    if Thread.isMainThread {
+      uiTraits = DeviceHelper.makeUITraits()
+      return
+    }
     guard !$isRefreshingUITraits.testAndSetTrue() else {
       return
     }
@@ -244,6 +253,44 @@ class DeviceHelper {
     }
     #endif
   }
+
+  /// Updates the cache at the moment the appearance or text size flips.
+  ///
+  /// There is no notification for `userInterfaceStyle`, so a system appearance
+  /// change while the app stays active — automatic light/dark at sunset — reaches
+  /// us only through a trait hook. Without this the cache reports the previous
+  /// token to `X-Device-Interface-Style` and to audience filters until something
+  /// else refreshes it.
+  ///
+  /// Registration needs a window, which may not exist yet when `DeviceHelper` is
+  /// created, so this also runs on activation and no-ops once registered.
+  private func registerForTraitChanges() {
+    #if !os(visionOS)
+    Task { @MainActor [weak self] in
+      if #available(iOS 17.0, *) {
+        self?.performTraitChangeRegistration()
+      }
+    }
+    #endif
+  }
+
+  #if !os(visionOS)
+  @available(iOS 17.0, *)
+  @MainActor
+  private func performTraitChangeRegistration() {
+    guard
+      traitChangeRegistration == nil,
+      let window = UIApplication.sharedApplication?.activeWindow
+    else {
+      return
+    }
+    traitChangeRegistration = window.registerForTraitChanges(
+      [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
+    ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
+      self?.uiTraits = DeviceHelper.makeUITraits()
+    }
+  }
+  #endif
 
   private struct UITraits {
     let interfaceStyle: String
@@ -285,6 +332,9 @@ class DeviceHelper {
   /// Refreshes the cached traits when the user changes their text size, or when the
   /// app becomes active after an appearance change. Both notifications are posted on
   /// the main thread.
+  ///
+  /// Activation also retries ``registerForTraitChanges()``, since a window is more
+  /// likely to exist by then than when `DeviceHelper` was created.
   private func observeUITraitChanges() {
     #if !os(visionOS)
     let names: [Notification.Name] = [
@@ -298,6 +348,7 @@ class DeviceHelper {
         queue: .main
       ) { [weak self] _ in
         self?.uiTraits = DeviceHelper.makeUITraits()
+        self?.registerForTraitChanges()
       }
     }
     #endif
@@ -683,6 +734,7 @@ class DeviceHelper {
 
     self.uiTraits = Self.makeUITraits()
     observeUITraitChanges()
+    registerForTraitChanges()
   }
 
   deinit {

@@ -106,11 +106,25 @@ struct DeviceHelperTests {
       )
     }.value
 
+    // Compared against the live UIKit values, not just non-empty: the placeholder
+    // `UITraits.unavailable` would satisfy any weaker assertion.
+    let expected = await MainActor.run { () -> (String, Int, Double, String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(scaledValue.rounded()),
+        ((scaledValue / 16.0) * 100).rounded() / 100,
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
     #expect(traits.isMainThread == false)
-    #expect(traits.interfaceStyle.isEmpty == false)
-    #expect(traits.fontSize > 0)
-    #expect(traits.fontScale > 0)
-    #expect(traits.contentSizeCategory.isEmpty == false)
+    #expect(traits.interfaceStyle == expected.0)
+    #expect(traits.fontSize == expected.1)
+    #expect(traits.fontScale == expected.2)
+    #expect(traits.contentSizeCategory == expected.3)
   }
 
   /// The cached traits must hold the device's real values, not placeholders.
