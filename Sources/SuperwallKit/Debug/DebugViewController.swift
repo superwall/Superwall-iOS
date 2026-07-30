@@ -118,7 +118,11 @@ final class DebugViewController: UIViewController {
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywall: Paywall?
-  var paywalls: [Paywall] = []
+  /// Backs the "Your Paywalls" picker.
+  ///
+  /// Populated from `GET /v2/paywalls/preview-list`. Empty when the request fails or the app
+  /// has a single paywall, in which case the picker declines to open.
+  var previewPaywalls: [PaywallSummary] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
   private var initialLocaleIdentifier: String?
@@ -156,6 +160,7 @@ final class DebugViewController: UIViewController {
     initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
+    Task { await loadPreviewPaywalls() }
   }
 
   private func addSubviews() {
@@ -204,22 +209,7 @@ final class DebugViewController: UIViewController {
   func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
-
-    if paywalls.isEmpty {
-      do {
-        paywalls = try await network.getPaywalls()
-        await finishLoadingPreview()
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "Failed to Fetch Paywalls",
-          error: error
-        )
-      }
-    } else {
-      await finishLoadingPreview()
-    }
+    await finishLoadingPreview()
   }
 
 	func finishLoadingPreview() async {
@@ -228,8 +218,21 @@ final class DebugViewController: UIViewController {
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
-			paywallIdentifier = paywallId
+      // Resolve the numeric database id from the deep link to the paywall's
+      // identifier (slug) with a single lookup.
+      do {
+        let resolution = try await network.resolvePaywallIdentifier(forDatabaseId: paywallDatabaseId)
+        paywallId = resolution.identifier
+        paywallIdentifier = resolution.identifier
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "Failed to Resolve Paywall",
+          error: error
+        )
+        return
+      }
     } else {
       return
     }
@@ -310,20 +313,49 @@ final class DebugViewController: UIViewController {
     }
   }
 
-  @objc func pressedPreview() {
-    guard let id = paywallDatabaseId else { return }
+  /// Populates the "Your Paywalls" picker from the application in the debugger's
+  /// preview token.
+  ///
+  /// Kicked off from `viewDidLoad` alongside — not after — the preview load, so
+  /// the picker is available even when the requested paywall fails to render.
+  /// Best-effort: a failure leaves `previewPaywalls` empty and `pressedPreview`
+  /// declines to open, which is the behaviour before this was restored.
+  private func loadPreviewPaywalls() async {
+    do {
+      let list = try await network.listPreviewPaywalls()
+      previewPaywalls = list.data
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .debugViewController,
+        message: "Failed to Load Paywall Picker",
+        info: nil,
+        error: error
+      )
+    }
+  }
 
-    let options: [AlertOption] = paywalls.map { paywall in
+  @objc func pressedPreview() {
+    // Open whenever there is something to switch *to*. That covers an empty list
+    // (the request failed) and a single-entry list whose one paywall is already
+    // on screen, without gating on `paywallDatabaseId` — which is nil when the
+    // deep link carried no `paywall_id` and nothing rendered. That is precisely
+    // when the picker is most useful, so it must not be inert then.
+    guard previewPaywalls.contains(where: { $0.id != paywallDatabaseId }) else { return }
+
+    let options: [AlertOption] = previewPaywalls.map { paywall in
       var name = paywall.name
 
-      if id == paywall.databaseId {
+      // Optional comparison: with no paywall on screen nothing is marked, which
+      // is correct rather than a case to guard against.
+      if paywall.id == paywallDatabaseId {
         name = "\(name) ✓"
       }
 
       let alert = AlertOption(
         title: name,
         action: { [weak self] in
-          self?.paywallDatabaseId = paywall.databaseId
+          self?.paywallDatabaseId = paywall.id
           self?.paywallIdentifier = paywall.identifier
           Task { await self?.loadPreview() }
         },

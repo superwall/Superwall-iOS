@@ -122,21 +122,54 @@ class Network {
     }
   }
 
-  func getPaywalls() async throws -> [Paywall] {
+  /// Resolves a numeric paywall database id to its identifier (slug) so the
+  /// debug/preview flow can fetch a single paywall instead of all of them.
+  func resolvePaywallIdentifier(
+    forDatabaseId databaseId: String,
+    retryCount: Int = 6
+  ) async throws -> PaywallSummary {
     do {
-      let response = try await urlSession.request(
-        .paywalls(),
+      return try await urlSession.request(
+        .resolvePaywall(
+          byDatabaseId: databaseId,
+          retryCount: retryCount
+        ),
         data: SuperwallRequestData(
           factory: factory,
           isForDebugging: true
         )
       )
-      return response.paywalls
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
-        message: "Request Failed: /paywalls",
+        message: "Request Failed: /v2/paywalls/resolve",
+        error: error
+      )
+      throw error
+    }
+  }
+
+  /// Lists the paywalls available to preview for the application in the
+  /// debugger's signed preview token, backing the debugger's paywall picker.
+  ///
+  /// Retries less than the resolver: this only populates an optional picker, so
+  /// a failure should degrade to "no alternatives to offer" quickly rather than
+  /// hold the debugger up.
+  func listPreviewPaywalls(retryCount: Int = 2) async throws -> PaywallPreviewList {
+    do {
+      return try await urlSession.request(
+        .listPreviewPaywalls(retryCount: retryCount),
+        data: SuperwallRequestData(
+          factory: factory,
+          isForDebugging: true
+        )
+      )
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /v2/paywalls/preview-list",
         error: error
       )
       throw error

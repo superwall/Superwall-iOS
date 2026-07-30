@@ -216,6 +216,24 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// Host for the Superwall V2 API (the `apps/api` Cloudflare Worker), whose
+    /// routes live under a `/v2/` path.
+    ///
+    /// This is a DIFFERENT host from ``baseHost`` (the legacy v1 API on
+    /// `api.superwall.me`): the V2 API is served from the `superwall.com`
+    /// domain — `api.superwall.com` in production and `api.superwall.dev` in the
+    /// developer/staging environment.
+    var apiV2Host: String {
+      switch self {
+      case .developer:
+        return "api.superwall.dev"
+      case .local:
+        return "localhost:3001"
+      default:
+        return "api.superwall.com"
+      }
+    }
+
     /// The base URL for the Superwall dashboard.
     var dashboardBaseUrl: String {
       switch self {
