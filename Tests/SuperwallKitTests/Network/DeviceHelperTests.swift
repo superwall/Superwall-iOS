@@ -80,4 +80,53 @@ struct DeviceHelperTests {
     #expect(DeviceHelper.contentSizeCategoryToken(for: .unspecified) == "unspecified")
     #expect(DeviceHelper.contentSizeCategoryToken(for: UIContentSizeCategory(rawValue: "someUnknownValue")) == "unspecified")
   }
+
+  // These tokens are a backend/audience-filter contract and must not change.
+  @Test func interfaceStyleToken_mapsEveryStyle() {
+    #expect(DeviceHelper.interfaceStyleToken(for: .unspecified) == "Unspecified")
+    #expect(DeviceHelper.interfaceStyleToken(for: .light) == "Light")
+    #expect(DeviceHelper.interfaceStyleToken(for: .dark) == "Dark")
+    #expect(DeviceHelper.interfaceStyleToken(for: UIUserInterfaceStyle(rawValue: 99)!) == "Unknown")
+  }
+
+  /// Reading these used to touch main-thread-only UIKit APIs, tripping
+  /// "UIApplication.preferredContentSizeCategory must be used from main thread only"
+  /// when the device template was built on a background thread.
+  @Test func traits_areReadableOffTheMainThread() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let traits = await Task.detached { () -> (isMainThread: Bool, interfaceStyle: String, fontSize: Int, fontScale: Double, contentSizeCategory: String) in
+      return (
+        Thread.isMainThread,
+        deviceHelper.interfaceStyle,
+        deviceHelper.fontSize,
+        deviceHelper.fontScale,
+        deviceHelper.preferredContentSizeCategory
+      )
+    }.value
+
+    #expect(traits.isMainThread == false)
+    #expect(traits.interfaceStyle.isEmpty == false)
+    #expect(traits.fontSize > 0)
+    #expect(traits.fontScale > 0)
+    #expect(traits.contentSizeCategory.isEmpty == false)
+  }
+
+  /// The cached traits must hold the device's real values, not placeholders.
+  @MainActor
+  @Test func traits_matchTheCurrentTraitValues() {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+
+    #expect(deviceHelper.preferredContentSizeCategory == DeviceHelper.contentSizeCategoryToken(for: category))
+    #expect(deviceHelper.interfaceStyle == DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle))
+    let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+    let expectedScale: Double = ((scaledValue / 16.0) * 100).rounded() / 100
+
+    #expect(deviceHelper.fontSize == Int(scaledValue.rounded()))
+    #expect(deviceHelper.fontScale == expectedScale)
+  }
 }

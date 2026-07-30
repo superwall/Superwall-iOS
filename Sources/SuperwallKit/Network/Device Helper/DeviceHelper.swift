@@ -190,10 +190,93 @@ class DeviceHelper {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
     }
+    return uiTraits.interfaceStyle
+  }
+
+  var fontSize: Int {
+    return uiTraits.fontSize
+  }
+
+  var fontScale: Double {
+    return uiTraits.fontScale
+  }
+
+  var preferredContentSizeCategory: String {
+    return uiTraits.preferredContentSizeCategory
+  }
+
+  /// Trait-derived values, cached from the main thread.
+  ///
+  /// `UIApplication.preferredContentSizeCategory`, `UIScreen.traitCollection` and
+  /// `UIFontMetrics` are main-thread-only, but these are read from background
+  /// contexts such as `getTemplateDevice()`. They're read on the main thread and
+  /// cached, then refreshed whenever the traits change.
+  @DispatchQueueBacked
+  private var uiTraits: UITraits
+
+  private var traitObservers: [NSObjectProtocol] = []
+
+  private struct UITraits {
+    let interfaceStyle: String
+    let fontSize: Int
+    let fontScale: Double
+    let preferredContentSizeCategory: String
+
+    /// The values used when UIKit traits aren't available, e.g. on visionOS.
+    static let unavailable = UITraits(
+      interfaceStyle: "Unknown",
+      fontSize: 16,
+      fontScale: 1.0,
+      preferredContentSizeCategory: "unspecified"
+    )
+  }
+
+  private static func makeUITraits() -> UITraits {
     #if os(visionOS)
-    return "Unknown"
+    return .unavailable
     #else
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    let read = { () -> UITraits in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = UIFontMetrics.default.scaledValue(for: 16.0)
+
+      return UITraits(
+        interfaceStyle: interfaceStyleToken(
+          for: UIScreen.main.traitCollection.userInterfaceStyle
+        ),
+        fontSize: Int(scaledValue.rounded()),
+        fontScale: ((scaledValue / 16.0) * 100).rounded() / 100,
+        preferredContentSizeCategory: contentSizeCategoryToken(for: category)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
+    #endif
+  }
+
+  /// Refreshes the cached traits when the user changes their text size, or when the
+  /// app becomes active after an appearance change. Both notifications are posted on
+  /// the main thread.
+  private func observeUITraitChanges() {
+    #if !os(visionOS)
+    let names: [Notification.Name] = [
+      UIContentSizeCategory.didChangeNotification,
+      UIApplication.didBecomeActiveNotification
+    ]
+    traitObservers = names.map { name in
+      NotificationCenter.default.addObserver(
+        forName: name,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        self?.uiTraits = DeviceHelper.makeUITraits()
+      }
+    }
+    #endif
+  }
+
+  /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
     switch style {
     case .unspecified:
       return "Unspecified"
@@ -204,34 +287,6 @@ class DeviceHelper {
     default:
       return "Unknown"
     }
-    #endif
-	}
-
-  var fontSize: Int {
-    #if os(visionOS)
-    return 16
-    #else
-    return Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded())
-    #endif
-  }
-
-  var fontScale: Double {
-    #if os(visionOS)
-    return 1.0
-    #else
-    let scale = UIFontMetrics.default.scaledValue(for: 16.0) / 16.0
-    return (scale * 100).rounded() / 100
-    #endif
-  }
-
-  var preferredContentSizeCategory: String {
-    #if os(visionOS)
-    return "unspecified"
-    #else
-    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
-      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-    return Self.contentSizeCategoryToken(for: category)
-    #endif
   }
 
   /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
@@ -596,6 +651,15 @@ class DeviceHelper {
     self.screenWidth = screenMetrics.width
     self.screenHeight = screenMetrics.height
     self.devicePixelRatio = screenMetrics.scale
+
+    self.uiTraits = Self.makeUITraits()
+    observeUITraitChanges()
+  }
+
+  deinit {
+    for observer in traitObservers {
+      NotificationCenter.default.removeObserver(observer)
+    }
   }
 
   func getEnrichment(
