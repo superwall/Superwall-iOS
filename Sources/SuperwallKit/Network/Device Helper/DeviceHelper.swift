@@ -221,10 +221,15 @@ class DeviceHelper {
 
   private var traitObservers: [NSObjectProtocol] = []
 
-  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``, held so it
-  /// can be reused across activations. Typed `Any?` because the protocol is iOS 17+
-  /// and a stored property can't be gated on availability.
+  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``. Typed `Any?`
+  /// because the protocol is iOS 17+ and a stored property can't be gated on
+  /// availability.
   private var traitChangeRegistration: Any?
+
+  /// The scene the registration was made against, held weakly so its deallocation is
+  /// detectable. UIKit tears a registration down with the object that created it, so
+  /// a non-nil token whose scene has gone is stale, not live.
+  private weak var observedTraitScene: UIWindowScene?
 
   /// The cached traits, refreshed so reads stay current.
   ///
@@ -262,8 +267,9 @@ class DeviceHelper {
   /// token to `X-Device-Interface-Style` and to audience filters until something
   /// else refreshes it.
   ///
-  /// Registration needs a window, which may not exist yet when `DeviceHelper` is
-  /// created, so this also runs on activation and no-ops once registered.
+  /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
+  /// created, so this also runs on activation and re-arms if the observed scene has
+  /// since gone away.
   private func registerForTraitChanges() {
     #if !os(visionOS)
     Task { @MainActor [weak self] in
@@ -278,13 +284,15 @@ class DeviceHelper {
   @available(iOS 17.0, *)
   @MainActor
   private func performTraitChangeRegistration() {
-    guard
-      traitChangeRegistration == nil,
-      let window = UIApplication.sharedApplication?.activeWindow
-    else {
+    // Already armed against a scene that still exists.
+    if traitChangeRegistration != nil && observedTraitScene != nil {
       return
     }
-    traitChangeRegistration = window.registerForTraitChanges(
+    guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
+      return
+    }
+    observedTraitScene = scene
+    traitChangeRegistration = scene.registerForTraitChanges(
       [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
     ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
       self?.uiTraits = DeviceHelper.makeUITraits()
