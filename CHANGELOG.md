@@ -2,12 +2,6 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## Unreleased
-
-### Fixes
-
-- Fixes the debugger paywall preview so its resolve request authenticates with the debugger's signed preview token instead of the app's public API key.
-
 ## 4.16.2
 
 ### Enhancements
@@ -19,6 +13,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
 - Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
+- Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
+- Fixes a Main Thread Checker warning caused by reading the device's text size and appearance off the main thread.
 
 ## 4.16.1
 
