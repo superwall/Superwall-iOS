@@ -270,6 +270,10 @@ class DeviceHelper {
   /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
   /// created, so this also runs on activation and re-arms if the observed scene has
   /// since gone away.
+  ///
+  /// iOS 17+ only. Earlier versions deliberately fall back to the notifications and
+  /// refresh-on-read rather than injecting a view into the host's window to reach
+  /// `traitCollectionDidChange`, leaving them correct after one read.
   private func registerForTraitChanges() {
     #if !os(visionOS)
     Task { @MainActor [weak self] in
