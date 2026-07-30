@@ -144,10 +144,12 @@ struct DeviceHelperTests {
     #expect(deviceHelper.fontScale == expectedScale)
   }
 
-  /// A read schedules a main-thread refresh, so an appearance change landing while
-  /// the app stays active can't leave the cache reporting a stale token. The refresh
-  /// must survive repeated reads rather than blanking the cache.
-  @Test func traits_stayCorrectAfterRepeatedReadsTriggerRefreshes() async throws {
+  /// Every read schedules a main-thread write to the cache, so a fault in the
+  /// refresh-on-read backstop would leave the cache blanked or stale rather than
+  /// holding the device's real values. Nothing here can change the device's traits,
+  /// so this pins that the writes keep the cache correct, not that a flip is picked
+  /// up — no in-process way exists to move `UIScreen.main`'s trait collection.
+  @Test func traits_stayCorrectAfterRepeatedReadsTriggerRefreshes() async {
     let dependencyContainer = DependencyContainer()
     let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
 
@@ -155,8 +157,9 @@ struct DeviceHelperTests {
       _ = await Task.detached {
         (deviceHelper.interfaceStyle, deviceHelper.fontSize, deviceHelper.preferredContentSizeCategory)
       }.value
-      // Let the scheduled refresh land before reading again.
-      try await Task.sleep(nanoseconds: 50_000_000)
+      // The refresh is enqueued on the main queue before this hop, so hopping to the
+      // main actor drains it deterministically instead of sleeping on it.
+      await MainActor.run {}
     }
 
     let expected = await MainActor.run { () -> (String, Int, String) in
