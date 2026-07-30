@@ -231,12 +231,20 @@ class DeviceHelper {
   /// a non-nil token whose scene has gone is stale, not live.
   private weak var observedTraitScene: UIWindowScene?
 
-  /// The cached traits, refreshed so reads stay current.
+  /// The current traits.
   ///
-  /// On the main thread the refresh is inline, so the caller sees the live value.
-  /// Off it, the refresh is scheduled and the caller sees the previous value —
-  /// a backstop for the window the trait hook can't cover, not the primary path.
+  /// Before iOS 17 there is no trait hook, so nothing invalidates the cache when the
+  /// appearance flips while the app stays active. These values were read live on
+  /// every access before caching was introduced, and serving a stale one would
+  /// regress `X-Device-Interface-Style` and the audience filters keyed on it — so
+  /// those versions read live. `makeUITraits()` makes the main-thread hop itself.
+  ///
+  /// From iOS 17 the hook keeps the cache current, and the scheduled refresh covers
+  /// the gap between launch and registration.
   private var currentUITraits: UITraits {
+    guard #available(iOS 17.0, *) else {
+      return DeviceHelper.makeUITraits()
+    }
     refreshUITraits()
     return uiTraits
   }
