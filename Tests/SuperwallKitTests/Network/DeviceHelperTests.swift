@@ -129,4 +129,34 @@ struct DeviceHelperTests {
     #expect(deviceHelper.fontSize == Int(scaledValue.rounded()))
     #expect(deviceHelper.fontScale == expectedScale)
   }
+
+  /// A read schedules a main-thread refresh, so an appearance change landing while
+  /// the app stays active can't leave the cache reporting a stale token. The refresh
+  /// must survive repeated reads rather than blanking the cache.
+  @Test func traits_stayCorrectAfterRepeatedReadsTriggerRefreshes() async throws {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    for _ in 0..<5 {
+      _ = await Task.detached {
+        (deviceHelper.interfaceStyle, deviceHelper.fontSize, deviceHelper.preferredContentSizeCategory)
+      }.value
+      // Let the scheduled refresh land before reading again.
+      try await Task.sleep(nanoseconds: 50_000_000)
+    }
+
+    let expected = await MainActor.run { () -> (String, Int, String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded()),
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
+    #expect(deviceHelper.interfaceStyle == expected.0)
+    #expect(deviceHelper.fontSize == expected.1)
+    #expect(deviceHelper.preferredContentSizeCategory == expected.2)
+  }
 }

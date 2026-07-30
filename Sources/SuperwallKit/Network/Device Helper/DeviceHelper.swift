@@ -190,19 +190,19 @@ class DeviceHelper {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
     }
-    return uiTraits.interfaceStyle
+    return currentUITraits.interfaceStyle
   }
 
   var fontSize: Int {
-    return uiTraits.fontSize
+    return currentUITraits.fontSize
   }
 
   var fontScale: Double {
-    return uiTraits.fontScale
+    return currentUITraits.fontScale
   }
 
   var preferredContentSizeCategory: String {
-    return uiTraits.preferredContentSizeCategory
+    return currentUITraits.preferredContentSizeCategory
   }
 
   /// Trait-derived values, cached from the main thread.
@@ -210,11 +210,40 @@ class DeviceHelper {
   /// `UIApplication.preferredContentSizeCategory`, `UIScreen.traitCollection` and
   /// `UIFontMetrics` are main-thread-only, but these are read from background
   /// contexts such as `getTemplateDevice()`. They're read on the main thread and
-  /// cached, then refreshed whenever the traits change.
+  /// cached, then refreshed on trait-change notifications and on read.
   @DispatchQueueBacked
   private var uiTraits: UITraits
 
+  /// Set while a refresh of ``uiTraits`` is already scheduled, so a burst of reads
+  /// queues one main-thread hop rather than one per read.
+  @DispatchQueueBacked
+  private var isRefreshingUITraits = false
+
   private var traitObservers: [NSObjectProtocol] = []
+
+  /// The cached traits, scheduling a refresh so the next read is current.
+  ///
+  /// The notifications alone miss a system appearance change that lands while the
+  /// app stays active — the automatic light/dark switch at sunset — which would
+  /// leave the cache reporting the wrong token until the next foreground. Reads
+  /// happen off the main thread and can't block on it, so the refresh is
+  /// asynchronous: the cache trails a change by one read instead of indefinitely.
+  private var currentUITraits: UITraits {
+    refreshUITraits()
+    return uiTraits
+  }
+
+  private func refreshUITraits() {
+    #if !os(visionOS)
+    guard !$isRefreshingUITraits.testAndSetTrue() else {
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      self?.uiTraits = DeviceHelper.makeUITraits()
+      self?.isRefreshingUITraits = false
+    }
+    #endif
+  }
 
   private struct UITraits {
     let interfaceStyle: String
