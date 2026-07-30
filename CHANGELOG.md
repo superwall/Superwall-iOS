@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Enhancements
+
+- Adds `error_domain` and `error_code` to the `transaction_fail` event parameters and delegate payload, so failed purchases can be identified by the underlying error's domain and code instead of its localized message.
+
 ## 4.16.2
 
 ### Enhancements

@@ -1768,6 +1768,60 @@ struct TrackingTests {
     #expect(result.parameters.audienceFilterParams["abandoned_product_period"] as? String == "")
   }
 
+  @Test func transaction_fail_includesErrorDomainAndCode() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: "abc"),
+      entitlements: [.stub()]
+    )
+    let rawError = NSError(
+      domain: "ASDErrorDomain",
+      code: 500,
+      userInfo: [NSLocalizedDescriptionKey: "Unable to Complete Request"]
+    )
+    let error = TransactionError.failure(rawError.localizedDescription, product)
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.Transaction(
+        state: .fail(error),
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: nil,
+        source: .internal,
+        isObserved: false,
+        storeKitVersion: .storeKit2,
+        rawError: rawError
+      )
+    )
+    #expect(result.parameters.audienceFilterParams["$message"] as? String == "Unable to Complete Request")
+    #expect(result.parameters.audienceFilterParams["$error_domain"] as? String == "ASDErrorDomain")
+    #expect(result.parameters.audienceFilterParams["$error_code"] as? Int == 500)
+    #expect(result.parameters.delegateParams["error_domain"] as? String == "ASDErrorDomain")
+    #expect(result.parameters.delegateParams["error_code"] as? Int == 500)
+  }
+
+  @Test func transaction_fail_withoutRawError_omitsDomainAndCode() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: "abc"),
+      entitlements: [.stub()]
+    )
+    let error = TransactionError.failure("failed mate", product)
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.Transaction(
+        state: .fail(error),
+        paywallInfo: paywallInfo,
+        product: product,
+        transaction: nil,
+        source: .internal,
+        isObserved: false,
+        storeKitVersion: .storeKit2
+      )
+    )
+    #expect(result.parameters.audienceFilterParams["$message"] as? String == "failed mate")
+    #expect(result.parameters.audienceFilterParams["$error_domain"] == nil)
+    #expect(result.parameters.audienceFilterParams["$error_code"] == nil)
+  }
+
   @Test func transaction_fail() async {
     let paywallInfo: PaywallInfo = .stub()
     let productId = "abc"

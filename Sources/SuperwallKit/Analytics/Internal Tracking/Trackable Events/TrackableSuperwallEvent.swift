@@ -690,6 +690,10 @@ enum InternalSuperwallEvent {
     var demandScore: Int?
     var demandTier: String?
 
+    /// The underlying error of a failed transaction, used to expose its
+    /// domain and code alongside the localized message.
+    var rawError: Error?
+
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
         return false
@@ -762,9 +766,15 @@ enum InternalSuperwallEvent {
         switch error {
         case .failure(let message, _),
           .pending(let message):
+          var otherParams: [String: Any] = ["message": message]
+          if let rawError = rawError {
+            let nsError = rawError as NSError
+            otherParams["error_domain"] = nsError.domain
+            otherParams["error_code"] = nsError.code
+          }
           let paywallInfoParams = await paywallInfo.placementParams(
             forProduct: product,
-            otherParams: ["message": message]
+            otherParams: otherParams
           )
           return placementParams + paywallInfoParams
         }
