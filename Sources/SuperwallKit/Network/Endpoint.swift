@@ -207,18 +207,14 @@ extension Endpoint where
   }
 }
 
-// MARK: - PaywallIdentifierResolution
+// MARK: - PaywallSummary
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == PaywallIdentifierResolution {
-  /// Resolves a numeric paywall database id to its identifier (slug) via the V2
-  /// resolver endpoint (`GET /v2/paywalls/resolve?id=<id>`).
+  Response == PaywallSummary {
+  /// Resolves a numeric paywall database id to its identifier (slug).
   ///
   /// Used by the debug/preview flow so it no longer has to fetch every paywall
   /// for the app just to translate a deep-link `paywall_id` into an identifier.
-  /// Authenticated with the debugger's signed preview token (the `sat_` token
-  /// from the deeplink, sent as `Authorization: Bearer <debugKey>`), not the
-  /// app's public key (see `Network.resolvePaywallIdentifier`).
   static func resolvePaywall(
     byDatabaseId databaseId: String,
     retryCount: Int
@@ -240,14 +236,10 @@ extension Endpoint where
   Kind == EndpointKinds.Superwall,
   Response == PaywallPreviewList {
   /// Lists the paywalls available to preview for the application in the
-  /// debugger's signed preview token (`GET /v2/paywalls/preview-list`).
+  /// debugger's signed preview token.
   ///
   /// Backs the debugger's "Your Paywalls" picker. Returns id/identifier/name
-  /// only — never the presentable paywall JSON — so switching previews costs one
-  /// small request rather than the fetch-all this replaced.
-  ///
-  /// Same auth as `resolvePaywall`: the `sat_` token from the deeplink, sent as
-  /// `Authorization: Bearer <debugKey>` (see `Network.listPreviewPaywalls`).
+  /// only.
   static func listPreviewPaywalls(retryCount: Int) -> Self {
     return Endpoint(
       retryCount: retryCount,

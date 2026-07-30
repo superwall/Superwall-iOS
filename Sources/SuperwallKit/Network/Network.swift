@@ -124,15 +124,10 @@ class Network {
 
   /// Resolves a numeric paywall database id to its identifier (slug) so the
   /// debug/preview flow can fetch a single paywall instead of all of them.
-  ///
-  /// Authenticated with the debugger's signed preview token (the `sat_` token
-  /// from the debugger deeplink, stored in `storage.debugKey`) via
-  /// `isForDebugging: true`, which `makeHeaders` sends as
-  /// `Authorization: Bearer <debugKey>` — not the app's public key.
   func resolvePaywallIdentifier(
     forDatabaseId databaseId: String,
     retryCount: Int = 6
-  ) async throws -> PaywallIdentifierResolution {
+  ) async throws -> PaywallSummary {
     do {
       return try await urlSession.request(
         .resolvePaywall(
@@ -157,10 +152,6 @@ class Network {
 
   /// Lists the paywalls available to preview for the application in the
   /// debugger's signed preview token, backing the debugger's paywall picker.
-  ///
-  /// Same auth as ``resolvePaywallIdentifier(forDatabaseId:retryCount:)``: the
-  /// `sat_` token from the debugger deeplink (stored in `storage.debugKey`) via
-  /// `isForDebugging: true`, not the app's public key.
   ///
   /// Retries less than the resolver: this only populates an optional picker, so
   /// a failure should degrade to "no alternatives to offer" quickly rather than

@@ -118,11 +118,11 @@ final class DebugViewController: UIViewController {
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywall: Paywall?
-  /// Backs the "Your Paywalls" picker. Populated from
-  /// `GET /v2/paywalls/preview-list` (id/name/slug only — not the full paywalls
-  /// the pre-#3456 fetch-all returned). Empty when the request fails or the app
+  /// Backs the "Your Paywalls" picker.
+  ///
+  /// Populated from `GET /v2/paywalls/preview-list`. Empty when the request fails or the app
   /// has a single paywall, in which case the picker declines to open.
-  var previewPaywalls: [PaywallPreviewListItem] = []
+  var previewPaywalls: [PaywallSummary] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
   private var initialLocaleIdentifier: String?
@@ -160,11 +160,6 @@ final class DebugViewController: UIViewController {
     initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
-    // Independent of the preview load on purpose. The picker is most useful
-    // precisely when the requested paywall fails to render — that is when you
-    // want to switch to another one — so it must not sit behind the preview's
-    // success path. Runs concurrently, and only here, so switching paywalls via
-    // the picker doesn't refetch a list that cannot have changed.
     Task { await loadPreviewPaywalls() }
   }
 
@@ -224,8 +219,7 @@ final class DebugViewController: UIViewController {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
       // Resolve the numeric database id from the deep link to the paywall's
-      // identifier (slug) with a single lookup, rather than fetching every
-      // paywall for the app and filtering in memory.
+      // identifier (slug) with a single lookup.
       do {
         let resolution = try await network.resolvePaywallIdentifier(forDatabaseId: paywallDatabaseId)
         paywallId = resolution.identifier

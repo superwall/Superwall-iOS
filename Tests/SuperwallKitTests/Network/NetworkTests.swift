@@ -183,7 +183,7 @@ struct NetworkTests {
   @Test func resolvePaywall_endpointBuildsRequest() async throws {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.debugKey = "sat_test"
-    let endpoint = Endpoint<EndpointKinds.Superwall, PaywallIdentifierResolution>.resolvePaywall(
+    let endpoint = Endpoint<EndpointKinds.Superwall, PaywallSummary>.resolvePaywall(
       byDatabaseId: "123",
       retryCount: 6
     )
