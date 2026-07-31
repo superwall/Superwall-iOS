@@ -177,12 +177,15 @@ struct DeviceHelperTests {
     #expect(deviceHelper.preferredContentSizeCategory == expected.2)
   }
 
-  /// The template takes its four trait fields from one `currentUITraits` snapshot
-  /// rather than four separate reads, so before iOS 17 a template costs one blocking
-  /// main-queue hop instead of four. That inlines the `interfaceStyleOverride`
-  /// short-circuit the `interfaceStyle` property used to apply, so pin that the
-  /// override still wins and the other three fields still come from the device.
-  @Test func templateDevice_usesOneTraitSnapshotAndKeepsTheInterfaceStyleOverride() async {
+  /// Taking the four trait fields from one `currentUITraits` snapshot inlined the
+  /// `interfaceStyleOverride` short-circuit that the `interfaceStyle` property used
+  /// to apply, so pin that the override still wins and the other three fields still
+  /// come from the device.
+  ///
+  /// The snapshot itself isn't pinned here — nothing observable distinguishes one
+  /// read from four, since `makeUITraits()` is private and its hop count can't be
+  /// counted from a test. That property rests on the comments at both call sites.
+  @Test func templateDevice_keepsTheInterfaceStyleOverrideAndFillsTheRestFromTheDevice() async {
     let dependencyContainer = DependencyContainer()
     let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
 
