@@ -201,6 +201,10 @@ struct DeviceHelperTests {
     // No override: every field mirrors the device.
     let template = await deviceHelper.getTemplateDevice()
     #expect(template["interfaceStyle"] as? String == expected.style)
+    // The template resolves the override by hand instead of going through
+    // `interfaceStyle`, which is what `X-Device-Interface-Style` uses. Pin that the
+    // two agree so the duplicated precedence rule can't drift silently.
+    #expect(template["interfaceStyle"] as? String == deviceHelper.interfaceStyle)
     #expect(template["fontSize"] as? Int == expected.fontSize)
     // Cast both sides to `Double`: comparing against the `[String: Any]` value
     // directly can resolve to SwiftyJSON's `NSNumber ==`.
@@ -212,6 +216,7 @@ struct DeviceHelperTests {
     deviceHelper.interfaceStyleOverride = .dark
     let overridden = await deviceHelper.getTemplateDevice()
     #expect(overridden["interfaceStyle"] as? String == "Dark")
+    #expect(overridden["interfaceStyle"] as? String == deviceHelper.interfaceStyle)
     #expect(overridden["interfaceStyleMode"] as? String == "manual")
     #expect(overridden["fontSize"] as? Int == expected.fontSize)
     #expect(overridden["fontScale"] as? Double == Double(expected.fontScale))

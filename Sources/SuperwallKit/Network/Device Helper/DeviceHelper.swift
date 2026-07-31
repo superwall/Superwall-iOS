@@ -186,6 +186,14 @@ class DeviceHelper {
 
   var interfaceStyleOverride: InterfaceStyle?
 
+  /// Backs `X-Device-Interface-Style`. `getTemplateDevice()` resolves the override
+  /// the same way against its own trait snapshot — change one and change the other,
+  /// or the template and the header disagree on a backend-contract field.
+  ///
+  /// Not folded into a shared `interfaceStyle(from:)` helper on purpose: passing
+  /// `currentUITraits` would evaluate it eagerly, and below iOS 17 that read is a
+  /// blocking main-queue hop — one per network request whenever an override is set.
+  /// The early return here avoids it.
   var interfaceStyle: String {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
@@ -800,6 +808,9 @@ class DeviceHelper {
     // Snapshot once. The four trait-derived fields below each go through
     // `currentUITraits`, which before iOS 17 reads live behind a blocking
     // main-queue hop, so reading them separately would make four of those per call.
+    // Taking the snapshot means `interfaceStyle` below resolves the override
+    // inline rather than going through ``interfaceStyle``, so the two resolve it
+    // the same way by hand — keep them in step.
     let traits = currentUITraits
 
     let template = DeviceTemplate(
