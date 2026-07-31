@@ -237,7 +237,9 @@ class DeviceHelper {
   /// appearance flips while the app stays active. These values were read live on
   /// every access before caching was introduced, and serving a stale one would
   /// regress `X-Device-Interface-Style` and the audience filters keyed on it — so
-  /// those versions read live. `makeUITraits()` makes the main-thread hop itself.
+  /// those versions read live. `makeUITraits()` makes the main-thread hop itself, and
+  /// off the main thread that hop *blocks* the caller until the main queue drains.
+  /// Read this once and reuse the snapshot rather than touching it per field.
   ///
   /// From iOS 17 the hook keeps the cache current, and the scheduled refresh covers
   /// the gap between launch and registration.
@@ -795,6 +797,11 @@ class DeviceHelper {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
+    // Snapshot once. The four trait-derived fields below each go through
+    // `currentUITraits`, which before iOS 17 reads live behind a blocking
+    // main-queue hop, so reading them separately would make four of those per call.
+    let traits = currentUITraits
+
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
@@ -816,10 +823,10 @@ class DeviceHelper {
       interfaceType: interfaceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
-      interfaceStyle: interfaceStyle,
-      fontSize: fontSize,
-      fontScale: fontScale,
-      preferredContentSizeCategory: preferredContentSizeCategory,
+      interfaceStyle: interfaceStyleOverride?.description ?? traits.interfaceStyle,
+      fontSize: traits.fontSize,
+      fontScale: traits.fontScale,
+      preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,

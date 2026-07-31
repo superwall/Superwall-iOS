@@ -176,4 +176,47 @@ struct DeviceHelperTests {
     #expect(deviceHelper.fontSize == expected.1)
     #expect(deviceHelper.preferredContentSizeCategory == expected.2)
   }
+
+  /// The template takes its four trait fields from one `currentUITraits` snapshot
+  /// rather than four separate reads, so before iOS 17 a template costs one blocking
+  /// main-queue hop instead of four. That inlines the `interfaceStyleOverride`
+  /// short-circuit the `interfaceStyle` property used to apply, so pin that the
+  /// override still wins and the other three fields still come from the device.
+  @Test func templateDevice_usesOneTraitSnapshotAndKeepsTheInterfaceStyleOverride() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let expected = await MainActor.run { () -> (style: String, fontSize: Int, fontScale: Double, category: String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(scaledValue.rounded()),
+        ((scaledValue / 16.0) * 100).rounded() / 100,
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
+    // No override: every field mirrors the device.
+    let template = await deviceHelper.getTemplateDevice()
+    #expect(template["interfaceStyle"] as? String == expected.style)
+    #expect(template["fontSize"] as? Int == expected.fontSize)
+    // Cast both sides to `Double`: comparing against the `[String: Any]` value
+    // directly can resolve to SwiftyJSON's `NSNumber ==`.
+    #expect(template["fontScale"] as? Double == Double(expected.fontScale))
+    #expect(template["preferredContentSizeCategory"] as? String == expected.category)
+
+    // Override set: it wins for `interfaceStyle` alone, and the snapshot still
+    // supplies the other three.
+    deviceHelper.interfaceStyleOverride = .dark
+    let overridden = await deviceHelper.getTemplateDevice()
+    #expect(overridden["interfaceStyle"] as? String == "Dark")
+    #expect(overridden["interfaceStyleMode"] as? String == "manual")
+    #expect(overridden["fontSize"] as? Int == expected.fontSize)
+    #expect(overridden["fontScale"] as? Double == Double(expected.fontScale))
+    #expect(overridden["preferredContentSizeCategory"] as? String == expected.category)
+
+    deviceHelper.interfaceStyleOverride = nil
+  }
 }
