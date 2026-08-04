@@ -334,7 +334,10 @@ extension DependencyContainer: ViewControllerFactory {
   }
 
   @MainActor
-  func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController {
+  func makeDebugViewController(
+    withDatabaseId id: String?,
+    overrides: DebugPaywallOverrides
+  ) -> DebugViewController {
     let viewController = DebugViewController(
       storeKitManager: storeKitManager,
       network: network,
@@ -344,6 +347,7 @@ extension DependencyContainer: ViewControllerFactory {
       factory: self
     )
     viewController.paywallDatabaseId = id
+    viewController.overrides = overrides
     viewController.modalPresentationStyle = .overFullScreen
     return viewController
   }

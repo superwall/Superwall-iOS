@@ -87,4 +87,48 @@ struct SWDebugManagerLogicTests {
     // Then
     #expect(value == nil)
   }
+
+  @Test func getQueryItemValue_trialState() {
+    // Given
+    let url = URL(string: "myapp://?superwall_debug=true&trial_state=eligible")!
+
+    // When
+    let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .trialState)
+
+    // Then
+    #expect(value == "eligible")
+  }
+
+  @Test func getQueryItemValue_appearance() {
+    // Given
+    let url = URL(string: "myapp://?superwall_debug=true&appearance=dark")!
+
+    // When
+    let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .appearance)
+
+    // Then
+    #expect(value == "dark")
+  }
+
+  @Test func getQueryItemValue_locale() {
+    // Given
+    let url = URL(string: "myapp://?superwall_debug=true&locale=de")!
+
+    // When
+    let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .locale)
+
+    // Then
+    #expect(value == "de")
+  }
+
+  @Test func getQueryItemValue_present() {
+    // Given
+    let url = URL(string: "myapp://?superwall_debug=true&present=true")!
+
+    // When
+    let value = SWDebugManagerLogic.getQueryItemValue(fromUrl: url, withName: .present)
+
+    // Then
+    #expect(value == "true")
+  }
 }

@@ -124,8 +124,12 @@ final class DebugViewController: UIViewController {
   /// has a single paywall, in which case the picker declines to open.
   var previewPaywalls: [PaywallSummary] = []
   var previewViewContent: UIView?
+  var overrides = DebugPaywallOverrides()
   private var cancellable: AnyCancellable?
   private var initialLocaleIdentifier: String?
+  private var initialInterfaceStyleOverride: InterfaceStyle?
+  private var didAppear = false
+  private var previewTask: Task<Void, Never>?
 
   private unowned let storeKitManager: StoreKitManager
   private unowned let network: Network
@@ -158,9 +162,36 @@ final class DebugViewController: UIViewController {
   override func viewDidLoad() {
     super.viewDidLoad()
     initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
+    initialInterfaceStyleOverride = Superwall.shared.dependencyContainer.deviceHelper.interfaceStyleOverride
+    applyOverrides()
     addSubviews()
-    Task { await loadPreview() }
+    previewTask = Task { await loadPreview() }
     Task { await loadPreviewPaywalls() }
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    didAppear = true
+    presentAutomaticallyIfNeeded()
+  }
+
+  private func applyOverrides() {
+    if let localeIdentifier = overrides.localeIdentifier {
+      Superwall.shared.options.localeIdentifier = localeIdentifier
+    }
+    if let appearance = overrides.appearance {
+      Superwall.shared.setInterfaceStyle(to: appearance.interfaceStyle)
+    }
+  }
+
+  private func presentAutomaticallyIfNeeded() {
+    guard didAppear,
+      overrides.shouldPresent,
+      paywall != nil else {
+      return
+    }
+    overrides.shouldPresent = false
+    loadAndShowPaywall(introOfferAvailable: overrides.freeTrialOverride ?? (paywall?.isFreeTrialAvailable ?? false))
   }
 
   private func addSubviews() {
@@ -241,7 +272,7 @@ final class DebugViewController: UIViewController {
       let request = factory.makePaywallRequest(
         placementData: nil,
         responseIdentifiers: .init(paywallId: paywallId),
-        overrides: nil,
+        overrides: overrides.freeTrialOverride.map { PaywallRequest.Overrides(isFreeTrial: $0) },
         isDebuggerLaunched: true,
         presentationSourceType: nil
       )
@@ -250,10 +281,17 @@ final class DebugViewController: UIViewController {
       let productVariables = await storeKitManager.getProductVariables(for: paywall)
       paywall.productVariables = productVariables
 
+      // Debugger dismissed mid-load (previewTask cancelled): skip rendering/presenting.
+      guard !Task.isCancelled else {
+        return
+      }
+
       self.paywall = paywall
       self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
       self.activityIndicator.stopAnimating()
       self.addPaywallPreview()
+
+      presentAutomaticallyIfNeeded()
     } catch {
       Logger.debug(
         logLevel: .error,
@@ -551,9 +589,13 @@ final class DebugViewController: UIViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
+    previewTask?.cancel()
     paywallManager.resetCache()
     debugManager.isDebuggerLaunched = false
     Superwall.shared.options.localeIdentifier = initialLocaleIdentifier
+    if overrides.appearance != nil {
+      Superwall.shared.setInterfaceStyle(to: initialInterfaceStyleOverride)
+    }
   }
 }
 
