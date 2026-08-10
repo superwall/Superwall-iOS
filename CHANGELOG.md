@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Enhancements
+
+- Injects the device locale into the paywall webview at document start so paywalls with translations render in the user's language on first paint, instead of briefly showing the default language and re-rendering once device attributes arrive.
+
 ## 4.16.2
 
 ### Enhancements
