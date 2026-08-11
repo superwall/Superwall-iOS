@@ -186,14 +186,214 @@ class DeviceHelper {
 
   var interfaceStyleOverride: InterfaceStyle?
 
+  /// Backs `X-Device-Interface-Style`. `getTemplateDevice()` resolves the override
+  /// the same way against its own trait snapshot — change one and change the other,
+  /// or the template and the header disagree on a backend-contract field.
+  ///
+  /// Not folded into a shared `interfaceStyle(from:)` helper on purpose: passing
+  /// `currentUITraits` would evaluate it eagerly, and below iOS 17 that read is a
+  /// blocking main-queue hop — one per network request whenever an override is set.
+  /// The early return here avoids it.
   var interfaceStyle: String {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
     }
+    return currentUITraits.interfaceStyle
+  }
+
+  var fontSize: Int {
+    return currentUITraits.fontSize
+  }
+
+  var fontScale: Double {
+    return currentUITraits.fontScale
+  }
+
+  var preferredContentSizeCategory: String {
+    return currentUITraits.preferredContentSizeCategory
+  }
+
+  /// Trait-derived values, cached from the main thread.
+  ///
+  /// `UIApplication.preferredContentSizeCategory`, `UIScreen.traitCollection` and
+  /// `UIFontMetrics` are main-thread-only, but these are read from background
+  /// contexts such as `getTemplateDevice()`. They're read on the main thread and
+  /// cached, then refreshed on trait-change notifications and on read.
+  @DispatchQueueBacked
+  private var uiTraits: UITraits
+
+  /// Set while a refresh of ``uiTraits`` is already scheduled, so a burst of reads
+  /// queues one main-thread hop rather than one per read.
+  @DispatchQueueBacked
+  private var isRefreshingUITraits = false
+
+  private var traitObservers: [NSObjectProtocol] = []
+
+  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``. Typed `Any?`
+  /// because the protocol is iOS 17+ and a stored property can't be gated on
+  /// availability.
+  private var traitChangeRegistration: Any?
+
+  /// The scene the registration was made against, held weakly. A registration goes
+  /// stale two ways: UIKit tears it down when its scene deallocates, and a
+  /// multi-window host can keep the scene alive in the background while another
+  /// becomes active — where trait updates are deferred, so flips the user can see
+  /// never fire it. Both show up as this no longer matching the active scene.
+  private weak var observedTraitScene: UIWindowScene?
+
+  /// The current traits.
+  ///
+  /// Before iOS 17 there is no trait hook, so nothing invalidates the cache when the
+  /// appearance flips while the app stays active. These values were read live on
+  /// every access before caching was introduced, and serving a stale one would
+  /// regress `X-Device-Interface-Style` and the audience filters keyed on it — so
+  /// those versions read live. `makeUITraits()` makes the main-thread hop itself, and
+  /// off the main thread that hop *blocks* the caller until the main queue drains.
+  /// Read this once and reuse the snapshot rather than touching it per field.
+  ///
+  /// From iOS 17 the hook keeps the cache current, and the scheduled refresh covers
+  /// the gap between launch and registration.
+  private var currentUITraits: UITraits {
+    guard #available(iOS 17.0, *) else {
+      return DeviceHelper.makeUITraits()
+    }
+    refreshUITraits()
+    return uiTraits
+  }
+
+  private func refreshUITraits() {
+    #if !os(visionOS)
+    // The wrapper's setter and getter share one serial queue, so this write is
+    // ordered ahead of `currentUITraits`' read and the caller sees it.
+    if Thread.isMainThread {
+      uiTraits = DeviceHelper.makeUITraits()
+      return
+    }
+    if $isRefreshingUITraits.testAndSetTrue() {
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      self?.uiTraits = DeviceHelper.makeUITraits()
+      self?.isRefreshingUITraits = false
+    }
+    #endif
+  }
+
+  /// Updates the cache at the moment the appearance or text size flips.
+  ///
+  /// There is no notification for `userInterfaceStyle`, so a system appearance
+  /// change while the app stays active — automatic light/dark at sunset — reaches
+  /// us only through a trait hook. Without this the cache reports the previous
+  /// token to `X-Device-Interface-Style` and to audience filters until something
+  /// else refreshes it.
+  ///
+  /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
+  /// created, so this also runs on activation and re-arms if the observed scene has
+  /// since gone away or stopped being the active one.
+  ///
+  /// iOS 17+ only. Earlier releases read live on every access instead, rather than
+  /// injecting a view into the host's window to reach `traitCollectionDidChange`.
+  private func registerForTraitChanges() {
+    #if !os(visionOS)
+    Task { @MainActor [weak self] in
+      if #available(iOS 17.0, *) {
+        self?.performTraitChangeRegistration()
+      }
+    }
+    #endif
+  }
+
+  #if !os(visionOS)
+  @available(iOS 17.0, *)
+  @MainActor
+  private func performTraitChangeRegistration() {
+    guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
+      return
+    }
+    // Already armed against the scene that's currently active.
+    if traitChangeRegistration != nil && observedTraitScene === scene {
+      return
+    }
+    // The observed scene either died or ceded activity to this one. Moving the
+    // registration rather than adding a second keeps it single: one live token,
+    // fired by the scene the user is looking at.
+    if let staleRegistration = traitChangeRegistration as? UITraitChangeRegistration {
+      observedTraitScene?.unregisterForTraitChanges(staleRegistration)
+    }
+    observedTraitScene = scene
+    traitChangeRegistration = scene.registerForTraitChanges(
+      [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
+    ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
+      self?.uiTraits = DeviceHelper.makeUITraits()
+    }
+  }
+  #endif
+
+  private struct UITraits {
+    let interfaceStyle: String
+    let fontSize: Int
+    let fontScale: Double
+    let preferredContentSizeCategory: String
+
+    /// The values used when UIKit traits aren't available, e.g. on visionOS.
+    static let unavailable = UITraits(
+      interfaceStyle: "Unknown",
+      fontSize: 16,
+      fontScale: 1.0,
+      preferredContentSizeCategory: "unspecified"
+    )
+  }
+
+  private static func makeUITraits() -> UITraits {
     #if os(visionOS)
-    return "Unknown"
+    return .unavailable
     #else
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    let read = { () -> UITraits in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = UIFontMetrics.default.scaledValue(for: 16.0)
+
+      return UITraits(
+        interfaceStyle: interfaceStyleToken(
+          for: UIScreen.main.traitCollection.userInterfaceStyle
+        ),
+        fontSize: Int(scaledValue.rounded()),
+        fontScale: ((scaledValue / 16.0) * 100).rounded() / 100,
+        preferredContentSizeCategory: contentSizeCategoryToken(for: category)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
+    #endif
+  }
+
+  /// Refreshes the cached traits when the user changes their text size, or when the
+  /// app becomes active after an appearance change. Both notifications are posted on
+  /// the main thread.
+  ///
+  /// Activation also retries ``registerForTraitChanges()``, since a window is more
+  /// likely to exist by then than when `DeviceHelper` was created.
+  private func observeUITraitChanges() {
+    #if !os(visionOS)
+    let names: [Notification.Name] = [
+      UIContentSizeCategory.didChangeNotification,
+      UIApplication.didBecomeActiveNotification
+    ]
+    traitObservers = names.map { name in
+      NotificationCenter.default.addObserver(
+        forName: name,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        self?.uiTraits = DeviceHelper.makeUITraits()
+        self?.registerForTraitChanges()
+      }
+    }
+    #endif
+  }
+
+  /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
     switch style {
     case .unspecified:
       return "Unspecified"
@@ -204,34 +404,6 @@ class DeviceHelper {
     default:
       return "Unknown"
     }
-    #endif
-	}
-
-  var fontSize: Int {
-    #if os(visionOS)
-    return 16
-    #else
-    return Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded())
-    #endif
-  }
-
-  var fontScale: Double {
-    #if os(visionOS)
-    return 1.0
-    #else
-    let scale = UIFontMetrics.default.scaledValue(for: 16.0) / 16.0
-    return (scale * 100).rounded() / 100
-    #endif
-  }
-
-  var preferredContentSizeCategory: String {
-    #if os(visionOS)
-    return "unspecified"
-    #else
-    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
-      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-    return Self.contentSizeCategoryToken(for: category)
-    #endif
   }
 
   /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
@@ -596,6 +768,16 @@ class DeviceHelper {
     self.screenWidth = screenMetrics.width
     self.screenHeight = screenMetrics.height
     self.devicePixelRatio = screenMetrics.scale
+
+    self.uiTraits = Self.makeUITraits()
+    observeUITraitChanges()
+    registerForTraitChanges()
+  }
+
+  deinit {
+    for observer in traitObservers {
+      NotificationCenter.default.removeObserver(observer)
+    }
   }
 
   func getEnrichment(
@@ -631,6 +813,14 @@ class DeviceHelper {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
+    // Snapshot once. The four trait-derived fields below each go through
+    // `currentUITraits`, which before iOS 17 reads live behind a blocking
+    // main-queue hop, so reading them separately would make four of those per call.
+    // Taking the snapshot means `interfaceStyle` below resolves the override
+    // inline rather than going through ``interfaceStyle``, so the two resolve it
+    // the same way by hand — keep them in step.
+    let traits = currentUITraits
+
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
@@ -652,10 +842,10 @@ class DeviceHelper {
       interfaceType: interfaceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
-      interfaceStyle: interfaceStyle,
-      fontSize: fontSize,
-      fontScale: fontScale,
-      preferredContentSizeCategory: preferredContentSizeCategory,
+      interfaceStyle: interfaceStyleOverride?.description ?? traits.interfaceStyle,
+      fontSize: traits.fontSize,
+      fontScale: traits.fontScale,
+      preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,
