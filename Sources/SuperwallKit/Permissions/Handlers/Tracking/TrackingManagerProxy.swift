@@ -36,11 +36,14 @@ final class TrackingManagerProxy: NSObject {
     super.init()
   }
 
-  @objc var trackingStatusSelectorName: String {
+  // Deliberately not `@objc`: an `@objc` member emits its name into the binary's
+  // Objective-C method metadata, which is the section this file's mangling exists
+  // to keep Apple's API names out of. These are read from Swift only.
+  var trackingStatusSelectorName: String {
     Self.mangledTrackingStatusSelector.rot13()
   }
 
-  @objc var requestTrackingSelectorName: String {
+  var requestTrackingSelectorName: String {
     Self.mangledRequestTrackingSelector.rot13()
   }
 

@@ -16,6 +16,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
 - Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
 - Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
+- Keeps unused microphone, location, and contacts permission code out of your app's binary too.
 
 ## 4.16.1
 

@@ -34,36 +34,38 @@ final class LocationManagerProxy: NSObject {
     NSClassFromString(mangledLocationManagerClassName.rot13())
   }
 
-  @objc var authorizationStatusSelectorName: String {
+  private var locationManager: NSObject?
+
+  init(locationManagerClass: AnyClass? = LocationManagerProxy.locationManagerClass) {
+    super.init()
+    guard let managerType = locationManagerClass as? NSObject.Type else {
+      return
+    }
+    locationManager = managerType.init()
+  }
+
+  // Deliberately not `@objc`: an `@objc` member emits its name into the binary's
+  // Objective-C method metadata, which is the section this file's mangling exists
+  // to keep Apple's API names out of. These are read from Swift only.
+  var authorizationStatusSelectorName: String {
     Self.mangledAuthorizationStatusSelector.rot13()
   }
 
-  @objc var requestWhenInUseSelectorName: String {
+  var requestWhenInUseSelectorName: String {
     Self.mangledRequestWhenInUseSelector.rot13()
   }
 
-  @objc var requestAlwaysSelectorName: String {
+  var requestAlwaysSelectorName: String {
     Self.mangledRequestAlwaysSelector.rot13()
   }
 
-  @objc var setDelegateSelectorName: String {
+  var setDelegateSelectorName: String {
     Self.mangledSetDelegateSelector.rot13()
   }
 
   private static func instanceIMP(_ cls: AnyClass, _ sel: Selector) -> IMP? {
     guard let method = class_getInstanceMethod(cls, sel) else { return nil }
     return method_getImplementation(method)
-  }
-
-  private var locationManager: NSObject?
-
-  override init() {
-    super.init()
-    let cls: AnyClass = Self.locationManagerClass ?? FakeLocationManager.self
-    guard let managerType = cls as? NSObject.Type else {
-      return
-    }
-    locationManager = managerType.init()
   }
 
   func authorizationStatus() -> Int {
