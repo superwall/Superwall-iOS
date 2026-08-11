@@ -30,13 +30,13 @@ final class LocationManagerProxy: NSObject {
   // ROT13("setDelegate:")
   static let mangledSetDelegateSelector = "frgQryrtngr:"
 
-  static var locationManagerClass: AnyClass? {
-    NSClassFromString(mangledLocationManagerClassName.rot13())
-  }
-
   private var locationManager: NSObject?
 
-  init(locationManagerClass: AnyClass? = LocationManagerProxy.locationManagerClass) {
+  init(
+    locationManagerClass: AnyClass? = NSClassFromString(
+      LocationManagerProxy.mangledLocationManagerClassName.rot13()
+    )
+  ) {
     super.init()
     guard let managerType = locationManagerClass as? NSObject.Type else {
       return

@@ -35,20 +35,39 @@ if [ ! -f "$BINARY" ]; then
 fi
 
 # Add a name here when the SDK starts reaching a new permission API by runtime lookup.
+#
+# Entries are bare names, not full selectors: a leaked name can wear several suffixes
+# — "requestRecordPermission:" from an `@objc` member, "requestRecordPermission()"
+# from `withCheckedContinuation`'s `#function` default — and the bare form matches
+# them all. An entry must never legitimately appear in the scanned sections, so a hit
+# is always a real leak.
+#
+# Deliberately absent: `LocationPermissionDelegate`'s callback selectors
+# (locationManagerDidChangeAuthorization:, locationManager:didChangeAuthorization:).
+# CLLocationManager dispatches those by selector at runtime, so their metadata has to
+# exist for the callbacks to arrive. See the note on that class.
+#
+# Also absent: names from the camera, photos, and notification handlers. Those call
+# their frameworks directly rather than through mangled runtime lookups — e.g.
+# `AVCaptureDevice.requestAccess(for:)` legitimately emits
+# `requestAccessForMediaType:completionHandler:` — so their names in the binary are
+# how the SDK works today, not a leak. If they ever join the proxy scheme, add them.
 FORBIDDEN=(
   # Tracking — the one App Store Connect actively warns about.
   "NSUserTrackingUsageDescription"
   "ATTrackingManager"
-  "requestTrackingAuthorizationWithCompletionHandler:"
+  "requestTrackingAuthorization"
+  "trackingAuthorizationStatus"
   # Microphone, location, and contacts — reached the same way, so hold them to the
   # same standard even though no scanner is known to flag them.
   "AVAudioSession"
-  "requestRecordPermission:"
+  "recordPermission"
+  "requestRecordPermission"
   "CLLocationManager"
   "requestWhenInUseAuthorization"
   "requestAlwaysAuthorization"
   "CNContactStore"
-  "requestAccessForEntityType:completionHandler:"
+  "requestAccessForEntityType"
 )
 
 echo "🔍 Scanning $(basename "$BINARY") for privacy API signatures..."

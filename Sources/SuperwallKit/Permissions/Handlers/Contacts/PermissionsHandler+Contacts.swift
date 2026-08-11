@@ -28,7 +28,7 @@ extension PermissionHandler {
 
     do {
       let proxy = ContactStoreProxy()
-      let granted = try await proxy.requestAccess()
+      let granted = try await proxy.requestPermission()
       return granted ? .granted : .denied
     } catch {
       Logger.debug(

@@ -103,27 +103,9 @@ struct AudioSessionProxyMissingClassTests {
     #expect(proxy.recordPermission() == -1)
   }
 
-  @Test func missingSession_requestRecordPermission_returnsFalse() async {
+  @Test func missingSession_requestPermission_returnsFalse() async {
     let proxy = AudioSessionProxy(audioSessionClass: nil)
-    let granted = await proxy.requestRecordPermission()
-    #expect(granted == false)
-  }
-}
-
-/// `ContactStoreProxy` had no fake-class tests, but it carried the same `@objc` fake.
-/// Pin its guarded path too, so the deleted `FakeContactStore` can't quietly return.
-@Suite
-struct ContactStoreProxyMissingClassTests {
-  /// -1 is the "unavailable" sentinel `checkContactsPermission()` maps to
-  /// `.unsupported`, and is what the fake's class method returned.
-  @Test func missingStore_authorizationStatus_returnsUnavailable() {
-    let proxy = ContactStoreProxy(contactStoreClass: nil)
-    #expect(proxy.authorizationStatus() == -1)
-  }
-
-  @Test func missingStore_requestAccess_returnsFalse() async throws {
-    let proxy = ContactStoreProxy(contactStoreClass: nil)
-    let granted = try await proxy.requestAccess()
+    let granted = await proxy.requestPermission()
     #expect(granted == false)
   }
 }

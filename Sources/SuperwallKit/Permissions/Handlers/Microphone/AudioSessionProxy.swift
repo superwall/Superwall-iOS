@@ -81,7 +81,11 @@ final class AudioSessionProxy: NSObject {
     return function(instance, sel)
   }
 
-  func requestRecordPermission() async -> Bool {
+  // Named away from Apple's `requestRecordPermission` deliberately:
+  // `withCheckedContinuation`'s `function: String = #function` default expands the
+  // enclosing method name into a string literal in the binary, which is the same
+  // leak the mangling exists to prevent.
+  func requestPermission() async -> Bool {
     guard
       let cls = audioSessionClass,
       let instance = sharedInstance()

@@ -78,7 +78,10 @@ final class ContactStoreProxy: NSObject {
     return function(cls as AnyObject, sel, Self.contactsEntityType)
   }
 
-  func requestAccess() async throws -> Bool {
+  // Named away from Apple's `requestAccess` deliberately:
+  // `withCheckedThrowingContinuation`'s `function: String = #function` default
+  // expands the enclosing method name into a string literal in the binary.
+  func requestPermission() async throws -> Bool {
     guard let storeType = contactStoreClass as? NSObject.Type else {
       return false
     }
