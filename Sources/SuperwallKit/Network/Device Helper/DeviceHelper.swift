@@ -234,9 +234,11 @@ class DeviceHelper {
   /// availability.
   private var traitChangeRegistration: Any?
 
-  /// The scene the registration was made against, held weakly so its deallocation is
-  /// detectable. UIKit tears a registration down with the object that created it, so
-  /// a non-nil token whose scene has gone is stale, not live.
+  /// The scene the registration was made against, held weakly. A registration goes
+  /// stale two ways: UIKit tears it down when its scene deallocates, and a
+  /// multi-window host can keep the scene alive in the background while another
+  /// becomes active — where trait updates are deferred, so flips the user can see
+  /// never fire it. Both show up as this no longer matching the active scene.
   private weak var observedTraitScene: UIWindowScene?
 
   /// The current traits.
@@ -267,7 +269,7 @@ class DeviceHelper {
       uiTraits = DeviceHelper.makeUITraits()
       return
     }
-    guard !$isRefreshingUITraits.testAndSetTrue() else {
+    if $isRefreshingUITraits.testAndSetTrue() {
       return
     }
     DispatchQueue.main.async { [weak self] in
@@ -287,7 +289,7 @@ class DeviceHelper {
   ///
   /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
   /// created, so this also runs on activation and re-arms if the observed scene has
-  /// since gone away.
+  /// since gone away or stopped being the active one.
   ///
   /// iOS 17+ only. Earlier releases read live on every access instead, rather than
   /// injecting a view into the host's window to reach `traitCollectionDidChange`.
@@ -305,12 +307,18 @@ class DeviceHelper {
   @available(iOS 17.0, *)
   @MainActor
   private func performTraitChangeRegistration() {
-    // Already armed against a scene that still exists.
-    if traitChangeRegistration != nil && observedTraitScene != nil {
-      return
-    }
     guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
       return
+    }
+    // Already armed against the scene that's currently active.
+    if traitChangeRegistration != nil && observedTraitScene === scene {
+      return
+    }
+    // The observed scene either died or ceded activity to this one. Moving the
+    // registration rather than adding a second keeps it single: one live token,
+    // fired by the scene the user is looking at.
+    if let staleRegistration = traitChangeRegistration as? UITraitChangeRegistration {
+      observedTraitScene?.unregisterForTraitChanges(staleRegistration)
     }
     observedTraitScene = scene
     traitChangeRegistration = scene.registerForTraitChanges(
