@@ -52,6 +52,14 @@ fi
 # `AVCaptureDevice.requestAccess(for:)` legitimately emits
 # `requestAccessForMediaType:completionHandler:` — so their names in the binary are
 # how the SDK works today, not a leak. If they ever join the proxy scheme, add them.
+#
+# Also absent, and unlike the above this one is a genuine `@objc` shim: `FakeASIdManager`
+# (its class name, and its `sharedManager` selector). It survives where the four
+# permission fakes were deleted because it is load-bearing — it's what makes
+# `classType.sharedManager()` typecheck through AnyObject lookup — and `sharedManager`
+# is a generic Cocoa selector shared by many classes, so it fingerprints nothing. The
+# AdSupport names that would fingerprint (the class and property below) are mangled, and
+# guarded here.
 FORBIDDEN=(
   # Tracking — the one App Store Connect actively warns about.
   "NSUserTrackingUsageDescription"
@@ -68,6 +76,10 @@ FORBIDDEN=(
   "requestAlwaysAuthorization"
   "CNContactStore"
   "requestAccessForEntityType"
+  # AdSupport (IDFA) — reached through the same runtime-lookup proxy, which mangles
+  # both the class name and the `advertisingIdentifier` property.
+  "ASIdentifierManager"
+  "advertisingIdentifier"
 )
 
 echo "🔍 Scanning $(basename "$BINARY") for privacy API signatures..."
