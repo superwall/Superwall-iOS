@@ -15,6 +15,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
 - Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
 - Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
+- Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
+- Stops Apple's microphone, location, and contacts class and selector names appearing in your app's binary when you don't use those permissions.
 
 ## 4.16.1
 

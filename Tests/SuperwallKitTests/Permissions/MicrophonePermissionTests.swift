@@ -78,32 +78,34 @@ struct AudioSessionProxyTests {
 
   @Test func sharedInstance_returnsNonNil() {
     let proxy = AudioSessionProxy()
-    // In test environment, this should return either real AVAudioSession or FakeAudioSession
+    // AVAudioSession resolves at runtime on every platform the tests run on.
     let instance = proxy.sharedInstance()
     #expect(instance != nil)
   }
 }
 
+/// These replace the tests for the deleted `FakeAudioSession`. The fake stood in for
+/// `AVAudioSession` when AVFoundation was unavailable, but its `@objc` members emitted
+/// Apple's real selector names into the binary — the leak this SDK's mangling exists to
+/// prevent. The proxy now guards on a missing class instead, so pin what it returns
+/// down that path.
 @Suite
-struct FakeAudioSessionTests {
-  @Test func sharedInstance_returnsFakeAudioSession() {
-    let instance = FakeAudioSession.sharedInstance()
-    #expect(instance is FakeAudioSession)
+struct AudioSessionProxyMissingClassTests {
+  @Test func missingSession_sharedInstance_returnsNil() {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    #expect(proxy.sharedInstance() == nil)
   }
 
-  @Test func recordPermission_returnsNegativeOne() {
-    let fake = FakeAudioSession()
-    #expect(fake.recordPermission() == -1)
+  /// -1 is the "unavailable" sentinel `checkMicrophonePermission()` maps to
+  /// `.unsupported`, and is what the fake's `recordPermission()` returned.
+  @Test func missingSession_recordPermission_returnsUnavailable() {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    #expect(proxy.recordPermission() == -1)
   }
 
-  @Test func requestRecordPermission_callsCompletionWithFalse() {
-    let fake = FakeAudioSession()
-    var result: Bool?
-
-    fake.requestRecordPermission { granted in
-      result = granted
-    }
-
-    #expect(result == false)
+  @Test func missingSession_requestPermission_returnsFalse() async {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    let granted = await proxy.requestPermission()
+    #expect(granted == false)
   }
 }

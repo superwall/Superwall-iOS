@@ -30,7 +30,7 @@ extension PermissionHandler {
     }
 
     let proxy = AudioSessionProxy()
-    let granted = await proxy.requestRecordPermission()
+    let granted = await proxy.requestPermission()
     return granted ? .granted : .denied
   }
 }
