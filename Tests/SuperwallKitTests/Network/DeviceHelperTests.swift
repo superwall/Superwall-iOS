@@ -408,19 +408,19 @@ struct DeviceHelperTests {
       name: UIContentSizeCategory.didChangeNotification,
       object: nil
     )
-    gate.isOpen = false
-
-    // The observer is scheduled onto `OperationQueue.main`, not run inline on
-    // the posting thread, so wait — bounded — for its fill to land instead of
-    // relying on undocumented interleaving. Polling with the gate closed can't
-    // fill the caches itself, so the values asserted below can only have come
-    // from the observer.
-    for _ in 0..<200 {
-      if deviceHelper.screenWidth != 0 && deviceHelper.interfaceStyle != "Unknown" {
-        break
+    // The observer's fill consults the gate when its block *runs*, not when it
+    // was enqueued, so the gate has to stay open until the fill has landed.
+    // `OperationQueue.main` runs one operation at a time in enqueue order, so
+    // an operation added after the post can't run before the observer's block
+    // — and if delivery was inline, the fill already happened. Nothing reads
+    // the helper while the gate is open, so the fill stays the only possible
+    // writer and closing the gate before the assertions keeps the proof.
+    await withCheckedContinuation { continuation in
+      OperationQueue.main.addOperation {
+        continuation.resume()
       }
-      try? await Task.sleep(nanoseconds: 10_000_000)
     }
+    gate.isOpen = false
 
     let expected = await expectedLiveValues()
     #expect(deviceHelper.screenWidth == expected.width)
