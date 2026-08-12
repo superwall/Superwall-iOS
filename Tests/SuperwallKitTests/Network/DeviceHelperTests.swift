@@ -291,4 +291,130 @@ struct DeviceHelperTests {
     #expect(read.height == expected.height)
     #expect(read.scale == expected.scale)
   }
+
+  // MARK: - Instance-level self-healing
+
+  /// Flippable gate for the tests below, standing in for "the application doesn't
+  /// exist yet" / "launch has completed".
+  private final class Gate: @unchecked Sendable {
+    var isOpen: Bool
+    init(_ isOpen: Bool) {
+      self.isOpen = isOpen
+    }
+  }
+
+  /// Builds a `DeviceHelper` with an injected gate. The container is returned
+  /// alongside because the helper only holds its factory `unowned`.
+  private func makeDeviceHelper(
+    gate: Gate
+  ) -> (DeviceHelper, DependencyContainer) {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper = DeviceHelper(
+      api: dependencyContainer.api,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      isUIKitReadSafe: { gate.isOpen }
+    )
+    return (deviceHelper, dependencyContainer)
+  }
+
+  private func expectedLiveValues() async -> (
+    width: Int, height: Int, scale: Double, style: String, category: String
+  ) {
+    await MainActor.run {
+      let screen = UIApplication.sharedApplication?
+        .connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .first?
+        .screen ?? UIScreen.main
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      return (
+        Int(screen.bounds.width.rounded()),
+        Int(screen.bounds.height.rounded()),
+        Double(screen.scale),
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+  }
+
+  /// While reads are disallowed, an instance must serve placeholders rather than
+  /// touch UIKit — the pre-launch state a `configure` in a SwiftUI `App.init`
+  /// puts the SDK in.
+  @Test func instance_whileReadsAreDisallowed_servesPlaceholders() {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+
+    #expect(deviceHelper.screenWidth == 0)
+    #expect(deviceHelper.screenHeight == 0)
+    #expect(deviceHelper.devicePixelRatio == 1.0)
+    #expect(deviceHelper.interfaceStyle == "Unknown")
+    #expect(deviceHelper.fontSize == 16)
+    #expect(deviceHelper.preferredContentSizeCategory == "unspecified")
+  }
+
+  /// Once the gate opens, the next read must fill both caches with the device's
+  /// live values — not keep serving `.placeholder`/`.unavailable`. The traits are
+  /// read from off the main thread so the read exercises the blocking
+  /// empty-cache branch in `refreshUITraits()`, the path `getTemplateDevice()`
+  /// and the MMP match take after a too-early init.
+  @Test func instance_healsOnFirstAllowedRead() async {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+    #expect(deviceHelper.screenWidth == 0)
+    #expect(deviceHelper.interfaceStyle == "Unknown")
+
+    gate.isOpen = true
+    let expected = await expectedLiveValues()
+
+    let read = await Task.detached { () -> (width: Int, height: Int, scale: Double, style: String, category: String) in
+      return (
+        deviceHelper.screenWidth,
+        deviceHelper.screenHeight,
+        deviceHelper.devicePixelRatio,
+        deviceHelper.interfaceStyle,
+        deviceHelper.preferredContentSizeCategory
+      )
+    }.value
+
+    #expect(read.width == expected.width)
+    #expect(read.height == expected.height)
+    #expect(read.scale == expected.scale)
+    #expect(read.style == expected.style)
+    #expect(read.category == expected.category)
+  }
+
+  /// The notification observer must fill both caches after a too-early init.
+  /// Posted as `UIContentSizeCategory.didChangeNotification`, which shares the
+  /// handler with `didBecomeActiveNotification` but doesn't wake the app-session
+  /// machinery of the containers other tests hold. Closing the gate again before
+  /// reading proves the values came from the notification's fill, not from the
+  /// read itself.
+  @MainActor
+  @Test func instance_fillsCachesOnNotification() async {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+    #expect(deviceHelper.screenWidth == 0)
+
+    gate.isOpen = true
+    NotificationCenter.default.post(
+      name: UIContentSizeCategory.didChangeNotification,
+      object: nil
+    )
+    gate.isOpen = false
+
+    let expected = await expectedLiveValues()
+    #expect(deviceHelper.screenWidth == expected.width)
+    #expect(deviceHelper.screenHeight == expected.height)
+    #expect(deviceHelper.devicePixelRatio == expected.scale)
+    #expect(deviceHelper.interfaceStyle == expected.style)
+    #expect(deviceHelper.preferredContentSizeCategory == expected.category)
+  }
 }

@@ -163,7 +163,7 @@ class DeviceHelper {
     if let cached = screenMetrics {
       return cached
     }
-    guard let metrics = Self.makeScreenMetrics() else {
+    guard let metrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe) else {
       return .placeholder
     }
     screenMetrics = metrics
@@ -195,6 +195,12 @@ class DeviceHelper {
     }
     return Bundle.main.bundleURL.pathExtension != "app"
   }
+
+  /// The instance's view of ``isUIKitReadSafe``, injected at init. Every
+  /// instance-level cache read and refresh consults this rather than the static,
+  /// so tests can hold a real instance in the pre-launch state and then release
+  /// it — the static's state can't be recreated in-process.
+  private let isUIKitReadSafe: () -> Bool
 
   /// Reads the screen metrics, or `nil` when UIKit can't be touched yet.
   ///
@@ -326,7 +332,7 @@ class DeviceHelper {
   /// the gap between launch and registration.
   private var currentUITraits: UITraits {
     guard #available(iOS 17.0, *) else {
-      return DeviceHelper.makeUITraits() ?? .unavailable
+      return DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) ?? .unavailable
     }
     refreshUITraits()
     return uiTraits ?? .unavailable
@@ -337,7 +343,7 @@ class DeviceHelper {
     // The wrapper's setter and getter share one serial queue, so this write is
     // ordered ahead of `currentUITraits`' read and the caller sees it.
     if Thread.isMainThread {
-      if let traits = DeviceHelper.makeUITraits() {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
         uiTraits = traits
       }
       return
@@ -347,7 +353,7 @@ class DeviceHelper {
     // main-thread hop itself — rather than scheduling it, so early off-main
     // readers don't report placeholder values.
     if uiTraits == nil {
-      if let traits = DeviceHelper.makeUITraits() {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
         uiTraits = traits
       }
       return
@@ -356,10 +362,13 @@ class DeviceHelper {
       return
     }
     DispatchQueue.main.async { [weak self] in
-      if let traits = DeviceHelper.makeUITraits() {
-        self?.uiTraits = traits
+      guard let self = self else {
+        return
       }
-      self?.isRefreshingUITraits = false
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+      self.isRefreshingUITraits = false
     }
     #endif
   }
@@ -409,8 +418,11 @@ class DeviceHelper {
     traitChangeRegistration = scene.registerForTraitChanges(
       [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
     ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
-      if let traits = DeviceHelper.makeUITraits() {
-        self?.uiTraits = traits
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
       }
     }
   }
@@ -485,11 +497,11 @@ class DeviceHelper {
         guard let self = self else {
           return
         }
-        if let traits = DeviceHelper.makeUITraits() {
+        if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
           self.uiTraits = traits
         }
         if self.screenMetrics == nil,
-          let metrics = DeviceHelper.makeScreenMetrics() {
+          let metrics = DeviceHelper.makeScreenMetrics(isUIKitReadSafe: self.isUIKitReadSafe) {
           self.screenMetrics = metrics
         }
         self.registerForTraitChanges()
@@ -859,7 +871,8 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
     self.storage = storage
     self.network = network
@@ -870,11 +883,12 @@ class DeviceHelper {
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+    self.isUIKitReadSafe = isUIKitReadSafe
 
     // Both are `nil` when `configure` runs before `UIApplicationMain` — they
     // fill on first post-launch read or on app activation.
-    self.screenMetrics = Self.makeScreenMetrics()
-    self.uiTraits = Self.makeUITraits()
+    self.screenMetrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe)
+    self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
     observeUITraitChanges()
     registerForTraitChanges()
   }
