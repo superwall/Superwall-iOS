@@ -122,27 +122,101 @@ class DeviceHelper {
     TimeZone.current.secondsFromGMT()
   }
 
-  /// Screen metrics, cached once at init on the main thread.
+  /// Screen metrics, cached from the main thread.
   ///
   /// `UIScreen` / `UIWindowScene` are main-thread-only (and `UIScreen.main`
   /// is deprecated), but these are read from background contexts such as
-  /// `matchMMPInstall`. Reading once up front, on the main thread, keeps those
+  /// `matchMMPInstall`. Reading on the main thread and caching keeps those
   /// reads safe instead of touching main-thread-only UIKit off-thread.
-  let screenWidth: Int
-  let screenHeight: Int
-  let devicePixelRatio: Double
+  ///
+  /// `nil` until a read is allowed to touch UIKit (see ``isUIKitReadSafe``).
+  /// When the SDK is configured before `UIApplicationMain` runs, the init-time
+  /// read stays empty and the cache fills on first post-launch read or on app
+  /// activation instead.
+  @DispatchQueueBacked
+  private var screenMetrics: ScreenMetrics?
 
-  private struct ScreenMetrics {
+  var screenWidth: Int {
+    currentScreenMetrics.width
+  }
+
+  var screenHeight: Int {
+    currentScreenMetrics.height
+  }
+
+  var devicePixelRatio: Double {
+    currentScreenMetrics.scale
+  }
+
+  struct ScreenMetrics {
     let width: Int
     let height: Int
     let scale: Double
+
+    /// The values used when the screen can't be read: before the application
+    /// exists, and on visionOS where there is no screen.
+    static let placeholder = ScreenMetrics(width: 0, height: 0, scale: 1.0)
   }
 
-  private static func makeScreenMetrics() -> ScreenMetrics {
+  /// The cached metrics, filling the cache first when it's still empty.
+  private var currentScreenMetrics: ScreenMetrics {
+    if let cached = screenMetrics {
+      return cached
+    }
+    guard let metrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe) else {
+      return .placeholder
+    }
+    screenMetrics = metrics
+    return metrics
+  }
+
+  /// Whether UIKit's screen and trait APIs can be read without side effects.
+  ///
+  /// In an app, touching `UIScreen`, `UIFontMetrics`, or any other
+  /// appearance-adjacent UIKit API before `UIApplicationMain` has created the
+  /// application object — e.g. `configure` called from a SwiftUI `App.init` —
+  /// makes UIKit build its trait system before the app's asset-catalog accent
+  /// color is registered, permanently resetting the global tint to system blue.
+  /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
+  /// trait collections — must sit behind this check, and the check must come
+  /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
+  /// unguarded `UIDevice` reads at init (`model`, `vendorId`, `interfaceType`)
+  /// are exempt: they don't touch the trait system, and the sample-app repro
+  /// keeps its tint with them in place.
+  ///
+  /// A missing application object doesn't always mean that window, though: some
+  /// processes never create one (unit-test runners, app extensions) yet can read
+  /// `UIScreen.main` freely, and waiting there would leave placeholder values
+  /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
+  /// disambiguates.
+  static var isUIKitReadSafe: Bool {
+    if UIApplication.sharedApplication != nil {
+      return true
+    }
+    return Bundle.main.bundleURL.pathExtension != "app"
+  }
+
+  /// The instance's view of ``isUIKitReadSafe``, injected at init. Every
+  /// instance-level cache read and refresh consults this rather than the static,
+  /// so tests can hold a real instance in the pre-launch state and then release
+  /// it — the static's state can't be recreated in-process.
+  private let isUIKitReadSafe: () -> Bool
+
+  /// Reads the screen metrics, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeScreenMetrics(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> ScreenMetrics? {
     #if os(visionOS)
-    return ScreenMetrics(width: 0, height: 0, scale: 1.0)
+    return .placeholder
     #else
-    let read = { () -> ScreenMetrics in
+    let read = { () -> ScreenMetrics? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
       // Prefer the connected window scene's screen; fall back to the
       // deprecated `UIScreen.main` only when no scene is attached yet.
       let screen = UIApplication.sharedApplication?
@@ -219,8 +293,11 @@ class DeviceHelper {
   /// `UIFontMetrics` are main-thread-only, but these are read from background
   /// contexts such as `getTemplateDevice()`. They're read on the main thread and
   /// cached, then refreshed on trait-change notifications and on read.
+  ///
+  /// `nil` while a read isn't yet allowed to touch UIKit (see ``isUIKitReadSafe``),
+  /// which only happens when the SDK is configured before `UIApplicationMain` runs.
   @DispatchQueueBacked
-  private var uiTraits: UITraits
+  private var uiTraits: UITraits?
 
   /// Set while a refresh of ``uiTraits`` is already scheduled, so a burst of reads
   /// queues one main-thread hop rather than one per read.
@@ -255,10 +332,10 @@ class DeviceHelper {
   /// the gap between launch and registration.
   private var currentUITraits: UITraits {
     guard #available(iOS 17.0, *) else {
-      return DeviceHelper.makeUITraits()
+      return DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) ?? .unavailable
     }
     refreshUITraits()
-    return uiTraits
+    return uiTraits ?? .unavailable
   }
 
   private func refreshUITraits() {
@@ -266,15 +343,32 @@ class DeviceHelper {
     // The wrapper's setter and getter share one serial queue, so this write is
     // ordered ahead of `currentUITraits`' read and the caller sees it.
     if Thread.isMainThread {
-      uiTraits = DeviceHelper.makeUITraits()
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
+      return
+    }
+    // An empty cache means init ran before `UIApplicationMain` created the
+    // application. Block on the first real read — `makeUITraits()` makes the
+    // main-thread hop itself — rather than scheduling it, so early off-main
+    // readers don't report placeholder values.
+    if uiTraits == nil {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
       return
     }
     if $isRefreshingUITraits.testAndSetTrue() {
       return
     }
     DispatchQueue.main.async { [weak self] in
-      self?.uiTraits = DeviceHelper.makeUITraits()
-      self?.isRefreshingUITraits = false
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+      self.isRefreshingUITraits = false
     }
     #endif
   }
@@ -324,12 +418,17 @@ class DeviceHelper {
     traitChangeRegistration = scene.registerForTraitChanges(
       [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
     ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
-      self?.uiTraits = DeviceHelper.makeUITraits()
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
     }
   }
   #endif
 
-  private struct UITraits {
+  struct UITraits {
     let interfaceStyle: String
     let fontSize: Int
     let fontScale: Double
@@ -344,11 +443,21 @@ class DeviceHelper {
     )
   }
 
-  private static func makeUITraits() -> UITraits {
+  /// Reads the current traits, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeUITraits(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> UITraits? {
     #if os(visionOS)
     return .unavailable
     #else
-    let read = { () -> UITraits in
+    let read = { () -> UITraits? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
       let category = UIApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
       let scaledValue = UIFontMetrics.default.scaledValue(for: 16.0)
@@ -371,7 +480,8 @@ class DeviceHelper {
   /// the main thread.
   ///
   /// Activation also retries ``registerForTraitChanges()``, since a window is more
-  /// likely to exist by then than when `DeviceHelper` was created.
+  /// likely to exist by then than when `DeviceHelper` was created, and fills the
+  /// screen-metrics cache when init ran too early to read the screen.
   private func observeUITraitChanges() {
     #if !os(visionOS)
     let names: [Notification.Name] = [
@@ -384,8 +494,17 @@ class DeviceHelper {
         object: nil,
         queue: .main
       ) { [weak self] _ in
-        self?.uiTraits = DeviceHelper.makeUITraits()
-        self?.registerForTraitChanges()
+        guard let self = self else {
+          return
+        }
+        if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.uiTraits = traits
+        }
+        if self.screenMetrics == nil,
+          let metrics = DeviceHelper.makeScreenMetrics(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.screenMetrics = metrics
+        }
+        self.registerForTraitChanges()
       }
     }
     #endif
@@ -752,7 +871,8 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
     self.storage = storage
     self.network = network
@@ -763,13 +883,12 @@ class DeviceHelper {
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+    self.isUIKitReadSafe = isUIKitReadSafe
 
-    let screenMetrics = Self.makeScreenMetrics()
-    self.screenWidth = screenMetrics.width
-    self.screenHeight = screenMetrics.height
-    self.devicePixelRatio = screenMetrics.scale
-
-    self.uiTraits = Self.makeUITraits()
+    // Both are `nil` when `configure` runs before `UIApplicationMain` — they
+    // fill on first post-launch read or on app activation.
+    self.screenMetrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe)
+    self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
     observeUITraitChanges()
     registerForTraitChanges()
   }

@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
 - Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
 - Stops Apple's microphone, location, and contacts class and selector names appearing in your app's binary when you don't use those permissions.
+- Fixes the app's accent color resetting to the system blue when configuring the SDK from a SwiftUI `App` initializer.
 
 ## 4.16.1
 
