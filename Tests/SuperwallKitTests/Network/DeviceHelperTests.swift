@@ -250,7 +250,7 @@ struct DeviceHelperTests {
     #expect(DeviceHelper.isUIKitReadSafe)
   }
 
-  @Test func makeScreenMetrics_whenTheApplicationExists_readsTheScreen() {
+  @Test func makeScreenMetrics_whenReadsAreAllowed_readsTheScreen() {
     let metrics = DeviceHelper.makeScreenMetrics()
     #expect((metrics?.width ?? 0) > 0)
     #expect((metrics?.height ?? 0) > 0)

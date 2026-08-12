@@ -177,8 +177,12 @@ class DeviceHelper {
   /// application object — e.g. `configure` called from a SwiftUI `App.init` —
   /// makes UIKit build its trait system before the app's asset-catalog accent
   /// color is registered, permanently resetting the global tint to system blue.
-  /// Every UIKit read in this file must sit behind this check, and the check must
-  /// come first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it.
+  /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
+  /// trait collections — must sit behind this check, and the check must come
+  /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
+  /// unguarded `UIDevice` reads at init (`model`, `vendorId`, `interfaceType`)
+  /// are exempt: they don't touch the trait system, and the sample-app repro
+  /// keeps its tint with them in place.
   ///
   /// A missing application object doesn't always mean that window, though: some
   /// processes never create one (unit-test runners, app extensions) yet can read
