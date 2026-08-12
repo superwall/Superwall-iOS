@@ -410,6 +410,18 @@ struct DeviceHelperTests {
     )
     gate.isOpen = false
 
+    // The observer is scheduled onto `OperationQueue.main`, not run inline on
+    // the posting thread, so wait — bounded — for its fill to land instead of
+    // relying on undocumented interleaving. Polling with the gate closed can't
+    // fill the caches itself, so the values asserted below can only have come
+    // from the observer.
+    for _ in 0..<200 {
+      if deviceHelper.screenWidth != 0 && deviceHelper.interfaceStyle != "Unknown" {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+
     let expected = await expectedLiveValues()
     #expect(deviceHelper.screenWidth == expected.width)
     #expect(deviceHelper.screenHeight == expected.height)

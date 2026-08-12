@@ -294,7 +294,7 @@ class DeviceHelper {
   /// contexts such as `getTemplateDevice()`. They're read on the main thread and
   /// cached, then refreshed on trait-change notifications and on read.
   ///
-  /// `nil` until a read is allowed to touch UIKit (see ``isUIKitReadSafe``),
+  /// `nil` while a read isn't yet allowed to touch UIKit (see ``isUIKitReadSafe``),
   /// which only happens when the SDK is configured before `UIApplicationMain` runs.
   @DispatchQueueBacked
   private var uiTraits: UITraits?
