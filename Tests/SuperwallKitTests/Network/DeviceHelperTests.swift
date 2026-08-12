@@ -183,8 +183,8 @@ struct DeviceHelperTests {
   /// come from the device.
   ///
   /// The snapshot itself isn't pinned here — nothing observable distinguishes one
-  /// read from four, since `makeUITraits()` is private and its hop count can't be
-  /// counted from a test. That property rests on the comments at both call sites.
+  /// read from four, since `makeUITraits()`'s hop count can't be counted from a
+  /// test. That property rests on the comments at both call sites.
   @Test func templateDevice_keepsTheInterfaceStyleOverrideAndFillsTheRestFromTheDevice() async {
     let dependencyContainer = DependencyContainer()
     let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
@@ -226,5 +226,69 @@ struct DeviceHelperTests {
     #expect(overridden["preferredContentSizeCategory"] as? String == expected.category)
 
     deviceHelper.interfaceStyleOverride = nil
+  }
+
+  /// `configure` from a SwiftUI `App.init` runs before `UIApplicationMain` has
+  /// created the application object. Touching `UIScreen` or `UIFontMetrics` at
+  /// that point makes UIKit build its trait system before the app's accent color
+  /// is registered, permanently resetting the global tint to system blue (#493).
+  /// Both readers must return nothing rather than touch UIKit; the flag is
+  /// injected because the pre-launch state can't be recreated in-process.
+  @Test func makeScreenMetrics_beforeTheApplicationExists_readsNothing() {
+    #expect(DeviceHelper.makeScreenMetrics(isUIKitReadSafe: { false }) == nil)
+  }
+
+  @Test func makeUITraits_beforeTheApplicationExists_readsNothing() {
+    #expect(DeviceHelper.makeUITraits(isUIKitReadSafe: { false }) == nil)
+  }
+
+  /// This test runner has no `UIApplication` and never launches one, like an app
+  /// extension. Deferring UIKit reads there would leave the device attributes as
+  /// placeholders forever, so the gate must allow reads despite the missing
+  /// application object.
+  @Test func isUIKitReadSafe_withoutAnApplicationOutsideAnAppBundle_allowsReads() {
+    #expect(DeviceHelper.isUIKitReadSafe)
+  }
+
+  @Test func makeScreenMetrics_whenTheApplicationExists_readsTheScreen() {
+    let metrics = DeviceHelper.makeScreenMetrics()
+    #expect((metrics?.width ?? 0) > 0)
+    #expect((metrics?.height ?? 0) > 0)
+    #expect((metrics?.scale ?? 0) >= 1.0)
+  }
+
+  /// The screen metrics moved from init-time `let`s to a cache so a too-early
+  /// init can heal itself, so pin that reads still match the screen and stay
+  /// safe off the main thread, where `matchMMPInstall` reads them.
+  @Test func screenMetrics_matchTheScreenWhenReadOffTheMainThread() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let expected = await MainActor.run { () -> (width: Int, height: Int, scale: Double) in
+      let screen = UIApplication.sharedApplication?
+        .connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .first?
+        .screen ?? UIScreen.main
+      return (
+        Int(screen.bounds.width.rounded()),
+        Int(screen.bounds.height.rounded()),
+        Double(screen.scale)
+      )
+    }
+
+    let read = await Task.detached { () -> (isMainThread: Bool, width: Int, height: Int, scale: Double) in
+      return (
+        Thread.isMainThread,
+        deviceHelper.screenWidth,
+        deviceHelper.screenHeight,
+        deviceHelper.devicePixelRatio
+      )
+    }.value
+
+    #expect(read.isMainThread == false)
+    #expect(read.width == expected.width)
+    #expect(read.height == expected.height)
+    #expect(read.scale == expected.scale)
   }
 }
