@@ -12,6 +12,20 @@ import UIKit
 @testable import SuperwallKit
 
 struct DeviceHelperTests {
+  /// Scales the way `makeUITraits()` does — explicitly against the resolved category,
+  /// not the ambient `UITraitCollection.current`. Computing an expectation with the
+  /// implicit overload would make both sides inherit the same ambient-trait fault, so
+  /// the assertion couldn't fail on it.
+  @MainActor
+  private static func expectedScaledValue(for category: UIContentSizeCategory) -> Double {
+    return Double(
+      UIFontMetrics.default.scaledValue(
+        for: 16.0,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: category)
+      )
+    )
+  }
+
   @Test func makePaddedSdkVersion_withBeta() {
     let version = "3.0.0-beta.1"
     let paddedVersion = DeviceHelper.makePaddedVersion(using: version)
@@ -111,7 +125,7 @@ struct DeviceHelperTests {
     let expected = await MainActor.run { () -> (String, Int, Double, String) in
       let category = UIApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-      let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+      let scaledValue = Self.expectedScaledValue(for: category)
       return (
         DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
         Int(scaledValue.rounded()),
@@ -137,7 +151,7 @@ struct DeviceHelperTests {
 
     #expect(deviceHelper.preferredContentSizeCategory == DeviceHelper.contentSizeCategoryToken(for: category))
     #expect(deviceHelper.interfaceStyle == DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle))
-    let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+    let scaledValue = Self.expectedScaledValue(for: category)
     let expectedScale: Double = ((scaledValue / 16.0) * 100).rounded() / 100
 
     #expect(deviceHelper.fontSize == Int(scaledValue.rounded()))
@@ -167,7 +181,7 @@ struct DeviceHelperTests {
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
       return (
         DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
-        Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded()),
+        Int(Self.expectedScaledValue(for: category).rounded()),
         DeviceHelper.contentSizeCategoryToken(for: category)
       )
     }
@@ -192,7 +206,7 @@ struct DeviceHelperTests {
     let expected = await MainActor.run { () -> (style: String, fontSize: Int, fontScale: Double, category: String) in
       let category = UIApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-      let scaledValue = Double(UIFontMetrics.default.scaledValue(for: 16.0))
+      let scaledValue = Self.expectedScaledValue(for: category)
       return (
         DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
         Int(scaledValue.rounded()),
@@ -248,6 +262,42 @@ struct DeviceHelperTests {
   /// application object.
   @Test func isUIKitReadSafe_withoutAnApplicationOutsideAnAppBundle_allowsReads() {
     #expect(DeviceHelper.isUIKitReadSafe)
+  }
+
+  /// The arm that actually prevents #493 — an app bundle whose application object
+  /// doesn't exist yet, i.e. `configure` from a SwiftUI `App.init`. The property
+  /// can't reach it: this runner is neither an app bundle nor ever gets an
+  /// application, so drive the decision through the parameterised overload. Without
+  /// this, loosening `"app"` would leave the whole suite green.
+  @Test func isUIKitReadSafe_insideAnAppBundleBeforeLaunch_defersReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: false,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.app")
+      ) == false
+    )
+  }
+
+  /// Once `UIApplicationMain` has built the application object the accent colour is
+  /// already registered, so an app bundle stops deferring.
+  @Test func isUIKitReadSafe_insideAnAppBundleAfterLaunch_allowsReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: true,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.app")
+      )
+    )
+  }
+
+  /// Processes that never run `UIApplicationMain` — app extensions, this runner —
+  /// must not wait for an application that will never arrive.
+  @Test func isUIKitReadSafe_outsideAnAppBundleWithoutAnApplication_allowsReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: false,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.appex")
+      )
+    )
   }
 
   @Test func makeScreenMetrics_whenReadsAreAllowed_readsTheScreen() {
