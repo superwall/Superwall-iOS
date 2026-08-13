@@ -279,9 +279,9 @@ class DeviceHelper {
   /// or the template and the header disagree on a backend-contract field.
   ///
   /// Not folded into a shared `interfaceStyle(from:)` helper on purpose: passing
-  /// `currentUITraits` would evaluate it eagerly, and below iOS 17 that read is a
-  /// blocking main-queue hop — one per network request whenever an override is set.
-  /// The early return here avoids it.
+  /// `currentUITraits` would evaluate it eagerly, scheduling a needless cache
+  /// refresh — one per network request whenever an override is set, and a blocking
+  /// fill on the first pre-launch read. The early return here avoids it.
   var interfaceStyle: String {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
@@ -332,22 +332,22 @@ class DeviceHelper {
   /// never fire it. Both show up as this no longer matching the active scene.
   private weak var observedTraitScene: UIWindowScene?
 
-  /// The current traits.
+  /// The current traits, served from the cache on every version.
   ///
-  /// Before iOS 17 there is no trait hook, so nothing invalidates the cache when the
-  /// appearance flips while the app stays active. These values were read live on
-  /// every access before caching was introduced, and serving a stale one would
-  /// regress `X-Device-Interface-Style` and the audience filters keyed on it — so
-  /// those versions read live. `makeUITraits()` makes the main-thread hop itself, and
-  /// off the main thread that hop *blocks* the caller until the main queue drains.
-  /// Read this once and reuse the snapshot rather than touching it per field.
+  /// `refreshUITraits()` keeps the cache fresh: main-thread reads refresh it
+  /// synchronously, off-main reads schedule one coalesced main-queue refresh —
+  /// blocking only to fill an empty cache, which happens when init ran before
+  /// `UIApplicationMain`.
   ///
-  /// From iOS 17 the hook keeps the cache current, and the scheduled refresh covers
-  /// the gap between launch and registration.
+  /// From iOS 17 the trait hook also updates the cache at the moment the appearance
+  /// flips. Below 17 there is no hook, so an in-place automatic light/dark change —
+  /// sunset while the app is frontmost — lands one read late via the refresh-on-read
+  /// backstop. That bounded lag is accepted in exchange for not blocking a
+  /// cooperative-pool thread on the main queue for every network request
+  /// (`X-Device-Interface-Style`) and template build; earlier releases read live here
+  /// and paid that hop each time. Text-size changes and flips made while backgrounded
+  /// still land immediately via the notification observers.
   private var currentUITraits: UITraits {
-    guard #available(iOS 17.0, *) else {
-      return DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) ?? .unavailable
-    }
     refreshUITraits()
     return uiTraits ?? .unavailable
   }
@@ -956,8 +956,8 @@ class DeviceHelper {
     let aliases = [identityInfo.aliasId]
 
     // Snapshot once. The four trait-derived fields below each go through
-    // `currentUITraits`, which before iOS 17 reads live behind a blocking
-    // main-queue hop, so reading them separately would make four of those per call.
+    // `currentUITraits`, so reading them separately would schedule four cache
+    // refreshes per call and could interleave with one, tearing the snapshot.
     // Taking the snapshot means `interfaceStyle` below resolves the override
     // inline rather than going through ``interfaceStyle``, so the two resolve it
     // the same way by hand — keep them in step.
