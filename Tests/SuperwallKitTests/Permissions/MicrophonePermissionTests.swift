@@ -76,11 +76,16 @@ struct AudioSessionProxyTests {
     #expect(validValues.contains(result))
   }
 
-  @Test func sharedInstance_returnsNonNil() {
+  /// Whether `AVAudioSession` is registered with the ObjC runtime is a property of
+  /// the runner image — `SuperwallKit` deliberately doesn't link AVFoundation and the
+  /// test target declares no `TEST_HOST` — so asserting non-nil outright would fail
+  /// CI on an environment fact rather than a defect. Tie both sides to the same fact:
+  /// the proxy returns an instance exactly when the class resolves.
+  @Test func sharedInstance_matchesWhetherTheClassResolves() {
     let proxy = AudioSessionProxy()
-    // AVAudioSession resolves at runtime on every platform the tests run on.
-    let instance = proxy.sharedInstance()
-    #expect(instance != nil)
+    let classResolves = NSClassFromString(AudioSessionProxy.mangledClassName.rot13()) != nil
+
+    #expect((proxy.sharedInstance() != nil) == classResolves)
   }
 }
 

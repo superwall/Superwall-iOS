@@ -190,10 +190,24 @@ class DeviceHelper {
   /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
   /// disambiguates.
   static var isUIKitReadSafe: Bool {
-    if UIApplication.sharedApplication != nil {
+    return isUIKitReadSafe(
+      hasApplication: UIApplication.sharedApplication != nil,
+      bundleURL: Bundle.main.bundleURL
+    )
+  }
+
+  /// The decision above, split from the globals it reads.
+  ///
+  /// Both facts come from process-wide state that a test can't stage: the runner has
+  /// no application object and isn't an app bundle, so the deciding arm — an app
+  /// bundle with no application yet — is unreachable through the property. Taking
+  /// them as parameters lets both arms be pinned, so loosening `"app"` can't leave
+  /// the suite green while re-opening the accent-color bug.
+  static func isUIKitReadSafe(hasApplication: Bool, bundleURL: URL) -> Bool {
+    if hasApplication {
       return true
     }
-    return Bundle.main.bundleURL.pathExtension != "app"
+    return bundleURL.pathExtension != "app"
   }
 
   /// The instance's view of ``isUIKitReadSafe``, injected at init. Every
@@ -460,7 +474,16 @@ class DeviceHelper {
       }
       let category = UIApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-      let scaledValue = UIFontMetrics.default.scaledValue(for: 16.0)
+      // Scale against `category` explicitly. The implicit `scaledValue(for:)` resolves
+      // against `UITraitCollection.current`, which Apple documents as undefined outside
+      // a view or view-controller trait callback and stores per thread — so the two
+      // font numbers could disagree with the category on the line above, which is read
+      // from `UIApplication` and doesn't depend on trait context. One source, so the
+      // three values in a snapshot can't contradict each other in the audience filters.
+      let scaledValue = UIFontMetrics.default.scaledValue(
+        for: 16.0,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: category)
+      )
 
       return UITraits(
         interfaceStyle: interfaceStyleToken(
