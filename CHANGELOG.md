@@ -14,7 +14,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
 - Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
 - Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
-- Fixes network requests on iOS 16 and earlier briefly waiting on the main thread.
 - Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
 - Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
 - Stops Apple's microphone, location, and contacts class and selector names appearing in your app's binary when you don't use those permissions.

@@ -399,8 +399,9 @@ class DeviceHelper {
   /// created, so this also runs on activation and re-arms if the observed scene has
   /// since gone away or stopped being the active one.
   ///
-  /// iOS 17+ only. Earlier releases read live on every access instead, rather than
-  /// injecting a view into the host's window to reach `traitCollectionDidChange`.
+  /// iOS 17+ only. Below 17 the refresh-on-read backstop and the two notification
+  /// observers cover this instead, rather than injecting a view into the host's
+  /// window to reach `traitCollectionDidChange`.
   private func registerForTraitChanges() {
     #if !os(visionOS)
     Task { @MainActor [weak self] in
