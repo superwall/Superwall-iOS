@@ -213,7 +213,8 @@ extension PaywallRequestManager {
 
   // MARK: - Free Trial Refresh
 
-  /// Recalculates `isFreeTrialAvailable` for a paywall.
+  /// Recalculates `isFreeTrialAvailable` and `isFreeTrialAvailableByProductName`
+  /// for a paywall.
   ///
   /// This is called both for freshly loaded paywalls and cached paywalls to ensure
   /// trial eligibility reflects the user's current entitlement/subscription state.
@@ -223,79 +224,136 @@ extension PaywallRequestManager {
   ) async -> Paywall {
     var paywall = paywall
 
-    // Test mode overrides take highest precedence
+    // Test mode overrides take highest precedence, followed by the developer
+    // override. When forced, the paywall-level flag takes the forced value
+    // verbatim and per-product availability is gated by whether the product
+    // has an intro offer at all.
+    var forcedAvailability: Bool?
     if factory.isTestMode {
       switch factory.testModeFreeTrialOverride {
       case .forceAvailable:
-        paywall.isFreeTrialAvailable = true
-        return paywall
+        forcedAvailability = true
       case .forceUnavailable:
-        paywall.isFreeTrialAvailable = false
-        return paywall
+        forcedAvailability = false
       case .useDefault:
         break
       }
     }
-
-    // If a developer override is set, use it directly
-    if let override = request.overrides.isFreeTrial {
-      paywall.isFreeTrialAvailable = override
-      return paywall
+    if forcedAvailability == nil,
+      let override = request.overrides.isFreeTrial {
+      forcedAvailability = override
     }
 
-    // Check App Store products. Lookup uses the composite-keyed map so
-    // billing-plan-specific Superwall Products resolve to the right clone.
-    // Falls back to the Apple-ID-keyed map for products loaded outside the
-    // paywall flow (e.g. preloaded overrides).
+    // Lookup uses the composite-keyed map so billing-plan-specific Superwall
+    // Products resolve to the right clone. Falls back to the Apple-ID-keyed
+    // map for products loaded outside the paywall flow (e.g. preloaded
+    // overrides).
     let productsByCompositeId = await storeKitManager.productsByCompositeId
     let productsByAppleId = await storeKitManager.productsById
+
+    var isFreeTrialAvailableByProductName: [String: Bool] = [:]
     var isFreeTrialAvailable = false
 
     for productItem in paywall.products {
-      let storeProduct: StoreProduct?
-      if let composite = productsByCompositeId[productItem.id] {
-        storeProduct = composite
-      } else if case .appStore(let appStoreProduct) = productItem.type {
-        storeProduct = productsByAppleId[appStoreProduct.id]
-      } else {
-        storeProduct = productsByAppleId[productItem.id]
+      let isAvailable = await freeTrialAvailability(
+        for: productItem,
+        forcedAvailability: forcedAvailability,
+        introOfferEligibility: paywall.introOfferEligibility,
+        productsByCompositeId: productsByCompositeId,
+        productsByAppleId: productsByAppleId
+      )
+      if let name = productItem.name {
+        isFreeTrialAvailableByProductName[name] = isAvailable
       }
-      guard let storeProduct = storeProduct else {
-        continue
-      }
-
-      if await checkAppStoreTrialEligibility(
-        for: storeProduct,
-        introOfferEligibility: paywall.introOfferEligibility
-      ) {
+      if isAvailable {
         isFreeTrialAvailable = true
-        break
       }
     }
 
-    paywall.isFreeTrialAvailable = isFreeTrialAvailable
-
-    // Check Stripe products for trial eligibility (they're not in productsById
-    // so the loop above skips them)
-    if !paywall.isFreeTrialAvailable {
-      paywall.isFreeTrialAvailable = await checkStripeTrialEligibility(
-        productItems: paywall.products,
-        introOfferEligibility: paywall.introOfferEligibility
-      )
-    }
-
-    // Check custom products for trial eligibility using the same entitlement-based
-    // approach as Stripe products. Custom products are looked up by their
-    // unique ID in the Apple-ID-keyed map.
-    if !paywall.isFreeTrialAvailable {
-      paywall.isFreeTrialAvailable = await checkCustomTrialEligibility(
-        productItems: paywall.products,
-        productsById: productsByAppleId,
-        introOfferEligibility: paywall.introOfferEligibility
-      )
-    }
+    paywall.isFreeTrialAvailableByProductName = isFreeTrialAvailableByProductName
+    paywall.isFreeTrialAvailable = forcedAvailability ?? isFreeTrialAvailable
 
     return paywall
+  }
+
+  /// Determines whether a free trial is available for a single product on
+  /// the paywall.
+  private func freeTrialAvailability(
+    for productItem: Product,
+    forcedAvailability: Bool?,
+    introOfferEligibility: IntroOfferEligibility,
+    productsByCompositeId: [String: StoreProduct],
+    productsByAppleId: [String: StoreProduct]
+  ) async -> Bool {
+    switch productItem.type {
+    case .appStore:
+      guard let storeProduct = storeProduct(
+        for: productItem,
+        productsByCompositeId: productsByCompositeId,
+        productsByAppleId: productsByAppleId
+      ) else {
+        return false
+      }
+      if let forcedAvailability = forcedAvailability {
+        return forcedAvailability && storeProduct.hasFreeTrial
+      }
+      return await checkAppStoreTrialEligibility(
+        for: storeProduct,
+        introOfferEligibility: introOfferEligibility
+      )
+    case .stripe(let stripeProduct):
+      if let forcedAvailability = forcedAvailability {
+        return forcedAvailability && (stripeProduct.trialDays ?? 0) > 0
+      }
+      return await checkStripeTrialEligibility(
+        for: productItem,
+        stripeProduct: stripeProduct,
+        introOfferEligibility: introOfferEligibility
+      )
+    case .custom:
+      guard let storeProduct = storeProduct(
+        for: productItem,
+        productsByCompositeId: productsByCompositeId,
+        productsByAppleId: productsByAppleId
+      ) else {
+        return false
+      }
+      if let forcedAvailability = forcedAvailability {
+        return forcedAvailability && storeProduct.hasFreeTrial
+      }
+      // Custom products with a cached StoreProduct also pass through the
+      // App Store-style check so `ALWAYS_ELIGIBLE` continues to surface
+      // their trial without requiring entitlement history.
+      if await checkAppStoreTrialEligibility(
+        for: storeProduct,
+        introOfferEligibility: introOfferEligibility
+      ) {
+        return true
+      }
+      return await checkCustomTrialEligibility(
+        for: productItem,
+        storeProduct: storeProduct,
+        introOfferEligibility: introOfferEligibility
+      )
+    case .paddle:
+      return false
+    }
+  }
+
+  /// Looks up the cached `StoreProduct` for a product item, preferring the
+  /// composite-keyed map and falling back to the Apple-ID-keyed map.
+  private func storeProduct(
+    for productItem: Product,
+    productsByCompositeId: [String: StoreProduct],
+    productsByAppleId: [String: StoreProduct]
+  ) -> StoreProduct? {
+    if let composite = productsByCompositeId[productItem.id] {
+      return composite
+    }
+    if case .appStore(let appStoreProduct) = productItem.type {
+      return productsByAppleId[appStoreProduct.id]
+    }
+    return productsByAppleId[productItem.id]
   }
 
   /// Checks App Store trial eligibility for a single product.
@@ -384,84 +442,64 @@ extension PaywallRequestManager {
 
   // MARK: - Stripe Trial Eligibility
 
-  /// Checks Stripe products for trial eligibility.
+  /// Checks a Stripe product for trial eligibility.
   ///
   /// Stripe products are not fetched into `productsById` (which only contains App Store products),
-  /// so `getVariablesAndFreeTrial` skips them. This method handles Stripe trial eligibility
-  /// separately by checking the `trialDays` property on the `StripeProduct` model.
+  /// so trial eligibility is determined separately by checking the `trialDays` property on the
+  /// `StripeProduct` model against the user's entitlement history.
   private func checkStripeTrialEligibility(
-    productItems: [Product],
+    for productItem: Product,
+    stripeProduct: StripeProduct,
     introOfferEligibility: IntroOfferEligibility
   ) async -> Bool {
     if introOfferEligibility == .ineligible {
       return false
     }
-
-    for productItem in productItems {
-      guard case .stripe(let stripeProduct) = productItem.type else {
-        continue
-      }
-      guard let trialDays = stripeProduct.trialDays else {
-        continue
-      }
-      guard trialDays > 0 else {
-        continue
-      }
-      // Can't determine past subscription history without entitlements.
-      if productItem.entitlements.isEmpty {
-        Logger.debug(
-          logLevel: .warn,
-          scope: .productsManager,
-          message: "Stripe product \(stripeProduct.id) has trialDays > 0 but no entitlements — skipping trial eligibility check."
-        )
-        continue
-      }
-
-      let hasEntitlement = await hasEverHadEntitlement(
-        forProductEntitlements: productItem.entitlements
-      )
-      if !hasEntitlement {
-        return true
-      }
+    guard let trialDays = stripeProduct.trialDays,
+      trialDays > 0 else {
+      return false
     }
-    return false
+    // Can't determine past subscription history without entitlements.
+    if productItem.entitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .productsManager,
+        message: "Stripe product \(stripeProduct.id) has trialDays > 0 but no entitlements — skipping trial eligibility check."
+      )
+      return false
+    }
+
+    let hasEntitlement = await hasEverHadEntitlement(
+      forProductEntitlements: productItem.entitlements
+    )
+    return !hasEntitlement
   }
 
   // MARK: - Custom Trial Eligibility
 
-  /// Checks custom products for trial eligibility using the cached StoreProduct data.
+  /// Checks a custom product for trial eligibility using the cached StoreProduct data.
   private func checkCustomTrialEligibility(
-    productItems: [Product],
-    productsById: [String: StoreProduct],
+    for productItem: Product,
+    storeProduct: StoreProduct,
     introOfferEligibility: IntroOfferEligibility
   ) async -> Bool {
     if introOfferEligibility == .ineligible {
       return false
     }
-
-    for productItem in productItems {
-      if case .custom = productItem.type {
-        guard let storeProduct = productsById[productItem.id] else {
-          continue
-        }
-        if storeProduct.hasFreeTrial {
-          if productItem.entitlements.isEmpty {
-            Logger.debug(
-              logLevel: .warn,
-              scope: .productsManager,
-              message: "Custom product \(productItem.id) has a free trial but no entitlements — skipping trial eligibility check."
-            )
-            continue
-          }
-          let hasEntitlement = await hasEverHadEntitlement(
-            forProductEntitlements: productItem.entitlements
-          )
-          if !hasEntitlement {
-            return true
-          }
-        }
-      }
+    guard storeProduct.hasFreeTrial else {
+      return false
     }
-    return false
+    if productItem.entitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .productsManager,
+        message: "Custom product \(productItem.id) has a free trial but no entitlements — skipping trial eligibility check."
+      )
+      return false
+    }
+    let hasEntitlement = await hasEverHadEntitlement(
+      forProductEntitlements: productItem.entitlements
+    )
+    return !hasEntitlement
   }
 }

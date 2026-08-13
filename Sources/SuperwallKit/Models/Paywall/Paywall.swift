@@ -135,6 +135,13 @@ struct Paywall: Codable {
   /// Determines whether a free trial is available or not.
   var isFreeTrialAvailable = false
 
+  /// Determines whether a free trial is available for each product, keyed by
+  /// the product's name.
+  ///
+  /// Recalculated alongside ``isFreeTrialAvailable`` on every paywall request
+  /// so it reflects the user's current per-product trial eligibility.
+  var isFreeTrialAvailableByProductName: [String: Bool] = [:]
+
   /// The source of the presentation request. Either 'implicit', 'getPaywall', 'register'.
   var presentationSourceType: String?
 
@@ -480,6 +487,7 @@ struct Paywall: Codable {
     products = paywall.products
     productVariables = paywall.productVariables
     isFreeTrialAvailable = paywall.isFreeTrialAvailable
+    isFreeTrialAvailableByProductName = paywall.isFreeTrialAvailableByProductName
     productsLoadingInfo = paywall.productsLoadingInfo
     presentationSourceType = paywall.presentationSourceType
     experiment = paywall.experiment

@@ -31,6 +31,16 @@ enum TemplateLogic {
       }
     }
 
+    // Dynamically set isFreeTrialAvailable for each product, reflecting the
+    // user's current trial eligibility for that specific product. Only set
+    // when eligibility was computed for the product, e.g. not on debug
+    // previews, which skip the free trial refresh.
+    for (index, productVariable) in productVariables.enumerated() {
+      if let isFreeTrialAvailable = paywall.isFreeTrialAvailableByProductName[productVariable.name] {
+        productVariables[index].attributes["isFreeTrialAvailable"] = JSON(isFreeTrialAvailable)
+      }
+    }
+
     let variablesTemplate = await factory.makeJsonVariables(
       products: productVariables,
       computedPropertyRequests: paywall.computedPropertyRequests,

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Enhancements
+
+- Adds an `isFreeTrialAvailable` product variable to paywalls, reflecting whether the user is currently eligible for a free trial of that specific product. Unlike the paywall-level free trial flag, this is computed per product, so paywalls with products from different subscription groups can route on each product's eligibility individually.
+
 ## 4.16.2
 
 ### Enhancements
