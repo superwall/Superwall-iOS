@@ -87,6 +87,22 @@ struct AudioSessionProxyTests {
 
     #expect((proxy.sharedInstance() != nil) == classResolves)
   }
+
+  /// The check above ties both sides to `mangledClassName`, so a typo in the constant
+  /// sends them nil together and leaves the suite green — while every microphone
+  /// permission read silently degrades to the unavailable sentinel. Pin the decoded
+  /// names deterministically instead, the way the Contacts, Location, and Tracking
+  /// proxy suites do. The literals land in the test binary, not the shipped SDK, so
+  /// they don't undo the mangling.
+  @Test func mangledClassName_decodesCorrectly() {
+    #expect(AudioSessionProxy.mangledClassName.rot13() == "AVAudioSession")
+  }
+
+  @Test func selectorNames_areCorrectlyDecoded() {
+    #expect(AudioSessionProxy.mangledSharedInstanceSelector.rot13() == "sharedInstance")
+    #expect(AudioSessionProxy.mangledRecordPermissionSelector.rot13() == "recordPermission")
+    #expect(AudioSessionProxy.mangledRequestPermissionSelector.rot13() == "requestRecordPermission:")
+  }
 }
 
 /// These replace the tests for the deleted `FakeAudioSession`. The fake stood in for
