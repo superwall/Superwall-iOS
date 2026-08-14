@@ -12,7 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes a crash on launch when an audience filter contains an invalid expression.
+- Fixes a crash when an audience filter contains an expression that can't be evaluated, such as a computed property with an unquoted argument (`daysSince(app_install)`). Updates Superscript to 1.0.15, which also stops any future evaluation failure from aborting the app. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.15).
 - Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
 - Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
 - Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
