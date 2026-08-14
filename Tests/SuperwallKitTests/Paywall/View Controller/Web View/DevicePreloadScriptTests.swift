@@ -24,9 +24,9 @@ struct DevicePreloadScriptTests {
     #expect(!source.contains(#""en"};"#))
   }
 
-  @Test("Handles non-ASCII locale identifiers")
+  @Test("Emits non-ASCII locale identifiers as raw UTF-8")
   func handlesNonAsciiLocales() throws {
-    let source = try #require(DevicePreloadScript.source(deviceLocale: "zh_Hans_CN"))
-    #expect(source.contains("zh_Hans_CN"))
+    let source = try #require(DevicePreloadScript.source(deviceLocale: "中文_CN"))
+    #expect(source == #"window.__SW_DEVICE_PRELOAD__ = {"deviceLocale":"中文_CN"};"#)
   }
 }
