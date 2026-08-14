@@ -136,6 +136,25 @@ struct CELEvaluatorTests {
     #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
   }
 
+  @Test func evaluateExpression_unresolvableFunctionArgument_noMatch() async {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.reset()
+    let evaluator = CELEvaluator(
+      storage: dependencyContainer.storage,
+      factory: dependencyContainer
+    )
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    // A function argument that fails to resolve must degrade to noMatch —
+    // Superscript < 1.0.15 aborted the process when evaluating this.
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "daysSince(app_install) >= 1")
+    let result = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: .stub()
+    )
+    #expect(result == .noMatch(source: .expression, experimentId: rule.experiment.id))
+  }
+
   @Test func evaluateExpression_noEntitlements_match() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
