@@ -52,7 +52,7 @@ class SWWebView: WKWebView {
     isMac: Bool,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
-    factory: FeatureFlagsFactory
+    factory: FeatureFlagsFactory & DeviceHelperFactory
   ) {
     self.isMac = isMac
     self.messageHandler = messageHandler
@@ -116,6 +116,21 @@ class SWWebView: WKWebView {
       RawWebMessageHandler(delegate: messageHandler),
       name: "paywallMessageHandler"
     )
+
+    // Inject the device locale before any page JavaScript runs so paywall.js
+    // can render localized strings on first paint, rather than after the
+    // (receipt/product-gated) template_variables message arrives.
+    if let preloadSource = DevicePreloadScript.source(
+      deviceLocale: factory.makeDeviceInfo().locale
+    ) {
+      wkConfig.userContentController.addUserScript(
+        WKUserScript(
+          source: preloadSource,
+          injectionTime: .atDocumentStart,
+          forMainFrameOnly: true
+        )
+      )
+    }
     self.navigationDelegate = self
 
     translatesAutoresizingMaskIntoConstraints = false
