@@ -8,10 +8,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
 - Links subscriptions to the user server-side after successful purchase or restore.
-- Injects the device locale into the paywall webview at document start so paywalls with translations render in the user's language on first paint, instead of briefly showing the default language and re-rendering once device attributes arrive.
 
 ### Fixes
 
+- Fixes issue on localized paywalls where the default language would briefly show before re-rendering once device attributes arrive.
 - Fixes a crash when an audience filter contains an expression that can't be evaluated, such as a computed property with an unquoted argument (`daysSince(app_install)`). Updates Superscript to 1.0.15, which also stops any future evaluation failure from aborting the app. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.15).
 - Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
 - Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
