@@ -460,6 +460,7 @@
 		CF2064883604B915C8768FC5 /* ASIdManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF989B3D90DC3D88FACC4D45 /* ASIdManagerProxy.swift */; };
 		CF3683E2AD703237EC0CE22E /* PaywallProducts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C95DABA23C6CBEF0AAA63C0 /* PaywallProducts.swift */; };
 		CFEB0D797815E8EDFB059767 /* Superwall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */; };
+		D09F053C8458BD4DC5D8C385 /* FirstSessionDeepLinkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AF63F804DD58D34FDF2BAB8 /* FirstSessionDeepLinkTests.swift */; };
 		D0E19F665C7B230BF3FA122D /* TrackingResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85ED994DEC92BB90ACC6AC2 /* TrackingResult.swift */; };
 		D1F8771E65157D1B0E05D0B9 /* ManifestDataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2915A802FACB53B6094B011 /* ManifestDataFetcher.swift */; };
 		D25B3A24CEE42FC90BFA31D2 /* SuperwallEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E4096EBF0B8C9693322CD1 /* SuperwallEvent.swift */; };
@@ -647,6 +648,7 @@
 		1A60698DFEF03837D029E191 /* TestModeEntitlementRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeEntitlementRowView.swift; sourceTree = "<group>"; };
 		1AB5B56470F69FBE1C34EAA8 /* PaywallRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequest.swift; sourceTree = "<group>"; };
 		1AD42859B8BFEC078665FA1E /* StripeStoreProductDiscount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeStoreProductDiscount.swift; sourceTree = "<group>"; };
+		1AF63F804DD58D34FDF2BAB8 /* FirstSessionDeepLinkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstSessionDeepLinkTests.swift; sourceTree = "<group>"; };
 		1B1A6ADFFB9FA982BF69C134 /* MockSKPaymentTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSKPaymentTransaction.swift; sourceTree = "<group>"; };
 		1B78FB9232236AF44369EA92 /* AppSessionManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionManagerMock.swift; sourceTree = "<group>"; };
 		1BDB77756A3775FF4ED31C48 /* Email.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Email.swift; sourceTree = "<group>"; };
@@ -1735,6 +1737,7 @@
 			isa = PBXGroup;
 			children = (
 				0A9F09187825FB944A3BD8A9 /* DeepLinkRouterTests.swift */,
+				1AF63F804DD58D34FDF2BAB8 /* FirstSessionDeepLinkTests.swift */,
 			);
 			path = DeepLink;
 			sourceTree = "<group>";
@@ -3280,6 +3283,7 @@
 				CE43399599386456DCCD1FDC /* FakeLocationAuthorizationStatusTests.swift in Sources */,
 				1F9AE04458B942D070FC4832 /* FakeTrackingAuthorizationStatusTests.swift in Sources */,
 				AC7D527612F631AAADC7D225 /* FileManagerMigratorTests.swift in Sources */,
+				D09F053C8458BD4DC5D8C385 /* FirstSessionDeepLinkTests.swift in Sources */,
 				D4B5A9708204AB6D58904733 /* GetPaywallVcOperatorTests.swift in Sources */,
 				64B962A8B59ACE514B0E48AE /* GetPresenterOperatorTests.swift in Sources */,
 				AF4AD928FACF9056E00D5920 /* HandleTriggerResultOperatorTests.swift in Sources */,

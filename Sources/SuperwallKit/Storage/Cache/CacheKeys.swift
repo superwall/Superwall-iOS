@@ -113,6 +113,20 @@ enum DidTrackFirstSession: Storable {
   typealias Value = Bool
 }
 
+/// The first deep link URL received during the first app session after
+/// install. App Store custom product pages can each specify a deep link
+/// that's delivered on the first app open, so this is stored for product
+/// page attribution. Install-scoped: survives identity reset so it can be
+/// re-applied to a new user's attributes, and is only cleared by app
+/// uninstall.
+enum FirstSessionDeepLinkURL: Storable {
+  static var key: String {
+    "store.firstSessionDeepLinkUrl"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
+}
+
 enum DidCleanUserAttributes: Storable {
   static var key: String {
     "store.didCleanUserAttributes"

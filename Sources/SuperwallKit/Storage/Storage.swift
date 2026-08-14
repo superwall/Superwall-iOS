@@ -349,3 +349,29 @@ class Storage {
     return cache.delete(keyType)
   }
 }
+
+// MARK: - First Session Deep Link
+extension Storage {
+  /// Records the first deep link received during the first app session.
+  ///
+  /// App Store custom product pages can each specify a deep link that's
+  /// delivered on the first app open after install. Storing it allows
+  /// results to be broken down by product page. Only the first deep link
+  /// received during the first app session is recorded. The stored value
+  /// is install-scoped, surviving identity resets.
+  ///
+  /// - Returns: `true` if this call recorded the URL, `false` if the first
+  ///   app session has already ended or a deep link was already recorded.
+  func recordFirstSessionDeepLink(_ url: URL) -> Bool {
+    queue.sync {
+      if _didTrackFirstSession {
+        return false
+      }
+      if get(FirstSessionDeepLinkURL.self) != nil {
+        return false
+      }
+      save(url.absoluteString, forType: FirstSessionDeepLinkURL.self)
+      return true
+    }
+  }
+}

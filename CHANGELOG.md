@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.16.3
+
+### Enhancements
+
+- Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. Requires `Superwall.handleDeepLink(_:)` to be set up.
+
 ## 4.16.2
 
 ### Enhancements
