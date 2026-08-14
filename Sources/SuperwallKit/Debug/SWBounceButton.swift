@@ -27,8 +27,17 @@ final class SWBounceButton: UIButton {
         self.activityIndicator.startAnimating()
         self.isEnabled = false
       } else {
-        self.setTitle(oldTitle, for: .normal)
-        self.oldTitle = ""
+        // `didSet` fires on every assignment, not just on a change, so
+        // `showLoading = false` can arrive when loading was never started (or
+        // was already ended). `oldTitle` is empty in that case, and restoring
+        // it unconditionally would blank a perfectly good title — e.g. the
+        // debugger's "Preview" button vanishes when a second terminal state
+        // (skipped, then presentationError) lands on an already-idle button.
+        // Only restore when there is a saved title to restore.
+        if !oldTitle.isEmpty {
+          self.setTitle(oldTitle, for: .normal)
+          self.oldTitle = ""
+        }
         self.activityIndicator.stopAnimating()
         self.isEnabled = true
       }

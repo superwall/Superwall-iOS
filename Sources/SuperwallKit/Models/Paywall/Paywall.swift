@@ -8,10 +8,6 @@
 
 import UIKit
 
-struct Paywalls: Decodable {
-  var paywalls: [Paywall]
-}
-
 struct Paywall: Codable {
   /// The id of the paywall in the database.
   var databaseId: String

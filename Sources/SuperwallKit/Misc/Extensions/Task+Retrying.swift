@@ -30,6 +30,12 @@ extension Task where Failure == Error {
               if let (_, response) = result as? (Data, URLResponse),
                 let httpResponse = response as? HTTPURLResponse,
                 !(200...299).contains(httpResponse.statusCode) {
+                // A client error won't succeed on retry, so hand the response back
+                // for the caller to map rather than burning the whole backoff
+                // schedule on a request that can only fail the same way.
+                if TaskRetryLogic.isTerminal(statusCode: httpResponse.statusCode) {
+                  return result
+                }
                 throw URLError(.badServerResponse)
               }
               return result

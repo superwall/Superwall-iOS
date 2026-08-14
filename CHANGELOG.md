@@ -2,6 +2,25 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.16.2
+
+### Enhancements
+
+- Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
+- Links subscriptions to the user server-side after successful purchase or restore.
+
+### Fixes
+
+- Fixes issue on localized paywalls where the default language would briefly show before re-rendering once device attributes arrive.
+- Fixes a crash when an audience filter contains an expression that can't be evaluated, such as a computed property with an unquoted argument (`daysSince(app_install)`). Updates Superscript to 1.0.15, which also stops any future evaluation failure from aborting the app. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.15).
+- Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
+- Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
+- Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
+- Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
+- Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
+- Stops Apple's microphone, location, and contacts class and selector names appearing in your app's binary when you don't use those permissions.
+- Fixes the app's accent color resetting to the system blue when configuring the SDK from a SwiftUI `App` initializer.
+
 ## 4.16.1
 
 ### Enhancements

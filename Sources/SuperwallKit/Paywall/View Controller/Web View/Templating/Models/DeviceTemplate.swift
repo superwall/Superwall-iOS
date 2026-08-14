@@ -29,6 +29,9 @@ struct DeviceTemplate: Codable {
   var timezoneOffset: Int
   var radioType: String
   var interfaceStyle: String
+  var fontSize: Int
+  var fontScale: Double
+  var preferredContentSizeCategory: String
   var isLowPowerModeEnabled: Bool
   var isApplePayAvailable: Bool
   var bundleId: String

@@ -476,6 +476,19 @@ final class TransactionManager {
       )
       await Superwall.shared.track(trackedEvent)
     }
+
+    // `didRestore` is only reached on a successful restore, at which point
+    // receipts/entitlements have just been reloaded. Redeem existing codes so a
+    // freshly-restored subscription is linked to the identified user server-side,
+    // mirroring the purchase path in `loadPurchasedProductsIfNeeded`. Skipped in
+    // test mode, which sets subscription state without real receipt data
+    // (SW-5516: always redeem after a successful purchase & restore).
+    if factory.makeTestModeManager().isTestMode {
+      return
+    }
+    Task {
+      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    }
   }
 
   private func purchase(
@@ -830,11 +843,23 @@ final class TransactionManager {
   }
 
   private func loadPurchasedProductsIfNeeded(for product: StoreProduct) async {
-    guard !shouldSkipReceiptLoading(for: product) else {
+    if shouldSkipReceiptLoading(for: product) {
       return
     }
 
     await receiptManager.loadPurchasedProducts(config: nil)
+
+    // A successful native (App Store) purchase doesn't otherwise hit `/redeem`,
+    // so a new subscription for an already-identified user isn't linked to them
+    // server-side until some other trigger fires. Redeem existing codes here so
+    // the freshly-loaded receipts + appTransactionId are always pushed to the
+    // backend right after a native purchase completes. This is the purchase path;
+    // the equivalent redeem for restores lives in `didRestore`. Gated by
+    // `shouldSkipReceiptLoading`, so it skips custom/web products and test mode
+    // (SW-5516: always redeem after a successful purchase & restore).
+    Task {
+      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    }
   }
 
   private func shouldSkipReceiptLoading(for product: StoreProduct) -> Bool {
