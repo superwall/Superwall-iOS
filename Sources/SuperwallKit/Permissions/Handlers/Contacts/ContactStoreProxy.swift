@@ -29,15 +29,25 @@ final class ContactStoreProxy: NSObject {
   // CNEntityType.contacts == 0
   static let contactsEntityType = 0
 
-  static var contactStoreClass: AnyClass? {
-    NSClassFromString(mangledContactStoreClassName.rot13())
+  private let contactStoreClass: AnyClass?
+
+  init(
+    contactStoreClass: AnyClass? = NSClassFromString(
+      ContactStoreProxy.mangledContactStoreClassName.rot13()
+    )
+  ) {
+    self.contactStoreClass = contactStoreClass
+    super.init()
   }
 
-  @objc var authorizationStatusSelectorName: String {
+  // Deliberately not `@objc`: an `@objc` member emits its name into the binary's
+  // Objective-C method metadata, which is the section this file's mangling exists
+  // to keep Apple's API names out of. These are read from Swift only.
+  var authorizationStatusSelectorName: String {
     Self.mangledAuthorizationStatusSelector.rot13()
   }
 
-  @objc var requestAccessSelectorName: String {
+  var requestAccessSelectorName: String {
     Self.mangledRequestAccessSelector.rot13()
   }
 
@@ -51,8 +61,10 @@ final class ContactStoreProxy: NSObject {
     return method_getImplementation(method)
   }
 
-  @objc func authorizationStatus() -> Int {
-    let cls: AnyClass = Self.contactStoreClass ?? FakeContactStore.self
+  func authorizationStatus() -> Int {
+    guard let cls = contactStoreClass else {
+      return -1
+    }
     let sel = NSSelectorFromString(authorizationStatusSelectorName)
 
     guard let imp = Self.classIMP(cls, sel) else {
@@ -66,10 +78,11 @@ final class ContactStoreProxy: NSObject {
     return function(cls as AnyObject, sel, Self.contactsEntityType)
   }
 
-  func requestAccess() async throws -> Bool {
-    let cls: AnyClass = Self.contactStoreClass ?? FakeContactStore.self
-
-    guard let storeType = cls as? NSObject.Type else {
+  // Named away from Apple's `requestAccess` deliberately:
+  // `withCheckedThrowingContinuation`'s `function: String = #function` default
+  // expands the enclosing method name into a string literal in the binary.
+  func requestPermission() async throws -> Bool {
+    guard let storeType = contactStoreClass as? NSObject.Type else {
       return false
     }
 

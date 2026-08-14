@@ -122,27 +122,115 @@ class DeviceHelper {
     TimeZone.current.secondsFromGMT()
   }
 
-  /// Screen metrics, cached once at init on the main thread.
+  /// Screen metrics, cached from the main thread.
   ///
   /// `UIScreen` / `UIWindowScene` are main-thread-only (and `UIScreen.main`
   /// is deprecated), but these are read from background contexts such as
-  /// `matchMMPInstall`. Reading once up front, on the main thread, keeps those
+  /// `matchMMPInstall`. Reading on the main thread and caching keeps those
   /// reads safe instead of touching main-thread-only UIKit off-thread.
-  let screenWidth: Int
-  let screenHeight: Int
-  let devicePixelRatio: Double
+  ///
+  /// `nil` until a read is allowed to touch UIKit (see ``isUIKitReadSafe``).
+  /// When the SDK is configured before `UIApplicationMain` runs, the init-time
+  /// read stays empty and the cache fills on first post-launch read or on app
+  /// activation instead.
+  @DispatchQueueBacked
+  private var screenMetrics: ScreenMetrics?
 
-  private struct ScreenMetrics {
+  var screenWidth: Int {
+    currentScreenMetrics.width
+  }
+
+  var screenHeight: Int {
+    currentScreenMetrics.height
+  }
+
+  var devicePixelRatio: Double {
+    currentScreenMetrics.scale
+  }
+
+  struct ScreenMetrics {
     let width: Int
     let height: Int
     let scale: Double
+
+    /// The values used when the screen can't be read: before the application
+    /// exists, and on visionOS where there is no screen.
+    static let placeholder = ScreenMetrics(width: 0, height: 0, scale: 1.0)
   }
 
-  private static func makeScreenMetrics() -> ScreenMetrics {
+  /// The cached metrics, filling the cache first when it's still empty.
+  private var currentScreenMetrics: ScreenMetrics {
+    if let cached = screenMetrics {
+      return cached
+    }
+    guard let metrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe) else {
+      return .placeholder
+    }
+    screenMetrics = metrics
+    return metrics
+  }
+
+  /// Whether UIKit's screen and trait APIs can be read without side effects.
+  ///
+  /// In an app, touching `UIScreen`, `UIFontMetrics`, or any other
+  /// appearance-adjacent UIKit API before `UIApplicationMain` has created the
+  /// application object — e.g. `configure` called from a SwiftUI `App.init` —
+  /// makes UIKit build its trait system before the app's asset-catalog accent
+  /// color is registered, permanently resetting the global tint to system blue.
+  /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
+  /// trait collections — must sit behind this check, and the check must come
+  /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
+  /// unguarded `UIDevice` reads at init (`model`, `vendorId`, `interfaceType`)
+  /// are exempt: they don't touch the trait system, and the sample-app repro
+  /// keeps its tint with them in place.
+  ///
+  /// A missing application object doesn't always mean that window, though: some
+  /// processes never create one (unit-test runners, app extensions) yet can read
+  /// `UIScreen.main` freely, and waiting there would leave placeholder values
+  /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
+  /// disambiguates.
+  static var isUIKitReadSafe: Bool {
+    return isUIKitReadSafe(
+      hasApplication: UIApplication.sharedApplication != nil,
+      bundleURL: Bundle.main.bundleURL
+    )
+  }
+
+  /// The decision above, split from the globals it reads.
+  ///
+  /// Both facts come from process-wide state that a test can't stage: the runner has
+  /// no application object and isn't an app bundle, so the deciding arm — an app
+  /// bundle with no application yet — is unreachable through the property. Taking
+  /// them as parameters lets both arms be pinned, so loosening `"app"` can't leave
+  /// the suite green while re-opening the accent-color bug.
+  static func isUIKitReadSafe(hasApplication: Bool, bundleURL: URL) -> Bool {
+    if hasApplication {
+      return true
+    }
+    return bundleURL.pathExtension != "app"
+  }
+
+  /// The instance's view of ``isUIKitReadSafe``, injected at init. Every
+  /// instance-level cache read and refresh consults this rather than the static,
+  /// so tests can hold a real instance in the pre-launch state and then release
+  /// it — the static's state can't be recreated in-process.
+  private let isUIKitReadSafe: () -> Bool
+
+  /// Reads the screen metrics, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeScreenMetrics(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> ScreenMetrics? {
     #if os(visionOS)
-    return ScreenMetrics(width: 0, height: 0, scale: 1.0)
+    return .placeholder
     #else
-    let read = { () -> ScreenMetrics in
+    let read = { () -> ScreenMetrics? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
       // Prefer the connected window scene's screen; fall back to the
       // deprecated `UIScreen.main` only when no scene is attached yet.
       let screen = UIApplication.sharedApplication?
@@ -186,14 +274,269 @@ class DeviceHelper {
 
   var interfaceStyleOverride: InterfaceStyle?
 
+  /// Backs `X-Device-Interface-Style`. `getTemplateDevice()` resolves the override
+  /// the same way against its own trait snapshot — change one and change the other,
+  /// or the template and the header disagree on a backend-contract field.
+  ///
+  /// Not folded into a shared `interfaceStyle(from:)` helper on purpose: passing
+  /// `currentUITraits` would evaluate it eagerly, scheduling a needless cache
+  /// refresh — one per network request whenever an override is set, and a blocking
+  /// fill on the first pre-launch read. The early return here avoids it.
   var interfaceStyle: String {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
     }
+    return currentUITraits.interfaceStyle
+  }
+
+  var fontSize: Int {
+    return currentUITraits.fontSize
+  }
+
+  var fontScale: Double {
+    return currentUITraits.fontScale
+  }
+
+  var preferredContentSizeCategory: String {
+    return currentUITraits.preferredContentSizeCategory
+  }
+
+  /// Trait-derived values, cached from the main thread.
+  ///
+  /// `UIApplication.preferredContentSizeCategory`, `UIScreen.traitCollection` and
+  /// `UIFontMetrics` are main-thread-only, but these are read from background
+  /// contexts such as `getTemplateDevice()`. They're read on the main thread and
+  /// cached, then refreshed on trait-change notifications and on read.
+  ///
+  /// `nil` while a read isn't yet allowed to touch UIKit (see ``isUIKitReadSafe``),
+  /// which only happens when the SDK is configured before `UIApplicationMain` runs.
+  @DispatchQueueBacked
+  private var uiTraits: UITraits?
+
+  /// Set while a refresh of ``uiTraits`` is already scheduled, so a burst of reads
+  /// queues one main-thread hop rather than one per read.
+  @DispatchQueueBacked
+  private var isRefreshingUITraits = false
+
+  private var traitObservers: [NSObjectProtocol] = []
+
+  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``. Typed `Any?`
+  /// because the protocol is iOS 17+ and a stored property can't be gated on
+  /// availability.
+  private var traitChangeRegistration: Any?
+
+  /// The scene the registration was made against, held weakly. A registration goes
+  /// stale two ways: UIKit tears it down when its scene deallocates, and a
+  /// multi-window host can keep the scene alive in the background while another
+  /// becomes active — where trait updates are deferred, so flips the user can see
+  /// never fire it. Both show up as this no longer matching the active scene.
+  private weak var observedTraitScene: UIWindowScene?
+
+  /// The current traits, served from the cache on every version.
+  ///
+  /// `refreshUITraits()` keeps the cache fresh: main-thread reads refresh it
+  /// synchronously, off-main reads schedule one coalesced main-queue refresh —
+  /// blocking only to fill an empty cache, which happens when init ran before
+  /// `UIApplicationMain`.
+  ///
+  /// From iOS 17 the trait hook also updates the cache at the moment the appearance
+  /// flips. Below 17 there is no hook, so an in-place automatic light/dark change —
+  /// sunset while the app is frontmost — lands one read late via the refresh-on-read
+  /// backstop. That bounded lag is accepted in exchange for not blocking a
+  /// cooperative-pool thread on the main queue for every network request
+  /// (`X-Device-Interface-Style`) and template build; earlier releases read live here
+  /// and paid that hop each time. Text-size changes and flips made while backgrounded
+  /// still land immediately via the notification observers.
+  private var currentUITraits: UITraits {
+    refreshUITraits()
+    return uiTraits ?? .unavailable
+  }
+
+  private func refreshUITraits() {
+    #if !os(visionOS)
+    // The wrapper's setter and getter share one serial queue, so this write is
+    // ordered ahead of `currentUITraits`' read and the caller sees it.
+    if Thread.isMainThread {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
+      return
+    }
+    // An empty cache means init ran before `UIApplicationMain` created the
+    // application. Block on the first real read — `makeUITraits()` makes the
+    // main-thread hop itself — rather than scheduling it, so early off-main
+    // readers don't report placeholder values.
+    if uiTraits == nil {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
+      return
+    }
+    if $isRefreshingUITraits.testAndSetTrue() {
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+      self.isRefreshingUITraits = false
+    }
+    #endif
+  }
+
+  /// Updates the cache at the moment the appearance or text size flips.
+  ///
+  /// There is no notification for `userInterfaceStyle`, so a system appearance
+  /// change while the app stays active — automatic light/dark at sunset — reaches
+  /// us only through a trait hook. Without this the cache reports the previous
+  /// token to `X-Device-Interface-Style` and to audience filters until something
+  /// else refreshes it.
+  ///
+  /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
+  /// created, so this also runs on activation and re-arms if the observed scene has
+  /// since gone away or stopped being the active one.
+  ///
+  /// iOS 17+ only. Below 17 the refresh-on-read backstop and the two notification
+  /// observers cover this instead, rather than injecting a view into the host's
+  /// window to reach `traitCollectionDidChange`.
+  private func registerForTraitChanges() {
+    #if !os(visionOS)
+    Task { @MainActor [weak self] in
+      if #available(iOS 17.0, *) {
+        self?.performTraitChangeRegistration()
+      }
+    }
+    #endif
+  }
+
+  #if !os(visionOS)
+  @available(iOS 17.0, *)
+  @MainActor
+  private func performTraitChangeRegistration() {
+    guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
+      return
+    }
+    // Already armed against the scene that's currently active.
+    if traitChangeRegistration != nil && observedTraitScene === scene {
+      return
+    }
+    // The observed scene either died or ceded activity to this one. Moving the
+    // registration rather than adding a second keeps it single: one live token,
+    // fired by the scene the user is looking at.
+    if let staleRegistration = traitChangeRegistration as? UITraitChangeRegistration {
+      observedTraitScene?.unregisterForTraitChanges(staleRegistration)
+    }
+    observedTraitScene = scene
+    traitChangeRegistration = scene.registerForTraitChanges(
+      [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
+    ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+    }
+  }
+  #endif
+
+  struct UITraits {
+    let interfaceStyle: String
+    let fontSize: Int
+    let fontScale: Double
+    let preferredContentSizeCategory: String
+
+    /// The values used when UIKit traits aren't available, e.g. on visionOS.
+    static let unavailable = UITraits(
+      interfaceStyle: "Unknown",
+      fontSize: 16,
+      fontScale: 1.0,
+      preferredContentSizeCategory: "unspecified"
+    )
+  }
+
+  /// Reads the current traits, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeUITraits(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> UITraits? {
     #if os(visionOS)
-    return "Unknown"
+    return .unavailable
     #else
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    let read = { () -> UITraits? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      // Scale against `category` explicitly. The implicit `scaledValue(for:)` resolves
+      // against `UITraitCollection.current`, which Apple documents as undefined outside
+      // a view or view-controller trait callback and stores per thread — so the two
+      // font numbers could disagree with the category on the line above, which is read
+      // from `UIApplication` and doesn't depend on trait context. One source, so the
+      // three values in a snapshot can't contradict each other in the audience filters.
+      let scaledValue = UIFontMetrics.default.scaledValue(
+        for: 16.0,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: category)
+      )
+
+      return UITraits(
+        interfaceStyle: interfaceStyleToken(
+          for: UIScreen.main.traitCollection.userInterfaceStyle
+        ),
+        fontSize: Int(scaledValue.rounded()),
+        fontScale: ((scaledValue / 16.0) * 100).rounded() / 100,
+        preferredContentSizeCategory: contentSizeCategoryToken(for: category)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
+    #endif
+  }
+
+  /// Refreshes the cached traits when the user changes their text size, or when the
+  /// app becomes active after an appearance change. Both notifications are posted on
+  /// the main thread.
+  ///
+  /// Activation also retries ``registerForTraitChanges()``, since a window is more
+  /// likely to exist by then than when `DeviceHelper` was created, and fills the
+  /// screen-metrics cache when init ran too early to read the screen.
+  private func observeUITraitChanges() {
+    #if !os(visionOS)
+    let names: [Notification.Name] = [
+      UIContentSizeCategory.didChangeNotification,
+      UIApplication.didBecomeActiveNotification
+    ]
+    traitObservers = names.map { name in
+      NotificationCenter.default.addObserver(
+        forName: name,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.uiTraits = traits
+        }
+        if self.screenMetrics == nil,
+          let metrics = DeviceHelper.makeScreenMetrics(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.screenMetrics = metrics
+        }
+        self.registerForTraitChanges()
+      }
+    }
+    #endif
+  }
+
+  /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
     switch style {
     case .unspecified:
       return "Unspecified"
@@ -204,34 +547,6 @@ class DeviceHelper {
     default:
       return "Unknown"
     }
-    #endif
-	}
-
-  var fontSize: Int {
-    #if os(visionOS)
-    return 16
-    #else
-    return Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded())
-    #endif
-  }
-
-  var fontScale: Double {
-    #if os(visionOS)
-    return 1.0
-    #else
-    let scale = UIFontMetrics.default.scaledValue(for: 16.0) / 16.0
-    return (scale * 100).rounded() / 100
-    #endif
-  }
-
-  var preferredContentSizeCategory: String {
-    #if os(visionOS)
-    return "unspecified"
-    #else
-    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
-      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-    return Self.contentSizeCategoryToken(for: category)
-    #endif
   }
 
   /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
@@ -580,7 +895,8 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
     self.storage = storage
     self.network = network
@@ -591,11 +907,20 @@ class DeviceHelper {
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+    self.isUIKitReadSafe = isUIKitReadSafe
 
-    let screenMetrics = Self.makeScreenMetrics()
-    self.screenWidth = screenMetrics.width
-    self.screenHeight = screenMetrics.height
-    self.devicePixelRatio = screenMetrics.scale
+    // Both are `nil` when `configure` runs before `UIApplicationMain` — they
+    // fill on first post-launch read or on app activation.
+    self.screenMetrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe)
+    self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
+    observeUITraitChanges()
+    registerForTraitChanges()
+  }
+
+  deinit {
+    for observer in traitObservers {
+      NotificationCenter.default.removeObserver(observer)
+    }
   }
 
   func getEnrichment(
@@ -631,6 +956,14 @@ class DeviceHelper {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
+    // Snapshot once. The four trait-derived fields below each go through
+    // `currentUITraits`, so reading them separately would schedule four cache
+    // refreshes per call and could interleave with one, tearing the snapshot.
+    // Taking the snapshot means `interfaceStyle` below resolves the override
+    // inline rather than going through ``interfaceStyle``, so the two resolve it
+    // the same way by hand — keep them in step.
+    let traits = currentUITraits
+
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
       platform: isMac ? "macOS" : "iOS",
@@ -652,10 +985,10 @@ class DeviceHelper {
       interfaceType: interfaceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
-      interfaceStyle: interfaceStyle,
-      fontSize: fontSize,
-      fontScale: fontScale,
-      preferredContentSizeCategory: preferredContentSizeCategory,
+      interfaceStyle: interfaceStyleOverride?.description ?? traits.interfaceStyle,
+      fontSize: traits.fontSize,
+      fontScale: traits.fontScale,
+      preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,

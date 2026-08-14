@@ -76,34 +76,57 @@ struct AudioSessionProxyTests {
     #expect(validValues.contains(result))
   }
 
-  @Test func sharedInstance_returnsNonNil() {
+  /// Whether `AVAudioSession` is registered with the ObjC runtime is a property of
+  /// the runner image — `SuperwallKit` deliberately doesn't link AVFoundation and the
+  /// test target declares no `TEST_HOST` — so asserting non-nil outright would fail
+  /// CI on an environment fact rather than a defect. Tie both sides to the same fact:
+  /// the proxy returns an instance exactly when the class resolves.
+  @Test func sharedInstance_matchesWhetherTheClassResolves() {
     let proxy = AudioSessionProxy()
-    // In test environment, this should return either real AVAudioSession or FakeAudioSession
-    let instance = proxy.sharedInstance()
-    #expect(instance != nil)
+    let classResolves = NSClassFromString(AudioSessionProxy.mangledClassName.rot13()) != nil
+
+    #expect((proxy.sharedInstance() != nil) == classResolves)
+  }
+
+  /// The check above ties both sides to `mangledClassName`, so a typo in the constant
+  /// sends them nil together and leaves the suite green — while every microphone
+  /// permission read silently degrades to the unavailable sentinel. Pin the decoded
+  /// names deterministically instead, the way the Contacts, Location, and Tracking
+  /// proxy suites do. The literals land in the test binary, not the shipped SDK, so
+  /// they don't undo the mangling.
+  @Test func mangledClassName_decodesCorrectly() {
+    #expect(AudioSessionProxy.mangledClassName.rot13() == "AVAudioSession")
+  }
+
+  @Test func selectorNames_areCorrectlyDecoded() {
+    #expect(AudioSessionProxy.mangledSharedInstanceSelector.rot13() == "sharedInstance")
+    #expect(AudioSessionProxy.mangledRecordPermissionSelector.rot13() == "recordPermission")
+    #expect(AudioSessionProxy.mangledRequestPermissionSelector.rot13() == "requestRecordPermission:")
   }
 }
 
+/// These replace the tests for the deleted `FakeAudioSession`. The fake stood in for
+/// `AVAudioSession` when AVFoundation was unavailable, but its `@objc` members emitted
+/// Apple's real selector names into the binary — the leak this SDK's mangling exists to
+/// prevent. The proxy now guards on a missing class instead, so pin what it returns
+/// down that path.
 @Suite
-struct FakeAudioSessionTests {
-  @Test func sharedInstance_returnsFakeAudioSession() {
-    let instance = FakeAudioSession.sharedInstance()
-    #expect(instance is FakeAudioSession)
+struct AudioSessionProxyMissingClassTests {
+  @Test func missingSession_sharedInstance_returnsNil() {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    #expect(proxy.sharedInstance() == nil)
   }
 
-  @Test func recordPermission_returnsNegativeOne() {
-    let fake = FakeAudioSession()
-    #expect(fake.recordPermission() == -1)
+  /// -1 is the "unavailable" sentinel `checkMicrophonePermission()` maps to
+  /// `.unsupported`, and is what the fake's `recordPermission()` returned.
+  @Test func missingSession_recordPermission_returnsUnavailable() {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    #expect(proxy.recordPermission() == -1)
   }
 
-  @Test func requestRecordPermission_callsCompletionWithFalse() {
-    let fake = FakeAudioSession()
-    var result: Bool?
-
-    fake.requestRecordPermission { granted in
-      result = granted
-    }
-
-    #expect(result == false)
+  @Test func missingSession_requestPermission_returnsFalse() async {
+    let proxy = AudioSessionProxy(audioSessionClass: nil)
+    let granted = await proxy.requestPermission()
+    #expect(granted == false)
   }
 }
