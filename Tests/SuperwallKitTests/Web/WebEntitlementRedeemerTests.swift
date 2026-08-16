@@ -650,6 +650,158 @@ struct WebEntitlementRedeemerTests {
     #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
   }
 
+  @Test("Empty poll response does not clobber unexpired web entitlements")
+  func testPollWebEntitlements_emptyResponse_keepsUnexpiredWebEntitlements() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A Stripe subscriber with a paid-through web entitlement in the cache.
+    let stripeEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(
+        \.customerInfo,
+        to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [stripeEntitlement])
+      )
+    dependencyContainer.storage.save(previousRedeemResponse, forType: LatestRedeemResponse.self)
+    dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([stripeEntitlement])
+    }
+
+    // The backend answers with zero entitlements. The poll is keyed on
+    // appUserId/deviceId alone, so an alias mismatch or backend hiccup
+    // produces exactly this response for a still-paying subscriber. Before
+    // the fix, this response poisoned the cache. The next cold launch then
+    // read the user as inactive until a network poll recovered them.
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    mockNetwork.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: dependencyContainer.storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+        to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL(string: "https://superwall.com")!)
+      )
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    // The cache keeps the unexpired entitlement.
+    let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(
+      savedRedeemResponse?.customerInfo.entitlements.contains(stripeEntitlement) == true,
+      "An empty poll response must not remove an unexpired web entitlement"
+    )
+
+    // The status stays active.
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status == .active([stripeEntitlement]))
+
+    // The fetch date is not saved, so the next poll retries without
+    // waiting out entitlementsMaxAge.
+    #expect(dependencyContainer.storage.get(LastWebEntitlementsFetchDate.self) == nil)
+
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+  }
+
+  @Test("Empty poll response removes expired web entitlements")
+  func testPollWebEntitlements_emptyResponse_removesExpiredWebEntitlements() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The cached entitlement expired a day ago, so nothing protects it.
+    let expiredEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(-86_400),
+      isLifetime: false,
+      willRenew: false,
+      state: nil,
+      offerType: nil
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(
+        \.customerInfo,
+        to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [expiredEntitlement])
+      )
+    dependencyContainer.storage.save(previousRedeemResponse, forType: LatestRedeemResponse.self)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    mockNetwork.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: dependencyContainer.storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+        to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL(string: "https://superwall.com")!)
+      )
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(
+      savedRedeemResponse?.customerInfo.entitlements.isEmpty == true,
+      "An empty poll response must remove an expired web entitlement"
+    )
+
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+  }
+
   @Test("External purchase controller with mixed web + appStore entitlements - polling removes web entitlements")
   func testPollWebEntitlements_externalPurchaseController_mixedEntitlements_webRemoved() async {
     guard #available(iOS 14.0, *) else {

@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Fixes
+
+- Fixes subscribers being reported as `inactive` on cold launch when StoreKit returns no purchases before it finishes loading. This hit web and Stripe subscribers hardest, because they have no App Store purchases at all. The SDK now keeps an `active` subscription status while one of its entitlements is within its expiry date.
+- Fixes a web entitlements poll response with zero entitlements erasing cached web entitlements that are still within their expiry date. One bad response could make a paying web subscriber look `inactive` on every later cold launch until a network call recovered them.
+
 ## 4.16.2
 
 ### Enhancements
