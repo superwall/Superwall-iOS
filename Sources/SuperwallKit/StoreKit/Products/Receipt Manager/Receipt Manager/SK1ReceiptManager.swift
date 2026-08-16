@@ -97,7 +97,12 @@ final class SK1ReceiptManager: ReceiptManagerType {
           id: entitlementId,
           type: entitlementTypes[entitlementId] ?? .serviceLevel,
           isActive: isActive,
-          productIds: productIds
+          productIds: productIds,
+          // Receipt-derived entitlements are App Store entitlements. The
+          // anti-downgrade guard relies on this: a device read may only
+          // refute `.appStore` entitlements, and a nil store marks an
+          // entitlement as granted outside the App Store (web, manual).
+          store: .appStore
         )
       )
     }

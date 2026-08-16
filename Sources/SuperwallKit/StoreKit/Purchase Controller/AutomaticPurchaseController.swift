@@ -49,23 +49,20 @@ final class AutomaticPurchaseController {
         //
         // On a non-answer, keep an `.active` status while one of its
         // entitlements is within its expiry date. A device read also has no
-        // authority over entitlements from other stores (Stripe, web), so
-        // those hold the status even when unrelated inactive purchases
-        // exist. Entitlements with no expiry date never hold the status, so
-        // a revoked lifetime purchase can still deactivate here.
+        // authority over entitlements not granted by the App Store, so those
+        // hold the status even when unrelated inactive purchases exist. A
+        // nil store means no App Store transaction unlocks the entitlement
+        // (web or manual grant — both receipt managers stamp `.appStore` on
+        // device-derived entitlements), so nil is protected too. Entitlements
+        // with no expiry date never hold the status, so a revoked lifetime
+        // purchase can still deactivate here.
         if case .active(let currentEntitlements) = superwall.subscriptionStatus {
           let holdsStatus = currentEntitlements.contains { entitlement in
             guard entitlement.isActive,
               (entitlement.expiresAt ?? .distantPast) > Date() else {
               return false
             }
-            if purchases.isEmpty {
-              return true
-            }
-            if let store = entitlement.store, store != .appStore {
-              return true
-            }
-            return false
+            return purchases.isEmpty || entitlement.store != .appStore
           }
           if holdsStatus {
             return

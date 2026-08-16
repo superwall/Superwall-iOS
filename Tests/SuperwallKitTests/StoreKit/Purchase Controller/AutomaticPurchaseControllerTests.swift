@@ -271,6 +271,70 @@ struct AutomaticPurchaseControllerTests {
     }
   }
 
+  @Test("Inactive purchases cannot refute a nil-store entitlement")
+  func testInactivePurchases_nilStoreStatus_staysActive() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A nil store means no App Store transaction unlocks the entitlement:
+    // a web or manual grant whose payload omitted `store`. Both receipt
+    // managers stamp `.appStore` on device-derived entitlements, so a
+    // device read has no authority here and must not demote it.
+    let nilStoreEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: nil,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([nilStoreEntitlement])
+    }
+
+    let controller = makeController()
+    let oldPurchase = Purchase(
+      id: "old_trial_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-700 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [oldPurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(nilStoreEntitlement))
+    } else {
+      Issue.record("A device read must not refute a nil-store entitlement; got \(status)")
+    }
+  }
+
+  @Test("SK1 receipt entitlements carry the App Store store")
+  func testSK1Entitlements_carryAppStoreStore() async {
+    // The flipped guard predicate protects nil-store entitlements, so
+    // refund enforcement on StoreKit 1 depends on the receipt manager
+    // stamping `.appStore` on the entitlements it derives.
+    let receiptManager = SK1ReceiptManager(receiptData: { MockReceiptData.newReceipt })
+    let entitlement = Entitlement(id: "pro")
+    let snapshot = await receiptManager.loadPurchases(
+      serverEntitlementsByProductId: ["com.nutcallalert.inapp.optimum": [entitlement]]
+    )
+
+    #expect(!snapshot.customerInfo.entitlements.isEmpty)
+    for derived in snapshot.customerInfo.entitlements {
+      #expect(
+        derived.store == .appStore,
+        "SK1 receipt-derived entitlement \(derived.id) must carry .appStore"
+      )
+    }
+  }
+
   @Test("Empty device read from an inactive status stays inactive")
   func testEmptyDeviceRead_inactiveStatus_staysInactive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
