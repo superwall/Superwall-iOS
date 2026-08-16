@@ -35,15 +35,41 @@ final class AutomaticPurchaseController {
     await MainActor.run { [entitlements] in
       let superwall = superwall ?? Superwall.shared
       if entitlements.isEmpty {
-        // An empty device read is not proof that the user lost access. StoreKit
-        // can return nothing at cold launch before it hydrates, and web/Stripe
-        // subscribers never have App Store purchases. Keep an `.active` status
-        // while one of its entitlements is still within its expiry date.
-        // Entitlements with no expiry date don't hold the status, so a revoked
-        // lifetime purchase can still deactivate here.
-        if case .active(let currentEntitlements) = superwall.subscriptionStatus,
-          currentEntitlements.contains(where: { ($0.expiresAt ?? .distantPast) > Date() }) {
-          return
+        // A device read with no entitlements can mean two different things,
+        // and only one of them may demote a subscriber:
+        //
+        // - Purchases exist but none is active: an authoritative answer.
+        //   Refunded and expired transactions stay in the set as inactive
+        //   (SK2 reads `Transaction.all`; the SK1 receipt keeps cancelled
+        //   purchases), so this downgrades immediately.
+        // - The purchases set is completely empty: a non-answer. StoreKit
+        //   returns nothing at cold launch before it hydrates, the SK1
+        //   receipt can be missing, and web/Stripe subscribers have no App
+        //   Store purchases at all.
+        //
+        // On a non-answer, keep an `.active` status while one of its
+        // entitlements is within its expiry date. A device read also has no
+        // authority over entitlements from other stores (Stripe, web), so
+        // those hold the status even when unrelated inactive purchases
+        // exist. Entitlements with no expiry date never hold the status, so
+        // a revoked lifetime purchase can still deactivate here.
+        if case .active(let currentEntitlements) = superwall.subscriptionStatus {
+          let holdsStatus = currentEntitlements.contains { entitlement in
+            guard entitlement.isActive,
+              (entitlement.expiresAt ?? .distantPast) > Date() else {
+              return false
+            }
+            if purchases.isEmpty {
+              return true
+            }
+            if let store = entitlement.store, store != .appStore {
+              return true
+            }
+            return false
+          }
+          if holdsStatus {
+            return
+          }
         }
         superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
       } else {

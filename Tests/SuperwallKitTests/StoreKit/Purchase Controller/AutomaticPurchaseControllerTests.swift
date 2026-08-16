@@ -30,13 +30,17 @@ struct AutomaticPurchaseControllerTests {
 
   /// A web entitlement like the one a Stripe subscriber holds.
   private func stripeEntitlement(expiresAt: Date?) -> Entitlement {
+    return entitlement(store: .stripe, expiresAt: expiresAt)
+  }
+
+  private func entitlement(store: EntitlementStore, expiresAt: Date?) -> Entitlement {
     return Entitlement(
       id: "pro",
       type: .serviceLevel,
       isActive: true,
       productIds: [],
       latestProductId: nil,
-      store: .stripe,
+      store: store,
       startsAt: Date().addingTimeInterval(-90 * 86_400),
       renewedAt: nil,
       expiresAt: expiresAt,
@@ -203,6 +207,68 @@ struct AutomaticPurchaseControllerTests {
 
     let status = await MainActor.run { superwall.subscriptionStatus }
     #expect(status == .inactive, "A status with no expiry date must not hold the guard")
+  }
+
+  @Test("Inactive purchases deactivate an unexpired App Store status")
+  func testInactivePurchases_appStoreStatus_becomesInactive() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A refunded subscription: the transaction stays in the purchases set
+    // as inactive (SK2 reads Transaction.all; the SK1 receipt keeps
+    // cancelled purchases). That is an authoritative answer, so the guard
+    // must not hold, even though the cached expiry date is in the future.
+    let appStoreEntitlement = entitlement(
+      store: .appStore,
+      expiresAt: Date().addingTimeInterval(300 * 86_400)
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([appStoreEntitlement])
+    }
+
+    let controller = makeController()
+    let refundedPurchase = Purchase(
+      id: "annual_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [refundedPurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(
+      status == .inactive,
+      "A refunded App Store subscription must deactivate on the next device read"
+    )
+  }
+
+  @Test("Inactive purchases cannot refute an unexpired web entitlement")
+  func testInactivePurchases_webStatus_staysActive() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A Stripe subscriber with old, inactive App Store transactions (for
+    // example an expired trial from years ago). The device read is
+    // authoritative about the App Store only, so it must not demote the
+    // web entitlement — even with the web cache missing.
+    let webEntitlement = stripeEntitlement(expiresAt: Date().addingTimeInterval(30 * 86_400))
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement])
+    }
+
+    let controller = makeController()
+    let oldPurchase = Purchase(
+      id: "old_trial_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-700 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [oldPurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+    } else {
+      Issue.record("An App Store read must not refute a web entitlement; got \(status)")
+    }
   }
 
   @Test("Empty device read from an inactive status stays inactive")
