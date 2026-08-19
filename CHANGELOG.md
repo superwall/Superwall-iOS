@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.16.3
+
+### Fixes
+
+- Fixes a build error when compiling the SDK with Xcode 26.0.
+
 ## 4.16.2
 
 ### Enhancements
