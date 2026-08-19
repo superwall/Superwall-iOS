@@ -72,8 +72,13 @@ final class AutomaticPurchaseController {
               return true
             }
             // A still-active purchase that unlocks this entitlement means
-            // the empty entitlement set is a mapping failure, so the read
-            // cannot refute the entitlement it just confirmed.
+            // the empty entitlement set is a mapping failure. With the
+            // mapping missing, SK2's subscription-level correction of
+            // `Purchase.isActive` is disabled too, so this is the raw
+            // transaction-level value and can miss a revocation that sets
+            // no `revocationDate`. The hold is still bounded by the expiry
+            // gate above, which beats locking out a paying subscriber over
+            // a lost product mapping.
             return entitlement.productIds.contains { activeProductIds.contains($0) }
           }
           if holdsStatus {
