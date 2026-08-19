@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes subscribers being reported as `inactive` on cold launch when the App Store has no purchases to report, which hit web and Stripe subscribers hardest. Refunded and expired App Store subscriptions still deactivate immediately.
-- Fixes paying web subscribers being reported as `inactive` on later cold launches after the server temporarily returns no entitlements for them. Revoking a web subscriber's entitlements now takes effect once their expiry date passes.
+- Fixes paying web subscribers being reported as `inactive` on later cold launches after the server temporarily returns no entitlement data for them. Revocations still take effect immediately, because the server reports revoked entitlements as inactive rather than omitting them.
 
 ## 4.16.3
 

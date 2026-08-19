@@ -921,15 +921,18 @@ actor WebEntitlementRedeemer {
       )
 
       // A response with zero entitlements must not replace cached web
-      // entitlements that are still within their expiry date. This request is
-      // keyed on appUserId/deviceId alone, so an alias mismatch or backend
-      // hiccup can return empty for a still-paying subscriber. If it replaced
-      // the cache, the next cold launch would read the user as inactive until
-      // a network poll recovered them. The cost: revoking a web entitlement
-      // before its expiry date only takes effect once that date passes.
-      // Entitlements with no expiry date are not protected and remain
-      // revocable at any time. We skip saving the fetch date so the next
-      // poll retries without waiting out `entitlementsMaxAge`.
+      // entitlements that are still within their expiry date. The server
+      // reports a revocation by returning the entitlement as inactive —
+      // and it enumerates every config-mapped entitlement even for users
+      // with no purchases — so a fully empty array is a backend or config
+      // artifact (alias mismatch, failed upstream lookup), not a
+      // revocation. Real revocations arrive non-empty and apply
+      // immediately through the save below. If an empty response replaced
+      // the cache, the next cold launch would read the user as inactive
+      // until a network poll recovered them. Entitlements with no expiry
+      // date are not protected by this guard. We skip saving the fetch
+      // date so the next poll retries without waiting out
+      // `entitlementsMaxAge`.
       let hasUnexpiredWebEntitlements = existingWebEntitlements.contains {
         $0.isActive && ($0.expiresAt ?? .distantPast) > Date()
       }
