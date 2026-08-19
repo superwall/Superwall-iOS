@@ -491,7 +491,7 @@ class DeviceHelper {
           for: UIScreen.main.traitCollection.userInterfaceStyle
         ),
         fontSize: Int(scaledValue.rounded()),
-        fontScale: ((scaledValue / 16.0) * 100).rounded() / 100,
+        fontScale: ((Double(scaledValue) / 16.0) * 100).rounded() / 100,
         preferredContentSizeCategory: contentSizeCategoryToken(for: category)
       )
     }
