@@ -32,10 +32,12 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
+    let activeProductIds = Set(activePurchases.map { $0.id })
+
     await MainActor.run { [entitlements] in
       let superwall = superwall ?? Superwall.shared
       if entitlements.isEmpty {
-        // A device read with no entitlements can mean two different things,
+        // A device read with no entitlements can mean different things,
         // and only one of them may demote a subscriber:
         //
         // - Purchases exist but none is active: an authoritative answer.
@@ -46,6 +48,9 @@ final class AutomaticPurchaseController {
         //   returns nothing at cold launch before it hydrates, the SK1
         //   receipt can be missing, and web/Stripe subscribers have no App
         //   Store purchases at all.
+        // - A purchase is still active but maps to no entitlement: a
+        //   mapping failure (the config no longer knows the product), not
+        //   an authoritative answer for the entitlement it unlocks.
         //
         // On a non-answer, keep an `.active` status while one of its
         // entitlements is within its expiry date. A device read also has no
@@ -53,16 +58,23 @@ final class AutomaticPurchaseController {
         // hold the status even when unrelated inactive purchases exist. A
         // nil store means no App Store transaction unlocks the entitlement
         // (web or manual grant — both receipt managers stamp `.appStore` on
-        // device-derived entitlements), so nil is protected too. Entitlements
-        // with no expiry date never hold the status, so a revoked lifetime
-        // purchase can still deactivate here.
+        // entitlements a receipt transaction unlocks, so active
+        // device-derived entitlements always carry it), so nil is protected
+        // too. Entitlements with no expiry date never hold the status, so a
+        // revoked lifetime purchase can still deactivate here.
         if case .active(let currentEntitlements) = superwall.subscriptionStatus {
           let holdsStatus = currentEntitlements.contains { entitlement in
             guard entitlement.isActive,
               (entitlement.expiresAt ?? .distantPast) > Date() else {
               return false
             }
-            return purchases.isEmpty || entitlement.store != .appStore
+            if purchases.isEmpty || entitlement.store != .appStore {
+              return true
+            }
+            // A still-active purchase that unlocks this entitlement means
+            // the empty entitlement set is a mapping failure, so the read
+            // cannot refute the entitlement it just confirmed.
+            return entitlement.productIds.contains { activeProductIds.contains($0) }
           }
           if holdsStatus {
             return

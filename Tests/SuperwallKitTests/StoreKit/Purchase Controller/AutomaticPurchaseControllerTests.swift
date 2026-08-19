@@ -26,6 +26,7 @@ struct AutomaticPurchaseControllerTests {
     dependencyContainer.storage.delete(LatestRedeemResponse.self)
     dependencyContainer.storage.delete(SubscriptionStatusKey.self)
     dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+    dependencyContainer.storage.delete(EntitlementsByProductId.self)
   }
 
   /// A web entitlement like the one a Stripe subscriber holds.
@@ -271,6 +272,102 @@ struct AutomaticPurchaseControllerTests {
     }
   }
 
+  @Test("An active purchase with no entitlement mapping cannot demote its entitlement")
+  func testActiveUnmappedPurchase_matchingCachedEntitlement_staysActive() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The cached App Store entitlement was unlocked by "annual_product".
+    // The config has since lost the product (undecodable product dropped,
+    // or a stale cached config), so the active purchase maps to no
+    // entitlements. That is a mapping failure, not an authoritative
+    // "nothing is active" — the read just confirmed the purchase.
+    let appStoreEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([appStoreEntitlement])
+    }
+
+    let controller = makeController()
+    let activePurchase = Purchase(
+      id: "annual_product",
+      isActive: true,
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [activePurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(appStoreEntitlement))
+    } else {
+      Issue.record("An active purchase must not demote the entitlement it unlocks; got \(status)")
+    }
+  }
+
+  @Test("An unrelated active purchase cannot hold a refunded subscription")
+  func testRefundedSubscription_withUnrelatedActivePurchase_becomesInactive() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The subscription for "annual_product" was refunded. The user also
+    // owns an unrelated non-consumable that maps to no entitlement. The
+    // active-but-unmapped purchase unlocks nothing in the cached status,
+    // so the refund still deactivates immediately.
+    let appStoreEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(300 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([appStoreEntitlement])
+    }
+
+    let controller = makeController()
+    let refundedPurchase = Purchase(
+      id: "annual_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400)
+    )
+    let unrelatedPurchase = Purchase(
+      id: "coin_doubler",
+      isActive: true,
+      purchaseDate: Date().addingTimeInterval(-700 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(
+      withPurchases: [refundedPurchase, unrelatedPurchase],
+      superwall: superwall
+    )
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(
+      status == .inactive,
+      "An unrelated active purchase must not hold a refunded subscription's status"
+    )
+  }
+
   @Test("Inactive purchases cannot refute a nil-store entitlement")
   func testInactivePurchases_nilStoreStatus_staysActive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
@@ -315,24 +412,34 @@ struct AutomaticPurchaseControllerTests {
     }
   }
 
-  @Test("SK1 receipt entitlements carry the App Store store")
-  func testSK1Entitlements_carryAppStoreStore() async {
-    // The flipped guard predicate protects nil-store entitlements, so
-    // refund enforcement on StoreKit 1 depends on the receipt manager
-    // stamping `.appStore` on the entitlements it derives.
+  @Test("SK1 stamps .appStore only on entitlements a receipt transaction unlocks")
+  func testSK1Entitlements_storeReflectsReceiptTransactions() async {
+    // The guard protects nil-store entitlements, so refund enforcement on
+    // StoreKit 1 depends on the receipt manager stamping `.appStore` on
+    // purchased entitlements — while never-purchased entitlements keep a
+    // nil store, per the `Entitlement.store` contract and the SK2 path.
     let receiptManager = SK1ReceiptManager(receiptData: { MockReceiptData.newReceipt })
-    let entitlement = Entitlement(id: "pro")
     let snapshot = await receiptManager.loadPurchases(
-      serverEntitlementsByProductId: ["com.nutcallalert.inapp.optimum": [entitlement]]
+      serverEntitlementsByProductId: [
+        // `newReceipt` contains a transaction for this product.
+        "CYCLEMAPS_PREMIUM": [Entitlement(id: "pro")],
+        // No transaction in the receipt unlocks this one.
+        "com.example.never_purchased": [Entitlement(id: "plus")]
+      ]
     )
 
-    #expect(!snapshot.customerInfo.entitlements.isEmpty)
-    for derived in snapshot.customerInfo.entitlements {
-      #expect(
-        derived.store == .appStore,
-        "SK1 receipt-derived entitlement \(derived.id) must carry .appStore"
-      )
-    }
+    let purchased = snapshot.customerInfo.entitlements.first { $0.id == "pro" }
+    #expect(
+      purchased?.store == .appStore,
+      "A receipt transaction unlocks `pro`, so it must carry .appStore"
+    )
+
+    let neverPurchased = snapshot.customerInfo.entitlements.first { $0.id == "plus" }
+    #expect(neverPurchased != nil)
+    #expect(
+      neverPurchased?.store == nil,
+      "No transaction unlocks `plus`, so its store must be nil"
+    )
   }
 
   @Test("Empty device read from an inactive status stays inactive")
