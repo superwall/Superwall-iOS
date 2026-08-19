@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -474,6 +474,7 @@
 		D506526569FAA54E3220A02A /* PurchaseSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67A5C0CA15AF645709A2545 /* PurchaseSource.swift */; };
 		D56F32CB484F74EC7E49E581 /* PaywallViewControllerCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */; };
 		D5A1334579BE0B0A207B0BF7 /* TestModeModalViewController+TableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0D4F9888B5827992153F5F /* TestModeModalViewController+TableView.swift */; };
+		D5C9A71CFB166225C082CAFB /* AutomaticPurchaseControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */; };
 		D66461863D54A56BE9C29310 /* Publisher+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5A8FFFC23826AD113D525A /* Publisher+Async.swift */; };
 		D6CA719D79BAA6369D1C01C3 /* AudienceLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71CF4BE5D2A6CEA9F8993C81 /* AudienceLogic.swift */; };
 		D77DB3187C62B91E3D55DF80 /* ArchiveRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4300EBF7463A42D2FB89371 /* ArchiveRequest.swift */; };
@@ -1167,6 +1168,7 @@
 		F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionDelegate.swift; sourceTree = "<group>"; };
 		F16AFE9C93A441CFB6A95F10 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
 		F2A2A54314BAEAF65B46D322 /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
+		F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseControllerTests.swift; sourceTree = "<group>"; };
 		F338AF233A9EF2A20B1AC5A5 /* MockPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPurchaseController.swift; sourceTree = "<group>"; };
 		F34468E3988E779132CE101A /* BundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleHelper.swift; sourceTree = "<group>"; };
 		F36CB341B28F250F5252A8DF /* Transaction+LatestSince.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transaction+LatestSince.swift"; sourceTree = "<group>"; };
@@ -1298,6 +1300,7 @@
 				054FCADFEF560A1A736DEFE4 /* StoreKitManagerTests.swift */,
 				C0D3F44546D33F8AA71A79B9 /* Mocks */,
 				2C05828E18C52F510F7CDFA2 /* Products */,
+				42F8F9824C94A7946BD46450 /* Purchase Controller */,
 				357496424A62506BB5B92AB9 /* Transactions */,
 			);
 			path = StoreKit;
@@ -1797,6 +1800,14 @@
 				0D84EBFB7492EE4D10955D82 /* SuperwallKit_StoreKitTestCertificate.cer */,
 			);
 			path = Certificates;
+			sourceTree = "<group>";
+		};
+		42F8F9824C94A7946BD46450 /* Purchase Controller */ = {
+			isa = PBXGroup;
+			children = (
+				F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */,
+			);
+			path = "Purchase Controller";
 			sourceTree = "<group>";
 		};
 		43AE802CA13E36803E2FF13E /* Popup Transition */ = {
@@ -3148,6 +3159,8 @@
 				8F41784FB73AC60BED81E582 /* PBXTargetDependency */,
 			);
 			name = SuperwallKitTests;
+			packageProductDependencies = (
+			);
 			productName = SuperwallKitTests;
 			productReference = 92001AC11F099F7B03AF338A /* SuperwallKitTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
@@ -3160,8 +3173,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = B7BB212B66F694F1FDA2FA4F /* Build configuration list for PBXProject "SuperwallKit" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -3212,9 +3223,11 @@
 				zh_Hant,
 			);
 			mainGroup = 5CE8CEF97A892FFF3D0D8F06;
+			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				89F17188BC665EFC6FE5CEFA /* XCRemoteSwiftPackageReference "superscript-ios-next" */,
 			);
+			preferredProjectObjectVersion = 77;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -3252,6 +3265,7 @@
 				59685CE55D34FA6A96A8F890 /* AssignmentLogicTests.swift in Sources */,
 				BC8A62869C7BACE6D0867195 /* AssignmentTests.swift in Sources */,
 				3CD2C23BAC2EA11174237785 /* AttributionTests.swift in Sources */,
+				D5C9A71CFB166225C082CAFB /* AutomaticPurchaseControllerTests.swift in Sources */,
 				B0DC8290B081B74CC65E9305 /* CELEvaluatorTests.swift in Sources */,
 				E984458E465D5A834CC52302 /* CacheMock.swift in Sources */,
 				CBFC0D2DCA996A5FF7E5174B /* CacheTests.swift in Sources */,

@@ -920,6 +920,31 @@ actor WebEntitlementRedeemer {
         deviceId: factory.makeDeviceId()
       )
 
+      // A response with zero entitlements must not replace cached web
+      // entitlements that are still within their expiry date. The server
+      // reports a revocation by returning the entitlement as inactive —
+      // and it enumerates every config-mapped entitlement even for users
+      // with no purchases — so a fully empty array is a backend or config
+      // artifact (alias mismatch, failed upstream lookup), not a
+      // revocation. Real revocations arrive non-empty and apply
+      // immediately through the save below. If an empty response replaced
+      // the cache, the next cold launch would read the user as inactive
+      // until a network poll recovered them. Entitlements with no expiry
+      // date are not protected by this guard. We skip saving the fetch
+      // date so the next poll retries without waiting out
+      // `entitlementsMaxAge`.
+      let hasUnexpiredWebEntitlements = existingWebEntitlements.contains {
+        $0.isActive && ($0.expiresAt ?? .distantPast) > Date()
+      }
+      if response.customerInfo.entitlements.isEmpty && hasUnexpiredWebEntitlements {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .webEntitlements,
+          message: "Ignoring empty web entitlements response because unexpired web entitlements are cached."
+        )
+        return
+      }
+
       // Update the latest redeem response with the entitlements and customer info from the response.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
         latestRedeemResponse.customerInfo = response.customerInfo

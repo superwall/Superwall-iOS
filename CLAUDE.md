@@ -72,6 +72,10 @@ When bumping the version, update all three files:
 3. `CHANGELOG.md` (add new version entry at top)
 
 - Follows semantic versioning
+- **Never use an `## Unreleased` heading in `CHANGELOG.md`.** Unreleased changes always live under the next concrete version number (e.g. `## 4.16.4`).
+- To pick that number, compare the version on `develop` with the version on `master`:
+  - If develop's version is **above** master's, a release is already staged — add your entries to that existing top section. Do not bump again.
+  - If develop's version **equals** master's, start the next release: add a new version section and bump all three files together (patch/minor/major per the change).
 
 ### Testing
 
