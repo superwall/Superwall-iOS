@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes issue where paying web users could end up having an inactive subscription status if the server temporarily returns no entitlement data for them.
+- Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 
 ## 4.16.3
 
