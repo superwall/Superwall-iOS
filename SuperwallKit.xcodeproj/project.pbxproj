@@ -313,6 +313,7 @@
 		91BA5E01D0FB528954ABB937 /* StripeStoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AD42859B8BFEC078665FA1E /* StripeStoreProductDiscount.swift */; };
 		9304297F3B76DB512F2F9D53 /* TrackingLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2300AFFC31667E749E85EAC /* TrackingLogicTests.swift */; };
 		941F2296F5250A15DE6B5B70 /* SuperwallKit_Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */; };
+		94209E030EB310AAE5450272 /* SupportEmailComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */; };
 		94908C7FD2227D917187FEEF /* CoreDataManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E3AC3B23DAAA8C1D125BDD3 /* CoreDataManager.swift */; };
 		9509D1E5080DBB8BD39FDF1C /* SuperwallKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 04FB15C76DE3D22CB370AFDB /* SuperwallKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9532DC347593689DCDDBA1A4 /* StorePresentationObjects.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0596DAAE31B2242A59060C5F /* StorePresentationObjects.swift */; };
@@ -371,6 +372,7 @@
 		AC7D527612F631AAADC7D225 /* FileManagerMigratorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FB3F2FC9FCCD4B912E61A1F /* FileManagerMigratorTests.swift */; };
 		AD26500C2B27829305F76859 /* EndpointKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15E6FBB3D0826827A04F87AE /* EndpointKind.swift */; };
 		AD5EBB6DBA919E3CBC5B85B7 /* SessionEventsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40D6FA6547CB5B9520B0B64 /* SessionEventsRequest.swift */; };
+		ADFFF22341B34F9F28FE595B /* SupportEmailComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */; };
 		AE0555AA0B433427E5D17309 /* InternalGetPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57F454704875FFFC5CE1827 /* InternalGetPresentationResult.swift */; };
 		AE1D15070BC159212967CAD4 /* ConfirmHoldoutAssignmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 018F5856F39FC33AFE9740D4 /* ConfirmHoldoutAssignmentTests.swift */; };
 		AE9F583082A5CDCE595BDA2D /* AppSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8165DD71323903F7CF426D2C /* AppSession.swift */; };
@@ -774,6 +776,7 @@
 		4E0895B5C0A26AA7FD3C0178 /* ArchivalManifestDownloaded.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchivalManifestDownloaded.swift; sourceTree = "<group>"; };
 		4EB1F47410CBC84D9ABD2F14 /* AutomaticPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseController.swift; sourceTree = "<group>"; };
 		4EC3DA8E774FBFE31F811FAF /* ConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManager.swift; sourceTree = "<group>"; };
+		501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportEmailComposerTests.swift; sourceTree = "<group>"; };
 		50458143450675EF205CE2C3 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
 		51407421A3CBF7AF0FC76E60 /* Bundle+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Helpers.swift"; sourceTree = "<group>"; };
 		51445FD3A0C38C2B502EAF1D /* ComputedPropertyRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComputedPropertyRequest.swift; sourceTree = "<group>"; };
@@ -800,6 +803,7 @@
 		59A767F107FB1FBBC2F22DB3 /* AppSessionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionManagerTests.swift; sourceTree = "<group>"; };
 		59C73BC10AC2F6DE8AB1074A /* SuperwallKit_AppleIncRootCertificate.cer */ = {isa = PBXFileReference; path = SuperwallKit_AppleIncRootCertificate.cer; sourceTree = "<group>"; };
 		5A413B6FF46B130D90A428B4 /* ProductPurchaserLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPurchaserLogic.swift; sourceTree = "<group>"; };
+		5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportEmailComposer.swift; sourceTree = "<group>"; };
 		5C2E30544869C5469AA31832 /* FactoryProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryProtocols.swift; sourceTree = "<group>"; };
 		5C57C1CCAF97244AE0DC953F /* PaywallManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManagerMock.swift; sourceTree = "<group>"; };
 		5CD130C74880AD07DCD2A7AA /* RedemptionResultObjc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedemptionResultObjc.swift; sourceTree = "<group>"; };
@@ -1883,6 +1887,7 @@
 			isa = PBXGroup;
 			children = (
 				016DD542BBB840B80C9A9BF4 /* AppVersionComparatorTests.swift */,
+				501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -2044,6 +2049,7 @@
 			isa = PBXGroup;
 			children = (
 				120D7D604E496BA935989AEA /* AppVersionComparator.swift */,
+				5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */,
 			);
 			path = Logic;
 			sourceTree = "<group>";
@@ -3450,6 +3456,7 @@
 				5E51E14716E29C9B88B8A6F2 /* StripeTrialEligibilityTests.swift in Sources */,
 				097719E21BBD153BA6FD6785 /* SubscriptionPeriodPriceTests.swift in Sources */,
 				E9F892ABB9BDA85F4794E3CF /* SubscriptionStatusResolutionTests.swift in Sources */,
+				ADFFF22341B34F9F28FE595B /* SupportEmailComposerTests.swift in Sources */,
 				89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */,
 				252D37DDAA2C97A6E2DDD6B7 /* SurveyTests.swift in Sources */,
 				18D39CB7BCF324B44197735D /* TaskRetryingTests.swift in Sources */,
@@ -3829,6 +3836,7 @@
 				941F2296F5250A15DE6B5B70 /* SuperwallKit_Model.xcdatamodeld in Sources */,
 				0A1366F15DD3C1761C095DF5 /* SuperwallOptions.swift in Sources */,
 				F365F06BBA58055920FC751B /* SuperwallPlacementInfo.swift in Sources */,
+				94209E030EB310AAE5450272 /* SupportEmailComposer.swift in Sources */,
 				776B122691BB67A703BB0DDD /* Survey.swift in Sources */,
 				C23744AAAF31A533693281B6 /* SurveyManager.swift in Sources */,
 				210BEE229900A19606803EDC /* SurveyOption.swift in Sources */,
