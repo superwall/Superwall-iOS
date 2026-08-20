@@ -40,7 +40,10 @@ final class CheckDebuggerPresentationTests {
 
   @Test func checkDebuggerPresentation_debuggerLaunched_presentingOnDebugger() async {
     let dependencyContainer = DependencyContainer()
-    let debugViewController = await dependencyContainer.makeDebugViewController(withDatabaseId: "abc")
+    let debugViewController = await dependencyContainer.makeDebugViewController(
+      withDatabaseId: "abc",
+      overrides: DebugPaywallOverrides()
+    )
     let request = PresentationRequest.stub()
       .setting(\.flags.isDebuggerLaunched, to: true)
       .setting(\.presenter, to: debugViewController)

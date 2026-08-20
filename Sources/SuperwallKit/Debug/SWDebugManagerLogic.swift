@@ -12,6 +12,10 @@ enum SWDebugManagerLogic {
     case token
     case paywallId = "paywall_id"
     case superwallDebug = "superwall_debug"
+    case trialState = "trial_state"
+    case appearance
+    case locale
+    case present
   }
 
   static func getQueryItemValue(

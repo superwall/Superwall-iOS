@@ -20,7 +20,10 @@ protocol ViewControllerFactory: AnyObject {
   ) -> PaywallViewController
 
   @MainActor
-  func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
+  func makeDebugViewController(
+    withDatabaseId id: String?,
+    overrides: DebugPaywallOverrides
+  ) -> DebugViewController
 }
 
 protocol CacheFactory: AnyObject {
