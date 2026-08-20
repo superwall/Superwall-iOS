@@ -34,6 +34,7 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case cache
   case webEntitlements
   case all
+  case customerCenter
 
   public var description: String {
     switch self {
@@ -85,6 +86,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "webEntitlements"
     case .all:
       return "all"
+    case .customerCenter:
+      return "customerCenter"
     }
   }
 }
