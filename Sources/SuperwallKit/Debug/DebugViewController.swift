@@ -177,9 +177,12 @@ final class DebugViewController: UIViewController {
 
   /// Every preview load runs through here so that `viewDidDisappear` can cancel
   /// whichever one is in flight, not just the initial `viewDidLoad` load.
-  private func startPreviewLoad() {
+  @discardableResult
+  func startPreviewLoad() -> Task<Void, Never> {
     previewTask?.cancel()
-    previewTask = Task { await loadPreview() }
+    let task = Task { await loadPreview() }
+    previewTask = task
+    return task
   }
 
   func applyOverrides() {
