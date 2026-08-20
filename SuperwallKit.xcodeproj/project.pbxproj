@@ -192,6 +192,7 @@
 		5634C4E0E082754F7939BB60 /* ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B730226BC4F32B0A3A0FA6E9 /* ReceiptManager.swift */; };
 		56408549E721E2ED524DEA35 /* PaddingListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DC4D23D1EDDA249C928930D /* PaddingListener.swift */; };
 		577B6D9068BAE0B1A87C8D64 /* StripeProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3479E4B3365290BC0C0A123 /* StripeProduct.swift */; };
+		57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E48D6D7B8E5EFCC2623446B /* CustomerCenterConfiguration.swift */; };
 		58170B6B2E4224AD27549567 /* UserInitiatedEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE406AAED11F2B63E4A5A1FD /* UserInitiatedEvents.swift */; };
 		58185F7A0770111BDE259936 /* NetworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A2A54314BAEAF65B46D322 /* NetworkTests.swift */; };
 		591DCE67E64C63AACFFB604B /* IdentityLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB3F04AC933701EE33F5F325 /* IdentityLogic.swift */; };
@@ -463,6 +464,7 @@
 		CF3683E2AD703237EC0CE22E /* PaywallProducts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C95DABA23C6CBEF0AAA63C0 /* PaywallProducts.swift */; };
 		CFEB0D797815E8EDFB059767 /* Superwall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */; };
 		D0E19F665C7B230BF3FA122D /* TrackingResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85ED994DEC92BB90ACC6AC2 /* TrackingResult.swift */; };
+		D163B7AB99BE796B233DAE28 /* CustomerCenterConfigurationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6BCA6546821A143D0087CD9 /* CustomerCenterConfigurationTests.swift */; };
 		D1F8771E65157D1B0E05D0B9 /* ManifestDataFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2915A802FACB53B6094B011 /* ManifestDataFetcher.swift */; };
 		D25B3A24CEE42FC90BFA31D2 /* SuperwallEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E4096EBF0B8C9693322CD1 /* SuperwallEvent.swift */; };
 		D2E381B26362F434760F9AC0 /* GameControllerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577A16EE2161E2CDEDFA48C0 /* GameControllerManager.swift */; };
@@ -708,6 +710,7 @@
 		2D3DB70C19B7C07E1750DB8F /* ca */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ca; path = ca.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2DAE3B565ECB65BCCFD39A0A /* FileManagerMigrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerMigrator.swift; sourceTree = "<group>"; };
 		2E2027BFC214905CBE589AF2 /* KeypathWritable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeypathWritable.swift; sourceTree = "<group>"; };
+		2E48D6D7B8E5EFCC2623446B /* CustomerCenterConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterConfiguration.swift; sourceTree = "<group>"; };
 		2F6AFBC7C60A5074ACE8DF88 /* Tracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracking.swift; sourceTree = "<group>"; };
 		2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Superwall.swift; sourceTree = "<group>"; };
 		2FB3F2FC9FCCD4B912E61A1F /* FileManagerMigratorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileManagerMigratorTests.swift; sourceTree = "<group>"; };
@@ -975,6 +978,7 @@
 		A524F7AAE90E48C3B8D7E99A /* PurchaseResult+Internal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PurchaseResult+Internal.swift"; sourceTree = "<group>"; };
 		A5C4AD6349F2D432132F36D5 /* MockSubscriptionPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockSubscriptionPeriod.swift; sourceTree = "<group>"; };
 		A6B47DD5F59411CC529CD2DB /* pt */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A6BCA6546821A143D0087CD9 /* CustomerCenterConfigurationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterConfigurationTests.swift; sourceTree = "<group>"; };
 		A78C5C57C3C92444EBAC2E38 /* TrackingManagerProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingManagerProxy.swift; sourceTree = "<group>"; };
 		A79E9DBDDA7FEE63C15FBEAF /* CELEvaluatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CELEvaluatorTests.swift; sourceTree = "<group>"; };
 		A7A8FDBB0F8D450288C3FEA0 /* LocalFileSchemeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileSchemeHandlerTests.swift; sourceTree = "<group>"; };
@@ -1760,6 +1764,14 @@
 			path = "Web View";
 			sourceTree = "<group>";
 		};
+		3EFE894723C00D72A3C01061 /* CustomerCenter */ = {
+			isa = PBXGroup;
+			children = (
+				E40538D195AAE4E177C98959 /* Models */,
+			);
+			path = CustomerCenter;
+			sourceTree = "<group>";
+		};
 		41C20E3AA2F12F64126C7D72 /* StoreTransaction */ = {
 			isa = PBXGroup;
 			children = (
@@ -2275,6 +2287,7 @@
 				2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */,
 				33C89C06ECF942287FA14087 /* Analytics */,
 				91B8F43244A7C30402275032 /* Config */,
+				E4455CBE23BD58AF980439B4 /* CustomerCenter */,
 				97F6AA52B81B82F72AB80D7C /* Debug */,
 				9C21AAF80FD220C960FE568F /* Delegate */,
 				A34416D82C5BDBAA82A119C1 /* Dependencies */,
@@ -2573,6 +2586,14 @@
 			path = Logic;
 			sourceTree = "<group>";
 		};
+		AC076DCADFAF818A0325BA18 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				2E48D6D7B8E5EFCC2623446B /* CustomerCenterConfiguration.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
 		AC10C98F9F6D03AD79376ADE /* Capabilities */ = {
 			isa = PBXGroup;
 			children = (
@@ -2714,6 +2735,7 @@
 				FE0E783785F917188D12F4B4 /* Utils.swift */,
 				E338A5AE4BB82E592AE9B9BA /* Analytics */,
 				D554340BB6652F5FA1F21FF8 /* Config */,
+				3EFE894723C00D72A3C01061 /* CustomerCenter */,
 				38C02C19ED9C9958A7A61FB1 /* Debug */,
 				3B16D25FCB6991D55E0F63B3 /* DeepLink */,
 				373AFF230833A951B6E5DF36 /* Identity */,
@@ -2822,8 +2844,8 @@
 			children = (
 				0E3AC3B23DAAA8C1D125BDD3 /* CoreDataManager.swift */,
 				50458143450675EF205CE2C3 /* CoreDataStack.swift */,
-				EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */,
 				2DAF3427CF469F5373C2BFD7 /* Managed Models */,
+				EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */,
 			);
 			path = "Core Data";
 			sourceTree = "<group>";
@@ -2954,6 +2976,22 @@
 				AEF92489C827187888EA0370 /* Validation */,
 			);
 			path = "Receipt Manager";
+			sourceTree = "<group>";
+		};
+		E40538D195AAE4E177C98959 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A6BCA6546821A143D0087CD9 /* CustomerCenterConfigurationTests.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		E4455CBE23BD58AF980439B4 /* CustomerCenter */ = {
+			isa = PBXGroup;
+			children = (
+				AC076DCADFAF818A0325BA18 /* Models */,
+			);
+			path = CustomerCenter;
 			sourceTree = "<group>";
 		};
 		E4C1D2384C6CAD193D3CE652 /* Templating */ = {
@@ -3173,9 +3211,10 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = B7BB212B66F694F1FDA2FA4F /* Build configuration list for PBXProject "SuperwallKit" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -3228,6 +3267,7 @@
 				89F17188BC665EFC6FE5CEFA /* XCRemoteSwiftPackageReference "superscript-ios-next" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 778C04FFAA9840C37CA3C1CA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -3285,6 +3325,7 @@
 				B2AC4436371BC96FAA4FB5B3 /* CustomCallbackRegistryTests.swift in Sources */,
 				2517FC60F3A7288C5FE34A73 /* CustomProductTests.swift in Sources */,
 				85728EABBC5C73193AC5F876 /* CustomURLSessionMock.swift in Sources */,
+				D163B7AB99BE796B233DAE28 /* CustomerCenterConfigurationTests.swift in Sources */,
 				37FDB46DD55E649FA10D753C /* CustomerInfoDecodingTests.swift in Sources */,
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,
@@ -3465,6 +3506,7 @@
 				8537CA38FFD40CF7C8A6A691 /* CustomStoreProduct.swift in Sources */,
 				D90B2915CA23976F48794449 /* CustomStoreTransaction.swift in Sources */,
 				9E21D97817B1BA97806283B3 /* CustomURLSession.swift in Sources */,
+				57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */,
 				8E5661E20F318661BB005E2F /* CustomerInfo.swift in Sources */,
 				E7FD108C357A816AF8BFBA47 /* DarkBlurredBackground.swift in Sources */,
 				C5EA22647EFADC126DC4BFE8 /* Date+IsoString.swift in Sources */,
