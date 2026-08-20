@@ -1210,6 +1210,69 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct CustomerCenterOpen: TrackableSuperwallEvent {
+    let screen: String
+    var superwallEvent: SuperwallEvent { .customerCenterOpen(screen: screen) }
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { ["screen": screen] }
+  }
+
+  struct CustomerCenterClose: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .customerCenterClose
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] { [:] }
+  }
+
+  struct CustomerCenterAction: TrackableSuperwallEvent {
+    let action: SuperwallKit.CustomerCenterAction
+    let pathId: String
+    let productId: String?
+    var superwallEvent: SuperwallEvent { .customerCenterAction(action: action, pathId: pathId, productId: productId) }
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = ["action": action.analyticsName, "path_id": pathId]
+      if let productId { params["product_id"] = productId }
+      if case .url(let url) = action { params["url"] = url.absoluteString }
+      if case .custom(let identifier) = action { params["custom_identifier"] = identifier }
+      return params
+    }
+  }
+
+  struct CustomerCenterSurveyResponse: TrackableSuperwallEvent {
+    let surveyId: String
+    let optionId: String
+    let action: SuperwallKit.CustomerCenterAction
+    let pathId: String
+    let productId: String?
+    var superwallEvent: SuperwallEvent {
+      .customerCenterSurveyResponse(
+        surveyId: surveyId,
+        optionId: optionId,
+        action: action,
+        pathId: pathId,
+        productId: productId
+      )
+    }
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      var params: [String: Any] = [
+        "survey_id": surveyId, "option_id": optionId, "action": action.analyticsName, "path_id": pathId
+      ]
+      if let productId { params["product_id"] = productId }
+      return params
+    }
+  }
+
+  struct CustomerCenterRefundRequest: TrackableSuperwallEvent {
+    let productId: String
+    let status: CustomerCenterRefundStatus
+    var superwallEvent: SuperwallEvent { .customerCenterRefundRequest(productId: productId, status: status) }
+    var audienceFilterParams: [String: Any] = [:]
+    func getSuperwallParameters() async -> [String: Any] {
+      ["product_id": productId, "status": status.analyticsName]
+    }
+  }
+
   enum PaywallPreloadState {
     case start
     case complete

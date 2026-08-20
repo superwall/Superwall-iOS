@@ -198,6 +198,7 @@
 		58185F7A0770111BDE259936 /* NetworkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A2A54314BAEAF65B46D322 /* NetworkTests.swift */; };
 		591DCE67E64C63AACFFB604B /* IdentityLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB3F04AC933701EE33F5F325 /* IdentityLogic.swift */; };
 		59685CE55D34FA6A96A8F890 /* AssignmentLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3501D12845840D6CBA1F0081 /* AssignmentLogicTests.swift */; };
+		59C8960F002CD6B88A2E372E /* CustomerCenterEventsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81F69ACFBD6522C150971839 /* CustomerCenterEventsTests.swift */; };
 		5A6D06700C4E4E2C6C9BC1B2 /* ShimmerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D123D95036ED6CE3B097BBF0 /* ShimmerView.swift */; };
 		5C504112376B6E0798CA20CE /* Variables.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B75209DF76859131941CA0F /* Variables.swift */; };
 		5D0DAFA97F75920FFB99DF6B /* PriceFormatterProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5B5BF873B8D190097E8CFB5 /* PriceFormatterProvider.swift */; };
@@ -891,6 +892,7 @@
 		81BE917F0AA7A7453B7D0BB2 /* AppSessionLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionLogicTests.swift; sourceTree = "<group>"; };
 		81C5A241FC9EF921D4E08FF1 /* ArchiveURLFetcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveURLFetcher.swift; sourceTree = "<group>"; };
 		81D80A7C5B8A17B83C218656 /* MapSwiftErrors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapSwiftErrors.swift; sourceTree = "<group>"; };
+		81F69ACFBD6522C150971839 /* CustomerCenterEventsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterEventsTests.swift; sourceTree = "<group>"; };
 		82E6981E6A6574EE72B65A9E /* Paywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Paywall.swift; sourceTree = "<group>"; };
 		831F679BDAC779043091DB7E /* PaywallPresentationInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationInfoTests.swift; sourceTree = "<group>"; };
 		83416F0F1B5294C350D5CF70 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
@@ -1773,6 +1775,7 @@
 		3EFE894723C00D72A3C01061 /* CustomerCenter */ = {
 			isa = PBXGroup;
 			children = (
+				81F69ACFBD6522C150971839 /* CustomerCenterEventsTests.swift */,
 				E40538D195AAE4E177C98959 /* Models */,
 			);
 			path = CustomerCenter;
@@ -3336,6 +3339,7 @@
 				85728EABBC5C73193AC5F876 /* CustomURLSessionMock.swift in Sources */,
 				4A3DD598AC298C6A2A371622 /* CustomerCenterActionTests.swift in Sources */,
 				D163B7AB99BE796B233DAE28 /* CustomerCenterConfigurationTests.swift in Sources */,
+				59C8960F002CD6B88A2E372E /* CustomerCenterEventsTests.swift in Sources */,
 				37FDB46DD55E649FA10D753C /* CustomerInfoDecodingTests.swift in Sources */,
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,
