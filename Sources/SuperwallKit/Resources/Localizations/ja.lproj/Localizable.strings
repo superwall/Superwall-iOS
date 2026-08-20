@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "完了";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "サブスクリプションを管理";
+"customer_center_no_active_title" = "サブスクリプションが見つかりません";
+"customer_center_no_active_subtitle" = "以前の購入を確認できます。";
+"customer_center_close" = "閉じる";
+"customer_center_done" = "完了";
+"customer_center_cancel" = "キャンセル";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "購入を復元";
+"customer_center_path_manage_subscription" = "サブスクリプションを管理";
+"customer_center_path_refund" = "返金をリクエスト";
+"customer_center_path_change_plan" = "プランを変更";
+"customer_center_path_contact_support" = "サポートに問い合わせる";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "キャンセルする理由を教えてください";
+"customer_center_survey_too_expensive" = "料金が高すぎる";
+"customer_center_survey_dont_use" = "アプリを使っていない";
+"customer_center_survey_bought_by_mistake" = "誤って購入した";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "%@に%@で更新されます";
+"customer_center_renews_on" = "%@に更新されます";
+"customer_center_expires_on" = "%@に終了します";
+"customer_center_expired_on" = "%@に終了しました";
+"customer_center_free_trial_until" = "%@まで無料トライアル";
+"customer_center_billing_issue" = "お支払いに問題があります – アクセスを維持するには支払い方法を更新してください";
+"customer_center_lifetime" = "生涯アクセス";
+"customer_center_revoked" = "返金済み";
+"customer_center_purchased_on" = "%@に購入";
+"customer_center_active_via_superwall" = "有効";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "終了しました";
+"customer_center_purchase_date" = "購入日";
+"customer_center_expiration_date" = "有効期限";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "有効";
+"customer_center_badge_free_trial" = "無料トライアル";
+"customer_center_badge_cancelled" = "キャンセル済み";
+"customer_center_badge_billing_issue" = "お支払いの問題";
+"customer_center_badge_expired" = "終了";
+"customer_center_badge_revoked" = "返金済み";
+"customer_center_badge_lifetime" = "生涯";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "ウェブ";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "その他";
+"customer_center_family_shared" = "ファミリー共有経由で共有中";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "サブスクリプション";
+"customer_center_section_purchases" = "購入";
+"customer_center_section_actions" = "操作";
+"customer_center_see_all_purchases" = "すべての購入を見る";
+"customer_center_purchase_history" = "購入履歴";
+"customer_center_history_active" = "有効なサブスクリプション";
+"customer_center_history_expired" = "終了したサブスクリプション";
+"customer_center_history_other" = "その他の購入";
+"customer_center_account_details" = "アカウントの詳細";
+"customer_center_user_id" = "ユーザーID";
+"customer_center_copy" = "コピー";
+"customer_center_copied" = "コピーしました";
+"customer_center_original_download_date" = "初回ダウンロード日";
+"customer_center_transaction_id" = "取引ID";
+"customer_center_product_id" = "製品ID";
+"customer_center_store" = "ストア";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "復元中…";
+"customer_center_restore_success_title" = "購入を復元しました";
+"customer_center_restore_success_message" = "過去の購入を復元し、アカウントに適用しました。";
+"customer_center_restore_none_title" = "過去の購入はありません";
+"customer_center_restore_none_message" = "アカウントに購入履歴が見つかりませんでした。誤りだと思われる場合は、サポートにお問い合わせください。";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Appleが返金リクエストを受け付けました。";
+"customer_center_refund_error" = "返金のリクエスト中に問題が発生しました。もう一度お試しください。";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "アップデートが利用可能です";
+"customer_center_update_message" = "アプリの最新バージョンをダウンロードすると、問題の解決に役立つ場合があります。";
+"customer_center_update_action" = "アップデート";
+"customer_center_update_continue" = "続ける";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "サブスクリプションが重複している可能性があります";
+"customer_center_duplicate_message" = "ウェブとApp Storeの両方でサブスクリプションに登録している可能性があります。二重請求を避けるため、いずれか一方をキャンセルしてください。";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "サポートリクエスト";
+"customer_center_support_body" = "問題やご質問の内容をご記入ください。";
+"customer_center_no_mail_app" = "このデバイスにはメールアプリが設定されていません。%@までご連絡ください。";

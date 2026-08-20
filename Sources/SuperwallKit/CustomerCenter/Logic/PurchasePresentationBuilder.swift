@@ -80,7 +80,7 @@ struct PurchasePresentationBuilder {
     case .revoked: status = strings.string("customer_center_revoked")
     case .expired:
       status = date.map { strings.string("customer_center_expired_on", $0) }
-        ?? strings.string("customer_center_revoked")
+        ?? strings.string("customer_center_expired")
     case .billingIssue: status = strings.string("customer_center_billing_issue")
     case .cancelled: status = date.map { strings.string("customer_center_expires_on", $0) } ?? ""
     case .freeTrial: status = date.map { strings.string("customer_center_free_trial_until", $0) } ?? ""

@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "完成";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "管理您的订阅";
+"customer_center_no_active_title" = "未找到订阅";
+"customer_center_no_active_subtitle" = "我们可以检查以前的购买记录。";
+"customer_center_close" = "关闭";
+"customer_center_done" = "完成";
+"customer_center_cancel" = "取消";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "恢复购买项目";
+"customer_center_path_manage_subscription" = "管理订阅";
+"customer_center_path_refund" = "申请退款";
+"customer_center_path_change_plan" = "更改方案";
+"customer_center_path_contact_support" = "联系支持人员";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "您为什么要取消？";
+"customer_center_survey_too_expensive" = "太贵了";
+"customer_center_survey_dont_use" = "不使用该应用";
+"customer_center_survey_bought_by_mistake" = "误购";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "将于 %@ 以 %@ 续订";
+"customer_center_renews_on" = "将于 %@ 续订";
+"customer_center_expires_on" = "将于 %@ 到期";
+"customer_center_expired_on" = "已于 %@ 到期";
+"customer_center_free_trial_until" = "免费试用至 %@";
+"customer_center_billing_issue" = "账单问题 – 请更新您的付款方式以保留访问权限";
+"customer_center_lifetime" = "终身使用权";
+"customer_center_revoked" = "已退款";
+"customer_center_purchased_on" = "购买于 %@";
+"customer_center_active_via_superwall" = "有效";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "已过期";
+"customer_center_purchase_date" = "购买日期";
+"customer_center_expiration_date" = "到期日期";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "有效";
+"customer_center_badge_free_trial" = "免费试用";
+"customer_center_badge_cancelled" = "已取消";
+"customer_center_badge_billing_issue" = "账单问题";
+"customer_center_badge_expired" = "已过期";
+"customer_center_badge_revoked" = "已退款";
+"customer_center_badge_lifetime" = "终身";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "网页";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "其他";
+"customer_center_family_shared" = "通过家人共享获得";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "订阅";
+"customer_center_section_purchases" = "购买项目";
+"customer_center_section_actions" = "操作";
+"customer_center_see_all_purchases" = "查看所有购买项目";
+"customer_center_purchase_history" = "购买记录";
+"customer_center_history_active" = "有效订阅";
+"customer_center_history_expired" = "已过期订阅";
+"customer_center_history_other" = "其他购买项目";
+"customer_center_account_details" = "账户详情";
+"customer_center_user_id" = "用户 ID";
+"customer_center_copy" = "复制";
+"customer_center_copied" = "已复制";
+"customer_center_original_download_date" = "首次下载日期";
+"customer_center_transaction_id" = "交易 ID";
+"customer_center_product_id" = "产品 ID";
+"customer_center_store" = "商店";
+"customer_center_sandbox" = "沙盒环境";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "正在恢复…";
+"customer_center_restore_success_title" = "购买项目已恢复";
+"customer_center_restore_success_message" = "我们已恢复您以前的购买记录，并应用到您的账户。";
+"customer_center_restore_none_title" = "没有以前的购买记录";
+"customer_center_restore_none_message" = "未找到与您账户相关的任何购买记录。如果您认为这是错误，请联系支持人员。";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple 已收到您的退款请求。";
+"customer_center_refund_error" = "申请退款时出现问题，请重试。";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "有可用更新";
+"customer_center_update_message" = "下载该应用的最新版本可能有助于解决此问题。";
+"customer_center_update_action" = "更新";
+"customer_center_update_continue" = "继续";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "您可能有重复的订阅";
+"customer_center_duplicate_message" = "您可能同时通过网页和 App Store 订阅。为避免被重复扣费，请取消其中一个。";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "支持请求";
+"customer_center_support_body" = "请描述您的问题或疑问。";
+"customer_center_no_mail_app" = "此设备未配置邮件应用。您可以通过 %@ 联系我们。";

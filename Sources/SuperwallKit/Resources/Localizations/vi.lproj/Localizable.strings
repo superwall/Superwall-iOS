@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Xong";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Quản lý gói đăng ký của bạn";
+"customer_center_no_active_title" = "Không tìm thấy gói đăng ký nào";
+"customer_center_no_active_subtitle" = "Chúng tôi có thể kiểm tra các giao dịch mua trước đó.";
+"customer_center_close" = "Đóng";
+"customer_center_done" = "Xong";
+"customer_center_cancel" = "Hủy";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Khôi phục giao dịch mua";
+"customer_center_path_manage_subscription" = "Quản lý gói đăng ký";
+"customer_center_path_refund" = "Yêu cầu hoàn tiền";
+"customer_center_path_change_plan" = "Thay đổi gói";
+"customer_center_path_contact_support" = "Liên hệ hỗ trợ";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Tại sao bạn hủy?";
+"customer_center_survey_too_expensive" = "Quá đắt";
+"customer_center_survey_dont_use" = "Không sử dụng ứng dụng";
+"customer_center_survey_bought_by_mistake" = "Mua nhầm";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Gia hạn vào %@ với giá %@";
+"customer_center_renews_on" = "Gia hạn vào %@";
+"customer_center_expires_on" = "Hết hạn vào %@";
+"customer_center_expired_on" = "Đã hết hạn vào %@";
+"customer_center_free_trial_until" = "Dùng thử miễn phí đến %@";
+"customer_center_billing_issue" = "Sự cố thanh toán – cập nhật phương thức thanh toán để duy trì quyền truy cập";
+"customer_center_lifetime" = "Truy cập trọn đời";
+"customer_center_revoked" = "Đã hoàn tiền";
+"customer_center_purchased_on" = "Đã mua vào %@";
+"customer_center_active_via_superwall" = "Đang hoạt động";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Đã hết hạn";
+"customer_center_purchase_date" = "Ngày mua";
+"customer_center_expiration_date" = "Ngày hết hạn";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Đang hoạt động";
+"customer_center_badge_free_trial" = "Dùng thử miễn phí";
+"customer_center_badge_cancelled" = "Đã hủy";
+"customer_center_badge_billing_issue" = "Sự cố thanh toán";
+"customer_center_badge_expired" = "Đã hết hạn";
+"customer_center_badge_revoked" = "Đã hoàn tiền";
+"customer_center_badge_lifetime" = "Trọn đời";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Khác";
+"customer_center_family_shared" = "Được chia sẻ qua Chia sẻ trong gia đình";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Gói đăng ký";
+"customer_center_section_purchases" = "Giao dịch mua";
+"customer_center_section_actions" = "Thao tác";
+"customer_center_see_all_purchases" = "Xem tất cả giao dịch mua";
+"customer_center_purchase_history" = "Lịch sử mua hàng";
+"customer_center_history_active" = "Gói đăng ký đang hoạt động";
+"customer_center_history_expired" = "Gói đăng ký đã hết hạn";
+"customer_center_history_other" = "Giao dịch mua khác";
+"customer_center_account_details" = "Chi tiết tài khoản";
+"customer_center_user_id" = "ID người dùng";
+"customer_center_copy" = "Sao chép";
+"customer_center_copied" = "Đã sao chép";
+"customer_center_original_download_date" = "Ngày tải xuống ban đầu";
+"customer_center_transaction_id" = "ID giao dịch";
+"customer_center_product_id" = "ID sản phẩm";
+"customer_center_store" = "Cửa hàng";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Đang khôi phục…";
+"customer_center_restore_success_title" = "Đã khôi phục giao dịch mua";
+"customer_center_restore_success_message" = "Chúng tôi đã khôi phục các giao dịch mua trước đây của bạn và áp dụng chúng vào tài khoản của bạn.";
+"customer_center_restore_none_title" = "Không có giao dịch mua trước đó";
+"customer_center_restore_none_message" = "Chúng tôi không tìm thấy giao dịch mua nào cho tài khoản của bạn. Nếu bạn cho rằng đây là lỗi, vui lòng liên hệ bộ phận hỗ trợ.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple đã nhận được yêu cầu hoàn tiền của bạn.";
+"customer_center_refund_error" = "Đã xảy ra lỗi khi yêu cầu hoàn tiền. Vui lòng thử lại.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Có bản cập nhật";
+"customer_center_update_message" = "Tải xuống phiên bản mới nhất của ứng dụng có thể giúp giải quyết sự cố.";
+"customer_center_update_action" = "Cập nhật";
+"customer_center_update_continue" = "Tiếp tục";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Bạn có thể có các gói đăng ký trùng lặp";
+"customer_center_duplicate_message" = "Bạn có thể đã đăng ký cả trên web và qua App Store. Để tránh bị tính phí hai lần, hãy hủy một trong số đó.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Yêu cầu hỗ trợ";
+"customer_center_support_body" = "Vui lòng mô tả vấn đề hoặc câu hỏi của bạn.";
+"customer_center_no_mail_app" = "Không có ứng dụng thư nào được định cấu hình trên thiết bị này. Bạn có thể liên hệ với chúng tôi tại %@.";

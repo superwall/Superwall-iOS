@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Færdig";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Administrer dit abonnement";
+"customer_center_no_active_title" = "Ingen abonnementer fundet";
+"customer_center_no_active_subtitle" = "Vi kan tjekke for tidligere køb.";
+"customer_center_close" = "Luk";
+"customer_center_done" = "Udført";
+"customer_center_cancel" = "Annuller";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Gendan køb";
+"customer_center_path_manage_subscription" = "Administrer abonnement";
+"customer_center_path_refund" = "Anmod om refundering";
+"customer_center_path_change_plan" = "Skift abonnement";
+"customer_center_path_contact_support" = "Kontakt support";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Hvorfor opsiger du?";
+"customer_center_survey_too_expensive" = "For dyrt";
+"customer_center_survey_dont_use" = "Bruger ikke appen";
+"customer_center_survey_bought_by_mistake" = "Købt ved en fejl";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Fornyes den %@ for %@";
+"customer_center_renews_on" = "Fornyes den %@";
+"customer_center_expires_on" = "Udløber den %@";
+"customer_center_expired_on" = "Udløb den %@";
+"customer_center_free_trial_until" = "Gratis prøveperiode indtil %@";
+"customer_center_billing_issue" = "Betalingsproblem – opdater din betalingsmetode for at beholde adgangen";
+"customer_center_lifetime" = "Livstidsadgang";
+"customer_center_revoked" = "Refunderet";
+"customer_center_purchased_on" = "Købt den %@";
+"customer_center_active_via_superwall" = "Aktiv";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Udløbet";
+"customer_center_purchase_date" = "Købsdato";
+"customer_center_expiration_date" = "Udløbsdato";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktiv";
+"customer_center_badge_free_trial" = "Gratis prøveperiode";
+"customer_center_badge_cancelled" = "Opsagt";
+"customer_center_badge_billing_issue" = "Betalingsproblem";
+"customer_center_badge_expired" = "Udløbet";
+"customer_center_badge_revoked" = "Refunderet";
+"customer_center_badge_lifetime" = "Livstid";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Andet";
+"customer_center_family_shared" = "Delt via Familiedeling";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Abonnementer";
+"customer_center_section_purchases" = "Køb";
+"customer_center_section_actions" = "Handlinger";
+"customer_center_see_all_purchases" = "Se alle køb";
+"customer_center_purchase_history" = "Købshistorik";
+"customer_center_history_active" = "Aktive abonnementer";
+"customer_center_history_expired" = "Udløbne abonnementer";
+"customer_center_history_other" = "Andre køb";
+"customer_center_account_details" = "Kontooplysninger";
+"customer_center_user_id" = "Bruger-id";
+"customer_center_copy" = "Kopiér";
+"customer_center_copied" = "Kopieret";
+"customer_center_original_download_date" = "Oprindelig downloaddato";
+"customer_center_transaction_id" = "Transaktions-id";
+"customer_center_product_id" = "Produkt-id";
+"customer_center_store" = "Butik";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Gendanner…";
+"customer_center_restore_success_title" = "Køb gendannet";
+"customer_center_restore_success_message" = "Vi har gendannet dine tidligere køb og anvendt dem på din konto.";
+"customer_center_restore_none_title" = "Ingen tidligere køb";
+"customer_center_restore_none_message" = "Vi kunne ikke finde nogen køb til din konto. Hvis du mener, dette er en fejl, bedes du kontakte support.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple har modtaget din anmodning om refundering.";
+"customer_center_refund_error" = "Der opstod en fejl under anmodning om refundering. Prøv igen.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Opdatering tilgængelig";
+"customer_center_update_message" = "Det kan hjælpe med at løse problemet at downloade den nyeste version af appen.";
+"customer_center_update_action" = "Opdater";
+"customer_center_update_continue" = "Fortsæt";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Du har muligvis dobbelte abonnementer";
+"customer_center_duplicate_message" = "Du er muligvis abonnent både på nettet og via App Store. For at undgå at blive opkrævet to gange bør du opsige det ene.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Supportanmodning";
+"customer_center_support_body" = "Beskriv venligst dit problem eller spørgsmål.";
+"customer_center_no_mail_app" = "Der er ikke konfigureret en mailapp på denne enhed. Du kan kontakte os på %@.";

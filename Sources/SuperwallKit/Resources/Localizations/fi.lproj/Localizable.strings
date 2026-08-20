@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Valmis";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Hallinnoi tilaustasi";
+"customer_center_no_active_title" = "Tilauksia ei löytynyt";
+"customer_center_no_active_subtitle" = "Voimme tarkistaa aiemmat ostokset.";
+"customer_center_close" = "Sulje";
+"customer_center_done" = "Valmis";
+"customer_center_cancel" = "Peruuta";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Palauta ostokset";
+"customer_center_path_manage_subscription" = "Hallinnoi tilausta";
+"customer_center_path_refund" = "Pyydä hyvitystä";
+"customer_center_path_change_plan" = "Vaihda tilaustasoa";
+"customer_center_path_contact_support" = "Ota yhteyttä tukeen";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Miksi peruutat tilauksen?";
+"customer_center_survey_too_expensive" = "Liian kallis";
+"customer_center_survey_dont_use" = "En käytä sovellusta";
+"customer_center_survey_bought_by_mistake" = "Ostettu vahingossa";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Uusiutuu %@ hintaan %@";
+"customer_center_renews_on" = "Uusiutuu %@";
+"customer_center_expires_on" = "Vanhenee %@";
+"customer_center_expired_on" = "Vanheni %@";
+"customer_center_free_trial_until" = "Ilmainen kokeilu %@ asti";
+"customer_center_billing_issue" = "Laskutusongelma – päivitä maksutapasi säilyttääksesi käyttöoikeuden";
+"customer_center_lifetime" = "Elinikäinen käyttöoikeus";
+"customer_center_revoked" = "Hyvitetty";
+"customer_center_purchased_on" = "Ostettu %@";
+"customer_center_active_via_superwall" = "Aktiivinen";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Vanhentunut";
+"customer_center_purchase_date" = "Ostopäivä";
+"customer_center_expiration_date" = "Vanhenemispäivä";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktiivinen";
+"customer_center_badge_free_trial" = "Ilmainen kokeilu";
+"customer_center_badge_cancelled" = "Peruutettu";
+"customer_center_badge_billing_issue" = "Laskutusongelma";
+"customer_center_badge_expired" = "Vanhentunut";
+"customer_center_badge_revoked" = "Hyvitetty";
+"customer_center_badge_lifetime" = "Elinikäinen";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Muu";
+"customer_center_family_shared" = "Jaettu Perhejaon kautta";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Tilaukset";
+"customer_center_section_purchases" = "Ostokset";
+"customer_center_section_actions" = "Toiminnot";
+"customer_center_see_all_purchases" = "Näytä kaikki ostokset";
+"customer_center_purchase_history" = "Ostohistoria";
+"customer_center_history_active" = "Aktiiviset tilaukset";
+"customer_center_history_expired" = "Vanhentuneet tilaukset";
+"customer_center_history_other" = "Muut ostokset";
+"customer_center_account_details" = "Tilin tiedot";
+"customer_center_user_id" = "Käyttäjätunnus";
+"customer_center_copy" = "Kopioi";
+"customer_center_copied" = "Kopioitu";
+"customer_center_original_download_date" = "Alkuperäinen latauspäivä";
+"customer_center_transaction_id" = "Tapahtumatunnus";
+"customer_center_product_id" = "Tuotetunnus";
+"customer_center_store" = "Kauppa";
+"customer_center_sandbox" = "Hiekkalaatikko";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Palautetaan…";
+"customer_center_restore_success_title" = "Ostokset palautettu";
+"customer_center_restore_success_message" = "Palautimme aiemmat ostoksesi ja lisäsimme ne tilillesi.";
+"customer_center_restore_none_title" = "Ei aiempia ostoksia";
+"customer_center_restore_none_message" = "Tilillesi ei löytynyt ostoksia. Jos uskot tämän olevan virhe, ota yhteyttä tukeen.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple on vastaanottanut hyvityspyyntösi.";
+"customer_center_refund_error" = "Hyvityspyynnössä tapahtui virhe. Yritä uudelleen.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Päivitys saatavilla";
+"customer_center_update_message" = "Sovelluksen uusimman version lataaminen saattaa auttaa ratkaisemaan ongelman.";
+"customer_center_update_action" = "Päivitä";
+"customer_center_update_continue" = "Jatka";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Sinulla saattaa olla päällekkäisiä tilauksia";
+"customer_center_duplicate_message" = "Saatat olla tilaaja sekä verkossa että App Storen kautta. Vältä kaksinkertainen veloitus perumalla toinen niistä.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Tukipyyntö";
+"customer_center_support_body" = "Kuvaile ongelmaasi tai kysymystäsi.";
+"customer_center_no_mail_app" = "Tähän laitteeseen ei ole määritetty sähköpostisovellusta. Voit tavoittaa meidät osoitteessa %@.";

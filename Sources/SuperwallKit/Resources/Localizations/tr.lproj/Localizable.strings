@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Bitti";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Aboneliğinizi yönetin";
+"customer_center_no_active_title" = "Abonelik bulunamadı";
+"customer_center_no_active_subtitle" = "Önceki satın alımlarınızı kontrol edebiliriz.";
+"customer_center_close" = "Kapat";
+"customer_center_done" = "Bitti";
+"customer_center_cancel" = "İptal";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Satın alımları geri yükle";
+"customer_center_path_manage_subscription" = "Aboneliği yönet";
+"customer_center_path_refund" = "İade talep et";
+"customer_center_path_change_plan" = "Planı değiştir";
+"customer_center_path_contact_support" = "Destek ile iletişime geç";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Neden iptal ediyorsunuz?";
+"customer_center_survey_too_expensive" = "Çok pahalı";
+"customer_center_survey_dont_use" = "Uygulamayı kullanmıyorum";
+"customer_center_survey_bought_by_mistake" = "Yanlışlıkla satın alındı";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "%@ tarihinde %@ karşılığında yenilenir";
+"customer_center_renews_on" = "%@ tarihinde yenilenir";
+"customer_center_expires_on" = "%@ tarihinde sona erer";
+"customer_center_expired_on" = "%@ tarihinde sona erdi";
+"customer_center_free_trial_until" = "%@ tarihine kadar ücretsiz deneme";
+"customer_center_billing_issue" = "Faturalandırma sorunu – erişiminizi sürdürmek için ödeme yönteminizi güncelleyin";
+"customer_center_lifetime" = "Ömür boyu erişim";
+"customer_center_revoked" = "Para iadesi yapıldı";
+"customer_center_purchased_on" = "%@ tarihinde satın alındı";
+"customer_center_active_via_superwall" = "Aktif";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Süresi doldu";
+"customer_center_purchase_date" = "Satın alma tarihi";
+"customer_center_expiration_date" = "Son kullanma tarihi";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktif";
+"customer_center_badge_free_trial" = "Ücretsiz deneme";
+"customer_center_badge_cancelled" = "İptal edildi";
+"customer_center_badge_billing_issue" = "Faturalandırma sorunu";
+"customer_center_badge_expired" = "Süresi doldu";
+"customer_center_badge_revoked" = "Para iadesi yapıldı";
+"customer_center_badge_lifetime" = "Ömür boyu";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Diğer";
+"customer_center_family_shared" = "Aile Paylaşımı ile paylaşıldı";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Abonelikler";
+"customer_center_section_purchases" = "Satın alımlar";
+"customer_center_section_actions" = "İşlemler";
+"customer_center_see_all_purchases" = "Tüm satın alımları gör";
+"customer_center_purchase_history" = "Satın alma geçmişi";
+"customer_center_history_active" = "Aktif abonelikler";
+"customer_center_history_expired" = "Süresi dolmuş abonelikler";
+"customer_center_history_other" = "Diğer satın alımlar";
+"customer_center_account_details" = "Hesap bilgileri";
+"customer_center_user_id" = "Kullanıcı kimliği";
+"customer_center_copy" = "Kopyala";
+"customer_center_copied" = "Kopyalandı";
+"customer_center_original_download_date" = "Orijinal indirme tarihi";
+"customer_center_transaction_id" = "İşlem kimliği";
+"customer_center_product_id" = "Ürün kimliği";
+"customer_center_store" = "Mağaza";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Geri yükleniyor…";
+"customer_center_restore_success_title" = "Satın alımlar geri yüklendi";
+"customer_center_restore_success_message" = "Geçmiş satın alımlarınızı geri yükledik ve hesabınıza uyguladık.";
+"customer_center_restore_none_title" = "Geçmiş satın alım yok";
+"customer_center_restore_none_message" = "Hesabınız için herhangi bir satın alım bulamadık. Bunun bir hata olduğunu düşünüyorsanız lütfen destek ile iletişime geçin.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple, iade talebinizi aldı.";
+"customer_center_refund_error" = "İade talep edilirken bir sorun oluştu. Lütfen tekrar deneyin.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Güncelleme mevcut";
+"customer_center_update_message" = "Uygulamanın en son sürümünü indirmek sorunu çözmeye yardımcı olabilir.";
+"customer_center_update_action" = "Güncelle";
+"customer_center_update_continue" = "Devam et";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Yinelenen aboneliklerinize olabilir";
+"customer_center_duplicate_message" = "Hem web üzerinden hem de App Store üzerinden abone olmuş olabilirsiniz. İki kez ücretlendirilmemek için bunlardan birini iptal edin.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Destek talebi";
+"customer_center_support_body" = "Lütfen sorununuzu veya sorunuzu açıklayın.";
+"customer_center_no_mail_app" = "Bu cihazda yapılandırılmış bir posta uygulaması yok. Bize %@ adresinden ulaşabilirsiniz.";

@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "تم";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "إدارة اشتراكك";
+"customer_center_no_active_title" = "لم يتم العثور على اشتراكات";
+"customer_center_no_active_subtitle" = "يمكننا التحقق من عمليات الشراء السابقة.";
+"customer_center_close" = "إغلاق";
+"customer_center_done" = "تم";
+"customer_center_cancel" = "إلغاء";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "استعادة المشتريات";
+"customer_center_path_manage_subscription" = "إدارة الاشتراك";
+"customer_center_path_refund" = "طلب استرداد الأموال";
+"customer_center_path_change_plan" = "تغيير الخطة";
+"customer_center_path_contact_support" = "التواصل مع الدعم";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "لماذا تقوم بالإلغاء؟";
+"customer_center_survey_too_expensive" = "باهظ الثمن";
+"customer_center_survey_dont_use" = "لا أستخدم التطبيق";
+"customer_center_survey_bought_by_mistake" = "تم الشراء عن طريق الخطأ";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "يتجدد في %@ مقابل %@";
+"customer_center_renews_on" = "يتجدد في %@";
+"customer_center_expires_on" = "تنتهي الصلاحية في %@";
+"customer_center_expired_on" = "انتهت الصلاحية في %@";
+"customer_center_free_trial_until" = "فترة تجريبية مجانية حتى %@";
+"customer_center_billing_issue" = "مشكلة في الفوترة – يرجى تحديث طريقة الدفع للحفاظ على الوصول";
+"customer_center_lifetime" = "وصول مدى الحياة";
+"customer_center_revoked" = "تم استرداد المبلغ";
+"customer_center_purchased_on" = "تم الشراء في %@";
+"customer_center_active_via_superwall" = "نشط";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "منتهي الصلاحية";
+"customer_center_purchase_date" = "تاريخ الشراء";
+"customer_center_expiration_date" = "تاريخ انتهاء الصلاحية";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "نشط";
+"customer_center_badge_free_trial" = "فترة تجريبية مجانية";
+"customer_center_badge_cancelled" = "تم الإلغاء";
+"customer_center_badge_billing_issue" = "مشكلة في الفوترة";
+"customer_center_badge_expired" = "منتهي الصلاحية";
+"customer_center_badge_revoked" = "تم استرداد المبلغ";
+"customer_center_badge_lifetime" = "مدى الحياة";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "الويب";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "أخرى";
+"customer_center_family_shared" = "مشترك عبر مشاركة العائلة";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "الاشتراكات";
+"customer_center_section_purchases" = "المشتريات";
+"customer_center_section_actions" = "الإجراءات";
+"customer_center_see_all_purchases" = "عرض جميع المشتريات";
+"customer_center_purchase_history" = "سجل المشتريات";
+"customer_center_history_active" = "الاشتراكات النشطة";
+"customer_center_history_expired" = "الاشتراكات المنتهية";
+"customer_center_history_other" = "مشتريات أخرى";
+"customer_center_account_details" = "تفاصيل الحساب";
+"customer_center_user_id" = "معرّف المستخدم";
+"customer_center_copy" = "نسخ";
+"customer_center_copied" = "تم النسخ";
+"customer_center_original_download_date" = "تاريخ التنزيل الأصلي";
+"customer_center_transaction_id" = "معرّف المعاملة";
+"customer_center_product_id" = "معرّف المنتج";
+"customer_center_store" = "المتجر";
+"customer_center_sandbox" = "بيئة اختبار (Sandbox)";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "جارٍ الاستعادة…";
+"customer_center_restore_success_title" = "تمت استعادة المشتريات";
+"customer_center_restore_success_message" = "لقد استعدنا مشترياتك السابقة وطبّقناها على حسابك.";
+"customer_center_restore_none_title" = "لا توجد مشتريات سابقة";
+"customer_center_restore_none_message" = "لم نتمكن من العثور على أي مشتريات لحسابك. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع الدعم.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "استلمت Apple طلب استرداد الأموال الخاص بك.";
+"customer_center_refund_error" = "حدث خطأ ما أثناء طلب استرداد الأموال. يرجى المحاولة مرة أخرى.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "يتوفر تحديث";
+"customer_center_update_message" = "قد يساعد تنزيل أحدث إصدار من التطبيق في حل المشكلة.";
+"customer_center_update_action" = "تحديث";
+"customer_center_update_continue" = "متابعة";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "قد يكون لديك اشتراكات مكررة";
+"customer_center_duplicate_message" = "من المحتمل أنك مشترك عبر الويب ومن خلال App Store في آنٍ واحد. لتجنب الدفع مرتين، يرجى إلغاء أحد الاشتراكين.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "طلب دعم";
+"customer_center_support_body" = "يرجى وصف مشكلتك أو سؤالك.";
+"customer_center_no_mail_app" = "لا يوجد تطبيق بريد مُهيأ على هذا الجهاز. يمكنك التواصل معنا عبر %@.";

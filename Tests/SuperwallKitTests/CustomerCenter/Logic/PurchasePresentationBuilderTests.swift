@@ -142,4 +142,19 @@ struct PurchasePresentationBuilderTests {
     let rows = builder.build(customerInfo: info(subs: [sub("monthly")], entitlements: [ent]), products: [:])
     #expect(rows.count == 1)
   }
+
+  @Test("inactive subscription with no expiration date falls back to Expired status line")
+  func expiredWithNoDateFallsBackToExpired() {
+    let subscription = sub("monthly", active: false, expires: nil)
+    let rows = builder.build(customerInfo: info(subs: [subscription]), products: [:])
+    #expect(rows[0].badge == .expired)
+    #expect(rows[0].statusLine == "Expired")
+  }
+
+  @Test("sorting: active subscription with nil expiration date sorts after a dated active subscription")
+  func nilExpirationSortsAfterDatedActiveSubscription() {
+    let subs = [sub("no-date", expires: nil), sub("dated", expires: 200)]
+    let rows = builder.build(customerInfo: info(subs: subs), products: [:])
+    #expect(rows.map(\.id) == ["dated", "no-date"])
+  }
 }

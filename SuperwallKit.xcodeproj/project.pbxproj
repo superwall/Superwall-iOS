@@ -422,6 +422,7 @@
 		BCF808C7AC319C2B1F0AD52D /* ConfigResponseLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4827295A4E093CAEE2207DDF /* ConfigResponseLogicTests.swift */; };
 		BCFF20903199DDDE379D81E0 /* InAppReceiptPayloadContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 862888AB2869D09AA55A017D /* InAppReceiptPayloadContainer.swift */; };
 		BD152F3BA0BC197A5C6C8CC1 /* InAppReceipt.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0695B39826F85AACBA833B77 /* InAppReceipt.swift */; };
+		BD1784A9E99914C0748F918A /* CustomerCenterStringsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58EA2C2A9FFC16FA7B90A31B /* CustomerCenterStringsTests.swift */; };
 		BDBEE781EC4910025379F0B6 /* ASN1Serialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7588892D6DD1C4437CF507DE /* ASN1Serialization.swift */; };
 		BDECE549960DB9A5662939BE /* Tracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F6AFBC7C60A5074ACE8DF88 /* Tracking.swift */; };
 		BE5BE4ECDE6505182DD92AA1 /* PaywallViewControllerDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EBF6FC3090E004EE1377B4 /* PaywallViewControllerDelegate.swift */; };
@@ -811,6 +812,7 @@
 		5836EFACFA00594CE8F9F377 /* Experiment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
 		58466FF38687A9F8715F9B54 /* Array+Capability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Capability.swift"; sourceTree = "<group>"; };
 		58BA95995DE57E811FD65C02 /* PaywallCacheLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallCacheLogicTests.swift; sourceTree = "<group>"; };
+		58EA2C2A9FFC16FA7B90A31B /* CustomerCenterStringsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterStringsTests.swift; sourceTree = "<group>"; };
 		59A767F107FB1FBBC2F22DB3 /* AppSessionManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionManagerTests.swift; sourceTree = "<group>"; };
 		59C73BC10AC2F6DE8AB1074A /* SuperwallKit_AppleIncRootCertificate.cer */ = {isa = PBXFileReference; path = SuperwallKit_AppleIncRootCertificate.cer; sourceTree = "<group>"; };
 		5A413B6FF46B130D90A428B4 /* ProductPurchaserLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPurchaserLogic.swift; sourceTree = "<group>"; };
@@ -1808,6 +1810,7 @@
 			isa = PBXGroup;
 			children = (
 				81F69ACFBD6522C150971839 /* CustomerCenterEventsTests.swift */,
+				58EA2C2A9FFC16FA7B90A31B /* CustomerCenterStringsTests.swift */,
 				9723663065538DB5CF16F4A4 /* Actions */,
 				4664D61C9B4C8ADC2B834E36 /* Logic */,
 				E40538D195AAE4E177C98959 /* Models */,
@@ -3418,6 +3421,7 @@
 				D163B7AB99BE796B233DAE28 /* CustomerCenterConfigurationTests.swift in Sources */,
 				59C8960F002CD6B88A2E372E /* CustomerCenterEventsTests.swift in Sources */,
 				F478921BA3C4CD34C2459742 /* CustomerCenterPathResolverTests.swift in Sources */,
+				BD1784A9E99914C0748F918A /* CustomerCenterStringsTests.swift in Sources */,
 				37FDB46DD55E649FA10D753C /* CustomerInfoDecodingTests.swift in Sources */,
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,

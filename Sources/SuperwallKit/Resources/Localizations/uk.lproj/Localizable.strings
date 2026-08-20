@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Готово";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Керування підпискою";
+"customer_center_no_active_title" = "Підписок не знайдено";
+"customer_center_no_active_subtitle" = "Ми можемо перевірити попередні покупки.";
+"customer_center_close" = "Закрити";
+"customer_center_done" = "Готово";
+"customer_center_cancel" = "Скасувати";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Відновити покупки";
+"customer_center_path_manage_subscription" = "Керування підпискою";
+"customer_center_path_refund" = "Запросити повернення коштів";
+"customer_center_path_change_plan" = "Змінити план";
+"customer_center_path_contact_support" = "Зв'язатися зі службою підтримки";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Чому ви скасовуєте?";
+"customer_center_survey_too_expensive" = "Занадто дорого";
+"customer_center_survey_dont_use" = "Не користуюся застосунком";
+"customer_center_survey_bought_by_mistake" = "Куплено помилково";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Поновлюється %@ за %@";
+"customer_center_renews_on" = "Поновлюється %@";
+"customer_center_expires_on" = "Закінчується %@";
+"customer_center_expired_on" = "Закінчилося %@";
+"customer_center_free_trial_until" = "Безкоштовний пробний період до %@";
+"customer_center_billing_issue" = "Проблема з оплатою – оновіть спосіб оплати, щоб зберегти доступ";
+"customer_center_lifetime" = "Довічний доступ";
+"customer_center_revoked" = "Кошти повернено";
+"customer_center_purchased_on" = "Придбано %@";
+"customer_center_active_via_superwall" = "Активна";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Закінчилася";
+"customer_center_purchase_date" = "Дата покупки";
+"customer_center_expiration_date" = "Дата закінчення";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Активна";
+"customer_center_badge_free_trial" = "Безкоштовний пробний період";
+"customer_center_badge_cancelled" = "Скасовано";
+"customer_center_badge_billing_issue" = "Проблема з оплатою";
+"customer_center_badge_expired" = "Закінчилася";
+"customer_center_badge_revoked" = "Кошти повернено";
+"customer_center_badge_lifetime" = "Довічна";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Веб";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Інше";
+"customer_center_family_shared" = "Надано через сімейний доступ";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Підписки";
+"customer_center_section_purchases" = "Покупки";
+"customer_center_section_actions" = "Дії";
+"customer_center_see_all_purchases" = "Переглянути всі покупки";
+"customer_center_purchase_history" = "Історія покупок";
+"customer_center_history_active" = "Активні підписки";
+"customer_center_history_expired" = "Завершені підписки";
+"customer_center_history_other" = "Інші покупки";
+"customer_center_account_details" = "Дані облікового запису";
+"customer_center_user_id" = "Ідентифікатор користувача";
+"customer_center_copy" = "Копіювати";
+"customer_center_copied" = "Скопійовано";
+"customer_center_original_download_date" = "Дата первинного завантаження";
+"customer_center_transaction_id" = "Ідентифікатор транзакції";
+"customer_center_product_id" = "Ідентифікатор товару";
+"customer_center_store" = "Магазин";
+"customer_center_sandbox" = "Тестове середовище";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Відновлення…";
+"customer_center_restore_success_title" = "Покупки відновлено";
+"customer_center_restore_success_message" = "Ми відновили ваші попередні покупки та застосували їх до вашого облікового запису.";
+"customer_center_restore_none_title" = "Немає попередніх покупок";
+"customer_center_restore_none_message" = "Ми не знайшли жодних покупок для вашого облікового запису. Якщо ви вважаєте, що це помилка, зверніться до служби підтримки.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple отримала ваш запит на повернення коштів.";
+"customer_center_refund_error" = "Під час запиту на повернення коштів сталася помилка. Спробуйте ще раз.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Доступне оновлення";
+"customer_center_update_message" = "Завантаження останньої версії застосунку може допомогти вирішити проблему.";
+"customer_center_update_action" = "Оновити";
+"customer_center_update_continue" = "Продовжити";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "У вас можуть бути дубльовані підписки";
+"customer_center_duplicate_message" = "Можливо, ви підписані і в інтернеті, і через App Store. Щоб уникнути подвійного списання коштів, скасуйте одну з них.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Запит до підтримки";
+"customer_center_support_body" = "Будь ласка, опишіть вашу проблему або запитання.";
+"customer_center_no_mail_app" = "На цьому пристрої не налаштовано жодного поштового застосунку. Ви можете зв'язатися з нами за адресою %@.";

@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "סיום";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "ניהול המנוי שלך";
+"customer_center_no_active_title" = "לא נמצאו מנויים";
+"customer_center_no_active_subtitle" = "נוכל לבדוק אם יש רכישות קודמות.";
+"customer_center_close" = "סגירה";
+"customer_center_done" = "סיום";
+"customer_center_cancel" = "ביטול";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "שחזור רכישות";
+"customer_center_path_manage_subscription" = "ניהול המנוי";
+"customer_center_path_refund" = "בקשת החזר כספי";
+"customer_center_path_change_plan" = "שינוי תוכנית";
+"customer_center_path_contact_support" = "יצירת קשר עם התמיכה";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "מדוע אתה מבטל?";
+"customer_center_survey_too_expensive" = "יקר מדי";
+"customer_center_survey_dont_use" = "אני לא משתמש באפליקציה";
+"customer_center_survey_bought_by_mistake" = "נרכש בטעות";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "מתחדש בתאריך %@ תמורת %@";
+"customer_center_renews_on" = "מתחדש בתאריך %@";
+"customer_center_expires_on" = "פג תוקף בתאריך %@";
+"customer_center_expired_on" = "פג תוקף בתאריך %@";
+"customer_center_free_trial_until" = "ניסיון חינם עד %@";
+"customer_center_billing_issue" = "בעיית חיוב – עדכן את אמצעי התשלום שלך כדי לשמור על הגישה";
+"customer_center_lifetime" = "גישה לכל החיים";
+"customer_center_revoked" = "הוחזר הכסף";
+"customer_center_purchased_on" = "נרכש בתאריך %@";
+"customer_center_active_via_superwall" = "פעיל";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "פג תוקף";
+"customer_center_purchase_date" = "תאריך רכישה";
+"customer_center_expiration_date" = "תאריך תפוגה";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "פעיל";
+"customer_center_badge_free_trial" = "ניסיון חינם";
+"customer_center_badge_cancelled" = "בוטל";
+"customer_center_badge_billing_issue" = "בעיית חיוב";
+"customer_center_badge_expired" = "פג תוקף";
+"customer_center_badge_revoked" = "הוחזר הכסף";
+"customer_center_badge_lifetime" = "לכל החיים";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "אינטרנט";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "אחר";
+"customer_center_family_shared" = "משותף דרך שיתוף משפחתי";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "מנויים";
+"customer_center_section_purchases" = "רכישות";
+"customer_center_section_actions" = "פעולות";
+"customer_center_see_all_purchases" = "הצג את כל הרכישות";
+"customer_center_purchase_history" = "היסטוריית רכישות";
+"customer_center_history_active" = "מנויים פעילים";
+"customer_center_history_expired" = "מנויים שפג תוקפם";
+"customer_center_history_other" = "רכישות אחרות";
+"customer_center_account_details" = "פרטי חשבון";
+"customer_center_user_id" = "מזהה משתמש";
+"customer_center_copy" = "העתקה";
+"customer_center_copied" = "הועתק";
+"customer_center_original_download_date" = "תאריך ההורדה המקורי";
+"customer_center_transaction_id" = "מזהה עסקה";
+"customer_center_product_id" = "מזהה מוצר";
+"customer_center_store" = "חנות";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "משחזר…";
+"customer_center_restore_success_title" = "הרכישות שוחזרו";
+"customer_center_restore_success_message" = "שחזרנו את הרכישות הקודמות שלך והחלנו אותן על החשבון שלך.";
+"customer_center_restore_none_title" = "אין רכישות קודמות";
+"customer_center_restore_none_message" = "לא הצלחנו למצוא רכישות עבור החשבון שלך. אם לדעתך מדובר בטעות, צור קשר עם התמיכה.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple קיבלה את בקשת ההחזר הכספי שלך.";
+"customer_center_refund_error" = "משהו השתבש בעת בקשת ההחזר הכספי. נסה שוב.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "עדכון זמין";
+"customer_center_update_message" = "הורדת הגרסה העדכנית ביותר של האפליקציה עשויה לסייע בפתרון הבעיה.";
+"customer_center_update_action" = "עדכון";
+"customer_center_update_continue" = "המשך";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "ייתכן שיש לך מנויים כפולים";
+"customer_center_duplicate_message" = "ייתכן שאתה מנוי גם באינטרנט וגם דרך App Store. כדי להימנע מחיוב כפול, בטל אחד מהם.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "בקשת תמיכה";
+"customer_center_support_body" = "אנא תאר את הבעיה או השאלה שלך.";
+"customer_center_no_mail_app" = "לא הוגדרה אפליקציית אימייל במכשיר זה. תוכל ליצור איתנו קשר בכתובת %@.";

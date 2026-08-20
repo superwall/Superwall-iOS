@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "완료";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "구독 관리";
+"customer_center_no_active_title" = "구독을 찾을 수 없습니다";
+"customer_center_no_active_subtitle" = "이전 구매 내역을 확인할 수 있습니다.";
+"customer_center_close" = "닫기";
+"customer_center_done" = "완료";
+"customer_center_cancel" = "취소";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "구매 항목 복원";
+"customer_center_path_manage_subscription" = "구독 관리";
+"customer_center_path_refund" = "환불 요청";
+"customer_center_path_change_plan" = "요금제 변경";
+"customer_center_path_contact_support" = "지원팀에 문의";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "취소하시는 이유가 무엇인가요?";
+"customer_center_survey_too_expensive" = "너무 비쌈";
+"customer_center_survey_dont_use" = "앱을 사용하지 않음";
+"customer_center_survey_bought_by_mistake" = "실수로 구매함";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "%@에 %@에 갱신됩니다";
+"customer_center_renews_on" = "%@에 갱신됩니다";
+"customer_center_expires_on" = "%@에 만료됩니다";
+"customer_center_expired_on" = "%@에 만료되었습니다";
+"customer_center_free_trial_until" = "%@까지 무료 체험";
+"customer_center_billing_issue" = "결제 문제 – 계속 이용하려면 결제 수단을 업데이트하세요";
+"customer_center_lifetime" = "평생 이용 가능";
+"customer_center_revoked" = "환불됨";
+"customer_center_purchased_on" = "%@에 구매함";
+"customer_center_active_via_superwall" = "활성";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "만료됨";
+"customer_center_purchase_date" = "구매일";
+"customer_center_expiration_date" = "만료일";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "활성";
+"customer_center_badge_free_trial" = "무료 체험";
+"customer_center_badge_cancelled" = "취소됨";
+"customer_center_badge_billing_issue" = "결제 문제";
+"customer_center_badge_expired" = "만료됨";
+"customer_center_badge_revoked" = "환불됨";
+"customer_center_badge_lifetime" = "평생";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "웹";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "기타";
+"customer_center_family_shared" = "가족 공유를 통해 공유됨";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "구독";
+"customer_center_section_purchases" = "구매 항목";
+"customer_center_section_actions" = "작업";
+"customer_center_see_all_purchases" = "모든 구매 항목 보기";
+"customer_center_purchase_history" = "구매 내역";
+"customer_center_history_active" = "활성 구독";
+"customer_center_history_expired" = "만료된 구독";
+"customer_center_history_other" = "기타 구매 항목";
+"customer_center_account_details" = "계정 세부정보";
+"customer_center_user_id" = "사용자 ID";
+"customer_center_copy" = "복사";
+"customer_center_copied" = "복사됨";
+"customer_center_original_download_date" = "최초 다운로드 날짜";
+"customer_center_transaction_id" = "거래 ID";
+"customer_center_product_id" = "제품 ID";
+"customer_center_store" = "스토어";
+"customer_center_sandbox" = "샌드박스";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "복원 중…";
+"customer_center_restore_success_title" = "구매 항목이 복원되었습니다";
+"customer_center_restore_success_message" = "이전 구매 항목을 복원하여 계정에 적용했습니다.";
+"customer_center_restore_none_title" = "이전 구매 내역 없음";
+"customer_center_restore_none_message" = "계정에서 구매 내역을 찾을 수 없습니다. 오류라고 생각되면 지원팀에 문의해 주세요.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple이 환불 요청을 접수했습니다.";
+"customer_center_refund_error" = "환불을 요청하는 중 문제가 발생했습니다. 다시 시도해 주세요.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "업데이트 사용 가능";
+"customer_center_update_message" = "최신 버전의 앱을 다운로드하면 문제 해결에 도움이 될 수 있습니다.";
+"customer_center_update_action" = "업데이트";
+"customer_center_update_continue" = "계속";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "중복 구독이 있을 수 있습니다";
+"customer_center_duplicate_message" = "웹과 App Store 모두에서 구독 중일 수 있습니다. 이중 청구를 방지하려면 둘 중 하나를 취소하세요.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "지원 요청";
+"customer_center_support_body" = "문제나 질문을 설명해 주세요.";
+"customer_center_no_mail_app" = "이 기기에 메일 앱이 설정되어 있지 않습니다. %@로 문의해 주세요.";

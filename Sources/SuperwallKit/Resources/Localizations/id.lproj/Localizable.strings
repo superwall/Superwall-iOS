@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Selesai";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Kelola langganan Anda";
+"customer_center_no_active_title" = "Tidak ada langganan yang ditemukan";
+"customer_center_no_active_subtitle" = "Kami dapat memeriksa pembelian sebelumnya.";
+"customer_center_close" = "Tutup";
+"customer_center_done" = "Selesai";
+"customer_center_cancel" = "Batal";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Pulihkan pembelian";
+"customer_center_path_manage_subscription" = "Kelola langganan";
+"customer_center_path_refund" = "Ajukan pengembalian dana";
+"customer_center_path_change_plan" = "Ubah paket";
+"customer_center_path_contact_support" = "Hubungi dukungan";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Mengapa Anda membatalkan?";
+"customer_center_survey_too_expensive" = "Terlalu mahal";
+"customer_center_survey_dont_use" = "Tidak menggunakan aplikasi";
+"customer_center_survey_bought_by_mistake" = "Terbeli tanpa sengaja";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Diperbarui pada %@ seharga %@";
+"customer_center_renews_on" = "Diperbarui pada %@";
+"customer_center_expires_on" = "Berakhir pada %@";
+"customer_center_expired_on" = "Berakhir pada %@";
+"customer_center_free_trial_until" = "Uji coba gratis hingga %@";
+"customer_center_billing_issue" = "Masalah penagihan – perbarui metode pembayaran Anda untuk mempertahankan akses";
+"customer_center_lifetime" = "Akses seumur hidup";
+"customer_center_revoked" = "Dana dikembalikan";
+"customer_center_purchased_on" = "Dibeli pada %@";
+"customer_center_active_via_superwall" = "Aktif";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Berakhir";
+"customer_center_purchase_date" = "Tanggal pembelian";
+"customer_center_expiration_date" = "Tanggal kedaluwarsa";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktif";
+"customer_center_badge_free_trial" = "Uji coba gratis";
+"customer_center_badge_cancelled" = "Dibatalkan";
+"customer_center_badge_billing_issue" = "Masalah penagihan";
+"customer_center_badge_expired" = "Berakhir";
+"customer_center_badge_revoked" = "Dana dikembalikan";
+"customer_center_badge_lifetime" = "Seumur hidup";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Lainnya";
+"customer_center_family_shared" = "Dibagikan melalui Berbagi Keluarga";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Langganan";
+"customer_center_section_purchases" = "Pembelian";
+"customer_center_section_actions" = "Tindakan";
+"customer_center_see_all_purchases" = "Lihat semua pembelian";
+"customer_center_purchase_history" = "Riwayat pembelian";
+"customer_center_history_active" = "Langganan aktif";
+"customer_center_history_expired" = "Langganan berakhir";
+"customer_center_history_other" = "Pembelian lainnya";
+"customer_center_account_details" = "Detail akun";
+"customer_center_user_id" = "ID pengguna";
+"customer_center_copy" = "Salin";
+"customer_center_copied" = "Disalin";
+"customer_center_original_download_date" = "Tanggal unduhan asli";
+"customer_center_transaction_id" = "ID transaksi";
+"customer_center_product_id" = "ID produk";
+"customer_center_store" = "Toko";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Memulihkan…";
+"customer_center_restore_success_title" = "Pembelian dipulihkan";
+"customer_center_restore_success_message" = "Kami telah memulihkan pembelian Anda sebelumnya dan menerapkannya ke akun Anda.";
+"customer_center_restore_none_title" = "Tidak ada pembelian sebelumnya";
+"customer_center_restore_none_message" = "Kami tidak dapat menemukan pembelian untuk akun Anda. Jika Anda merasa ini adalah kesalahan, silakan hubungi dukungan.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple telah menerima permintaan pengembalian dana Anda.";
+"customer_center_refund_error" = "Terjadi kesalahan saat meminta pengembalian dana. Silakan coba lagi.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Pembaruan tersedia";
+"customer_center_update_message" = "Mengunduh versi terbaru aplikasi dapat membantu mengatasi masalah ini.";
+"customer_center_update_action" = "Perbarui";
+"customer_center_update_continue" = "Lanjutkan";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Anda mungkin memiliki langganan duplikat";
+"customer_center_duplicate_message" = "Anda mungkin berlangganan baik melalui web maupun App Store. Untuk menghindari penagihan dua kali, batalkan salah satunya.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Permintaan dukungan";
+"customer_center_support_body" = "Silakan jelaskan masalah atau pertanyaan Anda.";
+"customer_center_no_mail_app" = "Tidak ada aplikasi email yang dikonfigurasi di perangkat ini. Anda dapat menghubungi kami di %@.";

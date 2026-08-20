@@ -36,3 +36,101 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Klar";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Hantera din prenumeration";
+"customer_center_no_active_title" = "Inga prenumerationer hittades";
+"customer_center_no_active_subtitle" = "Vi kan kontrollera om det finns tidigare köp.";
+"customer_center_close" = "Stäng";
+"customer_center_done" = "Klar";
+"customer_center_cancel" = "Avbryt";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Återställ köp";
+"customer_center_path_manage_subscription" = "Hantera prenumeration";
+"customer_center_path_refund" = "Begär återbetalning";
+"customer_center_path_change_plan" = "Byt plan";
+"customer_center_path_contact_support" = "Kontakta support";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Varför säger du upp?";
+"customer_center_survey_too_expensive" = "För dyrt";
+"customer_center_survey_dont_use" = "Använder inte appen";
+"customer_center_survey_bought_by_mistake" = "Köpt av misstag";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Förnyas %@ för %@";
+"customer_center_renews_on" = "Förnyas %@";
+"customer_center_expires_on" = "Upphör %@";
+"customer_center_expired_on" = "Upphörde %@";
+"customer_center_free_trial_until" = "Kostnadsfri provperiod till %@";
+"customer_center_billing_issue" = "Faktureringsproblem – uppdatera din betalningsmetod för att behålla åtkomsten";
+"customer_center_lifetime" = "Livstidsåtkomst";
+"customer_center_revoked" = "Återbetald";
+"customer_center_purchased_on" = "Köpt %@";
+"customer_center_active_via_superwall" = "Aktiv";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Upphörd";
+"customer_center_purchase_date" = "Inköpsdatum";
+"customer_center_expiration_date" = "Utgångsdatum";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktiv";
+"customer_center_badge_free_trial" = "Kostnadsfri provperiod";
+"customer_center_badge_cancelled" = "Uppsagd";
+"customer_center_badge_billing_issue" = "Faktureringsproblem";
+"customer_center_badge_expired" = "Upphörd";
+"customer_center_badge_revoked" = "Återbetald";
+"customer_center_badge_lifetime" = "Livstid";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Webb";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Annat";
+"customer_center_family_shared" = "Delas via Familjedelning";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Prenumerationer";
+"customer_center_section_purchases" = "Köp";
+"customer_center_section_actions" = "Åtgärder";
+"customer_center_see_all_purchases" = "Visa alla köp";
+"customer_center_purchase_history" = "Köphistorik";
+"customer_center_history_active" = "Aktiva prenumerationer";
+"customer_center_history_expired" = "Upphörda prenumerationer";
+"customer_center_history_other" = "Andra köp";
+"customer_center_account_details" = "Kontouppgifter";
+"customer_center_user_id" = "Användar-ID";
+"customer_center_copy" = "Kopiera";
+"customer_center_copied" = "Kopierat";
+"customer_center_original_download_date" = "Ursprungligt nedladdningsdatum";
+"customer_center_transaction_id" = "Transaktions-ID";
+"customer_center_product_id" = "Produkt-ID";
+"customer_center_store" = "Butik";
+"customer_center_sandbox" = "Sandbox";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Återställer…";
+"customer_center_restore_success_title" = "Köp återställda";
+"customer_center_restore_success_message" = "Vi har återställt dina tidigare köp och tillämpat dem på ditt konto.";
+"customer_center_restore_none_title" = "Inga tidigare köp";
+"customer_center_restore_none_message" = "Vi kunde inte hitta några köp för ditt konto. Om du tror att detta är ett fel, kontakta supporten.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple har tagit emot din begäran om återbetalning.";
+"customer_center_refund_error" = "Något gick fel när återbetalningen begärdes. Försök igen.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Uppdatering tillgänglig";
+"customer_center_update_message" = "Att ladda ner den senaste versionen av appen kan hjälpa till att lösa problemet.";
+"customer_center_update_action" = "Uppdatera";
+"customer_center_update_continue" = "Fortsätt";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Du kan ha dubbla prenumerationer";
+"customer_center_duplicate_message" = "Du kan vara prenumerant både på webben och via App Store. För att undvika att debiteras dubbelt bör du säga upp en av dem.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Supportförfrågan";
+"customer_center_support_body" = "Beskriv ditt problem eller din fråga.";
+"customer_center_no_mail_app" = "Ingen e-postapp är konfigurerad på den här enheten. Du kan nå oss på %@.";
