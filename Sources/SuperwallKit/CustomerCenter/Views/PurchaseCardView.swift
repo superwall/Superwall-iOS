@@ -18,7 +18,7 @@ struct PurchaseCardView: View {
       HStack {
         Text(purchase.title).font(.headline)
         Spacer()
-        BadgeView(badge: purchase.badge)
+        BadgeView(badge: purchase.badge, rowId: purchase.productId ?? purchase.id)
       }
       if let price = purchase.priceLine { Text(price).font(.subheadline) }
       Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
@@ -41,6 +41,7 @@ struct PurchaseCardView: View {
 @available(iOS 15.0, *)
 struct BadgeView: View {
   let badge: PurchaseBadge
+  var rowId: String?
   @Environment(\.customerCenterStrings) private var strings
 
   private var key: String {
@@ -70,6 +71,6 @@ struct BadgeView: View {
       .background(color.opacity(0.15))
       .foregroundStyle(color)
       .clipShape(Capsule())
-      .accessibilityIdentifier("customer_center.badge.\(key)")
+      .accessibilityIdentifier(rowId.map { "customer_center.badge.\(key).\($0)" } ?? "customer_center.badge.\(key)")
   }
 }

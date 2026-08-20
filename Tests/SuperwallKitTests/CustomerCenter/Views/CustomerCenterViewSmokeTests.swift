@@ -50,4 +50,42 @@ struct CustomerCenterViewSmokeTests {
       window.isHidden = true
     }
   }
+
+  @Test("survey and history views host")
+  @available(iOS 15.0, *)
+  func secondaryViews() async {
+    let now = Date()
+    let sub = SubscriptionTransaction(
+      transactionId: "t",
+      productId: "monthly",
+      purchaseDate: now,
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: now.addingTimeInterval(86_400),
+      offerType: nil,
+      subscriptionGroupId: "g",
+      store: .appStore
+    )
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [sub], nonSubscriptions: [], entitlements: [])
+    )
+    let vm = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    await vm.select(manage, purchase: purchase)
+    for view in [AnyView(FeedbackSurveyView(viewModel: vm)), AnyView(PurchaseHistoryView(viewModel: vm))] {
+      let host = UIHostingController(rootView: view)
+      host.view.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
+      let window = UIWindow(frame: host.view.frame)
+      window.rootViewController = host
+      window.makeKeyAndVisible()
+      host.view.layoutIfNeeded()
+      #expect(!host.view.subviews.isEmpty)
+      window.isHidden = true
+    }
+  }
 }

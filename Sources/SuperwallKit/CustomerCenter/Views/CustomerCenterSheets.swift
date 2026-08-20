@@ -57,7 +57,10 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
     return ""
   }
   private var onItemSheetDismiss: () -> Void {
-    { Task { await viewModel.sheetDidDismiss() } }
+    {
+      if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
+      Task { await viewModel.sheetDidDismiss() }
+    }
   }
 
   func body(content: Content) -> some View {

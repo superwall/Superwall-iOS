@@ -124,9 +124,5 @@ public struct CustomerCenterView: View {
     CustomerCenterTheme(appearance: viewModel.configuration.appearance, colorScheme: colorScheme)
   }
 
-  private var themeAccent: Color? {
-    guard let pair = viewModel.configuration.appearance.accent else { return nil }
-    let hex = colorScheme == .dark ? pair.dark : pair.light
-    return UIColor(hex: hex).map(Color.init)
-  }
+  private var themeAccent: Color? { theme.accent }
 }
