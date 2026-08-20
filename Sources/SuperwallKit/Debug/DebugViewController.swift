@@ -165,7 +165,7 @@ final class DebugViewController: UIViewController {
     initialInterfaceStyleOverride = Superwall.shared.dependencyContainer.deviceHelper.interfaceStyleOverride
     applyOverrides()
     addSubviews()
-    previewTask = Task { await loadPreview() }
+    startPreviewLoad()
     Task { await loadPreviewPaywalls() }
   }
 
@@ -175,7 +175,14 @@ final class DebugViewController: UIViewController {
     presentAutomaticallyIfNeeded()
   }
 
-  private func applyOverrides() {
+  /// Every preview load runs through here so that `viewDidDisappear` can cancel
+  /// whichever one is in flight, not just the initial `viewDidLoad` load.
+  private func startPreviewLoad() {
+    previewTask?.cancel()
+    previewTask = Task { await loadPreview() }
+  }
+
+  func applyOverrides() {
     if let localeIdentifier = overrides.localeIdentifier {
       Superwall.shared.options.localeIdentifier = localeIdentifier
     }
@@ -186,6 +193,7 @@ final class DebugViewController: UIViewController {
 
   private func presentAutomaticallyIfNeeded() {
     guard didAppear,
+      viewIfLoaded?.window != nil,
       overrides.shouldPresent,
       paywall != nil else {
       return
@@ -395,7 +403,7 @@ final class DebugViewController: UIViewController {
         action: { [weak self] in
           self?.paywallDatabaseId = paywall.id
           self?.paywallIdentifier = paywall.identifier
-          Task { await self?.loadPreview() }
+          self?.startPreviewLoad()
         },
         style: .default
       )
@@ -439,7 +447,7 @@ final class DebugViewController: UIViewController {
 	func showLocalizationPicker() async {
     let viewController = SWLocalizationViewController { [weak self] identifier in
       Superwall.shared.options.localeIdentifier = identifier
-      Task { await self?.loadPreview() }
+      self?.startPreviewLoad()
     }
 
 		let navController = UINavigationController(rootViewController: viewController)
@@ -589,6 +597,7 @@ final class DebugViewController: UIViewController {
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
+    didAppear = false
     previewTask?.cancel()
     paywallManager.resetCache()
     debugManager.isDebuggerLaunched = false

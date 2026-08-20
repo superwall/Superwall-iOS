@@ -108,6 +108,8 @@ final class DebugManager {
       }
 			viewController.paywallDatabaseId = paywallDatabaseId
       viewController.overrides = overrides
+      // On reuse, `viewDidLoad` won't run again, so apply locale/appearance here.
+      viewController.applyOverrides()
 			await viewController.loadPreview()
 			await UIViewController.topMostViewController?.present(
         viewController,
