@@ -48,6 +48,17 @@ final class DependencyContainer {
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
+  // `CustomerCenterManager` is `@available(iOS 15.0, *)`, and stored properties can't carry an
+  // availability attribute, so the typed accessor below is backed by an untyped `Any?`.
+  private var _customerCenterManager: Any?
+
+  /// Builds the dependencies backing the Customer Center and owns its presentation state.
+  @available(iOS 15.0, *)
+  var customerCenterManager: CustomerCenterManager {
+    // swiftlint:disable:next force_cast
+    _customerCenterManager as! CustomerCenterManager
+  }
+
   init(
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
@@ -210,6 +221,15 @@ final class DependencyContainer {
       productsManager: productsManager,
       factory: self
     )
+
+    if #available(iOS 15.0, *) {
+      // `DependencyContainer.init` runs on the main thread at configure time, but the initializer
+      // itself isn't statically main-actor-isolated, so we assert isolation to construct the
+      // main-actor-isolated `CustomerCenterManager`.
+      MainActor.assumeIsolated {
+        _customerCenterManager = CustomerCenterManager(container: self)
+      }
+    }
   }
 }
 

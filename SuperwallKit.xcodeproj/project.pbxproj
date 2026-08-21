@@ -90,6 +90,7 @@
 		2517FC60F3A7288C5FE34A73 /* CustomProductTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FD32AF04F6FB9601759E529 /* CustomProductTests.swift */; };
 		252D37DDAA2C97A6E2DDD6B7 /* SurveyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 655E5AE73EF5723A28D2EADD /* SurveyTests.swift */; };
 		25E2A4570B63FE36E4DD4E52 /* TemplateLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2E541F079BC78206BC44D6E /* TemplateLogic.swift */; };
+		26081D80FCF7BCD475103467 /* CustomerCenterManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E19BDEFD1BAB331A814E95CE /* CustomerCenterManagerTests.swift */; };
 		26237FCC56AE2B7B68C9F1B1 /* SWWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C2580C3CD6A8BF0C5258665 /* SWWebView.swift */; };
 		26250F084157D9E2556338FB /* CustomerCenterSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4904244CA123DEE51D7E71 /* CustomerCenterSheets.swift */; };
 		2653909358966BE9AC9894F1 /* EvaluationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911CD5859EC1BE7E428F06C4 /* EvaluationResult.swift */; };
@@ -97,6 +98,7 @@
 		2743143ED664F942D5D758B1 /* DevicePreloadScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01AC1F76564A6EC47EE696F9 /* DevicePreloadScriptTests.swift */; };
 		27DC2F109FAE3357DC8418F6 /* AutomaticPurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB1F47410CBC84D9ABD2F14 /* AutomaticPurchaseController.swift */; };
 		27E396F717A62BA4E0D98086 /* PaywallCacheLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58BA95995DE57E811FD65C02 /* PaywallCacheLogicTests.swift */; };
+		28A1E7AFF222A9C36F4AE019 /* Superwall+CustomerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */; };
 		28FED9AE68193B568FF887E1 /* Superscript in Frameworks */ = {isa = PBXBuildFile; productRef = 721C720FA8360B9851DE843D /* Superscript */; };
 		295EF01B171923E20329DF91 /* CustomerCenterManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165B7C00C437146FB5C9DB92 /* CustomerCenterManager.swift */; };
 		29EE3ACBAA5A7D7DA1269C65 /* String+ROT13.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9845F441ACFCBC267E3368C5 /* String+ROT13.swift */; };
@@ -863,6 +865,7 @@
 		60B80BEE0364C0EF86E2084E /* sl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sl; path = sl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		61062B4B7A0AB23514A2F439 /* SwiftVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftVersion.swift; sourceTree = "<group>"; };
 		618BF4D10B7D87FAF8FB48CD /* ProductPurchaserSK1Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPurchaserSK1Tests.swift; sourceTree = "<group>"; };
+		618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Superwall+CustomerCenter.swift"; sourceTree = "<group>"; };
 		61B5ABEC694245E0DC00E409 /* SurveyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyManager.swift; sourceTree = "<group>"; };
 		61D3EA7000250D02303BEF81 /* Date+WithinAnHourBefore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+WithinAnHourBefore.swift"; sourceTree = "<group>"; };
 		62AC69B94A568B7E14A391A8 /* SWProductDiscount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductDiscount.swift; sourceTree = "<group>"; };
@@ -1219,6 +1222,7 @@
 		DFE7B1045C0541E66A965FC1 /* IARError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IARError.swift; sourceTree = "<group>"; };
 		E09C238ADC0B019047FAB1DF /* JSONToDict.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONToDict.swift; sourceTree = "<group>"; };
 		E0A7F2B0E53BE42DC6B52873 /* EntitlementsStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementsStatus.swift; sourceTree = "<group>"; };
+		E19BDEFD1BAB331A814E95CE /* CustomerCenterManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterManagerTests.swift; sourceTree = "<group>"; };
 		E1C8B2F4853060258BC2CBD9 /* VerificationResult+Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "VerificationResult+Transaction.swift"; sourceTree = "<group>"; };
 		E2243C6BF6BE477794F568ED /* GCControllerElement+buttonName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GCControllerElement+buttonName.swift"; sourceTree = "<group>"; };
 		E23F2FE294EBC63F81786A85 /* PresentationItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationItems.swift; sourceTree = "<group>"; };
@@ -1890,6 +1894,7 @@
 			isa = PBXGroup;
 			children = (
 				81F69ACFBD6522C150971839 /* CustomerCenterEventsTests.swift */,
+				E19BDEFD1BAB331A814E95CE /* CustomerCenterManagerTests.swift */,
 				58EA2C2A9FFC16FA7B90A31B /* CustomerCenterStringsTests.swift */,
 				9723663065538DB5CF16F4A4 /* Actions */,
 				4664D61C9B4C8ADC2B834E36 /* Logic */,
@@ -2453,6 +2458,7 @@
 				0EA0BD57CE7F03A50ACA9D25 /* DeepLinkRouter.swift */,
 				C22CA9431D5F791BE7A9BE27 /* Documentation.docc */,
 				2F7EDB6D68D0AEDD332E40BB /* Superwall.swift */,
+				618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */,
 				33C89C06ECF942287FA14087 /* Analytics */,
 				91B8F43244A7C30402275032 /* Config */,
 				E4455CBE23BD58AF980439B4 /* CustomerCenter */,
@@ -3546,6 +3552,7 @@
 				C6CC0FF052FE616DB8908757 /* CustomerCenterDependenciesMocks.swift in Sources */,
 				5D1F0BE78AFD0801B6073B4A /* CustomerCenterDependenciesTests.swift in Sources */,
 				59C8960F002CD6B88A2E372E /* CustomerCenterEventsTests.swift in Sources */,
+				26081D80FCF7BCD475103467 /* CustomerCenterManagerTests.swift in Sources */,
 				F478921BA3C4CD34C2459742 /* CustomerCenterPathResolverTests.swift in Sources */,
 				BD1784A9E99914C0748F918A /* CustomerCenterStringsTests.swift in Sources */,
 				DC3ECD6BD248CCA5322CE05E /* CustomerCenterViewModelTests.swift in Sources */,
@@ -4034,6 +4041,7 @@
 				B60C3A3AD25CE2E2C513A2D2 /* Stubbable.swift in Sources */,
 				C34A4AF2C8CD9ACBD2C370F8 /* SubscriptionPeriod.swift in Sources */,
 				B0AD4A89AD5101360F93652D /* SubscriptionTransaction.swift in Sources */,
+				28A1E7AFF222A9C36F4AE019 /* Superwall+CustomerCenter.swift in Sources */,
 				CFEB0D797815E8EDFB059767 /* Superwall.swift in Sources */,
 				17C0F1960CD89B6BFA8B2FBB /* SuperwallDelegate.swift in Sources */,
 				FA907E1BC8B68F238C791867 /* SuperwallDelegateAdapter.swift in Sources */,
