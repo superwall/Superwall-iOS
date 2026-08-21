@@ -30,6 +30,31 @@ struct HomeView: View {
     Superwall.shared.userAttributes["firstName"] as? String
   }
 
+  /// Presents the Customer Center with a code-built configuration and a delegate that prints
+  /// each callback it receives. See `CustomerCenterExampleDelegate`.
+  private func presentCustomerCenter() {
+    let configuration = CustomerCenterConfiguration(
+      managementScreen: .init(
+        paths: [
+          .init(id: "restore", type: .restore),
+          .init(id: "change_plan", type: .changePlan()),
+          .init(id: "refund", type: .refund()),
+          .init(id: "manage_subscription", type: .manageSubscription),
+          .init(id: "faq", type: .url(URL(string: "https://superwall.com/faq")!, openMethod: .inApp)),
+          .init(id: "contact_support", type: .contactSupport)
+        ]
+      ),
+      noPurchasesScreen: .init(
+        paths: [.init(id: "restore", type: .restore)]
+      ),
+      support: .init(email: "support@superwall.com")
+    )
+    Superwall.shared.presentCustomerCenter(
+      configuration: configuration,
+      delegate: CustomerCenterExampleDelegate()
+    )
+  }
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 10) {
@@ -81,6 +106,9 @@ struct HomeView: View {
           Superwall.shared.register(placement: "diamond") {
             page = .diamond
           }
+        }
+        BrandedButton(title: "Customer Center") {
+          presentCustomerCenter()
         }
       }
       .padding(.horizontal)

@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Gata";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Gestionați-vă abonamentul";
+"customer_center_no_purchases_title" = "Nu s-a găsit niciun abonament";
+"customer_center_no_purchases_subtitle" = "Putem verifica achizițiile anterioare.";
+"customer_center_close" = "Închide";
+"customer_center_done" = "Terminat";
+"customer_center_cancel" = "Anulează";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Restaurați achizițiile";
+"customer_center_path_manage_subscription" = "Anulați abonamentul";
+"customer_center_path_refund" = "Solicitați o rambursare";
+"customer_center_path_change_plan" = "Schimbați planul";
+"customer_center_path_contact_support" = "Contactați asistența";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "De ce anulați?";
+"customer_center_survey_too_expensive" = "Prea scump";
+"customer_center_survey_dont_use" = "Nu folosesc aplicația";
+"customer_center_survey_bought_by_mistake" = "Cumpărat din greșeală";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Se reînnoiește pe %@ pentru %@";
+"customer_center_renews_on" = "Se reînnoiește pe %@";
+"customer_center_expires_on" = "Expiră pe %@";
+"customer_center_expired_on" = "A expirat pe %@";
+"customer_center_free_trial_until" = "Perioadă de probă gratuită până pe %@";
+"customer_center_billing_issue" = "Problemă de facturare – actualizați metoda de plată pentru a vă păstra accesul";
+"customer_center_lifetime" = "Acces pe viață";
+"customer_center_revoked" = "Rambursat";
+"customer_center_purchased_on" = "Cumpărat pe %@";
+"customer_center_active_via_superwall" = "Activ";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Expirat";
+"customer_center_purchase_date" = "Data achiziției";
+"customer_center_expiration_date" = "Data expirării";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Activ";
+"customer_center_badge_free_trial" = "Perioadă de probă gratuită";
+"customer_center_badge_cancelled" = "Anulat";
+"customer_center_badge_billing_issue" = "Problemă de facturare";
+"customer_center_badge_expired" = "Expirat";
+"customer_center_badge_revoked" = "Rambursat";
+"customer_center_badge_lifetime" = "Pe viață";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Altul";
+"customer_center_family_shared" = "Partajat prin Partajare familială";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Abonamente";
+"customer_center_section_purchases" = "Achiziții";
+"customer_center_section_actions" = "Acțiuni";
+"customer_center_see_all_purchases" = "Vezi toate achizițiile";
+"customer_center_purchase_history" = "Istoricul achizițiilor";
+"customer_center_history_active" = "Abonamente active";
+"customer_center_history_expired" = "Abonamente expirate";
+"customer_center_history_other" = "Alte achiziții";
+"customer_center_account_details" = "Detaliile contului";
+"customer_center_user_id" = "ID utilizator";
+"customer_center_copy" = "Copiază";
+"customer_center_copied" = "Copiat";
+"customer_center_original_download_date" = "Data descărcării inițiale";
+"customer_center_transaction_id" = "ID tranzacție";
+"customer_center_product_id" = "ID produs";
+"customer_center_store" = "Magazin";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ofertă";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Se restaurează…";
+"customer_center_restore_success_title" = "Achiziții restaurate";
+"customer_center_restore_success_message" = "Am restaurat achizițiile dvs. anterioare și le-am aplicat contului dvs.";
+"customer_center_restore_none_title" = "Nicio achiziție anterioară";
+"customer_center_restore_none_message" = "Nu am găsit nicio achiziție pentru contul dvs. Dacă credeți că este o eroare, contactați asistența.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple a primit cererea dvs. de rambursare.";
+"customer_center_refund_error" = "Ceva nu a funcționat la solicitarea rambursării. Vă rugăm să încercați din nou.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Actualizare disponibilă";
+"customer_center_update_message" = "Descărcarea celei mai recente versiuni a aplicației ar putea ajuta la rezolvarea problemei.";
+"customer_center_update_action" = "Actualizează";
+"customer_center_update_continue" = "Continuă";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Este posibil să aveți abonamente duplicate";
+"customer_center_duplicate_message" = "Este posibil să fiți abonat atât pe web, cât și prin App Store. Pentru a evita o taxare dublă, anulați unul dintre ele.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Solicitare de asistență";
+"customer_center_support_body" = "Vă rugăm să descrieți problema sau întrebarea dvs.";
+"customer_center_no_mail_app" = "Nu este configurată nicio aplicație de e-mail pe acest dispozitiv. Ne puteți contacta la %@.";

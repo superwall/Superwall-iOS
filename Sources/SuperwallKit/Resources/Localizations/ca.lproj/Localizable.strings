@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Fet";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Gestiona la teva subscripció";
+"customer_center_no_purchases_title" = "No s'ha trobat cap subscripció";
+"customer_center_no_purchases_subtitle" = "Podem comprovar si hi ha compres anteriors.";
+"customer_center_close" = "Tanca";
+"customer_center_done" = "Fet";
+"customer_center_cancel" = "Cancel·la";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Restaura les compres";
+"customer_center_path_manage_subscription" = "Cancel·la la subscripció";
+"customer_center_path_refund" = "Sol·licita un reemborsament";
+"customer_center_path_change_plan" = "Canvia el pla";
+"customer_center_path_contact_support" = "Contacta amb l'assistència";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Per què cancel·les?";
+"customer_center_survey_too_expensive" = "És massa car";
+"customer_center_survey_dont_use" = "No faig servir l'aplicació";
+"customer_center_survey_bought_by_mistake" = "Ho vaig comprar per error";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Es renova el %@ per %@";
+"customer_center_renews_on" = "Es renova el %@";
+"customer_center_expires_on" = "Caduca el %@";
+"customer_center_expired_on" = "Va caducar el %@";
+"customer_center_free_trial_until" = "Prova gratuïta fins al %@";
+"customer_center_billing_issue" = "Problema de facturació: actualitza el mètode de pagament per mantenir l'accés";
+"customer_center_lifetime" = "Accés de per vida";
+"customer_center_revoked" = "Reemborsat";
+"customer_center_purchased_on" = "Comprat el %@";
+"customer_center_active_via_superwall" = "Actiu";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Caducat";
+"customer_center_purchase_date" = "Data de compra";
+"customer_center_expiration_date" = "Data de caducitat";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Actiu";
+"customer_center_badge_free_trial" = "Prova gratuïta";
+"customer_center_badge_cancelled" = "Cancel·lat";
+"customer_center_badge_billing_issue" = "Problema de facturació";
+"customer_center_badge_expired" = "Caducat";
+"customer_center_badge_revoked" = "Reemborsat";
+"customer_center_badge_lifetime" = "De per vida";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Altres";
+"customer_center_family_shared" = "Compartit mitjançant En família";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Subscripcions";
+"customer_center_section_purchases" = "Compres";
+"customer_center_section_actions" = "Accions";
+"customer_center_see_all_purchases" = "Veure totes les compres";
+"customer_center_purchase_history" = "Historial de compres";
+"customer_center_history_active" = "Subscripcions actives";
+"customer_center_history_expired" = "Subscripcions caducades";
+"customer_center_history_other" = "Altres compres";
+"customer_center_account_details" = "Detalls del compte";
+"customer_center_user_id" = "ID d'usuari";
+"customer_center_copy" = "Copia";
+"customer_center_copied" = "Copiat";
+"customer_center_original_download_date" = "Data de descàrrega original";
+"customer_center_transaction_id" = "ID de transacció";
+"customer_center_product_id" = "ID del producte";
+"customer_center_store" = "Botiga";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Oferta";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Restaurant…";
+"customer_center_restore_success_title" = "Compres restaurades";
+"customer_center_restore_success_message" = "Hem restaurat les teves compres anteriors i les hem aplicat al teu compte.";
+"customer_center_restore_none_title" = "Cap compra anterior";
+"customer_center_restore_none_message" = "No hem trobat cap compra per al teu compte. Si creus que es tracta d'un error, contacta amb l'assistència.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple ha rebut la teva sol·licitud de reemborsament.";
+"customer_center_refund_error" = "S'ha produït un error en sol·licitar el reemborsament. Torna-ho a provar.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Actualització disponible";
+"customer_center_update_message" = "Descarregar la versió més recent de l'aplicació pot ajudar a resoldre el problema.";
+"customer_center_update_action" = "Actualitza";
+"customer_center_update_continue" = "Continua";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "És possible que tinguis subscripcions duplicades";
+"customer_center_duplicate_message" = "És possible que estiguis subscrit tant a través del web com de l'App Store. Per evitar que et cobrin dues vegades, cancel·la'n una.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Sol·licitud d'assistència";
+"customer_center_support_body" = "Descriu el teu problema o dubte.";
+"customer_center_no_mail_app" = "Aquest dispositiu no té cap aplicació de correu configurada. Ens pots contactar a %@.";

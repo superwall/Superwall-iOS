@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Končano";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Upravljanje naročnine";
+"customer_center_no_purchases_title" = "Ni najdenih naročnin";
+"customer_center_no_purchases_subtitle" = "Preverimo lahko prejšnje nakupe.";
+"customer_center_close" = "Zapri";
+"customer_center_done" = "Končano";
+"customer_center_cancel" = "Prekliči";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Obnovi nakupe";
+"customer_center_path_manage_subscription" = "Preklic naročnine";
+"customer_center_path_refund" = "Zahtevaj vračilo denarja";
+"customer_center_path_change_plan" = "Spremeni paket";
+"customer_center_path_contact_support" = "Obrni se na podporo";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Zakaj preklicujete?";
+"customer_center_survey_too_expensive" = "Predrago";
+"customer_center_survey_dont_use" = "Aplikacije ne uporabljam";
+"customer_center_survey_bought_by_mistake" = "Kupljeno pomotoma";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Obnovi se %@ za %@";
+"customer_center_renews_on" = "Obnovi se %@";
+"customer_center_expires_on" = "Poteče %@";
+"customer_center_expired_on" = "Poteklo %@";
+"customer_center_free_trial_until" = "Brezplačna preizkusna doba do %@";
+"customer_center_billing_issue" = "Težava z zaračunavanjem – posodobite način plačila, da ohranite dostop";
+"customer_center_lifetime" = "Dostop za vse življenje";
+"customer_center_revoked" = "Vrnjeno";
+"customer_center_purchased_on" = "Kupljeno %@";
+"customer_center_active_via_superwall" = "Aktivna";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Poteklo";
+"customer_center_purchase_date" = "Datum nakupa";
+"customer_center_expiration_date" = "Datum poteka";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktivna";
+"customer_center_badge_free_trial" = "Brezplačna preizkusna doba";
+"customer_center_badge_cancelled" = "Preklicano";
+"customer_center_badge_billing_issue" = "Težava z zaračunavanjem";
+"customer_center_badge_expired" = "Poteklo";
+"customer_center_badge_revoked" = "Vrnjeno";
+"customer_center_badge_lifetime" = "Vseživljenjsko";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Splet";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Drugo";
+"customer_center_family_shared" = "V skupni rabi prek Družinske skupne rabe";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Naročnine";
+"customer_center_section_purchases" = "Nakupi";
+"customer_center_section_actions" = "Dejanja";
+"customer_center_see_all_purchases" = "Prikaži vse nakupe";
+"customer_center_purchase_history" = "Zgodovina nakupov";
+"customer_center_history_active" = "Aktivne naročnine";
+"customer_center_history_expired" = "Potekle naročnine";
+"customer_center_history_other" = "Drugi nakupi";
+"customer_center_account_details" = "Podrobnosti računa";
+"customer_center_user_id" = "ID uporabnika";
+"customer_center_copy" = "Kopiraj";
+"customer_center_copied" = "Kopirano";
+"customer_center_original_download_date" = "Datum prvotnega prenosa";
+"customer_center_transaction_id" = "ID transakcije";
+"customer_center_product_id" = "ID izdelka";
+"customer_center_store" = "Trgovina";
+"customer_center_sandbox" = "Peskovnik";
+"customer_center_offer" = "Ponudba";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Obnavljanje…";
+"customer_center_restore_success_title" = "Nakupi obnovljeni";
+"customer_center_restore_success_message" = "Obnovili smo vaše prejšnje nakupe in jih uveljavili na vašem računu.";
+"customer_center_restore_none_title" = "Ni prejšnjih nakupov";
+"customer_center_restore_none_message" = "Za vaš račun nismo našli nobenih nakupov. Če menite, da gre za napako, se obrnite na podporo.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple je prejel vaš zahtevek za vračilo denarja.";
+"customer_center_refund_error" = "Pri zahtevi za vračilo denarja je prišlo do napake. Poskusite znova.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Na voljo je posodobitev";
+"customer_center_update_message" = "Prenos najnovejše različice aplikacije lahko pomaga rešiti težavo.";
+"customer_center_update_action" = "Posodobi";
+"customer_center_update_continue" = "Nadaljuj";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Morda imate podvojene naročnine";
+"customer_center_duplicate_message" = "Mogoče ste naročeni tako prek spleta kot prek App Store. Da se izognete dvojnemu zaračunavanju, eno od njiju prekličite.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Zahteva za podporo";
+"customer_center_support_body" = "Opišite svojo težavo ali vprašanje.";
+"customer_center_no_mail_app" = "V tej napravi ni nastavljena aplikacija za e-pošto. Lahko nas kontaktirate na %@.";

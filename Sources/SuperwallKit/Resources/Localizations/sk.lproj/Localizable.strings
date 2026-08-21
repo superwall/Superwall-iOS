@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Hotovo";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Spravovať predplatné";
+"customer_center_no_purchases_title" = "Nenašlo sa žiadne predplatné";
+"customer_center_no_purchases_subtitle" = "Môžeme skontrolovať predchádzajúce nákupy.";
+"customer_center_close" = "Zavrieť";
+"customer_center_done" = "Hotovo";
+"customer_center_cancel" = "Zrušiť";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Obnoviť nákupy";
+"customer_center_path_manage_subscription" = "Zrušiť predplatné";
+"customer_center_path_refund" = "Požiadať o vrátenie peňazí";
+"customer_center_path_change_plan" = "Zmeniť plán";
+"customer_center_path_contact_support" = "Kontaktovať podporu";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Prečo rušíte predplatné?";
+"customer_center_survey_too_expensive" = "Príliš drahé";
+"customer_center_survey_dont_use" = "Aplikáciu nepoužívam";
+"customer_center_survey_bought_by_mistake" = "Kúpené omylom";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Obnoví sa %@ za %@";
+"customer_center_renews_on" = "Obnoví sa %@";
+"customer_center_expires_on" = "Vyprší %@";
+"customer_center_expired_on" = "Vypršalo %@";
+"customer_center_free_trial_until" = "Bezplatná skúšobná verzia do %@";
+"customer_center_billing_issue" = "Problém s platbou – aktualizujte spôsob platby, aby ste si zachovali prístup";
+"customer_center_lifetime" = "Doživotný prístup";
+"customer_center_revoked" = "Vrátené";
+"customer_center_purchased_on" = "Zakúpené %@";
+"customer_center_active_via_superwall" = "Aktívne";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Vypršalo";
+"customer_center_purchase_date" = "Dátum nákupu";
+"customer_center_expiration_date" = "Dátum vypršania platnosti";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktívne";
+"customer_center_badge_free_trial" = "Bezplatná skúšobná verzia";
+"customer_center_badge_cancelled" = "Zrušené";
+"customer_center_badge_billing_issue" = "Problém s platbou";
+"customer_center_badge_expired" = "Vypršalo";
+"customer_center_badge_revoked" = "Vrátené";
+"customer_center_badge_lifetime" = "Doživotné";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Iné";
+"customer_center_family_shared" = "Zdieľané prostredníctvom rodinného zdieľania";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Predplatné";
+"customer_center_section_purchases" = "Nákupy";
+"customer_center_section_actions" = "Akcie";
+"customer_center_see_all_purchases" = "Zobraziť všetky nákupy";
+"customer_center_purchase_history" = "História nákupov";
+"customer_center_history_active" = "Aktívne predplatné";
+"customer_center_history_expired" = "Vypršané predplatné";
+"customer_center_history_other" = "Ostatné nákupy";
+"customer_center_account_details" = "Podrobnosti o účte";
+"customer_center_user_id" = "ID používateľa";
+"customer_center_copy" = "Kopírovať";
+"customer_center_copied" = "Skopírované";
+"customer_center_original_download_date" = "Dátum pôvodného stiahnutia";
+"customer_center_transaction_id" = "ID transakcie";
+"customer_center_product_id" = "ID produktu";
+"customer_center_store" = "Obchod";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ponuka";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Obnovuje sa…";
+"customer_center_restore_success_title" = "Nákupy obnovené";
+"customer_center_restore_success_message" = "Obnovili sme vaše predchádzajúce nákupy a priradili sme ich k vášmu účtu.";
+"customer_center_restore_none_title" = "Žiadne predchádzajúce nákupy";
+"customer_center_restore_none_message" = "Pre váš účet sme nenašli žiadne nákupy. Ak si myslíte, že ide o chybu, kontaktujte podporu.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple prijalo vašu žiadosť o vrátenie peňazí.";
+"customer_center_refund_error" = "Pri žiadosti o vrátenie peňazí sa niečo pokazilo. Skúste to znova.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "K dispozícii je aktualizácia";
+"customer_center_update_message" = "Stiahnutie najnovšej verzie aplikácie môže pomôcť vyriešiť problém.";
+"customer_center_update_action" = "Aktualizovať";
+"customer_center_update_continue" = "Pokračovať";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Možno máte duplicitné predplatné";
+"customer_center_duplicate_message" = "Je možné, že ste predplatiteľom na webe aj cez App Store zároveň. Aby ste sa vyhli dvojitému účtovaniu, jedno z nich zrušte.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Žiadosť o podporu";
+"customer_center_support_body" = "Opíšte, prosím, váš problém alebo otázku.";
+"customer_center_no_mail_app" = "V tomto zariadení nie je nastavená žiadna e-mailová aplikácia. Môžete nás kontaktovať na %@.";

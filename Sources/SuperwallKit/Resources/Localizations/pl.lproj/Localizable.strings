@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Gotowe";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Zarządzaj subskrypcją";
+"customer_center_no_purchases_title" = "Nie znaleziono subskrypcji";
+"customer_center_no_purchases_subtitle" = "Możemy sprawdzić poprzednie zakupy.";
+"customer_center_close" = "Zamknij";
+"customer_center_done" = "Gotowe";
+"customer_center_cancel" = "Anuluj";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Przywróć zakupy";
+"customer_center_path_manage_subscription" = "Anuluj subskrypcję";
+"customer_center_path_refund" = "Poproś o zwrot pieniędzy";
+"customer_center_path_change_plan" = "Zmień plan";
+"customer_center_path_contact_support" = "Skontaktuj się z pomocą techniczną";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Dlaczego rezygnujesz?";
+"customer_center_survey_too_expensive" = "Zbyt drogie";
+"customer_center_survey_dont_use" = "Nie korzystam z aplikacji";
+"customer_center_survey_bought_by_mistake" = "Kupione przez pomyłkę";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Odnawia się %@ za %@";
+"customer_center_renews_on" = "Odnawia się %@";
+"customer_center_expires_on" = "Wygasa %@";
+"customer_center_expired_on" = "Wygasło %@";
+"customer_center_free_trial_until" = "Bezpłatny okres próbny do %@";
+"customer_center_billing_issue" = "Problem z płatnością – zaktualizuj metodę płatności, aby zachować dostęp";
+"customer_center_lifetime" = "Dostęp dożywotni";
+"customer_center_revoked" = "Zwrócono środki";
+"customer_center_purchased_on" = "Zakupiono %@";
+"customer_center_active_via_superwall" = "Aktywna";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Wygasła";
+"customer_center_purchase_date" = "Data zakupu";
+"customer_center_expiration_date" = "Data wygaśnięcia";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktywna";
+"customer_center_badge_free_trial" = "Bezpłatny okres próbny";
+"customer_center_badge_cancelled" = "Anulowana";
+"customer_center_badge_billing_issue" = "Problem z płatnością";
+"customer_center_badge_expired" = "Wygasła";
+"customer_center_badge_revoked" = "Zwrócono środki";
+"customer_center_badge_lifetime" = "Dożywotnia";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Internet";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Inne";
+"customer_center_family_shared" = "Udostępniono przez Rodzinę";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Subskrypcje";
+"customer_center_section_purchases" = "Zakupy";
+"customer_center_section_actions" = "Działania";
+"customer_center_see_all_purchases" = "Zobacz wszystkie zakupy";
+"customer_center_purchase_history" = "Historia zakupów";
+"customer_center_history_active" = "Aktywne subskrypcje";
+"customer_center_history_expired" = "Wygasłe subskrypcje";
+"customer_center_history_other" = "Inne zakupy";
+"customer_center_account_details" = "Szczegóły konta";
+"customer_center_user_id" = "ID użytkownika";
+"customer_center_copy" = "Kopiuj";
+"customer_center_copied" = "Skopiowano";
+"customer_center_original_download_date" = "Pierwotna data pobrania";
+"customer_center_transaction_id" = "ID transakcji";
+"customer_center_product_id" = "ID produktu";
+"customer_center_store" = "Sklep";
+"customer_center_sandbox" = "Środowisko testowe";
+"customer_center_offer" = "Oferta";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Przywracanie…";
+"customer_center_restore_success_title" = "Zakupy przywrócone";
+"customer_center_restore_success_message" = "Przywróciliśmy Twoje poprzednie zakupy i zastosowaliśmy je do Twojego konta.";
+"customer_center_restore_none_title" = "Brak poprzednich zakupów";
+"customer_center_restore_none_message" = "Nie znaleźliśmy żadnych zakupów dla Twojego konta. Jeśli uważasz, że to błąd, skontaktuj się z pomocą techniczną.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple otrzymało Twoją prośbę o zwrot pieniędzy.";
+"customer_center_refund_error" = "Coś poszło nie tak podczas składania prośby o zwrot pieniędzy. Spróbuj ponownie.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Dostępna aktualizacja";
+"customer_center_update_message" = "Pobranie najnowszej wersji aplikacji może pomóc rozwiązać ten problem.";
+"customer_center_update_action" = "Aktualizuj";
+"customer_center_update_continue" = "Kontynuuj";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Możesz mieć zduplikowane subskrypcje";
+"customer_center_duplicate_message" = "Możesz być subskrybentem zarówno w internecie, jak i przez App Store. Aby uniknąć podwójnej opłaty, anuluj jedną z nich.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Zgłoszenie do pomocy technicznej";
+"customer_center_support_body" = "Opisz swój problem lub pytanie.";
+"customer_center_no_mail_app" = "Na tym urządzeniu nie skonfigurowano aplikacji pocztowej. Możesz się z nami skontaktować pod adresem %@.";

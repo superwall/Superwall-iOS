@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Τέλος";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Διαχείριση της συνδρομής σας";
+"customer_center_no_purchases_title" = "Δεν βρέθηκαν συνδρομές";
+"customer_center_no_purchases_subtitle" = "Μπορούμε να ελέγξουμε για προηγούμενες αγορές.";
+"customer_center_close" = "Κλείσιμο";
+"customer_center_done" = "Τέλος";
+"customer_center_cancel" = "Ακύρωση";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Επαναφορά αγορών";
+"customer_center_path_manage_subscription" = "Ακύρωση συνδρομής";
+"customer_center_path_refund" = "Αίτημα επιστροφής χρημάτων";
+"customer_center_path_change_plan" = "Αλλαγή πλάνου";
+"customer_center_path_contact_support" = "Επικοινωνία με την υποστήριξη";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Γιατί ακυρώνετε;";
+"customer_center_survey_too_expensive" = "Πολύ ακριβό";
+"customer_center_survey_dont_use" = "Δεν χρησιμοποιώ την εφαρμογή";
+"customer_center_survey_bought_by_mistake" = "Αγοράστηκε κατά λάθος";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Ανανεώνεται στις %@ για %@";
+"customer_center_renews_on" = "Ανανεώνεται στις %@";
+"customer_center_expires_on" = "Λήγει στις %@";
+"customer_center_expired_on" = "Έληξε στις %@";
+"customer_center_free_trial_until" = "Δωρεάν δοκιμή έως %@";
+"customer_center_billing_issue" = "Πρόβλημα χρέωσης – ενημερώστε τον τρόπο πληρωμής σας για να διατηρήσετε την πρόσβαση";
+"customer_center_lifetime" = "Πρόσβαση ισόβια";
+"customer_center_revoked" = "Επιστράφηκαν τα χρήματα";
+"customer_center_purchased_on" = "Αγοράστηκε στις %@";
+"customer_center_active_via_superwall" = "Ενεργή";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Έληξε";
+"customer_center_purchase_date" = "Ημερομηνία αγοράς";
+"customer_center_expiration_date" = "Ημερομηνία λήξης";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Ενεργή";
+"customer_center_badge_free_trial" = "Δωρεάν δοκιμή";
+"customer_center_badge_cancelled" = "Ακυρώθηκε";
+"customer_center_badge_billing_issue" = "Πρόβλημα χρέωσης";
+"customer_center_badge_expired" = "Έληξε";
+"customer_center_badge_revoked" = "Επιστράφηκαν τα χρήματα";
+"customer_center_badge_lifetime" = "Ισόβια";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Ιστός";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Άλλο";
+"customer_center_family_shared" = "Κοινή χρήση μέσω Οικογενειακού Κοινόχρηστου";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Συνδρομές";
+"customer_center_section_purchases" = "Αγορές";
+"customer_center_section_actions" = "Ενέργειες";
+"customer_center_see_all_purchases" = "Προβολή όλων των αγορών";
+"customer_center_purchase_history" = "Ιστορικό αγορών";
+"customer_center_history_active" = "Ενεργές συνδρομές";
+"customer_center_history_expired" = "Ληγμένες συνδρομές";
+"customer_center_history_other" = "Άλλες αγορές";
+"customer_center_account_details" = "Στοιχεία λογαριασμού";
+"customer_center_user_id" = "Αναγνωριστικό χρήστη";
+"customer_center_copy" = "Αντιγραφή";
+"customer_center_copied" = "Αντιγράφηκε";
+"customer_center_original_download_date" = "Αρχική ημερομηνία λήψης";
+"customer_center_transaction_id" = "Αναγνωριστικό συναλλαγής";
+"customer_center_product_id" = "Αναγνωριστικό προϊόντος";
+"customer_center_store" = "Κατάστημα";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Προσφορά";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Γίνεται επαναφορά…";
+"customer_center_restore_success_title" = "Οι αγορές επαναφέρθηκαν";
+"customer_center_restore_success_message" = "Επαναφέραμε τις προηγούμενες αγορές σας και τις εφαρμόσαμε στον λογαριασμό σας.";
+"customer_center_restore_none_title" = "Καμία προηγούμενη αγορά";
+"customer_center_restore_none_message" = "Δεν βρέθηκαν αγορές για τον λογαριασμό σας. Αν πιστεύετε ότι πρόκειται για σφάλμα, επικοινωνήστε με την υποστήριξη.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Η Apple έλαβε το αίτημά σας για επιστροφή χρημάτων.";
+"customer_center_refund_error" = "Κάτι πήγε στραβά κατά το αίτημα επιστροφής χρημάτων. Δοκιμάστε ξανά.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Διαθέσιμη ενημέρωση";
+"customer_center_update_message" = "Η λήψη της πιο πρόσφατης έκδοσης της εφαρμογής ενδέχεται να βοηθήσει στην επίλυση του προβλήματος.";
+"customer_center_update_action" = "Ενημέρωση";
+"customer_center_update_continue" = "Συνέχεια";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Ενδέχεται να έχετε διπλές συνδρομές";
+"customer_center_duplicate_message" = "Ενδέχεται να έχετε συνδρομή τόσο μέσω ιστού όσο και μέσω του App Store. Για να αποφύγετε διπλή χρέωση, ακυρώστε τη μία.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Αίτημα υποστήριξης";
+"customer_center_support_body" = "Περιγράψτε το πρόβλημα ή την ερώτησή σας.";
+"customer_center_no_mail_app" = "Δεν έχει ρυθμιστεί εφαρμογή αλληλογραφίας σε αυτή τη συσκευή. Μπορείτε να επικοινωνήσετε μαζί μας στο %@.";

@@ -359,6 +359,28 @@ public enum SuperwallEvent {
   /// When the test mode modal is closed.
   case testModeModalClose
 
+  /// When the Customer Center is presented. `screen` is `management` or `no_purchases`.
+  case customerCenterOpen(screen: String)
+
+  /// When the Customer Center is dismissed.
+  case customerCenterClose
+
+  /// When the user taps a path in the Customer Center.
+  case customerCenterAction(action: CustomerCenterAction, pathId: String, productId: String?)
+
+  /// When the user answers a Customer Center survey.
+  // swiftlint:disable:next enum_case_associated_values_count
+  case customerCenterSurveyResponse(
+    surveyId: String,
+    optionId: String,
+    action: CustomerCenterAction,
+    pathId: String,
+    productId: String?
+  )
+
+  /// When a refund request started from the Customer Center completes.
+  case customerCenterRefundRequest(productId: String, status: CustomerCenterRefundStatus)
+
   /// When a user navigates to a page in a multi-page paywall.
   case paywallPageView(
     paywallInfo: PaywallInfo,
@@ -564,6 +586,16 @@ extension SuperwallEvent {
       return .init(objcEvent: .testModeModalOpen)
     case .testModeModalClose:
       return .init(objcEvent: .testModeModalClose)
+    case .customerCenterOpen:
+      return .init(objcEvent: .customerCenterOpen)
+    case .customerCenterClose:
+      return .init(objcEvent: .customerCenterClose)
+    case .customerCenterAction:
+      return .init(objcEvent: .customerCenterAction)
+    case .customerCenterSurveyResponse:
+      return .init(objcEvent: .customerCenterSurveyResponse)
+    case .customerCenterRefundRequest:
+      return .init(objcEvent: .customerCenterRefundRequest)
     case .paywallPageView:
       return .init(objcEvent: .paywallPageView)
     }

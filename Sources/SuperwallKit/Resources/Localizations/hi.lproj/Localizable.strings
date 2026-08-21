@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "पूर्ण";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "अपनी सदस्यता प्रबंधित करें";
+"customer_center_no_purchases_title" = "कोई सदस्यता नहीं मिली";
+"customer_center_no_purchases_subtitle" = "हम पिछली खरीदारी की जांच कर सकते हैं।";
+"customer_center_close" = "बंद करें";
+"customer_center_done" = "हो गया";
+"customer_center_cancel" = "रद्द करें";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "खरीदारी पुनर्स्थापित करें";
+"customer_center_path_manage_subscription" = "सदस्यता रद्द करें";
+"customer_center_path_refund" = "रिफंड का अनुरोध करें";
+"customer_center_path_change_plan" = "प्लान बदलें";
+"customer_center_path_contact_support" = "सहायता से संपर्क करें";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "आप रद्द क्यों कर रहे हैं?";
+"customer_center_survey_too_expensive" = "बहुत महंगा";
+"customer_center_survey_dont_use" = "ऐप का उपयोग नहीं करता";
+"customer_center_survey_bought_by_mistake" = "गलती से खरीदा गया";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "%@ को %@ में नवीनीकृत होगी";
+"customer_center_renews_on" = "%@ को नवीनीकृत होगी";
+"customer_center_expires_on" = "%@ को समाप्त होगी";
+"customer_center_expired_on" = "%@ को समाप्त हो गई";
+"customer_center_free_trial_until" = "%@ तक निःशुल्क ट्रायल";
+"customer_center_billing_issue" = "बिलिंग समस्या – पहुंच बनाए रखने के लिए अपनी भुगतान विधि अपडेट करें";
+"customer_center_lifetime" = "आजीवन एक्सेस";
+"customer_center_revoked" = "रिफंड कर दिया गया";
+"customer_center_purchased_on" = "%@ को खरीदा गया";
+"customer_center_active_via_superwall" = "सक्रिय";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "समाप्त";
+"customer_center_purchase_date" = "खरीद की तारीख";
+"customer_center_expiration_date" = "समाप्ति तिथि";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "सक्रिय";
+"customer_center_badge_free_trial" = "निःशुल्क ट्रायल";
+"customer_center_badge_cancelled" = "रद्द";
+"customer_center_badge_billing_issue" = "बिलिंग समस्या";
+"customer_center_badge_expired" = "समाप्त";
+"customer_center_badge_revoked" = "रिफंड कर दिया गया";
+"customer_center_badge_lifetime" = "आजीवन";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "वेब";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "अन्य";
+"customer_center_family_shared" = "फ़ैमिली शेयरिंग के ज़रिए साझा किया गया";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "सदस्यताएं";
+"customer_center_section_purchases" = "खरीदारी";
+"customer_center_section_actions" = "कार्रवाइयां";
+"customer_center_see_all_purchases" = "सभी खरीदारी देखें";
+"customer_center_purchase_history" = "खरीद इतिहास";
+"customer_center_history_active" = "सक्रिय सदस्यताएं";
+"customer_center_history_expired" = "समाप्त हुई सदस्यताएं";
+"customer_center_history_other" = "अन्य खरीदारी";
+"customer_center_account_details" = "खाते का विवरण";
+"customer_center_user_id" = "उपयोगकर्ता आईडी";
+"customer_center_copy" = "कॉपी करें";
+"customer_center_copied" = "कॉपी हो गया";
+"customer_center_original_download_date" = "मूल डाउनलोड तिथि";
+"customer_center_transaction_id" = "लेनदेन आईडी";
+"customer_center_product_id" = "उत्पाद आईडी";
+"customer_center_store" = "स्टोर";
+"customer_center_sandbox" = "सैंडबॉक्स";
+"customer_center_offer" = "ऑफ़र";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "पुनर्स्थापित हो रहा है…";
+"customer_center_restore_success_title" = "खरीदारी पुनर्स्थापित की गई";
+"customer_center_restore_success_message" = "हमने आपकी पिछली खरीदारी पुनर्स्थापित करके आपके खाते में लागू कर दी है।";
+"customer_center_restore_none_title" = "कोई पिछली खरीदारी नहीं";
+"customer_center_restore_none_message" = "हमें आपके खाते के लिए कोई खरीदारी नहीं मिली। यदि आपको लगता है कि यह एक त्रुटि है, तो कृपया सहायता से संपर्क करें।";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple को आपका रिफंड अनुरोध मिल गया है।";
+"customer_center_refund_error" = "रिफंड का अनुरोध करते समय कुछ गड़बड़ हुई। कृपया फिर से प्रयास करें।";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "अपडेट उपलब्ध है";
+"customer_center_update_message" = "ऐप का नवीनतम संस्करण डाउनलोड करने से समस्या हल करने में मदद मिल सकती है।";
+"customer_center_update_action" = "अपडेट करें";
+"customer_center_update_continue" = "जारी रखें";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "हो सकता है आपकी डुप्लीकेट सदस्यताएं हों";
+"customer_center_duplicate_message" = "हो सकता है आप वेब और App Store दोनों के माध्यम से सदस्यता ले चुके हों। दोगुना शुल्क लगने से बचने के लिए, उनमें से एक को रद्द कर दें।";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "सहायता अनुरोध";
+"customer_center_support_body" = "कृपया अपनी समस्या या प्रश्न का वर्णन करें।";
+"customer_center_no_mail_app" = "इस डिवाइस पर कोई मेल ऐप कॉन्फ़िगर नहीं है। आप हमसे %@ पर संपर्क कर सकते हैं।";
