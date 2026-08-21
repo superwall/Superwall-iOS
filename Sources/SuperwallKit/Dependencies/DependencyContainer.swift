@@ -53,10 +53,21 @@ final class DependencyContainer {
   private var _customerCenterManager: Any?
 
   /// Builds the dependencies backing the Customer Center and owns its presentation state.
+  ///
+  /// Built lazily on first access rather than in `init`, since `DependencyContainer.init` is not
+  /// itself main-actor-isolated (many test suites, and potentially host apps, construct it off the
+  /// main thread), while `CustomerCenterManager` is `@MainActor`. All production call sites
+  /// (`Superwall.presentCustomerCenter`/`dismissCustomerCenter`/the Objective-C variant) are
+  /// themselves `@MainActor`, so this accessor is only ever reached from the main actor.
   @available(iOS 15.0, *)
+  @MainActor
   var customerCenterManager: CustomerCenterManager {
-    // swiftlint:disable:next force_cast
-    _customerCenterManager as! CustomerCenterManager
+    if let manager = _customerCenterManager as? CustomerCenterManager {
+      return manager
+    }
+    let manager = CustomerCenterManager(container: self)
+    _customerCenterManager = manager
+    return manager
   }
 
   init(
@@ -221,15 +232,6 @@ final class DependencyContainer {
       productsManager: productsManager,
       factory: self
     )
-
-    if #available(iOS 15.0, *) {
-      // `DependencyContainer.init` runs on the main thread at configure time, but the initializer
-      // itself isn't statically main-actor-isolated, so we assert isolation to construct the
-      // main-actor-isolated `CustomerCenterManager`.
-      MainActor.assumeIsolated {
-        _customerCenterManager = CustomerCenterManager(container: self)
-      }
-    }
   }
 }
 

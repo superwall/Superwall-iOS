@@ -54,6 +54,14 @@ final class CustomerCenterManager {
   /// Builds the view model backing ``CustomerCenterView``, using `Superwall.shared`'s dependency
   /// container. Used by `CustomerCenterViewController`'s public initializers.
   static func makeViewModel(configuration: CustomerCenterConfiguration?) -> CustomerCenterViewModel {
+    if !Superwall.isInitialized {
+      Logger.debug(
+        logLevel: .error,
+        scope: .customerCenter,
+        message: "Customer Center was created before Superwall.configure(...) — it will not show "
+          + "purchases. Configure the SDK first."
+      )
+    }
     let container = Superwall.shared.dependencyContainer
     let resolved = configuration ?? container.configManager.options.customerCenter
     return CustomerCenterViewModel(
