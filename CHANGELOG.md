@@ -4,6 +4,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.16.4
 
+### Enhancements
+
+- Adds the Customer Center: a native, self-service screen where users can view their subscriptions and purchases, restore purchases, manage or cancel a subscription, request a refund, change plans, contact support, answer exit surveys and browse purchase history. Present it with `Superwall.shared.presentCustomerCenter()`, embed `CustomerCenterView` in SwiftUI, or use `CustomerCenterViewController` in UIKit. Configure it via `SuperwallOptions.customerCenter` (`CustomerCenterConfiguration`). Requires iOS 15+.
+- Adds `CustomerCenterDelegate` callbacks and the `customerCenterOpen`, `customerCenterClose`, `customerCenterAction`, `customerCenterSurveyResponse` and `customerCenterRefundRequest` events.
+
 ### Fixes
 
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
