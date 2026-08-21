@@ -21,9 +21,9 @@ struct CustomerCenterEventsTests {
     #expect(sheetParams["screen"] as? String == "management")
     #expect(sheetParams["presentation"] as? String == "sheet")
 
-    let embedded = InternalSuperwallEvent.CustomerCenterOpen(screen: "no_active", presentation: "embedded")
+    let embedded = InternalSuperwallEvent.CustomerCenterOpen(screen: "no_purchases", presentation: "embedded")
     let embeddedParams = await embedded.getSuperwallParameters()
-    #expect(embeddedParams["screen"] as? String == "no_active")
+    #expect(embeddedParams["screen"] as? String == "no_purchases")
     #expect(embeddedParams["presentation"] as? String == "embedded")
   }
 

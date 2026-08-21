@@ -359,7 +359,7 @@ public enum SuperwallEvent {
   /// When the test mode modal is closed.
   case testModeModalClose
 
-  /// When the Customer Center is presented. `screen` is `management` or `no_active`.
+  /// When the Customer Center is presented. `screen` is `management` or `no_purchases`.
   case customerCenterOpen(screen: String)
 
   /// When the Customer Center is dismissed.

@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Administrer abonnementet ditt";
-"customer_center_no_active_title" = "Fant ingen abonnementer";
-"customer_center_no_active_subtitle" = "Vi kan sjekke etter tidligere kjøp.";
+"customer_center_no_purchases_title" = "Fant ingen abonnementer";
+"customer_center_no_purchases_subtitle" = "Vi kan sjekke etter tidligere kjøp.";
 "customer_center_close" = "Lukk";
 "customer_center_done" = "Ferdig";
 "customer_center_cancel" = "Avbryt";

@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Керування підпискою";
-"customer_center_no_active_title" = "Підписок не знайдено";
-"customer_center_no_active_subtitle" = "Ми можемо перевірити попередні покупки.";
+"customer_center_no_purchases_title" = "Підписок не знайдено";
+"customer_center_no_purchases_subtitle" = "Ми можемо перевірити попередні покупки.";
 "customer_center_close" = "Закрити";
 "customer_center_done" = "Готово";
 "customer_center_cancel" = "Скасувати";

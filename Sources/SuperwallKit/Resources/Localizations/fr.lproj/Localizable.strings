@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Gérer votre abonnement";
-"customer_center_no_active_title" = "Aucun abonnement trouvé";
-"customer_center_no_active_subtitle" = "Nous pouvons vérifier vos achats précédents.";
+"customer_center_no_purchases_title" = "Aucun abonnement trouvé";
+"customer_center_no_purchases_subtitle" = "Nous pouvons vérifier vos achats précédents.";
 "customer_center_close" = "Fermer";
 "customer_center_done" = "Terminé";
 "customer_center_cancel" = "Annuler";

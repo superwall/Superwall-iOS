@@ -140,8 +140,8 @@ public struct CustomerCenterView: View {
         ProgressView().accessibilityIdentifier("customer_center.loading")
       case .management:
         ManagementScreenView(viewModel: viewModel)
-      case .noActive:
-        NoActiveScreenView(viewModel: viewModel)
+      case .noPurchases:
+        NoPurchasesScreenView(viewModel: viewModel)
       }
       RestoreOverlay(viewModel: viewModel)
     }

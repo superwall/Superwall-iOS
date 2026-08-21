@@ -44,7 +44,7 @@ struct HomeView: View {
           .init(id: "contact_support", type: .contactSupport)
         ]
       ),
-      noActiveScreen: .init(
+      noPurchasesScreen: .init(
         paths: [.init(id: "restore", type: .restore)]
       ),
       support: .init(email: "support@superwall.com")

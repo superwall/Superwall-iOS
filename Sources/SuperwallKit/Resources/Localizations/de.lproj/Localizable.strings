@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Abo verwalten";
-"customer_center_no_active_title" = "Keine Abonnements gefunden";
-"customer_center_no_active_subtitle" = "Wir können nach früheren Käufen suchen.";
+"customer_center_no_purchases_title" = "Keine Abonnements gefunden";
+"customer_center_no_purchases_subtitle" = "Wir können nach früheren Käufen suchen.";
 "customer_center_close" = "Schließen";
 "customer_center_done" = "Fertig";
 "customer_center_cancel" = "Abbrechen";

@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Upravljanje pretplatom";
-"customer_center_no_active_title" = "Nije pronađena nijedna pretplata";
-"customer_center_no_active_subtitle" = "Možemo provjeriti prethodne kupnje.";
+"customer_center_no_purchases_title" = "Nije pronađena nijedna pretplata";
+"customer_center_no_purchases_subtitle" = "Možemo provjeriti prethodne kupnje.";
 "customer_center_close" = "Zatvori";
 "customer_center_done" = "Gotovo";
 "customer_center_cancel" = "Odustani";

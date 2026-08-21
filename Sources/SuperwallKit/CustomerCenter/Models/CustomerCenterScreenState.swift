@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum CustomerCenterScreenState: Equatable { case loading, management, noActive }
+enum CustomerCenterScreenState: Equatable { case loading, management, noPurchases }
 enum CustomerCenterRestoreState: Equatable { case idle, restoring, restored, notFound }
 
 enum CustomerCenterSheet: Identifiable, Equatable {

@@ -4,11 +4,11 @@ import Foundation
 
 @Suite("CustomerCenterConfiguration")
 struct CustomerCenterConfigurationTests {
-  @Test("default has management paths restore/changePlan/refund/manage(with survey)/contactSupport and no-active restore")
+  @Test("default has management paths restore/changePlan/refund/manage(with survey)/contactSupport and no-purchases restore")
   func defaultShape() {
     let config = CustomerCenterConfiguration.default
     #expect(config.managementScreen.paths.map(\.id) == ["restore", "change_plan", "refund", "manage_subscription", "contact_support"])
-    #expect(config.noActiveScreen.paths.map(\.id) == ["restore"])
+    #expect(config.noPurchasesScreen.paths.map(\.id) == ["restore"])
     let manage = config.managementScreen.paths[3]
     #expect(manage.type == .manageSubscription)
     #expect(manage.survey?.id == "cancel_survey")

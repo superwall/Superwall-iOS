@@ -50,11 +50,11 @@ struct CustomerCenterViewModelTests {
     }
   }
 
-  @Test("load: no purchases → noActive")
-  func loadNoActive() async {
+  @Test("load: no purchases → noPurchases")
+  func loadNoPurchases() async {
     let (vm, _, _) = make(info: info([]))
     await vm.load()
-    #expect(vm.state == .noActive)
+    #expect(vm.state == .noPurchases)
   }
 
   @Test("update banner only when latestAppVersion is newer and warn enabled")
@@ -164,7 +164,7 @@ struct CustomerCenterViewModelTests {
     let restorer = RestorerMock()
     let (vm, infoMock, _) = make(info: info([]), restorer: restorer)
     await vm.load()
-    #expect(vm.state == .noActive)
+    #expect(vm.state == .noPurchases)
     let entitlementOnlyInfo = CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [Entitlement(id: "premium")])
     infoMock.subject.value = entitlementOnlyInfo
     await vm.performRestore()
@@ -340,7 +340,7 @@ struct CustomerCenterViewModelTests {
     let tracker = EventTrackerMock()
     let (vm, infoMock, _) = make(info: info([]), tracker: tracker)
     await vm.load()
-    #expect(vm.state == .noActive)
+    #expect(vm.state == .noPurchases)
     infoMock.subject.value = info([sub()])
     try? await Task.sleep(nanoseconds: 100_000_000)
     #expect(vm.state == .management)

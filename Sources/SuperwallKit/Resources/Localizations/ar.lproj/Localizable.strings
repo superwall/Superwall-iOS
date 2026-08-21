@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "إدارة اشتراكك";
-"customer_center_no_active_title" = "لم يتم العثور على اشتراكات";
-"customer_center_no_active_subtitle" = "يمكننا التحقق من عمليات الشراء السابقة.";
+"customer_center_no_purchases_title" = "لم يتم العثور على اشتراكات";
+"customer_center_no_purchases_subtitle" = "يمكننا التحقق من عمليات الشراء السابقة.";
 "customer_center_close" = "إغلاق";
 "customer_center_done" = "تم";
 "customer_center_cancel" = "إلغاء";

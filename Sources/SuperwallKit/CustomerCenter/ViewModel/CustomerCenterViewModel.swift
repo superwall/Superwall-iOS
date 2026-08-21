@@ -88,7 +88,7 @@ final class CustomerCenterViewModel: ObservableObject {
       hasTrackedOpen = true
       await dependencies.tracker.track(
         InternalSuperwallEvent.CustomerCenterOpen(
-          screen: state == .management ? "management" : "no_active",
+          screen: state == .management ? "management" : "no_purchases",
           presentation: presentationMode
         )
       )
@@ -108,7 +108,7 @@ final class CustomerCenterViewModel: ObservableObject {
     }
     let builder = PurchasePresentationBuilder(strings: strings)
     purchases = builder.build(customerInfo: customerInfo, products: products)
-    state = hasAnyPurchases(customerInfo) ? .management : .noActive
+    state = hasAnyPurchases(customerInfo) ? .management : .noPurchases
     showsUpdateBanner = !updateWarningDismissed
       && configuration.support.shouldWarnToUpdate
       && AppVersionComparator.isInstalledVersion(
@@ -137,10 +137,10 @@ final class CustomerCenterViewModel: ObservableObject {
   /// Resolves the paths to show.
   /// - Parameters:
   ///   - purchase: The purchase the paths apply to, if any.
-  ///   - isScreenLevel: `true` for a screen's main action list (management / no-active), where
+  ///   - isScreenLevel: `true` for a screen's main action list (management / no-purchases), where
   ///     restore is always available; `false` for a drilled-in purchase detail screen.
   func paths(for purchase: PurchasePresentation?, isScreenLevel: Bool = true) -> [ResolvedPath] {
-    let screen = state == .noActive ? configuration.noActiveScreen : configuration.managementScreen
+    let screen = state == .noPurchases ? configuration.noPurchasesScreen : configuration.managementScreen
     let context = PathResolutionContext(
       purchase: purchase,
       product: purchase?.productId.flatMap { products[$0] },

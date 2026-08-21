@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Spravovať predplatné";
-"customer_center_no_active_title" = "Nenašlo sa žiadne predplatné";
-"customer_center_no_active_subtitle" = "Môžeme skontrolovať predchádzajúce nákupy.";
+"customer_center_no_purchases_title" = "Nenašlo sa žiadne predplatné";
+"customer_center_no_purchases_subtitle" = "Môžeme skontrolovať predchádzajúce nákupy.";
 "customer_center_close" = "Zavrieť";
 "customer_center_done" = "Hotovo";
 "customer_center_cancel" = "Zrušiť";

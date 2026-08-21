@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Gestisci il tuo abbonamento";
-"customer_center_no_active_title" = "Nessun abbonamento trovato";
-"customer_center_no_active_subtitle" = "Possiamo verificare la presenza di acquisti precedenti.";
+"customer_center_no_purchases_title" = "Nessun abbonamento trovato";
+"customer_center_no_purchases_subtitle" = "Possiamo verificare la presenza di acquisti precedenti.";
 "customer_center_close" = "Chiudi";
 "customer_center_done" = "Fatto";
 "customer_center_cancel" = "Annulla";

@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "अपनी सदस्यता प्रबंधित करें";
-"customer_center_no_active_title" = "कोई सदस्यता नहीं मिली";
-"customer_center_no_active_subtitle" = "हम पिछली खरीदारी की जांच कर सकते हैं।";
+"customer_center_no_purchases_title" = "कोई सदस्यता नहीं मिली";
+"customer_center_no_purchases_subtitle" = "हम पिछली खरीदारी की जांच कर सकते हैं।";
 "customer_center_close" = "बंद करें";
 "customer_center_done" = "हो गया";
 "customer_center_cancel" = "रद्द करें";

@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Kelola langganan Anda";
-"customer_center_no_active_title" = "Tidak ada langganan yang ditemukan";
-"customer_center_no_active_subtitle" = "Kami dapat memeriksa pembelian sebelumnya.";
+"customer_center_no_purchases_title" = "Tidak ada langganan yang ditemukan";
+"customer_center_no_purchases_subtitle" = "Kami dapat memeriksa pembelian sebelumnya.";
 "customer_center_close" = "Tutup";
 "customer_center_done" = "Selesai";
 "customer_center_cancel" = "Batal";

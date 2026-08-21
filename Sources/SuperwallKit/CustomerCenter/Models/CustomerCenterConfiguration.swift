@@ -18,7 +18,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   /// The screen shown when the user has at least one subscription (active or expired) or purchase.
   public var managementScreen: Screen
   /// The screen shown when the user has no purchases at all.
-  public var noActiveScreen: Screen
+  public var noPurchasesScreen: Screen
   /// Support-related settings (email, app update warning, web management URL).
   public var support: Support
   /// Optional color overrides. `nil` values use system colors.
@@ -32,7 +32,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
 
   public init(
     managementScreen: Screen,
-    noActiveScreen: Screen,
+    noPurchasesScreen: Screen,
     support: Support = Support(),
     appearance: Appearance = Appearance(),
     showsPurchaseHistory: Bool = true,
@@ -40,7 +40,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     warnsAboutDuplicateSubscriptions: Bool = true
   ) {
     self.managementScreen = managementScreen
-    self.noActiveScreen = noActiveScreen
+    self.noPurchasesScreen = noPurchasesScreen
     self.support = support
     self.appearance = appearance
     self.showsPurchaseHistory = showsPurchaseHistory
@@ -50,7 +50,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
 
   /// A fresh copy of the default configuration: restore, change plan, refund, manage subscription
   /// (with a cancellation survey) and contact support on the management screen; restore on the
-  /// no-active screen.
+  /// no-purchases screen.
   public static var `default`: CustomerCenterConfiguration {
     let cancelSurvey = FeedbackSurvey(
       id: "cancel_survey",
@@ -73,7 +73,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
           Path(id: "contact_support", type: .contactSupport)
         ]
       ),
-      noActiveScreen: Screen(
+      noPurchasesScreen: Screen(
         title: nil,
         subtitle: nil,
         paths: [Path(id: "restore", type: .restore)]
@@ -84,7 +84,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   override public func isEqual(_ object: Any?) -> Bool {
     guard let other = object as? CustomerCenterConfiguration else { return false }
     return managementScreen == other.managementScreen
-      && noActiveScreen == other.noActiveScreen
+      && noPurchasesScreen == other.noPurchasesScreen
       && support == other.support
       && appearance == other.appearance
       && showsPurchaseHistory == other.showsPurchaseHistory
@@ -95,7 +95,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   override public var hash: Int {
     var hasher = Hasher()
     hasher.combine(managementScreen)
-    hasher.combine(noActiveScreen)
+    hasher.combine(noPurchasesScreen)
     hasher.combine(support)
     hasher.combine(appearance)
     hasher.combine(showsPurchaseHistory)
@@ -112,7 +112,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   public final class Screen: NSObject, Codable {
     /// Title. `nil` uses the localized default for the screen.
     public var title: String?
-    /// Subtitle. `nil` uses the localized default (no-active screen) or none (management screen).
+    /// Subtitle. `nil` uses the localized default (no-purchases screen) or none (management screen).
     public var subtitle: String?
     /// Ordered paths (actions) shown on the screen.
     public var paths: [Path]

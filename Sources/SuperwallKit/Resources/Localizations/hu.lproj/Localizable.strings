@@ -39,8 +39,8 @@
 
 /* Customer Center – screens */
 "customer_center_management_title" = "Előfizetés kezelése";
-"customer_center_no_active_title" = "Nem található előfizetés";
-"customer_center_no_active_subtitle" = "Ellenőrizhetjük a korábbi vásárlásokat.";
+"customer_center_no_purchases_title" = "Nem található előfizetés";
+"customer_center_no_purchases_subtitle" = "Ellenőrizhetjük a korábbi vásárlásokat.";
 "customer_center_close" = "Bezárás";
 "customer_center_done" = "Kész";
 "customer_center_cancel" = "Mégse";
