@@ -26,13 +26,15 @@ struct PathsListView: View {
           loadingPathId = nil
         }
       } label: {
+        // No disclosure chevron: a chevron promises a push onto the navigation stack, and every
+        // path here either presents a sheet, acts in place, or leaves the app. The rows that do
+        // push — "See all purchases" and the purchase detail rows — are `NavigationLink`s and get
+        // their chevron from SwiftUI.
         HStack {
           Text(title(for: resolved.path))
           Spacer()
           if loadingPathId == resolved.id {
             ProgressView()
-          } else {
-            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
           }
         }
       }
