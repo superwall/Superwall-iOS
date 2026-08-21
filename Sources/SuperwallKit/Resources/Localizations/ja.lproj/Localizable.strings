@@ -108,6 +108,7 @@
 "customer_center_product_id" = "製品ID";
 "customer_center_store" = "ストア";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "オファー";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "復元中…";

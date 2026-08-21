@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID sản phẩm";
 "customer_center_store" = "Cửa hàng";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ưu đãi";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Đang khôi phục…";

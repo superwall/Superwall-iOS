@@ -92,6 +92,18 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       && warnsAboutDuplicateSubscriptions == other.warnsAboutDuplicateSubscriptions
   }
 
+  override public var hash: Int {
+    var hasher = Hasher()
+    hasher.combine(managementScreen)
+    hasher.combine(noActiveScreen)
+    hasher.combine(support)
+    hasher.combine(appearance)
+    hasher.combine(showsPurchaseHistory)
+    hasher.combine(showsAccountDetails)
+    hasher.combine(warnsAboutDuplicateSubscriptions)
+    return hasher.finalize()
+  }
+
   // MARK: - Screen
 
   /// A Customer Center screen: a title, optional subtitle and an ordered list of paths.
@@ -114,6 +126,14 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     override public func isEqual(_ object: Any?) -> Bool {
       guard let other = object as? Screen else { return false }
       return title == other.title && subtitle == other.subtitle && paths == other.paths
+    }
+
+    override public var hash: Int {
+      var hasher = Hasher()
+      hasher.combine(title)
+      hasher.combine(subtitle)
+      hasher.combine(paths)
+      return hasher.finalize()
     }
   }
 
@@ -143,10 +163,19 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       guard let other = object as? Path else { return false }
       return id == other.id && type == other.type && title == other.title && survey == other.survey
     }
+
+    override public var hash: Int {
+      var hasher = Hasher()
+      hasher.combine(id)
+      hasher.combine(type)
+      hasher.combine(title)
+      hasher.combine(survey)
+      return hasher.finalize()
+    }
   }
 
   /// The kinds of path the Customer Center supports.
-  public enum PathType: Codable, Equatable {
+  public enum PathType: Codable, Hashable {
     case restore
     case manageSubscription
     /// `window`: optional seconds since purchase during which a refund may be requested.
@@ -159,7 +188,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   }
 
   /// How a URL path opens.
-  public enum OpenMethod: String, Codable {
+  public enum OpenMethod: String, Codable, Hashable {
     case inApp
     case external
   }
@@ -186,6 +215,14 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       return id == other.id && title == other.title && options == other.options
     }
 
+    override public var hash: Int {
+      var hasher = Hasher()
+      hasher.combine(id)
+      hasher.combine(title)
+      hasher.combine(options)
+      return hasher.finalize()
+    }
+
     @objc(SWKCustomerCenterFeedbackSurveyOption)
     @objcMembers
     public final class Option: NSObject, Codable {
@@ -201,6 +238,13 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       override public func isEqual(_ object: Any?) -> Bool {
         guard let other = object as? Option else { return false }
         return id == other.id && title == other.title
+      }
+
+      override public var hash: Int {
+        var hasher = Hasher()
+        hasher.combine(id)
+        hasher.combine(title)
+        return hasher.finalize()
       }
     }
   }

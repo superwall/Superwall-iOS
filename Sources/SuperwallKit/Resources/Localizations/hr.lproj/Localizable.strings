@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID proizvoda";
 "customer_center_store" = "Trgovina";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ponuda";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Vraćanje…";

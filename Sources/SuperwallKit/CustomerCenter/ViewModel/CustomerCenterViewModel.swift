@@ -17,8 +17,9 @@ final class CustomerCenterViewModel: ObservableObject {
 
   @Published private(set) var state: CustomerCenterScreenState = .loading
   @Published private(set) var purchases: [PurchasePresentation] = []
-  @Published var selectedPurchaseId: String?
-  @Published var sheet: CustomerCenterSheet?
+  @Published var sheet: CustomerCenterSheet? {
+    didSet { if let sheet { lastPresentedSheet = sheet } }
+  }
   @Published var restoreState: CustomerCenterRestoreState = .idle
   @Published private(set) var refundResult: (productId: String, status: CustomerCenterRefundStatus)?
   @Published private(set) var showsUpdateBanner = false
@@ -30,11 +31,23 @@ final class CustomerCenterViewModel: ObservableObject {
   var presentationMode = "sheet"
   private(set) var pendingSurvey: PendingSurvey?
 
+  /// `true` while a screen the Customer Center pushed itself (purchase detail, purchase
+  /// history) covers the root view. In embedded mode (`usesExistingNavigation`) such a push
+  /// removes the root view from the hierarchy, which must not count as a dismissal.
+  var isNavigatingWithinCustomerCenter = false
+
   private let dependencies: CustomerCenterDependencies
   private let isChangePlanSheetAvailable: Bool
   private var products: [String: ProductDisplayInfo] = [:]
   private var familyShared: Set<String> = []
   private var pendingAction: PendingAction?
+  /// An action deferred from `answerSurvey` until the survey sheet has finished dismissing.
+  /// Performing it immediately would present a new sheet while the old one is still animating
+  /// out, which iOS 15/16 can silently drop.
+  private var pendingActionAfterSheetDismiss: PendingAction?
+  /// The most recent non-nil ``sheet``, so ``sheetDidDismiss()`` knows whether the sheet that
+  /// just closed was a StoreKit store sheet requiring a receipt refresh.
+  private var lastPresentedSheet: CustomerCenterSheet?
   private var updateWarningDismissed = false
   private var hasTrackedOpen = false
   private var didDismiss = false
@@ -74,7 +87,10 @@ final class CustomerCenterViewModel: ObservableObject {
     if !hasTrackedOpen {
       hasTrackedOpen = true
       await dependencies.tracker.track(
-        InternalSuperwallEvent.CustomerCenterOpen(screen: state == .management ? "management" : "no_active")
+        InternalSuperwallEvent.CustomerCenterOpen(
+          screen: state == .management ? "management" : "no_active",
+          presentation: presentationMode
+        )
       )
     }
   }
@@ -114,41 +130,16 @@ final class CustomerCenterViewModel: ObservableObject {
 
   // MARK: - Paths
 
-  var selectedPurchase: PurchasePresentation? { purchases.first { $0.id == selectedPurchaseId } }
-
   var userId: String { dependencies.environment.userId }
   var originalDownloadDate: Date? { dependencies.environment.originalDownloadDate }
   var appStoreURL: URL? { dependencies.environment.appStoreURL }
 
-  var supportMailtoURL: URL? {
-    SupportEmailComposer.mailtoURL(
-      email: configuration.support.email,
-      subject: strings.string("customer_center_support_subject"),
-      body: strings.string("customer_center_support_body"),
-      diagnostics: diagnostics
-    )
-  }
-
-  private var diagnostics: SupportEmailDiagnostics {
-    let env = dependencies.environment
-    let active = purchases.filter(\.isActive).compactMap(\.productId)
-    return .init(
-      userId: env.userId,
-      appVersion: env.appVersion,
-      osVersion: env.osVersion,
-      deviceModel: env.deviceModel,
-      sdkVersion: env.sdkVersion,
-      activeEntitlementIds: active,
-      isSandbox: env.isSandbox
-    )
-  }
-
-  private var supportEmailAvailable: Bool {
-    guard let url = supportMailtoURL else { return false }
-    return dependencies.urlOpener.canOpen(url) || dependencies.environment.isSimulator
-  }
-
-  func paths(for purchase: PurchasePresentation?) -> [ResolvedPath] {
+  /// Resolves the paths to show.
+  /// - Parameters:
+  ///   - purchase: The purchase the paths apply to, if any.
+  ///   - isScreenLevel: `true` for a screen's main action list (management / no-active), where
+  ///     restore is always available; `false` for a drilled-in purchase detail screen.
+  func paths(for purchase: PurchasePresentation?, isScreenLevel: Bool = true) -> [ResolvedPath] {
     let screen = state == .noActive ? configuration.noActiveScreen : configuration.managementScreen
     let context = PathResolutionContext(
       purchase: purchase,
@@ -157,7 +148,8 @@ final class CustomerCenterViewModel: ObservableObject {
       supportEmailAvailable: supportEmailAvailable,
       webManagementURL: dependencies.environment.webManagementURL,
       isChangePlanSheetAvailable: isChangePlanSheetAvailable,
-      canOpenURLs: dependencies.urlOpener.canOpenURLs && !dependencies.environment.isAppExtension
+      canOpenURLs: dependencies.urlOpener.canOpenURLs && !dependencies.environment.isAppExtension,
+      isScreenLevel: isScreenLevel
     )
     return CustomerCenterPathResolver.resolve(screen.paths, context: context)
   }
@@ -190,13 +182,17 @@ final class CustomerCenterViewModel: ObservableObject {
     ))
     self.pendingSurvey = nil
     self.pendingAction = nil
+    // Don't perform the follow-up action yet: it may present another sheet, and doing so while
+    // the survey sheet is still animating out can be dropped on iOS 15/16. It's performed by
+    // `sheetDidDismiss()` once the survey sheet has finished dismissing.
+    pendingActionAfterSheetDismiss = pendingAction
     sheet = nil
-    await perform(pendingAction.resolved, purchase: pendingAction.purchase)
   }
 
   func cancelSurvey() {
     pendingSurvey = nil
     pendingAction = nil
+    pendingActionAfterSheetDismiss = nil
     if case .survey = sheet { sheet = nil }
   }
 
@@ -218,6 +214,9 @@ final class CustomerCenterViewModel: ObservableObject {
       sheet = .changePlan(groupId: groupId, productIds: productIds)
     case .contactSupport:
       guard let url = supportMailtoURL else { return }
+      // The path row itself is no longer gated on `canOpen` (see `supportEmailAvailable`), so
+      // the fallback happens here at tap time: open the composer when we can, otherwise show
+      // the address so the user can still reach support manually.
       if dependencies.urlOpener.canOpen(url) {
         dependencies.urlOpener.open(url)
       } else {
@@ -261,15 +260,41 @@ final class CustomerCenterViewModel: ObservableObject {
     sheet = nil
   }
 
-  /// Call when the manage-subscriptions or change-plan sheet closes; reloads to pick up changes.
+  /// Call when any Customer Center sheet finishes dismissing. Performs any action deferred by
+  /// `answerSurvey`, then reloads to pick up changes. When the dismissed sheet was a StoreKit
+  /// store sheet (manage subscriptions / change plan), receipts are reloaded first: cancelling
+  /// auto-renew in Apple's sheet emits no `Transaction.updates`, so a plain cached
+  /// customer-info read would miss the change.
   func sheetDidDismiss() async {
-    let info = await dependencies.customerInfo.fetchCustomerInfo()
+    let dismissed = lastPresentedSheet
+    lastPresentedSheet = nil
+    // Perform the deferred survey follow-up BEFORE the refetch, now that the previous sheet
+    // has finished dismissing and a new one can be presented reliably.
+    if let pending = pendingActionAfterSheetDismiss {
+      pendingActionAfterSheetDismiss = nil
+      await perform(pending.resolved, purchase: pending.purchase)
+    }
+    let info: CustomerInfo
+    switch dismissed {
+    case .manageSubscriptions, .changePlan:
+      info = await dependencies.customerInfo.refreshReceipts()
+    default:
+      info = await dependencies.customerInfo.fetchCustomerInfo()
+    }
     await apply(customerInfo: info, refetchProducts: true)
   }
 
   func continueAfterUpdateWarning() {
     updateWarningDismissed = true
     showsUpdateBanner = false
+  }
+
+  /// Call from the root view's `onDisappear`. In embedded mode a push within the Customer
+  /// Center (purchase detail / purchase history) also removes the root view from the
+  /// hierarchy, which must not count as a dismissal.
+  func rootViewDidDisappear() {
+    guard !isNavigatingWithinCustomerCenter else { return }
+    dismiss()
   }
 
   func dismiss() {
@@ -288,4 +313,40 @@ final class CustomerCenterViewModel: ObservableObject {
     let subs = purchases.filter { $0.subscription != nil }
     return (subs.filter(\.isActive), subs.filter { !$0.isActive }, purchases.filter { $0.subscription == nil })
   }
+}
+
+// MARK: - Support email
+
+@available(iOS 15.0, *)
+extension CustomerCenterViewModel {
+  var supportMailtoURL: URL? {
+    SupportEmailComposer.mailtoURL(
+      email: configuration.support.email,
+      subject: strings.string("customer_center_support_subject"),
+      body: strings.string("customer_center_support_body"),
+      diagnostics: diagnostics
+    )
+  }
+
+  private var diagnostics: SupportEmailDiagnostics {
+    let env = dependencies.environment
+    let active = purchases.filter(\.isActive).compactMap(\.productId)
+    return .init(
+      userId: env.userId,
+      appVersion: env.appVersion,
+      osVersion: env.osVersion,
+      deviceModel: env.deviceModel,
+      sdkVersion: env.sdkVersion,
+      activeEntitlementIds: active,
+      isSandbox: env.isSandbox
+    )
+  }
+
+  /// Whether to show the contact-support path.
+  ///
+  /// Gated only on a support email being configured. `canOpenURL("mailto:…")` returns false on
+  /// device unless the host app declares `mailto` in `LSApplicationQueriesSchemes`, so
+  /// pre-gating on it would hide the path entirely for most apps. The tap handler falls back to
+  /// a sheet showing the address instead.
+  var supportEmailAvailable: Bool { supportMailtoURL != nil }
 }

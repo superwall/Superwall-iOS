@@ -108,6 +108,7 @@
 "customer_center_product_id" = "Ürün kimliği";
 "customer_center_store" = "Mağaza";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Teklif";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Geri yükleniyor…";

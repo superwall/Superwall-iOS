@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID izdelka";
 "customer_center_store" = "Trgovina";
 "customer_center_sandbox" = "Peskovnik";
+"customer_center_offer" = "Ponudba";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Obnavljanje…";

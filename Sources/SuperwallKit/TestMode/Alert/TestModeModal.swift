@@ -2,7 +2,7 @@
 //  TestModeModal.swift
 //  Superwall
 //
-//  Created by Claude on 2026-01-27.
+//  Created by Jordan Morgan on 2026-01-27.
 //
 
 import UIKit

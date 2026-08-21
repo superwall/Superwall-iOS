@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID produs";
 "customer_center_store" = "Magazin";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ofertă";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Se restaurează…";

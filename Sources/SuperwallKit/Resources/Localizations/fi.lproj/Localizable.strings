@@ -108,6 +108,7 @@
 "customer_center_product_id" = "Tuotetunnus";
 "customer_center_store" = "Kauppa";
 "customer_center_sandbox" = "Hiekkalaatikko";
+"customer_center_offer" = "Tarjous";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Palautetaan…";

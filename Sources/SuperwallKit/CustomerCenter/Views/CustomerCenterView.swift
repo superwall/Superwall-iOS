@@ -2,7 +2,7 @@
 //  CustomerCenterView.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SwiftUI
@@ -53,10 +53,26 @@ public struct CustomerCenterView: View {
     configuration: CustomerCenterConfiguration? = nil,
     navigationOptions: CustomerCenterNavigationOptions = .default
   ) {
-    let model = CustomerCenterManager.makeViewModel(configuration: configuration)
-    model.presentationMode = navigationOptions.usesExistingNavigation ? "embedded" : "sheet"
-    _viewModel = StateObject(wrappedValue: model)
+    // `StateObject(wrappedValue:)` takes an `@autoclosure`, so inlining the construction call
+    // directly into the argument defers it until SwiftUI installs the state object for the
+    // first time. Building the model in a local `let` first would rebuild it on every
+    // `CustomerCenterView.init` (i.e. on every parent body evaluation) and throw it away.
+    _viewModel = StateObject(
+      wrappedValue: Self.makeConfiguredViewModel(
+        configuration: configuration,
+        usesExistingNavigation: navigationOptions.usesExistingNavigation
+      )
+    )
     self.navigationOptions = navigationOptions
+  }
+
+  private static func makeConfiguredViewModel(
+    configuration: CustomerCenterConfiguration?,
+    usesExistingNavigation: Bool
+  ) -> CustomerCenterViewModel {
+    let model = CustomerCenterManager.makeViewModel(configuration: configuration)
+    model.presentationMode = usesExistingNavigation ? "embedded" : "sheet"
+    return model
   }
 
   init(viewModel: CustomerCenterViewModel, navigationOptions: CustomerCenterNavigationOptions) {
@@ -78,7 +94,9 @@ public struct CustomerCenterView: View {
       viewModel.callbacks = Self.merged(viewModel.callbacks, callbacksBox.callbacks)
       await viewModel.load()
     }
-    .onDisappear { viewModel.dismiss() }
+    // `rootViewDidDisappear` skips the dismissal when a screen the Customer Center pushed
+    // itself (detail / history) covers the root view in embedded mode.
+    .onDisappear { viewModel.rootViewDidDisappear() }
   }
 
   /// Combines the view model's existing callbacks (e.g. set by the UIKit adapter) with those

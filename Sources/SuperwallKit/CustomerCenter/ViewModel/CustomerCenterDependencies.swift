@@ -11,6 +11,10 @@ import UIKit
 
 protocol CustomerCenterCustomerInfoProviding: AnyObject {
   func fetchCustomerInfo() async -> CustomerInfo
+  /// Reloads receipts/entitlements from StoreKit before returning fresh customer info. Use
+  /// after Apple's manage-subscriptions or change-plan sheet closes: cancelling auto-renew
+  /// there emits no `Transaction.updates`, so a cached read would miss the change.
+  func refreshReceipts() async -> CustomerInfo
   var customerInfoPublisher: AnyPublisher<CustomerInfo, Never> { get }
 }
 protocol CustomerCenterProductsProviding {
@@ -98,6 +102,10 @@ extension ProductDisplayInfo {
 @available(iOS 15.0, *)
 final class LiveCustomerInfoProvider: CustomerCenterCustomerInfoProviding {
   func fetchCustomerInfo() async -> CustomerInfo { await Superwall.shared.getCustomerInfo() }
+  func refreshReceipts() async -> CustomerInfo {
+    await Superwall.shared.dependencyContainer.receiptManager.loadPurchasedProducts(config: nil)
+    return await Superwall.shared.getCustomerInfo()
+  }
   var customerInfoPublisher: AnyPublisher<CustomerInfo, Never> { Superwall.shared.$customerInfo.eraseToAnyPublisher() }
 }
 @available(iOS 15.0, *)

@@ -108,6 +108,7 @@
 "customer_center_product_id" = "รหัสสินค้า";
 "customer_center_store" = "ร้านค้า";
 "customer_center_sandbox" = "แซนด์บ็อกซ์";
+"customer_center_offer" = "ข้อเสนอ";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "กำลังกู้คืน…";

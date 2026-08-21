@@ -15,6 +15,9 @@ struct PathResolutionContext {
   var webManagementURL: URL?
   var isChangePlanSheetAvailable: Bool
   var canOpenURLs = true
+  /// `true` when resolving a screen's main action list (management / no-active), where restore
+  /// is always available; `false` when resolving a drilled-in purchase detail screen.
+  var isScreenLevel = false
   var now = Date()
 }
 
@@ -56,7 +59,10 @@ enum CustomerCenterPathResolver {
 
     switch path.type {
     case .restore:
-      return purchase == nil ? .restore : nil
+      // Restore is always available at screen level (even when the screen's single-purchase
+      // layout passes its purchase for the other paths); it's only hidden on drilled-in
+      // purchase detail screens.
+      return purchase == nil || context.isScreenLevel ? .restore : nil
 
     case .contactSupport:
       return context.supportEmailAvailable && context.canOpenURLs ? .contactSupport : nil

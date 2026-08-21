@@ -108,6 +108,7 @@
 "customer_center_product_id" = "Produkt-ID";
 "customer_center_store" = "Butikk";
 "customer_center_sandbox" = "Sandkasse";
+"customer_center_offer" = "Tilbod";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Gjenoppretter…";

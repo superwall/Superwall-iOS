@@ -14,6 +14,19 @@ struct CustomerCenterEventsTests {
     #expect(SuperwallEventObjc(event: .customerCenterClose) == .customerCenterClose)
   }
 
+  @Test("open event carries the screen and how the Customer Center was presented")
+  func openParameters() async {
+    let sheet = InternalSuperwallEvent.CustomerCenterOpen(screen: "management", presentation: "sheet")
+    let sheetParams = await sheet.getSuperwallParameters()
+    #expect(sheetParams["screen"] as? String == "management")
+    #expect(sheetParams["presentation"] as? String == "sheet")
+
+    let embedded = InternalSuperwallEvent.CustomerCenterOpen(screen: "no_active", presentation: "embedded")
+    let embeddedParams = await embedded.getSuperwallParameters()
+    #expect(embeddedParams["screen"] as? String == "no_active")
+    #expect(embeddedParams["presentation"] as? String == "embedded")
+  }
+
   @Test("trackable parameters")
   func parameters() async {
     let action = InternalSuperwallEvent.CustomerCenterAction(action: .custom(identifier: "del"), pathId: "p1", productId: "prod")

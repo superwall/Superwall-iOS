@@ -63,7 +63,7 @@ Use `presentCustomerCenterWithConfiguration:from:delegate:onDismiss:`:
 ## Configuring the Customer Center
 
 Set the default configuration via ``SuperwallOptions/customerCenter`` before calling
-`Superwall/configure(apiKey:purchaseController:options:completion:)-52tke`, or pass a
+`Superwall.configure(apiKey:purchaseController:options:completion:)`, or pass a
 ``CustomerCenterConfiguration`` directly to a presentation call to override it for that
 presentation only.
 

@@ -12,8 +12,12 @@ import Foundation
 final class CustomerInfoProviderMock: CustomerCenterCustomerInfoProviding {
   let subject: CurrentValueSubject<CustomerInfo, Never>
   var fetchCount = 0
+  var refreshReceiptsCount = 0
+  /// `true` once the view model asked for a receipt-backed refresh rather than a cached read.
+  var didRefreshReceipts: Bool { refreshReceiptsCount > 0 }
   init(_ info: CustomerInfo) { subject = .init(info) }
   func fetchCustomerInfo() async -> CustomerInfo { fetchCount += 1; return subject.value }
+  func refreshReceipts() async -> CustomerInfo { refreshReceiptsCount += 1; return subject.value }
   var customerInfoPublisher: AnyPublisher<CustomerInfo, Never> { subject.eraseToAnyPublisher() }
 }
 final class ProductsProviderMock: CustomerCenterProductsProviding {

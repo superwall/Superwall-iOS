@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID produktu";
 "customer_center_store" = "Obchod";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Nabídka";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Obnovování…";

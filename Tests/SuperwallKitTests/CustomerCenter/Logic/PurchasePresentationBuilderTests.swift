@@ -122,7 +122,9 @@ struct PurchasePresentationBuilderTests {
     )
     let ent = Entitlement(id: "granted", isActive: true, store: .superwall)
     let rows = builder.build(customerInfo: info(subs: subs, nonSubs: [nonSub], entitlements: [ent]), products: [:])
-    #expect(rows.map(\.id) == ["soon", "late", "dead", "coins", "entitlement:granted"])
+    // Non-subscription rows are keyed by transaction id ("n"), not product id, so repeat
+    // consumable purchases of the same product each get their own row.
+    #expect(rows.map(\.id) == ["soon", "late", "dead", "n", "entitlement:granted"])
   }
 
   @Test("store labels")
@@ -156,5 +158,59 @@ struct PurchasePresentationBuilderTests {
     let subs = [sub("no-date", expires: nil), sub("dated", expires: 200)]
     let rows = builder.build(customerInfo: info(subs: subs), products: [:])
     #expect(rows.map(\.id) == ["dated", "no-date"])
+  }
+
+  // MARK: - Renewal collapsing
+
+  @Test("renewals of one product collapse to a single row, preferring the active transaction")
+  func renewalsCollapseToActiveRow() {
+    // Three StoreKit transactions of the same subscription: two lapsed renewal periods plus the
+    // current one. `CustomerInfo.subscriptions` reports all three; the user has one subscription.
+    let subs = [
+      sub("monthly", active: false, expires: -172_800),
+      sub("monthly", active: false, expires: -86_400),
+      sub("monthly", active: true, expires: 86_400)
+    ]
+    let rows = builder.build(customerInfo: info(subs: subs), products: ["monthly": monthly])
+    #expect(rows.count == 1)
+    #expect(rows[0].id == "monthly")
+    #expect(rows[0].badge == .active)
+    #expect(rows[0].isActive)
+    #expect(rows[0].subscription?.expirationDate == now.addingTimeInterval(86_400))
+  }
+
+  @Test("all-expired renewals collapse to a single row carrying the latest expiration")
+  func expiredRenewalsCollapseToLatestExpiration() {
+    let subs = [
+      sub("monthly", active: false, expires: -172_800),
+      sub("monthly", active: false, expires: -3_600),
+      sub("monthly", active: false, expires: -86_400)
+    ]
+    let rows = builder.build(customerInfo: info(subs: subs), products: ["monthly": monthly])
+    #expect(rows.count == 1)
+    #expect(rows[0].badge == .expired)
+    #expect(rows[0].subscription?.expirationDate == now.addingTimeInterval(-3_600))
+  }
+
+  @Test("repeat purchases of the same consumable stay as separate rows with distinct ids")
+  func repeatConsumablePurchasesKeepDistinctRows() {
+    func coins(_ transactionId: String, purchasedAgo: TimeInterval) -> NonSubscriptionTransaction {
+      NonSubscriptionTransaction(
+        transactionId: transactionId,
+        productId: "coins",
+        purchaseDate: now.addingTimeInterval(-purchasedAgo),
+        isConsumable: true,
+        isRevoked: false,
+        store: .appStore
+      )
+    }
+    let rows = builder.build(
+      customerInfo: info(nonSubs: [coins("n1", purchasedAgo: 172_800), coins("n2", purchasedAgo: 3_600)]),
+      products: [:]
+    )
+    #expect(rows.count == 2)
+    #expect(rows.map(\.id) == ["n1", "n2"])
+    #expect(Set(rows.map(\.id)).count == 2)
+    #expect(rows.allSatisfy { $0.productId == "coins" })
   }
 }

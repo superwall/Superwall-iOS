@@ -1,3 +1,10 @@
+//
+//  AppVersionComparatorTests.swift
+//
+//
+//  Created by Jordan Morgan on 20/08/2026.
+//
+
 import Testing
 @testable import SuperwallKit
 

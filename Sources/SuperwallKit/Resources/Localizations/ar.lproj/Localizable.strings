@@ -108,6 +108,7 @@
 "customer_center_product_id" = "معرّف المنتج";
 "customer_center_store" = "المتجر";
 "customer_center_sandbox" = "بيئة اختبار (Sandbox)";
+"customer_center_offer" = "عرض";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "جارٍ الاستعادة…";

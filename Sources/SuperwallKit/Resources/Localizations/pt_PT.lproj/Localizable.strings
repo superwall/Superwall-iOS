@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID do produto";
 "customer_center_store" = "Loja";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Oferta";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "A restaurar…";

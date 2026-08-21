@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID du produit";
 "customer_center_store" = "Boutique";
 "customer_center_sandbox" = "Bac à sable";
+"customer_center_offer" = "Offre";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Restauration en cours…";

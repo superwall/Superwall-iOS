@@ -2,7 +2,7 @@
 //  PathsListView.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SwiftUI
@@ -11,11 +11,13 @@ import SwiftUI
 struct PathsListView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let purchase: PurchasePresentation?
+  /// `true` for a screen's main action list; `false` on a drilled-in purchase detail screen.
+  var isScreenLevel = true
   @Environment(\.customerCenterStrings) private var strings
   @State private var loadingPathId: String?
 
   var body: some View {
-    ForEach(viewModel.paths(for: purchase)) { resolved in
+    ForEach(viewModel.paths(for: purchase, isScreenLevel: isScreenLevel)) { resolved in
       Button {
         guard loadingPathId == nil else { return }
         loadingPathId = resolved.id

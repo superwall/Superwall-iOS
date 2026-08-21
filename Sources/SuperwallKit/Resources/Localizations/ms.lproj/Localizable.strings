@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID produk";
 "customer_center_store" = "Kedai";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Tawaran";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Memulihkan…";

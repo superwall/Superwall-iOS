@@ -29,9 +29,10 @@ struct CustomerCenterPathResolverTests {
       expirationDate: expires.map { now.addingTimeInterval($0) }, offerType: offer, subscriptionGroupId: group, store: store)
   }
   func context(_ purchase: PurchasePresentation?, product: ProductDisplayInfo? = nil, family: Bool = false, email: Bool = true,
-               web: URL? = nil, changePlan: Bool = true, canOpen: Bool = true) -> PathResolutionContext {
+               web: URL? = nil, changePlan: Bool = true, canOpen: Bool = true, isScreenLevel: Bool = false) -> PathResolutionContext {
     PathResolutionContext(purchase: purchase, product: product, isFamilyShared: family, supportEmailAvailable: email,
-                          webManagementURL: web, isChangePlanSheetAvailable: changePlan, canOpenURLs: canOpen, now: now)
+                          webManagementURL: web, isChangePlanSheetAvailable: changePlan, canOpenURLs: canOpen,
+                          isScreenLevel: isScreenLevel, now: now)
   }
   func destinations(_ ctx: PathResolutionContext, _ paths: [CustomerCenterConfiguration.Path]? = nil) -> [ResolvedPathDestination] {
     CustomerCenterPathResolver.resolve(paths ?? self.paths, context: ctx).map(\.destination)
@@ -57,6 +58,23 @@ struct CustomerCenterPathResolverTests {
     let ctx = context(presentation(sub(), product: monthly), product: monthly, email: false)
     #expect(!destinations(ctx).contains(.restore))
     #expect(!destinations(ctx).contains(.contactSupport))
+  }
+
+  @Test("restore stays available at screen level with a purchase, and is hidden once drilled in")
+  func restoreIsScreenLevelOnly() {
+    // The management screen's single-purchase layout passes its purchase so the other paths can
+    // resolve, but restore must still be offered there — a user with one subscription may well
+    // have other purchases to restore. Only the drilled-in detail screen hides it.
+    let purchase = presentation(sub(), product: monthly)
+    let screenLevel = destinations(context(purchase, product: monthly, isScreenLevel: true))
+    #expect(screenLevel.contains(.restore))
+    #expect(screenLevel.first == .restore)
+
+    let drilledIn = destinations(context(purchase, product: monthly, isScreenLevel: false))
+    #expect(!drilledIn.contains(.restore))
+
+    // Screen level adds restore and changes nothing else.
+    #expect(screenLevel.filter { $0 != .restore } == drilledIn)
   }
 
   @Test("cancelled sub: no manage sheet; expired: no manage/change; revoked: no refund/manage/change")

@@ -2,7 +2,7 @@
 //  PurchaseHistoryView.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SwiftUI
@@ -22,6 +22,8 @@ struct PurchaseHistoryView: View {
     .listStyle(.insetGrouped)
     .navigationTitle(strings.string("customer_center_purchase_history"))
     .navigationBarTitleDisplayMode(.inline)
+    .onAppear { viewModel.isNavigatingWithinCustomerCenter = true }
+    .onDisappear { viewModel.isNavigatingWithinCustomerCenter = false }
   }
 
   @ViewBuilder
@@ -64,7 +66,7 @@ struct PurchaseDetailRows: View {
         row(strings.string("customer_center_store"), purchase.storeLabelKey.map { strings.string($0) } ?? "App Store")
         if let sub = purchase.subscription {
           row(strings.string("customer_center_transaction_id"), sub.transactionId)
-          if let offer = sub.offerType { row("Offer", offer.rawValue) }
+          if let offer = sub.offerType { row(strings.string("customer_center_offer"), offer.rawValue) }
         }
         if case .nonSubscription(let transaction) = purchase.kind {
           row(strings.string("customer_center_transaction_id"), transaction.transactionId)

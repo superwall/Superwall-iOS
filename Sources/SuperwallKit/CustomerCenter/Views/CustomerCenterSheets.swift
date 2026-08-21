@@ -2,7 +2,7 @@
 //  CustomerCenterSheets.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SafariServices
@@ -37,7 +37,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
     .init(
       get: {
         switch viewModel.sheet {
-        case .survey, .changePlan, .safari, .purchaseHistory, .noMailApp: return viewModel.sheet
+        case .survey, .changePlan, .safari, .noMailApp: return viewModel.sheet
         default: return nil
         }
       },
@@ -85,8 +85,6 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
           ChangePlanSheet(groupId: groupId, productIds: productIds)
         case .safari(let url):
           SafariView(url: url).ignoresSafeArea()
-        case .purchaseHistory:
-          NavigationView { PurchaseHistoryView(viewModel: viewModel) }
         case .noMailApp(let email):
           Text(strings.string("customer_center_no_mail_app", email)).padding()
         default:

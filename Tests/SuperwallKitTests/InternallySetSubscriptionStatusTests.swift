@@ -2,7 +2,7 @@
 //  InternallySetSubscriptionStatusTests.swift
 //  SuperwallKitTests
 //
-//  Created by Claude on 02/10/2025.
+//  Created by Jordan Morgan on 02/10/2025.
 //
 
 import Testing

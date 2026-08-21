@@ -2,7 +2,7 @@
 //  Superwall+CustomerCenter.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import UIKit
@@ -48,8 +48,11 @@ extension Superwall {
 
   /// Dismisses a Customer Center presented via
   /// ``presentCustomerCenter(configuration:from:delegate:onDismiss:)``. A no-op if none is presented.
+  ///
+  /// Available to Objective-C as `dismissCustomerCenterWithCompletion:`.
   @available(iOS 15.0, *)
   @MainActor
+  @objc(dismissCustomerCenterWithCompletion:)
   public func dismissCustomerCenter(completion: (() -> Void)? = nil) {
     guard Superwall.isInitialized else {
       Logger.debug(
@@ -65,6 +68,7 @@ extension Superwall {
   /// Objective-C: presents the Customer Center. See
   /// ``presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
   @available(iOS 15.0, *)
+  @available(swift, obsoleted: 1.0)
   @MainActor
   @objc(presentCustomerCenterWithConfiguration:from:delegate:onDismiss:)
   public func presentCustomerCenterObjc(

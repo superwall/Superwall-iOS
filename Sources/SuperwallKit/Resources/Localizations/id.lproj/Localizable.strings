@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID produk";
 "customer_center_store" = "Toko";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Penawaran";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Memulihkan…";

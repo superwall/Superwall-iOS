@@ -108,6 +108,7 @@
 "customer_center_product_id" = "產品 ID";
 "customer_center_store" = "商店";
 "customer_center_sandbox" = "沙盒環境";
+"customer_center_offer" = "優惠";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "正在恢復…";

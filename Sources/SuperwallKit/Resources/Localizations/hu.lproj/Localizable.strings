@@ -108,6 +108,7 @@
 "customer_center_product_id" = "Termékazonosító";
 "customer_center_store" = "Áruház";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ajánlat";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Visszaállítás…";

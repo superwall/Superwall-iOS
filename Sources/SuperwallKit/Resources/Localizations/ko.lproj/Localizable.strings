@@ -108,6 +108,7 @@
 "customer_center_product_id" = "제품 ID";
 "customer_center_store" = "스토어";
 "customer_center_sandbox" = "샌드박스";
+"customer_center_offer" = "혜택";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "복원 중…";

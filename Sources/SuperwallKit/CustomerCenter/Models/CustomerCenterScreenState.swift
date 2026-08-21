@@ -16,7 +16,6 @@ enum CustomerCenterSheet: Identifiable, Equatable {
   case changePlan(groupId: String?, productIds: [String]?)
   case refund(transactionId: UInt64, productId: String)
   case safari(URL)
-  case purchaseHistory
   case noMailApp(email: String)
 
   var id: String {
@@ -27,7 +26,6 @@ enum CustomerCenterSheet: Identifiable, Equatable {
       return "change:\(groupId ?? ""):\(productIds?.joined(separator: ",") ?? "")"
     case .refund(let transactionId, _): return "refund:\(transactionId)"
     case .safari(let url): return "safari:\(url.absoluteString)"
-    case .purchaseHistory: return "history"
     case .noMailApp: return "nomail"
     }
   }

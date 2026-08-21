@@ -108,6 +108,7 @@
 "customer_center_product_id" = "מזהה מוצר";
 "customer_center_store" = "חנות";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "מבצע";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "משחזר…";

@@ -108,6 +108,7 @@
 "customer_center_product_id" = "ID продукта";
 "customer_center_store" = "Магазин";
 "customer_center_sandbox" = "Тестовая среда";
+"customer_center_offer" = "Предложение";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Восстановление…";

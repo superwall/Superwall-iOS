@@ -2,7 +2,7 @@
 //  TestModeRestoreDrawer.swift
 //  Superwall
 //
-//  Created by Claude on 2026-02-09.
+//  Created by Jordan Morgan on 2026-02-09.
 //
 import UIKit
 

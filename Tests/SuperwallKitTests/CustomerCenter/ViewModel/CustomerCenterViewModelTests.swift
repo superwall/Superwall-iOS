@@ -112,10 +112,29 @@ struct CustomerCenterViewModelTests {
       return false
     }
     #expect(hasSurveyEvent)
+    // The follow-up action is deferred: presenting the next sheet while the survey sheet is
+    // still animating out is silently dropped on iOS 15/16.
+    #expect(vm.sheet == nil)
+
+    await vm.sheetDidDismiss()
     #expect(vm.sheet == .manageSubscriptions(groupId: "g1"))
+  }
+
+  @Test("cancelling the survey drops the pending action so a later dismissal performs nothing")
+  func cancelSurveyDropsPendingAction() async {
+    let (vm, _, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    await vm.select(manage, purchase: purchase)
+    #expect(vm.sheet == .survey(pathId: "manage_subscription"))
 
     vm.cancelSurvey()
     #expect(vm.pendingSurvey == nil)
+    #expect(vm.sheet == nil)
+
+    await vm.sheetDidDismiss()
+    #expect(vm.sheet == nil)
   }
 
   @Test("restore: gate can cancel; success/notFound states; tracks via Superwall restore events (not duplicated here)")
@@ -211,10 +230,109 @@ struct CustomerCenterViewModelTests {
     let purchase = vm.purchases[0]
     let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
     vm.callbacks.didSelectAction = nil
-    // default manage path has a survey; answer it
+    // default manage path has a survey; answer it, then let the survey sheet finish dismissing
+    // so the deferred follow-up action runs
     await vm.select(manage, purchase: purchase)
     await vm.answerSurvey(optionId: "dont_use")
+    #expect(vm.sheet == nil)
+    await vm.sheetDidDismiss()
     #expect(vm.sheet == .safari(url))
+  }
+
+  // MARK: - Contact support visibility
+
+  @Test("contact support row shows even when canOpenURL is false; tap falls back to the address sheet")
+  func contactSupportVisibleWithoutCanOpen() async {
+    // On device `canOpenURL("mailto:")` is false unless the host app declares `mailto` in
+    // `LSApplicationQueriesSchemes`, so visibility must not depend on it.
+    let opener = URLOpenerMock()
+    opener.openable = false
+    let config = CustomerCenterConfiguration.default
+    config.support.email = "help@app.com"
+    let (vm, _, _) = make(info: info([sub()]), config: config, opener: opener)
+    await vm.load()
+
+    let contact = vm.paths(for: nil).first { $0.path.id == "contact_support" }
+    #expect(contact != nil)
+
+    await vm.select(contact!, purchase: nil)
+    #expect(opener.opened.isEmpty)
+    #expect(vm.sheet == .noMailApp(email: "help@app.com"))
+  }
+
+  @Test("contact support row is hidden when no support email is configured")
+  func contactSupportHiddenWithoutEmail() async {
+    let (vm, _, _) = make(info: info([sub()]))   // default config carries no support email
+    await vm.load()
+    #expect(!vm.paths(for: nil).contains { $0.path.id == "contact_support" })
+  }
+
+  // MARK: - Restore availability
+
+  @Test("management screen still offers restore alongside a single subscription; detail screen doesn't")
+  func managementPathsIncludeRestore() async {
+    let (vm, _, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    #expect(vm.paths(for: purchase).map(\.destination).contains(.restore))
+    #expect(!vm.paths(for: purchase, isScreenLevel: false).map(\.destination).contains(.restore))
+  }
+
+  // MARK: - Receipt refresh on store-sheet dismissal
+
+  @Test("change-plan sheet dismissal reloads from receipts rather than the cache")
+  func changePlanDismissalRefreshesReceipts() async {
+    let (vm, infoMock, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let change = vm.paths(for: purchase).first { $0.path.id == "change_plan" }!
+    await vm.select(change, purchase: purchase)
+    #expect(vm.sheet == .changePlan(groupId: "g1", productIds: nil))
+
+    await vm.sheetDidDismiss()
+    #expect(infoMock.didRefreshReceipts)
+  }
+
+  @Test("manage-subscriptions dismissal refreshes receipts; a plain sheet dismissal does not")
+  func manageSubscriptionsDismissalRefreshesReceipts() async {
+    let (vm, infoMock, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    await vm.select(manage, purchase: purchase)
+    await vm.answerSurvey(optionId: "too_expensive")
+
+    // Dismissing the *survey* sheet performs the deferred action but needs no receipt reload.
+    await vm.sheetDidDismiss()
+    #expect(vm.sheet == .manageSubscriptions(groupId: "g1"))
+    #expect(!infoMock.didRefreshReceipts)
+
+    // Dismissing Apple's manage-subscriptions sheet does: cancelling auto-renew there emits no
+    // `Transaction.updates`, so a cached read would miss it.
+    await vm.sheetDidDismiss()
+    #expect(infoMock.didRefreshReceipts)
+  }
+
+  // MARK: - Embedded navigation
+
+  @Test("navigating within the Customer Center is not treated as a dismissal")
+  func navigationWithinCustomerCenterIsNotDismissal() async {
+    let (vm, _, _) = make(info: info([sub()]))
+    await vm.load()
+    var dismissed = false
+    vm.callbacks.didDismiss = { dismissed = true }
+
+    // Embedded mode: pushing the detail/history screen removes the root view from the hierarchy.
+    vm.isNavigatingWithinCustomerCenter = true
+    vm.rootViewDidDisappear()
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    #expect(!dismissed)
+
+    // A real disappearance still dismisses.
+    vm.isNavigatingWithinCustomerCenter = false
+    vm.rootViewDidDisappear()
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    #expect(dismissed)
   }
 
   @Test("dismiss tracks close and calls back; publisher updates re-render")

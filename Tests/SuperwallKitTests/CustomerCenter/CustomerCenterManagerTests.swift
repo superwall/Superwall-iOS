@@ -2,7 +2,7 @@
 //  CustomerCenterManagerTests.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import Testing

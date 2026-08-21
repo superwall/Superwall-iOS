@@ -108,6 +108,7 @@
 "customer_center_product_id" = "产品 ID";
 "customer_center_store" = "商店";
 "customer_center_sandbox" = "沙盒环境";
+"customer_center_offer" = "优惠";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "正在恢复…";

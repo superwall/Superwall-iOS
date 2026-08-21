@@ -108,6 +108,7 @@
 "customer_center_product_id" = "Αναγνωριστικό προϊόντος";
 "customer_center_store" = "Κατάστημα";
 "customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Προσφορά";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Γίνεται επαναφορά…";

@@ -2,7 +2,7 @@
 //  ManagementScreenView.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SwiftUI
@@ -80,12 +80,13 @@ struct PurchaseDetailScreenView: View {
     List {
       Section { PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult) }
       Section(strings.string("customer_center_section_actions")) {
-        PathsListView(viewModel: viewModel, purchase: purchase)
+        PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
       }
     }
     .listStyle(.insetGrouped)
     .navigationTitle(purchase.title)
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear { viewModel.selectedPurchaseId = purchase.id }
+    .onAppear { viewModel.isNavigatingWithinCustomerCenter = true }
+    .onDisappear { viewModel.isNavigatingWithinCustomerCenter = false }
   }
 }

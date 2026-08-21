@@ -34,7 +34,20 @@ struct PurchasePresentationBuilder {
     _ subscriptions: [SubscriptionTransaction],
     products: [String: ProductDisplayInfo]
   ) -> [PurchasePresentation] {
-    let sorted = subscriptions.sorted { lhs, rhs in
+    // `CustomerInfo.subscriptions` carries one entry per StoreKit transaction, which includes
+    // every past renewal of a subscription. Collapse to one row per product: prefer the active
+    // transaction, otherwise the one with the latest expiration date (nil dates last).
+    var latestPerProduct: [String: SubscriptionTransaction] = [:]
+    for sub in subscriptions {
+      if let existing = latestPerProduct[sub.productId] {
+        if isPreferred(sub, over: existing) {
+          latestPerProduct[sub.productId] = sub
+        }
+      } else {
+        latestPerProduct[sub.productId] = sub
+      }
+    }
+    let sorted = latestPerProduct.values.sorted { lhs, rhs in
       if lhs.isActive != rhs.isActive { return lhs.isActive }
       switch (lhs.expirationDate, rhs.expirationDate) {
       case let (lhsDate?, rhsDate?): return lhsDate < rhsDate
@@ -46,14 +59,29 @@ struct PurchasePresentationBuilder {
     return sorted.map { presentation(for: $0, product: products[$0.productId]) }
   }
 
+  /// Whether `lhs` better represents its product than `rhs` when both are transactions of the
+  /// same subscription: active wins, then the latest expiration date (nil dates last), then the
+  /// latest purchase date.
+  private func isPreferred(_ lhs: SubscriptionTransaction, over rhs: SubscriptionTransaction) -> Bool {
+    if lhs.isActive != rhs.isActive { return lhs.isActive }
+    switch (lhs.expirationDate, rhs.expirationDate) {
+    case let (lhsDate?, rhsDate?): return lhsDate > rhsDate
+    case (_?, nil): return true
+    case (nil, _?): return false
+    case (nil, nil): return lhs.purchaseDate > rhs.purchaseDate
+    }
+  }
+
   func nonSubscriptionPresentations(
     _ purchases: [NonSubscriptionTransaction],
     products: [String: ProductDisplayInfo]
   ) -> [PurchasePresentation] {
     purchases.sorted { $0.purchaseDate < $1.purchaseDate }.map { purchase in
       let product = products[purchase.productId]
+      // Keyed by transaction id, not product id: consumables can legitimately be purchased
+      // multiple times, and each purchase gets its own row.
       return PurchasePresentation(
-        id: purchase.productId,
+        id: purchase.transactionId,
         kind: .nonSubscription(purchase),
         productId: purchase.productId,
         title: product?.title ?? purchase.productId,

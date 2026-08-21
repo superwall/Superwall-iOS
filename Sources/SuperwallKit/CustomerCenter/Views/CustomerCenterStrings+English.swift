@@ -100,6 +100,7 @@ let englishStrings: [String: String] = [
   "customer_center_product_id": "Product ID",
   "customer_center_store": "Store",
   "customer_center_sandbox": "Sandbox",
+  "customer_center_offer": "Offer",
   // Customer Center – restore
   "customer_center_restoring": "Restoring…",
   "customer_center_restore_success_title": "Purchases restored",

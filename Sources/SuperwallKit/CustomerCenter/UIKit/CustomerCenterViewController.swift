@@ -2,7 +2,7 @@
 //  CustomerCenterViewController.swift
 //
 //
-//  Created by Claude on 20/08/2026.
+//  Created by Jordan Morgan on 20/08/2026.
 //
 
 import SwiftUI
@@ -39,7 +39,9 @@ public final class CustomerCenterViewController: UIViewController {
   ///     delegate. Keep a strong reference to it for the duration of the presentation — or present
   ///     via `Superwall.shared.presentCustomerCenter(delegate:)`, which retains the delegate while
   ///     the Customer Center is presented.
-  @objc public convenience init(configuration: CustomerCenterConfiguration?, objcDelegate: CustomerCenterDelegateObjc?) {
+  @available(swift, obsoleted: 1.0)
+  @objc(initWithConfiguration:delegate:)
+  public convenience init(configuration: CustomerCenterConfiguration?, objcDelegate: CustomerCenterDelegateObjc?) {
     self.init(
       viewModel: CustomerCenterManager.makeViewModel(configuration: configuration),
       adapter: CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: objcDelegate)
