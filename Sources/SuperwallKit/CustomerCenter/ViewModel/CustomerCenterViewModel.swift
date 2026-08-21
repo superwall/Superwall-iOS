@@ -60,7 +60,11 @@ final class CustomerCenterViewModel: ObservableObject {
     dependencies: CustomerCenterDependencies,
     strings: CustomerCenterStrings,
     isChangePlanSheetAvailable: Bool? = nil,
-    dismissDebounceInterval: TimeInterval = 0.3
+    // Comfortably longer than a UINavigationController push/pop (~0.35s). During a pop the
+    // outgoing screen's `onDisappear` can land before the root's `onAppear`, so the count dips to
+    // zero mid-transition; the debounce has to outlast that or a dismissal fires while the user is
+    // still inside. Only delays how soon `didDismiss` reaches the host, which nothing is gated on.
+    dismissDebounceInterval: TimeInterval = 0.6
   ) {
     self.configuration = configuration
     self.dependencies = dependencies
