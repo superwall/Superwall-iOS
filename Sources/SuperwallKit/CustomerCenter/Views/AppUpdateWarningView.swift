@@ -12,6 +12,7 @@ struct AppUpdateWarningView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterStrings) private var strings
   @Environment(\.openURL) private var openURL
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     Section {
@@ -24,9 +25,16 @@ struct AppUpdateWarningView: View {
               .buttonStyle(.borderedProminent)
               .accessibilityIdentifier("customer_center.update")
           }
-          Button(strings.string("customer_center_update_continue")) { viewModel.continueAfterUpdateWarning() }
-            .buttonStyle(.bordered)
-            .accessibilityIdentifier("customer_center.update_continue")
+          Button(strings.string("customer_center_update_continue")) {
+            // Animated here rather than in the view model so the banner's removal from the list
+            // is part of the same transaction. `withAnimation(nil)` runs the change unanimated,
+            // which is what Reduce Motion should get.
+            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
+              viewModel.continueAfterUpdateWarning()
+            }
+          }
+          .buttonStyle(.bordered)
+          .accessibilityIdentifier("customer_center.update_continue")
         }
       }
       .padding(.vertical, 4)
