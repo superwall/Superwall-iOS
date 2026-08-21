@@ -43,6 +43,7 @@ public struct CustomerCenterView: View {
   private let navigationOptions: CustomerCenterNavigationOptions
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.customerCenterCallbacks) private var callbacksBox
 
   /// Creates a Customer Center view.
   /// - Parameters:
@@ -73,8 +74,28 @@ public struct CustomerCenterView: View {
     }
     .environment(\.customerCenterStrings, viewModel.strings)
     .environment(\.customerCenterTheme, theme)
-    .task { await viewModel.load() }
+    .task {
+      viewModel.callbacks = Self.merged(viewModel.callbacks, callbacksBox.callbacks)
+      await viewModel.load()
+    }
     .onDisappear { viewModel.dismiss() }
+  }
+
+  /// Combines the view model's existing callbacks (e.g. set by the UIKit adapter) with those
+  /// accumulated in the environment by `.onCustomerCenter*` modifiers, preferring the
+  /// environment's non-nil closures for each field. Not `private` so it stays directly testable;
+  /// it's still excluded from the SDK's public interface.
+  static func merged(
+    _ existing: CustomerCenterCallbacks,
+    _ environment: CustomerCenterCallbacks
+  ) -> CustomerCenterCallbacks {
+    var result = existing
+    result.shouldRestore = environment.shouldRestore ?? existing.shouldRestore
+    result.didSelectAction = environment.didSelectAction ?? existing.didSelectAction
+    result.didCompleteSurvey = environment.didCompleteSurvey ?? existing.didCompleteSurvey
+    result.didCompleteRefund = environment.didCompleteRefund ?? existing.didCompleteRefund
+    result.didDismiss = environment.didDismiss ?? existing.didDismiss
+    return result
   }
 
   private var content: some View {

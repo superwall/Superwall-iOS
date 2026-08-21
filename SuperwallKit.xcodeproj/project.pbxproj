@@ -569,6 +569,7 @@
 		E9F892ABB9BDA85F4794E3CF /* SubscriptionStatusResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C15CF29C17FE1EE3BFDEDC /* SubscriptionStatusResolutionTests.swift */; };
 		EA50607230AA07B509E90E10 /* TestStoreUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7162E1E791297A3BF80B65A4 /* TestStoreUser.swift */; };
 		EA66951B1DF341C4F0448C9F /* PlacementsQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682AB10207309C439F64BC69 /* PlacementsQueueTests.swift */; };
+		EAA404AC45EFECE0C8B58140 /* View+CustomerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60CC773CBB97573AC2326D3 /* View+CustomerCenter.swift */; };
 		EB1964816A8297CE133F96BF /* PurchaseError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49E522F5BCABB3A95B97549E /* PurchaseError.swift */; };
 		EB6540A8E1ECC3548C5E6368 /* PaywallMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC653A44D9B40812BDDD94E7 /* PaywallMessage.swift */; };
 		ECA7E9C9898CAB24B56E7054 /* SK2PriceFormatRoundingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC580BF1CC720ECBC4E68A28 /* SK2PriceFormatRoundingTests.swift */; };
@@ -1101,6 +1102,7 @@
 		B48AAFA27917F0BE3ADC6FFB /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B52A0EFBBFE9D2F949EA4C28 /* UserAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAttributes.swift; sourceTree = "<group>"; };
 		B5637C2D7DDA38C11E48DD1C /* RawPaywallResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawPaywallResponse.swift; sourceTree = "<group>"; };
+		B60CC773CBB97573AC2326D3 /* View+CustomerCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "View+CustomerCenter.swift"; sourceTree = "<group>"; };
 		B634347011742D475E3F1A27 /* ConfigLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigLogic.swift; sourceTree = "<group>"; };
 		B6EB705DC16CB1AC24B75BA7 /* pt_PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt_PT; path = pt_PT.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B6F403BB2165F528F3C40339 /* CustomerCenterDependenciesMocks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDependenciesMocks.swift; sourceTree = "<group>"; };
@@ -2399,6 +2401,14 @@
 			path = Internal;
 			sourceTree = "<group>";
 		};
+		797427D95711FB08D8A372E2 /* SwiftUI */ = {
+			isa = PBXGroup;
+			children = (
+				B60CC773CBB97573AC2326D3 /* View+CustomerCenter.swift */,
+			);
+			path = SwiftUI;
+			sourceTree = "<group>";
+		};
 		79E3E1B6A224AE8B4085CF9B /* Templating */ = {
 			isa = PBXGroup;
 			children = (
@@ -3199,6 +3209,7 @@
 				942120C628E5C7B6E603287A /* Delegate */,
 				5E4DEFC8C051825F0007162E /* Logic */,
 				AC076DCADFAF818A0325BA18 /* Models */,
+				797427D95711FB08D8A372E2 /* SwiftUI */,
 				035954DCF2214A634651A352 /* UIKit */,
 				6CA03A908C710F4F27075427 /* ViewModel */,
 				1422D4F63A53E2768C2E90E6 /* Views */,
@@ -4118,6 +4129,7 @@
 				5C504112376B6E0798CA20CE /* Variables.swift in Sources */,
 				DE2F41FF9D70AB13AD246E49 /* VariantOption.swift in Sources */,
 				9A0D436A679DD6FC72BEBE9A /* VerificationResult+Transaction.swift in Sources */,
+				EAA404AC45EFECE0C8B58140 /* View+CustomerCenter.swift in Sources */,
 				C366CDBA75B69D05DC28394A /* WaitForSubsStatusAndConfig.swift in Sources */,
 				D89F615A7826947C9246F6B1 /* WebArchive.swift in Sources */,
 				BA1416132CD360BCBA93D698 /* WebArchiveFileSytemManager.swift in Sources */,
