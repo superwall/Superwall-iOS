@@ -2,7 +2,7 @@
 //  ProductsFetcherSK2Tests.swift
 //  SuperwallKit
 //
-//  Created by Jordan Morgan on 27/08/2025.
+//  Created by Claude on 27/08/2025.
 //
 
 import Testing

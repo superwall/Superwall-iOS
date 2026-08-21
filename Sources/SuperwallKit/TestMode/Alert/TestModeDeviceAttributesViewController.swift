@@ -2,7 +2,7 @@
 //  TestModeDeviceAttributesViewController.swift
 //  Superwall
 //
-//  Created by Jordan Morgan on 2026-02-05.
+//  Created by Claude on 2026-02-05.
 //
 
 import UIKit

@@ -2,7 +2,7 @@
 //  TestStoreUser.swift
 //  Superwall
 //
-//  Created by Jordan Morgan on 2026-01-27.
+//  Created by Claude on 2026-01-27.
 //
 
 import Foundation

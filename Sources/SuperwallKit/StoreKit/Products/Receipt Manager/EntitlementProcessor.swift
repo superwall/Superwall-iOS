@@ -2,7 +2,7 @@
 //  EntitlementProcessor.swift
 //  SuperwallKit
 //
-//  Created by Jordan Morgan on 11/09/2025.
+//  Created by Claude on 11/09/2025.
 //
 // swiftlint:disable all
 

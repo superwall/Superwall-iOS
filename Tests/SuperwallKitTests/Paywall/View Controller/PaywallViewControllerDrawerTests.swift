@@ -2,7 +2,7 @@
 //  PaywallViewControllerDrawerTests.swift
 //  SuperwallKitTests
 //
-//  Created by Jordan Morgan on 08/01/2025.
+//  Created by Claude on 08/01/2025.
 //
 
 import Testing

@@ -2,7 +2,7 @@
 //  AttributionTests.swift
 //  SuperwallKit
 //
-//  Created by Jordan Morgan on 13/08/2025.
+//  Created by Claude on 13/08/2025.
 //
 
 import Testing

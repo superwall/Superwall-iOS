@@ -2,7 +2,7 @@
 //  StripeTrialEligibilityTests.swift
 //  SuperwallKitTests
 //
-//  Created by Jordan Morgan on 03/03/2026.
+//  Created by Claude on 03/03/2026.
 //
 // swiftlint:disable all
 

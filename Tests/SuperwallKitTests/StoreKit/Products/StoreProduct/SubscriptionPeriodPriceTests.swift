@@ -2,7 +2,7 @@
 //  SubscriptionPeriodPriceTests.swift
 //  SuperwallKitTests
 //
-//  Created by Jordan Morgan on 2026-01-16.
+//  Created by Claude on 2026-01-16.
 //
 // swiftlint:disable all
 
