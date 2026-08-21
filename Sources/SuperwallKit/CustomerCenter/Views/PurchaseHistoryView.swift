@@ -22,8 +22,8 @@ struct PurchaseHistoryView: View {
     .listStyle(.insetGrouped)
     .navigationTitle(strings.string("customer_center_purchase_history"))
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear { viewModel.isNavigatingWithinCustomerCenter = true }
-    .onDisappear { viewModel.isNavigatingWithinCustomerCenter = false }
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 
   @ViewBuilder
@@ -32,7 +32,7 @@ struct PurchaseHistoryView: View {
       Section(strings.string(key)) {
         ForEach(items) { item in
           NavigationLink {
-            PurchaseDetailRows(purchase: item)
+            PurchaseDetailRows(viewModel: viewModel, purchase: item)
           } label: {
             PurchaseCardView(purchase: item, refundResult: nil)
           }
@@ -44,6 +44,7 @@ struct PurchaseHistoryView: View {
 
 @available(iOS 15.0, *)
 struct PurchaseDetailRows: View {
+  @ObservedObject var viewModel: CustomerCenterViewModel
   let purchase: PurchasePresentation
   @Environment(\.customerCenterStrings) private var strings
   private let dateFormatter: DateFormatter = {
@@ -80,6 +81,8 @@ struct PurchaseDetailRows: View {
     }
     .navigationTitle(purchase.title)
     .navigationBarTitleDisplayMode(.inline)
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 
   private func row(_ label: String, _ value: String) -> some View {

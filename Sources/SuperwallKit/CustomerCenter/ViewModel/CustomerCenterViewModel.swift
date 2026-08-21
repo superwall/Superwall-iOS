@@ -31,12 +31,8 @@ final class CustomerCenterViewModel: ObservableObject {
   var presentationMode = "sheet"
   private(set) var pendingSurvey: PendingSurvey?
 
-  /// `true` while a screen the Customer Center pushed itself (purchase detail, purchase
-  /// history) covers the root view. In embedded mode (`usesExistingNavigation`) such a push
-  /// removes the root view from the hierarchy, which must not count as a dismissal.
-  var isNavigatingWithinCustomerCenter = false
-
   private let dependencies: CustomerCenterDependencies
+  private let dismissDebounceInterval: TimeInterval
   private let isChangePlanSheetAvailable: Bool
   private var products: [String: ProductDisplayInfo] = [:]
   private var familyShared: Set<String> = []
@@ -53,15 +49,23 @@ final class CustomerCenterViewModel: ObservableObject {
   private var didDismiss = false
   private var cancellables = Set<AnyCancellable>()
 
+  /// Number of Customer Center surfaces (root + any pushed screens) currently on screen.
+  /// Incremented/decremented by ``surfaceDidAppear()``/``surfaceDidDisappear()``. When this
+  /// reaches zero and stays zero past the debounce, the Customer Center is genuinely gone.
+  private var visibleSurfaceCount = 0
+  private var dismissDebounceTask: Task<Void, Never>?
+
   init(
     configuration: CustomerCenterConfiguration,
     dependencies: CustomerCenterDependencies,
     strings: CustomerCenterStrings,
-    isChangePlanSheetAvailable: Bool? = nil
+    isChangePlanSheetAvailable: Bool? = nil,
+    dismissDebounceInterval: TimeInterval = 0.3
   ) {
     self.configuration = configuration
     self.dependencies = dependencies
     self.strings = strings
+    self.dismissDebounceInterval = dismissDebounceInterval
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
     } else if #available(iOS 17.0, *) {
@@ -289,21 +293,6 @@ final class CustomerCenterViewModel: ObservableObject {
     showsUpdateBanner = false
   }
 
-  /// Call from the root view's `onDisappear`. In embedded mode a push within the Customer
-  /// Center (purchase detail / purchase history) also removes the root view from the
-  /// hierarchy, which must not count as a dismissal.
-  func rootViewDidDisappear() {
-    guard !isNavigatingWithinCustomerCenter else { return }
-    dismiss()
-  }
-
-  func dismiss() {
-    guard !didDismiss else { return }
-    didDismiss = true
-    callbacks.didDismiss?()
-    Task { await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterClose()) }
-  }
-
   // swiftlint:disable:next large_tuple
   func historySections() -> (
     active: [PurchasePresentation],
@@ -312,6 +301,50 @@ final class CustomerCenterViewModel: ObservableObject {
   ) {
     let subs = purchases.filter { $0.subscription != nil }
     return (subs.filter(\.isActive), subs.filter { !$0.isActive }, purchases.filter { $0.subscription == nil })
+  }
+}
+
+// MARK: - Visibility-driven dismissal
+
+@available(iOS 15.0, *)
+extension CustomerCenterViewModel {
+  /// Call from any Customer Center surface's `onAppear` — the root view, and any screen it
+  /// pushes itself (purchase detail, purchase history, purchase detail rows). In embedded mode
+  /// (`usesExistingNavigation`) the host owns the navigation stack, so pushing one of these
+  /// screens removes the previous surface from the hierarchy without the Customer Center
+  /// actually closing. Counting concurrently visible surfaces (instead of a single boolean)
+  /// correctly tracks nested pushes, and cancels any pending dismissal from a prior disappear.
+  func surfaceDidAppear() {
+    visibleSurfaceCount += 1
+    dismissDebounceTask?.cancel()
+    dismissDebounceTask = nil
+  }
+
+  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear()``.
+  /// When the count drops to zero, waits a short debounce before dismissing — a push/pop
+  /// transition can briefly have both the old and new surface on screen, or neither, so a
+  /// single runloop turn isn't enough to distinguish "navigating within the Customer Center"
+  /// from "the Customer Center was torn down". If another surface appears before the debounce
+  /// elapses, ``surfaceDidAppear()`` cancels it and no dismissal happens.
+  func surfaceDidDisappear() {
+    visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
+    guard visibleSurfaceCount == 0 else { return }
+    dismissDebounceTask?.cancel()
+    dismissDebounceTask = Task { [weak self, dismissDebounceInterval] in
+      try? await Task.sleep(nanoseconds: UInt64(dismissDebounceInterval * 1_000_000_000))
+      guard !Task.isCancelled else { return }
+      guard let self, self.visibleSurfaceCount == 0 else { return }
+      self.dismiss()
+    }
+  }
+
+  func dismiss() {
+    guard !didDismiss else { return }
+    didDismiss = true
+    dismissDebounceTask?.cancel()
+    dismissDebounceTask = nil
+    callbacks.didDismiss?()
+    Task { await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterClose()) }
   }
 }
 

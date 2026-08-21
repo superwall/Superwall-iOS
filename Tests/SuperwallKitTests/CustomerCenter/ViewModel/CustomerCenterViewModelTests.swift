@@ -313,26 +313,90 @@ struct CustomerCenterViewModelTests {
     #expect(infoMock.didRefreshReceipts)
   }
 
-  // MARK: - Embedded navigation
+  // MARK: - Embedded navigation (visibility count)
 
-  @Test("navigating within the Customer Center is not treated as a dismissal")
-  func navigationWithinCustomerCenterIsNotDismissal() async {
-    let (vm, _, _) = make(info: info([sub()]))
+  /// Tests below use a short debounce so they don't need real sleeps of `dismissDebounceInterval`
+  /// (the production default, 0.3s) to observe whether `dismiss()` fired.
+  func makeForVisibility(info customerInfo: CustomerInfo) -> CustomerCenterViewModel {
+    let (deps, _, _) = CustomerCenterDependencies.mock(info: customerInfo, products: ["monthly": monthly])
+    return CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english,
+      isChangePlanSheetAvailable: true,
+      dismissDebounceInterval: 0.02
+    )
+  }
+
+  @Test("appear → disappear → after debounce, didDismiss fires exactly once")
+  func appearDisappearFiresOnce() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 1)
+  }
+
+  @Test("appear → push (second appear) → first disappear → not dismissed while still inside")
+  func pushWithinCustomerCenterIsNotDismissal() async {
+    let vm = makeForVisibility(info: info([sub()]))
     await vm.load()
     var dismissed = false
     vm.callbacks.didDismiss = { dismissed = true }
 
-    // Embedded mode: pushing the detail/history screen removes the root view from the hierarchy.
-    vm.isNavigatingWithinCustomerCenter = true
-    vm.rootViewDidDisappear()
-    try? await Task.sleep(nanoseconds: 50_000_000)
+    // Root appears, then a pushed screen appears before the root disappears (embedded mode:
+    // both can be briefly on screen, or the push can register before the pop).
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
     #expect(!dismissed)
 
-    // A real disappearance still dismisses.
-    vm.isNavigatingWithinCustomerCenter = false
-    vm.rootViewDidDisappear()
-    try? await Task.sleep(nanoseconds: 50_000_000)
+    // The second surface disappearing too means the Customer Center is genuinely gone.
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
     #expect(dismissed)
+  }
+
+  @Test("two-deep push: three appears then three disappears fires exactly once")
+  func twoDeepPushFiresOnce() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    vm.surfaceDidDisappear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 1)
+  }
+
+  @Test("dismiss() remains idempotent when reached via the debounce and called again directly")
+  func dismissRemainsIdempotent() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 1)
+
+    // A stray extra disappear (or a direct call) after the debounce already fired must not
+    // double-fire the callback or the close event.
+    vm.surfaceDidDisappear()
+    vm.dismiss()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 1)
   }
 
   @Test("dismiss tracks close and calls back; publisher updates re-render")

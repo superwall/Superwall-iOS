@@ -94,9 +94,10 @@ public struct CustomerCenterView: View {
       viewModel.callbacks = Self.merged(viewModel.callbacks, callbacksBox.callbacks)
       await viewModel.load()
     }
-    // `rootViewDidDisappear` skips the dismissal when a screen the Customer Center pushed
-    // itself (detail / history) covers the root view in embedded mode.
-    .onDisappear { viewModel.rootViewDidDisappear() }
+    // Part of the visibility count that determines when the Customer Center has genuinely
+    // closed — see `CustomerCenterViewModel.surfaceDidAppear()`.
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 
   /// Combines the view model's existing callbacks (e.g. set by the UIKit adapter) with those

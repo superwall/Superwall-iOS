@@ -86,7 +86,7 @@ struct PurchaseDetailScreenView: View {
     .listStyle(.insetGrouped)
     .navigationTitle(purchase.title)
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear { viewModel.isNavigatingWithinCustomerCenter = true }
-    .onDisappear { viewModel.isNavigatingWithinCustomerCenter = false }
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 }
