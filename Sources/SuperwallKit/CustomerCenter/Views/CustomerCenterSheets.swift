@@ -99,8 +99,15 @@ private struct ManageSubscriptionsSheet: ViewModifier {
   let isPresented: Binding<Bool>
   let groupId: String?
   func body(content: Content) -> some View {
-    if #available(iOS 17.0, *), let groupId {
-      content.manageSubscriptionsSheet(isPresented: isPresented, subscriptionGroupID: groupId)
+    // The branch must not depend on `groupId`. It is derived from `viewModel.sheet`, so it becomes
+    // non-nil in the very same update that flips `isPresented` to true — and swapping which
+    // modifier is applied during that update tears down the one that was about to present, so the
+    // sheet never appears. `#available` is constant for the process, so branching on it is safe.
+    if #available(iOS 17.0, *) {
+      content.manageSubscriptionsSheet(
+        isPresented: isPresented,
+        subscriptionGroupID: groupId ?? ""
+      )
     } else {
       content.manageSubscriptionsSheet(isPresented: isPresented)
     }
