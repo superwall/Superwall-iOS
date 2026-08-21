@@ -28,7 +28,7 @@ present(customerCenter, animated: true)
 
 ### Presenting from SwiftUI
 
-Use the ``SwiftUICore/View/presentCustomerCenter(isPresented:configuration:onDismiss:)`` modifier to present it as a sheet:
+Use the ``SwiftUICore/View/presentSuperwallCustomerCenter(isPresented:configuration:onDismiss:)`` modifier to present it as a sheet:
 
 ```swift
 struct SettingsView: View {
@@ -38,7 +38,7 @@ struct SettingsView: View {
     Button("Manage Subscription") {
       showsCustomerCenter = true
     }
-    .presentCustomerCenter(isPresented: $showsCustomerCenter)
+    .presentSuperwallCustomerCenter(isPresented: $showsCustomerCenter)
   }
 }
 ```

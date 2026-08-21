@@ -29,11 +29,18 @@ extension EnvironmentValues {
 @available(iOS 15.0, *)
 public extension View {
   /// Presents the Customer Center as a sheet.
+  ///
+  /// The name is deliberately Superwall-specific. Other subscription SDKs put a
+  /// `presentCustomerCenter` modifier on `View` too, and because every parameter after
+  /// `isPresented` is defaulted on both sides, a shared name would make the common call forms
+  /// ambiguous — a compile error — in any file that imports both. Extension methods can't be
+  /// module-qualified at the call site, so the name has to do the disambiguating.
+  ///
   /// - Parameters:
   ///   - isPresented: Controls presentation, same as the standard `sheet` modifier.
   ///   - configuration: Overrides ``SuperwallOptions/customerCenter``. `nil` uses the options value.
   ///   - onDismiss: Called after the sheet is dismissed.
-  func presentCustomerCenter(
+  func presentSuperwallCustomerCenter(
     isPresented: Binding<Bool>,
     configuration: CustomerCenterConfiguration? = nil,
     onDismiss: (() -> Void)? = nil

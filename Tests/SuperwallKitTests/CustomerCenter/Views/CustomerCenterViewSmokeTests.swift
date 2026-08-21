@@ -89,13 +89,13 @@ struct CustomerCenterViewSmokeTests {
     }
   }
 
-  @Test("presentCustomerCenter(isPresented:) compiles and hosts")
+  @Test("presentSuperwallCustomerCenter(isPresented:) compiles and hosts")
   @available(iOS 15.0, *)
   func presentCustomerCenterHosts() {
     struct Host: View {
       @State var isPresented = true
       var body: some View {
-        NavigationView { Text("Root") }.presentCustomerCenter(isPresented: $isPresented)
+        NavigationView { Text("Root") }.presentSuperwallCustomerCenter(isPresented: $isPresented)
       }
     }
     let host = UIHostingController(rootView: Host())
