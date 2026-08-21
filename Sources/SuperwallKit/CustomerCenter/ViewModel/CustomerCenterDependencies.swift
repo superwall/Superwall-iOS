@@ -118,7 +118,9 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
 }
 @available(iOS 15.0, *)
 struct LiveRestorer: CustomerCenterRestoring {
-  func restorePurchases() async -> RestorationResult { await Superwall.shared.restorePurchases() }
+  func restorePurchases() async -> RestorationResult {
+    await Superwall.shared.restorePurchases(presentsFailureAlert: false)
+  }
 }
 struct LiveURLOpener: CustomerCenterURLOpening {
   var canOpenURLs: Bool { UIApplication.sharedApplication != nil }
