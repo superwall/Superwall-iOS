@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Ripristina acquisti";
-"customer_center_path_manage_subscription" = "Gestisci abbonamento";
+"customer_center_path_manage_subscription" = "Disdici abbonamento";
 "customer_center_path_refund" = "Richiedi un rimborso";
 "customer_center_path_change_plan" = "Cambia piano";
 "customer_center_path_contact_support" = "Contatta l'assistenza";

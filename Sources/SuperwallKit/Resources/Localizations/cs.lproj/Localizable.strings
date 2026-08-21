@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Obnovit nákupy";
-"customer_center_path_manage_subscription" = "Spravovat předplatné";
+"customer_center_path_manage_subscription" = "Zrušit předplatné";
 "customer_center_path_refund" = "Požádat o vrácení peněz";
 "customer_center_path_change_plan" = "Změnit plán";
 "customer_center_path_contact_support" = "Kontaktovat podporu";

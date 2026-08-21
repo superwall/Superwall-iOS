@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Palauta ostokset";
-"customer_center_path_manage_subscription" = "Hallinnoi tilausta";
+"customer_center_path_manage_subscription" = "Peruuta tilaus";
 "customer_center_path_refund" = "Pyydä hyvitystä";
 "customer_center_path_change_plan" = "Vaihda tilaustasoa";
 "customer_center_path_contact_support" = "Ota yhteyttä tukeen";

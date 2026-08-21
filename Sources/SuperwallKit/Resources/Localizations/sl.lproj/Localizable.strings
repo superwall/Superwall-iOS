@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Obnovi nakupe";
-"customer_center_path_manage_subscription" = "Upravljanje naročnine";
+"customer_center_path_manage_subscription" = "Preklic naročnine";
 "customer_center_path_refund" = "Zahtevaj vračilo denarja";
 "customer_center_path_change_plan" = "Spremeni paket";
 "customer_center_path_contact_support" = "Obrni se na podporo";

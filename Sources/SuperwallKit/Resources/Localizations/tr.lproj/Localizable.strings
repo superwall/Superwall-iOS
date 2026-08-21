@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Satın alımları geri yükle";
-"customer_center_path_manage_subscription" = "Aboneliği yönet";
+"customer_center_path_manage_subscription" = "Aboneliği iptal et";
 "customer_center_path_refund" = "İade talep et";
 "customer_center_path_change_plan" = "Planı değiştir";
 "customer_center_path_contact_support" = "Destek ile iletişime geç";

@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Pulihkan pembelian";
-"customer_center_path_manage_subscription" = "Urus langganan";
+"customer_center_path_manage_subscription" = "Batalkan langganan";
 "customer_center_path_refund" = "Mohon bayaran balik";
 "customer_center_path_change_plan" = "Tukar pelan";
 "customer_center_path_contact_support" = "Hubungi sokongan";

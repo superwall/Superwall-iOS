@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Aankopen herstellen";
-"customer_center_path_manage_subscription" = "Abonnement beheren";
+"customer_center_path_manage_subscription" = "Abonnement opzeggen";
 "customer_center_path_refund" = "Terugbetaling aanvragen";
 "customer_center_path_change_plan" = "Abonnement wijzigen";
 "customer_center_path_contact_support" = "Contact opnemen met ondersteuning";

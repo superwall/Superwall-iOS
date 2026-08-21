@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "購入を復元";
-"customer_center_path_manage_subscription" = "サブスクリプションを管理";
+"customer_center_path_manage_subscription" = "サブスクリプションを解約";
 "customer_center_path_refund" = "返金をリクエスト";
 "customer_center_path_change_plan" = "プランを変更";
 "customer_center_path_contact_support" = "サポートに問い合わせる";

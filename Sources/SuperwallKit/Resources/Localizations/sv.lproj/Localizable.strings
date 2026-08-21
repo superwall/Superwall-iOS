@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Återställ köp";
-"customer_center_path_manage_subscription" = "Hantera prenumeration";
+"customer_center_path_manage_subscription" = "Avsluta prenumeration";
 "customer_center_path_refund" = "Begär återbetalning";
 "customer_center_path_change_plan" = "Byt plan";
 "customer_center_path_contact_support" = "Kontakta support";

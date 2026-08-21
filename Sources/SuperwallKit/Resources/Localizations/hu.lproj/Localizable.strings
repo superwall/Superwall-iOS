@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Vásárlások visszaállítása";
-"customer_center_path_manage_subscription" = "Előfizetés kezelése";
+"customer_center_path_manage_subscription" = "Előfizetés lemondása";
 "customer_center_path_refund" = "Visszatérítés kérése";
 "customer_center_path_change_plan" = "Csomag módosítása";
 "customer_center_path_contact_support" = "Kapcsolatfelvétel az ügyfélszolgálattal";

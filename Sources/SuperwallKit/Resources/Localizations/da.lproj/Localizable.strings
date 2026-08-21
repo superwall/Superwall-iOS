@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Gendan køb";
-"customer_center_path_manage_subscription" = "Administrer abonnement";
+"customer_center_path_manage_subscription" = "Opsig abonnement";
 "customer_center_path_refund" = "Anmod om refundering";
 "customer_center_path_change_plan" = "Skift abonnement";
 "customer_center_path_contact_support" = "Kontakt support";

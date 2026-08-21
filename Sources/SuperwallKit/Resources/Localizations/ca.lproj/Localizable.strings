@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Restaura les compres";
-"customer_center_path_manage_subscription" = "Gestiona la subscripció";
+"customer_center_path_manage_subscription" = "Cancel·la la subscripció";
 "customer_center_path_refund" = "Sol·licita un reemborsament";
 "customer_center_path_change_plan" = "Canvia el pla";
 "customer_center_path_contact_support" = "Contacta amb l'assistència";

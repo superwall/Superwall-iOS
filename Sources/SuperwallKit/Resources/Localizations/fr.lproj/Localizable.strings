@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Restaurer les achats";
-"customer_center_path_manage_subscription" = "Gérer l'abonnement";
+"customer_center_path_manage_subscription" = "Résilier l'abonnement";
 "customer_center_path_refund" = "Demander un remboursement";
 "customer_center_path_change_plan" = "Changer de formule";
 "customer_center_path_contact_support" = "Contacter l'assistance";

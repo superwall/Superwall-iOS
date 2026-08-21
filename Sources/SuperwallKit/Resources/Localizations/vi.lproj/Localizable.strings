@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Khôi phục giao dịch mua";
-"customer_center_path_manage_subscription" = "Quản lý gói đăng ký";
+"customer_center_path_manage_subscription" = "Hủy gói đăng ký";
 "customer_center_path_refund" = "Yêu cầu hoàn tiền";
 "customer_center_path_change_plan" = "Thay đổi gói";
 "customer_center_path_contact_support" = "Liên hệ hỗ trợ";

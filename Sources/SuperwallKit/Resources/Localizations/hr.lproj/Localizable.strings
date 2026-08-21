@@ -47,7 +47,7 @@
 
 /* Customer Center – paths */
 "customer_center_path_restore" = "Vrati kupnje";
-"customer_center_path_manage_subscription" = "Upravljanje pretplatom";
+"customer_center_path_manage_subscription" = "Otkazivanje pretplate";
 "customer_center_path_refund" = "Zatraži povrat novca";
 "customer_center_path_change_plan" = "Promijeni plan";
 "customer_center_path_contact_support" = "Kontaktiraj podršku";
