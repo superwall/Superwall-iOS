@@ -23,7 +23,11 @@ body:
         [dashboard](https://superwall.com/select-application?pathname=/applications/:app/users/v2),
         open **Users**, search for the app user ID you pass to `Superwall.shared.identify(userId:)`
         (or the `$SuperwallAlias:...` ID from the device logs if you don't identify users),
-        open the user, and paste the page URL. If the bug isn't tied to a user (e.g. a build
+        open the user, and paste the page URL. The link only opens for your own team and us,
+        but issues are public and the URL contains the user ID itself — so if your app user IDs
+        are personally identifying (e.g. an email address), paste the user's `$SuperwallAlias:...`
+        URL instead (shown on their user page), or share the link privately via the support chat
+        in the dashboard and mention this issue. If the bug isn't tied to a user (e.g. a build
         error), write "N/A".
       placeholder: https://superwall.com/applications/<appId>/users/v2/<userId>
     validations:
