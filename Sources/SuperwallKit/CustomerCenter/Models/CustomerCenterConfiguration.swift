@@ -8,6 +8,8 @@
 import Foundation
 import UIKit
 
+// swiftlint:disable type_body_length
+
 /// Configures the screens, actions, support options and appearance of the Customer Center.
 ///
 /// Set the default via ``SuperwallOptions/customerCenter`` before calling `configure`, or pass one to
@@ -282,6 +284,15 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
         && shouldWarnToUpdate == other.shouldWarnToUpdate
         && webManagementURL == other.webManagementURL
     }
+
+    override public var hash: Int {
+      var hasher = Hasher()
+      hasher.combine(email)
+      hasher.combine(latestAppVersion)
+      hasher.combine(shouldWarnToUpdate)
+      hasher.combine(webManagementURL)
+      return hasher.finalize()
+    }
   }
 
   // MARK: - Appearance
@@ -315,6 +326,16 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
         && buttonText == other.buttonText && buttonBackground == other.buttonBackground
     }
 
+    override public var hash: Int {
+      var hasher = Hasher()
+      hasher.combine(accent)
+      hasher.combine(background)
+      hasher.combine(text)
+      hasher.combine(buttonText)
+      hasher.combine(buttonBackground)
+      return hasher.finalize()
+    }
+
     /// A light/dark color pair stored as hex strings (`#RRGGBB` or `#RRGGBBAA`).
     @objc(SWKCustomerCenterColorPair)
     @objcMembers
@@ -334,6 +355,13 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       override public func isEqual(_ object: Any?) -> Bool {
         guard let other = object as? ColorPair else { return false }
         return light == other.light && dark == other.dark
+      }
+
+      override public var hash: Int {
+        var hasher = Hasher()
+        hasher.combine(light)
+        hasher.combine(dark)
+        return hasher.finalize()
       }
     }
   }

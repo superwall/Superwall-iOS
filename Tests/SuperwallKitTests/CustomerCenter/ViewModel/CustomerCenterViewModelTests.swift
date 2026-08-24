@@ -57,6 +57,27 @@ struct CustomerCenterViewModelTests {
     #expect(vm.state == .noPurchases)
   }
 
+  @Test("support diagnostics list active entitlement ids, not product ids")
+  func supportDiagnosticsUseEntitlementIds() async throws {
+    let config = CustomerCenterConfiguration.default
+    config.support.email = "help@app.com"
+    let customerInfo = CustomerInfo(
+      subscriptions: [sub()],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "pro"), Entitlement(id: "lapsed", isActive: false)]
+    )
+    let (vm, _, _) = make(info: customerInfo, config: config)
+    await vm.load()
+
+    let url = try #require(vm.supportMailtoURL)
+    let body = try #require(
+      URLComponents(url: url, resolvingAgainstBaseURL: false)?
+        .queryItems?.first { $0.name == "body" }?.value
+    )
+    #expect(body.contains("- Entitlements: pro"))
+    #expect(!body.contains("monthly"))
+  }
+
   @Test("update banner only when latestAppVersion is newer and warn enabled")
   func updateBanner() async {
     let config = CustomerCenterConfiguration.default
@@ -328,6 +349,17 @@ struct CustomerCenterViewModelTests {
     )
   }
 
+  /// Polls until `condition` holds or a generous timeout elapses. Under parallel test
+  /// execution the main actor can stall for tens of seconds (a 100ms sleep has been observed
+  /// taking 25s wall-clock), so tests wait on the outcome with a deadline that dwarfs the
+  /// congestion rather than sleeping a fixed wall-clock amount. Passing runs exit early.
+  func waitUntil(timeout: TimeInterval = 30, _ condition: () -> Bool) async {
+    let deadline = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
   @Test("appear → disappear → after debounce, didDismiss fires exactly once")
   func appearDisappearFiresOnce() async {
     let vm = makeForVisibility(info: info([sub()]))
@@ -337,7 +369,7 @@ struct CustomerCenterViewModelTests {
 
     vm.surfaceDidAppear()
     vm.surfaceDidDisappear()
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    await waitUntil { dismissCount == 1 }
     #expect(dismissCount == 1)
   }
 
@@ -358,7 +390,7 @@ struct CustomerCenterViewModelTests {
 
     // The second surface disappearing too means the Customer Center is genuinely gone.
     vm.surfaceDidDisappear()
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    await waitUntil { dismissed }
     #expect(dismissed)
   }
 
@@ -375,7 +407,23 @@ struct CustomerCenterViewModelTests {
     vm.surfaceDidDisappear()
     vm.surfaceDidDisappear()
     vm.surfaceDidDisappear()
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+  }
+
+  @Test("debounced dismissal still fires after the owner releases the view model (sheet teardown)")
+  func debounceSurvivesOwnerRelease() async {
+    var vm: CustomerCenterViewModel? = makeForVisibility(info: info([sub()]))
+    await vm?.load()
+    var dismissCount = 0
+    vm?.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm?.surfaceDidAppear()
+    vm?.surfaceDidDisappear()
+    // SwiftUI releases the @StateObject right after the sheet's last onDisappear; the pending
+    // debounce must keep the model alive long enough to deliver didDismiss and track the close.
+    vm = nil
+    await waitUntil { dismissCount == 1 }
     #expect(dismissCount == 1)
   }
 
@@ -388,7 +436,7 @@ struct CustomerCenterViewModelTests {
 
     vm.surfaceDidAppear()
     vm.surfaceDidDisappear()
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    await waitUntil { dismissCount == 1 }
     #expect(dismissCount == 1)
 
     // A stray extra disappear (or a direct call) after the debounce already fired must not
@@ -406,19 +454,17 @@ struct CustomerCenterViewModelTests {
     await vm.load()
     #expect(vm.state == .noPurchases)
     infoMock.subject.value = info([sub()])
-    try? await Task.sleep(nanoseconds: 100_000_000)
+    await waitUntil { vm.state == .management }
     #expect(vm.state == .management)
     var dismissed = false
     vm.callbacks.didDismiss = { dismissed = true }
     vm.dismiss()
-    try? await Task.sleep(nanoseconds: 50_000_000)
     #expect(dismissed)
-    let hasCloseEvent: Bool
-    if case .customerCenterClose = tracker.events.last {
-      hasCloseEvent = true
-    } else {
-      hasCloseEvent = false
+    func trackedClose() -> Bool {
+      if case .customerCenterClose = tracker.events.last { return true }
+      return false
     }
-    #expect(hasCloseEvent)
+    await waitUntil { trackedClose() }
+    #expect(trackedClose())
   }
 }

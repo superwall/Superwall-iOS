@@ -62,6 +62,20 @@ struct PurchasePresentationBuilderTests {
     isAutoRenewable: true
   )
 
+  @Test("dates format in the injected locale, not the system locale")
+  func formatsDatesWithInjectedLocale() {
+    let locale = Locale(identifier: "fr_FR")
+    let localized = PurchasePresentationBuilder(now: { now }, strings: .english, locale: locale)
+    let rows = localized.subscriptionPresentations([sub("monthly")], products: [:])
+
+    let expected = DateFormatter()
+    expected.dateStyle = .medium
+    expected.timeStyle = .none
+    expected.locale = locale
+    let renewalDate = now.addingTimeInterval(86_400)
+    #expect(rows.first?.statusLine.contains(expected.string(from: renewalDate)) == true)
+  }
+
   @Test("active renewing subscription: Active badge, renews line with price")
   func activeRenewing() {
     let rows = builder.build(customerInfo: info(subs: [sub("monthly")]), products: ["monthly": monthly])

@@ -47,12 +47,18 @@ struct PurchaseDetailRows: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let purchase: PurchasePresentation
   @Environment(\.customerCenterStrings) private var strings
-  private let dateFormatter: DateFormatter = {
+  private let dateFormatter: DateFormatter
+
+  init(viewModel: CustomerCenterViewModel, purchase: PurchasePresentation) {
+    self.viewModel = viewModel
+    self.purchase = purchase
+    // Dates must follow the same locale as the localized strings, not the system locale.
     let formatter = DateFormatter()
     formatter.dateStyle = .medium
     formatter.timeStyle = .short
-    return formatter
-  }()
+    formatter.locale = viewModel.locale
+    dateFormatter = formatter
+  }
 
   var body: some View {
     List {

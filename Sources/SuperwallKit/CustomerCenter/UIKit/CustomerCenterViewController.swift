@@ -83,6 +83,12 @@ public final class CustomerCenterViewController: UIViewController {
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
     if isBeingDismissed || presentingViewController == nil {
+      // A dismissed view controller knows definitively that the Customer Center is gone, so
+      // fire the view model's dismissal now rather than waiting out its visibility debounce —
+      // `onDismiss` releases the manager's retained delegate, and a debounced dismissal would
+      // land after that release and reach a nil delegate. `dismiss()` is idempotent, so the
+      // debounce firing later (or having fired) is harmless.
+      viewModel.dismiss()
       onDismiss?()
     }
   }

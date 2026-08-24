@@ -31,6 +31,10 @@ final class CustomerCenterViewModel: ObservableObject {
   var presentationMode = "sheet"
   private(set) var pendingSurvey: PendingSurvey?
 
+  /// Locale for date formatting, matching the locale the localized strings resolve against
+  /// (`SuperwallOptions.localeIdentifier` when set) rather than the system locale.
+  var locale: Locale { dependencies.environment.locale }
+
   private let dependencies: CustomerCenterDependencies
   private let dismissDebounceInterval: TimeInterval
   private let isChangePlanSheetAvailable: Bool
@@ -47,6 +51,8 @@ final class CustomerCenterViewModel: ObservableObject {
   private var updateWarningDismissed = false
   private var hasTrackedOpen = false
   private var didDismiss = false
+  /// Active entitlement identifiers from the latest `CustomerInfo`, for support diagnostics.
+  private var activeEntitlementIds: [String] = []
   private var cancellables = Set<AnyCancellable>()
 
   /// Number of Customer Center surfaces (root + any pushed screens) currently on screen.
@@ -114,8 +120,9 @@ final class CustomerCenterViewModel: ObservableObject {
       }
       familyShared = shared
     }
-    let builder = PurchasePresentationBuilder(strings: strings)
+    let builder = PurchasePresentationBuilder(strings: strings, locale: dependencies.environment.locale)
     purchases = builder.build(customerInfo: customerInfo, products: products)
+    activeEntitlementIds = customerInfo.entitlements.filter(\.isActive).map(\.id)
     state = hasAnyPurchases(customerInfo) ? .management : .noPurchases
     showsUpdateBanner = !updateWarningDismissed
       && configuration.support.shouldWarnToUpdate
@@ -334,11 +341,15 @@ extension CustomerCenterViewModel {
     visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
     guard visibleSurfaceCount == 0 else { return }
     dismissDebounceTask?.cancel()
-    dismissDebounceTask = Task { [weak self, dismissDebounceInterval] in
+    // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
+    // followed by `@StateObject` releasing the view model, and a weak capture would let it
+    // deallocate before the debounce elapses — silently dropping `didDismiss` and the
+    // `customerCenterClose` event. The task only outlives the view by the debounce interval.
+    dismissDebounceTask = Task { [dismissDebounceInterval] in
       try? await Task.sleep(nanoseconds: UInt64(dismissDebounceInterval * 1_000_000_000))
       guard !Task.isCancelled else { return }
-      guard let self, self.visibleSurfaceCount == 0 else { return }
-      self.dismiss()
+      guard visibleSurfaceCount == 0 else { return }
+      dismiss()
     }
   }
 
@@ -367,14 +378,13 @@ extension CustomerCenterViewModel {
 
   private var diagnostics: SupportEmailDiagnostics {
     let env = dependencies.environment
-    let active = purchases.filter(\.isActive).compactMap(\.productId)
     return .init(
       userId: env.userId,
       appVersion: env.appVersion,
       osVersion: env.osVersion,
       deviceModel: env.deviceModel,
       sdkVersion: env.sdkVersion,
-      activeEntitlementIds: active,
+      activeEntitlementIds: activeEntitlementIds,
       isSandbox: env.isSandbox
     )
   }

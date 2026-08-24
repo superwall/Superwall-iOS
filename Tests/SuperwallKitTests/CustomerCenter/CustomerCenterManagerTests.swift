@@ -87,6 +87,35 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
+  @available(iOS 15.0, *)
+  @Test("viewDidDisappear fires didDismiss while the delegate is still retained")
+  func viewDidDisappearFiresDelegateBeforeRelease() {
+    final class ProbeDelegate: CustomerCenterDelegate {
+      let onDidDismiss: () -> Void
+      init(onDidDismiss: @escaping () -> Void) { self.onDidDismiss = onDidDismiss }
+      func customerCenterDidDismiss() { onDidDismiss() }
+    }
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+    let viewModel = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    var didDismissCount = 0
+    var delegate: ProbeDelegate? = ProbeDelegate { didDismissCount += 1 }
+    let adapter = CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil)
+    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter)
+    // The manager's `onDismiss` releases its retained delegate — the only strong reference here.
+    // The view model's dismissal (default 0.6s debounce) must not be what delivers `didDismiss`,
+    // or it would reach a released delegate.
+    controller.onDismiss = { delegate = nil }
+
+    // Hostless: the controller isn't in a window, so `presentingViewController == nil` takes the
+    // same teardown branch a real dismissal would.
+    controller.viewDidDisappear(false)
+
+    #expect(didDismissCount == 1)
+    #expect(delegate == nil)
+  }
+
   /// A window backed by a real connected `UIWindowScene` when one is available (as it is when a
   /// unit test target runs inside its generated host app), since modal presentation/dismissal
   /// transitions need one to actually animate and complete. Falls back to a legacy frame-based

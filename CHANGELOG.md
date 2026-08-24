@@ -11,6 +11,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes the Customer Center's dismissal callback and close event sometimes not firing.
+- Formats Customer Center dates using the locale set in the SDK options instead of the device locale.
+- Lists active entitlements instead of product identifiers in the Customer Center support email.
+- Fixes equal Customer Center configurations hashing differently.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 

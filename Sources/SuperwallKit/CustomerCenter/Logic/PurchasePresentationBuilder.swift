@@ -11,12 +11,26 @@ import Foundation
 struct PurchasePresentationBuilder {
   var now: () -> Date = Date.init
   var strings: CustomerCenterStrings
-  var dateFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    formatter.timeStyle = .none
-    return formatter
-  }()
+  var dateFormatter: DateFormatter
+
+  init(
+    now: @escaping () -> Date = Date.init,
+    strings: CustomerCenterStrings,
+    locale: Locale = .current,
+    dateFormatter: DateFormatter? = nil
+  ) {
+    self.now = now
+    self.strings = strings
+    // Dates must follow the same locale as the strings (`SuperwallOptions.localeIdentifier` via
+    // `CustomerCenterEnvironmentProviding.locale`), not the system locale.
+    self.dateFormatter = dateFormatter ?? {
+      let formatter = DateFormatter()
+      formatter.dateStyle = .medium
+      formatter.timeStyle = .none
+      formatter.locale = locale
+      return formatter
+    }()
+  }
 
   func build(customerInfo: CustomerInfo, products: [String: ProductDisplayInfo]) -> [PurchasePresentation] {
     let subs = subscriptionPresentations(customerInfo.subscriptions, products: products)
