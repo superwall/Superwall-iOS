@@ -1,6 +1,7 @@
 name: 🐛 Bug report
 description: Report a bug in SuperwallKit. The more you give us up front, the faster we can find the cause.
 title: "[BUG] "
+labels: ["bug"]
 body:
   - type: checkboxes
     id: checklist
@@ -22,7 +23,7 @@ body:
         fastest route to a diagnosis. In the
         [dashboard](https://superwall.com/select-application?pathname=/applications/:app/users/v2),
         open **Users**, search for the app user ID you pass to `Superwall.shared.identify(userId:)`
-        (or the `$SuperwallAlias:...` ID from the device logs if you don't identify users),
+        (or the `$SuperwallAlias:...` ID from `Superwall.shared.userId` if you don't identify users),
         open the user, and paste the page URL. The link only opens for your own team and us,
         but issues are public and the URL contains the user ID itself — so if your app user IDs
         are personally identifying (e.g. an email address), paste the user's `$SuperwallAlias:...`
@@ -121,7 +122,7 @@ body:
     id: logs
     attributes:
       label: Debug logs
-      description: Set `options.logging.level = .debug` in `SuperwallOptions` before configuring the SDK, reproduce the bug, and paste the console output covering when it happened. Automatically formatted as code.
+      description: Set `options.logging.level = .debug` in `SuperwallOptions` before configuring the SDK, reproduce the bug, and paste the console output covering when it happened. Automatically formatted as code. Please redact anything personal — logs can contain user attributes you've set.
       render: shell
   - type: textarea
     id: other
