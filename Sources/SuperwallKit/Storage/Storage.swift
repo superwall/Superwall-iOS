@@ -81,7 +81,7 @@ class Storage {
 
   init(
     factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory,
-    cache: Cache = Cache(),
+    cache: Cache = .makeDefault(),
     coreDataManager: CoreDataManager = CoreDataManager()
   ) {
     self.cache = cache
