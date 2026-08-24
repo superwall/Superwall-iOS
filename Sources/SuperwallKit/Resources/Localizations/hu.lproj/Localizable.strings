@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Kész";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Előfizetés kezelése";
+"customer_center_no_purchases_title" = "Nem található előfizetés";
+"customer_center_no_purchases_subtitle" = "Ellenőrizhetjük a korábbi vásárlásokat.";
+"customer_center_close" = "Bezárás";
+"customer_center_done" = "Kész";
+"customer_center_cancel" = "Mégse";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Vásárlások visszaállítása";
+"customer_center_path_manage_subscription" = "Előfizetés lemondása";
+"customer_center_path_refund" = "Visszatérítés kérése";
+"customer_center_path_change_plan" = "Csomag módosítása";
+"customer_center_path_contact_support" = "Kapcsolatfelvétel az ügyfélszolgálattal";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Miért mondja le?";
+"customer_center_survey_too_expensive" = "Túl drága";
+"customer_center_survey_dont_use" = "Nem használom az alkalmazást";
+"customer_center_survey_bought_by_mistake" = "Tévedésből vásároltam";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Megújul: %@, ár: %@";
+"customer_center_renews_on" = "Megújul: %@";
+"customer_center_expires_on" = "Lejár: %@";
+"customer_center_expired_on" = "Lejárt: %@";
+"customer_center_free_trial_until" = "Ingyenes próba eddig: %@";
+"customer_center_billing_issue" = "Számlázási probléma – a hozzáférés megtartásához frissítse a fizetési módot";
+"customer_center_lifetime" = "Élettartam hozzáférés";
+"customer_center_revoked" = "Visszatérítve";
+"customer_center_purchased_on" = "Vásárolva: %@";
+"customer_center_active_via_superwall" = "Aktív";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Lejárt";
+"customer_center_purchase_date" = "Vásárlás dátuma";
+"customer_center_expiration_date" = "Lejárat dátuma";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Aktív";
+"customer_center_badge_free_trial" = "Ingyenes próba";
+"customer_center_badge_cancelled" = "Lemondva";
+"customer_center_badge_billing_issue" = "Számlázási probléma";
+"customer_center_badge_expired" = "Lejárt";
+"customer_center_badge_revoked" = "Visszatérítve";
+"customer_center_badge_lifetime" = "Élettartam";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Egyéb";
+"customer_center_family_shared" = "Megosztva Családmegosztáson keresztül";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Előfizetések";
+"customer_center_section_purchases" = "Vásárlások";
+"customer_center_section_actions" = "Műveletek";
+"customer_center_see_all_purchases" = "Összes vásárlás megtekintése";
+"customer_center_purchase_history" = "Vásárlási előzmények";
+"customer_center_history_active" = "Aktív előfizetések";
+"customer_center_history_expired" = "Lejárt előfizetések";
+"customer_center_history_other" = "Egyéb vásárlások";
+"customer_center_account_details" = "Fiók adatai";
+"customer_center_user_id" = "Felhasználói azonosító";
+"customer_center_copy" = "Másolás";
+"customer_center_copied" = "Másolva";
+"customer_center_original_download_date" = "Eredeti letöltés dátuma";
+"customer_center_transaction_id" = "Tranzakcióazonosító";
+"customer_center_product_id" = "Termékazonosító";
+"customer_center_store" = "Áruház";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Ajánlat";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Visszaállítás…";
+"customer_center_restore_success_title" = "Vásárlások visszaállítva";
+"customer_center_restore_success_message" = "Visszaállítottuk korábbi vásárlásait, és alkalmaztuk azokat a fiókjára.";
+"customer_center_restore_none_title" = "Nincsenek korábbi vásárlások";
+"customer_center_restore_none_message" = "Nem találtunk vásárlást a fiókjához. Ha úgy gondolja, hogy ez hiba, forduljon az ügyfélszolgálathoz.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Az Apple megkapta a visszatérítési kérelmét.";
+"customer_center_refund_error" = "Hiba történt a visszatérítés kérése közben. Kérjük, próbálja újra.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Frissítés elérhető";
+"customer_center_update_message" = "Az alkalmazás legújabb verziójának letöltése segíthet a probléma megoldásában.";
+"customer_center_update_action" = "Frissítés";
+"customer_center_update_continue" = "Folytatás";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "Lehet, hogy duplikált előfizetései vannak";
+"customer_center_duplicate_message" = "Előfordulhat, hogy egyszerre fizet elő a weben és az App Store-on keresztül is. A kétszeres terhelés elkerülése érdekében mondja le az egyiket.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Támogatási kérelem";
+"customer_center_support_body" = "Kérjük, írja le a problémáját vagy kérdését.";
+"customer_center_no_mail_app" = "Ezen az eszközön nincs beállítva levelezőalkalmazás. Elérhet minket a következő címen: %@.";

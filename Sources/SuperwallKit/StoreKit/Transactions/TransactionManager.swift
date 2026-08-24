@@ -192,7 +192,10 @@ final class TransactionManager {
 
   @MainActor
   @discardableResult
-  func tryToRestore(_ restoreSource: RestoreSource) async -> RestorationResult {
+  func tryToRestore(
+    _ restoreSource: RestoreSource,
+    presentsFailureAlert: Bool = true
+  ) async -> RestorationResult {
     func logAndTrack(
       state: InternalSuperwallEvent.Restore.State,
       message: String,
@@ -403,12 +406,14 @@ final class TransactionManager {
         .webRestore:
         break
       case .failure:
-        await presentAlert(
-          title: Superwall.shared.options.paywalls.restoreFailed.title,
-          message: Superwall.shared.options.paywalls.restoreFailed.message,
-          closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle,
-          source: restoreSource
-        )
+        if presentsFailureAlert {
+          await presentAlert(
+            title: Superwall.shared.options.paywalls.restoreFailed.title,
+            message: Superwall.shared.options.paywalls.restoreFailed.message,
+            closeActionTitle: Superwall.shared.options.paywalls.restoreFailed.closeButtonTitle,
+            source: restoreSource
+          )
+        }
       }
 
       return restorationResult

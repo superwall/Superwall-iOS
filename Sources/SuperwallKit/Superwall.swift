@@ -1324,11 +1324,26 @@ public final class Superwall: NSObject, ObservableObject {
   /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
   /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
+    return await restorePurchases(presentsFailureAlert: true)
+  }
+
+  /// Restores purchases, optionally suppressing the SDK's own restore-failure alert.
+  ///
+  /// Used internally by callers — such as the Customer Center — that present their own
+  /// restore-outcome UI and don't want the SDK's alert doubling up with theirs.
+  ///
+  /// - Parameter presentsFailureAlert: When `false`, suppresses the SDK's built-in
+  ///   restore-failure alert on failure. Defaults to `true` for the public API.
+  /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
+  func restorePurchases(presentsFailureAlert: Bool) async -> RestorationResult {
     // Await config because we must have entitlements before restoring.
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    let result = await dependencyContainer.transactionManager.tryToRestore(.external)
+    let result = await dependencyContainer.transactionManager.tryToRestore(
+      .external,
+      presentsFailureAlert: presentsFailureAlert
+    )
     return result
   }
 

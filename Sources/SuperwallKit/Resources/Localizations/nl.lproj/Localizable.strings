@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Gereed";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Beheer uw abonnement";
+"customer_center_no_purchases_title" = "Geen abonnementen gevonden";
+"customer_center_no_purchases_subtitle" = "We kunnen controleren op eerdere aankopen.";
+"customer_center_close" = "Sluiten";
+"customer_center_done" = "Gereed";
+"customer_center_cancel" = "Annuleren";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Aankopen herstellen";
+"customer_center_path_manage_subscription" = "Abonnement opzeggen";
+"customer_center_path_refund" = "Terugbetaling aanvragen";
+"customer_center_path_change_plan" = "Abonnement wijzigen";
+"customer_center_path_contact_support" = "Contact opnemen met ondersteuning";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Waarom zegt u op?";
+"customer_center_survey_too_expensive" = "Te duur";
+"customer_center_survey_dont_use" = "Gebruik de app niet";
+"customer_center_survey_bought_by_mistake" = "Per ongeluk gekocht";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Wordt verlengd op %@ voor %@";
+"customer_center_renews_on" = "Wordt verlengd op %@";
+"customer_center_expires_on" = "Verloopt op %@";
+"customer_center_expired_on" = "Verlopen op %@";
+"customer_center_free_trial_until" = "Gratis proefperiode tot %@";
+"customer_center_billing_issue" = "Factureringsprobleem – werk uw betaalmethode bij om toegang te behouden";
+"customer_center_lifetime" = "Levenslange toegang";
+"customer_center_revoked" = "Terugbetaald";
+"customer_center_purchased_on" = "Gekocht op %@";
+"customer_center_active_via_superwall" = "Actief";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Verlopen";
+"customer_center_purchase_date" = "Aankoopdatum";
+"customer_center_expiration_date" = "Vervaldatum";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Actief";
+"customer_center_badge_free_trial" = "Gratis proefperiode";
+"customer_center_badge_cancelled" = "Opgezegd";
+"customer_center_badge_billing_issue" = "Factureringsprobleem";
+"customer_center_badge_expired" = "Verlopen";
+"customer_center_badge_revoked" = "Terugbetaald";
+"customer_center_badge_lifetime" = "Levenslang";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Web";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Overig";
+"customer_center_family_shared" = "Gedeeld via Gezinsdeling";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Abonnementen";
+"customer_center_section_purchases" = "Aankopen";
+"customer_center_section_actions" = "Acties";
+"customer_center_see_all_purchases" = "Alle aankopen bekijken";
+"customer_center_purchase_history" = "Aankoopgeschiedenis";
+"customer_center_history_active" = "Actieve abonnementen";
+"customer_center_history_expired" = "Verlopen abonnementen";
+"customer_center_history_other" = "Overige aankopen";
+"customer_center_account_details" = "Accountgegevens";
+"customer_center_user_id" = "Gebruikers-ID";
+"customer_center_copy" = "Kopiëren";
+"customer_center_copied" = "Gekopieerd";
+"customer_center_original_download_date" = "Oorspronkelijke downloaddatum";
+"customer_center_transaction_id" = "Transactie-ID";
+"customer_center_product_id" = "Product-ID";
+"customer_center_store" = "Store";
+"customer_center_sandbox" = "Sandbox";
+"customer_center_offer" = "Aanbieding";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Bezig met herstellen…";
+"customer_center_restore_success_title" = "Aankopen hersteld";
+"customer_center_restore_success_message" = "We hebben uw eerdere aankopen hersteld en toegepast op uw account.";
+"customer_center_restore_none_title" = "Geen eerdere aankopen";
+"customer_center_restore_none_message" = "We konden geen aankopen vinden voor uw account. Als u denkt dat dit een fout is, neem dan contact op met ondersteuning.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple heeft uw terugbetalingsverzoek ontvangen.";
+"customer_center_refund_error" = "Er is iets misgegaan bij het aanvragen van een terugbetaling. Probeer het opnieuw.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Update beschikbaar";
+"customer_center_update_message" = "Het downloaden van de nieuwste versie van de app kan helpen het probleem op te lossen.";
+"customer_center_update_action" = "Bijwerken";
+"customer_center_update_continue" = "Doorgaan";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "U hebt mogelijk dubbele abonnementen";
+"customer_center_duplicate_message" = "Mogelijk bent u zowel via het web als via de App Store geabonneerd. Om dubbele kosten te voorkomen, kunt u er een opzeggen.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Ondersteuningsverzoek";
+"customer_center_support_body" = "Beschrijf uw probleem of vraag.";
+"customer_center_no_mail_app" = "Er is geen mail-app geconfigureerd op dit apparaat. U kunt ons bereiken via %@.";

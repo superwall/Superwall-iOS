@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "Готово";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "Управление подпиской";
+"customer_center_no_purchases_title" = "Подписки не найдены";
+"customer_center_no_purchases_subtitle" = "Мы можем проверить наличие предыдущих покупок.";
+"customer_center_close" = "Закрыть";
+"customer_center_done" = "Готово";
+"customer_center_cancel" = "Отмена";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "Восстановить покупки";
+"customer_center_path_manage_subscription" = "Отмена подписки";
+"customer_center_path_refund" = "Запросить возврат средств";
+"customer_center_path_change_plan" = "Изменить план";
+"customer_center_path_contact_support" = "Связаться со службой поддержки";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "Почему вы отменяете подписку?";
+"customer_center_survey_too_expensive" = "Слишком дорого";
+"customer_center_survey_dont_use" = "Не пользуюсь приложением";
+"customer_center_survey_bought_by_mistake" = "Куплено по ошибке";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "Продлевается %@ за %@";
+"customer_center_renews_on" = "Продлевается %@";
+"customer_center_expires_on" = "Истекает %@";
+"customer_center_expired_on" = "Истекло %@";
+"customer_center_free_trial_until" = "Бесплатный пробный период до %@";
+"customer_center_billing_issue" = "Проблема с оплатой – обновите способ оплаты, чтобы сохранить доступ";
+"customer_center_lifetime" = "Пожизненный доступ";
+"customer_center_revoked" = "Возвращены средства";
+"customer_center_purchased_on" = "Куплено %@";
+"customer_center_active_via_superwall" = "Активна";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "Истекла";
+"customer_center_purchase_date" = "Дата покупки";
+"customer_center_expiration_date" = "Дата окончания";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "Активна";
+"customer_center_badge_free_trial" = "Бесплатный пробный период";
+"customer_center_badge_cancelled" = "Отменена";
+"customer_center_badge_billing_issue" = "Проблема с оплатой";
+"customer_center_badge_expired" = "Истекла";
+"customer_center_badge_revoked" = "Возвращены средства";
+"customer_center_badge_lifetime" = "Пожизненная";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "Веб";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "Другое";
+"customer_center_family_shared" = "Предоставлено через семейный доступ";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "Подписки";
+"customer_center_section_purchases" = "Покупки";
+"customer_center_section_actions" = "Действия";
+"customer_center_see_all_purchases" = "Показать все покупки";
+"customer_center_purchase_history" = "История покупок";
+"customer_center_history_active" = "Активные подписки";
+"customer_center_history_expired" = "Истёкшие подписки";
+"customer_center_history_other" = "Другие покупки";
+"customer_center_account_details" = "Данные аккаунта";
+"customer_center_user_id" = "ID пользователя";
+"customer_center_copy" = "Копировать";
+"customer_center_copied" = "Скопировано";
+"customer_center_original_download_date" = "Дата первой загрузки";
+"customer_center_transaction_id" = "ID транзакции";
+"customer_center_product_id" = "ID продукта";
+"customer_center_store" = "Магазин";
+"customer_center_sandbox" = "Тестовая среда";
+"customer_center_offer" = "Предложение";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "Восстановление…";
+"customer_center_restore_success_title" = "Покупки восстановлены";
+"customer_center_restore_success_message" = "Мы восстановили ваши предыдущие покупки и применили их к вашему аккаунту.";
+"customer_center_restore_none_title" = "Нет предыдущих покупок";
+"customer_center_restore_none_message" = "Мы не смогли найти покупки для вашего аккаунта. Если вы считаете, что это ошибка, обратитесь в службу поддержки.";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple получила ваш запрос на возврат средств.";
+"customer_center_refund_error" = "Что-то пошло не так при запросе возврата средств. Попробуйте ещё раз.";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "Доступно обновление";
+"customer_center_update_message" = "Загрузка последней версии приложения может помочь решить проблему.";
+"customer_center_update_action" = "Обновить";
+"customer_center_update_continue" = "Продолжить";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "У вас могут быть дублирующиеся подписки";
+"customer_center_duplicate_message" = "Возможно, вы подписаны как через веб, так и через App Store. Чтобы избежать двойного списания средств, отмените одну из подписок.";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "Запрос в поддержку";
+"customer_center_support_body" = "Пожалуйста, опишите вашу проблему или вопрос.";
+"customer_center_no_mail_app" = "На этом устройстве не настроено почтовое приложение. Вы можете связаться с нами по адресу %@.";

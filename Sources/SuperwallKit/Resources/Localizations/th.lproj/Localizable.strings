@@ -36,3 +36,102 @@
 
 /* Generic alert dismiss button */
 "alert_action_done" = "เสร็จสิ้น";
+
+/* Customer Center – screens */
+"customer_center_management_title" = "จัดการการสมัครสมาชิกของคุณ";
+"customer_center_no_purchases_title" = "ไม่พบการสมัครสมาชิก";
+"customer_center_no_purchases_subtitle" = "เราสามารถตรวจสอบการซื้อก่อนหน้านี้ได้";
+"customer_center_close" = "ปิด";
+"customer_center_done" = "เสร็จสิ้น";
+"customer_center_cancel" = "ยกเลิก";
+
+/* Customer Center – paths */
+"customer_center_path_restore" = "กู้คืนการซื้อ";
+"customer_center_path_manage_subscription" = "ยกเลิกการสมัครสมาชิก";
+"customer_center_path_refund" = "ขอคืนเงิน";
+"customer_center_path_change_plan" = "เปลี่ยนแผน";
+"customer_center_path_contact_support" = "ติดต่อฝ่ายสนับสนุน";
+
+/* Customer Center – default survey */
+"customer_center_survey_cancel_title" = "เหตุใดคุณจึงยกเลิก";
+"customer_center_survey_too_expensive" = "แพงเกินไป";
+"customer_center_survey_dont_use" = "ไม่ได้ใช้แอป";
+"customer_center_survey_bought_by_mistake" = "ซื้อโดยไม่ได้ตั้งใจ";
+
+/* Customer Center – purchase status */
+"customer_center_renews_on_for" = "ต่ออายุวันที่ %@ ในราคา %@";
+"customer_center_renews_on" = "ต่ออายุวันที่ %@";
+"customer_center_expires_on" = "หมดอายุวันที่ %@";
+"customer_center_expired_on" = "หมดอายุเมื่อวันที่ %@";
+"customer_center_free_trial_until" = "ทดลองใช้ฟรีจนถึงวันที่ %@";
+"customer_center_billing_issue" = "ปัญหาการเรียกเก็บเงิน – อัปเดตวิธีการชำระเงินของคุณเพื่อคงสิทธิ์การเข้าถึง";
+"customer_center_lifetime" = "สิทธิ์การเข้าถึงตลอดชีพ";
+"customer_center_revoked" = "คืนเงินแล้ว";
+"customer_center_purchased_on" = "ซื้อเมื่อวันที่ %@";
+"customer_center_active_via_superwall" = "ใช้งานอยู่";
+"customer_center_price_per_period" = "%@ / %@";
+"customer_center_expired" = "หมดอายุแล้ว";
+"customer_center_purchase_date" = "วันที่ซื้อ";
+"customer_center_expiration_date" = "วันหมดอายุ";
+
+/* Customer Center – badges */
+"customer_center_badge_active" = "ใช้งานอยู่";
+"customer_center_badge_free_trial" = "ทดลองใช้ฟรี";
+"customer_center_badge_cancelled" = "ยกเลิกแล้ว";
+"customer_center_badge_billing_issue" = "ปัญหาการเรียกเก็บเงิน";
+"customer_center_badge_expired" = "หมดอายุแล้ว";
+"customer_center_badge_revoked" = "คืนเงินแล้ว";
+"customer_center_badge_lifetime" = "ตลอดชีพ";
+
+/* Customer Center – stores */
+"customer_center_store_web" = "เว็บ";
+"customer_center_store_google_play" = "Google Play";
+"customer_center_store_superwall" = "Superwall";
+"customer_center_store_other" = "อื่นๆ";
+"customer_center_family_shared" = "แชร์ผ่านการแชร์กับครอบครัว";
+
+/* Customer Center – sections */
+"customer_center_section_subscriptions" = "การสมัครสมาชิก";
+"customer_center_section_purchases" = "การซื้อ";
+"customer_center_section_actions" = "การดำเนินการ";
+"customer_center_see_all_purchases" = "ดูการซื้อทั้งหมด";
+"customer_center_purchase_history" = "ประวัติการซื้อ";
+"customer_center_history_active" = "การสมัครสมาชิกที่ใช้งานอยู่";
+"customer_center_history_expired" = "การสมัครสมาชิกที่หมดอายุ";
+"customer_center_history_other" = "การซื้ออื่นๆ";
+"customer_center_account_details" = "รายละเอียดบัญชี";
+"customer_center_user_id" = "รหัสผู้ใช้";
+"customer_center_copy" = "คัดลอก";
+"customer_center_copied" = "คัดลอกแล้ว";
+"customer_center_original_download_date" = "วันที่ดาวน์โหลดครั้งแรก";
+"customer_center_transaction_id" = "รหัสธุรกรรม";
+"customer_center_product_id" = "รหัสสินค้า";
+"customer_center_store" = "ร้านค้า";
+"customer_center_sandbox" = "แซนด์บ็อกซ์";
+"customer_center_offer" = "ข้อเสนอ";
+
+/* Customer Center – restore */
+"customer_center_restoring" = "กำลังกู้คืน…";
+"customer_center_restore_success_title" = "กู้คืนการซื้อแล้ว";
+"customer_center_restore_success_message" = "เราได้กู้คืนการซื้อก่อนหน้านี้ของคุณและนำไปใช้กับบัญชีของคุณแล้ว";
+"customer_center_restore_none_title" = "ไม่มีการซื้อก่อนหน้านี้";
+"customer_center_restore_none_message" = "เราไม่พบการซื้อใดๆ สำหรับบัญชีของคุณ หากคุณคิดว่านี่เป็นข้อผิดพลาด โปรดติดต่อฝ่ายสนับสนุน";
+
+/* Customer Center – refund */
+"customer_center_refund_success" = "Apple ได้รับคำขอคืนเงินของคุณแล้ว";
+"customer_center_refund_error" = "เกิดข้อผิดพลาดขณะขอคืนเงิน โปรดลองอีกครั้ง";
+
+/* Customer Center – update warning */
+"customer_center_update_title" = "มีการอัปเดตพร้อมใช้งาน";
+"customer_center_update_message" = "การดาวน์โหลดแอปเวอร์ชันล่าสุดอาจช่วยแก้ไขปัญหาได้";
+"customer_center_update_action" = "อัปเดต";
+"customer_center_update_continue" = "ดำเนินการต่อ";
+
+/* Customer Center – duplicate subscriptions */
+"customer_center_duplicate_title" = "คุณอาจมีการสมัครสมาชิกซ้ำซ้อน";
+"customer_center_duplicate_message" = "คุณอาจสมัครสมาชิกทั้งทางเว็บและผ่าน App Store เพื่อหลีกเลี่ยงการถูกเรียกเก็บเงินสองครั้ง โปรดยกเลิกรายการใดรายการหนึ่ง";
+
+/* Customer Center – support */
+"customer_center_support_subject" = "คำขอการสนับสนุน";
+"customer_center_support_body" = "โปรดอธิบายปัญหาหรือคำถามของคุณ";
+"customer_center_no_mail_app" = "ไม่มีแอปอีเมลที่ตั้งค่าไว้บนอุปกรณ์นี้ คุณสามารถติดต่อเราได้ที่ %@";
