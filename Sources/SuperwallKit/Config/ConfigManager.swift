@@ -440,8 +440,12 @@ class ConfigManager {
     let shouldShowTestModeAlert = isFirstTime || testModeJustActivated
     if shouldShowTestModeAlert,
       testModeManager.isTestMode,
-      let reason = testModeManager.testModeReason {
-      await presentTestModeModal(reason: reason, config: config)
+      testModeManager.testModeReason != nil {
+      if DevMode.isActive(options) {
+        await applyDefaultTestModeState(testModeManager: testModeManager)
+      } else if let reason = testModeManager.testModeReason {
+        await presentTestModeModal(reason: reason, config: config)
+      }
     }
   }
 
@@ -558,7 +562,9 @@ class ConfigManager {
   ///
   /// A developer can disable preloading of paywalls by setting ``SuperwallOptions/shouldPreloadPaywalls``.
   private func preloadPaywalls() async {
-    guard Superwall.shared.options.paywalls.shouldPreload else {
+    guard Superwall.shared.options.paywalls.shouldPreload,
+      !DevMode.isActive(Superwall.shared.options)
+    else {
       return
     }
     await preloadAllPaywalls()
@@ -722,6 +728,24 @@ class ConfigManager {
         error: error
       )
     }
+  }
+
+  /// Seeds the state the test mode modal would otherwise collect, without
+  /// presenting it. Used when a dev server drives the SDK: every entitlement
+  /// starts inactive so paywalls present, and purchases flip them for real.
+  @MainActor
+  private func applyDefaultTestModeState(testModeManager: TestModeManager) async {
+    testModeManager.setEntitlements([])
+    let testModeCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
+    Superwall.shared.customerInfo = testModeCustomerInfo
+    testModeManager.overriddenSubscriptionStatus = .inactive
+    Superwall.shared.subscriptionStatus = .inactive
+    storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
   @MainActor

@@ -249,6 +249,16 @@
 		744F0D34C800E17CF8462820 /* URLSessionRetryLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C054891709C534F59C93C815 /* URLSessionRetryLogicTests.swift */; };
 		746FCA3A2499F7BAF653F205 /* PermissionHandler+Notification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 405C59153A88E6B9D664585A /* PermissionHandler+Notification.swift */; };
 		7477EFEA4C42BB441B92D096 /* RawPaywallResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5637C2D7DDA38C11E48DD1C /* RawPaywallResponse.swift */; };
+		DE05E27E00000000000001A2 /* DevServerManifest.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001A1 /* DevServerManifest.swift */; };
+		DE05E27E00000000000001A5 /* DevServerPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001A4 /* DevServerPreview.swift */; };
+		DE05E27E00000000000001A7 /* DevServerPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001A6 /* DevServerPaywall.swift */; };
+		DE05E27E00000000000001AD /* DevMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001AC /* DevMode.swift */; };
+		DE05E27E00000000000001A9 /* DebugPickerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001A8 /* DebugPickerLogic.swift */; };
+		DE05E27E00000000000001AB /* DebugPaywallPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001AA /* DebugPaywallPickerViewController.swift */; };
+		DE05E27E00000000000001B5 /* DebugPickerLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001B4 /* DebugPickerLogicTests.swift */; };
+		DE05E27E00000000000001B2 /* DevServerManifestTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001B1 /* DevServerManifestTests.swift */; };
+		DE05E27E00000000000001B7 /* DevModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001B6 /* DevModeTests.swift */; };
+		DE05E27E00000000000001B9 /* DevServerPaywallTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE05E27E00000000000001B8 /* DevServerPaywallTests.swift */; };
 		749117DF0A2364453CCED102 /* LocalizationOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7FFF0EDFF6DA910E4B5CCB7 /* LocalizationOption.swift */; };
 		7494124F44F712EC7138C7DF /* UserAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = B52A0EFBBFE9D2F949EA4C28 /* UserAttributes.swift */; };
 		75083E470EB6E25E01F4F28B /* AsyncSequence+Extract.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B1DC32C4ABB60B8323E5D28 /* AsyncSequence+Extract.swift */; };
@@ -1016,6 +1026,16 @@
 		B48AAFA27917F0BE3ADC6FFB /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B52A0EFBBFE9D2F949EA4C28 /* UserAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAttributes.swift; sourceTree = "<group>"; };
 		B5637C2D7DDA38C11E48DD1C /* RawPaywallResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawPaywallResponse.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001A1 /* DevServerManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerManifest.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001A4 /* DevServerPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerPreview.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001A6 /* DevServerPaywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerPaywall.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001AC /* DevMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevMode.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001A8 /* DebugPickerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugPickerLogic.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001AA /* DebugPaywallPickerViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugPaywallPickerViewController.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001B4 /* DebugPickerLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugPickerLogicTests.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001B1 /* DevServerManifestTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerManifestTests.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001B6 /* DevModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevModeTests.swift; sourceTree = "<group>"; };
+		DE05E27E00000000000001B8 /* DevServerPaywallTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerPaywallTests.swift; sourceTree = "<group>"; };
 		B634347011742D475E3F1A27 /* ConfigLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigLogic.swift; sourceTree = "<group>"; };
 		B6EB705DC16CB1AC24B75BA7 /* pt_PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt_PT; path = pt_PT.lproj/Localizable.strings; sourceTree = "<group>"; };
 		B6F71D7A7DC8FFB72CA13296 /* PaywallRequestBody.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequestBody.swift; sourceTree = "<group>"; };
@@ -1725,6 +1745,7 @@
 			isa = PBXGroup;
 			children = (
 				C733A9BE56EA9E10D75B073B /* SWDebugManagerLogicTests.swift */,
+				DE05E27E00000000000001B4 /* DebugPickerLogicTests.swift */,
 			);
 			path = Debug;
 			sourceTree = "<group>";
@@ -2278,6 +2299,7 @@
 				97F6AA52B81B82F72AB80D7C /* Debug */,
 				9C21AAF80FD220C960FE568F /* Delegate */,
 				A34416D82C5BDBAA82A119C1 /* Dependencies */,
+				DE05E27E00000000000001A3 /* DevServer */,
 				5943C0902B0D5EC30C0C3B8C /* Game Controller */,
 				C36C5C30F60C1DFCDCF25E16 /* Graveyard */,
 				66F9C998E9BBCFFCF80386FE /* Identity */,
@@ -2294,6 +2316,27 @@
 				E7A87DE5237B7AEDCCDA998C /* Web */,
 			);
 			path = SuperwallKit;
+			sourceTree = "<group>";
+		};
+		DE05E27E00000000000001A3 /* DevServer */ = {
+			isa = PBXGroup;
+			children = (
+				DE05E27E00000000000001A1 /* DevServerManifest.swift */,
+				DE05E27E00000000000001A4 /* DevServerPreview.swift */,
+				DE05E27E00000000000001A6 /* DevServerPaywall.swift */,
+				DE05E27E00000000000001AC /* DevMode.swift */,
+			);
+			path = DevServer;
+			sourceTree = "<group>";
+		};
+		DE05E27E00000000000001B3 /* DevServer */ = {
+			isa = PBXGroup;
+			children = (
+				DE05E27E00000000000001B1 /* DevServerManifestTests.swift */,
+				DE05E27E00000000000001B6 /* DevModeTests.swift */,
+				DE05E27E00000000000001B8 /* DevServerPaywallTests.swift */,
+			);
+			path = DevServer;
 			sourceTree = "<group>";
 		};
 		86DD4496D1218324B5CBBB89 /* Paywall */ = {
@@ -2444,6 +2487,8 @@
 			isa = PBXGroup;
 			children = (
 				5383FA48A6E9EF8F30683C9B /* DebugManager.swift */,
+				DE05E27E00000000000001A8 /* DebugPickerLogic.swift */,
+				DE05E27E00000000000001AA /* DebugPaywallPickerViewController.swift */,
 				F9098101E599AEB01521FE89 /* DebugViewController.swift */,
 				299F91895EE88281B5ED8320 /* SWBounceButton.swift */,
 				3CDFBF0FA8B313E0D84A51DB /* SWConsoleViewController.swift */,
@@ -2716,6 +2761,7 @@
 				D554340BB6652F5FA1F21FF8 /* Config */,
 				38C02C19ED9C9958A7A61FB1 /* Debug */,
 				3B16D25FCB6991D55E0F63B3 /* DeepLink */,
+				DE05E27E00000000000001B3 /* DevServer */,
 				373AFF230833A951B6E5DF36 /* Identity */,
 				8DD7B7C5E111EAB0878886B6 /* Logger */,
 				4D7656D6A565958F58A644AF /* Misc */,
@@ -3289,6 +3335,10 @@
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,
 				01BE837B492223B76A95CB5D /* DeepLinkRouterTests.swift in Sources */,
+				DE05E27E00000000000001B2 /* DevServerManifestTests.swift in Sources */,
+				DE05E27E00000000000001B7 /* DevModeTests.swift in Sources */,
+				DE05E27E00000000000001B9 /* DevServerPaywallTests.swift in Sources */,
+				DE05E27E00000000000001B5 /* DebugPickerLogicTests.swift in Sources */,
 				0CA13E721ADB243882536D4A /* DeviceHelperMock.swift in Sources */,
 				9DBDDD10A1EFC7CD3575D9E5 /* DeviceHelperTests.swift in Sources */,
 				2743143ED664F942D5D758B1 /* DevicePreloadScriptTests.swift in Sources */,
@@ -3678,6 +3728,12 @@
 				16622133C8DD73C2B153A32A /* Queue.swift in Sources */,
 				FC051A3A8D640AF49D798B25 /* RawExperiment.swift in Sources */,
 				7477EFEA4C42BB441B92D096 /* RawPaywallResponse.swift in Sources */,
+				DE05E27E00000000000001A2 /* DevServerManifest.swift in Sources */,
+				DE05E27E00000000000001A5 /* DevServerPreview.swift in Sources */,
+				DE05E27E00000000000001A7 /* DevServerPaywall.swift in Sources */,
+				DE05E27E00000000000001AD /* DevMode.swift in Sources */,
+				DE05E27E00000000000001A9 /* DebugPickerLogic.swift in Sources */,
+				DE05E27E00000000000001AB /* DebugPaywallPickerViewController.swift in Sources */,
 				B3E6E82C0240EE6048360C9B /* RawWebMessageHandler.swift in Sources */,
 				4E7761949715C8BF8DEEF35C /* ReceiptLogic.swift in Sources */,
 				5634C4E0E082754F7939BB60 /* ReceiptManager.swift in Sources */,

@@ -16,6 +16,9 @@ extension PaywallRequestManager {
       placement: request.placementData
     )
     var paywall = try await getPaywallResponse(from: request)
+    if !request.isDebuggerLaunched {
+      paywall = await applyDevServerOverrideIfNeeded(to: paywall)
+    }
     paywall.presentationId = UUID().uuidString
 
     let paywallInfo = paywall.getInfo(fromPlacement: request.placementData)
@@ -24,6 +27,41 @@ extension PaywallRequestManager {
       placement: request.placementData
     )
 
+    return paywall
+  }
+
+  func applyDevServerOverrideIfNeeded(to paywall: Paywall) async -> Paywall {
+    let options = factory.makeSuperwallOptions()
+    guard DevMode.isActive(options) else {
+      return paywall
+    }
+    guard
+      let location = await DevServerLocator.shared.locate(devServerURL: options.devServerURL),
+      let surface = location.manifest.surface(forPaywallDatabaseId: paywall.databaseId),
+      let mountURL = location.manifest.mountURL(for: surface, base: location.base)
+    else {
+      return paywall
+    }
+
+    var paywall = paywall
+    paywall.url = mountURL
+    paywall.urlConfig = WebViewURLConfig(
+      endpoints: [
+        WebViewEndpoint(
+          url: mountURL,
+          timeout: 15,
+          percentage: 100
+        )
+      ],
+      maxAttempts: 1
+    )
+    paywall.manifest = nil
+
+    Logger.debug(
+      logLevel: .info,
+      scope: .superwallCore,
+      message: "Dev server override: paywall \(paywall.identifier) renders from \(mountURL.absoluteString)."
+    )
     return paywall
   }
 

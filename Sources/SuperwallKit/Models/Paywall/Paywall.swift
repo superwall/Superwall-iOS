@@ -28,7 +28,7 @@ struct Paywall: Codable {
   var url: URL
 
   /// An array of potential URLs to load the paywall from.
-  let urlConfig: WebViewURLConfig
+  var urlConfig: WebViewURLConfig
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
   /// by the webview.
@@ -151,7 +151,7 @@ struct Paywall: Codable {
 
   /// A listing of all the files referenced in a paywall to be able to preload the whole
   /// paywall into a web archive.
-  let manifest: ArchiveManifest?
+  var manifest: ArchiveManifest?
 
   /// The state of the paywall, updated on paywall did dismiss.
   var state: [String: Any] = [:]
@@ -366,8 +366,8 @@ struct Paywall: Codable {
     try container.encodeIfPresent(introOfferEligibility, forKey: .introductoryOfferEligibility)
   }
 
-  // Only used in stub
-  private init(
+  // Used by the stub and by `Paywall.devServer(surface:url:)`.
+  init(
     databaseId: String,
     identifier: String,
     name: String,

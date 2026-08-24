@@ -63,6 +63,10 @@ final class DeepLinkRouter {
       return true
     }
 
+    if DevServerPreview.handle(url: deepLinkUrl) {
+      return true
+    }
+
     // Return true for Superwall deep links (we handled it above)
     if isSuperwallDeepLink {
       return true
@@ -132,6 +136,10 @@ final class DeepLinkRouter {
 
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
+      return true
+    }
+
+    if DevServerPreview.outcomeForDeepLink(url: url) != nil {
       return true
     }
 

@@ -388,6 +388,33 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// - `.always`: Test mode is always activated, regardless of configuration.
   public var testModeBehavior: TestModeBehavior = .automatic
 
+  /// Connects this SDK instance to a running `superwall dev` server, for development builds only.
+  ///
+  /// Every paywall the SDK would present then renders from the dev server's live, local
+  /// paywall code instead of its published version, while configuration, placements,
+  /// audience evaluation and assignment all stay real. On a simulator this finds the dev
+  /// server on `localhost` automatically; on a physical device set ``devServerURL`` to
+  /// the `Device` URL that `superwall dev` prints.
+  ///
+  /// Dev mode also activates test mode (simulated purchases, product data from the
+  /// dashboard), disables paywall preloading, and skips the test mode intro sheet.
+  ///
+  /// The host app must allow local networking in its `Info.plist`
+  /// (`NSAppTransportSecurity` → `NSAllowsLocalNetworking` and
+  /// `NSAllowsArbitraryLoadsInWebContent`).
+  public var devMode = false
+
+  /// Where ``devMode`` looks for the `superwall dev` server. Setting this implies ``devMode``.
+  ///
+  /// Defaults to `localhost` ports 6100–6104, which reaches a dev server running on the
+  /// same machine from a simulator. On a physical device set this to the `Device` URL's
+  /// origin that `superwall dev` prints, e.g. `http://192.168.1.10:6100`.
+  @nonobjc public var devServerURL: URL?
+
+  var isDevModeEnabled: Bool {
+    return devMode || devServerURL != nil
+  }
+
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
