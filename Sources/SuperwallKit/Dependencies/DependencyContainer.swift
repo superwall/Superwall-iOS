@@ -210,6 +210,10 @@ final class DependencyContainer {
       productsManager: productsManager,
       factory: self
     )
+
+    // Must stay last: the poll reads container state from a background task,
+    // so every dependency above has to be assigned before it starts.
+    webEntitlementRedeemer.pollPendingStripeCheckoutOnColdLaunch()
   }
 }
 

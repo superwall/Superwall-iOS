@@ -112,12 +112,16 @@ actor WebEntitlementRedeemer {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+  }
 
-    // Also check once on SDK initialization so pending Stripe checkouts can be
-    // recovered on cold launch. Guard on factory readiness to avoid accessing
-    // dependencies (e.g. deviceHelper) before the container is fully set up.
+  /// Checks once on SDK initialization so pending Stripe checkouts can be
+  /// recovered on cold launch.
+  ///
+  /// Called by `DependencyContainer` at the end of its `init` rather than from
+  /// this actor's own `init`: the poll reads container state from a background
+  /// task, so it must not start while the container is still being set up.
+  nonisolated func pollPendingStripeCheckoutOnColdLaunch() {
     Task {
-      guard factory.makeIsContainerReady() else { return }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
   }
