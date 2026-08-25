@@ -2,13 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## Unreleased
+## 4.16.4
 
 ### Enhancements
 
 - Adds `SuperwallOptions.devMode` for development builds: with a `superwall dev` server running, every paywall renders from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Simulators find the dev server on localhost automatically; on a physical device set `SuperwallOptions.devServerURL` to the Device URL `superwall dev` prints. Bound paywalls resolve via the dev server's manifest (`superwall.lock`); dev mode also activates test mode, disables preloading, and skips the test mode intro sheet.
-
-## 4.16.4
 
 ### Fixes
 
