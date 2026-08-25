@@ -56,6 +56,9 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   /// this can't be reached through a real presentation.
   var wasPresentedModally = false
 
+  /// Latches ``deliverDismissal()``; see its note on the overlapping call sites.
+  private var hasDeliveredDismissal = false
+
   /// - Parameters:
   ///   - configuration: Overrides ``SuperwallOptions/customerCenter``; `nil` uses the options value.
   ///   - presentationStyle: Whether you present this controller modally or push it onto a
@@ -145,12 +148,17 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
     }
     navigationController.setNavigationBarHidden(true, animated: animated)
 
-    // Hiding the bar also takes UIKit's swipe-to-go-back with it, so drive the recognizer for as
-    // long as we're on screen and hand it back untouched on the way out.
-    replacedInteractivePopDelegate = navigationController.interactivePopGestureRecognizer?.delegate
+    // With the bar hidden, UIKit's own recognizer delegate stops allowing swipe-to-go-back, so
+    // supply one that does. Only the delegate is touched — `isEnabled` is left exactly as the host
+    // set it, since a host that deliberately turned the gesture off is entitled to keep it off.
+    // Guarded like the bar above: a second `viewWillAppear` without an intervening disappear would
+    // otherwise record our own delegate as the host's and "restore" it to that on the way out.
+    if replacedInteractivePopDelegate == nil {
+      replacedInteractivePopDelegate = navigationController.interactivePopGestureRecognizer?.delegate
+    }
     interactivePopDelegate.navigationController = navigationController
+    interactivePopDelegate.viewModel = viewModel
     navigationController.interactivePopGestureRecognizer?.delegate = interactivePopDelegate
-    navigationController.interactivePopGestureRecognizer?.isEnabled = true
   }
 
   override public func viewDidAppear(_ animated: Bool) {
@@ -174,12 +182,41 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
 
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    guard isLeavingHierarchy else { return }
-    // A view controller on its way out knows definitively that the Customer Center is gone, so
-    // fire the view model's dismissal now rather than waiting out its visibility debounce —
-    // `onDismiss` releases the manager's retained delegate, and a debounced dismissal would
-    // land after that release and reach a nil delegate. `dismiss()` is idempotent, so the
-    // debounce firing later (or having fired) is harmless.
+    guard isLeavingHierarchy else {
+      // Merely covered — a host push on top, a tab switch. `super` has just forwarded the
+      // disappearance into SwiftUI, whose `onDisappear` dropped the visible-surface count to zero
+      // and armed the dismissal debounce. That debounce is a heuristic for the embedded SwiftUI
+      // case, which has no way to tell a cover from a teardown; here we know, so veto it. Left to
+      // fire it would deliver `customerCenterDidDismiss()` and track `customerCenterClose` while
+      // the screen sits on the back stack, and latch, silencing the genuine teardown later.
+      viewModel.cancelPendingDismissal()
+      return
+    }
+    deliverDismissal()
+  }
+
+  override public func didMove(toParent parent: UIViewController?) {
+    super.didMove(toParent: parent)
+    // Being removed from a container. This is not redundant with `viewDidDisappear`: a controller
+    // that was already covered — the host pushed its own screen on top — has disappeared once
+    // already, so popping it off the stack produces no second disappearance and the teardown would
+    // otherwise never be delivered at all.
+    if parent == nil {
+      deliverDismissal()
+    }
+  }
+
+  /// A view controller on its way out knows definitively that the Customer Center is gone, so fire
+  /// the view model's dismissal now rather than waiting out its visibility debounce — `onDismiss`
+  /// releases the manager's retained delegate, and a debounced dismissal would land after that
+  /// release and reach a nil delegate.
+  ///
+  /// Latched because the two call sites overlap: an ordinary pop is both a disappearance and a
+  /// removal from the container. `viewModel.dismiss()` is idempotent on its own, but `onDismiss`
+  /// is the manager's cleanup and must not run twice.
+  private func deliverDismissal() {
+    guard !hasDeliveredDismissal else { return }
+    hasDeliveredDismissal = true
     viewModel.dismiss()
     onDismiss?()
   }
@@ -215,10 +252,17 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
 @available(iOS 15.0, *)
 private final class InteractivePopGestureDelegate: NSObject, UIGestureRecognizerDelegate {
   weak var navigationController: UINavigationController?
+  weak var viewModel: CustomerCenterViewModel?
 
   func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
     // Swiping on the stack's root would leave UIKit mid-transition with nothing to pop.
-    guard let navigationController else { return false }
-    return navigationController.viewControllers.count > 1
+    guard let navigationController, navigationController.viewControllers.count > 1 else {
+      return false
+    }
+    // Stand down while the user is inside the Customer Center's own stack — on purchase history
+    // or a purchase detail. Both stacks have an edge-pan armed for the same swipe with no failure
+    // requirement between them, and if the host's were to win, the user would be thrown out of the
+    // whole Customer Center instead of going back one screen. Their own back button still works.
+    return viewModel?.isShowingPushedSurface != true
   }
 }

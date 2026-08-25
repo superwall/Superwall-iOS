@@ -23,12 +23,18 @@ struct CustomerCenterViewControllerTests {
   @available(iOS 15.0, *)
   private func makeController(
     style: CustomerCenterPresentationStyle,
-    delegate: CustomerCenterDelegate?
+    delegate: CustomerCenterDelegate?,
+    dismissDebounceInterval: TimeInterval = 0.6
   ) -> CustomerCenterViewController {
     let (deps, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
     )
-    let viewModel = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english,
+      dismissDebounceInterval: dismissDebounceInterval
+    )
     return CustomerCenterViewController(
       viewModel: viewModel,
       adapter: CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil),
@@ -83,6 +89,40 @@ struct CustomerCenterViewControllerTests {
 
     #expect(delegate.didDismissCount == 0)
     #expect(onDismissCount == 0)
+
+    window.isHidden = true
+  }
+
+  /// The synchronous cover test above only proves nothing fires *immediately*. The view model also
+  /// arms a debounced dismissal from SwiftUI's `onDisappear`, which a `UIHostingController`
+  /// forwards on a cover just as it does on a teardown — so without a veto the dismissal simply
+  /// arrives late, and the latch then silences the genuine pop. This waits past the debounce.
+  @available(iOS 15.0, *)
+  @Test("pushed: a cover does not fire a late dismissal, and the real pop still does")
+  func pushedCoverDoesNotFireLateDismissal() async {
+    let debounce: TimeInterval = 0.2
+    let delegate = ProbeDelegate()
+    let controller = makeController(style: .pushed, delegate: delegate, dismissDebounceInterval: debounce)
+
+    let navigation = UINavigationController(rootViewController: UIViewController())
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    navigation.pushViewController(controller, animated: false)
+    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
+
+    // Covered by the host's own screen.
+    navigation.pushViewController(UIViewController(), animated: false)
+    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
+    controller.viewDidDisappear(false)
+
+    try? await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(delegate.didDismissCount == 0, "a cover must not deliver a dismissal, even late")
+
+    // And the genuine teardown afterwards must still be delivered — the premature fire would have
+    // latched `didDismiss` and made this silent.
+    navigation.popToRootViewController(animated: false)
+    spinRunLoop(timeout: 1) { delegate.didDismissCount > 0 }
+    #expect(delegate.didDismissCount == 1)
 
     window.isHidden = true
   }
@@ -204,6 +244,67 @@ struct CustomerCenterViewControllerTests {
     spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
 
     #expect(!navigation.isNavigationBarHidden)
+
+    window.isHidden = true
+  }
+
+  /// Every host property the pushed style writes has to come back exactly as it was found —
+  /// including for a host that deliberately turned swipe-to-go-back off.
+  @available(iOS 15.0, *)
+  @Test("pushed restores the pop recognizer's delegate and never writes its enablement")
+  func pushedRoundTripsTheInteractivePopGesture() {
+    for hostEnabled in [true, false] {
+      let controller = makeController(style: .pushed, delegate: nil)
+      let navigation = UINavigationController(rootViewController: UIViewController())
+      let window = makeWindow(rootViewController: navigation)
+      window.makeKeyAndVisible()
+      let recognizer = navigation.interactivePopGestureRecognizer
+      recognizer?.isEnabled = hostEnabled
+      let hostDelegate = recognizer?.delegate
+
+      navigation.pushViewController(controller, animated: false)
+      spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
+      #expect(recognizer?.isEnabled == hostEnabled, "the host's enablement must not be overwritten")
+
+      navigation.popViewController(animated: false)
+      spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
+
+      #expect(recognizer?.delegate === hostDelegate)
+      #expect(recognizer?.isEnabled == hostEnabled)
+
+      window.isHidden = true
+    }
+  }
+
+  /// Both stacks arm an edge-pan for the same swipe. While the user is inside the Customer
+  /// Center's own stack the host's must stand down, or the swipe throws them out of the whole
+  /// Customer Center instead of going back one screen.
+  @available(iOS 15.0, *)
+  @Test("the host's pop gesture stands down while drilled into the Customer Center's own stack")
+  func hostPopGestureDefersToTheInnerStack() async {
+    let controller = makeController(style: .pushed, delegate: nil)
+    let navigation = UINavigationController(rootViewController: UIViewController())
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    navigation.pushViewController(controller, animated: false)
+    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
+
+    guard let recognizer = navigation.interactivePopGestureRecognizer,
+      let delegate = recognizer.delegate else {
+      Issue.record("expected the pushed style to install a pop gesture delegate")
+      return
+    }
+
+    // At the Customer Center's root, swiping back out of it is right.
+    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == true)
+
+    // Drilled in — the inner stack owns the gesture now.
+    controller.viewModel.surfaceDidAppear(isPushed: true)
+    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == false)
+
+    // Back at the root, it's ours again.
+    controller.viewModel.surfaceDidDisappear(isPushed: true)
+    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == true)
 
     window.isHidden = true
   }

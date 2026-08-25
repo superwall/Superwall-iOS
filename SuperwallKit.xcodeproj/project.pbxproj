@@ -551,6 +551,7 @@
 		E23BC32639E66B3992FB6959 /* PurchaseHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E705F9954F808C341A4D0EBD /* PurchaseHistoryView.swift */; };
 		E2E0E2A82200943E73E3A92A /* AppSessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A767F107FB1FBBC2F22DB3 /* AppSessionManagerTests.swift */; };
 		E315F3C6BBCA8582BF540086 /* GetExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */; };
+		E38FE7475E82AC6EA10F2C65 /* CustomerCenterViewModel+Support.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D672DB1BB0AFC32C1DA3148 /* CustomerCenterViewModel+Support.swift */; };
 		E3DC0E7597234DC8CC508A33 /* MapSwiftErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D80A7C5B8A17B83C218656 /* MapSwiftErrors.swift */; };
 		E3EBCCD69E44711E26A4BFF3 /* SK2StoreProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71A62CA55C012D480DF37427 /* SK2StoreProduct.swift */; };
 		E3F2F347326B8D206D341FB6 /* TrackingLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95ED8690E8B88125776BC247 /* TrackingLogic.swift */; };
@@ -947,6 +948,7 @@
 		7B921746BEC8F63DDB65C634 /* LimitedQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LimitedQueue.swift; sourceTree = "<group>"; };
 		7C468F707B216A2F20C6092D /* MMPInstallAttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMPInstallAttributionTests.swift; sourceTree = "<group>"; };
 		7CF0668C27EEEF9505006818 /* CustomerCenterDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDelegate.swift; sourceTree = "<group>"; };
+		7D672DB1BB0AFC32C1DA3148 /* CustomerCenterViewModel+Support.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterViewModel+Support.swift"; sourceTree = "<group>"; };
 		7E27997BBCEAC330E4FB3718 /* pt_BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt_BR; path = pt_BR.lproj/Localizable.strings; sourceTree = "<group>"; };
 		7EBEC3638B8BD423E4951BEE /* ManagementScreenViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagementScreenViewTests.swift; sourceTree = "<group>"; };
 		7FCE6A59348C9018F40D7AC5 /* LogScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogScope.swift; sourceTree = "<group>"; };
@@ -2317,6 +2319,7 @@
 			children = (
 				91BC4FDC29B7919F3C976C14 /* CustomerCenterDependencies.swift */,
 				16C0D857F4714F3B76D58D9F /* CustomerCenterViewModel.swift */,
+				7D672DB1BB0AFC32C1DA3148 /* CustomerCenterViewModel+Support.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -3780,6 +3783,7 @@
 				54BF320BC284406282CB49B6 /* CustomerCenterStrings+English.swift in Sources */,
 				FACCB02103E21B86A98E12BE /* CustomerCenterView.swift in Sources */,
 				8901727EE5E2048125791BAB /* CustomerCenterViewController.swift in Sources */,
+				E38FE7475E82AC6EA10F2C65 /* CustomerCenterViewModel+Support.swift in Sources */,
 				46E56EAC8F9CEB8F567C5BCA /* CustomerCenterViewModel.swift in Sources */,
 				8E5661E20F318661BB005E2F /* CustomerInfo.swift in Sources */,
 				E7FD108C357A816AF8BFBA47 /* DarkBlurredBackground.swift in Sources */,

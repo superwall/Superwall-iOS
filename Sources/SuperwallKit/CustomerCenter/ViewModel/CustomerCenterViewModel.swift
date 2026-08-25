@@ -35,7 +35,9 @@ final class CustomerCenterViewModel: ObservableObject {
   /// (`SuperwallOptions.localeIdentifier` when set) rather than the system locale.
   var locale: Locale { dependencies.environment.locale }
 
-  private let dependencies: CustomerCenterDependencies
+  // Not `private`: the support-email extension in `CustomerCenterViewModel+Support.swift`
+  // reads these, and `private` is file-scoped.
+  let dependencies: CustomerCenterDependencies
   private let dismissDebounceInterval: TimeInterval
   private let isChangePlanSheetAvailable: Bool
   private var products: [String: ProductDisplayInfo] = [:]
@@ -52,13 +54,16 @@ final class CustomerCenterViewModel: ObservableObject {
   private var hasTrackedOpen = false
   private var didDismiss = false
   /// Active entitlement identifiers from the latest `CustomerInfo`, for support diagnostics.
-  private var activeEntitlementIds: [String] = []
+  var activeEntitlementIds: [String] = []
   private var cancellables = Set<AnyCancellable>()
 
   /// Number of Customer Center surfaces (root + any pushed screens) currently on screen.
   /// Incremented/decremented by ``surfaceDidAppear()``/``surfaceDidDisappear()``. When this
   /// reaches zero and stays zero past the debounce, the Customer Center is genuinely gone.
   private var visibleSurfaceCount = 0
+  /// Of those surfaces, how many the Customer Center pushed onto its own stack. Zero means the
+  /// user is on its root screen.
+  private var pushedSurfaceCount = 0
   private var dismissDebounceTask: Task<Void, Never>?
 
   init(
@@ -319,26 +324,31 @@ final class CustomerCenterViewModel: ObservableObject {
 
 @available(iOS 15.0, *)
 extension CustomerCenterViewModel {
-  /// Call from any Customer Center surface's `onAppear` — the root view, and any screen it
-  /// pushes itself (purchase detail, purchase history, purchase detail rows). In embedded mode
-  /// (`usesExistingNavigation`) the host owns the navigation stack, so pushing one of these
-  /// screens removes the previous surface from the hierarchy without the Customer Center
-  /// actually closing. Counting concurrently visible surfaces (instead of a single boolean)
-  /// correctly tracks nested pushes, and cancels any pending dismissal from a prior disappear.
-  func surfaceDidAppear() {
+  /// Call from any Customer Center surface's `onAppear` — the root view, and any screen it pushes
+  /// itself. Pushing a screen removes the previous surface from the hierarchy without the Customer
+  /// Center closing, so a count of concurrently visible surfaces (rather than a boolean) is what
+  /// tracks nested pushes correctly. Also cancels any pending dismissal from a prior disappear.
+  /// - Parameter isPushed: `true` for a screen pushed onto the Customer Center's own stack, `false`
+  ///   for the root view. Tracked separately — see ``isShowingPushedSurface``.
+  func surfaceDidAppear(isPushed: Bool = false) {
     visibleSurfaceCount += 1
+    if isPushed {
+      pushedSurfaceCount += 1
+    }
     dismissDebounceTask?.cancel()
     dismissDebounceTask = nil
   }
 
-  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear()``.
-  /// When the count drops to zero, waits a short debounce before dismissing — a push/pop
-  /// transition can briefly have both the old and new surface on screen, or neither, so a
-  /// single runloop turn isn't enough to distinguish "navigating within the Customer Center"
-  /// from "the Customer Center was torn down". If another surface appears before the debounce
-  /// elapses, ``surfaceDidAppear()`` cancels it and no dismissal happens.
-  func surfaceDidDisappear() {
+  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear(isPushed:)``.
+  /// When the count drops to zero, waits out a debounce before dismissing: a push/pop transition can
+  /// briefly have both surfaces on screen or neither, so one runloop turn can't tell "navigating
+  /// within the Customer Center" from "the Customer Center was torn down". An appearance before the
+  /// debounce elapses cancels it.
+  func surfaceDidDisappear(isPushed: Bool = false) {
     visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
+    if isPushed {
+      pushedSurfaceCount = max(0, pushedSurfaceCount - 1)
+    }
     guard visibleSurfaceCount == 0 else { return }
     dismissDebounceTask?.cancel()
     // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
@@ -353,6 +363,19 @@ extension CustomerCenterViewModel {
     }
   }
 
+  /// Whether the user is currently on a screen the Customer Center pushed onto its own stack,
+  /// rather than on its root.
+  var isShowingPushedSurface: Bool { pushedSurfaceCount > 0 }
+
+  /// Drops a dismissal the visibility count scheduled but hasn't delivered. The count can't tell a
+  /// teardown from something being put on top, so it guesses; a host that knows better — a
+  /// `CustomerCenterViewController` being covered rather than removed — vetoes the guess here.
+  /// Left to fire, the premature ``dismiss()`` would latch and silence the genuine teardown.
+  func cancelPendingDismissal() {
+    dismissDebounceTask?.cancel()
+    dismissDebounceTask = nil
+  }
+
   func dismiss() {
     guard !didDismiss else { return }
     didDismiss = true
@@ -361,39 +384,4 @@ extension CustomerCenterViewModel {
     callbacks.didDismiss?()
     Task { await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterClose()) }
   }
-}
-
-// MARK: - Support email
-
-@available(iOS 15.0, *)
-extension CustomerCenterViewModel {
-  var supportMailtoURL: URL? {
-    SupportEmailComposer.mailtoURL(
-      email: configuration.support.email,
-      subject: strings.string("customer_center_support_subject"),
-      body: strings.string("customer_center_support_body"),
-      diagnostics: diagnostics
-    )
-  }
-
-  private var diagnostics: SupportEmailDiagnostics {
-    let env = dependencies.environment
-    return .init(
-      userId: env.userId,
-      appVersion: env.appVersion,
-      osVersion: env.osVersion,
-      deviceModel: env.deviceModel,
-      sdkVersion: env.sdkVersion,
-      activeEntitlementIds: activeEntitlementIds,
-      isSandbox: env.isSandbox
-    )
-  }
-
-  /// Whether to show the contact-support path.
-  ///
-  /// Gated only on a support email being configured. `canOpenURL("mailto:…")` returns false on
-  /// device unless the host app declares `mailto` in `LSApplicationQueriesSchemes`, so
-  /// pre-gating on it would hide the path entirely for most apps. The tap handler falls back to
-  /// a sheet showing the address instead.
-  var supportEmailAvailable: Bool { supportMailtoURL != nil }
 }
