@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Geen abonnementen gevonden";
 "customer_center_no_purchases_subtitle" = "We kunnen controleren op eerdere aankopen.";
 "customer_center_close" = "Sluiten";
+"customer_center_back" = "Terug";
 "customer_center_done" = "Gereed";
 "customer_center_cancel" = "Annuleren";
 

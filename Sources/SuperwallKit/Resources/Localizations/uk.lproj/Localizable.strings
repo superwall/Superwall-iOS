@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Підписок не знайдено";
 "customer_center_no_purchases_subtitle" = "Ми можемо перевірити попередні покупки.";
 "customer_center_close" = "Закрити";
+"customer_center_back" = "Назад";
 "customer_center_done" = "Готово";
 "customer_center_cancel" = "Скасувати";
 

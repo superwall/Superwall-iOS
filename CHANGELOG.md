@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the Customer Center: a native, self-service screen where users can view their subscriptions and purchases, restore purchases, manage or cancel a subscription, request a refund, change plans, contact support, answer exit surveys and browse purchase history. Present it with `Superwall.shared.presentCustomerCenter()`, embed `CustomerCenterView` in SwiftUI, or use `CustomerCenterViewController` in UIKit. Configure it via `SuperwallOptions.customerCenter` (`CustomerCenterConfiguration`). Requires iOS 15+.
 - Adds `CustomerCenterDelegate` callbacks and the `customerCenterOpen`, `customerCenterClose`, `customerCenterAction`, `customerCenterSurveyResponse` and `customerCenterRefundRequest` events.
+- `CustomerCenterViewController` can be pushed onto a navigation controller of your own as well as presented modally. Pass `presentationStyle: .pushed` to push it: it shows a back button instead of a close button and takes over the navigation bar while it's on screen, so its own drill-downs keep working and only one bar is ever visible.
 
 ### Fixes
 

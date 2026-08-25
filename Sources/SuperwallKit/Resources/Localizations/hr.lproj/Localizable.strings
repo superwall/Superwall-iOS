@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Nije pronađena nijedna pretplata";
 "customer_center_no_purchases_subtitle" = "Možemo provjeriti prethodne kupnje.";
 "customer_center_close" = "Zatvori";
+"customer_center_back" = "Natrag";
 "customer_center_done" = "Gotovo";
 "customer_center_cancel" = "Odustani";
 

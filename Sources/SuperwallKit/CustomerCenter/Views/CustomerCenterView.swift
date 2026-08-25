@@ -14,22 +14,33 @@ public struct CustomerCenterNavigationOptions {
   public var usesExistingNavigation: Bool
   /// Shows a close button in the trailing toolbar position.
   public var showsCloseButton: Bool
+  /// Shows a back button in the leading toolbar position. Use this when the view supplies its own
+  /// navigation but sits inside a stack you own, so the button can take the user back out of it.
+  public var showsBackButton: Bool
   /// Called when the close button is tapped. `nil` uses the environment dismiss action.
   public var onClose: (() -> Void)?
+  /// Called when the back button is tapped. `nil` uses the environment dismiss action.
+  public var onBack: (() -> Void)?
 
   /// Creates navigation options for ``CustomerCenterView``.
   /// - Parameters:
   ///   - usesExistingNavigation: `true` when you push the view inside your own navigation stack.
   ///   - showsCloseButton: Shows a close button in the trailing toolbar position.
+  ///   - showsBackButton: Shows a back button in the leading toolbar position.
   ///   - onClose: Called when the close button is tapped. `nil` uses the environment dismiss action.
+  ///   - onBack: Called when the back button is tapped. `nil` uses the environment dismiss action.
   public init(
     usesExistingNavigation: Bool = false,
     showsCloseButton: Bool = true,
-    onClose: (() -> Void)? = nil
+    showsBackButton: Bool = false,
+    onClose: (() -> Void)? = nil,
+    onBack: (() -> Void)? = nil
   ) {
     self.usesExistingNavigation = usesExistingNavigation
     self.showsCloseButton = showsCloseButton
+    self.showsBackButton = showsBackButton
     self.onClose = onClose
+    self.onBack = onBack
   }
 
   /// The default navigation options: wraps in its own `NavigationView` and shows a close button.
@@ -123,10 +134,25 @@ public struct CustomerCenterView: View {
       .tint(themeAccent)
   }
 
-  // `ToolbarContentBuilder`'s conditional (`if`) support needs iOS 16, so the close button is
-  // toggled here at the plain `@ViewBuilder` level instead, which iOS 15 supports.
+  // `ToolbarContentBuilder`'s conditional (`if`) support needs iOS 16, so the buttons are toggled
+  // here at the plain `@ViewBuilder` level instead, which iOS 15 supports. Branching on these
+  // flags is safe even though branch flips tear down modifiers: both come from
+  // `navigationOptions`, which is fixed for the view's lifetime, so neither can flip mid-update.
+  //
+  // The leading item is only attached when a back button is actually wanted — an always-present
+  // leading `ToolbarItem` would displace the automatic back button that the host's stack supplies
+  // in `usesExistingNavigation` mode.
   @ViewBuilder
   private var screenContent: some View {
+    if navigationOptions.showsBackButton {
+      closeConfiguredContent.toolbar { backButtonToolbarItem }
+    } else {
+      closeConfiguredContent
+    }
+  }
+
+  @ViewBuilder
+  private var closeConfiguredContent: some View {
     if navigationOptions.showsCloseButton {
       coreContent.toolbar { closeButtonToolbarItem }
     } else {
@@ -157,6 +183,18 @@ public struct CustomerCenterView: View {
       }
       .accessibilityLabel(viewModel.strings.string("customer_center_close"))
       .accessibilityIdentifier("customer_center.close")
+    }
+  }
+
+  private var backButtonToolbarItem: some ToolbarContent {
+    ToolbarItem(placement: .navigationBarLeading) {
+      Button {
+        if let onBack = navigationOptions.onBack { onBack() } else { dismiss() }
+      } label: {
+        Image(systemName: "chevron.backward")
+      }
+      .accessibilityLabel(viewModel.strings.string("customer_center_back"))
+      .accessibilityIdentifier("customer_center.back")
     }
   }
 

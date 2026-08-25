@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "לא נמצאו מנויים";
 "customer_center_no_purchases_subtitle" = "נוכל לבדוק אם יש רכישות קודמות.";
 "customer_center_close" = "סגירה";
+"customer_center_back" = "חזרה";
 "customer_center_done" = "סיום";
 "customer_center_cancel" = "ביטול";
 

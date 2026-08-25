@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "サブスクリプションが見つかりません";
 "customer_center_no_purchases_subtitle" = "以前の購入を確認できます。";
 "customer_center_close" = "閉じる";
+"customer_center_back" = "戻る";
 "customer_center_done" = "完了";
 "customer_center_cancel" = "キャンセル";
 

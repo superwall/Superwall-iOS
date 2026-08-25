@@ -19,12 +19,29 @@ Present it over your current view controller with ``Superwall/presentCustomerCen
 Superwall.shared.presentCustomerCenter()
 ```
 
-Or embed it directly using ``CustomerCenterViewController``:
+Or use ``CustomerCenterViewController`` yourself. Present it modally:
 
 ```swift
 let customerCenter = CustomerCenterViewController(delegate: myDelegate)
 present(customerCenter, animated: true)
 ```
+
+Or push it onto a navigation controller of your own, which is what you want when the Customer
+Center is a row in your own settings screen:
+
+```swift
+let customerCenter = CustomerCenterViewController(
+  presentationStyle: .pushed,
+  delegate: myDelegate
+)
+navigationController?.pushViewController(customerCenter, animated: true)
+```
+
+A pushed Customer Center shows a back button instead of a close button, and hides your navigation
+bar for as long as it is on screen. It supplies its own navigation bar in place of yours, because
+its drill-downs — purchase history and per-purchase detail — need a SwiftUI navigation stack that
+a `UINavigationController` can't provide. Your bar is restored exactly as it was found when the
+user leaves, and swipe-to-go-back keeps working throughout.
 
 ### Presenting from SwiftUI
 

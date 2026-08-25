@@ -10,7 +10,7 @@ import Foundation
 import UIKit
 @testable import SuperwallKit
 
-@Suite("CustomerCenterManager")
+@Suite("CustomerCenterManager", .serialized)
 @MainActor
 struct CustomerCenterManagerTests {
   @available(iOS 15.0, *)
@@ -102,14 +102,18 @@ struct CustomerCenterManagerTests {
     var didDismissCount = 0
     var delegate: ProbeDelegate? = ProbeDelegate { didDismissCount += 1 }
     let adapter = CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil)
-    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter)
+    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter, presentationStyle: .modal)
     // The manager's `onDismiss` releases its retained delegate — the only strong reference here.
     // The view model's dismissal (default 0.6s debounce) must not be what delivers `didDismiss`,
     // or it would reach a released delegate.
     controller.onDismiss = { delegate = nil }
 
-    // Hostless: the controller isn't in a window, so `presentingViewController == nil` takes the
-    // same teardown branch a real dismissal would.
+    // The teardown check deliberately no longer treats "no presenter" on its own as a dismissal,
+    // because that is equally true of every pushed controller for its whole lifetime. A hostless
+    // test target never completes a modal transition, so UIKit never records that the controller
+    // was presented — set that one fact the way `viewDidAppear` would have, and let the real check
+    // run against it.
+    controller.wasPresentedModally = true
     controller.viewDidDisappear(false)
 
     #expect(didDismissCount == 1)

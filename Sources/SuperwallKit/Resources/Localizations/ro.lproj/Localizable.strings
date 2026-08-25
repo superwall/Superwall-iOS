@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Nu s-a găsit niciun abonament";
 "customer_center_no_purchases_subtitle" = "Putem verifica achizițiile anterioare.";
 "customer_center_close" = "Închide";
+"customer_center_back" = "Înapoi";
 "customer_center_done" = "Terminat";
 "customer_center_cancel" = "Anulează";
 

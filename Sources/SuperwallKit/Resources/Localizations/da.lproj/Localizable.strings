@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Ingen abonnementer fundet";
 "customer_center_no_purchases_subtitle" = "Vi kan tjekke for tidligere køb.";
 "customer_center_close" = "Luk";
+"customer_center_back" = "Tilbage";
 "customer_center_done" = "Udført";
 "customer_center_cancel" = "Annuller";
 

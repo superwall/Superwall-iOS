@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Inga prenumerationer hittades";
 "customer_center_no_purchases_subtitle" = "Vi kan kontrollera om det finns tidigare köp.";
 "customer_center_close" = "Stäng";
+"customer_center_back" = "Tillbaka";
 "customer_center_done" = "Klar";
 "customer_center_cancel" = "Avbryt";
 

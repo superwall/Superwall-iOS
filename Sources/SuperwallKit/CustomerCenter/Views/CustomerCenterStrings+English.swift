@@ -40,6 +40,7 @@ let englishStrings: [String: String] = [
   "customer_center_no_purchases_title": "No subscriptions found",
   "customer_center_no_purchases_subtitle": "We can check for previous purchases.",
   "customer_center_close": "Close",
+  "customer_center_back": "Back",
   "customer_center_done": "Done",
   "customer_center_cancel": "Cancel",
   // Customer Center – paths

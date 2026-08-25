@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Tilauksia ei löytynyt";
 "customer_center_no_purchases_subtitle" = "Voimme tarkistaa aiemmat ostokset.";
 "customer_center_close" = "Sulje";
+"customer_center_back" = "Takaisin";
 "customer_center_done" = "Valmis";
 "customer_center_cancel" = "Peruuta";
 

@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "कोई सदस्यता नहीं मिली";
 "customer_center_no_purchases_subtitle" = "हम पिछली खरीदारी की जांच कर सकते हैं।";
 "customer_center_close" = "बंद करें";
+"customer_center_back" = "वापस";
 "customer_center_done" = "हो गया";
 "customer_center_cancel" = "रद्द करें";
 

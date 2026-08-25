@@ -132,7 +132,7 @@ final class CustomerCenterManager {
       dependencies: .live(container: container, configuration: resolved),
       strings: .bundled()
     )
-    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter)
+    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter, presentationStyle: .modal)
     controller.onDismiss = { [weak self] in
       self?.presentedController = nil
       self?.retainedDelegate = nil

@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Tidak ada langganan yang ditemukan";
 "customer_center_no_purchases_subtitle" = "Kami dapat memeriksa pembelian sebelumnya.";
 "customer_center_close" = "Tutup";
+"customer_center_back" = "Kembali";
 "customer_center_done" = "Selesai";
 "customer_center_cancel" = "Batal";
 

@@ -42,6 +42,7 @@
 "customer_center_no_purchases_title" = "Không tìm thấy gói đăng ký nào";
 "customer_center_no_purchases_subtitle" = "Chúng tôi có thể kiểm tra các giao dịch mua trước đó.";
 "customer_center_close" = "Đóng";
+"customer_center_back" = "Quay lại";
 "customer_center_done" = "Xong";
 "customer_center_cancel" = "Hủy";
 
