@@ -86,7 +86,8 @@ actor DevServerLocator {
       bases.insert(pinnedBase, at: 0)
     }
     if let cached = cached {
-      bases.sort { first, _ in first == cached.location.base }
+      bases.removeAll { $0 == cached.location.base }
+      bases.insert(cached.location.base, at: 0)
     }
 
     for base in bases {

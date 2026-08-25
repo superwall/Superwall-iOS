@@ -45,6 +45,10 @@ extension PaywallRequestManager {
 
     var paywall = paywall
     paywall.url = mountURL
+    // A changed cacheKey is what makes an already-cached view controller
+    // reload its web view; without it a moved dev server or a published
+    // fallback would present the stale page.
+    paywall.cacheKey = "dev:\(paywall.cacheKey):\(mountURL.absoluteString)"
     paywall.urlConfig = WebViewURLConfig(
       endpoints: [
         WebViewEndpoint(

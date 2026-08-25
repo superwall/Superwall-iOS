@@ -125,7 +125,7 @@ final class DebugViewController: UIViewController {
 
   /// The dev-server surface to render instead of fetching a published paywall.
   private var devSurface: DevServerSurface?
-  
+
   /// Backs the "Your Paywalls" picker.
   ///
   /// Populated from `GET /v2/paywalls/preview-list`. Empty when the request fails or the app
@@ -364,20 +364,30 @@ final class DebugViewController: UIViewController {
     }
   }
 
+  /// Races the operation against a deadline and genuinely resumes at whichever
+  /// finishes first. A task group can't do this — it awaits every child, and
+  /// the product path has no cancellation checks to cut a slow call short —
+  /// so a missed deadline abandons the operation's unstructured task instead.
   private func withTimeout<T: Sendable>(
     seconds: Double,
     operation: @escaping @Sendable () async -> T
   ) async -> T? {
-    return await withTaskGroup(of: T?.self) { group in
-      group.addTask { await operation() }
-      group.addTask {
-        try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-        return nil
+    let stream = AsyncStream<T?> { continuation in
+      let operationTask = Task {
+        continuation.yield(await operation())
+        continuation.finish()
       }
-      let result = await group.next() ?? nil
-      group.cancelAll()
+      Task {
+        try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+        operationTask.cancel()
+        continuation.yield(nil)
+        continuation.finish()
+      }
+    }
+    for await result in stream {
       return result
     }
+    return nil
   }
 
   /// Picks the dev-server surface the debugger opens with, if any.
