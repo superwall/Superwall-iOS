@@ -117,9 +117,10 @@ actor WebEntitlementRedeemer {
   /// Checks once on SDK initialization so pending Stripe checkouts can be
   /// recovered on cold launch.
   ///
-  /// Called by `DependencyContainer` at the end of its `init` rather than from
-  /// this actor's own `init`: the poll reads container state from a background
-  /// task, so it must not start while the container is still being set up.
+  /// Called by `Superwall` after the dependency container is fully built,
+  /// rather than from this actor's own `init`: the poll reads container state
+  /// from a background task, so it must not start while the container is
+  /// still being set up.
   nonisolated func pollPendingStripeCheckoutOnColdLaunch() {
     Task {
       await pollPendingStripeCheckoutOnForegroundIfNeeded()

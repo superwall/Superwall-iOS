@@ -14,11 +14,12 @@ struct DependencyContainerInitTests {
   ///
   /// `DependencyContainer.init` used to pass `self` to `WebEntitlementRedeemer`,
   /// whose init spawned a task reading `configManager` on a background thread
-  /// while init was still assigning stored properties. Run under Thread
-  /// Sanitizer, this loop reproduces that race; without TSan it's a smoke test.
+  /// while init was still assigning stored properties. This loop only signals
+  /// under Thread Sanitizer (`-enableThreadSanitizer YES`), where it reproduced
+  /// the race on the first iteration; without TSan it's a smoke test.
   @Test("Constructing the container doesn't race against its own init")
   func containerInitHasNoDataRace() {
-    for _ in 0..<50 {
+    for _ in 0..<10 {
       _ = DependencyContainer(apiKey: "pk_test_504")
     }
   }

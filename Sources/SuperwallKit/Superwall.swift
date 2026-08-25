@@ -473,6 +473,11 @@ public final class Superwall: NSObject, ObservableObject {
 
     addListeners()
 
+    // Recover any Stripe checkout that was pending when the app was killed.
+    // Kicked off here rather than inside an initializer so the redeemer's
+    // background poll can only ever see a fully-built dependency container.
+    dependencyContainer.webEntitlementRedeemer.pollPendingStripeCheckoutOnColdLaunch()
+
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
     // therefore, we don't need to make this detached.

@@ -29,7 +29,7 @@ struct WebEntitlementRedeemerTests {
 
   init() {
     // Clear any pending stripe checkout state left on disk by a previous test
-    // to prevent the container's cold-launch poll from triggering unexpected saves.
+    // so foreground/cold-launch polls triggered later can't see stale state.
     dependencyContainer.storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
