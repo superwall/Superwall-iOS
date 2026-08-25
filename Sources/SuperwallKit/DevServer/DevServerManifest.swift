@@ -46,6 +46,12 @@ struct DevServerManifest: Decodable, Equatable {
       resolved.host == base.host,
       resolved.port == base.port
     else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Ignoring dev server surface \(surface.id): its url \(surface.url) resolves to "
+          + "\(resolved.absoluteString), which is off \(base.absoluteString)'s origin."
+      )
       return nil
     }
     return resolved
