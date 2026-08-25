@@ -167,6 +167,7 @@
 		4A4E788046CD308F465B37BF /* ProductsFetcherSK2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57AD390BC73341A49301B4AA /* ProductsFetcherSK2.swift */; };
 		4AA4E2CE223DC7CF1678E83C /* TrackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65E23B703C00044332FDEBE8 /* TrackTests.swift */; };
 		4AB907436D4A84932F09D8B3 /* String+MD5.swift in Sources */ = {isa = PBXBuildFile; fileRef = D449672964023589DA5535E3 /* String+MD5.swift */; };
+		4ABF9FB54105917343865145 /* DependencyContainerInitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 880CE7E95B65A756C372CE05 /* DependencyContainerInitTests.swift */; };
 		4B0E203D477E48611797047C /* PaywallViewControllerCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672776875A4286319C2F2D61 /* PaywallViewControllerCacheTests.swift */; };
 		4B4BCB32699C3A1AF7E2BFE6 /* SK2StoreProductCyclesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00929DACD8621FC32F83927 /* SK2StoreProductCyclesTests.swift */; };
 		4B54BA9E52A97C486D808A05 /* IntroOfferToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF0596D5BDDE0911046E60D /* IntroOfferToken.swift */; };
@@ -897,6 +898,7 @@
 		8719AC2E83128EE469E58C36 /* RedeemRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedeemRequest.swift; sourceTree = "<group>"; };
 		87AD727C5A8639E704F7BE98 /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		87B1E659458AE78C3908562B /* SK2ReceiptManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK2ReceiptManagerTests.swift; sourceTree = "<group>"; };
+		880CE7E95B65A756C372CE05 /* DependencyContainerInitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainerInitTests.swift; sourceTree = "<group>"; };
 		884DF3D8A1CA382BFEE9F8F4 /* ArchiveManifestUsage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArchiveManifestUsage.swift; sourceTree = "<group>"; };
 		887834329A06971D86D5282F /* NotificationProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationProtocols.swift; sourceTree = "<group>"; };
 		88EBF6FC3090E004EE1377B4 /* PaywallViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerDelegate.swift; sourceTree = "<group>"; };
@@ -2716,6 +2718,7 @@
 				D554340BB6652F5FA1F21FF8 /* Config */,
 				38C02C19ED9C9958A7A61FB1 /* Debug */,
 				3B16D25FCB6991D55E0F63B3 /* DeepLink */,
+				E9FF04AB866B9CCA7DFBE592 /* Dependencies */,
 				373AFF230833A951B6E5DF36 /* Identity */,
 				8DD7B7C5E111EAB0878886B6 /* Logger */,
 				4D7656D6A565958F58A644AF /* Misc */,
@@ -2822,8 +2825,8 @@
 			children = (
 				0E3AC3B23DAAA8C1D125BDD3 /* CoreDataManager.swift */,
 				50458143450675EF205CE2C3 /* CoreDataStack.swift */,
-				EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */,
 				2DAF3427CF469F5373C2BFD7 /* Managed Models */,
+				EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */,
 			);
 			path = "Core Data";
 			sourceTree = "<group>";
@@ -2994,6 +2997,14 @@
 				CFDA311A030FDFC45AEE248A /* SuperwallOptions.swift */,
 			);
 			path = Options;
+			sourceTree = "<group>";
+		};
+		E9FF04AB866B9CCA7DFBE592 /* Dependencies */ = {
+			isa = PBXGroup;
+			children = (
+				880CE7E95B65A756C372CE05 /* DependencyContainerInitTests.swift */,
+			);
+			path = Dependencies;
 			sourceTree = "<group>";
 		};
 		ED389E60F716C417202738F0 /* Misc */ = {
@@ -3173,9 +3184,10 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
 			};
 			buildConfigurationList = B7BB212B66F694F1FDA2FA4F /* Build configuration list for PBXProject "SuperwallKit" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -3228,6 +3240,7 @@
 				89F17188BC665EFC6FE5CEFA /* XCRemoteSwiftPackageReference "superscript-ios-next" */,
 			);
 			preferredProjectObjectVersion = 77;
+			productRefGroup = 778C04FFAA9840C37CA3C1CA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -3289,6 +3302,7 @@
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,
 				01BE837B492223B76A95CB5D /* DeepLinkRouterTests.swift in Sources */,
+				4ABF9FB54105917343865145 /* DependencyContainerInitTests.swift in Sources */,
 				0CA13E721ADB243882536D4A /* DeviceHelperMock.swift in Sources */,
 				9DBDDD10A1EFC7CD3575D9E5 /* DeviceHelperTests.swift in Sources */,
 				2743143ED664F942D5D758B1 /* DevicePreloadScriptTests.swift in Sources */,

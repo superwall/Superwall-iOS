@@ -29,7 +29,7 @@ struct WebEntitlementRedeemerTests {
 
   init() {
     // Clear any pending stripe checkout state left on disk by a previous test
-    // to prevent the WebEntitlementRedeemer init Task from triggering unexpected saves.
+    // so foreground/cold-launch polls triggered later can't see stale state.
     dependencyContainer.storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
@@ -2940,6 +2940,87 @@ struct WebEntitlementRedeemerTests {
     await redeemer.handleStripeCheckoutComplete(contextId: "ctx_new", productId: "prod_new")
 
     // Failed status clears pending state, but we can verify the poll happened
+    #expect(mockNetwork.pollRedemptionResultCallCount == 1)
+  }
+
+  @Test("Init doesn't start the cold-launch Stripe poll")
+  func testInit_doesNotStartColdLaunchPoll() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    // Seed a pending checkout so a poll would fire if anything kicked one off.
+    mockStorage.save(
+      PendingStripeCheckoutPollState(
+        checkoutContextId: "ctx_cold",
+        productId: "prod_cold"
+      ),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    mockNetwork.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+
+    _ = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    // Give a stray init-spawned task time to run before asserting it didn't.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(mockNetwork.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("Cold-launch kick-off polls a pending Stripe checkout")
+  func testPollPendingStripeCheckoutOnColdLaunch_pollsPendingCheckout() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    mockStorage.save(
+      PendingStripeCheckoutPollState(
+        checkoutContextId: "ctx_cold",
+        productId: "prod_cold"
+      ),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    mockNetwork.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    redeemer.pollPendingStripeCheckoutOnColdLaunch()
+
+    // The kick-off spawns a task; wait for the poll to land.
+    for _ in 0..<100 where mockNetwork.pollRedemptionResultCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 50_000_000)
+    }
     #expect(mockNetwork.pollRedemptionResultCallCount == 1)
   }
 }
