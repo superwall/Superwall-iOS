@@ -36,7 +36,19 @@ struct DevServerManifest: Decodable, Equatable {
   }
 
   func mountURL(for surface: DevServerSurface, base: URL) -> URL? {
-    return URL(string: surface.url, relativeTo: base)?.absoluteURL
+    guard let resolved = URL(string: surface.url, relativeTo: base)?.absoluteURL else {
+      return nil
+    }
+    // An absolute `url` resolves off `base` entirely, so a server reached at a
+    // trusted address could otherwise name any origin it likes.
+    guard
+      resolved.scheme == base.scheme,
+      resolved.host == base.host,
+      resolved.port == base.port
+    else {
+      return nil
+    }
+    return resolved
   }
 }
 

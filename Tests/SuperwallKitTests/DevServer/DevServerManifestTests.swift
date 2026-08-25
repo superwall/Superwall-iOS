@@ -114,4 +114,20 @@ final class DevServerManifestTests: XCTestCase {
       "http://192.168.1.10:6100/preview/paywall/pro"
     )
   }
+
+  func test_mountUrlRejectsSurfacesPointingOffTheDevServerOrigin() throws {
+    let decoded = try manifest("""
+    {
+      "surfaces": [
+        { "kind": "paywall", "id": "absolute", "url": "https://evil.example.com/x" },
+        { "kind": "paywall", "id": "protocol-relative", "url": "//evil.example.com/x" },
+        { "kind": "paywall", "id": "other-port", "url": "http://192.168.1.10:9999/x" }
+      ]
+    }
+    """)
+    let base = try XCTUnwrap(URL(string: "http://192.168.1.10:6100"))
+    for surface in decoded.surfaces {
+      XCTAssertNil(decoded.mountURL(for: surface, base: base), surface.id)
+    }
+  }
 }
