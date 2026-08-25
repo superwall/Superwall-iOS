@@ -41,7 +41,7 @@ struct ManagementScreenView: View {
       }
       if !others.isEmpty {
         Section(strings.string("customer_center_section_purchases")) {
-          ForEach(others.prefix(2)) { PurchaseCardView(purchase: $0, refundResult: nil) }
+          ForEach(visibleOthers) { PurchaseCardView(purchase: $0, refundResult: nil) }
         }
       }
       Section(strings.string("customer_center_section_actions")) {
@@ -63,6 +63,16 @@ struct ManagementScreenView: View {
     .navigationTitle(navigationTitle)
     .navigationBarTitleDisplayMode(.inline)
   }
+
+  /// Non-subscription purchases to show inline. Collapsing to the first few keeps the management
+  /// screen scannable, but that's only acceptable while the rest stay reachable — with
+  /// `showsPurchaseHistory` off there is no "See all purchases" row, so a cap would make anything
+  /// past it unreachable rather than merely collapsed.
+  var visibleOthers: [PurchasePresentation] {
+    viewModel.configuration.showsPurchaseHistory ? Array(others.prefix(Self.inlineOthersLimit)) : others
+  }
+
+  private static let inlineOthersLimit = 2
 
   private var navigationTitle: String {
     viewModel.configuration.managementScreen.title ?? strings.string("customer_center_management_title")

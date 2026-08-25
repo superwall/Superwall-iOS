@@ -42,6 +42,7 @@
 		0EB256F6E5E6B608878941ED /* UIWindow+Landscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA65A320EE640CDB878F43E9 /* UIWindow+Landscape.swift */; };
 		0EF8D358CA712DB3C45C1318 /* ConfirmHoldoutAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6752063E4547657E20072CE7 /* ConfirmHoldoutAssignment.swift */; };
 		0F00D32C125E8B86EA477631 /* PurchaseControllerObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CC67D2CEA90B70D6AC99419 /* PurchaseControllerObjc.swift */; };
+		0F632AEB4FDA9D90CFCBD1F7 /* ManagementScreenViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBEC3638B8BD423E4951BEE /* ManagementScreenViewTests.swift */; };
 		11477D1EB60D1FDA32F5099A /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258FC2DB67022EF3D9B1FB67 /* Endpoint.swift */; };
 		11719638C88CFCA506264531 /* PopupTransitionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */; };
 		11798EDE58E5D225E5414F2E /* FakeLocationAuthorizationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D198C8645A213EEAD622C881 /* FakeLocationAuthorizationStatus.swift */; };
@@ -432,6 +433,7 @@
 		B84CA6014D8D6EF201DB3935 /* LocalizationGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC1253C6D5DD8D967BE05D1 /* LocalizationGrouping.swift */; };
 		B89435087910E6B501471622 /* Email.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BDB77756A3775FF4ED31C48 /* Email.swift */; };
 		B91D4755E1FDCBBC2D3CD8C3 /* InternalPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36299FDDEC7022F0F45A801 /* InternalPresentation.swift */; };
+		BA0F56BF5C028624554EEC89 /* CustomerCenterViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F30029EE3419EE5BD4CD2948 /* CustomerCenterViewControllerTests.swift */; };
 		BA1416132CD360BCBA93D698 /* WebArchiveFileSytemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCC728E79E36A4CDD87F3078 /* WebArchiveFileSytemManager.swift */; };
 		BA957415E2E1A38A25550B99 /* MockIntroductoryPeriod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 296A4AFE25C5E55DC5DD207D /* MockIntroductoryPeriod.swift */; };
 		BAD2C927523B12E973186C6B /* CustomerCenterConfiguration+ObjC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 710DB325AE1CA4988E2FB9CA /* CustomerCenterConfiguration+ObjC.swift */; };
@@ -946,6 +948,7 @@
 		7C468F707B216A2F20C6092D /* MMPInstallAttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMPInstallAttributionTests.swift; sourceTree = "<group>"; };
 		7CF0668C27EEEF9505006818 /* CustomerCenterDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDelegate.swift; sourceTree = "<group>"; };
 		7E27997BBCEAC330E4FB3718 /* pt_BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pt_BR; path = pt_BR.lproj/Localizable.strings; sourceTree = "<group>"; };
+		7EBEC3638B8BD423E4951BEE /* ManagementScreenViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagementScreenViewTests.swift; sourceTree = "<group>"; };
 		7FCE6A59348C9018F40D7AC5 /* LogScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogScope.swift; sourceTree = "<group>"; };
 		7FE43B98D847BB6DE291F0B4 /* FakeTrackingAuthorizationStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeTrackingAuthorizationStatusTests.swift; sourceTree = "<group>"; };
 		8012E350CCE22B0D892E0F96 /* PaywallManagerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManagerLogic.swift; sourceTree = "<group>"; };
@@ -1262,6 +1265,7 @@
 		F16AFE9C93A441CFB6A95F10 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
 		F2A2A54314BAEAF65B46D322 /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
 		F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseControllerTests.swift; sourceTree = "<group>"; };
+		F30029EE3419EE5BD4CD2948 /* CustomerCenterViewControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterViewControllerTests.swift; sourceTree = "<group>"; };
 		F338AF233A9EF2A20B1AC5A5 /* MockPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockPurchaseController.swift; sourceTree = "<group>"; };
 		F34468E3988E779132CE101A /* BundleHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleHelper.swift; sourceTree = "<group>"; };
 		F36CB341B28F250F5252A8DF /* Transaction+LatestSince.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Transaction+LatestSince.swift"; sourceTree = "<group>"; };
@@ -1370,6 +1374,7 @@
 			children = (
 				F4E26CA3FAD8F62F5D902594 /* AccentColorRoundTripTests.swift */,
 				2C865FA4B20684772E0E3328 /* CustomerCenterViewSmokeTests.swift */,
+				7EBEC3638B8BD423E4951BEE /* ManagementScreenViewTests.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -3369,6 +3374,7 @@
 			isa = PBXGroup;
 			children = (
 				A69194A3AABBE56CB18177F1 /* CustomerCenterDelegateAdapterTests.swift */,
+				F30029EE3419EE5BD4CD2948 /* CustomerCenterViewControllerTests.swift */,
 			);
 			path = UIKit;
 			sourceTree = "<group>";
@@ -3570,6 +3576,7 @@
 				26081D80FCF7BCD475103467 /* CustomerCenterManagerTests.swift in Sources */,
 				F478921BA3C4CD34C2459742 /* CustomerCenterPathResolverTests.swift in Sources */,
 				BD1784A9E99914C0748F918A /* CustomerCenterStringsTests.swift in Sources */,
+				BA0F56BF5C028624554EEC89 /* CustomerCenterViewControllerTests.swift in Sources */,
 				DC3ECD6BD248CCA5322CE05E /* CustomerCenterViewModelTests.swift in Sources */,
 				959F8F9F86BD7E770D842FE3 /* CustomerCenterViewSmokeTests.swift in Sources */,
 				37FDB46DD55E649FA10D753C /* CustomerInfoDecodingTests.swift in Sources */,
@@ -3603,6 +3610,7 @@
 				4DE01655FC4CC148DD3D161C /* LoggerMock.swift in Sources */,
 				556DDBA011967A3F2411AAE7 /* MMPInstallAttributionTests.swift in Sources */,
 				6838BDF35DFEB69351777883 /* MMPMatchResponseTests.swift in Sources */,
+				0F632AEB4FDA9D90CFCBD1F7 /* ManagementScreenViewTests.swift in Sources */,
 				A9B924A1211117378743A534 /* MicrophonePermissionTests.swift in Sources */,
 				B294572426111EC04F225289 /* MockExternalPurchaseControllerFactory.swift in Sources */,
 				BA957415E2E1A38A25550B99 /* MockIntroductoryPeriod.swift in Sources */,

@@ -337,7 +337,7 @@ struct CustomerCenterViewModelTests {
   // MARK: - Embedded navigation (visibility count)
 
   /// Tests below use a short debounce so they don't need real sleeps of `dismissDebounceInterval`
-  /// (the production default, 0.3s) to observe whether `dismiss()` fired.
+  /// (the production default, 0.6s) to observe whether `dismiss()` fired.
   func makeForVisibility(info customerInfo: CustomerInfo) -> CustomerCenterViewModel {
     let (deps, _, _) = CustomerCenterDependencies.mock(info: customerInfo, products: ["monthly": monthly])
     return CustomerCenterViewModel(
