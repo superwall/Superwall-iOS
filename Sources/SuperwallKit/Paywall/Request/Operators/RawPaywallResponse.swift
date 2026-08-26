@@ -43,30 +43,23 @@ extension PaywallRequestManager {
       return paywall
     }
 
-    var paywall = paywall
-    paywall.url = mountURL
-    // A changed cacheKey is what makes an already-cached view controller
-    // reload its web view; without it a moved dev server or a published
-    // fallback would present the stale page.
-    paywall.cacheKey = "dev:\(paywall.cacheKey):\(mountURL.absoluteString)"
-    paywall.urlConfig = WebViewURLConfig(
-      endpoints: [
-        WebViewEndpoint(
-          url: mountURL,
-          timeout: 15,
-          percentage: 100
-        )
-      ],
-      maxAttempts: 1
-    )
-    paywall.manifest = nil
+    // The local surface replaces the published paywall wholesale, so what
+    // presents is exactly what its config.ts declares — products included.
+    // Only the assignment's experiment and the fetch timings carry over,
+    // keeping holdouts and analytics coherent. The synthesized cacheKey
+    // embeds the mount URL, so a moved dev server or a published fallback
+    // reloads the web view instead of presenting the stale page.
+    var devPaywall = Paywall.devServer(surface: surface, url: mountURL)
+    devPaywall.experiment = paywall.experiment
+    devPaywall.responseLoadingInfo = paywall.responseLoadingInfo
 
     Logger.debug(
       logLevel: .info,
       scope: .superwallCore,
-      message: "Dev server override: paywall \(paywall.identifier) renders from \(mountURL.absoluteString)."
+      message: "Dev server override: paywall \(paywall.identifier) is served as local surface "
+        + "\(surface.id) from \(mountURL.absoluteString)."
     )
-    return paywall
+    return devPaywall
   }
 
   /// Resolves a synthetic `dev:` identifier — a dev-server surface the
