@@ -15,6 +15,7 @@ actor DevServerLocator {
   private var cached: (location: DevServerLocation, fetchedAt: Date)?
   private var lastMissAt: Date?
   private var pinnedBase: URL?
+  private var hasWarnedAboutTransportSecurity = false
 
   func pin(base: URL) {
     pinnedBase = base
@@ -63,8 +64,6 @@ actor DevServerLocator {
     )
     return nil
   }
-
-  private var hasWarnedAboutTransportSecurity = false
 
   /// App Transport Security blocks plain-http requests unless the app opts in,
   /// and the failure is otherwise indistinguishable from "no server there".
