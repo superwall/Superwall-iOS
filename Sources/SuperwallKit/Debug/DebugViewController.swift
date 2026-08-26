@@ -457,7 +457,7 @@ final class DebugViewController: UIViewController {
   }
 
   @objc func pressedPreview() {
-    if !canOpenPicker {
+    guard canOpenPicker else {
       return
     }
     let devSurfaces = devServer?.surfaces ?? []
