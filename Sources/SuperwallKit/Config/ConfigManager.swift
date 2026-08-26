@@ -562,7 +562,8 @@ class ConfigManager {
   ///
   /// A developer can disable preloading of paywalls by setting ``SuperwallOptions/shouldPreloadPaywalls``.
   private func preloadPaywalls() async {
-    guard Superwall.shared.options.paywalls.shouldPreload,
+    guard
+      Superwall.shared.options.paywalls.shouldPreload,
       !DevMode.isActive(Superwall.shared.options)
     else {
       return

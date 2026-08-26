@@ -31,7 +31,7 @@ enum DevMode {
   }
 
   private static func warnAboutProduction() {
-    guard !hasWarnedAboutProduction else {
+    if hasWarnedAboutProduction {
       return
     }
     hasWarnedAboutProduction = true

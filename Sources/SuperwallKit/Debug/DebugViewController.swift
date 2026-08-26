@@ -224,7 +224,8 @@ final class DebugViewController: UIViewController {
   /// Dev mode's local surfaces belong in the debugger however it was opened —
   /// a dashboard preview link should list them too, not just a dev link.
   private func ensureDevServer() async {
-    guard devServer == nil,
+    guard
+      devServer == nil,
       DevMode.isActive(Superwall.shared.options),
       let location = await DevServerLocator.shared.locate(
         devServerURL: Superwall.shared.options.devServerURL
