@@ -441,16 +441,27 @@ final class DebugViewController: UIViewController {
     }
   }
 
+  /// Whether the picker has anything to offer: local surfaces, a choice of
+  /// published paywalls, or no paywall selected yet.
+  private var canOpenPicker: Bool {
+    if devServer?.surfaces.isEmpty == false {
+      return true
+    }
+    if publishedPaywalls.count > 1 {
+      return true
+    }
+    if paywallDatabaseId == nil {
+      return true
+    }
+    return false
+  }
+
   @objc func pressedPreview() {
-    let devSurfaces = devServer?.surfaces ?? []
-    let published = publishedPaywalls
-    // Nothing to pick from: no local surfaces, at most one published paywall,
-    // and that paywall is already showing.
-    if devSurfaces.isEmpty,
-      published.count <= 1,
-      paywallDatabaseId != nil {
+    if !canOpenPicker {
       return
     }
+    let devSurfaces = devServer?.surfaces ?? []
+    let published = publishedPaywalls
 
     let picker = DebugPaywallPickerViewController(
       localSurfaceIds: devSurfaces.map { $0.id },
