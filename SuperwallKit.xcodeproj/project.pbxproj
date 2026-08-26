@@ -125,6 +125,7 @@
 		339F1D07DB57DBEC46940DB6 /* CheckoutWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */; };
 		342593FCA24FBEA77FE472C7 /* SK2ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */; };
 		3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */; };
+		346A77D3F31E471EB7CC4D5C /* DevServerSurface.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E37562E243AE6632134D94A /* DevServerSurface.swift */; };
 		35597883CB038DBEE63E162B /* EventData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86D76FB5809C3B8122778A9 /* EventData.swift */; };
 		3652D5EE4C172D623BDEE7E4 /* PresentationIdTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F306D67A9F3A43D082DD83 /* PresentationIdTests.swift */; };
 		369677E9A6E8754CFD20714D /* TrackingParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764012CF0C0972240A73E3CF /* TrackingParameters.swift */; };
@@ -308,6 +309,7 @@
 		8BBC7DE9391A8974DD5B6A32 /* ProductStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7106327DAD1C9044E4A57DD5 /* ProductStore.swift */; };
 		8C3A81E3D75F027539933310 /* BottomPaddingAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18DB52B223C181E0A8FA1D6D /* BottomPaddingAnimation.swift */; };
 		8D0B281D5CB739D6AD5EBC0D /* DebugPaywallPickerViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19162D473A3E154574733AA2 /* DebugPaywallPickerViewController.swift */; };
+		8D22B4A1500BF56E91DC731F /* DevServerLocator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7781E6093CC05F1467B431D /* DevServerLocator.swift */; };
 		8E5661E20F318661BB005E2F /* CustomerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2031E7FE7D2ECC7AFF8519AE /* CustomerInfo.swift */; };
 		8EC4001F5273FB1260618E84 /* PaywallRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AB5B56470F69FBE1C34EAA8 /* PaywallRequest.swift */; };
 		8F18BFB254E432BFBEAB1324 /* LogLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA3A82C80F89023672D56AD7 /* LogLevel.swift */; };
@@ -392,6 +394,7 @@
 		B15607185B9E4229C6C4F240 /* SK2StoreTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B96E2A1A289D96267EC0BC /* SK2StoreTransaction.swift */; };
 		B162BE92B3568078BC0ADD1B /* StoreProductBillingPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F98E1C9554F6AFAECF9B3430 /* StoreProductBillingPlanTests.swift */; };
 		B294572426111EC04F225289 /* MockExternalPurchaseControllerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9C9132109020FA03D1D5C7 /* MockExternalPurchaseControllerFactory.swift */; };
+		B29A93B51FE9421DD5E271C2 /* DevServerCandidates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A970BB7B4C3063A22F0B252 /* DevServerCandidates.swift */; };
 		B2AB1E9283FDE2D544C8BCA8 /* MockReceiptData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B81D88316F06C0C2757F10 /* MockReceiptData.swift */; };
 		B2AC4436371BC96FAA4FB5B3 /* CustomCallbackRegistryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CFC75AD1252D05D2033D7B0 /* CustomCallbackRegistryTests.swift */; };
 		B2B5684F46FB49AB9E3C1BE0 /* Cache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03E47DA89C9F4FBD7FA038F5 /* Cache.swift */; };
@@ -497,6 +500,7 @@
 		DB6FF170AE90FF8623A31E14 /* DispatchQueueBacked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */; };
 		DB7858A959C145FA32F6C9EC /* PaywallPresentationInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831F679BDAC779043091DB7E /* PaywallPresentationInfoTests.swift */; };
 		DBF70D987418DD9EB504FBDE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42956918D4FFA5FBA79F3AA5 /* Constants.swift */; };
+		DC1E01DEAD4D0E2F59CBCEF0 /* DevServerLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD506DA245EEFB3B0DB8D4E /* DevServerLocation.swift */; };
 		DCE85B4A9DBD672B658F6EB3 /* MockSKPaymentTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1A6ADFFB9FA982BF69C134 /* MockSKPaymentTransaction.swift */; };
 		DE2F41FF9D70AB13AD246E49 /* VariantOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 194B8214C0A66407CEDCC0F4 /* VariantOption.swift */; };
 		DE62F8E261EC7C60FBAAAE1D /* BundleHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = F34468E3988E779132CE101A /* BundleHelper.swift */; };
@@ -810,6 +814,7 @@
 		5D44CEC91693B4B900472C1C /* Survey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Survey.swift; sourceTree = "<group>"; };
 		5D8D539E4636D23E549B4520 /* TestModePurchaseDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModePurchaseDrawer.swift; sourceTree = "<group>"; };
 		5DD4E7007670C369DD8FF5D9 /* Date+IsWithinAnHourBeforeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsWithinAnHourBeforeTests.swift"; sourceTree = "<group>"; };
+		5E37562E243AE6632134D94A /* DevServerSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerSurface.swift; sourceTree = "<group>"; };
 		5EB5A772C1F2ECE6D0E0BD69 /* PaywallState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallState.swift; sourceTree = "<group>"; };
 		60B80BEE0364C0EF86E2084E /* sl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sl; path = sl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		61062B4B7A0AB23514A2F439 /* SwiftVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftVersion.swift; sourceTree = "<group>"; };
@@ -841,6 +846,7 @@
 		6944763A0D07AFA102B023C5 /* PaywallManagerLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManagerLogicTests.swift; sourceTree = "<group>"; };
 		69A4D77D819DDB696834E1B7 /* UIViewController+AsyncPresent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+AsyncPresent.swift"; sourceTree = "<group>"; };
 		6A56D712042043783D7CA142 /* ProductPurchaserSK1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPurchaserSK1.swift; sourceTree = "<group>"; };
+		6A970BB7B4C3063A22F0B252 /* DevServerCandidates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerCandidates.swift; sourceTree = "<group>"; };
 		6B103FA8F9AE387E7DB4B471 /* LocationPermissionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionDelegate.swift; sourceTree = "<group>"; };
 		6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionTests.swift; sourceTree = "<group>"; };
 		6B9E9E16EBDA97E736968496 /* PaywallPresentationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationHandler.swift; sourceTree = "<group>"; };
@@ -1112,6 +1118,7 @@
 		CC653A44D9B40812BDDD94E7 /* PaywallMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallMessage.swift; sourceTree = "<group>"; };
 		CC89718EBDD71E09AB5F41DA /* AppSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionManager.swift; sourceTree = "<group>"; };
 		CCAE23C483138D33A1CF8889 /* ProductsFetcherSK1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsFetcherSK1.swift; sourceTree = "<group>"; };
+		CCD506DA245EEFB3B0DB8D4E /* DevServerLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerLocation.swift; sourceTree = "<group>"; };
 		CCFFBE357699F5CAAB803DA7 /* ManagedTriggerRuleOccurrence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManagedTriggerRuleOccurrence.swift; sourceTree = "<group>"; };
 		CD8C0C8DA633BE856F5B9EEF /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/Localizable.strings; sourceTree = "<group>"; };
 		CD9298A79020030E9A1357A6 /* API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = API.swift; sourceTree = "<group>"; };
@@ -1138,6 +1145,7 @@
 		D6340ACDA40937ACAC66FA3D /* EntitlementPriorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementPriorityTests.swift; sourceTree = "<group>"; };
 		D69BCC259F5FBE15AB02D662 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 		D7434029CB9E4680C85D3FB6 /* PermissionHandler+Microphone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Microphone.swift"; sourceTree = "<group>"; };
+		D7781E6093CC05F1467B431D /* DevServerLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerLocator.swift; sourceTree = "<group>"; };
 		D7B0C7BDA06D25D9D5A865A3 /* TestModeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeManagerTests.swift; sourceTree = "<group>"; };
 		D7E232690489360042465DB2 /* Redeemable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redeemable.swift; sourceTree = "<group>"; };
 		D81D656CEA8B5B86458038D4 /* ms */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ms; path = ms.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -2605,9 +2613,13 @@
 			isa = PBXGroup;
 			children = (
 				D9C76F083AB62E59C5DF7FEE /* DevMode.swift */,
+				6A970BB7B4C3063A22F0B252 /* DevServerCandidates.swift */,
+				CCD506DA245EEFB3B0DB8D4E /* DevServerLocation.swift */,
+				D7781E6093CC05F1467B431D /* DevServerLocator.swift */,
 				ACAF662B855E4A70DDEE66F6 /* DevServerManifest.swift */,
 				3DE9BCE12E3F4300AD2379B4 /* DevServerPaywall.swift */,
 				4E9B7111D8087FC1DF3E6B80 /* DevServerPreview.swift */,
+				5E37562E243AE6632134D94A /* DevServerSurface.swift */,
 			);
 			path = DevServer;
 			sourceTree = "<group>";
@@ -3546,9 +3558,13 @@
 				CB2F2B4DA3709F171E54CBB8 /* DeepLinkRouter.swift in Sources */,
 				3F4BE7ECC80EEA757454F9B6 /* DependencyContainer.swift in Sources */,
 				50E0E5F4B476F2F5B8DF299E /* DevMode.swift in Sources */,
+				B29A93B51FE9421DD5E271C2 /* DevServerCandidates.swift in Sources */,
+				DC1E01DEAD4D0E2F59CBCEF0 /* DevServerLocation.swift in Sources */,
+				8D22B4A1500BF56E91DC731F /* DevServerLocator.swift in Sources */,
 				789B734B60F87DBC23FC7930 /* DevServerManifest.swift in Sources */,
 				EA6F422EB1C1F0E6882E4AEF /* DevServerPaywall.swift in Sources */,
 				08C89125100BC25CE015A7B6 /* DevServerPreview.swift in Sources */,
+				346A77D3F31E471EB7CC4D5C /* DevServerSurface.swift in Sources */,
 				7FCDAF6C945FA04FC4C4E8E3 /* DeviceHelper.swift in Sources */,
 				191AA8FBBF617251EF6F8628 /* DeviceInfo.swift in Sources */,
 				6CF900F9770237D75585A681 /* DevicePreloadScript.swift in Sources */,
