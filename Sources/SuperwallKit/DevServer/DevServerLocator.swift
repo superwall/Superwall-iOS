@@ -69,10 +69,10 @@ actor DevServerLocator {
   /// and the failure is otherwise indistinguishable from "no server there".
   private func warnIfBlockedByAppTransportSecurity(_ error: Error, base: URL) {
     let code = (error as NSError).code
-    guard
-      code == NSURLErrorAppTransportSecurityRequiresSecureConnection,
-      !hasWarnedAboutTransportSecurity
-    else {
+    guard code == NSURLErrorAppTransportSecurityRequiresSecureConnection else {
+      return
+    }
+    if hasWarnedAboutTransportSecurity {
       return
     }
     hasWarnedAboutTransportSecurity = true
