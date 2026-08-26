@@ -53,7 +53,7 @@ enum DevServerPreview {
 
   /// A deep-link-supplied base may only name a host `superwall dev` ever
   /// prints — loopback, `.local`, or a private-network address — or the
-  /// developer-supplied `devServerURL`, which is trusted input. Anything else
+  /// developer-supplied `devServer` URL, which is trusted input. Anything else
   /// is an arbitrary internet host that must not be handed the paywall
   /// pipeline's JS bridge.
   static func isTrustedBase(_ base: URL, devServerURL: URL?) -> Bool {
@@ -93,8 +93,8 @@ enum DevServerPreview {
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,
-        message: "Scanned a superwall dev link, but SuperwallOptions.devMode is off "
-          + "in this build. Enable devMode to preview local paywalls in the app."
+        message: "Scanned a superwall dev link, but SuperwallOptions.devServer is not set "
+          + "in this build. Set devServer to preview local paywalls in the app."
       )
       return false
     }
@@ -104,7 +104,7 @@ enum DevServerPreview {
         scope: .superwallCore,
         message: "Ignoring a superwall dev link pointing at \(outcome.base.absoluteString): "
           + "dev servers only run on localhost, .local hosts, or private-network addresses. "
-          + "To use another host, set it as SuperwallOptions.devServerURL."
+          + "To use another host, set it as SuperwallOptions.devServer's url."
       )
       return false
     }

@@ -10,12 +10,10 @@ import Testing
 @Suite(.serialized)
 struct DevServerPreviewTests {
   private func options(
-    devMode: Bool = true,
-    devServerURL: URL? = nil
+    devServer: SuperwallOptions.DevServer? = .default
   ) -> SuperwallOptions {
     let options = SuperwallOptions()
-    options.devMode = devMode
-    options.devServerURL = devServerURL
+    options.devServer = devServer
     return options
   }
 
@@ -76,14 +74,14 @@ struct DevServerPreviewTests {
 
   // MARK: - canHandle
 
-  @Test("A dev link is not Superwall's when dev mode is off")
-  func canHandle_devModeOff() throws {
+  @Test("A dev link is not Superwall's when no dev server is set")
+  func canHandle_devServerOff() throws {
     let url = try #require(URL(string: "myapp://?superwall_dev=http://localhost:6100"))
-    #expect(!DevServerPreview.canHandle(url: url, options: options(devMode: false)))
+    #expect(!DevServerPreview.canHandle(url: url, options: options(devServer: nil)))
   }
 
-  @Test("A dev link pointing at a local host is Superwall's when dev mode is on")
-  func canHandle_devModeOnLocalHost() throws {
+  @Test("A dev link pointing at a local host is Superwall's when a dev server is set")
+  func canHandle_devServerOnLocalHost() throws {
     DevMode.isSandboxEnvironment = { true }
     defer { DevMode.isSandboxEnvironment = { DeviceHelper.isSandboxEnvironment } }
 
@@ -91,8 +89,8 @@ struct DevServerPreviewTests {
     #expect(DevServerPreview.canHandle(url: url, options: options()))
   }
 
-  @Test("A dev link pointing at an internet host is refused even with dev mode on")
-  func canHandle_devModeOnPublicHost() throws {
+  @Test("A dev link pointing at an internet host is refused even with a dev server set")
+  func canHandle_devServerOnPublicHost() throws {
     DevMode.isSandboxEnvironment = { true }
     defer { DevMode.isSandboxEnvironment = { DeviceHelper.isSandboxEnvironment } }
 

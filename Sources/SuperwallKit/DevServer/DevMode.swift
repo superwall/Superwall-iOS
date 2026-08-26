@@ -20,7 +20,7 @@ enum DevMode {
   /// Whether dev mode should actually do anything right now: asked for, and
   /// running somewhere it is safe to (simulator, TestFlight, development).
   static func isActive(_ options: SuperwallOptions) -> Bool {
-    guard options.isDevModeEnabled else {
+    guard options.isDevServerEnabled else {
       return false
     }
     guard isSandboxEnvironment() else {
@@ -38,9 +38,9 @@ enum DevMode {
     Logger.debug(
       logLevel: .warn,
       scope: .superwallCore,
-      message: "SuperwallOptions.devMode is on in a production build, so it is being ignored: "
+      message: "SuperwallOptions.devServer is set in a production build, so it is being ignored: "
         + "paywalls load their published versions and purchases are real. "
-        + "Remove devMode before shipping."
+        + "Remove devServer before shipping."
     )
   }
 }

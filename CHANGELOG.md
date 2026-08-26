@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `SuperwallOptions.devMode` for development builds: with a `superwall dev` server running, every paywall renders from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Simulators find the dev server on localhost automatically; on a physical device set `SuperwallOptions.devServerURL` to the Device URL `superwall dev` prints. Dev mode also activates test mode, disables preloading, and skips the test mode intro sheet.
+- Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 
 ### Fixes
 

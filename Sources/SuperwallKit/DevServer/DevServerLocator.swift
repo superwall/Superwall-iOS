@@ -60,7 +60,7 @@ actor DevServerLocator {
       message: "Dev mode is on but no superwall dev server was found at "
         + "\(bases.map { $0.absoluteString }.joined(separator: ", ")). "
         + "Paywalls will load their published versions. On a physical device, "
-        + "set SuperwallOptions.devServerURL to the Device URL superwall dev prints."
+        + "set SuperwallOptions.devServer to the Device URL superwall dev prints."
     )
     return nil
   }
