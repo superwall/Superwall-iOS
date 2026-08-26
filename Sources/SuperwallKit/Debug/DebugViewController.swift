@@ -275,9 +275,7 @@ final class DebugViewController: UIViewController {
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 
-      paywall.productVariables = await withTimeout(seconds: 3) {
-        await self.storeKitManager.getProductVariables(for: paywall)
-      } ?? []
+      paywall.productVariables = await storeKitManager.getProductVariables(for: paywall)
 
       self.paywall = paywall
       self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
@@ -364,32 +362,6 @@ final class DebugViewController: UIViewController {
     }
   }
 
-  /// Races the operation against a deadline and genuinely resumes at whichever
-  /// finishes first. A task group can't do this — it awaits every child, and
-  /// the product path has no cancellation checks to cut a slow call short —
-  /// so a missed deadline abandons the operation's unstructured task instead.
-  private func withTimeout<T: Sendable>(
-    seconds: Double,
-    operation: @escaping @Sendable () async -> T
-  ) async -> T? {
-    let stream = AsyncStream<T?> { continuation in
-      let operationTask = Task {
-        continuation.yield(await operation())
-        continuation.finish()
-      }
-      Task {
-        try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-        operationTask.cancel()
-        continuation.yield(nil)
-        continuation.finish()
-      }
-    }
-    for await result in stream {
-      return result
-    }
-    return nil
-  }
-
   /// Picks the dev-server surface the debugger opens with, if any.
   func selectDevSurface(id: String?) {
     guard let id = id else {
@@ -417,9 +389,7 @@ final class DebugViewController: UIViewController {
     var paywall = Paywall.devServer(surface: surface, url: url)
     // Product variables are best-effort here: a surface can name products the
     // store has no record of yet, and the preview must still render.
-    paywall.productVariables = await withTimeout(seconds: 3) {
-      await self.storeKitManager.getProductVariables(for: paywall)
-    } ?? []
+    paywall.productVariables = await storeKitManager.getProductVariables(for: paywall)
     self.paywall = paywall
     paywallIdentifier = paywall.identifier
     paywallDatabaseId = paywall.databaseId
