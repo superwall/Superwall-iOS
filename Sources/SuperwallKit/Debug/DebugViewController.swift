@@ -444,7 +444,11 @@ final class DebugViewController: UIViewController {
   @objc func pressedPreview() {
     let devSurfaces = devServer?.surfaces ?? []
     let published = publishedPaywalls
-    guard !devSurfaces.isEmpty || published.count > 1 || paywallDatabaseId == nil else {
+    // Nothing to pick from: no local surfaces, at most one published paywall,
+    // and that paywall is already showing.
+    if devSurfaces.isEmpty,
+      published.count <= 1,
+      paywallDatabaseId != nil {
       return
     }
 
