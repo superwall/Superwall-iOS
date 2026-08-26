@@ -18,14 +18,23 @@ enum DevServerPreview {
     let surfaceId: String?
   }
 
+  /// Parses a `superwall_dev` deep link: the dev server base carried in the
+  /// `superwall_dev` query item, which must be a web URL, plus the optional
+  /// `superwall_dev_surface` to open with.
   static func outcomeForDeepLink(url: URL) -> DeepLinkOutcome? {
-    guard
-      let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-      let items = components.queryItems,
-      let raw = items.first(where: { $0.name == "superwall_dev" })?.value,
-      let base = URL(string: raw),
-      base.scheme == "http" || base.scheme == "https"
-    else {
+    guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+      return nil
+    }
+    guard let items = components.queryItems else {
+      return nil
+    }
+    guard let raw = items.first(where: { $0.name == "superwall_dev" })?.value else {
+      return nil
+    }
+    guard let base = URL(string: raw) else {
+      return nil
+    }
+    guard base.scheme == "http" || base.scheme == "https" else {
       return nil
     }
     let surfaceId = items.first { $0.name == "superwall_dev_surface" }?.value
