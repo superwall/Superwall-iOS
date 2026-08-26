@@ -69,6 +69,35 @@ extension PaywallRequestManager {
     return paywall
   }
 
+  /// Resolves a synthetic `dev:` identifier — a dev-server surface the
+  /// debugger selected that has never been pushed to the dashboard — from the
+  /// debugger's manifest, since the backend has nothing to fetch for it.
+  private func devServerPaywall(forId paywallId: String?) async -> Paywall? {
+    guard let paywallId = paywallId else {
+      return nil
+    }
+    guard paywallId.hasPrefix("dev:") else {
+      return nil
+    }
+    guard DevMode.isActive(factory.makeSuperwallOptions()) else {
+      return nil
+    }
+    guard let devServer = await MainActor.run(body: {
+      Superwall.shared.dependencyContainer.debugManager.devServer
+    }) else {
+      return nil
+    }
+    guard let surface = devServer.surfaces.first(where: { "dev:\($0.id)" == paywallId }) else {
+      return nil
+    }
+    guard let mountURL = DevServerManifest(surfaces: devServer.surfaces)
+      .mountURL(for: surface, base: devServer.base)
+    else {
+      return nil
+    }
+    return Paywall.devServer(surface: surface, url: mountURL)
+  }
+
   private func getPaywallResponse(
     from request: PaywallRequest
   ) async throws -> Paywall {
@@ -78,7 +107,9 @@ extension PaywallRequestManager {
     var paywall: Paywall
 
     do {
-      if let staticPaywall = factory.makeStaticPaywall(
+      if let devPaywall = await devServerPaywall(forId: paywallId) {
+        paywall = devPaywall
+      } else if let staticPaywall = factory.makeStaticPaywall(
         withId: paywallId,
         isDebuggerLaunched: request.isDebuggerLaunched
       ) {
