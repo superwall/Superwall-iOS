@@ -783,15 +783,12 @@ class ConfigManager {
       ? .active(result.entitlements)
       : .inactive
 
-    // This is only true when the persisted subscription status came from Test Mode. With an
-    // external purchase controller the persisted status stays app-owned, so it's never a Test
-    // Mode artifact.
-    storage.save(
-      hasActiveEntitlements && !hasPurchaseController,
-      forType: IsTestModeActiveSubscription.self
-    )
     testModeManager.overriddenCustomerInfo = testModeCustomerInfo
     testModeManager.overriddenSubscriptionStatus = subscriptionStatus
+    testModeManager.recordPersistedStatusOrigin(
+      subscriptionStatus,
+      hasPurchaseController: hasPurchaseController
+    )
     if hasPurchaseController {
       Superwall.shared.refreshTestModeResolvedState()
     } else {

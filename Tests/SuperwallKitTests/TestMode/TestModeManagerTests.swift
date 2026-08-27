@@ -11,6 +11,50 @@ import Testing
 import Foundation
 
 struct TestModeManagerTests {
+  // MARK: - recordPersistedStatusOrigin
+
+  @Test
+  func recordPersistedStatusOrigin_activeWithoutPurchaseController_flagsTestModeArtifact() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    let storage = dependencyContainer.storage!
+
+    manager.recordPersistedStatusOrigin(
+      .active(Set([Entitlement(id: "premium")])),
+      hasPurchaseController: false
+    )
+
+    #expect(storage.get(IsTestModeActiveSubscription.self) == true)
+  }
+
+  @Test
+  func recordPersistedStatusOrigin_activeWithPurchaseController_doesNotFlag() {
+    let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    let manager = dependencyContainer.testModeManager!
+    let storage = dependencyContainer.storage!
+    storage.save(true, forType: IsTestModeActiveSubscription.self)
+
+    // The public status is never written by Test Mode here, so what's persisted stays app-owned.
+    manager.recordPersistedStatusOrigin(
+      .active(Set([Entitlement(id: "premium")])),
+      hasPurchaseController: true
+    )
+
+    #expect(storage.get(IsTestModeActiveSubscription.self) == false)
+  }
+
+  @Test
+  func recordPersistedStatusOrigin_inactive_clearsFlag() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    let storage = dependencyContainer.storage!
+    storage.save(true, forType: IsTestModeActiveSubscription.self)
+
+    manager.recordPersistedStatusOrigin(.inactive, hasPurchaseController: false)
+
+    #expect(storage.get(IsTestModeActiveSubscription.self) == false)
+  }
+
   @Test
   func evaluateTestMode_activatesForMatchingUserId() {
     let dependencyContainer = DependencyContainer()

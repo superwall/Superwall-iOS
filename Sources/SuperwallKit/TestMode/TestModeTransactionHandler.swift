@@ -182,7 +182,13 @@ final class TestModeTransactionHandler {
     testModeManager.overriddenCustomerInfo = customerInfo
     testModeManager.overriddenSubscriptionStatus = subscriptionStatus
 
-    if Superwall.shared.dependencyContainer.makeHasExternalPurchaseController() {
+    let hasPurchaseController = Superwall.shared.dependencyContainer.makeHasExternalPurchaseController()
+    testModeManager.recordPersistedStatusOrigin(
+      subscriptionStatus,
+      hasPurchaseController: hasPurchaseController
+    )
+
+    if hasPurchaseController {
       Superwall.shared.refreshTestModeResolvedState()
     } else {
       Superwall.shared.customerInfo = customerInfo
