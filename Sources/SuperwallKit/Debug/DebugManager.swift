@@ -17,6 +17,7 @@ final class DebugManager {
   struct DeepLinkOutcome {
     let debugKey: String
     let paywallId: String?
+    let overrides: DebugPaywallOverrides
   }
 
   init(
@@ -33,7 +34,10 @@ final class DebugManager {
     }
     storage.debugKey = outcome.debugKey
     Task {
-      await self.launchDebugger(withPaywallId: outcome.paywallId)
+      await self.launchDebugger(
+        withPaywallId: outcome.paywallId,
+        overrides: outcome.overrides
+      )
     }
     return true
   }
@@ -58,7 +62,11 @@ final class DebugManager {
       fromUrl: url,
       withName: .paywallId
     )
-    return .init(debugKey: debugKey, paywallId: paywallId)
+    return .init(
+      debugKey: debugKey,
+      paywallId: paywallId,
+      overrides: DebugPaywallOverrides(url: url)
+    )
   }
 
 	/// Launches the debugger for you to preview paywalls.
@@ -68,38 +76,50 @@ final class DebugManager {
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
   @MainActor
-  func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+  func launchDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    overrides: DebugPaywallOverrides = DebugPaywallOverrides()
+  ) async {
     if Superwall.shared.isPaywallPresented {
       await Superwall.shared.dismiss()
-      await launchDebugger(withPaywallId: paywallDatabaseId)
+      await launchDebugger(withPaywallId: paywallDatabaseId, overrides: overrides)
 		} else {
 			if viewController == nil {
         let milliseconds = 200
         let nanoseconds = UInt64(milliseconds * 1_000_000)
         try? await Task.sleep(nanoseconds: nanoseconds)
-        await presentDebugger(withPaywallId: paywallDatabaseId)
+        await presentDebugger(withPaywallId: paywallDatabaseId, overrides: overrides)
 			} else {
         await closeDebugger(animated: true)
-        await launchDebugger(withPaywallId: paywallDatabaseId)
+        await launchDebugger(withPaywallId: paywallDatabaseId, overrides: overrides)
 			}
 		}
 	}
 
   @MainActor
-	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+	func presentDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    overrides: DebugPaywallOverrides = DebugPaywallOverrides()
+  ) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
       if viewController.isBeingPresented {
         return
       }
 			viewController.paywallDatabaseId = paywallDatabaseId
-			await viewController.loadPreview()
+      viewController.overrides = overrides
+      // On reuse, `viewDidLoad` won't run again, so apply locale/appearance here.
+      viewController.applyOverrides()
+      await viewController.startPreviewLoad().value
 			await UIViewController.topMostViewController?.present(
         viewController,
         animated: true
       )
 		} else {
-      let viewController = factory.makeDebugViewController(withDatabaseId: paywallDatabaseId)
+      let viewController = factory.makeDebugViewController(
+        withDatabaseId: paywallDatabaseId,
+        overrides: overrides
+      )
 			UIViewController.topMostViewController?.present(
         viewController,
         animated: true,
