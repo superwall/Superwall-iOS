@@ -11,7 +11,8 @@ final class DevServerPaywallTests: XCTestCase {
     id: String = "pro",
     paywallId: String? = nil,
     identifier: String? = nil,
-    products: [String: String]? = nil
+    products: [String: String]? = nil,
+    presentation: String? = nil
   ) -> DevServerSurface {
     let json = """
     {
@@ -20,6 +21,7 @@ final class DevServerPaywallTests: XCTestCase {
       "url": "/preview/paywall/\(id)",
       \(paywallId.map { "\"paywallId\": \"\($0)\"," } ?? "")
       \(identifier.map { "\"identifier\": \"\($0)\"," } ?? "")
+      \(presentation.map { "\"presentation\": \($0)," } ?? "")
       "products": \(products.map { dict in
         "{" + dict.map { "\"\($0.key)\": \"\($0.value)\"" }.sorted().joined(separator: ",") + "}"
       } ?? "null")
@@ -71,5 +73,52 @@ final class DevServerPaywallTests: XCTestCase {
 
     XCTAssertEqual(paywall.databaseId, "253583")
     XCTAssertEqual(paywall.identifier, "chatgpt-plus")
+  }
+
+  func test_isMarkedLocalSoEventsCanSaySo() {
+    let paywall = Paywall.devServer(surface: surface(), url: url)
+
+    XCTAssertTrue(paywall.isLocal)
+    let params = paywall.getInfo(fromPlacement: nil).audienceFilterParams()
+    XCTAssertEqual(params["is_local"] as? Bool, true)
+  }
+
+  func test_presentsFullscreenWhenTheConfigSaysNothing() {
+    let paywall = Paywall.devServer(surface: surface(), url: url)
+    XCTAssertEqual(paywall.presentation.style, .fullscreen)
+  }
+
+  func test_usesThePresentationStyleTheConfigDeclares() {
+    let modal = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "modal"}"#),
+      url: url
+    )
+    XCTAssertEqual(modal.presentation.style, .modal)
+
+    let drawer = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "drawer", "drawer": {"height": 420, "cornerRadius": 24}}"#),
+      url: url
+    )
+    XCTAssertEqual(drawer.presentation.style, .drawer(height: 420, cornerRadius: 24))
+
+    let popup = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "popup", "popup": {"width": 300, "height": 500, "cornerRadius": 16}}"#),
+      url: url
+    )
+    XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 16))
+  }
+
+  func test_fallsBackToFullscreenWhenAStyleIsUnknownOrIncomplete() {
+    let unknown = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "hologram"}"#),
+      url: url
+    )
+    XCTAssertEqual(unknown.presentation.style, .fullscreen)
+
+    let drawerWithoutGeometry = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "drawer"}"#),
+      url: url
+    )
+    XCTAssertEqual(drawerWithoutGeometry.presentation.style, .fullscreen)
   }
 }

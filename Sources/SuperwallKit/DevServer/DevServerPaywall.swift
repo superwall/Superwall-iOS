@@ -23,7 +23,7 @@ extension Paywall {
         )
       }
 
-    return Paywall(
+    var paywall = Paywall(
       databaseId: surface.paywallId ?? "dev:\(surface.kind)/\(surface.id)",
       identifier: surface.identifier ?? "dev:\(surface.id)",
       name: surface.id,
@@ -35,7 +35,10 @@ extension Paywall {
         maxAttempts: 1
       ),
       htmlSubstitutions: "",
-      presentation: PaywallPresentationInfo(style: .modal, delay: 0),
+      presentation: PaywallPresentationInfo(
+        style: presentationStyle(for: surface),
+        delay: 0
+      ),
       backgroundColorHex: "#FFFFFF",
       backgroundColor: .white,
       darkBackgroundColorHex: nil,
@@ -51,5 +54,35 @@ extension Paywall {
       isScrollEnabled: true,
       introOfferEligibility: .automatic
     )
+    paywall.isLocal = true
+    return paywall
+  }
+
+  /// Maps a surface's `config.ts` presentation onto the SDK's styles.
+  /// The framework documents `fullscreen` as its default, so anything
+  /// missing or unrecognized lands there.
+  private static func presentationStyle(
+    for surface: DevServerSurface
+  ) -> PaywallPresentationStyle {
+    switch surface.presentation?.style {
+    case "modal":
+      return .modal
+    case "push":
+      return .push
+    case "noAnimation":
+      return .fullscreenNoAnimation
+    case "drawer":
+      if let drawer = surface.presentation?.drawer {
+        return .drawer(height: drawer.height, cornerRadius: drawer.cornerRadius)
+      }
+      return .fullscreen
+    case "popup":
+      if let popup = surface.presentation?.popup {
+        return .popup(height: popup.height, width: popup.width, cornerRadius: popup.cornerRadius)
+      }
+      return .fullscreen
+    default:
+      return .fullscreen
+    }
   }
 }

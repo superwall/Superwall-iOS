@@ -87,6 +87,10 @@ struct Paywall: Codable {
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
 
+  /// Whether this paywall was synthesized from a `superwall dev` server
+  /// surface rather than fetched from the dashboard.
+  var isLocal = false
+
   /// Indicates how intro offer eligiblity should be treat on products. Defaults to
   /// `.automatic`.
   let introOfferEligibility: IntroOfferEligibility
@@ -189,6 +193,7 @@ struct Paywall: Codable {
     case surveys
     case manifest
     case isScrollEnabled
+    case isLocal
     case introductoryOfferEligibility
 
     case responseLoadStartTime
@@ -305,6 +310,7 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
+    isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? false
     introOfferEligibility = try values
       .decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
   }
@@ -363,6 +369,7 @@ struct Paywall: Codable {
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
     try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
+    try container.encode(isLocal, forKey: .isLocal)
     try container.encodeIfPresent(introOfferEligibility, forKey: .introductoryOfferEligibility)
   }
 
@@ -471,6 +478,7 @@ struct Paywall: Codable {
       surveys: surveys,
       presentation: presentation,
       isScrollEnabled: isScrollEnabled,
+      isLocal: isLocal,
       state: state,
       introOfferEligibility: introOfferEligibility
     )
