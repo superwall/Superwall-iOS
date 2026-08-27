@@ -746,7 +746,7 @@ final class TransactionManager {
     }
 
     let customerInfo = await MainActor.run {
-      Superwall.shared.customerInfo
+      Superwall.shared.effectiveCustomerInfo
     }
 
     // If customer info hasn't loaded yet, assume the user has already had the

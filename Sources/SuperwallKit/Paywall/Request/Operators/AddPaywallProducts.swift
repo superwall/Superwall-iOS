@@ -334,7 +334,7 @@ extension PaywallRequestManager {
     }
 
     let subscriptions = await MainActor.run {
-      Superwall.shared.customerInfo.subscriptions
+      Superwall.shared.effectiveCustomerInfo.subscriptions
     }
 
     // Find active App Store subscriptions in the same subscription group with an intro offer
@@ -361,7 +361,7 @@ extension PaywallRequestManager {
       return false
     }
     let customerInfo = await MainActor.run {
-      Superwall.shared.customerInfo
+      Superwall.shared.effectiveCustomerInfo
     }
     // If customer info hasn't loaded yet, assume the user has had the
     // entitlement to avoid falsely offering a trial.

@@ -215,11 +215,12 @@ public final class Superwall: NSObject, ObservableObject {
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
       let resolved = resolvedSubscriptionStatus(subscriptionStatus)
-      if resolved != subscriptionStatus {
+      if resolved != subscriptionStatus,
+        !shouldKeepTestModeSubscriptionStatusInternal {
         subscriptionStatus = resolved
         return
       }
-      entitlements.subscriptionStatusDidSet(subscriptionStatus)
+      publishEffectiveSubscriptionStatus()
 
       // When using an external purchase controller, update CustomerInfo.entitlements
       // to reflect the entitlements from the purchase controller.
@@ -243,7 +244,8 @@ public final class Superwall: NSObject, ObservableObject {
   public var customerInfo: CustomerInfo = .blank() {
     didSet {
       let resolved = resolvedCustomerInfo(customerInfo)
-      if resolved != customerInfo {
+      if resolved != customerInfo,
+        !shouldKeepTestModeCustomerInfoInternal {
         customerInfo = resolved
       }
     }
@@ -366,6 +368,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
+  private let effectiveSubscriptionStatusSubject = CurrentValueSubject<SubscriptionStatus, Never>(.unknown)
 
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
@@ -388,6 +391,18 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
+
+  var effectiveSubscriptionStatus: SubscriptionStatus {
+    return resolvedSubscriptionStatus(subscriptionStatus)
+  }
+
+  var effectiveSubscriptionStatusPublisher: AnyPublisher<SubscriptionStatus, Never> {
+    return effectiveSubscriptionStatusSubject.eraseToAnyPublisher()
+  }
+
+  var effectiveCustomerInfo: CustomerInfo {
+    return resolvedCustomerInfo(customerInfo)
+  }
 
   /// Used to serially execute register calls.
   var previousRegisterTask: Task<Void, Never>?
@@ -436,6 +451,22 @@ public final class Superwall: NSObject, ObservableObject {
     return status
   }
 
+  private var shouldKeepTestModeSubscriptionStatusInternal: Bool {
+    guard dependencyContainer.makeHasExternalPurchaseController(),
+      let testModeManager = dependencyContainer.testModeManager else {
+      return false
+    }
+    return testModeManager.isTestMode && testModeManager.overriddenSubscriptionStatus != nil
+  }
+
+  private var shouldKeepTestModeCustomerInfoInternal: Bool {
+    guard dependencyContainer.makeHasExternalPurchaseController(),
+      let testModeManager = dependencyContainer.testModeManager else {
+      return false
+    }
+    return testModeManager.isTestMode && testModeManager.overriddenCustomerInfo != nil
+  }
+
   private func resolvedCustomerInfo(
     _ info: CustomerInfo
   ) -> CustomerInfo {
@@ -445,6 +476,16 @@ public final class Superwall: NSObject, ObservableObject {
       return override
     }
     return info
+  }
+
+  private func publishEffectiveSubscriptionStatus() {
+    let effectiveStatus = effectiveSubscriptionStatus
+    entitlements.subscriptionStatusDidSet(effectiveStatus)
+    effectiveSubscriptionStatusSubject.send(effectiveStatus)
+  }
+
+  func refreshTestModeResolvedState() {
+    publishEffectiveSubscriptionStatus()
   }
 
   // MARK: - Private Functions
@@ -469,7 +510,7 @@ public final class Superwall: NSObject, ObservableObject {
     customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
     subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
-    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
+    publishEffectiveSubscriptionStatus()
 
     addListeners()
 

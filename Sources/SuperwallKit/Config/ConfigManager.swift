@@ -404,6 +404,9 @@ class ConfigManager {
     let testModeManager = factory.makeTestModeManager()
     let wasTestMode = testModeManager.isTestMode
     testModeManager.evaluateTestMode(config: config, options: options)
+    await MainActor.run {
+      Superwall.shared.refreshTestModeResolvedState()
+    }
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
@@ -775,20 +778,21 @@ class ConfigManager {
       nonSubscriptions: [],
       entitlements: Array(result.entitlements)
     )
-    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
-    Superwall.shared.customerInfo = testModeCustomerInfo
-
-    // Update subscription status based on whether any entitlements are active
-    let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
-    if hasActiveEntitlements {
-      let status = SubscriptionStatus.active(result.entitlements)
-      testModeManager.overriddenSubscriptionStatus = status
-      Superwall.shared.subscriptionStatus = status
+    let subscriptionStatus: SubscriptionStatus
+    if result.entitlements.contains(where: { $0.isActive }) {
+      subscriptionStatus = .active(result.entitlements)
       storage.save(true, forType: IsTestModeActiveSubscription.self)
     } else {
-      testModeManager.overriddenSubscriptionStatus = .inactive
-      Superwall.shared.subscriptionStatus = .inactive
+      subscriptionStatus = .inactive
       storage.save(false, forType: IsTestModeActiveSubscription.self)
+    }
+    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
+    testModeManager.overriddenSubscriptionStatus = subscriptionStatus
+    if hasPurchaseController {
+      Superwall.shared.refreshTestModeResolvedState()
+    } else {
+      Superwall.shared.customerInfo = testModeCustomerInfo
+      Superwall.shared.subscriptionStatus = subscriptionStatus
     }
   }
 }

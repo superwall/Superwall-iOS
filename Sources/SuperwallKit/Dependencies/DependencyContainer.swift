@@ -402,7 +402,7 @@ extension DependencyContainer: RequestFactory {
       paywallOverrides: paywallOverrides,
       flags: .init(
         isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
-        subscriptionStatus: Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
+        subscriptionStatus: Superwall.shared.effectiveSubscriptionStatusPublisher,
         isPaywallPresented: isPaywallPresented,
         type: type
       )

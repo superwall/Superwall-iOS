@@ -37,6 +37,7 @@ struct SubscriptionStatusResolutionTests {
 
     // Should resolve to the test mode override
     #expect(superwall.subscriptionStatus == overrideStatus)
+    #expect(superwall.effectiveSubscriptionStatus == overrideStatus)
   }
 
   @Test
@@ -60,6 +61,7 @@ struct SubscriptionStatusResolutionTests {
     superwall.subscriptionStatus = .inactive
 
     #expect(superwall.subscriptionStatus == .inactive)
+    #expect(superwall.effectiveSubscriptionStatus == .inactive)
   }
 
   @Test
@@ -88,6 +90,17 @@ struct SubscriptionStatusResolutionTests {
   }
 
   @Test
+  func subscriptionStatus_activeEmptyWithExternalPurchaseController_resolvesToInactive() {
+    let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    superwall.subscriptionStatus = .active([])
+
+    #expect(superwall.subscriptionStatus == .inactive)
+    #expect(superwall.effectiveSubscriptionStatus == .inactive)
+  }
+
+  @Test
   func subscriptionStatus_testModeNotActive_noOverrideApplied() {
     let dependencyContainer = DependencyContainer()
     let superwall = Superwall(dependencyContainer: dependencyContainer)
@@ -102,6 +115,7 @@ struct SubscriptionStatusResolutionTests {
     superwall.subscriptionStatus = .inactive
 
     #expect(superwall.subscriptionStatus == .inactive)
+    #expect(superwall.effectiveSubscriptionStatus == .inactive)
   }
 
   @Test
@@ -125,6 +139,31 @@ struct SubscriptionStatusResolutionTests {
     superwall.subscriptionStatus = .active(Set([entitlement]))
 
     #expect(superwall.subscriptionStatus == .active(Set([entitlement])))
+    #expect(superwall.effectiveSubscriptionStatus == .active(Set([entitlement])))
+  }
+
+  @Test
+  func subscriptionStatus_testModeOverride_withExternalPurchaseController_keepsRawStatus() {
+    let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let testModeManager = dependencyContainer.testModeManager!
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    let overrideEntitlement = Entitlement(id: "test_premium")
+    let overrideStatus: SubscriptionStatus = .active(Set([overrideEntitlement]))
+    testModeManager.overriddenSubscriptionStatus = overrideStatus
+
+    superwall.subscriptionStatus = .inactive
+
+    #expect(superwall.subscriptionStatus == .inactive)
+    #expect(superwall.effectiveSubscriptionStatus == overrideStatus)
+    #expect(superwall.entitlements.active == Set([overrideEntitlement]))
   }
 
   // MARK: - customerInfo resolution
@@ -161,6 +200,7 @@ struct SubscriptionStatusResolutionTests {
 
     // Should resolve to the test mode override
     #expect(superwall.customerInfo == overrideInfo)
+    #expect(superwall.effectiveCustomerInfo == overrideInfo)
   }
 
   @Test
@@ -176,6 +216,7 @@ struct SubscriptionStatusResolutionTests {
     superwall.customerInfo = info
 
     #expect(superwall.customerInfo == info)
+    #expect(superwall.effectiveCustomerInfo == info)
   }
 
   @Test
@@ -201,5 +242,37 @@ struct SubscriptionStatusResolutionTests {
     superwall.customerInfo = externalInfo
 
     #expect(superwall.customerInfo == externalInfo)
+    #expect(superwall.effectiveCustomerInfo == externalInfo)
+  }
+
+  @Test
+  func customerInfo_testModeOverride_withExternalPurchaseController_keepsRawInfo() {
+    let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let testModeManager = dependencyContainer.testModeManager!
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    let overrideInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "test_entitlement")]
+    )
+    let externalInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+    testModeManager.overriddenCustomerInfo = overrideInfo
+
+    superwall.customerInfo = externalInfo
+
+    #expect(superwall.customerInfo == externalInfo)
+    #expect(superwall.effectiveCustomerInfo == overrideInfo)
   }
 }

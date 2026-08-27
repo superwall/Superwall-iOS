@@ -69,20 +69,20 @@ final class TestModeTransactionHandler {
         nonSubscriptions: [],
         entitlements: entitlements
       )
-      testModeManager.overriddenCustomerInfo = updatedCustomerInfo
-      Superwall.shared.customerInfo = updatedCustomerInfo
 
       // Set subscription status based on whether any entitlements are active
       let entitlementSet = Set(entitlements)
       let hasActiveEntitlements = entitlements.contains { $0.isActive }
+      let subscriptionStatus: SubscriptionStatus
       if hasActiveEntitlements {
-        let status = SubscriptionStatus.active(entitlementSet)
-        testModeManager.overriddenSubscriptionStatus = status
-        Superwall.shared.subscriptionStatus = status
+        subscriptionStatus = .active(entitlementSet)
       } else {
-        testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        subscriptionStatus = .inactive
       }
+      applyTestModeState(
+        customerInfo: updatedCustomerInfo,
+        subscriptionStatus: subscriptionStatus
+      )
 
       // Track free trial start if free trial is shown (respecting override)
       if showFreeTrial {
@@ -144,10 +144,7 @@ final class TestModeTransactionHandler {
           nonSubscriptions: [],
           entitlements: []
         )
-        testModeManager.overriddenCustomerInfo = customerInfo
-        Superwall.shared.customerInfo = customerInfo
-        testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        applyTestModeState(customerInfo: customerInfo, subscriptionStatus: .inactive)
       } else {
         // Update test mode manager with selected entitlement IDs
         let activeIds = Set(entitlements.map { $0.id })
@@ -158,23 +155,38 @@ final class TestModeTransactionHandler {
           nonSubscriptions: [],
           entitlements: Array(entitlements)
         )
-        testModeManager.overriddenCustomerInfo = customerInfo
-        Superwall.shared.customerInfo = customerInfo
-
+        let subscriptionStatus: SubscriptionStatus
         if hasActive {
-          let status = SubscriptionStatus.active(entitlements)
-          testModeManager.overriddenSubscriptionStatus = status
-          Superwall.shared.subscriptionStatus = status
+          subscriptionStatus = .active(entitlements)
         } else {
-          testModeManager.overriddenSubscriptionStatus = .inactive
-          Superwall.shared.subscriptionStatus = .inactive
+          subscriptionStatus = .inactive
         }
+        applyTestModeState(
+          customerInfo: customerInfo,
+          subscriptionStatus: subscriptionStatus
+        )
       }
 
       // Only count as restored if there are active entitlements
       return hasActive ? .restored : .failed(nil)
     case .cancelled:
       return .failed(nil)
+    }
+  }
+
+  @MainActor
+  private func applyTestModeState(
+    customerInfo: CustomerInfo,
+    subscriptionStatus: SubscriptionStatus
+  ) {
+    testModeManager.overriddenCustomerInfo = customerInfo
+    testModeManager.overriddenSubscriptionStatus = subscriptionStatus
+
+    if Superwall.shared.dependencyContainer.makeHasExternalPurchaseController() {
+      Superwall.shared.refreshTestModeResolvedState()
+    } else {
+      Superwall.shared.customerInfo = customerInfo
+      Superwall.shared.subscriptionStatus = subscriptionStatus
     }
   }
 
