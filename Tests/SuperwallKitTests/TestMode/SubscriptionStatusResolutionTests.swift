@@ -166,6 +166,30 @@ struct SubscriptionStatusResolutionTests {
     #expect(superwall.entitlements.active == Set([overrideEntitlement]))
   }
 
+  @Test
+  func subscriptionStatus_activeEmptyWithTestModeOverrideAndExternalPurchaseController_normalizesToInactive() {
+    let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let testModeManager = dependencyContainer.testModeManager!
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+    testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    let overrideEntitlement = Entitlement(id: "test_premium")
+    let overrideStatus: SubscriptionStatus = .active(Set([overrideEntitlement]))
+    testModeManager.overriddenSubscriptionStatus = overrideStatus
+
+    superwall.subscriptionStatus = .active([])
+
+    // The app-owned status is still normalized, it's just not replaced by the override.
+    #expect(superwall.subscriptionStatus == .inactive)
+    #expect(superwall.effectiveSubscriptionStatus == overrideStatus)
+  }
+
   // MARK: - customerInfo resolution
 
   @Test

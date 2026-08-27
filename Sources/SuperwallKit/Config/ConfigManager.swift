@@ -778,14 +778,18 @@ class ConfigManager {
       nonSubscriptions: [],
       entitlements: Array(result.entitlements)
     )
-    let subscriptionStatus: SubscriptionStatus
-    if result.entitlements.contains(where: { $0.isActive }) {
-      subscriptionStatus = .active(result.entitlements)
-      storage.save(true, forType: IsTestModeActiveSubscription.self)
-    } else {
-      subscriptionStatus = .inactive
-      storage.save(false, forType: IsTestModeActiveSubscription.self)
-    }
+    let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
+    let subscriptionStatus: SubscriptionStatus = hasActiveEntitlements
+      ? .active(result.entitlements)
+      : .inactive
+
+    // This is only true when the persisted subscription status came from Test Mode. With an
+    // external purchase controller the persisted status stays app-owned, so it's never a Test
+    // Mode artifact.
+    storage.save(
+      hasActiveEntitlements && !hasPurchaseController,
+      forType: IsTestModeActiveSubscription.self
+    )
     testModeManager.overriddenCustomerInfo = testModeCustomerInfo
     testModeManager.overriddenSubscriptionStatus = subscriptionStatus
     if hasPurchaseController {

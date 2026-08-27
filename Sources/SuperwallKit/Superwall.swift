@@ -214,9 +214,10 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
-      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
-      if resolved != subscriptionStatus,
-        !shouldKeepTestModeSubscriptionStatusInternal {
+      let resolved = shouldKeepAppOwnedSubscriptionStatus
+        ? normalizedSubscriptionStatus(subscriptionStatus)
+        : resolvedSubscriptionStatus(subscriptionStatus)
+      if resolved != subscriptionStatus {
         subscriptionStatus = resolved
         return
       }
@@ -245,7 +246,7 @@ public final class Superwall: NSObject, ObservableObject {
     didSet {
       let resolved = resolvedCustomerInfo(customerInfo)
       if resolved != customerInfo,
-        !shouldKeepTestModeCustomerInfoInternal {
+        !shouldKeepAppOwnedCustomerInfo {
         customerInfo = resolved
       }
     }
@@ -444,6 +445,13 @@ public final class Superwall: NSObject, ObservableObject {
       let override = testModeManager.overriddenSubscriptionStatus {
       return override
     }
+    return normalizedSubscriptionStatus(status)
+  }
+
+  /// Treats an active status that carries no entitlements as inactive.
+  private func normalizedSubscriptionStatus(
+    _ status: SubscriptionStatus
+  ) -> SubscriptionStatus {
     if case .active(let entitlements) = status,
       entitlements.isEmpty {
       return .inactive
@@ -451,7 +459,7 @@ public final class Superwall: NSObject, ObservableObject {
     return status
   }
 
-  private var shouldKeepTestModeSubscriptionStatusInternal: Bool {
+  private var shouldKeepAppOwnedSubscriptionStatus: Bool {
     guard dependencyContainer.makeHasExternalPurchaseController(),
       let testModeManager = dependencyContainer.testModeManager else {
       return false
@@ -459,7 +467,7 @@ public final class Superwall: NSObject, ObservableObject {
     return testModeManager.isTestMode && testModeManager.overriddenSubscriptionStatus != nil
   }
 
-  private var shouldKeepTestModeCustomerInfoInternal: Bool {
+  private var shouldKeepAppOwnedCustomerInfo: Bool {
     guard dependencyContainer.makeHasExternalPurchaseController(),
       let testModeManager = dependencyContainer.testModeManager else {
       return false
