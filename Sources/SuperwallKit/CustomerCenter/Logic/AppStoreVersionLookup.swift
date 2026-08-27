@@ -19,6 +19,14 @@ protocol CustomerCenterAppStoreVersionProviding {
 ///
 /// Deliberately the public endpoint rather than App Store Connect: the Connect API authenticates
 /// with a signed JWT, and the private key that signs it can't ship inside a client.
+///
+/// Known limitation — phased release. Apple rolls a release out over seven days, but the lookup
+/// reports the new version to everyone the moment it's live. During that window some customers
+/// are told to update to a build they can't install yet; tapping through lands them on a store
+/// page still offering what they already have. Accepted rather than solved: the alternatives are
+/// holding the banner back a fixed number of days (which delays it for genuinely stale installs
+/// too) or not checking at all. Hosts who can't tolerate it should set `latestAppVersion` and
+/// control the timing themselves.
 struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
   /// How long a looked-up version is trusted before being fetched again.
   static let cacheDuration: TimeInterval = 60 * 60 * 24

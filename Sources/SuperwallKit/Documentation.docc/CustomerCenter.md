@@ -163,6 +163,11 @@ version — hides the banner and logs under the `customerCenter` scope.
 > it happens after the screen has loaded, the banner animates in a moment later rather than being
 > there on first paint.
 
+> Warning: Apple phases a release in over seven days, but the lookup sees the new version as soon
+> as it goes live. For the first few days of a release, some customers are told to update to a
+> build that hasn't reached them yet. If that matters for your app, set `latestAppVersion` and
+> raise it on your own schedule, or set `checksAppStoreForUpdates` to `false`.
+
 ## The Delegate
 
 Implement ``CustomerCenterDelegate`` (or ``CustomerCenterDelegateObjc`` from Objective-C) to
