@@ -131,6 +131,38 @@ plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:open
 URL either in-app or externally, and ``CustomerCenterConfiguration/PathType/custom(identifier:)``
 lets you handle an action entirely yourself via the delegate.
 
+### Warning customers about old versions
+
+The Customer Center can show a banner asking the customer to update. By default it finds the
+published version itself, by looking your app up on the App Store:
+
+```swift
+options.customerCenter.support = .init(
+  email: "support@mycompany.com",
+  shouldWarnToUpdate: true          // on by default
+)
+```
+
+Set `latestAppVersion` to skip the lookup and warn against a version you control, which is what
+you want if you gate support on a specific build:
+
+```swift
+options.customerCenter.support = .init(
+  email: "support@mycompany.com",
+  latestAppVersion: "2.1.0"
+)
+```
+
+The banner appears only when the installed version is *older* than the published one — never when
+it merely differs. It is skipped entirely on TestFlight, sandbox and simulator builds, whose
+version is normally ahead of the App Store. Set `checksAppStoreForUpdates` to `false` to stop the
+lookup without turning the banner off. Any failure — offline, no listing found, an unparseable
+version — hides the banner and logs under the `customerCenter` scope.
+
+> Note: The lookup result is cached for 24 hours, and only the bundle identifier is sent. Because
+> it happens after the screen has loaded, the banner animates in a moment later rather than being
+> there on first paint.
+
 ## The Delegate
 
 Implement ``CustomerCenterDelegate`` (or ``CustomerCenterDelegateObjc`` from Objective-C) to

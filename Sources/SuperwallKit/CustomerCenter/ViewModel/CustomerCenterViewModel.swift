@@ -22,7 +22,9 @@ final class CustomerCenterViewModel: ObservableObject {
   }
   @Published var restoreState: CustomerCenterRestoreState = .idle
   @Published private(set) var refundResult: (productId: String, status: CustomerCenterRefundStatus)?
-  @Published private(set) var showsUpdateBanner = false
+  // Not `private(set)`: the update-banner logic lives in
+  // `CustomerCenterViewModel+UpdateBanner.swift`, and `private` is file-scoped.
+  @Published var showsUpdateBanner = false
   @Published private(set) var showsDuplicateBanner = false
 
   let configuration: CustomerCenterConfiguration
@@ -50,7 +52,10 @@ final class CustomerCenterViewModel: ObservableObject {
   /// The most recent non-nil ``sheet``, so ``sheetDidDismiss()`` knows whether the sheet that
   /// just closed was a StoreKit store sheet requiring a receipt refresh.
   private var lastPresentedSheet: CustomerCenterSheet?
-  private var updateWarningDismissed = false
+  var updateWarningDismissed = false
+  /// Version read from the App Store, used when the host didn't configure one.
+  var fetchedAppStoreVersion: String?
+  var hasCheckedAppStoreVersion = false
   private var hasTrackedOpen = false
   private var didDismiss = false
   /// Active entitlement identifiers from the latest `CustomerInfo`, for support diagnostics.
@@ -103,6 +108,9 @@ final class CustomerCenterViewModel: ObservableObject {
   func load() async {
     let info = await dependencies.customerInfo.fetchCustomerInfo()
     await apply(customerInfo: info, refetchProducts: true)
+    // Deliberately after the first `apply`: the screen renders straight away rather than waiting
+    // on a network round trip, and the banner animates in afterwards if there's something to say.
+    await refreshAppStoreVersion()
     if !hasTrackedOpen {
       hasTrackedOpen = true
       await dependencies.tracker.track(
@@ -129,12 +137,7 @@ final class CustomerCenterViewModel: ObservableObject {
     purchases = builder.build(customerInfo: customerInfo, products: products)
     activeEntitlementIds = customerInfo.entitlements.filter(\.isActive).map(\.id)
     state = hasAnyPurchases(customerInfo) ? .management : .noPurchases
-    showsUpdateBanner = !updateWarningDismissed
-      && configuration.support.shouldWarnToUpdate
-      && AppVersionComparator.isInstalledVersion(
-        dependencies.environment.appVersion,
-        olderThan: configuration.support.latestAppVersion
-      )
+    recomputeUpdateBanner()
     let activeStores = Set(customerInfo.subscriptions.filter(\.isActive).map(\.store))
     showsDuplicateBanner = configuration.warnsAboutDuplicateSubscriptions
       && activeStores.contains(.appStore)
@@ -304,10 +307,6 @@ final class CustomerCenterViewModel: ObservableObject {
     await apply(customerInfo: info, refetchProducts: true)
   }
 
-  func continueAfterUpdateWarning() {
-    updateWarningDismissed = true
-    showsUpdateBanner = false
-  }
 
   // swiftlint:disable:next large_tuple
   func historySections() -> (

@@ -11,6 +11,7 @@ import SwiftUI
 struct ManagementScreenView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterStrings) private var strings
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   private var subscriptions: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription != nil } }
   private var others: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription == nil } }
@@ -60,6 +61,9 @@ struct ManagementScreenView: View {
       }
     }
     .listStyle(.insetGrouped)
+    // The update banner can arrive a beat after the screen does — its version comes from an App
+    // Store lookup — so animate the insertion rather than letting a row appear from nowhere.
+    .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: viewModel.showsUpdateBanner)
     .navigationTitle(navigationTitle)
     .navigationBarTitleDisplayMode(.inline)
   }

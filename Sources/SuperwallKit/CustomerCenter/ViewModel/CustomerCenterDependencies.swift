@@ -54,6 +54,7 @@ struct CustomerCenterDependencies {
   var tracker: CustomerCenterEventTracking
   var environment: CustomerCenterEnvironmentProviding
   var transactionLookup: StoreKitTransactionLooking
+  var appStoreVersion: CustomerCenterAppStoreVersionProviding
 }
 
 enum WebManagementURLResolver {
@@ -167,7 +168,8 @@ extension CustomerCenterDependencies {
       urlOpener: LiveURLOpener(),
       tracker: LiveEventTracker(),
       environment: LiveEnvironment(container: container, webManagementOverride: configuration.support.webManagementURL),
-      transactionLookup: StoreKitTransactionLookup()
+      transactionLookup: StoreKitTransactionLookup(),
+      appStoreVersion: AppStoreVersionLookup()
     )
   }
 }

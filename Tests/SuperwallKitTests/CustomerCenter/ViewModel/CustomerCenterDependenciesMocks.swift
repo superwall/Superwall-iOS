@@ -85,6 +85,13 @@ struct EnvironmentMock: CustomerCenterEnvironmentProviding {
     self.locale = locale
   }
 }
+final class AppStoreVersionProviderMock: CustomerCenterAppStoreVersionProviding {
+  var version: String?
+  var callCount = 0
+  init(version: String? = nil) { self.version = version }
+  func latestAppStoreVersion() async -> String? { callCount += 1; return version }
+}
+
 extension CustomerCenterDependencies {
   static func mock(
     info: CustomerInfo,
@@ -93,7 +100,8 @@ extension CustomerCenterDependencies {
     restorer: RestorerMock = RestorerMock(),
     urlOpener: URLOpenerMock = URLOpenerMock(),
     tracker: EventTrackerMock = EventTrackerMock(),
-    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
+    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock(),
+    appStoreVersion: AppStoreVersionProviderMock = AppStoreVersionProviderMock()
   ) -> (CustomerCenterDependencies, CustomerInfoProviderMock, ProductsProviderMock) {
     let infoProvider = CustomerInfoProviderMock(info)
     let productsProvider = ProductsProviderMock()
@@ -105,7 +113,8 @@ extension CustomerCenterDependencies {
       urlOpener: urlOpener,
       tracker: tracker,
       environment: environment,
-      transactionLookup: lookup
+      transactionLookup: lookup,
+      appStoreVersion: appStoreVersion
     )
     return (deps, infoProvider, productsProvider)
   }
