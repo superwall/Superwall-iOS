@@ -31,7 +31,7 @@ struct PathsListView: View {
         // push — "See all purchases" and the purchase detail rows — are `NavigationLink`s and get
         // their chevron from SwiftUI.
         HStack {
-          Text(title(for: resolved.path))
+          Text(title(for: resolved))
           Spacer()
           if loadingPathId == resolved.id {
             ProgressView()
@@ -43,11 +43,18 @@ struct PathsListView: View {
     }
   }
 
-  private func title(for path: CustomerCenterConfiguration.Path) -> String {
+  private func title(for resolved: ResolvedPath) -> String {
+    let path = resolved.path
     if let title = path.title { return title }
     switch path.type {
     case .restore: return strings.string("customer_center_path_restore")
-    case .manageSubscription: return strings.string("customer_center_path_manage_subscription")
+    case .manageSubscription:
+      // "Cancel subscription" is right for the App Store path, where the row carries the
+      // cancellation survey and opens Apple's cancel sheet. A web management page does more than
+      // cancel, so naming it that way there undersells it.
+      return resolved.destination.isWebManagement
+        ? strings.string("customer_center_path_manage_subscription_web")
+        : strings.string("customer_center_path_manage_subscription")
     case .refund: return strings.string("customer_center_path_refund")
     case .changePlan: return strings.string("customer_center_path_change_plan")
     case .contactSupport: return strings.string("customer_center_path_contact_support")

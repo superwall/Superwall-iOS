@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "استعادة المشتريات";
 "customer_center_path_manage_subscription" = "إلغاء الاشتراك";
+"customer_center_path_manage_subscription_web" = "إدارة الاشتراك";
+"customer_center_web_manage_unavailable" = "أدر اشتراكك عبر الرابط الموجود في إيصال البريد الإلكتروني.";
 "customer_center_path_refund" = "طلب استرداد الأموال";
 "customer_center_path_change_plan" = "تغيير الخطة";
 "customer_center_path_contact_support" = "التواصل مع الدعم";

@@ -49,6 +49,8 @@ let englishStrings: [String: String] = [
   // label says what the row does for the customer. In the default configuration this row carries the
   // cancellation survey and opens Apple's sheet, where cancelling is the primary action.
   "customer_center_path_manage_subscription": "Cancel subscription",
+  "customer_center_path_manage_subscription_web": "Manage subscription",
+  "customer_center_web_manage_unavailable": "Manage your subscription using the link in your emailed receipt.",
   "customer_center_path_refund": "Request a refund",
   "customer_center_path_change_plan": "Change plan",
   "customer_center_path_contact_support": "Contact support",

@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "恢复购买项目";
 "customer_center_path_manage_subscription" = "取消订阅";
+"customer_center_path_manage_subscription_web" = "管理订阅";
+"customer_center_web_manage_unavailable" = "请通过电子邮件收据中的链接管理您的订阅。";
 "customer_center_path_refund" = "申请退款";
 "customer_center_path_change_plan" = "更改方案";
 "customer_center_path_contact_support" = "联系支持人员";

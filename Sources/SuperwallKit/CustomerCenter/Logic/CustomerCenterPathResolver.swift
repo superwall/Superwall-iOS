@@ -25,6 +25,10 @@ enum ResolvedPathDestination: Equatable {
   case restore
   case appleManageSheet(subscriptionGroupId: String?)
   case webManage(URL)
+  /// A web-store subscription with no management page configured. There's nowhere to send the
+  /// customer, so the row explains where to find the link instead of disappearing and leaving
+  /// them with no way to manage a subscription they're paying for.
+  case webManageUnavailable
   case refund(productId: String)
   case changePlan(groupId: String?, productIds: [String]?)
   case contactSupport
@@ -36,6 +40,18 @@ struct ResolvedPath: Equatable, Identifiable {
   var id: String { path.id }
   var path: CustomerCenterConfiguration.Path
   var destination: ResolvedPathDestination
+}
+
+extension ResolvedPathDestination {
+  /// Whether this destination hands the customer off to a web management page — or explains that
+  /// there isn't one. Surveys are skipped for these: the survey gates an action, and here the
+  /// action either leaves the app entirely or can't be performed at all.
+  var isWebManagement: Bool {
+    switch self {
+    case .webManage, .webManageUnavailable: return true
+    default: return false
+    }
+  }
 }
 
 enum CustomerCenterPathResolver {
@@ -84,8 +100,8 @@ enum CustomerCenterPathResolver {
         else { return nil }
         return .appleManageSheet(subscriptionGroupId: sub.subscriptionGroupId ?? context.product?.subscriptionGroupId)
       }
-      if isWebStore, let url = context.webManagementURL {
-        return .webManage(url)
+      if isWebStore {
+        return context.webManagementURL.map { ResolvedPathDestination.webManage($0) } ?? .webManageUnavailable
       }
       return nil
 

@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Restaurați achizițiile";
 "customer_center_path_manage_subscription" = "Anulați abonamentul";
+"customer_center_path_manage_subscription_web" = "Gestionează abonamentul";
+"customer_center_web_manage_unavailable" = "Gestionează-ți abonamentul folosind linkul din chitanța primită prin e-mail.";
 "customer_center_path_refund" = "Solicitați o rambursare";
 "customer_center_path_change_plan" = "Schimbați planul";
 "customer_center_path_contact_support" = "Contactați asistența";

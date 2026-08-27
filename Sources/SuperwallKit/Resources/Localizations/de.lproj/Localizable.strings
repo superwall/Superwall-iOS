@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Käufe wiederherstellen";
 "customer_center_path_manage_subscription" = "Abo kündigen";
+"customer_center_path_manage_subscription_web" = "Abo verwalten";
+"customer_center_web_manage_unavailable" = "Verwalte dein Abo über den Link in deiner E-Mail-Rechnung.";
 "customer_center_path_refund" = "Rückerstattung anfordern";
 "customer_center_path_change_plan" = "Tarif ändern";
 "customer_center_path_contact_support" = "Support kontaktieren";

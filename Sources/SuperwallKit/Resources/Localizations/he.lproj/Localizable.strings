@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "שחזור רכישות";
 "customer_center_path_manage_subscription" = "ביטול המנוי";
+"customer_center_path_manage_subscription_web" = "ניהול המנוי";
+"customer_center_web_manage_unavailable" = "נהל את המנוי שלך באמצעות הקישור בקבלה שנשלחה במייל.";
 "customer_center_path_refund" = "בקשת החזר כספי";
 "customer_center_path_change_plan" = "שינוי תוכנית";
 "customer_center_path_contact_support" = "יצירת קשר עם התמיכה";

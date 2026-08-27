@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "กู้คืนการซื้อ";
 "customer_center_path_manage_subscription" = "ยกเลิกการสมัครสมาชิก";
+"customer_center_path_manage_subscription_web" = "จัดการการสมัครสมาชิก";
+"customer_center_web_manage_unavailable" = "จัดการการสมัครสมาชิกของคุณผ่านลิงก์ในใบเสร็จทางอีเมล";
 "customer_center_path_refund" = "ขอคืนเงิน";
 "customer_center_path_change_plan" = "เปลี่ยนแผน";
 "customer_center_path_contact_support" = "ติดต่อฝ่ายสนับสนุน";

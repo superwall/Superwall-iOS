@@ -17,6 +17,7 @@ enum CustomerCenterSheet: Identifiable, Equatable {
   case refund(transactionId: UInt64, productId: String)
   case safari(URL)
   case noMailApp(email: String)
+  case webManageUnavailable
 
   var id: String {
     switch self {
@@ -27,6 +28,7 @@ enum CustomerCenterSheet: Identifiable, Equatable {
     case .refund(let transactionId, _): return "refund:\(transactionId)"
     case .safari(let url): return "safari:\(url.absoluteString)"
     case .noMailApp: return "nomail"
+    case .webManageUnavailable: return "webManageUnavailable"
     }
   }
 }

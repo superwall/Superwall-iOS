@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "खरीदारी पुनर्स्थापित करें";
 "customer_center_path_manage_subscription" = "सदस्यता रद्द करें";
+"customer_center_path_manage_subscription_web" = "सदस्यता प्रबंधित करें";
+"customer_center_web_manage_unavailable" = "अपने ईमेल रसीद में दिए गए लिंक से अपनी सदस्यता प्रबंधित करें।";
 "customer_center_path_refund" = "रिफंड का अनुरोध करें";
 "customer_center_path_change_plan" = "प्लान बदलें";
 "customer_center_path_contact_support" = "सहायता से संपर्क करें";

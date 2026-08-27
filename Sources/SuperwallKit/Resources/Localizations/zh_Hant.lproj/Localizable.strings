@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "恢復購買項目";
 "customer_center_path_manage_subscription" = "取消訂閱";
+"customer_center_path_manage_subscription_web" = "管理訂閱";
+"customer_center_web_manage_unavailable" = "請透過電子郵件收據中的連結管理您的訂閱。";
 "customer_center_path_refund" = "申請退款";
 "customer_center_path_change_plan" = "變更方案";
 "customer_center_path_contact_support" = "聯絡支援人員";

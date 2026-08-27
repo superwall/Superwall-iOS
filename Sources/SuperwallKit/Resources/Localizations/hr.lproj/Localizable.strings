@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Vrati kupnje";
 "customer_center_path_manage_subscription" = "Otkazivanje pretplate";
+"customer_center_path_manage_subscription_web" = "Upravljanje pretplatom";
+"customer_center_web_manage_unavailable" = "Upravljajte pretplatom putem poveznice u računu poslanom e-poštom.";
 "customer_center_path_refund" = "Zatraži povrat novca";
 "customer_center_path_change_plan" = "Promijeni plan";
 "customer_center_path_contact_support" = "Kontaktiraj podršku";

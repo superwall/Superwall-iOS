@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Pulihkan pembelian";
 "customer_center_path_manage_subscription" = "Batalkan langganan";
+"customer_center_path_manage_subscription_web" = "Kelola langganan";
+"customer_center_web_manage_unavailable" = "Kelola langganan Anda melalui tautan di tanda terima email Anda.";
 "customer_center_path_refund" = "Ajukan pengembalian dana";
 "customer_center_path_change_plan" = "Ubah paket";
 "customer_center_path_contact_support" = "Hubungi dukungan";

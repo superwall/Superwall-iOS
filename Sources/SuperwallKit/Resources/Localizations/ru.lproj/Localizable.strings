@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Восстановить покупки";
 "customer_center_path_manage_subscription" = "Отмена подписки";
+"customer_center_path_manage_subscription_web" = "Управление подпиской";
+"customer_center_web_manage_unavailable" = "Управляйте подпиской по ссылке из чека, отправленного на почту.";
 "customer_center_path_refund" = "Запросить возврат средств";
 "customer_center_path_change_plan" = "Изменить план";
 "customer_center_path_contact_support" = "Связаться со службой поддержки";

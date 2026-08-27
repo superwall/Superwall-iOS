@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Відновити покупки";
 "customer_center_path_manage_subscription" = "Скасування підписки";
+"customer_center_path_manage_subscription_web" = "Керування підпискою";
+"customer_center_web_manage_unavailable" = "Керуйте підпискою за посиланням у квитанції, надісланій електронною поштою.";
 "customer_center_path_refund" = "Запросити повернення коштів";
 "customer_center_path_change_plan" = "Змінити план";
 "customer_center_path_contact_support" = "Зв'язатися зі службою підтримки";

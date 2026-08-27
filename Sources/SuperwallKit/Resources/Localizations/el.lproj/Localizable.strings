@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Επαναφορά αγορών";
 "customer_center_path_manage_subscription" = "Ακύρωση συνδρομής";
+"customer_center_path_manage_subscription_web" = "Διαχείριση συνδρομής";
+"customer_center_web_manage_unavailable" = "Διαχειριστείτε τη συνδρομή σας μέσω του συνδέσμου στην απόδειξη email σας.";
 "customer_center_path_refund" = "Αίτημα επιστροφής χρημάτων";
 "customer_center_path_change_plan" = "Αλλαγή πλάνου";
 "customer_center_path_contact_support" = "Επικοινωνία με την υποστήριξη";

@@ -106,11 +106,14 @@ struct CustomerCenterPathResolverTests {
     #expect(destinations(context(presentation(sub(group: nil), product: noGroup), product: noGroup), curated).isEmpty)
   }
 
-  @Test("web store sub: only webManage (when URL) + contactSupport; play store: contactSupport only")
+  @Test("web store sub: management row always shows; play store: contactSupport only")
   func otherStores() {
     let url = URL(string: "https://app.superwall.app/manage")!
     #expect(destinations(context(presentation(sub(store: .stripe), product: nil), web: url)) == [.webManage(url), .contactSupport])
-    #expect(destinations(context(presentation(sub(store: .stripe), product: nil))) == [.contactSupport])
+    // Without a management URL the row stays, explaining where to find the link. Dropping it left
+    // a paying web customer with no way to manage their subscription at all.
+    #expect(destinations(context(presentation(sub(store: .stripe), product: nil))) == [.webManageUnavailable, .contactSupport])
+    // The Play Store isn't a web store, so it gets neither branch.
     #expect(destinations(context(presentation(sub(store: .playStore), product: nil))) == [.contactSupport])
   }
 

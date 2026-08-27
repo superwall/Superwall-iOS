@@ -37,7 +37,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
     .init(
       get: {
         switch viewModel.sheet {
-        case .survey, .changePlan, .safari, .noMailApp: return viewModel.sheet
+        case .survey, .changePlan, .safari, .noMailApp, .webManageUnavailable: return viewModel.sheet
         default: return nil
         }
       },
@@ -87,6 +87,8 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
           SafariView(url: url).ignoresSafeArea()
         case .noMailApp(let email):
           Text(strings.string("customer_center_no_mail_app", email)).padding()
+        case .webManageUnavailable:
+          Text(strings.string("customer_center_web_manage_unavailable")).padding()
         default:
           EmptyView()
         }

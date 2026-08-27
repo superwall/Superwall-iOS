@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "구매 항목 복원";
 "customer_center_path_manage_subscription" = "구독 취소";
+"customer_center_path_manage_subscription_web" = "구독 관리";
+"customer_center_web_manage_unavailable" = "이메일 영수증의 링크에서 구독을 관리하세요.";
 "customer_center_path_refund" = "환불 요청";
 "customer_center_path_change_plan" = "요금제 변경";
 "customer_center_path_contact_support" = "지원팀에 문의";

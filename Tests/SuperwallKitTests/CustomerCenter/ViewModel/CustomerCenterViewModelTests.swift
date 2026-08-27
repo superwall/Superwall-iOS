@@ -251,12 +251,11 @@ struct CustomerCenterViewModelTests {
     let purchase = vm.purchases[0]
     let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
     vm.callbacks.didSelectAction = nil
-    // default manage path has a survey; answer it, then let the survey sheet finish dismissing
-    // so the deferred follow-up action runs
+    // The default manage path carries a survey, but web flows skip it: the action leaves the app,
+    // so the answer would be gathered for something whose outcome is never observed. The handoff
+    // therefore happens on the first tap, with no survey in between.
     await vm.select(manage, purchase: purchase)
-    await vm.answerSurvey(optionId: "dont_use")
-    #expect(vm.sheet == nil)
-    await vm.sheetDidDismiss()
+    #expect(vm.pendingSurvey == nil)
     #expect(vm.sheet == .safari(url))
   }
 

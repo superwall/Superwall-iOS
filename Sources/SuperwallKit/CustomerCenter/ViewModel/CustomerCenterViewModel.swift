@@ -183,7 +183,7 @@ final class CustomerCenterViewModel: ObservableObject {
     await dependencies.tracker.track(
       InternalSuperwallEvent.CustomerCenterAction(action: action, pathId: resolved.path.id, productId: purchase?.productId)
     )
-    if let survey = resolved.path.survey, !survey.options.isEmpty {
+    if let survey = resolved.path.survey, !survey.options.isEmpty, !resolved.destination.isWebManagement {
       pendingSurvey = (resolved.path, survey)
       pendingAction = (resolved, purchase)
       sheet = .survey(pathId: resolved.path.id)
@@ -227,6 +227,8 @@ final class CustomerCenterViewModel: ObservableObject {
       sheet = .manageSubscriptions(groupId: groupId)
     case .webManage(let url):
       sheet = .safari(url)
+    case .webManageUnavailable:
+      sheet = .webManageUnavailable
     case .refund(let productId):
       if let transactionId = await dependencies.transactionLookup.latestTransactionID(for: productId) {
         sheet = .refund(transactionId: transactionId, productId: productId)

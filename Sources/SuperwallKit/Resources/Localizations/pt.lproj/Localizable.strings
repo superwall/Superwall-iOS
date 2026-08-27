@@ -49,6 +49,8 @@
 /* Customer Center – paths */
 "customer_center_path_restore" = "Restaurar compras";
 "customer_center_path_manage_subscription" = "Cancelar subscrição";
+"customer_center_path_manage_subscription_web" = "Gerir subscrição";
+"customer_center_web_manage_unavailable" = "Faça a gestão da sua subscrição através da ligação no recibo enviado por e-mail.";
 "customer_center_path_refund" = "Pedir reembolso";
 "customer_center_path_change_plan" = "Alterar plano";
 "customer_center_path_contact_support" = "Contactar suporte";
