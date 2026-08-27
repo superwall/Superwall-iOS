@@ -111,10 +111,36 @@ final class LiveCustomerInfoProvider: CustomerCenterCustomerInfoProviding {
 }
 @available(iOS 15.0, *)
 struct LiveProductsProvider: CustomerCenterProductsProviding {
+  let container: DependencyContainer
+
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
     guard !ids.isEmpty else { return [:] }
     let products = await Superwall.shared.products(for: ids)
-    return Dictionary(uniqueKeysWithValues: products.map { ($0.productIdentifier, ProductDisplayInfo($0)) })
+    var resolved = Dictionary(uniqueKeysWithValues: products.map { ($0.productIdentifier, ProductDisplayInfo($0)) })
+
+    // StoreKit only knows App Store products, so a subscription bought on the web resolves to
+    // nothing and its card falls back to showing a raw product identifier with no price. Those
+    // products are in the Superwall catalogue with their price, so fill the gaps from there.
+    let missing = ids.subtracting(resolved.keys)
+    guard !missing.isEmpty else { return resolved }
+    do {
+      let response = try await container.network.getSuperwallProducts()
+      for product in response.data where missing.contains(product.identifier) {
+        let entitlements = Set(product.entitlements.map { Entitlement(id: $0.identifier) })
+        let apiProduct = APIStoreProduct(superwallProduct: product, entitlements: entitlements)
+        let storeProduct = StoreProduct(catalogProduct: apiProduct)
+        resolved[product.identifier] = ProductDisplayInfo(storeProduct)
+      }
+    } catch {
+      // Advisory: the cards still render, just without a price.
+      Logger.debug(
+        logLevel: .warn,
+        scope: .customerCenter,
+        message: "Couldn't load Superwall products, so web purchases will show without a price.",
+        error: error
+      )
+    }
+    return resolved
   }
 }
 @available(iOS 15.0, *)
@@ -163,7 +189,7 @@ extension CustomerCenterDependencies {
   static func live(container: DependencyContainer, configuration: CustomerCenterConfiguration) -> CustomerCenterDependencies {
     CustomerCenterDependencies(
       customerInfo: LiveCustomerInfoProvider(),
-      products: LiveProductsProvider(),
+      products: LiveProductsProvider(container: container),
       restore: LiveRestorer(),
       urlOpener: LiveURLOpener(),
       tracker: LiveEventTracker(),
