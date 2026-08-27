@@ -13,11 +13,17 @@ import Foundation
 struct WebProductPricingTests {
   /// Mirrors the `/v1/products` payload for a Stripe product. StoreKit can't resolve one of
   /// these, so the Superwall catalogue is the only place its price exists.
-  private func decodeProduct(amountInCents: Int, currency: String = "USD") throws -> SuperwallProduct {
+  private func decodeProduct(
+    amountInCents: Int,
+    currency: String = "USD",
+    name: String? = nil
+  ) throws -> SuperwallProduct {
+    let nameField = name.map { "\"name\": \"\($0)\"," } ?? ""
     let json = """
     {
       "object": "product",
       "identifier": "web_pro_monthly",
+      \(nameField)
       "platform": "stripe",
       "price": { "amount": \(amountInCents), "currency": "\(currency)" },
       "subscription": {
@@ -80,9 +86,24 @@ struct WebProductPricingTests {
 
     #expect(card.priceLine != nil)
     #expect(card.statusLine.contains(display.localizedPrice ?? "!"), "the renewal line quotes the price")
-    // `/v1/products` returns no display name, so the identifier is tidied into something
-    // readable rather than shown raw. Replaced by the real name once the payload carries one.
-    #expect(card.title == "Web Pro Monthly")
+    // No name in the payload today, so the identifier stands in. Deliberately not prettified:
+    // a composed identifier like `live:price_123:no-trial` would tidy into a plausible-looking
+    // product name that is pure fiction, and the real Stripe name is per-product anyway
+    // ("Pro"), not per-price ("Pro Monthly").
+    #expect(card.title == "web_pro_monthly")
+  }
+
+  /// The field the backend hasn't shipped yet. Once `/v1/products` returns a name, it's used
+  /// with no further change on this side — this test is what proves that wiring works today.
+  @Test("uses the catalogue's display name as soon as the payload carries one")
+  func usesDisplayNameWhenPresent() throws {
+    let product = try decodeProduct(amountInCents: 999, name: "Pro")
+    let storeProduct = StoreProduct(
+      catalogProduct: APIStoreProduct(superwallProduct: product, entitlements: [])
+    )
+
+    #expect(ProductDisplayInfo(storeProduct, name: product.name).title == "Pro")
+    #expect(ProductDisplayInfo(storeProduct).title == "web_pro_monthly", "no name given, no name used")
   }
 
   @Test("a product with no price still renders, just without one")

@@ -75,13 +75,16 @@ enum WebManagementURLResolver {
 }
 
 extension ProductDisplayInfo {
-  init(_ product: StoreProduct) {
-    // No store gave us a name, so tidy the identifier rather than showing it raw. Applies to web
-    // products (whose payload carries no name at all) and to any store product with an empty one.
-    var title = ProductTitleFormatter.displayTitle(forIdentifier: product.productIdentifier)
+  /// - Parameter name: A display name from outside StoreKit — the Superwall catalogue, for a web
+  ///   product StoreKit can't resolve. Ignored when `nil` or empty, leaving the usual fallbacks.
+  init(_ product: StoreProduct, name: String? = nil) {
+    var title = product.productIdentifier
     if #available(iOS 15.0, *), let name = product.sk2Product?.displayName, !name.isEmpty {
       title = name
     } else if let name = product.sk1Product?.localizedTitle, !name.isEmpty {
+      title = name
+    }
+    if let name, !name.isEmpty {
       title = name
     }
     var isAutoRenewable: Bool?
@@ -131,7 +134,7 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
         let entitlements = Set(product.entitlements.map { Entitlement(id: $0.identifier) })
         let apiProduct = APIStoreProduct(superwallProduct: product, entitlements: entitlements)
         let storeProduct = StoreProduct(catalogProduct: apiProduct)
-        resolved[product.identifier] = ProductDisplayInfo(storeProduct)
+        resolved[product.identifier] = ProductDisplayInfo(storeProduct, name: product.name)
       }
     } catch {
       // Advisory: the cards still render, just without a price.

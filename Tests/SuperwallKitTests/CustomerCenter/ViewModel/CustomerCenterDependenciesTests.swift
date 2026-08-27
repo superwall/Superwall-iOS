@@ -43,14 +43,12 @@ struct CustomerCenterDependenciesTests {
     #expect(info.isAutoRenewable == nil)
   }
 
-  @Test("ProductDisplayInfo init: title falls back to a tidied identifier when the sk1 title is empty")
+  @Test("ProductDisplayInfo init: title falls back to the product identifier when the sk1 title is empty")
   func productDisplayInfoFromSK1WithoutTitle() {
     let sk1 = MockSkProduct(productIdentifier: "monthly")
     let storeProduct = StoreProduct(sk1Product: sk1, entitlements: [])
     let info = ProductDisplayInfo(storeProduct)
 
-    // Previously the raw identifier. A card headed "monthly" reads like a bug to a customer, and
-    // web products have no name at all to fall back on — see `ProductTitleFormatter`.
-    #expect(info.title == "Monthly")
+    #expect(info.title == "monthly")
   }
 }
