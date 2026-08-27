@@ -11,15 +11,15 @@ import Testing
 import Foundation
 
 struct TestModeManagerTests {
-  // MARK: - recordPersistedStatusOrigin
+  // MARK: - recordTestModeActiveSubscription
 
   @Test
-  func recordPersistedStatusOrigin_activeWithoutPurchaseController_flagsTestModeArtifact() {
+  func recordTestModeActiveSubscription_activeWithoutPurchaseController_flagsCachedStatus() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
     let storage = dependencyContainer.storage!
 
-    manager.recordPersistedStatusOrigin(
+    manager.recordTestModeActiveSubscription(
       .active(Set([Entitlement(id: "premium")])),
       hasPurchaseController: false
     )
@@ -28,14 +28,14 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func recordPersistedStatusOrigin_activeWithPurchaseController_doesNotFlag() {
+  func recordTestModeActiveSubscription_activeWithPurchaseController_doesNotFlag() {
     let dependencyContainer = DependencyContainer(purchaseController: MockPurchaseController())
     let manager = dependencyContainer.testModeManager!
     let storage = dependencyContainer.storage!
     storage.save(true, forType: IsTestModeActiveSubscription.self)
 
     // The public status is never written by Test Mode here, so what's persisted stays app-owned.
-    manager.recordPersistedStatusOrigin(
+    manager.recordTestModeActiveSubscription(
       .active(Set([Entitlement(id: "premium")])),
       hasPurchaseController: true
     )
@@ -44,13 +44,13 @@ struct TestModeManagerTests {
   }
 
   @Test
-  func recordPersistedStatusOrigin_inactive_clearsFlag() {
+  func recordTestModeActiveSubscription_inactive_clearsFlag() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.testModeManager!
     let storage = dependencyContainer.storage!
     storage.save(true, forType: IsTestModeActiveSubscription.self)
 
-    manager.recordPersistedStatusOrigin(.inactive, hasPurchaseController: false)
+    manager.recordTestModeActiveSubscription(.inactive, hasPurchaseController: false)
 
     #expect(storage.get(IsTestModeActiveSubscription.self) == false)
   }

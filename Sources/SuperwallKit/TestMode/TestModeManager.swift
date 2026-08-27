@@ -202,23 +202,28 @@ final class TestModeManager {
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
-  /// Records whether the persisted subscription status originated from Test Mode.
+  /// Records whether the cached `SubscriptionStatusKey` holds an active subscription that
+  /// Test Mode fabricated.
   ///
-  /// Call this from every site that feeds a Test Mode status into
-  /// ``Superwall/subscriptionStatus``, so the flag can't drift from what's cached in
-  /// `SubscriptionStatusKey`. With an external purchase controller, Test Mode never writes the
-  /// public status, so what gets persisted stays app-owned and is never a Test Mode artifact.
-  func recordPersistedStatusOrigin(
+  /// `ConfigManager` reads this to discount a cached `.active` status when deciding whether the
+  /// user is a real subscriber, so only an active status needs flagging — an inactive one never
+  /// trips that check.
+  ///
+  /// - Important: `status` must be a status Test Mode is about to apply. Test Mode origin is a
+  /// precondition of calling this, not something the flag derives; the only thing weighed here is
+  /// whether that status actually reaches the cache. With an external purchase controller it
+  /// doesn't, because Test Mode leaves ``Superwall/subscriptionStatus`` app-owned.
+  func recordTestModeActiveSubscription(
     _ status: SubscriptionStatus,
     hasPurchaseController: Bool
   ) {
-    let isTestModeArtifact: Bool
+    let isTestModeActiveSubscription: Bool
     if case .active = status {
-      isTestModeArtifact = !hasPurchaseController
+      isTestModeActiveSubscription = !hasPurchaseController
     } else {
-      isTestModeArtifact = false
+      isTestModeActiveSubscription = false
     }
-    storage.save(isTestModeArtifact, forType: IsTestModeActiveSubscription.self)
+    storage.save(isTestModeActiveSubscription, forType: IsTestModeActiveSubscription.self)
   }
 
   /// Sets the products available for test mode purchases.

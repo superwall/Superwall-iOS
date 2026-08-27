@@ -785,7 +785,7 @@ class ConfigManager {
 
     testModeManager.overriddenCustomerInfo = testModeCustomerInfo
     testModeManager.overriddenSubscriptionStatus = subscriptionStatus
-    testModeManager.recordPersistedStatusOrigin(
+    testModeManager.recordTestModeActiveSubscription(
       subscriptionStatus,
       hasPurchaseController: hasPurchaseController
     )
