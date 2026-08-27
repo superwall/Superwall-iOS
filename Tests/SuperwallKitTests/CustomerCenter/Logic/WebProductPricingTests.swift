@@ -80,10 +80,9 @@ struct WebProductPricingTests {
 
     #expect(card.priceLine != nil)
     #expect(card.statusLine.contains(display.localizedPrice ?? "!"), "the renewal line quotes the price")
-    // Still the raw identifier: `/v1/products` returns no display name, so `APIStoreProduct`
-    // falls back to the id. The price is the half we can fix from the client; showing
-    // "Pro Monthly" instead of "web_pro_monthly" needs a name on that payload.
-    #expect(card.title == "web_pro_monthly")
+    // `/v1/products` returns no display name, so the identifier is tidied into something
+    // readable rather than shown raw. Replaced by the real name once the payload carries one.
+    #expect(card.title == "Web Pro Monthly")
   }
 
   @Test("a product with no price still renders, just without one")

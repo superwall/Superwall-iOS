@@ -76,7 +76,9 @@ enum WebManagementURLResolver {
 
 extension ProductDisplayInfo {
   init(_ product: StoreProduct) {
-    var title = product.productIdentifier
+    // No store gave us a name, so tidy the identifier rather than showing it raw. Applies to web
+    // products (whose payload carries no name at all) and to any store product with an empty one.
+    var title = ProductTitleFormatter.displayTitle(forIdentifier: product.productIdentifier)
     if #available(iOS 15.0, *), let name = product.sk2Product?.displayName, !name.isEmpty {
       title = name
     } else if let name = product.sk1Product?.localizedTitle, !name.isEmpty {
