@@ -10,10 +10,6 @@ import SwiftUI
 @available(iOS 15.0, *)
 struct CustomerCenterTheme {
   var accent: Color?
-  var background: Color?
-  var text: Color?
-  var buttonText: Color?
-  var buttonBackground: Color?
 
   init(appearance: CustomerCenterConfiguration.Appearance, colorScheme: ColorScheme) {
     func color(_ pair: CustomerCenterConfiguration.Appearance.ColorPair?) -> Color? {
@@ -21,10 +17,6 @@ struct CustomerCenterTheme {
       return UIColor(hex: colorScheme == .dark ? pair.dark : pair.light).map(Color.init)
     }
     accent = color(appearance.accent)
-    background = color(appearance.background)
-    text = color(appearance.text)
-    buttonText = color(appearance.buttonText)
-    buttonBackground = color(appearance.buttonBackground)
   }
 }
 

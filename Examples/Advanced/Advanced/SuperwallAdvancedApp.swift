@@ -21,10 +21,7 @@ struct SuperwallAdvancedApp: App {
     let apiKey = "pk_e361c8a9662281f4249f2fa11d1a63854615fa80e15e7a4d"
 
     // MARK: - Option 1: Let Superwall handle everything
-      let options = SuperwallOptions()
-      options.testModeBehavior = .never
-      Superwall.configure(apiKey: apiKey, options: options)
-
+    Superwall.configure(apiKey: apiKey)
 
     // MARK: - Option 2: Use a Purchase Controller with StoreKit
     /*

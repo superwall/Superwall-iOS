@@ -7,7 +7,7 @@ A native, self-service screen where users can view and manage their subscription
 The Customer Center lets users restore purchases, manage or cancel a subscription, request a
 refund, change plans, contact support, answer exit surveys and browse purchase history — all
 without leaving your app. It ships with sensible defaults and is fully configurable, so you can
-tailor which paths appear, their titles, surveys and appearance to match your app.
+tailor which paths appear, their titles, surveys and accent colour to match your app.
 
 The Customer Center requires **iOS 15.0+**.
 

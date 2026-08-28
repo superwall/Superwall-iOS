@@ -11,42 +11,30 @@ import UIKit
 extension CustomerCenterConfiguration {
   // MARK: - Appearance
 
+  /// Colour overrides for the Customer Center.
+  ///
+  /// Only the accent is applied. Slots for background, text and button colours existed here
+  /// before anything read them; exposing colours that reach no pixel would have meant either
+  /// honouring them later or removing them later, and removing them from a public, `Codable`,
+  /// Objective-C-exposed type is a breaking change. They come back when they're wired up.
   @objc(SWKCustomerCenterAppearance)
   @objcMembers
   public final class Appearance: NSObject, Codable {
+    /// Tints controls and links. `nil` uses the system accent.
     public var accent: ColorPair?
-    public var background: ColorPair?
-    public var text: ColorPair?
-    public var buttonText: ColorPair?
-    public var buttonBackground: ColorPair?
 
-    public init(
-      accent: ColorPair? = nil,
-      background: ColorPair? = nil,
-      text: ColorPair? = nil,
-      buttonText: ColorPair? = nil,
-      buttonBackground: ColorPair? = nil
-    ) {
+    public init(accent: ColorPair? = nil) {
       self.accent = accent
-      self.background = background
-      self.text = text
-      self.buttonText = buttonText
-      self.buttonBackground = buttonBackground
     }
 
     override public func isEqual(_ object: Any?) -> Bool {
       guard let other = object as? Appearance else { return false }
-      return accent == other.accent && background == other.background && text == other.text
-        && buttonText == other.buttonText && buttonBackground == other.buttonBackground
+      return accent == other.accent
     }
 
     override public var hash: Int {
       var hasher = Hasher()
       hasher.combine(accent)
-      hasher.combine(background)
-      hasher.combine(text)
-      hasher.combine(buttonText)
-      hasher.combine(buttonBackground)
       return hasher.finalize()
     }
 
