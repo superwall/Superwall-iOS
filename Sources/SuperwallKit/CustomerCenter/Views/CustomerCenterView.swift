@@ -188,13 +188,14 @@ public struct CustomerCenterView: View {
       ZStack {
         // Opaque, so nothing shows through and no touch reaches a half-built screen. Honours a
         // configured background, falling back to the grouped-list colour the screen uses.
-        //
-        // Deliberately not `ignoresSafeArea`: the overlay already fills the content area, and
-        // extending it would paint an opaque fill into the region behind the host's translucent
-        // navigation bar — flattening chrome that the pushed style promises not to touch.
         (theme.background ?? Color(uiColor: .systemGroupedBackground))
         ProgressView().accessibilityIdentifier("customer_center.loading")
       }
+      // Edge to edge, because the `List` this becomes already runs under the navigation bar and
+      // past the home indicator with the same background. Confining the cover to the safe area
+      // leaves it floating in a frame of unpainted screen, and the region it covers ends up the
+      // same colour either way — so there's no bar being flattened, only continuity.
+      .ignoresSafeArea()
       .transition(.opacity)
     }
   }

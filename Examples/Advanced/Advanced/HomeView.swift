@@ -33,13 +33,25 @@ struct HomeView: View {
   /// Presents the Customer Center with a code-built configuration and a delegate that prints
   /// each callback it receives. See `CustomerCenterExampleDelegate`.
   private func presentCustomerCenter() {
+    // Attached to the cancellation path below, so answering it is what unlocks Apple's cancel
+    // sheet. `nil` titles fall back to the built-in localized strings, which every locale the SDK
+    // ships already has for these three option ids.
+    let cancelSurvey = CustomerCenterConfiguration.FeedbackSurvey(
+      id: "cancel_survey",
+      title: nil,
+      options: [
+        .init(id: "too_expensive", title: nil),
+        .init(id: "dont_use", title: nil),
+        .init(id: "bought_by_mistake", title: nil)
+      ]
+    )
     let configuration = CustomerCenterConfiguration(
       managementScreen: .init(
         paths: [
           .init(id: "restore", type: .restore),
           .init(id: "change_plan", type: .changePlan()),
           .init(id: "refund", type: .refund()),
-          .init(id: "manage_subscription", type: .manageSubscription),
+          .init(id: "manage_subscription", type: .manageSubscription, survey: cancelSurvey),
           .init(id: "faq", type: .url(URL(string: "https://superwall.com/faq")!, openMethod: .inApp)),
           .init(id: "contact_support", type: .contactSupport)
         ]
