@@ -19,7 +19,10 @@ struct HomeView: View {
 
   init(isLoggedIn: Binding<Bool>) {
     _isLoggedIn = isLoggedIn
-    
+    UINavigationBar.appearance().titleTextAttributes = [
+      .foregroundColor: UIColor.white,
+      .font: UIFont.rubikBold(.five)
+    ]
   }
 
   var firstName: String? {

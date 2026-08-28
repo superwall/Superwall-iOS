@@ -35,12 +35,10 @@ final class CustomerCenterPushNavigator: CustomerCenterNavigating {
     // whichever appearance was active when it opened, while the root kept tracking the change.
     let hosted = CustomerCenterThemedContainer(
       appearance: viewModel.configuration.appearance,
-      content: destination
+      content: destination.customerCenterSheets(viewModel: viewModel, surfaceDepth: depth)
     )
       .environment(\.customerCenterStrings, viewModel.strings)
       .environment(\.customerCenterNavigator, self)
-      .environment(\.customerCenterSurfaceDepth, depth)
-      .customerCenterSheets(viewModel: viewModel)
 
     let controller = CustomerCenterPushedHostingController(rootView: hosted)
     controller.onRemovedFromParent = { [weak self] in
@@ -52,6 +50,9 @@ final class CustomerCenterPushNavigator: CustomerCenterNavigating {
       // presentation.
       guard let self else { return }
       self.viewModel.pushDepth = min(self.viewModel.pushDepth, depth - 1)
+    }
+    controller.onCoveredWhileStillInStack = { [weak self] in
+      self?.viewModel.cancelPendingDismissal()
     }
     viewModel.pushDepth = depth
     navigationController.pushViewController(controller, animated: true)
@@ -78,15 +79,41 @@ private struct CustomerCenterThemedContainer<Content: View>: View {
   }
 }
 
-/// A hosting controller that reports being popped, so the navigator can restore the depth.
+/// A hosting controller that reports being popped, so the navigator can restore the depth, and
+/// vetoes the dismissal debounce when it is merely covered.
 @available(iOS 15.0, *)
 private final class CustomerCenterPushedHostingController<Content: View>: UIHostingController<Content> {
   var onRemovedFromParent: (() -> Void)?
+  var onCoveredWhileStillInStack: (() -> Void)?
+  private var hasReportedRemoval = false
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    if isMovingFromParent || isBeingDismissed {
+      reportRemoval()
+      return
+    }
+    // Merely covered — the host pushed its own screen on top, presented something, or the user
+    // switched tabs. `super` has just forwarded the disappearance into SwiftUI, whose
+    // `onDisappear` dropped the visible-surface count to zero and armed the dismissal debounce.
+    // Left to fire it would deliver `customerCenterDidDismiss()` and latch, silencing the real
+    // teardown later. Same veto the root controller performs, one level down.
+    onCoveredWhileStillInStack?()
+  }
 
   override func didMove(toParent parent: UIViewController?) {
     super.didMove(toParent: parent)
+    // Not redundant with the above: a controller that was already covered has disappeared once
+    // already, so being popped from under the covering screen produces no second disappearance.
     if parent == nil {
-      onRemovedFromParent?()
+      reportRemoval()
     }
+  }
+
+  /// Latched, because an ordinary pop is both a disappearance and a removal from the container.
+  private func reportRemoval() {
+    guard !hasReportedRemoval else { return }
+    hasReportedRemoval = true
+    onRemovedFromParent?()
   }
 }

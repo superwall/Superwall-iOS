@@ -33,22 +33,6 @@ extension EnvironmentValues {
   }
 }
 
-@available(iOS 15.0, *)
-private struct CustomerCenterSurfaceDepthKey: EnvironmentKey {
-  static let defaultValue = 0
-}
-
-@available(iOS 15.0, *)
-extension EnvironmentValues {
-  /// How many Customer Center screens have been pushed above the root through UIKit. Compared
-  /// against ``CustomerCenterViewModel/pushDepth`` so that only the topmost surface presents
-  /// sheets — otherwise every screen still in the stack would race to present the same one.
-  var customerCenterSurfaceDepth: Int {
-    get { self[CustomerCenterSurfaceDepthKey.self] }
-    set { self[CustomerCenterSurfaceDepthKey.self] = newValue }
-  }
-}
-
 /// A row that drills into another Customer Center screen, by whichever mechanism the surrounding
 /// navigation supports.
 @available(iOS 15.0, *)

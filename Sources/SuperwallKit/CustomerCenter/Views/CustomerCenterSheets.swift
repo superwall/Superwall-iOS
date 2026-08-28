@@ -11,22 +11,45 @@ import SwiftUI
 
 @available(iOS 15.0, *)
 extension View {
-  func customerCenterSheets(viewModel: CustomerCenterViewModel) -> some View {
-    modifier(CustomerCenterSheetsModifier(viewModel: viewModel))
+  /// - Parameter surfaceDepth: How deep this screen sits in the Customer Center's own pushed
+  ///   stack; `0` for the root. Passed rather than read from the environment because a modifier
+  ///   resolves its `@Environment` against the values *above* it, so a caller that applied this
+  ///   outside its `.environment(...)` writes would silently read the default and the gate would
+  ///   stop working.
+  func customerCenterSheets(viewModel: CustomerCenterViewModel, surfaceDepth: Int = 0) -> some View {
+    modifier(CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: surfaceDepth))
+  }
+}
+
+/// Which surface owns sheet presentation. A free function so the rule the modifier applies can be
+/// exercised directly rather than restated by a test.
+enum CustomerCenterSheetOwnership {
+  static func isTopmost(surfaceDepth: Int, pushDepth: Int) -> Bool {
+    surfaceDepth == pushDepth
   }
 }
 
 @available(iOS 15.0, *)
 private struct CustomerCenterSheetsModifier: ViewModifier {
   @ObservedObject var viewModel: CustomerCenterViewModel
+  let surfaceDepth: Int
   @Environment(\.customerCenterStrings) private var strings
-  @Environment(\.customerCenterSurfaceDepth) private var depth
 
   /// Every screen still in the stack applies this modifier, so without a check they'd all try to
   /// present the same sheet. Gating the bindings rather than the modifier keeps the view tree
   /// stable — swapping modifiers mid-update is what stopped the manage sheet appearing once
   /// before.
-  private var isTopmost: Bool { depth == viewModel.pushDepth }
+  ///
+  /// Only the getters are gated. Gating the setters too would let a screen lose the right to
+  /// clear a sheet it already has open: the depth drops when the screen is popped, without regard
+  /// for whether a sheet is up, so the dismissal would be vetoed, `sheetDidDismiss()` would never
+  /// run, and the root would re-present the stale sheet the moment it became topmost again.
+  private var isTopmost: Bool {
+    CustomerCenterSheetOwnership.isTopmost(
+      surfaceDepth: surfaceDepth,
+      pushDepth: viewModel.pushDepth
+    )
+  }
 
   private var isManagePresented: Binding<Bool> {
     .init(
@@ -34,7 +57,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
         guard isTopmost, case .manageSubscriptions = viewModel.sheet else { return false }
         return true
       },
-      set: { if isTopmost, !$0 { viewModel.sheet = nil; Task { await viewModel.sheetDidDismiss() } } }
+      set: { if !$0 { viewModel.sheet = nil; Task { await viewModel.sheetDidDismiss() } } }
     )
   }
   private var refundBinding: Binding<Bool> {
@@ -43,7 +66,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
         guard isTopmost, case .refund = viewModel.sheet else { return false }
         return true
       },
-      set: { if isTopmost, !$0, case .refund = viewModel.sheet { viewModel.sheet = nil } }
+      set: { if !$0, case .refund = viewModel.sheet { viewModel.sheet = nil } }
     )
   }
   private var itemSheet: Binding<CustomerCenterSheet?> {
@@ -55,9 +78,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
         default: return nil
         }
       },
-      // Guarded like the getter: a surface that isn't topmost must not clear a sheet another
-      // screen owns, which would dismiss it and run its deferred follow-up on the wrong screen.
-      set: { if isTopmost { viewModel.sheet = $0 } }
+      set: { viewModel.sheet = $0 }
     )
   }
   private var manageGroupId: String? {
@@ -74,7 +95,6 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
   }
   private var onItemSheetDismiss: () -> Void {
     {
-      guard isTopmost else { return }
       if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
       Task { await viewModel.sheetDidDismiss() }
     }
