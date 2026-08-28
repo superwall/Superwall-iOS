@@ -30,25 +30,34 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
 
   private var isManagePresented: Binding<Bool> {
     .init(
-      get: { if case .manageSubscriptions = viewModel.sheet { return true } else { return false } },
-      set: { if !$0 { viewModel.sheet = nil; Task { await viewModel.sheetDidDismiss() } } }
+      get: {
+        guard isTopmost, case .manageSubscriptions = viewModel.sheet else { return false }
+        return true
+      },
+      set: { if isTopmost, !$0 { viewModel.sheet = nil; Task { await viewModel.sheetDidDismiss() } } }
     )
   }
   private var refundBinding: Binding<Bool> {
     .init(
-      get: { if case .refund = viewModel.sheet { return true } else { return false } },
-      set: { if !$0, case .refund = viewModel.sheet { viewModel.sheet = nil } }
+      get: {
+        guard isTopmost, case .refund = viewModel.sheet else { return false }
+        return true
+      },
+      set: { if isTopmost, !$0, case .refund = viewModel.sheet { viewModel.sheet = nil } }
     )
   }
   private var itemSheet: Binding<CustomerCenterSheet?> {
     .init(
       get: {
+        guard isTopmost else { return nil }
         switch viewModel.sheet {
         case .survey, .changePlan, .safari, .noMailApp, .webManageUnavailable: return viewModel.sheet
         default: return nil
         }
       },
-      set: { viewModel.sheet = $0 }
+      // Guarded like the getter: a surface that isn't topmost must not clear a sheet another
+      // screen owns, which would dismiss it and run its deferred follow-up on the wrong screen.
+      set: { if isTopmost { viewModel.sheet = $0 } }
     )
   }
   private var manageGroupId: String? {
@@ -65,6 +74,7 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
   }
   private var onItemSheetDismiss: () -> Void {
     {
+      guard isTopmost else { return }
       if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
       Task { await viewModel.sheetDidDismiss() }
     }

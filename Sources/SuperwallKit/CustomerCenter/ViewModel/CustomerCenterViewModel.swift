@@ -69,9 +69,6 @@ final class CustomerCenterViewModel: ObservableObject {
   /// Incremented/decremented by ``surfaceDidAppear()``/``surfaceDidDisappear()``. When this
   /// reaches zero and stays zero past the debounce, the Customer Center is genuinely gone.
   private var visibleSurfaceCount = 0
-  /// Of those surfaces, how many the Customer Center pushed onto its own stack. Zero means the
-  /// user is on its root screen.
-  private var pushedSurfaceCount = 0
   private var dismissDebounceTask: Task<Void, Never>?
 
   init(
@@ -333,27 +330,19 @@ extension CustomerCenterViewModel {
   /// itself. Pushing a screen removes the previous surface from the hierarchy without the Customer
   /// Center closing, so a count of concurrently visible surfaces (rather than a boolean) is what
   /// tracks nested pushes correctly. Also cancels any pending dismissal from a prior disappear.
-  /// - Parameter isPushed: `true` for a screen pushed onto the Customer Center's own stack, `false`
-  ///   for the root view. Tracked separately — see ``isShowingPushedSurface``.
-  func surfaceDidAppear(isPushed: Bool = false) {
+  func surfaceDidAppear() {
     visibleSurfaceCount += 1
-    if isPushed {
-      pushedSurfaceCount += 1
-    }
     dismissDebounceTask?.cancel()
     dismissDebounceTask = nil
   }
 
-  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear(isPushed:)``.
+  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear()``.
   /// When the count drops to zero, waits out a debounce before dismissing: a push/pop transition can
   /// briefly have both surfaces on screen or neither, so one runloop turn can't tell "navigating
   /// within the Customer Center" from "the Customer Center was torn down". An appearance before the
   /// debounce elapses cancels it.
-  func surfaceDidDisappear(isPushed: Bool = false) {
+  func surfaceDidDisappear() {
     visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
-    if isPushed {
-      pushedSurfaceCount = max(0, pushedSurfaceCount - 1)
-    }
     guard visibleSurfaceCount == 0 else { return }
     dismissDebounceTask?.cancel()
     // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
@@ -367,10 +356,6 @@ extension CustomerCenterViewModel {
       dismiss()
     }
   }
-
-  /// Whether the user is currently on a screen the Customer Center pushed onto its own stack,
-  /// rather than on its root.
-  var isShowingPushedSurface: Bool { pushedSurfaceCount > 0 }
 
   /// Drops a dismissal the visibility count scheduled but hasn't delivered. The count can't tell a
   /// teardown from something being put on top, so it guesses; a host that knows better — a

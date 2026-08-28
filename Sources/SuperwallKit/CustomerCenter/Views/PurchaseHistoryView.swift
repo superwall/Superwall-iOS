@@ -22,8 +22,8 @@ struct PurchaseHistoryView: View {
     .listStyle(.insetGrouped)
     .navigationTitle(strings.string("customer_center_purchase_history"))
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear { viewModel.surfaceDidAppear(isPushed: true) }
-    .onDisappear { viewModel.surfaceDidDisappear(isPushed: true) }
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 
   @ViewBuilder
@@ -87,8 +87,8 @@ struct PurchaseDetailRows: View {
     }
     .navigationTitle(purchase.title)
     .navigationBarTitleDisplayMode(.inline)
-    .onAppear { viewModel.surfaceDidAppear(isPushed: true) }
-    .onDisappear { viewModel.surfaceDidDisappear(isPushed: true) }
+    .onAppear { viewModel.surfaceDidAppear() }
+    .onDisappear { viewModel.surfaceDidDisappear() }
   }
 
   private func row(_ label: String, _ value: String) -> some View {
