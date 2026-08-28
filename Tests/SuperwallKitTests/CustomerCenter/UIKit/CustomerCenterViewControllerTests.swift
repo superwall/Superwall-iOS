@@ -113,6 +113,13 @@ struct CustomerCenterViewControllerTests {
     // Covered by the host's own screen.
     navigation.pushViewController(UIViewController(), animated: false)
     spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
+
+    // Arm the debounce explicitly rather than trusting SwiftUI's `onDisappear` to have fired in
+    // this harness. The claim under test is that the veto cancels an *armed* dismissal, and with
+    // nothing armed the test would pass whether or not the veto works at all. In production the
+    // ordering is guaranteed the other way round: `viewDidDisappear` calls `super` first, which
+    // is what forwards the disappearance into SwiftUI and arms this.
+    controller.viewModel.surfaceDidDisappear()
     controller.viewDidDisappear(false)
 
     try? await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
@@ -190,10 +197,6 @@ struct CustomerCenterViewControllerTests {
 
   // MARK: - Chrome
 
-
-
-  /// Taking over the host's bar is gated on the style, not on merely finding a navigation
-  /// controller: a `.modal` controller that happens to be inside one must leave it alone.
   /// The Customer Center used to hide a host's navigation bar in `.pushed` and hand it back on
   /// the way out. It no longer touches the bar in any style — the host's chrome is theirs.
   @available(iOS 15.0, *)
