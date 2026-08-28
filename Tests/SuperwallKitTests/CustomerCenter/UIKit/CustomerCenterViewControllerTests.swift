@@ -190,124 +190,37 @@ struct CustomerCenterViewControllerTests {
 
   // MARK: - Chrome
 
-  @available(iOS 15.0, *)
-  @Test("pushed hides the host's navigation bar while on screen and restores it on the way out")
-  func pushedTakesOverTheHostBar() {
-    let controller = makeController(style: .pushed, delegate: nil)
-    let navigation = UINavigationController(rootViewController: UIViewController())
-    navigation.setNavigationBarHidden(false, animated: false)
-    let window = makeWindow(rootViewController: navigation)
-    window.makeKeyAndVisible()
 
-    navigation.pushViewController(controller, animated: false)
-    spinRunLoop(timeout: 1) { navigation.isNavigationBarHidden }
-    #expect(navigation.isNavigationBarHidden)
-
-    navigation.popViewController(animated: false)
-    spinRunLoop(timeout: 1) { !navigation.isNavigationBarHidden }
-    #expect(!navigation.isNavigationBarHidden, "the host's bar should be handed back as it was found")
-
-    window.isHidden = true
-  }
-
-  @available(iOS 15.0, *)
-  @Test("pushed leaves an already-hidden host bar hidden")
-  func pushedRestoresAnAlreadyHiddenBar() {
-    let controller = makeController(style: .pushed, delegate: nil)
-    let navigation = UINavigationController(rootViewController: UIViewController())
-    navigation.setNavigationBarHidden(true, animated: false)
-    let window = makeWindow(rootViewController: navigation)
-    window.makeKeyAndVisible()
-
-    navigation.pushViewController(controller, animated: false)
-    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
-    navigation.popViewController(animated: false)
-    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
-
-    #expect(navigation.isNavigationBarHidden)
-
-    window.isHidden = true
-  }
 
   /// Taking over the host's bar is gated on the style, not on merely finding a navigation
   /// controller: a `.modal` controller that happens to be inside one must leave it alone.
+  /// The Customer Center used to hide a host's navigation bar in `.pushed` and hand it back on
+  /// the way out. It no longer touches the bar in any style — the host's chrome is theirs.
   @available(iOS 15.0, *)
-  @Test("modal style leaves the host's navigation bar alone even on a stack")
-  func modalStyleLeavesTheBarAlone() {
-    let controller = makeController(style: .modal, delegate: nil)
+  @Test("neither style modifies the host's navigation bar", arguments: [
+    CustomerCenterPresentationStyle.pushed, .modal
+  ])
+  func neitherStyleTouchesTheHostBar(style: CustomerCenterPresentationStyle) {
+    let controller = makeController(style: style, delegate: nil)
     let navigation = UINavigationController(rootViewController: UIViewController())
     navigation.setNavigationBarHidden(false, animated: false)
     let window = makeWindow(rootViewController: navigation)
     window.makeKeyAndVisible()
+    let recognizer = navigation.interactivePopGestureRecognizer
+    let hostDelegate = recognizer?.delegate
+    let hostEnabled = recognizer?.isEnabled
 
     navigation.pushViewController(controller, animated: false)
     spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
 
-    #expect(!navigation.isNavigationBarHidden)
+    #expect(!navigation.isNavigationBarHidden, "the host's bar stays visible")
+    #expect(recognizer?.delegate === hostDelegate, "the pop gesture is left alone")
+    #expect(recognizer?.isEnabled == hostEnabled)
 
     window.isHidden = true
   }
 
-  /// Every host property the pushed style writes has to come back exactly as it was found —
-  /// including for a host that deliberately turned swipe-to-go-back off.
-  @available(iOS 15.0, *)
-  @Test("pushed restores the pop recognizer's delegate and never writes its enablement")
-  func pushedRoundTripsTheInteractivePopGesture() {
-    for hostEnabled in [true, false] {
-      let controller = makeController(style: .pushed, delegate: nil)
-      let navigation = UINavigationController(rootViewController: UIViewController())
-      let window = makeWindow(rootViewController: navigation)
-      window.makeKeyAndVisible()
-      let recognizer = navigation.interactivePopGestureRecognizer
-      recognizer?.isEnabled = hostEnabled
-      let hostDelegate = recognizer?.delegate
 
-      navigation.pushViewController(controller, animated: false)
-      spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
-      #expect(recognizer?.isEnabled == hostEnabled, "the host's enablement must not be overwritten")
-
-      navigation.popViewController(animated: false)
-      spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
-
-      #expect(recognizer?.delegate === hostDelegate)
-      #expect(recognizer?.isEnabled == hostEnabled)
-
-      window.isHidden = true
-    }
-  }
-
-  /// Both stacks arm an edge-pan for the same swipe. While the user is inside the Customer
-  /// Center's own stack the host's must stand down, or the swipe throws them out of the whole
-  /// Customer Center instead of going back one screen.
-  @available(iOS 15.0, *)
-  @Test("the host's pop gesture stands down while drilled into the Customer Center's own stack")
-  func hostPopGestureDefersToTheInnerStack() async {
-    let controller = makeController(style: .pushed, delegate: nil)
-    let navigation = UINavigationController(rootViewController: UIViewController())
-    let window = makeWindow(rootViewController: navigation)
-    window.makeKeyAndVisible()
-    navigation.pushViewController(controller, animated: false)
-    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
-
-    guard let recognizer = navigation.interactivePopGestureRecognizer,
-      let delegate = recognizer.delegate else {
-      Issue.record("expected the pushed style to install a pop gesture delegate")
-      return
-    }
-
-    // At the Customer Center's root, swiping back out of it is right.
-    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == true)
-
-    // Drilled in — the inner stack owns the gesture now.
-    controller.viewModel.surfaceDidAppear(isPushed: true)
-    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == false)
-
-    // Back at the root, it's ours again.
-    controller.viewModel.surfaceDidDisappear(isPushed: true)
-    #expect(delegate.gestureRecognizerShouldBegin?(recognizer) == true)
-
-    window.isHidden = true
-  }
 
   // MARK: - Analytics
 

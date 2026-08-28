@@ -37,12 +37,11 @@ let customerCenter = CustomerCenterViewController(
 navigationController?.pushViewController(customerCenter, animated: true)
 ```
 
-A pushed Customer Center shows a back button instead of a close button, and hides your navigation
-bar for as long as it is on screen. It supplies its own navigation bar in place of yours, because
-its drill-downs — purchase history and per-purchase detail — need a SwiftUI navigation stack that
-a `UINavigationController` can't provide. Your bar is restored exactly as it was found when the
-user leaves, and swipe-to-go-back keeps working — except while the user is drilled into the
-Customer Center's own screens, where the back button takes them up one level instead.
+A pushed Customer Center renders into your navigation bar and leaves it alone — your title, your
+back button, your appearance, your swipe-to-go-back. It adds no close button, since your stack
+already provides the way back. Its own screens, purchase history and per-purchase detail, are
+pushed onto your stack as further view controllers, so they behave like any other screen you
+pushed yourself.
 
 > Important: A `CustomerCenterViewController` you construct yourself is yours, and the SDK does not
 > track it. ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)`` will present

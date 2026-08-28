@@ -20,6 +20,13 @@ extension View {
 private struct CustomerCenterSheetsModifier: ViewModifier {
   @ObservedObject var viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterStrings) private var strings
+  @Environment(\.customerCenterSurfaceDepth) private var depth
+
+  /// Every screen still in the stack applies this modifier, so without a check they'd all try to
+  /// present the same sheet. Gating the bindings rather than the modifier keeps the view tree
+  /// stable — swapping modifiers mid-update is what stopped the manage sheet appearing once
+  /// before.
+  private var isTopmost: Bool { depth == viewModel.pushDepth }
 
   private var isManagePresented: Binding<Bool> {
     .init(

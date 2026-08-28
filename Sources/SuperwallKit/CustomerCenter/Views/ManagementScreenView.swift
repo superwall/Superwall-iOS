@@ -31,7 +31,7 @@ struct ManagementScreenView: View {
             if isSingle {
               PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)
             } else {
-              NavigationLink {
+              CustomerCenterDrillDown {
                 PurchaseDetailScreenView(viewModel: viewModel, purchase: purchase)
               } label: {
                 PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)
@@ -50,8 +50,10 @@ struct ManagementScreenView: View {
       }
       if viewModel.configuration.showsPurchaseHistory {
         Section {
-          NavigationLink(strings.string("customer_center_see_all_purchases")) {
+          CustomerCenterDrillDown {
             PurchaseHistoryView(viewModel: viewModel)
+          } label: {
+            Text(strings.string("customer_center_see_all_purchases"))
           }
           .accessibilityIdentifier("customer_center.purchase_history")
         }

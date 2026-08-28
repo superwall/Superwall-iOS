@@ -123,6 +123,7 @@
 		3002A50E92B640B4E3A98662 /* SuperwallKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04FB15C76DE3D22CB370AFDB /* SuperwallKit.framework */; };
 		30113C71D033ADDF01214C75 /* PreloadingDisabled.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D2598EB46E9A27E2BD5104 /* PreloadingDisabled.swift */; };
 		309EC3675C7EF75050B076E7 /* ComputedPropertyRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51445FD3A0C38C2B502EAF1D /* ComputedPropertyRequest.swift */; };
+		30C0236F4E6A5260BFEF59AF /* CustomerCenterPushNavigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F7CF7FEC54E1EB4DF66A2D /* CustomerCenterPushNavigator.swift */; };
 		31DE588B2B4A26745C33753C /* ThrowableDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62EC6A60945A85646E1230C1 /* ThrowableDecodable.swift */; };
 		31E937EB414F62268F6C953C /* TestModeInfoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3548435BDE49161E3BDFA358 /* TestModeInfoCell.swift */; };
 		32A52161B29C999F06217B9A /* AppUpdateWarningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D83A9FEE5901713FC693147 /* AppUpdateWarningView.swift */; };
@@ -171,6 +172,7 @@
 		44829144E9EFA0CE4A75BBA1 /* ExpressionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154A9E99D00B9BD8837B798 /* ExpressionLogic.swift */; };
 		44E2AE9B0AED16C48027CD21 /* CustomCallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = E439B70BB6190AFF6DDB81F2 /* CustomCallback.swift */; };
 		454421E34ED200400A001AE1 /* PaywallManagerLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8012E350CCE22B0D892E0F96 /* PaywallManagerLogic.swift */; };
+		4616C021DCB8228B75D8B591 /* CustomerCenterNavigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B928799A028CB182E46CB4B /* CustomerCenterNavigator.swift */; };
 		46E56EAC8F9CEB8F567C5BCA /* CustomerCenterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16C0D857F4714F3B76D58D9F /* CustomerCenterViewModel.swift */; };
 		480C37A4D7A8AB5EE0760BF1 /* PaywallLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC6C4D551369C55D8AFB7F96 /* PaywallLogic.swift */; };
 		481903391564D2B19A9BD285 /* CustomerCenterDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF0668C27EEEF9505006818 /* CustomerCenterDelegate.swift */; };
@@ -695,6 +697,7 @@
 		115132479C9C41D57C9E3BA9 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		120D7D604E496BA935989AEA /* AppVersionComparator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersionComparator.swift; sourceTree = "<group>"; };
 		124F219E38F8398A65A7EB32 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
+		13F7CF7FEC54E1EB4DF66A2D /* CustomerCenterPushNavigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterPushNavigator.swift; sourceTree = "<group>"; };
 		1528915438E6714B1F7F7BD4 /* PaywallRequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequestManager.swift; sourceTree = "<group>"; };
 		153C660FB51D0D1DFE56D462 /* PaywallPresentationStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationStyle.swift; sourceTree = "<group>"; };
 		15E6FBB3D0826827A04F87AE /* EndpointKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EndpointKind.swift; sourceTree = "<group>"; };
@@ -912,6 +915,7 @@
 		6B103FA8F9AE387E7DB4B471 /* LocationPermissionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionDelegate.swift; sourceTree = "<group>"; };
 		6B36C6BD72D66F94DE620F16 /* AccountDetailsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailsSection.swift; sourceTree = "<group>"; };
 		6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionTests.swift; sourceTree = "<group>"; };
+		6B928799A028CB182E46CB4B /* CustomerCenterNavigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterNavigator.swift; sourceTree = "<group>"; };
 		6B9E9E16EBDA97E736968496 /* PaywallPresentationHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationHandler.swift; sourceTree = "<group>"; };
 		6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetExperiment.swift; sourceTree = "<group>"; };
 		6C47C3978AA22485EC9F5D24 /* SK2StoreProductDiscount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK2StoreProductDiscount.swift; sourceTree = "<group>"; };
@@ -1339,6 +1343,7 @@
 			isa = PBXGroup;
 			children = (
 				632BA7AFDDD93F08252C9043 /* CustomerCenterDelegateAdapter.swift */,
+				13F7CF7FEC54E1EB4DF66A2D /* CustomerCenterPushNavigator.swift */,
 				1EF06E9F79CA4C3BABD0D887 /* CustomerCenterViewController.swift */,
 			);
 			path = UIKit;
@@ -1484,6 +1489,7 @@
 				6B36C6BD72D66F94DE620F16 /* AccountDetailsSection.swift */,
 				1D83A9FEE5901713FC693147 /* AppUpdateWarningView.swift */,
 				518841D661079BCD21DA7692 /* CustomerCenterEnvironment.swift */,
+				6B928799A028CB182E46CB4B /* CustomerCenterNavigator.swift */,
 				4E4904244CA123DEE51D7E71 /* CustomerCenterSheets.swift */,
 				9C3A5B3F5DCF95EE9649CDA8 /* CustomerCenterStrings+English.swift */,
 				74230D92533298E4C0DAE83A /* CustomerCenterView.swift */,
@@ -3804,7 +3810,9 @@
 				A3E29135312C5A933D6234C5 /* CustomerCenterDependencies.swift in Sources */,
 				D99C565B5803B6ECE29A3D8B /* CustomerCenterEnvironment.swift in Sources */,
 				295EF01B171923E20329DF91 /* CustomerCenterManager.swift in Sources */,
+				4616C021DCB8228B75D8B591 /* CustomerCenterNavigator.swift in Sources */,
 				346FAC08A7D3932CE3FAD129 /* CustomerCenterPathResolver.swift in Sources */,
+				30C0236F4E6A5260BFEF59AF /* CustomerCenterPushNavigator.swift in Sources */,
 				9A883BA2FA1E9614B7B29EE9 /* CustomerCenterScreenState.swift in Sources */,
 				26250F084157D9E2556338FB /* CustomerCenterSheets.swift in Sources */,
 				54BF320BC284406282CB49B6 /* CustomerCenterStrings+English.swift in Sources */,

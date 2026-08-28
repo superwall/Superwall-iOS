@@ -14,9 +14,9 @@ public enum CustomerCenterPresentationStyle: Int {
   /// Presented modally, with `present(_:animated:)`. Shows a close button that dismisses it.
   case modal
 
-  /// Pushed onto a `UINavigationController` you own. Shows a back button that pops it off your
-  /// stack, and hides your navigation bar for as long as it is on screen so that only one
-  /// navigation bar is ever visible.
+  /// Pushed onto a `UINavigationController` you own. Renders into your navigation bar and leaves
+  /// it entirely alone — your title, your back button, your appearance. Its own drill-downs are
+  /// pushed onto your stack as further view controllers.
   case pushed
 }
 
@@ -41,11 +41,8 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   let presentationStyle: CustomerCenterPresentationStyle
   var onDismiss: (() -> Void)?
 
-  /// The host navigation bar's visibility before ``CustomerCenterPresentationStyle/pushed`` hid
-  /// it, so it can be handed back exactly as it was found.
-  private var hostNavigationBarWasHidden: Bool?
-  private var replacedInteractivePopDelegate: UIGestureRecognizerDelegate?
-  private lazy var interactivePopDelegate = InteractivePopGestureDelegate()
+  /// Retains the navigator that pushes this controller's own drill-downs, in `.pushed` style.
+  private var pushNavigator: CustomerCenterPushNavigator?
 
   /// Whether this controller was on screen as part of a modal presentation, recorded while it
   /// still is. Compared against `presentingViewController` on the way out — see
@@ -112,16 +109,13 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
     viewModel.callbacks = adapter.makeCallbacks()
     viewModel.presentationMode = presentationStyle.analyticsValue
 
-    // Both styles keep the Customer Center's own navigation stack, hence
-    // `usesExistingNavigation: false` even when pushed. Its drill-downs — purchase history and
-    // per-purchase detail — are SwiftUI `NavigationLink`s, and a `NavigationLink` does nothing
-    // without a SwiftUI navigation ancestor; a surrounding `UINavigationController` is not one.
-    // `.pushed` hides the host's bar instead (see `viewWillAppear`), so the user still only ever
-    // sees a single navigation bar.
+    // Presented modally we supply the navigation; pushed, the host already has it and we add
+    // nothing — no wrapping `NavigationView`, no close button, and nothing done to their bar.
+    // The drill-downs that `NavigationLink` can't serve in that case are pushed through
+    // `CustomerCenterNavigating` instead.
     var options = CustomerCenterNavigationOptions(
-      usesExistingNavigation: false,
-      showsCloseButton: presentationStyle == .modal,
-      showsBackButton: presentationStyle == .pushed
+      usesExistingNavigation: presentationStyle == .pushed,
+      showsCloseButton: presentationStyle == .modal
     )
     super.init(rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: options))
 
@@ -129,8 +123,20 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
     // `rootView` again here is free: `CustomerCenterView` is a struct, and SwiftUI hasn't rendered
     // it or installed its `@StateObject` yet.
     options.onClose = { [weak self] in self?.dismiss(animated: true) }
-    options.onBack = { [weak self] in self?.navigationController?.popViewController(animated: true) }
-    rootView = CustomerCenterView(viewModel: viewModel, navigationOptions: options)
+
+    // Pushed, the host owns the navigation, so `NavigationLink` has no SwiftUI ancestor to work
+    // with and the drill-downs go through the navigator instead.
+    var navigator: CustomerCenterPushNavigator?
+    if presentationStyle == .pushed {
+      navigator = CustomerCenterPushNavigator(viewModel: viewModel)
+      navigator?.presenter = self
+      pushNavigator = navigator
+    }
+    rootView = CustomerCenterView(
+      viewModel: viewModel,
+      navigationOptions: options,
+      navigator: navigator
+    )
 
     if presentationStyle == .modal {
       modalPresentationStyle = .pageSheet
@@ -140,44 +146,9 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   @available(*, unavailable)
   required dynamic init?(coder aDecoder: NSCoder) { fatalError("init(coder:) is not supported") }
 
-  override public func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    guard presentationStyle == .pushed, let navigationController else { return }
-    if hostNavigationBarWasHidden == nil {
-      hostNavigationBarWasHidden = navigationController.isNavigationBarHidden
-    }
-    navigationController.setNavigationBarHidden(true, animated: animated)
-
-    // With the bar hidden, UIKit's own recognizer delegate stops allowing swipe-to-go-back, so
-    // supply one that does. Only the delegate is touched — `isEnabled` is left exactly as the host
-    // set it, since a host that deliberately turned the gesture off is entitled to keep it off.
-    // Guarded like the bar above: a second `viewWillAppear` without an intervening disappear would
-    // otherwise record our own delegate as the host's and "restore" it to that on the way out.
-    if replacedInteractivePopDelegate == nil {
-      replacedInteractivePopDelegate = navigationController.interactivePopGestureRecognizer?.delegate
-    }
-    interactivePopDelegate.navigationController = navigationController
-    interactivePopDelegate.viewModel = viewModel
-    navigationController.interactivePopGestureRecognizer?.delegate = interactivePopDelegate
-  }
-
   override public func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     wasPresentedModally = presentingViewController != nil
-  }
-
-  override public func viewWillDisappear(_ animated: Bool) {
-    super.viewWillDisappear(animated)
-    guard presentationStyle == .pushed, let navigationController else { return }
-    // Also runs when the host merely covers us — pushing its own screen on top, or presenting
-    // something. Restoring the bar is right in that case too: the screen taking over wants its
-    // own chrome, and `viewWillAppear` hides it again if we come back.
-    if let hostNavigationBarWasHidden {
-      navigationController.setNavigationBarHidden(hostNavigationBarWasHidden, animated: animated)
-    }
-    hostNavigationBarWasHidden = nil
-    navigationController.interactivePopGestureRecognizer?.delegate = replacedInteractivePopDelegate
-    replacedInteractivePopDelegate = nil
   }
 
   override public func viewDidDisappear(_ animated: Bool) {
@@ -243,26 +214,5 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
       controller = current.parent
     }
     return wasPresentedModally && presentingViewController == nil
-  }
-}
-
-/// Keeps swipe-to-go-back working while ``CustomerCenterPresentationStyle/pushed`` has the host's
-/// navigation bar hidden. Deliberately not a conformance on `CustomerCenterViewController` itself,
-/// which would put `gestureRecognizerShouldBegin(_:)` on the SDK's public surface.
-@available(iOS 15.0, *)
-private final class InteractivePopGestureDelegate: NSObject, UIGestureRecognizerDelegate {
-  weak var navigationController: UINavigationController?
-  weak var viewModel: CustomerCenterViewModel?
-
-  func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-    // Swiping on the stack's root would leave UIKit mid-transition with nothing to pop.
-    guard let navigationController, navigationController.viewControllers.count > 1 else {
-      return false
-    }
-    // Stand down while the user is inside the Customer Center's own stack — on purchase history
-    // or a purchase detail. Both stacks have an edge-pan armed for the same swipe with no failure
-    // requirement between them, and if the host's were to win, the user would be thrown out of the
-    // whole Customer Center instead of going back one screen. Their own back button still works.
-    return viewModel?.isShowingPushedSurface != true
   }
 }

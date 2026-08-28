@@ -26,6 +26,9 @@ final class CustomerCenterViewModel: ObservableObject {
   // `CustomerCenterViewModel+UpdateBanner.swift`, and `private` is file-scoped.
   @Published var showsUpdateBanner = false
   @Published private(set) var showsDuplicateBanner = false
+  /// How many of the Customer Center's own screens the host has pushed above the root, when it
+  /// owns the navigation. Only the surface at this depth presents sheets.
+  @Published var pushDepth = 0
 
   let configuration: CustomerCenterConfiguration
   let strings: CustomerCenterStrings

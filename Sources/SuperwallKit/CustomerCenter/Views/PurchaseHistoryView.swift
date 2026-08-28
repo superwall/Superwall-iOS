@@ -31,7 +31,7 @@ struct PurchaseHistoryView: View {
     if !items.isEmpty {
       Section(strings.string(key)) {
         ForEach(items) { item in
-          NavigationLink {
+          CustomerCenterDrillDown {
             PurchaseDetailRows(viewModel: viewModel, purchase: item)
           } label: {
             PurchaseCardView(purchase: item, refundResult: nil)
