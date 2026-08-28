@@ -45,6 +45,7 @@ public struct CustomerCenterView: View {
   private let navigator: CustomerCenterNavigating?
   @Environment(\.dismiss) private var dismiss
   @Environment(\.colorScheme) private var colorScheme
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.customerCenterCallbacks) private var callbacksBox
 
   /// Creates a Customer Center view.
@@ -147,15 +148,54 @@ public struct CustomerCenterView: View {
 
   private var coreContent: some View {
     ZStack {
-      switch viewModel.state {
-      case .loading:
-        ProgressView().accessibilityIdentifier("customer_center.loading")
-      case .management:
-        ManagementScreenView(viewModel: viewModel)
-      case .noPurchases:
-        NoPurchasesScreenView(viewModel: viewModel)
-      }
+      // `.identity` so the content doesn't animate: it belongs to the same transaction as the
+      // cover's removal, and without this it would take SwiftUI's default opacity transition and
+      // fade in while the cover fades out. The content should simply be there, revealed.
+      loadedContent.transition(.identity)
       RestoreOverlay(viewModel: viewModel)
+    }
+    // The spinner covers the screen rather than standing in for it, so the content isn't built
+    // and swapped underneath the user — it's simply revealed as the cover fades. The animation
+    // lives here, on the view that owns the condition, because that's what supplies the
+    // transaction the cover's removal transition runs in.
+    .overlay(loadingCover)
+    .animation(loadingCoverAnimation, value: viewModel.state)
+  }
+
+  @ViewBuilder
+  private var loadedContent: some View {
+    switch viewModel.state {
+    case .loading:
+      // Nothing yet — whether this becomes the management or the no-purchases screen isn't known
+      // until the load finishes, and guessing would show the wrong one for a frame.
+      Color.clear
+    case .management:
+      ManagementScreenView(viewModel: viewModel)
+    case .noPurchases:
+      NoPurchasesScreenView(viewModel: viewModel)
+    }
+  }
+
+  /// The cover's fade. Applied to the container rather than the cover itself: a modifier on the
+  /// departing view isn't what drives its removal transition.
+  private var loadingCoverAnimation: Animation? {
+    reduceMotion ? nil : .easeOut(duration: 0.24)
+  }
+
+  @ViewBuilder
+  private var loadingCover: some View {
+    if viewModel.state == .loading {
+      ZStack {
+        // Opaque, so nothing shows through and no touch reaches a half-built screen. Honours a
+        // configured background, falling back to the grouped-list colour the screen uses.
+        //
+        // Deliberately not `ignoresSafeArea`: the overlay already fills the content area, and
+        // extending it would paint an opaque fill into the region behind the host's translucent
+        // navigation bar — flattening chrome that the pushed style promises not to touch.
+        (theme.background ?? Color(uiColor: .systemGroupedBackground))
+        ProgressView().accessibilityIdentifier("customer_center.loading")
+      }
+      .transition(.opacity)
     }
   }
 
