@@ -129,8 +129,18 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
     let missing = ids.subtracting(resolved.keys)
     guard !missing.isEmpty else { return resolved }
     do {
-      let response = try await container.network.getSuperwallProducts()
-      for product in response.data where missing.contains(product.identifier) {
+      // Bounded deliberately. This sits on the path that leaves `.loading`, and the endpoint's
+      // defaults are six retries with exponential backoff and no timeout — a failing backend
+      // would otherwise hold the spinner for minutes on a screen whose prices are a nicety.
+      let response = try await withCatalogueTimeout {
+        try await container.network.getSuperwallProducts()
+      }
+      // `missing` is every id StoreKit didn't return, which includes App Store products whenever
+      // a StoreKit lookup fails — `products(for:)` swallows that with `try?`. Filling those from
+      // the catalogue would quote the dashboard's storefront price instead of what the customer is
+      // actually charged, so restrict this to products StoreKit was never going to resolve.
+      for product in response.data
+      where missing.contains(product.identifier) && product.platform != .ios {
         let entitlements = Set(product.entitlements.map { Entitlement(id: $0.identifier) })
         let apiProduct = APIStoreProduct(superwallProduct: product, entitlements: entitlements)
         let storeProduct = StoreProduct(catalogProduct: apiProduct)
@@ -146,6 +156,26 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
       )
     }
     return resolved
+  }
+
+  /// How long the catalogue gets before the screen gives up on prices and renders without them.
+  private static let catalogueTimeout: TimeInterval = 5
+
+  private func withCatalogueTimeout(
+    _ work: @escaping () async throws -> SuperwallProductsResponse
+  ) async throws -> SuperwallProductsResponse {
+    try await withThrowingTaskGroup(of: SuperwallProductsResponse.self) { group in
+      group.addTask { try await work() }
+      group.addTask {
+        try await Task.sleep(nanoseconds: UInt64(Self.catalogueTimeout * 1_000_000_000))
+        throw CancellationError()
+      }
+      defer { group.cancelAll() }
+      guard let first = try await group.next() else {
+        throw CancellationError()
+      }
+      return first
+    }
   }
 }
 @available(iOS 15.0, *)
@@ -172,7 +202,12 @@ struct LiveEnvironment: CustomerCenterEnvironmentProviding {
   var deviceModel: String { UIDevice.current.model }
   var sdkVersion: String { SuperwallKit.sdkVersion }
   var userId: String { Superwall.shared.userId }
-  var isSandbox: Bool { ReceiptManager.isSandboxEnvironment ?? false }
+  /// Deliberately `DeviceHelper`'s detection rather than `ReceiptManager.isSandboxEnvironment`
+  /// directly: that static is only ever assigned inside an `#available(iOS 16.0, *)` branch, so on
+  /// iOS 15 — the Customer Center's own floor — it stays nil and every sandbox check silently
+  /// reads `false`. `DeviceHelper` falls back to the simulator flag and the receipt URL, and also
+  /// accounts for test mode.
+  var isSandbox: Bool { container.deviceHelper.isSandbox == "true" }
   var appStoreURL: URL? {
     let id = container.makeAppId() ?? ReceiptManager.appId.map(String.init)
     return id.flatMap { URL(string: "https://apps.apple.com/app/id\($0)") }

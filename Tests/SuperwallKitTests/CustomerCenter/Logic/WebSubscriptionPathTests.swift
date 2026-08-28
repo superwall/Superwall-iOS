@@ -111,6 +111,32 @@ struct WebSubscriptionPathTests {
     #expect(viewModel.sheet == .safari(managementURL))
   }
 
+  /// An entitlement with no transaction behind it — comped, or granted by hand — has a nil store
+  /// that the builder reports as `.superwall`, which reads as a web store. Sending that customer
+  /// to a management page, or telling them to find a link in a receipt they never got, is wrong.
+  @available(iOS 15.0, *)
+  @Test("a comped entitlement isn't told to check a receipt it never had")
+  func compedEntitlementGetsNoReceiptBlurb() async {
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro")]
+      ),
+      environment: EnvironmentMock(webManagementURL: nil)
+    )
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english
+    )
+    await viewModel.load()
+
+    let purchase = viewModel.purchases.first
+    let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
+    #expect(manage == nil, "nothing to manage, so no row at all")
+  }
+
   // MARK: - Surveys don't belong on a web flow
 
   /// The survey gates an action. On a web flow that action leaves the app — or, with no URL, can't

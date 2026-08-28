@@ -108,9 +108,6 @@ final class CustomerCenterViewModel: ObservableObject {
   func load() async {
     let info = await dependencies.customerInfo.fetchCustomerInfo()
     await apply(customerInfo: info, refetchProducts: true)
-    // Deliberately after the first `apply`: the screen renders straight away rather than waiting
-    // on a network round trip, and the banner animates in afterwards if there's something to say.
-    await refreshAppStoreVersion()
     if !hasTrackedOpen {
       hasTrackedOpen = true
       await dependencies.tracker.track(
@@ -120,6 +117,10 @@ final class CustomerCenterViewModel: ObservableObject {
         )
       )
     }
+    // Last, and deliberately so: this makes a network call, and everything above it — the first
+    // render and the open event — must not wait on it. Tracking open behind it would let a user
+    // who closes the screen mid-lookup emit close before open.
+    await refreshAppStoreVersion()
   }
 
   private func apply(customerInfo: CustomerInfo, refetchProducts: Bool) async {

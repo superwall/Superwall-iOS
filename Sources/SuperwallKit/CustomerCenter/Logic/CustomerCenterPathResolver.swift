@@ -64,6 +64,32 @@ enum CustomerCenterPathResolver {
     }
   }
 
+  /// Split out of `destination(for:context:)` to keep that switch under the complexity limit.
+  private static func manageSubscriptionDestination(
+    context: PathResolutionContext
+  ) -> ResolvedPathDestination? {
+    guard let purchase = context.purchase else { return nil }
+    let sub = purchase.subscription
+
+    if purchase.store == .appStore {
+      guard
+        let sub, sub.isActive, sub.willRenew, !sub.isRevoked,
+        sub.expirationDate != nil, !context.isFamilyShared
+      else { return nil }
+      return .appleManageSheet(subscriptionGroupId: sub.subscriptionGroupId ?? context.product?.subscriptionGroupId)
+    }
+
+    guard [.stripe, .paddle, .superwall].contains(purchase.store) else { return nil }
+
+    // An entitlement with no transaction behind it — comped, or granted by hand — has a nil store
+    // that the builder reports as `.superwall`, which lands here. There is no subscription to
+    // manage, so offer the page only if one exists and never claim a receipt was sent.
+    if case .entitlementOnly = purchase.kind {
+      return context.webManagementURL.map { ResolvedPathDestination.webManage($0) }
+    }
+    return context.webManagementURL.map { ResolvedPathDestination.webManage($0) } ?? .webManageUnavailable
+  }
+
   private static func destination(
     for path: CustomerCenterConfiguration.Path,
     context: PathResolutionContext
@@ -92,18 +118,7 @@ enum CustomerCenterPathResolver {
       return .custom(identifier)
 
     case .manageSubscription:
-      guard let purchase else { return nil }
-      if isAppStore {
-        guard
-          let sub, sub.isActive, sub.willRenew, !sub.isRevoked,
-          sub.expirationDate != nil, !context.isFamilyShared
-        else { return nil }
-        return .appleManageSheet(subscriptionGroupId: sub.subscriptionGroupId ?? context.product?.subscriptionGroupId)
-      }
-      if isWebStore {
-        return context.webManagementURL.map { ResolvedPathDestination.webManage($0) } ?? .webManageUnavailable
-      }
-      return nil
+      return manageSubscriptionDestination(context: context)
 
     case .refund(let window):
       guard isAppStore, let sub, !sub.isRevoked, sub.offerType != .trial, !context.isFamilyShared else { return nil }
