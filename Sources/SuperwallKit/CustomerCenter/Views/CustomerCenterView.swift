@@ -186,9 +186,14 @@ public struct CustomerCenterView: View {
   private var loadingCover: some View {
     if viewModel.state == .loading {
       ZStack {
-        // Opaque, so nothing shows through and no touch reaches a half-built screen. Honours a
-        // configured background, falling back to the grouped-list colour the screen uses.
-        (theme.background ?? Color(uiColor: .systemGroupedBackground))
+        // Opaque, so nothing shows through and no touch reaches a half-built screen. Matches the
+        // `insetGrouped` list it becomes.
+        //
+        // Deliberately not `theme.background`: nothing else in the SDK reads it, so honouring it
+        // here alone would tint the cover and then fade to an untinted list — a colour flip on
+        // exactly the screens that configured a background. It belongs here when background
+        // theming is wired up across the screens, not before.
+        Color(uiColor: .systemGroupedBackground)
         ProgressView().accessibilityIdentifier("customer_center.loading")
       }
       // Edge to edge, because the `List` this becomes already runs under the navigation bar and
