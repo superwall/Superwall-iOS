@@ -279,13 +279,19 @@ final class GrantedEntitlementsTests {
       }
     }
 
-    // The persisted base must never contain a granted entitlement.
-    if case .active(let entitlements) = dependencyContainer.storage.get(SubscriptionStatusKey.self) {
-      #expect(!entitlements.contains { $0.id == "granted" })
+    // The persisted base must be exactly one of the assigned values —
+    // any merged base means a resolved write-back was captured.
+    let persistedBase = dependencyContainer.storage.get(SubscriptionStatusKey.self)
+    #expect(
+      persistedBase == .inactive
+        || persistedBase == .active([deviceEntitlement(id: "premium")])
+    )
+    // The in-memory base must be clean too: clearing the grant must leave
+    // a status without it.
+    superwall.grantedEntitlements = []
+    if case .active(let entitlements) = superwall.subscriptionStatus {
+      #expect(entitlements.map(\.id) == ["premium"])
     }
-    // Whatever base won the race, the published status resolves active
-    // because of the grant.
-    #expect(superwall.subscriptionStatus.isActive)
   }
 
   @Test
