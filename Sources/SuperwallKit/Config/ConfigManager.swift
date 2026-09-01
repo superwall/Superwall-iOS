@@ -211,7 +211,11 @@ class ConfigManager {
     if storage.get(IsTestModeActiveSubscription.self) ?? false {
       return false
     }
-    if case .active = storage.get(SubscriptionStatusKey.self) {
+    // The persisted base can hold .active with no active entitlement
+    // (e.g. a developer-assigned .active([])) — inspect the set rather
+    // than pattern-matching the case alone.
+    if case .active(let entitlements) = storage.get(SubscriptionStatusKey.self),
+      entitlements.contains(where: { $0.isActive }) {
       return true
     }
     let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []

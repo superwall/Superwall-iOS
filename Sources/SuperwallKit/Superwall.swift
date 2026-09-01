@@ -220,6 +220,15 @@ public final class Superwall: NSObject, ObservableObject {
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
+      // Serializes resolution across threads: without it, an assignment
+      // landing inside another thread's resolved write-back window would be
+      // mistaken for the write-back and silently dropped. The lock is
+      // recursive because the write-back re-enters this didSet on the
+      // same thread.
+      subscriptionStatusResolutionLock.lock()
+      defer {
+        subscriptionStatusResolutionLock.unlock()
+      }
       if isResolvingSubscriptionStatus {
         // Write-back of the resolved value from
         // applySubscriptionStatusResolution, which runs the side effects.
@@ -243,7 +252,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// Guards the write-back of the resolved status inside
   /// `applySubscriptionStatusResolution` so `didSet` doesn't mistake it for a
   /// new external assignment and capture the resolved value as the base.
+  /// Only read and written while `subscriptionStatusResolutionLock` is held.
   private var isResolvingSubscriptionStatus = false
+
+  /// Serializes status resolution so concurrent assignments from different
+  /// threads can't interleave with the resolved write-back. Recursive
+  /// because the write-back re-enters the `subscriptionStatus` `didSet`.
+  private let subscriptionStatusResolutionLock = NSRecursiveLock()
 
   /// Whether the one-time warning about granted entitlements overriding an
   /// `.inactive` assignment has been logged.
@@ -271,6 +286,10 @@ public final class Superwall: NSObject, ObservableObject {
       return dependencyContainer.storage.get(GrantedEntitlements.self) ?? []
     }
     set {
+      subscriptionStatusResolutionLock.lock()
+      defer {
+        subscriptionStatusResolutionLock.unlock()
+      }
       dependencyContainer.storage.save(newValue, forType: GrantedEntitlements.self)
       Logger.debug(
         logLevel: .info,
@@ -280,7 +299,27 @@ public final class Superwall: NSObject, ObservableObject {
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
       applySubscriptionStatusResolution(oldBase: unresolvedSubscriptionStatus)
+      refreshAutomaticCustomerInfoAfterGrantChange()
     }
+  }
+
+  /// Recomputes `customerInfo` on the automatic path after a grant change,
+  /// rebuilding from the stored device and web sources so cleared grants
+  /// actually disappear. The external purchase controller path is recomputed
+  /// inside `applySubscriptionStatusResolution`; test mode manages its own
+  /// customer info.
+  private func refreshAutomaticCustomerInfoAfterGrantChange() {
+    if dependencyContainer.makeHasExternalPurchaseController() {
+      return
+    }
+    if dependencyContainer.testModeManager?.isTestMode == true {
+      return
+    }
+    let storage: Storage = dependencyContainer.storage
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+    let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
+    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+      .mergingGrantedEntitlements(from: storage)
   }
 
   /// Resolves the subscription status from the unresolved base and publishes
@@ -544,11 +583,18 @@ public final class Superwall: NSObject, ObservableObject {
       return override
     }
     var status = status
-    let granted = grantedEntitlements
+    // Only active grants merge into the status, mirroring how web
+    // entitlements merge (EntitlementsInfo.web filters to active).
+    // Inactive grants still reach customerInfo for round-trip visibility.
+    let granted = Set(grantedEntitlements.filter(\.isActive))
     if !granted.isEmpty {
       switch status {
       case .active(let entitlements):
-        status = .active(entitlements.union(granted))
+        // mergePrioritized explicitly: plain Set.union dedupes by deep
+        // equality, which would keep both records for a shared ID.
+        status = .active(
+          Entitlement.mergePrioritized(Array(entitlements) + Array(granted))
+        )
       case .inactive, .unknown:
         // .unknown promotes to active, unlike web entitlements (see
         // internallySetSubscriptionStatus). With an external purchase
@@ -1230,19 +1276,21 @@ public final class Superwall: NSObject, ObservableObject {
   /// its lifecycle. Set it again immediately after calling this if the next
   /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
-    if !grantedEntitlements.isEmpty {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .grantedEntitlements,
-        message: "reset() was called but grantedEntitlements persist across reset. "
-          + "Set grantedEntitlements again if the next user shouldn't inherit them."
-      )
-    }
     reset(duringIdentify: false)
   }
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
   func reset(duringIdentify: Bool) {
+    // Warn here rather than in the public reset() so the identify-triggered
+    // reset — the actual user-switch moment — warns too.
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "The user was reset but grantedEntitlements persist across reset() "
+          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
+      )
+    }
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     // Cancel any in-flight attribution post before wiping its storage, so a
     // late-completing post can't race the new user's state.

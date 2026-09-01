@@ -106,7 +106,29 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .inactive
     superwall.grantedEntitlements = [grantedEntitlement(isActive: false)]
 
-    #expect(!superwall.subscriptionStatus.isActive)
+    // Inactive-only grants must not promote — the status stays .inactive,
+    // not an .active-cased status that's effectively inactive.
+    #expect(superwall.subscriptionStatus == .inactive)
+  }
+
+  @Test
+  func inactiveGrant_doesNotEnterActiveSet() {
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
+    superwall.grantedEntitlements = [grantedEntitlement(id: "extra", isActive: false)]
+
+    if case .active(let entitlements) = superwall.subscriptionStatus {
+      #expect(entitlements.map(\.id) == ["premium"])
+    } else {
+      Issue.record("Expected .active status")
+    }
+  }
+
+  @Test
+  func inactiveGrantedOnly_leavesUnknownStatusUnknown() {
+    superwall.subscriptionStatus = .unknown
+    superwall.grantedEntitlements = [grantedEntitlement(isActive: false)]
+
+    #expect(superwall.subscriptionStatus == .unknown)
   }
 
   @Test
@@ -260,6 +282,15 @@ final class GrantedEntitlementsTests {
     )
 
     #expect(customerInfo.entitlements.contains { $0.id == "granted" && $0.isActive })
+  }
+
+  @Test
+  func grantChange_refreshesCustomerInfoOnAutomaticPath() {
+    superwall.grantedEntitlements = [grantedEntitlement()]
+    #expect(superwall.customerInfo.entitlements.contains { $0.id == "granted" && $0.isActive })
+
+    superwall.grantedEntitlements = []
+    #expect(!superwall.customerInfo.entitlements.contains { $0.id == "granted" })
   }
 
   @Test

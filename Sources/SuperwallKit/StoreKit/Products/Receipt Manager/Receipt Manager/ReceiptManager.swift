@@ -213,11 +213,15 @@ actor ReceiptManager {
       let allEntitlements = baseCustomerInfo.entitlements + externalOnlyEntitlements
       let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
 
+      // Granted entitlements merge here too: the externalOnly filter above
+      // drops a granted entitlement whose ID collides with an expired
+      // device one, which would leave customerInfo reporting it inactive
+      // while subscriptionStatus reports it active.
       mergedCustomerInfo = CustomerInfo(
         subscriptions: baseCustomerInfo.subscriptions,
         nonSubscriptions: baseCustomerInfo.nonSubscriptions,
         entitlements: finalEntitlements.sorted { $0.id < $1.id }
-      )
+      ).mergingGrantedEntitlements(from: storage)
     } else {
       mergedCustomerInfo = baseCustomerInfo.mergingGrantedEntitlements(from: storage)
     }

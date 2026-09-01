@@ -337,7 +337,9 @@ enum InternalSuperwallEvent {
         // The active set has provenance merged away, so surface which of the
         // active entitlements were developer-granted for debugging.
         let grantedIds = Set(grantedEntitlements.map(\.id))
-        let activeGrantedIds = entitlements.map(\.id).filter { grantedIds.contains($0) }
+        let activeGrantedIds = entitlements
+          .filter { $0.isActive && grantedIds.contains($0.id) }
+          .map(\.id)
         if !activeGrantedIds.isEmpty {
           params += [
             "granted_entitlement_ids": activeGrantedIds.joined(separator: ",")
