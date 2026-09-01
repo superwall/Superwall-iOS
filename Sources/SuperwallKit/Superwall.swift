@@ -219,13 +219,19 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``grantedEntitlements`` to an empty set.
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
-    didSet {
-      // Serializes resolution across threads: without it, an assignment
-      // landing inside another thread's resolved write-back window would be
-      // mistaken for the write-back and silently dropped. The lock is
-      // recursive because the write-back re-enters this didSet on the
-      // same thread.
+    willSet {
+      // Serializes the property store itself, not just the resolution:
+      // didSet has no newValue and must re-read the property, so a store
+      // landing mid-resolution on another thread would be captured as that
+      // thread's base — including the resolved write-back, which would bake
+      // granted entitlements into the persisted base. Locking before the
+      // store makes store + resolution atomic. The lock is recursive
+      // because the write-back re-enters these observers on the same
+      // thread. Released at the end of didSet — the pair must stay
+      // balanced across every didSet exit path.
       subscriptionStatusResolutionLock.lock()
+    }
+    didSet {
       defer {
         subscriptionStatusResolutionLock.unlock()
       }
