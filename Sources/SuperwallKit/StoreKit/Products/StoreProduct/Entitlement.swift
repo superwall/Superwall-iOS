@@ -255,7 +255,8 @@ public final class Entitlement: NSObject, Codable, Sendable {
     try container.encodeIfPresent(offerType, forKey: .offerType)
   }
 
-  // Override isEqual to define equality based on `id` and `type`
+  // Deep equality across all fields. For detecting logical status changes,
+  // use `identity` instead, which ignores transaction metadata.
   public override func isEqual(_ object: Any?) -> Bool {
     guard let other = object as? Entitlement else {
       return false
@@ -291,6 +292,26 @@ public final class Entitlement: NSObject, Codable, Sendable {
     hasher.combine(state)
     hasher.combine(offerType)
     return hasher.finalize()
+  }
+}
+
+// MARK: - Logical Identity
+extension Entitlement {
+  /// The fields that define which entitlement this is and whether it grants
+  /// access. Transaction metadata like dates, product IDs, and renewal state
+  /// can differ between writes of the same logical status, so it's excluded.
+  struct Identity: Hashable {
+    let id: String
+    let type: EntitlementType
+    let isActive: Bool
+  }
+
+  var identity: Identity {
+    return Identity(
+      id: id,
+      type: type,
+      isActive: isActive
+    )
   }
 }
 
