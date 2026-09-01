@@ -219,6 +219,9 @@ public final class Superwall: NSObject, ObservableObject {
         subscriptionStatus = resolved
         return
       }
+      // Saved here rather than in the status listener so that metadata-only
+      // updates, which the listener dedupes, still refresh the cache.
+      dependencyContainer.storage.save(subscriptionStatus, forType: SubscriptionStatusKey.self)
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
       // When using an external purchase controller, update CustomerInfo.entitlements
@@ -568,7 +571,7 @@ public final class Superwall: NSObject, ObservableObject {
 
   private func listenToSubscriptionStatus() {
     $subscriptionStatus
-      .removeDuplicates()
+      .removeDuplicates { $0.isLogicallyEqual(to: $1) }
       .dropFirst()
       .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
         // Shift the current value to previous, and set the new status as the current value
@@ -584,8 +587,6 @@ public final class Superwall: NSObject, ObservableObject {
             }
             let oldStatus = statusPair.previous
             let newStatus = statusPair.current
-
-            self.dependencyContainer.storage.save(newStatus, forType: SubscriptionStatusKey.self)
 
             Task {
               await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(

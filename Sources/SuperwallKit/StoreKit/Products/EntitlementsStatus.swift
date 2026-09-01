@@ -54,6 +54,26 @@ public enum SubscriptionStatus: Equatable, Codable {
   }
 }
 
+// MARK: - Logical Equality
+extension SubscriptionStatus {
+  /// Whether both statuses represent the same logical subscription state.
+  ///
+  /// Two `.active` statuses are logically equal when their entitlements have the
+  /// same identities (`id`, `type`, and `isActive`), even if transaction metadata
+  /// like expiry dates or renewal state differs. `==` compares that metadata too,
+  /// so repeat writes of the same logical status can read as changes.
+  func isLogicallyEqual(to other: SubscriptionStatus) -> Bool {
+    switch (self, other) {
+    case (.unknown, .unknown), (.inactive, .inactive):
+      return true
+    case let (.active(lhsEntitlements), .active(rhsEntitlements)):
+      return Set(lhsEntitlements.map(\.identity)) == Set(rhsEntitlements.map(\.identity))
+    default:
+      return false
+    }
+  }
+}
+
 // MARK: - CustomStringConvertible
 extension SubscriptionStatus: CustomStringConvertible {
   public var description: String {
