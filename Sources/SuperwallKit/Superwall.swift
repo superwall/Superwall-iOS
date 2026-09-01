@@ -242,8 +242,11 @@ public final class Superwall: NSObject, ObservableObject {
       }
       let oldBase = unresolvedSubscriptionStatus
       unresolvedSubscriptionStatus = subscriptionStatus
-      logIfGrantedEntitlementsOverrideInactive(subscriptionStatus)
-      applySubscriptionStatusResolution(oldBase: oldBase)
+      // Snapshot once: both the warning check and resolution need the
+      // granted set, and each read hits storage under the lock.
+      let granted = grantedEntitlements
+      logIfGrantedEntitlementsOverrideInactive(subscriptionStatus, granted: granted)
+      applySubscriptionStatusResolution(oldBase: oldBase, granted: granted)
     }
   }
 
@@ -304,7 +307,7 @@ public final class Superwall: NSObject, ObservableObject {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      applySubscriptionStatusResolution(oldBase: unresolvedSubscriptionStatus)
+      applySubscriptionStatusResolution(oldBase: unresolvedSubscriptionStatus, granted: newValue)
       refreshAutomaticCustomerInfoAfterGrantChange()
     }
   }
@@ -335,8 +338,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// `subscriptionStatus` `didSet` on external assignment and from the
   /// ``grantedEntitlements`` setter, whose changes must re-resolve the status
   /// without a new base being assigned.
-  private func applySubscriptionStatusResolution(oldBase: SubscriptionStatus) {
-    let resolved = resolvedSubscriptionStatus(unresolvedSubscriptionStatus)
+  private func applySubscriptionStatusResolution(
+    oldBase: SubscriptionStatus,
+    granted: Set<Entitlement>
+  ) {
+    let resolved = resolvedSubscriptionStatus(unresolvedSubscriptionStatus, granted: granted)
     if resolved != subscriptionStatus {
       isResolvingSubscriptionStatus = true
       subscriptionStatus = resolved
@@ -371,10 +377,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// `subscriptionStatus` while granted entitlements exist. The status will
   /// resolve back to active, which otherwise looks like the SDK ignored the
   /// assignment.
-  private func logIfGrantedEntitlementsOverrideInactive(_ status: SubscriptionStatus) {
+  private func logIfGrantedEntitlementsOverrideInactive(
+    _ status: SubscriptionStatus,
+    granted: Set<Entitlement>
+  ) {
     guard case .inactive = status,
       !hasLoggedGrantedEntitlementsWarning,
-      !grantedEntitlements.isEmpty
+      !granted.isEmpty
     else {
       return
     }
@@ -581,7 +590,8 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Value Resolution
 
   private func resolvedSubscriptionStatus(
-    _ status: SubscriptionStatus
+    _ status: SubscriptionStatus,
+    granted: Set<Entitlement>
   ) -> SubscriptionStatus {
     if let testModeManager = dependencyContainer.testModeManager,
       testModeManager.isTestMode,
@@ -592,7 +602,7 @@ public final class Superwall: NSObject, ObservableObject {
     // Only active grants merge into the status, mirroring how web
     // entitlements merge (EntitlementsInfo.web filters to active).
     // Inactive grants still reach customerInfo for round-trip visibility.
-    let granted = Set(grantedEntitlements.filter(\.isActive))
+    let granted = Set(granted.filter(\.isActive))
     if !granted.isEmpty {
       switch status {
       case .active(let entitlements):

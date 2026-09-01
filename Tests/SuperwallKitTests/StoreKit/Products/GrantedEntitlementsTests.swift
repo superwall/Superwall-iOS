@@ -262,6 +262,33 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
+  func concurrentAssignments_neverPersistGrantedIntoBase() async {
+    superwall.grantedEntitlements = [grantedEntitlement()]
+
+    // Race external assignments from many threads. Without the lock
+    // covering the property store, a store landing mid-resolution captures
+    // another thread's resolved write-back as its base, persisting granted
+    // entitlements into SubscriptionStatusKey.
+    await withTaskGroup(of: Void.self) { group in
+      for index in 0..<50 {
+        group.addTask { [superwall, deviceEnt = deviceEntitlement(id: "premium")] in
+          superwall.subscriptionStatus = index.isMultiple(of: 2)
+            ? .inactive
+            : .active([deviceEnt])
+        }
+      }
+    }
+
+    // The persisted base must never contain a granted entitlement.
+    if case .active(let entitlements) = dependencyContainer.storage.get(SubscriptionStatusKey.self) {
+      #expect(!entitlements.contains { $0.id == "granted" })
+    }
+    // Whatever base won the race, the published status resolves active
+    // because of the grant.
+    #expect(superwall.subscriptionStatus.isActive)
+  }
+
+  @Test
   func granted_survivesStorageReset() {
     superwall.grantedEntitlements = [grantedEntitlement()]
 
