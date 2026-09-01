@@ -210,7 +210,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
-  /// to receive a callback every time it changes.
+  /// to receive a callback whenever the logical status changes.
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
@@ -220,8 +220,11 @@ public final class Superwall: NSObject, ObservableObject {
         return
       }
       // Saved here rather than in the status listener so that metadata-only
-      // updates, which the listener dedupes, still refresh the cache.
-      dependencyContainer.storage.save(subscriptionStatus, forType: SubscriptionStatusKey.self)
+      // updates, which the listener dedupes, still refresh the cache. Identical
+      // writes are skipped so they don't re-encode and rewrite the file.
+      if oldValue != subscriptionStatus {
+        dependencyContainer.storage.save(subscriptionStatus, forType: SubscriptionStatusKey.self)
+      }
       entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
       // When using an external purchase controller, update CustomerInfo.entitlements
@@ -569,7 +572,7 @@ public final class Superwall: NSObject, ObservableObject {
         ))
   }
 
-  private func listenToSubscriptionStatus() {
+  func listenToSubscriptionStatus() {
     $subscriptionStatus
       .removeDuplicates { $0.isLogicallyEqual(to: $1) }
       .dropFirst()
