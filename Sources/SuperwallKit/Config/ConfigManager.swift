@@ -150,15 +150,7 @@ class ConfigManager {
 
       // Step 1: Determine fetch strategy based on subscription status and cached data
       let cachedConfig = storage.get(LatestConfig.self)
-      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
-
-      let isTestModeSubscription = storage.get(IsTestModeActiveSubscription.self) ?? false
-      let isSubscribed: Bool
-      if case .active = cachedSubsStatus, !isTestModeSubscription {
-        isSubscribed = true
-      } else {
-        isSubscribed = false
-      }
+      let isSubscribed = hasActiveCachedSubscription()
 
       let shouldFetchAsync = cachedConfig != nil && isSubscribed
 
@@ -211,6 +203,21 @@ class ConfigManager {
 
   // MARK: - Config Fetch Helpers
 
+  /// Whether the cached subscription state indicates an active subscriber.
+  ///
+  /// The persisted status is the unresolved base, before developer-granted
+  /// entitlements are merged in, so those are checked from their own storage.
+  private func hasActiveCachedSubscription() -> Bool {
+    if storage.get(IsTestModeActiveSubscription.self) ?? false {
+      return false
+    }
+    if case .active = storage.get(SubscriptionStatusKey.self) {
+      return true
+    }
+    let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
+    return grantedEntitlements.contains { $0.isActive }
+  }
+
   private struct ConfigFetchResult {
     let config: Config
     let isUsingCached: Bool
@@ -240,13 +247,7 @@ class ConfigManager {
       // Fetch config synchronously
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActiveSubscription: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self),
-        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
-        isActiveSubscription = true
-      } else {
-        isActiveSubscription = false
-      }
+      let isActiveSubscription = hasActiveCachedSubscription()
       let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       if let cachedConfig = cachedConfig,
@@ -294,13 +295,7 @@ class ConfigManager {
       // Fetch enrichment with timeout for sync path
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActiveSubscription: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self),
-        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
-        isActiveSubscription = true
-      } else {
-        isActiveSubscription = false
-      }
+      let isActiveSubscription = hasActiveCachedSubscription()
       let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       let cachedEnrichment = storage.get(LatestEnrichment.self)

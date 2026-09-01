@@ -219,7 +219,7 @@ actor ReceiptManager {
         entitlements: finalEntitlements.sorted { $0.id < $1.id }
       )
     } else {
-      mergedCustomerInfo = baseCustomerInfo
+      mergedCustomerInfo = baseCustomerInfo.mergingGrantedEntitlements(from: storage)
     }
 
     await MainActor.run {

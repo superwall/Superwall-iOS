@@ -33,6 +33,7 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case paywallViewController
   case cache
   case webEntitlements
+  case grantedEntitlements
   case all
 
   public var description: String {
@@ -83,6 +84,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "cache"
     case .webEntitlements:
       return "webEntitlements"
+    case .grantedEntitlements:
+      return "grantedEntitlements"
     case .all:
       return "all"
     }

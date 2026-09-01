@@ -211,33 +211,136 @@ public final class Superwall: NSObject, ObservableObject {
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
   /// to receive a callback whenever the logical status changes.
+  ///
+  /// - Warning: If you've set ``grantedEntitlements``, they are merged into
+  /// every value you assign here. Assigning `.inactive` does **not** remove
+  /// them — the status stays active for as long as ``grantedEntitlements``
+  /// contains an active entitlement. To revoke them, set
+  /// ``grantedEntitlements`` to an empty set.
   @Published
   public var subscriptionStatus: SubscriptionStatus = .unknown {
     didSet {
-      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
-      if resolved != subscriptionStatus {
-        subscriptionStatus = resolved
+      if isResolvingSubscriptionStatus {
+        // Write-back of the resolved value from
+        // applySubscriptionStatusResolution, which runs the side effects.
         return
       }
-      // Saved here rather than in the status listener so that metadata-only
-      // updates, which the listener dedupes, still refresh the cache. Identical
-      // writes are skipped so they don't re-encode and rewrite the file.
-      if oldValue != subscriptionStatus {
-        dependencyContainer.storage.save(subscriptionStatus, forType: SubscriptionStatusKey.self)
-      }
-      entitlements.subscriptionStatusDidSet(subscriptionStatus)
-
-      // When using an external purchase controller, update CustomerInfo.entitlements
-      // to reflect the entitlements from the purchase controller.
-      // Skip this in test mode — test mode manages its own CustomerInfo.
-      if dependencyContainer.makeHasExternalPurchaseController(),
-        dependencyContainer.testModeManager?.isTestMode != true {
-        customerInfo = CustomerInfo.forExternalPurchaseController(
-          storage: dependencyContainer.storage,
-          subscriptionStatus: subscriptionStatus
-        )
-      }
+      let oldBase = unresolvedSubscriptionStatus
+      unresolvedSubscriptionStatus = subscriptionStatus
+      logIfGrantedEntitlementsOverrideInactive(subscriptionStatus)
+      applySubscriptionStatusResolution(oldBase: oldBase)
     }
+  }
+
+  /// The last externally assigned subscription status, before resolution
+  /// merges in ``grantedEntitlements`` or test-mode overrides.
+  ///
+  /// Resolution always starts from this base rather than from the published
+  /// value: the published value is already merged, so re-resolving it could
+  /// never remove granted entitlements once the developer clears them.
+  private var unresolvedSubscriptionStatus: SubscriptionStatus = .unknown
+
+  /// Guards the write-back of the resolved status inside
+  /// `applySubscriptionStatusResolution` so `didSet` doesn't mistake it for a
+  /// new external assignment and capture the resolved value as the base.
+  private var isResolvingSubscriptionStatus = false
+
+  /// Whether the one-time warning about granted entitlements overriding an
+  /// `.inactive` assignment has been logged.
+  private var hasLoggedGrantedEntitlementsWarning = false
+
+  /// Entitlements granted by your own backend that Superwall can't observe,
+  /// which the SDK merges into ``subscriptionStatus`` alongside device and web
+  /// entitlements.
+  ///
+  /// Use this when access is granted outside of the App Store and the web —
+  /// for example, a promotional grant or an account comped by your backend.
+  /// Don't use this if you compute the full subscription picture in a
+  /// `PurchaseController` — in that case set ``subscriptionStatus`` directly,
+  /// otherwise two writers feed one value and the merge will surprise you.
+  ///
+  /// Each assignment replaces the previous value outright — granting `[a]`
+  /// and then `[b]` leaves only `b`. Assign an empty set to revoke.
+  ///
+  /// - Warning: This persists across app launches, ``reset()``, and
+  /// ``identify(userId:options:)``. You must set it again immediately after
+  /// calling `identify()` or `reset()` if the new user shouldn't inherit the
+  /// previous user's granted entitlements.
+  public var grantedEntitlements: Set<Entitlement> {
+    get {
+      return dependencyContainer.storage.get(GrantedEntitlements.self) ?? []
+    }
+    set {
+      dependencyContainer.storage.save(newValue, forType: GrantedEntitlements.self)
+      Logger.debug(
+        logLevel: .info,
+        scope: .grantedEntitlements,
+        message: newValue.isEmpty
+          ? "Granted entitlements cleared."
+          : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
+      )
+      applySubscriptionStatusResolution(oldBase: unresolvedSubscriptionStatus)
+    }
+  }
+
+  /// Resolves the subscription status from the unresolved base and publishes
+  /// it, then runs the side effects of a status change.
+  ///
+  /// This is the only writer of the resolved value. It's called from the
+  /// `subscriptionStatus` `didSet` on external assignment and from the
+  /// ``grantedEntitlements`` setter, whose changes must re-resolve the status
+  /// without a new base being assigned.
+  private func applySubscriptionStatusResolution(oldBase: SubscriptionStatus) {
+    let resolved = resolvedSubscriptionStatus(unresolvedSubscriptionStatus)
+    if resolved != subscriptionStatus {
+      isResolvingSubscriptionStatus = true
+      subscriptionStatus = resolved
+      isResolvingSubscriptionStatus = false
+    }
+    // The unresolved base is persisted, not the resolved value: granted
+    // entitlements are merged during resolution, and restoring an
+    // already-merged value would bake them into the base forever, making
+    // them impossible to clear after a relaunch.
+    //
+    // Saved here rather than in the status listener so that metadata-only
+    // updates, which the listener dedupes, still refresh the cache. Identical
+    // writes are skipped so they don't re-encode and rewrite the file.
+    if oldBase != unresolvedSubscriptionStatus {
+      dependencyContainer.storage.save(unresolvedSubscriptionStatus, forType: SubscriptionStatusKey.self)
+    }
+    entitlements.subscriptionStatusDidSet(subscriptionStatus)
+
+    // When using an external purchase controller, update CustomerInfo.entitlements
+    // to reflect the entitlements from the purchase controller.
+    // Skip this in test mode — test mode manages its own CustomerInfo.
+    if dependencyContainer.makeHasExternalPurchaseController(),
+      dependencyContainer.testModeManager?.isTestMode != true {
+      customerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: dependencyContainer.storage,
+        subscriptionStatus: subscriptionStatus
+      )
+    }
+  }
+
+  /// Logs a one-time warning when `.inactive` is assigned to
+  /// `subscriptionStatus` while granted entitlements exist. The status will
+  /// resolve back to active, which otherwise looks like the SDK ignored the
+  /// assignment.
+  private func logIfGrantedEntitlementsOverrideInactive(_ status: SubscriptionStatus) {
+    guard case .inactive = status,
+      !hasLoggedGrantedEntitlementsWarning,
+      !grantedEntitlements.isEmpty
+    else {
+      return
+    }
+    hasLoggedGrantedEntitlementsWarning = true
+    Logger.debug(
+      logLevel: .warn,
+      scope: .grantedEntitlements,
+      message: "subscriptionStatus was set to .inactive but grantedEntitlements "
+        + "is not empty, so the status remains active. Assigning subscriptionStatus "
+        + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
+    )
   }
 
   /// Contains the latest information about all of the customer's purchase and subscription data.
@@ -315,6 +418,11 @@ public final class Superwall: NSObject, ObservableObject {
         superwall.subscriptionStatus = .active(activeWebEntitlements)
       }
     case .unknown:
+      // Web entitlements deliberately don't promote .unknown to active,
+      // unlike granted entitlements (see resolvedSubscriptionStatus). This
+      // branch only runs without an external purchase controller, where the
+      // AutomaticPurchaseController is guaranteed to resolve .unknown after
+      // loading purchased products — so .unknown is always transient here.
       superwall.subscriptionStatus = .unknown
     }
   }
@@ -435,6 +543,23 @@ public final class Superwall: NSObject, ObservableObject {
       let override = testModeManager.overriddenSubscriptionStatus {
       return override
     }
+    var status = status
+    let granted = grantedEntitlements
+    if !granted.isEmpty {
+      switch status {
+      case .active(let entitlements):
+        status = .active(entitlements.union(granted))
+      case .inactive, .unknown:
+        // .unknown promotes to active, unlike web entitlements (see
+        // internallySetSubscriptionStatus). With an external purchase
+        // controller the developer is the only writer of the status, so
+        // .unknown can be terminal — without promotion, a developer relying
+        // solely on granted entitlements would be locked out forever.
+        status = .active(granted)
+      }
+    }
+    // This must run after the granted merge, or a developer-assigned
+    // .active([]) would collapse to .inactive before granted is applied.
     if case .active(let entitlements) = status,
       entitlements.isEmpty {
       return .inactive
@@ -594,7 +719,10 @@ public final class Superwall: NSObject, ObservableObject {
             Task {
               await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
                 from: oldStatus, to: newStatus)
-              let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
+              let event = InternalSuperwallEvent.SubscriptionStatusDidChange(
+                status: newStatus,
+                grantedEntitlements: self.grantedEntitlements
+              )
               await self.track(event)
             }
             Task {
@@ -1097,7 +1225,19 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Reset
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
+  ///
+  /// - Note: ``grantedEntitlements`` are not reset — you own that bucket and
+  /// its lifecycle. Set it again immediately after calling this if the next
+  /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "reset() was called but grantedEntitlements persist across reset. "
+          + "Set grantedEntitlements again if the next user shouldn't inherit them."
+      )
+    }
     reset(duringIdentify: false)
   }
 

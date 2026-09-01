@@ -2,7 +2,11 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.16.4
+## 4.17.0
+
+### Enhancements
+
+- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
 
 ### Fixes
 

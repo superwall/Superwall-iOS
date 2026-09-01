@@ -220,6 +220,30 @@ public final class CustomerInfo: NSObject, Codable {
       subscriptions: baseCustomerInfo.subscriptions,
       nonSubscriptions: baseCustomerInfo.nonSubscriptions,
       entitlements: finalEntitlements.sorted { $0.id < $1.id }
+    ).mergingGrantedEntitlements(from: storage)
+  }
+
+  /// Returns a copy with developer-granted entitlements merged in as their
+  /// own source.
+  ///
+  /// Granted entitlements are read from their own storage rather than
+  /// recovered from `subscriptionStatus` — that's an already-merged value
+  /// where sources are no longer distinguishable. They also can't ride in via
+  /// the appStore filter in `forExternalPurchaseController`: widening it to
+  /// admit them would resurrect revoked web entitlements, whose revocation is
+  /// signalled only by their absence from the web customer info.
+  func mergingGrantedEntitlements(from storage: Storage) -> CustomerInfo {
+    let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
+    if grantedEntitlements.isEmpty {
+      return self
+    }
+    let mergedEntitlements = Entitlement.mergePrioritized(
+      entitlements + Array(grantedEntitlements)
+    )
+    return CustomerInfo(
+      subscriptions: subscriptions,
+      nonSubscriptions: nonSubscriptions,
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id }
     )
   }
 }

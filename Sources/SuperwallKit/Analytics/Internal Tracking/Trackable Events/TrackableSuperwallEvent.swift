@@ -324,6 +324,7 @@ enum InternalSuperwallEvent {
   struct SubscriptionStatusDidChange: TrackableSuperwallEvent {
     let superwallEvent: SuperwallEvent = .subscriptionStatusDidChange
     let status: SubscriptionStatus
+    var grantedEntitlements: Set<Entitlement> = []
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = [
@@ -333,6 +334,15 @@ enum InternalSuperwallEvent {
         params += [
           "active_entitlement_ids": entitlements.map(\.id).joined(separator: ",")
         ]
+        // The active set has provenance merged away, so surface which of the
+        // active entitlements were developer-granted for debugging.
+        let grantedIds = Set(grantedEntitlements.map(\.id))
+        let activeGrantedIds = entitlements.map(\.id).filter { grantedIds.contains($0) }
+        if !activeGrantedIds.isEmpty {
+          params += [
+            "granted_entitlement_ids": activeGrantedIds.joined(separator: ",")
+          ]
+        }
       }
       return params
     }
