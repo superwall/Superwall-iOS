@@ -416,7 +416,7 @@ class ConfigManager {
       // loadPurchasedProducts / the controller itself will restore it.
       if testModeJustDeactivated,
         !factory.makeHasExternalPurchaseController() {
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(base: .inactive)
         Superwall.shared.customerInfo = CustomerInfo(
           subscriptions: [],
           nonSubscriptions: [],
@@ -782,11 +782,11 @@ class ConfigManager {
     if hasActiveEntitlements {
       let status = SubscriptionStatus.active(result.entitlements)
       testModeManager.overriddenSubscriptionStatus = status
-      Superwall.shared.subscriptionStatus = status
+      Superwall.shared.setSubscriptionStatus(base: status)
       storage.save(true, forType: IsTestModeActiveSubscription.self)
     } else {
       testModeManager.overriddenSubscriptionStatus = .inactive
-      Superwall.shared.subscriptionStatus = .inactive
+      Superwall.shared.setSubscriptionStatus(base: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
   }

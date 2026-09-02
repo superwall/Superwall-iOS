@@ -240,13 +240,11 @@ public final class Superwall: NSObject, ObservableObject {
         // applySubscriptionStatusResolution, which runs the side effects.
         return
       }
-      let oldBase = unresolvedSubscriptionStatus
-      unresolvedSubscriptionStatus = subscriptionStatus
       // Snapshot once: both the warning check and resolution need the
       // granted set, and each read hits storage under the lock.
       let granted = grantedEntitlements
       logIfGrantedEntitlementsOverrideInactive(subscriptionStatus, granted: granted)
-      applySubscriptionStatusResolution(oldBase: oldBase, granted: granted)
+      resolveSubscriptionStatus(from: subscriptionStatus, granted: granted)
     }
   }
 
@@ -272,6 +270,37 @@ public final class Superwall: NSObject, ObservableObject {
   /// Whether the one-time warning about granted entitlements overriding an
   /// `.inactive` assignment has been logged.
   private var hasLoggedGrantedEntitlementsWarning = false
+
+  /// Emits the resolved status exactly once per base assignment or grant
+  /// change. `$subscriptionStatus` can't serve this purpose: `@Published`
+  /// emits on every store, so a public-setter assignment that resolution
+  /// changes is published twice — the raw value, then the resolved one.
+  private let resolvedSubscriptionStatusSubject = PassthroughSubject<SubscriptionStatus, Never>()
+
+  /// Assigns a new unresolved base and publishes its resolution in a single
+  /// store, so subscribers never observe the unresolved value.
+  ///
+  /// SDK writers use this rather than assigning ``subscriptionStatus``: the
+  /// public setter has to store the raw value before `didSet` can resolve
+  /// it, which publishes the raw value first.
+  func setSubscriptionStatus(base: SubscriptionStatus) {
+    subscriptionStatusResolutionLock.lock()
+    defer {
+      subscriptionStatusResolutionLock.unlock()
+    }
+    resolveSubscriptionStatus(from: base, granted: grantedEntitlements)
+  }
+
+  /// Captures `base` as the unresolved status and resolves from it. Must be
+  /// called with `subscriptionStatusResolutionLock` held.
+  private func resolveSubscriptionStatus(
+    from base: SubscriptionStatus,
+    granted: Set<Entitlement>
+  ) {
+    let oldBase = unresolvedSubscriptionStatus
+    unresolvedSubscriptionStatus = base
+    applySubscriptionStatusResolution(oldBase: oldBase, granted: granted)
+  }
 
   /// Entitlements granted by your own backend that Superwall can't observe,
   /// which the SDK merges into ``subscriptionStatus`` alongside device and web
@@ -307,8 +336,8 @@ public final class Superwall: NSObject, ObservableObject {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      applySubscriptionStatusResolution(oldBase: unresolvedSubscriptionStatus, granted: newValue)
-      refreshAutomaticCustomerInfoAfterGrantChange()
+      resolveSubscriptionStatus(from: unresolvedSubscriptionStatus, granted: newValue)
+      refreshAutomaticCustomerInfoAfterGrantChange(granted: newValue)
     }
   }
 
@@ -317,7 +346,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// actually disappear. The external purchase controller path is recomputed
   /// inside `applySubscriptionStatusResolution`; test mode manages its own
   /// customer info.
-  private func refreshAutomaticCustomerInfoAfterGrantChange() {
+  private func refreshAutomaticCustomerInfoAfterGrantChange(granted: Set<Entitlement>) {
     if dependencyContainer.makeHasExternalPurchaseController() {
       return
     }
@@ -327,8 +356,7 @@ public final class Superwall: NSObject, ObservableObject {
     let storage: Storage = dependencyContainer.storage
     let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
     let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
-    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
-      .mergingGrantedEntitlements(from: storage)
+    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo, granting: granted)
   }
 
   /// Resolves the subscription status from the unresolved base and publishes
@@ -371,6 +399,7 @@ public final class Superwall: NSObject, ObservableObject {
         subscriptionStatus: subscriptionStatus
       )
     }
+    resolvedSubscriptionStatusSubject.send(subscriptionStatus)
   }
 
   /// Logs a one-time warning when `.inactive` is assigned to
@@ -454,31 +483,26 @@ public final class Superwall: NSObject, ObservableObject {
     }
     let activeWebEntitlements = dependencyContainer.entitlementsInfo.web
     let superwall = superwall ?? Superwall.shared
+    let deviceAndWebStatus: SubscriptionStatus
     switch status {
     case .active(let entitlements):
       // Use mergePrioritized to intelligently merge device and web entitlements
       // This ensures the highest priority version is kept for each entitlement ID
       let combinedEntitlements = Array(entitlements) + Array(activeWebEntitlements)
       let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
-      if mergedEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(mergedEntitlements)
-      }
+      deviceAndWebStatus = mergedEntitlements.isEmpty ? .inactive : .active(mergedEntitlements)
     case .inactive:
-      if activeWebEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(activeWebEntitlements)
-      }
+      deviceAndWebStatus = activeWebEntitlements.isEmpty ? .inactive : .active(activeWebEntitlements)
     case .unknown:
       // Web entitlements deliberately don't promote .unknown to active,
       // unlike granted entitlements (see resolvedSubscriptionStatus). This
       // branch only runs without an external purchase controller, where the
       // AutomaticPurchaseController is guaranteed to resolve .unknown after
       // loading purchased products — so .unknown is always transient here.
-      superwall.subscriptionStatus = .unknown
+      deviceAndWebStatus = .unknown
     }
+    // Granted entitlements merge during resolution, from this base.
+    superwall.setSubscriptionStatus(base: deviceAndWebStatus)
   }
 
   /// Returns the subscription status of the user.
@@ -661,7 +685,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
-    subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
+    setSubscriptionStatus(base: dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown)
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
 
     addListeners()
@@ -760,7 +784,11 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   func listenToSubscriptionStatus() {
-    $subscriptionStatus
+    // Listens to the resolved stream rather than $subscriptionStatus so the
+    // delegate and the status-change event never see the transient raw
+    // value that the public setter stores before resolution.
+    resolvedSubscriptionStatusSubject
+      .prepend(subscriptionStatus)
       .removeDuplicates { $0.isLogicallyEqual(to: $1) }
       .dropFirst()
       .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in

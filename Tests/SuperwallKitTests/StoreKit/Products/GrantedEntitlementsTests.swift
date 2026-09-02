@@ -7,6 +7,7 @@
 // swiftlint:disable all
 
 @testable import SuperwallKit
+import Combine
 import Testing
 import Foundation
 
@@ -327,17 +328,69 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
-  func granted_mergesIntoAutomaticPathCustomerInfo() {
-    superwall.grantedEntitlements = [grantedEntitlement()]
-
-    let base = CustomerInfo(
+  func merging_treatsGrantedAsASource() {
+    let device = CustomerInfo(
       subscriptions: [],
       nonSubscriptions: [],
       entitlements: [deviceEntitlement(id: "premium")]
     )
-    let merged = base.mergingGrantedEntitlements(from: dependencyContainer.storage)
 
-    #expect(Set(merged.entitlements.map(\.id)) == ["premium", "granted"])
+    let merged = device.merging(with: .blank(), granting: [grantedEntitlement()])
+
+    #expect(merged.entitlements.map(\.id) == ["granted", "premium"])
+  }
+
+  // MARK: - Publishing
+
+  @Test
+  func baseAssignment_publishesOnlyTheResolvedValue() {
+    superwall.grantedEntitlements = [grantedEntitlement()]
+
+    var published: [SubscriptionStatus] = []
+    let cancellable = superwall.$subscriptionStatus
+      .dropFirst()
+      .sink { published.append($0) }
+    defer { cancellable.cancel() }
+
+    superwall.setSubscriptionStatus(base: .active([deviceEntitlement(id: "premium")]))
+
+    // A single store of the merged value — never the raw base first.
+    #expect(published.count == 1)
+    if case .active(let entitlements) = published.first {
+      #expect(Set(entitlements.map(\.id)) == ["premium", "granted"])
+    } else {
+      Issue.record("Expected .active status")
+    }
+  }
+
+  @Test
+  func inactiveWritesWithGrant_doNotNotifyDelegate() async {
+    let delegate = MockSuperwallDelegate()
+    dependencyContainer.delegateAdapter.swiftDelegate = delegate
+    superwall.listenToSubscriptionStatus()
+
+    superwall.grantedEntitlements = [grantedEntitlement()]
+    await waitUntil { delegate.subscriptionStatusChanges.count == 1 }
+    #expect(delegate.subscriptionStatusChanges.count == 1)
+
+    // A device poll reporting no subscription, and a direct .inactive
+    // assignment, both resolve back to the granted status. The delegate
+    // must not hear about either — in particular it must never see the
+    // transient .inactive that the public setter stores before resolution.
+    superwall.setSubscriptionStatus(base: .inactive)
+    superwall.subscriptionStatus = .inactive
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(delegate.subscriptionStatusChanges.count == 1)
+  }
+
+  private func waitUntil(
+    timeout: TimeInterval = 2,
+    _ condition: @escaping () -> Bool
+  ) async {
+    let start = Date()
+    while !condition() && Date().timeIntervalSince(start) < timeout {
+      try? await Task.sleep(nanoseconds: 50_000_000)
+    }
   }
 
   // MARK: - Event parameters

@@ -526,8 +526,11 @@ actor WebEntitlementRedeemer {
       )
     } else {
       let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
-        .mergingGrantedEntitlements(from: storage)
+      let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
+      mergedCustomerInfo = deviceCustomerInfo.merging(
+        with: webCustomerInfo,
+        granting: grantedEntitlements
+      )
     }
 
     await MainActor.run {

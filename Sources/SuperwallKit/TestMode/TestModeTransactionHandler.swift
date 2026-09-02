@@ -78,10 +78,10 @@ final class TestModeTransactionHandler {
       if hasActiveEntitlements {
         let status = SubscriptionStatus.active(entitlementSet)
         testModeManager.overriddenSubscriptionStatus = status
-        Superwall.shared.subscriptionStatus = status
+        Superwall.shared.setSubscriptionStatus(base: status)
       } else {
         testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(base: .inactive)
       }
 
       // Track free trial start if free trial is shown (respecting override)
@@ -147,7 +147,7 @@ final class TestModeTransactionHandler {
         testModeManager.overriddenCustomerInfo = customerInfo
         Superwall.shared.customerInfo = customerInfo
         testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(base: .inactive)
       } else {
         // Update test mode manager with selected entitlement IDs
         let activeIds = Set(entitlements.map { $0.id })
@@ -164,10 +164,10 @@ final class TestModeTransactionHandler {
         if hasActive {
           let status = SubscriptionStatus.active(entitlements)
           testModeManager.overriddenSubscriptionStatus = status
-          Superwall.shared.subscriptionStatus = status
+          Superwall.shared.setSubscriptionStatus(base: status)
         } else {
           testModeManager.overriddenSubscriptionStatus = .inactive
-          Superwall.shared.subscriptionStatus = .inactive
+          Superwall.shared.setSubscriptionStatus(base: .inactive)
         }
       }
 
