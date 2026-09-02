@@ -319,6 +319,34 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
+  func preservingExternalControllerEntitlements_keepsGrantCollidingWithExpiredDevice() {
+    let expiredDevice = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [deviceEntitlement(id: "premium", isActive: false)]
+    )
+    // The controller's current customer info also carries "premium", so
+    // the externalOnly filter drops it — the grant must survive as its own
+    // source rather than ride in through that filter.
+    let current = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [deviceEntitlement(id: "premium", isActive: false)]
+    )
+
+    let merged = CustomerInfo.preservingExternalControllerEntitlements(
+      device: expiredDevice,
+      web: nil,
+      current: current,
+      granted: [grantedEntitlement(id: "premium")]
+    )
+
+    #expect(merged.entitlements.count == 1)
+    #expect(merged.entitlements.first?.isActive == true)
+    #expect(merged.entitlements.first?.latestProductId == nil)
+  }
+
+  @Test
   func grantChange_refreshesCustomerInfoOnAutomaticPath() {
     superwall.grantedEntitlements = [grantedEntitlement()]
     #expect(superwall.customerInfo.entitlements.contains { $0.id == "granted" && $0.isActive })

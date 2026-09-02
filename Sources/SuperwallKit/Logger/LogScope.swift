@@ -33,8 +33,10 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   case paywallViewController
   case cache
   case webEntitlements
-  case grantedEntitlements
   case all
+  // Declared after `all` so existing implicit raw values stay stable — they
+  // reach the backend via SuperwallOptions.toDictionary().
+  case grantedEntitlements
 
   public var description: String {
     switch self {
