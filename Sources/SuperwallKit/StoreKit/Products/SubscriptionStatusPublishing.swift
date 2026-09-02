@@ -63,7 +63,11 @@ extension Superwall {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(assigned: assignedSubscriptionStatus, isDeveloperAssignment: false)
+      publishSubscriptionStatus(
+        assigned: assignedSubscriptionStatus,
+        granted: newValue,
+        isDeveloperAssignment: false
+      )
       refreshAutomaticCustomerInfoAfterGrantChange(granted: newValue)
     }
   }
@@ -77,11 +81,11 @@ extension Superwall {
   /// public setter has to store the raw value before `didSet` can merge it,
   /// which publishes the raw value first.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
-    subscriptionStatusLock.lock()
-    defer {
-      subscriptionStatusLock.unlock()
-    }
-    publishSubscriptionStatus(assigned: status, isDeveloperAssignment: false)
+    publishSubscriptionStatus(
+      assigned: status,
+      granted: grantedEntitlements,
+      isDeveloperAssignment: false
+    )
   }
 
   /// Merges web entitlements into the device status and assigns the result,
@@ -121,17 +125,23 @@ extension Superwall {
 
   /// Records `assigned`, publishes the merged status in a single store,
   /// persists the assigned value, and runs the side effects of a change.
-  /// Must be called with `subscriptionStatusLock` held.
+  ///
+  /// Takes `subscriptionStatusLock` itself; callers that already hold it
+  /// (the ``subscriptionStatus`` observers, the ``grantedEntitlements``
+  /// setter) simply recurse.
   ///
   /// `isDeveloperAssignment` is `true` for writes through the public
   /// ``subscriptionStatus`` setter — the only path that warrants warning
   /// about granted entitlements overriding an `.inactive` assignment.
   func publishSubscriptionStatus(
     assigned: SubscriptionStatus,
+    granted: Set<Entitlement>,
     isDeveloperAssignment: Bool
   ) {
-    // Snapshot once: each read hits storage under the lock.
-    let granted = grantedEntitlements
+    subscriptionStatusLock.lock()
+    defer {
+      subscriptionStatusLock.unlock()
+    }
 
     // The status publishes as active regardless, which otherwise looks
     // like the SDK ignored the assignment.
