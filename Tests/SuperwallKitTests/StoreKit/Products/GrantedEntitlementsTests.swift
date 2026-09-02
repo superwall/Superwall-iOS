@@ -198,6 +198,20 @@ final class GrantedEntitlementsTests {
     #expect(activeIds(superwall.subscriptionStatus) == ["premium"])
   }
 
+  @Test
+  func writingBackACollidingGrant_keepsItRevocable() {
+    // A lapsed subscription and a grant for the same ID: the grant wins the
+    // merge but comes back carrying the lapsed record's product IDs, so it
+    // no longer equals the grant it came from.
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium", isActive: false)])
+    superwall.grantedEntitlements = [grantedEntitlement(id: "premium")]
+
+    superwall.subscriptionStatus = superwall.subscriptionStatus
+    superwall.grantedEntitlements = []
+
+    #expect(!superwall.subscriptionStatus.isActive)
+  }
+
   // MARK: - Merge precedence
 
   @Test

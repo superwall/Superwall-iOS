@@ -315,6 +315,30 @@ extension Entitlement {
   }
 }
 
+// MARK: - Comparison
+extension Entitlement {
+  /// Whether `other` is this entitlement with possibly different product IDs
+  /// — the shape a merge leaves behind, since it unions product IDs across a
+  /// shared ID regardless of which record wins.
+  func isEqualIgnoringProductIds(to other: Entitlement) -> Bool {
+    return Entitlement(
+      id: id,
+      type: type,
+      isActive: isActive,
+      productIds: other.productIds,
+      latestProductId: latestProductId,
+      store: store,
+      startsAt: startsAt,
+      renewedAt: renewedAt,
+      expiresAt: expiresAt,
+      isLifetime: isLifetime,
+      willRenew: willRenew,
+      state: state,
+      offerType: offerType
+    ) == other
+  }
+}
+
 // MARK: - Entitlement Merging
 extension Entitlement {
   /// Determines which entitlement should take priority when merging entitlements with the same ID.

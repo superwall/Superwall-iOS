@@ -141,7 +141,14 @@ extension Superwall {
     var assigned = newAssigned ?? assignedSubscriptionStatus
     if isDeveloperAssignment {
       if case .active(let assignedEntitlements) = assigned {
-        assigned = .active(assignedEntitlements.subtracting(granted))
+        // Compared ignoring product IDs: the merge unions those across a
+        // shared ID, so a grant that won a collision comes back carrying the
+        // loser's product IDs.
+        assigned = .active(
+          assignedEntitlements.filter { record in
+            !granted.contains { $0.isEqualIgnoringProductIds(to: record) }
+          }
+        )
       }
       if case .inactive = assigned,
         !activeGrants.isEmpty,
@@ -190,11 +197,43 @@ extension Superwall {
     // Skip this in test mode — test mode manages its own CustomerInfo.
     if dependencyContainer.makeHasExternalPurchaseController(),
       dependencyContainer.testModeManager?.isTestMode != true {
+      refreshExternalControllerCustomerInfo()
+    }
+  }
+
+  /// A consistent pair of the published status and the granted set, read
+  /// under the lock.
+  private struct PublishedSnapshot: Equatable {
+    let status: SubscriptionStatus
+    let granted: Set<Entitlement>
+  }
+
+  private func publishedSnapshot() -> PublishedSnapshot {
+    subscriptionStatusLock.lock()
+    defer {
+      subscriptionStatusLock.unlock()
+    }
+    return PublishedSnapshot(status: subscriptionStatus, granted: entitlements.granted)
+  }
+
+  /// Recomputes `customerInfo` for the external purchase controller path
+  /// outside the lock, so `$customerInfo` subscribers don't run inside the
+  /// SDK's critical section. It's built from a consistent snapshot and
+  /// rebuilt if either input moved while it ran, so a slower writer can't
+  /// leave a stale customer info behind a newer publish.
+  private func refreshExternalControllerCustomerInfo() {
+    var snapshot = publishedSnapshot()
+    while true {
       customerInfo = CustomerInfo.forExternalPurchaseController(
         storage: dependencyContainer.storage,
-        subscriptionStatus: subscriptionStatus,
-        granted: granted
+        subscriptionStatus: snapshot.status,
+        granted: snapshot.granted
       )
+      let newest = publishedSnapshot()
+      if newest == snapshot {
+        return
+      }
+      snapshot = newest
     }
   }
 
@@ -306,6 +345,10 @@ extension Superwall {
 /// see the value a writer assigned before granted entitlements and test-mode
 /// overrides were applied. The projected value (`$subscriptionStatus`) replays
 /// the current value to new subscribers, like `@Published`.
+///
+/// Public only because a public property's wrapper type has to be; nothing
+/// but the projection is meant to be used. The enclosing-instance subscript
+/// is the same mechanism `@Published` itself uses to reach its owner.
 @propertyWrapper
 public struct PublishedSubscriptionStatus {
   private var storage: SubscriptionStatus
