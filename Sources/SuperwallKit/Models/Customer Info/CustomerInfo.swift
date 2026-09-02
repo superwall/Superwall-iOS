@@ -169,11 +169,14 @@ public final class CustomerInfo: NSObject, Codable {
       self.entitlements + webCustomerInfo.entitlements + Array(grantedEntitlements)
     let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
-    // Return merged CustomerInfo with sorted transactions and entitlements
+    // Return merged CustomerInfo with sorted transactions and entitlements.
+    // It stays a placeholder until real data has arrived from either side —
+    // granted entitlements alone don't mean the device has been read.
     return CustomerInfo(
       subscriptions: mergedSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
       nonSubscriptions: mergedNonSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
-      entitlements: mergedEntitlements.sorted { $0.id < $1.id }
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id },
+      isPlaceholder: isPlaceholder && webCustomerInfo.isPlaceholder
     )
   }
 
@@ -227,7 +230,8 @@ public final class CustomerInfo: NSObject, Codable {
   /// - Returns: A new CustomerInfo with all sources merged
   static func forExternalPurchaseController(
     storage: Storage,
-    subscriptionStatus: SubscriptionStatus
+    subscriptionStatus: SubscriptionStatus,
+    granted grantedEntitlements: Set<Entitlement>
   ) -> CustomerInfo {
     // Get web CustomerInfo
     let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
@@ -254,13 +258,12 @@ public final class CustomerInfo: NSObject, Codable {
       externalEntitlements = []
     }
 
-    // Developer-granted entitlements are read from their own storage rather
-    // than recovered from subscriptionStatus — that's an already-merged value
+    // Developer-granted entitlements come in as their own source rather than
+    // recovered from subscriptionStatus — that's an already-merged value
     // where sources are no longer distinguishable. They also can't ride in via
     // the appStore filter above: widening it to admit them would resurrect
     // revoked web entitlements, whose revocation is signalled only by their
     // absence from webCustomerInfo.
-    let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
 
     // Merge: active from external controller + all web + inactive device + granted
     // This gives us complete history while respecting external controller as source of truth for active status

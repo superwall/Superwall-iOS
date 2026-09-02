@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
+- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements. The `subscriptionStatus` publisher now only ever emits the merged status.
 
 ### Fixes
 

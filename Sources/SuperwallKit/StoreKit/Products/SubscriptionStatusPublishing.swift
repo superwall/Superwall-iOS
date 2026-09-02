@@ -23,9 +23,10 @@ import Foundation
 /// The assigned value is kept because the published one can't be un-merged:
 /// clearing granted entitlements recomputes the published status from it.
 ///
-/// Every writer ends up in `publishSubscriptionStatus`, which runs under
-/// `subscriptionStatusLock` so assignments from different threads can't
-/// interleave with the write-back of the merged value.
+/// Every writer — the public setter included, via ``PublishedSubscriptionStatus``
+/// — ends up in `publishSubscriptionStatus`, the one critical section under
+/// `subscriptionStatusLock`. The merged value is stored under the lock and
+/// emitted to subscribers after it's released.
 extension Superwall {
   // MARK: - Granted entitlements
 
@@ -48,34 +49,29 @@ extension Superwall {
   /// previous user's granted entitlements.
   public var grantedEntitlements: Set<Entitlement> {
     get {
-      return dependencyContainer.storage.get(GrantedEntitlements.self) ?? []
+      return entitlements.granted
     }
     set {
-      subscriptionStatusLock.lock()
-      defer {
-        subscriptionStatusLock.unlock()
-      }
-      dependencyContainer.storage.save(newValue, forType: GrantedEntitlements.self)
+      entitlements.setGranted(newValue)
       Logger.debug(
-        logLevel: .info,
+        logLevel: .debug,
         scope: .grantedEntitlements,
         message: newValue.isEmpty
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(assigned: assignedSubscriptionStatus, isDeveloperAssignment: false)
-      refreshAutomaticCustomerInfoAfterGrantChange(granted: newValue)
+      publishSubscriptionStatus(assigned: nil, isDeveloperAssignment: false)
+      refreshAutomaticCustomerInfoAfterGrantChange()
     }
   }
 
   // MARK: - Assigning
 
-  /// Assigns a new status and publishes the merged result in a single
-  /// store, so subscribers never observe the un-merged value.
+  /// Assigns a new status and publishes the merged result.
   ///
-  /// SDK writers use this rather than assigning ``subscriptionStatus``: the
-  /// public setter has to store the raw value before `didSet` can merge it,
-  /// which publishes the raw value first.
+  /// SDK writers use this rather than assigning ``subscriptionStatus``, which
+  /// is the developer's entry point and gets the developer-assignment
+  /// treatment described on `publishSubscriptionStatus`.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
     publishSubscriptionStatus(assigned: status, isDeveloperAssignment: false)
   }
@@ -115,53 +111,59 @@ extension Superwall {
 
   // MARK: - Publishing
 
-  /// Records `assigned`, publishes the merged status in a single store,
-  /// persists the assigned value, and runs the side effects of a change.
+  /// Records the assigned status, stores the merged status and persists the
+  /// assigned value under the lock, then emits the merged status and runs the
+  /// remaining side effects outside it.
   ///
-  /// Takes `subscriptionStatusLock` itself; callers that already hold it
-  /// (the ``subscriptionStatus`` observers, the ``grantedEntitlements``
-  /// setter) simply recurse. The granted snapshot is read here, under the
-  /// lock, so a concurrent grant write can't slip between the read and the
-  /// publish.
+  /// Pass `nil` as `assigned` to re-publish from the current assigned status
+  /// — after a grant change — which is then read under the lock.
   ///
   /// `isDeveloperAssignment` is `true` for writes through the public
-  /// ``subscriptionStatus`` setter — the only path that warrants warning
-  /// about granted entitlements overriding an `.inactive` assignment.
+  /// ``subscriptionStatus`` setter, which get two extra treatments: records
+  /// identical to a current grant are stripped, because a developer who reads
+  /// the published status and writes it back would otherwise hand the grants
+  /// back as their own and clearing them could never revoke; and an
+  /// `.inactive` assignment while active grants exist logs a one-time
+  /// warning, since the status publishes as active and otherwise looks
+  /// ignored.
   func publishSubscriptionStatus(
-    assigned: SubscriptionStatus,
+    assigned newAssigned: SubscriptionStatus?,
     isDeveloperAssignment: Bool
   ) {
     subscriptionStatusLock.lock()
-    defer {
-      subscriptionStatusLock.unlock()
-    }
-    // Snapshot once: the warning check and the merge both need it.
-    let granted = grantedEntitlements
 
-    // The status publishes as active regardless, which otherwise looks
-    // like the SDK ignored the assignment.
-    if isDeveloperAssignment,
-      case .inactive = assigned,
-      !granted.isEmpty,
-      !hasLoggedGrantedEntitlementsWarning {
-      hasLoggedGrantedEntitlementsWarning = true
-      Logger.debug(
-        logLevel: .warn,
-        scope: .grantedEntitlements,
-        message: "subscriptionStatus was set to .inactive but grantedEntitlements "
-          + "is not empty, so the status remains active. Assigning subscriptionStatus "
-          + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
-      )
+    // Snapshot once, under the lock, so a concurrent grant write can't slip
+    // between the read and the store. Active grants are merged here so two
+    // grants sharing an ID collapse to one record on every path.
+    let granted = entitlements.granted
+    let activeGrants = Entitlement.mergePrioritized(Array(granted.filter(\.isActive)))
+
+    var assigned = newAssigned ?? assignedSubscriptionStatus
+    if isDeveloperAssignment {
+      if case .active(let assignedEntitlements) = assigned {
+        assigned = .active(assignedEntitlements.subtracting(granted))
+      }
+      if case .inactive = assigned,
+        !activeGrants.isEmpty,
+        !hasLoggedGrantedEntitlementsWarning {
+        hasLoggedGrantedEntitlementsWarning = true
+        Logger.debug(
+          logLevel: .warn,
+          scope: .grantedEntitlements,
+          message: "subscriptionStatus was set to .inactive but grantedEntitlements "
+            + "is not empty, so the status remains active. Assigning subscriptionStatus "
+            + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
+        )
+      }
     }
 
     let previouslyAssigned = assignedSubscriptionStatus
     assignedSubscriptionStatus = assigned
 
-    let merged = mergedSubscriptionStatus(assigned: assigned, granted: granted)
-    if merged != subscriptionStatus {
-      isPublishingSubscriptionStatus = true
-      subscriptionStatus = merged
-      isPublishingSubscriptionStatus = false
+    let merged = mergedSubscriptionStatus(assigned: assigned, activeGrants: activeGrants)
+    let statusChanged = merged != subscriptionStatus
+    if statusChanged {
+      storeMergedSubscriptionStatus(merged)
     }
 
     // Persist the assigned value, not the merged one: restoring a merged
@@ -174,6 +176,13 @@ extension Superwall {
     if previouslyAssigned != assigned {
       dependencyContainer.storage.save(assigned, forType: SubscriptionStatusKey.self)
     }
+    subscriptionStatusLock.unlock()
+
+    // Subscribers and customer info observers run outside the lock, so a
+    // subscriber that blocks on another thread can't deadlock a writer.
+    if statusChanged {
+      emitSubscriptionStatus()
+    }
     entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
     // When using an external purchase controller, update CustomerInfo.entitlements
@@ -183,10 +192,10 @@ extension Superwall {
       dependencyContainer.testModeManager?.isTestMode != true {
       customerInfo = CustomerInfo.forExternalPurchaseController(
         storage: dependencyContainer.storage,
-        subscriptionStatus: subscriptionStatus
+        subscriptionStatus: subscriptionStatus,
+        granted: granted
       )
     }
-    publishedSubscriptionStatusSubject.send(subscriptionStatus)
   }
 
   /// The status the SDK reports for `assigned`: active granted entitlements
@@ -194,7 +203,7 @@ extension Superwall {
   /// collapsed to `.inactive`.
   private func mergedSubscriptionStatus(
     assigned: SubscriptionStatus,
-    granted: Set<Entitlement>
+    activeGrants: Set<Entitlement>
   ) -> SubscriptionStatus {
     if let testModeManager = dependencyContainer.testModeManager,
       testModeManager.isTestMode,
@@ -205,15 +214,11 @@ extension Superwall {
     // Only active grants merge into the status, mirroring how web
     // entitlements merge (EntitlementsInfo.web filters to active).
     // Inactive grants still reach customerInfo for round-trip visibility.
-    let activeGrants = Set(granted.filter(\.isActive))
     if !activeGrants.isEmpty {
       switch status {
       case .active(let entitlements):
-        // mergePrioritized explicitly: plain Set.union dedupes by deep
-        // equality, which would keep both records for a shared ID.
-        status = .active(
-          Entitlement.mergePrioritized(Array(entitlements) + Array(activeGrants))
-        )
+        // Set<Entitlement>.union merges by priority, keeping one record per ID.
+        status = .active(entitlements.union(activeGrants))
       case .inactive, .unknown:
         // .unknown promotes to active, unlike web entitlements (see
         // internallySetSubscriptionStatus). With an external purchase
@@ -237,7 +242,7 @@ extension Superwall {
   /// actually disappear. The external purchase controller path is recomputed
   /// inside `publishSubscriptionStatus`; test mode manages its own customer
   /// info.
-  private func refreshAutomaticCustomerInfoAfterGrantChange(granted: Set<Entitlement>) {
+  private func refreshAutomaticCustomerInfoAfterGrantChange() {
     if dependencyContainer.makeHasExternalPurchaseController() {
       return
     }
@@ -247,17 +252,13 @@ extension Superwall {
     let storage: Storage = dependencyContainer.storage
     let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
     let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
-    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo, granting: granted)
+    customerInfo = deviceCustomerInfo.merging(with: webCustomerInfo, granting: entitlements.granted)
   }
 
   // MARK: - Listening
 
   func listenToSubscriptionStatus() {
-    // Listens to the published stream rather than $subscriptionStatus so the
-    // delegate and the status-change event never see the transient raw
-    // value that the public setter stores before merging.
-    publishedSubscriptionStatusSubject
-      .prepend(subscriptionStatus)
+    $subscriptionStatus
       .removeDuplicates { $0.isLogicallyEqual(to: $1) }
       .dropFirst()
       .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
@@ -293,5 +294,58 @@ extension Superwall {
           }
         )
       )
+  }
+}
+
+// MARK: - Property wrapper
+
+/// The property wrapper behind ``Superwall/subscriptionStatus``.
+///
+/// Every assignment is routed through `publishSubscriptionStatus`, so the
+/// stored and published value is always the merged one — subscribers never
+/// see the value a writer assigned before granted entitlements and test-mode
+/// overrides were applied. The projected value (`$subscriptionStatus`) replays
+/// the current value to new subscribers, like `@Published`.
+@propertyWrapper
+public struct PublishedSubscriptionStatus {
+  private var storage: SubscriptionStatus
+  private let subject: CurrentValueSubject<SubscriptionStatus, Never>
+
+  public init(wrappedValue: SubscriptionStatus) {
+    storage = wrappedValue
+    subject = CurrentValueSubject(wrappedValue)
+  }
+
+  @available(*, unavailable, message: "Only available on Superwall.")
+  public var wrappedValue: SubscriptionStatus {
+    get { fatalError("subscriptionStatus is only readable on Superwall.") }
+    set { fatalError("\(newValue) can only be assigned on Superwall.") }
+  }
+
+  public var projectedValue: AnyPublisher<SubscriptionStatus, Never> {
+    return subject.eraseToAnyPublisher()
+  }
+
+  public static subscript(
+    _enclosingInstance superwall: Superwall,
+    wrapped wrappedKeyPath: ReferenceWritableKeyPath<Superwall, SubscriptionStatus>,
+    storage storageKeyPath: ReferenceWritableKeyPath<Superwall, PublishedSubscriptionStatus>
+  ) -> SubscriptionStatus {
+    get {
+      return superwall[keyPath: storageKeyPath].storage
+    }
+    set {
+      superwall.publishSubscriptionStatus(assigned: newValue, isDeveloperAssignment: true)
+    }
+  }
+
+  /// Stores a merged status without emitting it.
+  mutating func store(_ merged: SubscriptionStatus) {
+    storage = merged
+  }
+
+  /// Emits a stored status to subscribers.
+  func emit(_ status: SubscriptionStatus) {
+    subject.send(status)
   }
 }

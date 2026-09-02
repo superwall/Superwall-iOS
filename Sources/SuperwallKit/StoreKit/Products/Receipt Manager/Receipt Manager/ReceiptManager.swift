@@ -189,7 +189,7 @@ actor ReceiptManager {
 
     // The other sources that merge with the device snapshot.
     let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo
-    let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
+    let grantedEntitlements = Superwall.shared.entitlements.granted
 
     let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {

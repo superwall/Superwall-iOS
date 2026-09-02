@@ -17,20 +17,12 @@ final class GrantedEntitlementsTests {
   private let superwall: Superwall
 
   init() {
-    dependencyContainer = DependencyContainer()
+    // In-memory storage, so nothing this suite writes reaches the on-disk
+    // store shared with other suites. GrantedEntitlements is app-specific
+    // and read on every status publish, so a file left behind mid-test would
+    // leak into suites running in parallel.
+    dependencyContainer = DependencyContainer(cache: CacheMock())
     superwall = Superwall(dependencyContainer: dependencyContainer)
-    cleanStorage()
-  }
-
-  deinit {
-    cleanStorage()
-  }
-
-  private func cleanStorage() {
-    dependencyContainer.storage.delete(GrantedEntitlements.self)
-    dependencyContainer.storage.delete(SubscriptionStatusKey.self)
-    dependencyContainer.storage.delete(LatestRedeemResponse.self)
-    dependencyContainer.storage.delete(LatestDeviceCustomerInfo.self)
   }
 
   // MARK: - Helpers
@@ -38,12 +30,14 @@ final class GrantedEntitlementsTests {
   /// A bare developer-granted entitlement: no transaction history, no store.
   private func grantedEntitlement(
     id: String = "granted",
-    isActive: Bool = true
+    isActive: Bool = true,
+    expiresAt: Date? = nil
   ) -> Entitlement {
     return Entitlement(
       id: id,
       type: .serviceLevel,
-      isActive: isActive
+      isActive: isActive,
+      expiresAt: expiresAt
     )
   }
 
@@ -67,6 +61,13 @@ final class GrantedEntitlementsTests {
     )
   }
 
+  private func activeIds(_ status: SubscriptionStatus) -> Set<String>? {
+    if case .active(let entitlements) = status {
+      return Set(entitlements.map(\.id))
+    }
+    return nil
+  }
+
   // MARK: - Merging
 
   @Test
@@ -75,11 +76,7 @@ final class GrantedEntitlementsTests {
     superwall.grantedEntitlements = [grantedEntitlement()]
 
     #expect(superwall.subscriptionStatus.isActive)
-    if case .active(let entitlements) = superwall.subscriptionStatus {
-      #expect(entitlements.map(\.id) == ["granted"])
-    } else {
-      Issue.record("Expected .active status")
-    }
+    #expect(activeIds(superwall.subscriptionStatus) == ["granted"])
   }
 
   @Test
@@ -87,11 +84,7 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
     superwall.grantedEntitlements = [grantedEntitlement(id: "granted")]
 
-    if case .active(let entitlements) = superwall.subscriptionStatus {
-      #expect(Set(entitlements.map(\.id)) == ["premium", "granted"])
-    } else {
-      Issue.record("Expected .active status")
-    }
+    #expect(activeIds(superwall.subscriptionStatus) == ["premium", "granted"])
   }
 
   @Test
@@ -117,11 +110,7 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
     superwall.grantedEntitlements = [grantedEntitlement(id: "extra", isActive: false)]
 
-    if case .active(let entitlements) = superwall.subscriptionStatus {
-      #expect(entitlements.map(\.id) == ["premium"])
-    } else {
-      Issue.record("Expected .active status")
-    }
+    #expect(activeIds(superwall.subscriptionStatus) == ["premium"])
   }
 
   @Test
@@ -139,10 +128,7 @@ final class GrantedEntitlementsTests {
 
     superwall.subscriptionStatus = .inactive
 
-    #expect(superwall.subscriptionStatus.isActive)
-    if case .active(let entitlements) = superwall.subscriptionStatus {
-      #expect(entitlements.map(\.id) == ["granted"])
-    }
+    #expect(activeIds(superwall.subscriptionStatus) == ["granted"])
   }
 
   @Test
@@ -153,6 +139,23 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .active([])
 
     #expect(superwall.subscriptionStatus.isActive)
+  }
+
+  @Test
+  func grantsSharingAnId_publishOneRecord() {
+    superwall.subscriptionStatus = .inactive
+    superwall.grantedEntitlements = [
+      grantedEntitlement(id: "pro", expiresAt: Date(timeIntervalSince1970: 1_800_000_000)),
+      grantedEntitlement(id: "pro", expiresAt: Date(timeIntervalSince1970: 1_900_000_000))
+    ]
+
+    if case .active(let entitlements) = superwall.subscriptionStatus {
+      #expect(entitlements.count == 1)
+      // The later expiry wins the merge.
+      #expect(entitlements.first?.expiresAt == Date(timeIntervalSince1970: 1_900_000_000))
+    } else {
+      Issue.record("Expected .active status")
+    }
   }
 
   // MARK: - Clearing
@@ -174,11 +177,25 @@ final class GrantedEntitlementsTests {
     superwall.grantedEntitlements = [grantedEntitlement(id: "a")]
     superwall.grantedEntitlements = [grantedEntitlement(id: "b")]
 
-    if case .active(let entitlements) = superwall.subscriptionStatus {
-      #expect(entitlements.map(\.id) == ["b"])
-    } else {
-      Issue.record("Expected .active status")
-    }
+    #expect(activeIds(superwall.subscriptionStatus) == ["b"])
+  }
+
+  @Test
+  func writingBackThePublishedStatus_keepsGrantsRevocable() {
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
+    superwall.grantedEntitlements = [grantedEntitlement()]
+
+    // A read-modify-write of the published, grant-merged status must not
+    // hand the grant back as the developer's own.
+    superwall.subscriptionStatus = superwall.subscriptionStatus
+    #expect(
+      dependencyContainer.storage.get(SubscriptionStatusKey.self)
+        == .active([deviceEntitlement(id: "premium")])
+    )
+
+    superwall.grantedEntitlements = []
+
+    #expect(activeIds(superwall.subscriptionStatus) == ["premium"])
   }
 
   // MARK: - Merge precedence
@@ -222,12 +239,12 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
     superwall.grantedEntitlements = [grantedEntitlement(id: "granted")]
 
-    let resolved = superwall.subscriptionStatus
-    superwall.subscriptionStatus = resolved
+    let published = superwall.subscriptionStatus
+    superwall.subscriptionStatus = published
 
     // merge(merge(x)) == merge(x): re-assigning an already-merged value
     // must settle, not loop or grow.
-    #expect(superwall.subscriptionStatus == resolved)
+    #expect(superwall.subscriptionStatus == published)
   }
 
   // MARK: - Persistence
@@ -253,8 +270,9 @@ final class GrantedEntitlementsTests {
     // Simulate a relaunch: a fresh instance restores the persisted status,
     // exactly as Superwall's configure init does.
     let relaunched = Superwall(dependencyContainer: dependencyContainer)
-    relaunched.subscriptionStatus =
-      dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
+    relaunched.setSubscriptionStatus(
+      assigned: dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
+    )
     #expect(relaunched.subscriptionStatus.isActive)
 
     relaunched.grantedEntitlements = []
@@ -266,10 +284,10 @@ final class GrantedEntitlementsTests {
   func concurrentAssignments_neverPersistGrantedIntoAssignedStatus() async {
     superwall.grantedEntitlements = [grantedEntitlement()]
 
-    // Race external assignments from many threads. Without the lock
-    // covering the property store, a store landing mid-publish captures
-    // another thread's merged write-back as its assigned status, persisting
-    // granted entitlements into SubscriptionStatusKey.
+    // Race external assignments from many threads. Without the lock, a store
+    // landing mid-publish could capture another thread's merged write-back
+    // as its assigned status, persisting granted entitlements into
+    // SubscriptionStatusKey.
     await withTaskGroup(of: Void.self) { group in
       for index in 0..<50 {
         group.addTask { [superwall, deviceEnt = deviceEntitlement(id: "premium")] in
@@ -312,7 +330,8 @@ final class GrantedEntitlementsTests {
 
     let customerInfo = CustomerInfo.forExternalPurchaseController(
       storage: dependencyContainer.storage,
-      subscriptionStatus: .inactive
+      subscriptionStatus: .inactive,
+      granted: superwall.grantedEntitlements
     )
 
     #expect(customerInfo.entitlements.contains { $0.id == "granted" && $0.isActive })
@@ -356,6 +375,18 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
+  func grantsBeforeTheDeviceSnapshot_keepCustomerInfoAsPlaceholder() {
+    #expect(superwall.customerInfo.isPlaceholder)
+
+    superwall.grantedEntitlements = [grantedEntitlement()]
+
+    // Grants alone don't mean the device has been read, so consumers that
+    // wait for real data keep waiting.
+    #expect(superwall.customerInfo.isPlaceholder)
+    #expect(superwall.customerInfo.entitlements.map(\.id) == ["granted"])
+  }
+
+  @Test
   func merging_treatsGrantedAsASource() {
     let device = CustomerInfo(
       subscriptions: [],
@@ -366,6 +397,7 @@ final class GrantedEntitlementsTests {
     let merged = device.merging(with: .blank(), granting: [grantedEntitlement()])
 
     #expect(merged.entitlements.map(\.id) == ["granted", "premium"])
+    #expect(!merged.isPlaceholder)
   }
 
   // MARK: - Publishing
@@ -382,13 +414,46 @@ final class GrantedEntitlementsTests {
 
     superwall.setSubscriptionStatus(assigned: .active([deviceEntitlement(id: "premium")]))
 
-    // A single store of the merged value — never the raw assigned value first.
     #expect(published.count == 1)
-    if case .active(let entitlements) = published.first {
-      #expect(Set(entitlements.map(\.id)) == ["premium", "granted"])
-    } else {
-      Issue.record("Expected .active status")
-    }
+    #expect(published.first.flatMap(activeIds) == ["premium", "granted"])
+  }
+
+  @Test
+  func developerAssignment_publishesOnlyTheMergedValue() {
+    superwall.grantedEntitlements = [grantedEntitlement()]
+
+    var published: [SubscriptionStatus] = []
+    let cancellable = superwall.$subscriptionStatus
+      .dropFirst()
+      .sink { published.append($0) }
+    defer { cancellable.cancel() }
+
+    // The public setter must never publish the raw assigned value first.
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
+
+    #expect(published.count == 1)
+    #expect(published.first.flatMap(activeIds) == ["premium", "granted"])
+  }
+
+  @Test
+  func assignmentFromASubscriber_isApplied() {
+    var didReassign = false
+    let cancellable = superwall.$subscriptionStatus
+      .dropFirst()
+      .sink { [superwall] status in
+        // A subscriber that reacts to the first change by assigning again,
+        // synchronously, from inside the emission.
+        if !didReassign, case .active = status {
+          didReassign = true
+          superwall.subscriptionStatus = .inactive
+        }
+      }
+    defer { cancellable.cancel() }
+
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
+
+    #expect(superwall.subscriptionStatus == .inactive)
+    #expect(dependencyContainer.storage.get(SubscriptionStatusKey.self) == .inactive)
   }
 
   @Test
@@ -403,8 +468,7 @@ final class GrantedEntitlementsTests {
 
     // A device poll reporting no subscription, and a direct .inactive
     // assignment, both publish the granted status again. The delegate
-    // must not hear about either — in particular it must never see the
-    // transient .inactive that the public setter stores before merging.
+    // must not hear about either.
     superwall.setSubscriptionStatus(assigned: .inactive)
     superwall.subscriptionStatus = .inactive
     try? await Task.sleep(nanoseconds: 300_000_000)

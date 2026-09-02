@@ -206,7 +206,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// `PurchaseController`, you must set this.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever it changes.
+  /// notified whenever it changes. The publisher only ever emits the merged
+  /// status — never a value you assigned before granted entitlements were
+  /// applied. Subscribers are called synchronously on the thread that changed
+  /// the status, so don't block in them.
   ///
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
@@ -217,29 +220,13 @@ public final class Superwall: NSObject, ObservableObject {
   /// them — the status stays active for as long as ``grantedEntitlements``
   /// contains an active entitlement. To revoke them, set
   /// ``grantedEntitlements`` to an empty set.
-  @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown {
-    willSet {
-      // Locked before the store so the store and the publish in didSet are
-      // atomic across threads — see SubscriptionStatusPublishing.swift.
-      // Released at the end of didSet; the pair must stay balanced.
-      subscriptionStatusLock.lock()
-    }
-    didSet {
-      defer {
-        subscriptionStatusLock.unlock()
-      }
-      if isPublishingSubscriptionStatus {
-        // Our own write-back of the merged value.
-        return
-      }
-      publishSubscriptionStatus(assigned: subscriptionStatus, isDeveloperAssignment: true)
-    }
-  }
+  @PublishedSubscriptionStatus
+  public var subscriptionStatus: SubscriptionStatus = .unknown
 
   // MARK: - Subscription status state
   // The publishing pipeline lives in SubscriptionStatusPublishing.swift; the
-  // stored state it needs has to live in the class.
+  // stored state it needs, and the two accessors of the wrapper's private
+  // storage, have to live in the class.
 
   /// The status last handed to the SDK — device + web entitlements on the
   /// automatic path, or the developer's value with a purchase controller —
@@ -248,24 +235,41 @@ public final class Superwall: NSObject, ObservableObject {
   /// so clearing granted entitlements can recompute it.
   var assignedSubscriptionStatus: SubscriptionStatus = .unknown
 
-  /// Serializes status assignment and publishing across threads. Recursive
-  /// because publishing re-enters the ``subscriptionStatus`` observers on
-  /// the same thread.
+  /// Serializes status assignment and publishing across threads. Recursive so
+  /// a subscriber that assigns the status from within an emission re-enters
+  /// the pipeline instead of deadlocking.
   let subscriptionStatusLock = NSRecursiveLock()
-
-  /// Set while `publishSubscriptionStatus` writes the merged value back, so
-  /// `didSet` doesn't treat that store as a new assignment. Only touched
-  /// with `subscriptionStatusLock` held.
-  var isPublishingSubscriptionStatus = false
-
-  /// Emits the merged status once per assignment or grant change, for the
-  /// status listener. `$subscriptionStatus` also emits the raw value the
-  /// public setter stores before merging, which must not reach the delegate.
-  let publishedSubscriptionStatusSubject = PassthroughSubject<SubscriptionStatus, Never>()
 
   /// Whether the one-time warning about granted entitlements overriding an
   /// `.inactive` assignment has been logged.
   var hasLoggedGrantedEntitlementsWarning = false
+
+  /// Stores the merged status. Only `publishSubscriptionStatus` calls this,
+  /// with `subscriptionStatusLock` held; the emission follows in
+  /// `emitSubscriptionStatus()` once the lock is released.
+  func storeMergedSubscriptionStatus(_ merged: SubscriptionStatus) {
+    objectWillChange.send()
+    _subscriptionStatus.store(merged)
+  }
+
+  /// Emits the stored status to `$subscriptionStatus` subscribers. Called
+  /// after the lock is released, so subscribers never run inside the SDK's
+  /// critical section. A store that landed on another thread between the
+  /// read and the emission is emitted again afterwards, so the publisher's
+  /// current value can't end up behind the stored one.
+  func emitSubscriptionStatus() {
+    subscriptionStatusLock.lock()
+    let emitted = subscriptionStatus
+    subscriptionStatusLock.unlock()
+    _subscriptionStatus.emit(emitted)
+
+    subscriptionStatusLock.lock()
+    let newest = subscriptionStatus
+    subscriptionStatusLock.unlock()
+    if newest != emitted {
+      _subscriptionStatus.emit(newest)
+    }
+  }
 
   /// Contains the latest information about all of the customer's purchase and subscription data.
   ///

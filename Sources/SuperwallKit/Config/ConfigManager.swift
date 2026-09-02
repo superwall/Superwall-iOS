@@ -211,15 +211,13 @@ class ConfigManager {
     if storage.get(IsTestModeActiveSubscription.self) ?? false {
       return false
     }
-    // The persisted status can hold .active with no active entitlement
-    // (e.g. a developer-assigned .active([])) — inspect the set rather
-    // than pattern-matching the case alone.
-    if case .active(let entitlements) = storage.get(SubscriptionStatusKey.self),
-      entitlements.contains(where: { $0.isActive }) {
+    // isActive rather than a bare `case .active` match: the persisted status
+    // can be .active with no active entitlement (e.g. a developer-assigned
+    // .active([])).
+    if storage.get(SubscriptionStatusKey.self)?.isActive == true {
       return true
     }
-    let grantedEntitlements = storage.get(GrantedEntitlements.self) ?? []
-    return grantedEntitlements.contains { $0.isActive }
+    return entitlementsInfo.granted.contains { $0.isActive }
   }
 
   private struct ConfigFetchResult {
@@ -417,11 +415,13 @@ class ConfigManager {
       if testModeJustDeactivated,
         !factory.makeHasExternalPurchaseController() {
         Superwall.shared.setSubscriptionStatus(assigned: .inactive)
+        // Granted entitlements survive test mode, so the customer info has
+        // to keep carrying them while the status does.
         Superwall.shared.customerInfo = CustomerInfo(
           subscriptions: [],
           nonSubscriptions: [],
           entitlements: []
-        )
+        ).merging(with: .blank(), granting: entitlementsInfo.granted)
       }
       await factory.loadPurchasedProducts(config: config)
     }
