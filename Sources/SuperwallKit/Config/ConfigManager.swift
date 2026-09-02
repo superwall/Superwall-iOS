@@ -205,13 +205,13 @@ class ConfigManager {
 
   /// Whether the cached subscription state indicates an active subscriber.
   ///
-  /// The persisted status is the unresolved base, before developer-granted
+  /// The persisted status is the assigned value, before developer-granted
   /// entitlements are merged in, so those are checked from their own storage.
   private func hasActiveCachedSubscription() -> Bool {
     if storage.get(IsTestModeActiveSubscription.self) ?? false {
       return false
     }
-    // The persisted base can hold .active with no active entitlement
+    // The persisted status can hold .active with no active entitlement
     // (e.g. a developer-assigned .active([])) — inspect the set rather
     // than pattern-matching the case alone.
     if case .active(let entitlements) = storage.get(SubscriptionStatusKey.self),
@@ -416,7 +416,7 @@ class ConfigManager {
       // loadPurchasedProducts / the controller itself will restore it.
       if testModeJustDeactivated,
         !factory.makeHasExternalPurchaseController() {
-        Superwall.shared.setSubscriptionStatus(base: .inactive)
+        Superwall.shared.setSubscriptionStatus(assigned: .inactive)
         Superwall.shared.customerInfo = CustomerInfo(
           subscriptions: [],
           nonSubscriptions: [],
@@ -782,11 +782,11 @@ class ConfigManager {
     if hasActiveEntitlements {
       let status = SubscriptionStatus.active(result.entitlements)
       testModeManager.overriddenSubscriptionStatus = status
-      Superwall.shared.setSubscriptionStatus(base: status)
+      Superwall.shared.setSubscriptionStatus(assigned: status)
       storage.save(true, forType: IsTestModeActiveSubscription.self)
     } else {
       testModeManager.overriddenSubscriptionStatus = .inactive
-      Superwall.shared.setSubscriptionStatus(base: .inactive)
+      Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
   }

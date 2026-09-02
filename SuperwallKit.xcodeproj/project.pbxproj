@@ -436,6 +436,7 @@
 		C7AB21123540550E513AD28A /* CoreDataManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D9CC1B947A08633E1C7BAE3 /* CoreDataManagerTests.swift */; };
 		C7E140466315324E9A1B9407 /* PermissionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEB7CF97D0926DCDAB133DB1 /* PermissionStatus.swift */; };
 		C80ACD3C05345709DAB248FD /* RestoreType.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAEBD34CFE62DCFE0AFD80D6 /* RestoreType.swift */; };
+		C8540455BC520DAB75862A5D /* SubscriptionStatusPublishing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 469037ACFCAE3F46CF751E43 /* SubscriptionStatusPublishing.swift */; };
 		C8671043E6585DE19AAD1DAD /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87AD727C5A8639E704F7BE98 /* PaywallView.swift */; };
 		C86B9D3992BBD1E8A1105F3C /* SuperwallDelegateObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A9E0597972B90E3B9DFFE1 /* SuperwallDelegateObjc.swift */; };
 		C8BCF3C0404622139D002893 /* PushTransitionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC74F16DC5A17489E97061EA /* PushTransitionLogic.swift */; };
@@ -748,6 +749,7 @@
 		45B3BC4249A9E9BA8E99EC7C /* CustomCallbackRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCallbackRegistry.swift; sourceTree = "<group>"; };
 		460B6F98BADD9EC96A978E40 /* SWProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProduct.swift; sourceTree = "<group>"; };
 		4634E3B868871DD24C2555F9 /* SWWebViewLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebViewLogic.swift; sourceTree = "<group>"; };
+		469037ACFCAE3F46CF751E43 /* SubscriptionStatusPublishing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusPublishing.swift; sourceTree = "<group>"; };
 		46D2598EB46E9A27E2BD5104 /* PreloadingDisabled.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreloadingDisabled.swift; sourceTree = "<group>"; };
 		4711FABAB250221629C47688 /* AppStoreProductTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreProductTests.swift; sourceTree = "<group>"; };
 		481D47E5121C521DDA268609 /* TriggerRule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRule.swift; sourceTree = "<group>"; };
@@ -2508,6 +2510,7 @@
 			children = (
 				C6BB83F17D20143827C28042 /* EntitlementsInfo.swift */,
 				E0A7F2B0E53BE42DC6B52873 /* EntitlementsStatus.swift */,
+				469037ACFCAE3F46CF751E43 /* SubscriptionStatusPublishing.swift */,
 				0D4F1B49114819E9E6923508 /* Product Fetching */,
 				E36E6C0CB40C3F44423C80CF /* Receipt Manager */,
 				CB4191E8F35374E6FF55C5D0 /* StoreProduct */,
@@ -3758,6 +3761,7 @@
 				91BA5E01D0FB528954ABB937 /* StripeStoreProductDiscount.swift in Sources */,
 				B60C3A3AD25CE2E2C513A2D2 /* Stubbable.swift in Sources */,
 				C34A4AF2C8CD9ACBD2C370F8 /* SubscriptionPeriod.swift in Sources */,
+				C8540455BC520DAB75862A5D /* SubscriptionStatusPublishing.swift in Sources */,
 				B0AD4A89AD5101360F93652D /* SubscriptionTransaction.swift in Sources */,
 				CFEB0D797815E8EDFB059767 /* Superwall.swift in Sources */,
 				17C0F1960CD89B6BFA8B2FBB /* SuperwallDelegate.swift in Sources */,
