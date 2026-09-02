@@ -63,11 +63,7 @@ extension Superwall {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(
-        assigned: assignedSubscriptionStatus,
-        granted: newValue,
-        isDeveloperAssignment: false
-      )
+      publishSubscriptionStatus(assigned: assignedSubscriptionStatus, isDeveloperAssignment: false)
       refreshAutomaticCustomerInfoAfterGrantChange(granted: newValue)
     }
   }
@@ -81,11 +77,7 @@ extension Superwall {
   /// public setter has to store the raw value before `didSet` can merge it,
   /// which publishes the raw value first.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
-    publishSubscriptionStatus(
-      assigned: status,
-      granted: grantedEntitlements,
-      isDeveloperAssignment: false
-    )
+    publishSubscriptionStatus(assigned: status, isDeveloperAssignment: false)
   }
 
   /// Merges web entitlements into the device status and assigns the result,
@@ -128,20 +120,23 @@ extension Superwall {
   ///
   /// Takes `subscriptionStatusLock` itself; callers that already hold it
   /// (the ``subscriptionStatus`` observers, the ``grantedEntitlements``
-  /// setter) simply recurse.
+  /// setter) simply recurse. The granted snapshot is read here, under the
+  /// lock, so a concurrent grant write can't slip between the read and the
+  /// publish.
   ///
   /// `isDeveloperAssignment` is `true` for writes through the public
   /// ``subscriptionStatus`` setter — the only path that warrants warning
   /// about granted entitlements overriding an `.inactive` assignment.
   func publishSubscriptionStatus(
     assigned: SubscriptionStatus,
-    granted: Set<Entitlement>,
     isDeveloperAssignment: Bool
   ) {
     subscriptionStatusLock.lock()
     defer {
       subscriptionStatusLock.unlock()
     }
+    // Snapshot once: the warning check and the merge both need it.
+    let granted = grantedEntitlements
 
     // The status publishes as active regardless, which otherwise looks
     // like the SDK ignored the assignment.

@@ -233,11 +233,7 @@ public final class Superwall: NSObject, ObservableObject {
         // Our own write-back of the merged value.
         return
       }
-      publishSubscriptionStatus(
-        assigned: subscriptionStatus,
-        granted: grantedEntitlements,
-        isDeveloperAssignment: true
-      )
+      publishSubscriptionStatus(assigned: subscriptionStatus, isDeveloperAssignment: true)
     }
   }
 
