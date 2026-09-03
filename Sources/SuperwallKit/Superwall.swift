@@ -207,9 +207,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
   /// notified whenever it changes. The publisher only ever emits the merged
-  /// status — never a value you assigned before granted entitlements were
-  /// applied. Subscribers are called synchronously on the thread that changed
-  /// the status, so don't block in them.
+  /// status – never a value you assigned before granted entitlements were
+  /// applied. Subscribers are called on whichever thread changed the status,
+  /// which is often a background one, so use `receive(on:)` before updating UI.
   ///
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
