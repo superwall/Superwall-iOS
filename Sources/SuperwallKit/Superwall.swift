@@ -224,9 +224,6 @@ public final class Superwall: NSObject, ObservableObject {
   public var subscriptionStatus: SubscriptionStatus = .unknown
 
   // MARK: - Subscription status state
-  // The publishing pipeline lives in SubscriptionStatusPublishing.swift; the
-  // stored state it needs, and the two accessors of the wrapper's private
-  // storage, have to live in the class.
 
   /// The status last handed to the SDK — device + web entitlements on the
   /// automatic path, or the developer's value with a purchase controller —
