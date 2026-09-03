@@ -224,30 +224,24 @@ extension Superwall {
 
   /// Recomputes `customerInfo` for the external purchase controller path
   /// outside the lock, so `$customerInfo` subscribers don't run inside the
-  /// SDK's critical section. It's built from a consistent snapshot, and
-  /// rebuilt once if either input moved while it ran, so a slower writer
-  /// can't leave a stale customer info behind a newer publish.
+  /// SDK's critical section.
   ///
-  /// The retry is deliberately bounded rather than a loop: this runs
-  /// synchronously on the caller's thread, which can be the main one, and a
-  /// write landing during the rebuild is both vanishingly rare and corrected
-  /// by that write's own publish.
+  /// It's built from a consistent snapshot and dropped if a concurrent
+  /// publish moved either input while it ran: that publish runs its own
+  /// refresh with the newer values, so assigning ours would put the older
+  /// customer info last. Uncontended — the normal case, and the only one a
+  /// synchronous read after a status write depends on — the snapshot is
+  /// unchanged and the value is assigned before this returns.
   private func refreshExternalControllerCustomerInfo() {
     let snapshot = publishedSnapshot()
-    customerInfo = customerInfo(for: snapshot)
-
-    let newest = publishedSnapshot()
-    if newest != snapshot {
-      customerInfo = customerInfo(for: newest)
-    }
-  }
-
-  private func customerInfo(for snapshot: PublishedSnapshot) -> CustomerInfo {
-    return CustomerInfo.forExternalPurchaseController(
+    let info = CustomerInfo.forExternalPurchaseController(
       storage: dependencyContainer.storage,
       subscriptionStatus: snapshot.status,
       granted: snapshot.granted
     )
+    if publishedSnapshot() == snapshot {
+      customerInfo = info
+    }
   }
 
   /// The status the SDK reports for `assigned`: active granted entitlements
