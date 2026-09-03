@@ -16,6 +16,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
+- Fixes an entitlement being deactivated when one of the subscriptions granting it is refunded, even though another subscription in a different subscription group is still paid for and active. Each subscription group is now evaluated on its own.
+- Fixes a subscription in its billing grace period being reported as inactive after its expiry date has passed.
 
 ## 4.16.3
 
