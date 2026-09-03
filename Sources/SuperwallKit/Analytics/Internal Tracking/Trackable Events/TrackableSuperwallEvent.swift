@@ -334,9 +334,9 @@ enum InternalSuperwallEvent {
         params += [
           "active_entitlement_ids": entitlements.map(\.id).joined(separator: ",")
         ]
-        // The merged set carries no provenance, so this lists the active IDs
-        // that are also granted — a device record that beat a grant for the
-        // same ID is included too.
+        // The merged set doesn't record where each entitlement came from, so
+        // this lists the active IDs that are also granted — a device record
+        // that beat a grant for the same ID is included too.
         let grantedIds = Set(grantedEntitlements.map(\.id))
         let activeGrantedIds = entitlements
           .filter { $0.isActive && grantedIds.contains($0.id) }
