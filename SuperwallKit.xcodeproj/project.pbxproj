@@ -121,6 +121,7 @@
 		31E937EB414F62268F6C953C /* TestModeInfoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3548435BDE49161E3BDFA358 /* TestModeInfoCell.swift */; };
 		32C1A7BB48AC2A5CB88C448B /* NonSubscriptionTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA1E17A7907C42F27817C958 /* NonSubscriptionTransaction.swift */; };
 		3313CD30A969731960FC32BF /* PaywallOverrides.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1439A212719AA2EA8BEA357 /* PaywallOverrides.swift */; };
+		332915728292DE705DB09338 /* SubscriptionStatusChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5813618E0E26698492BC7485 /* SubscriptionStatusChange.swift */; };
 		339F1D07DB57DBEC46940DB6 /* CheckoutWebViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA0B401CD38DBD6D90E4EB3E /* CheckoutWebViewController.swift */; };
 		342593FCA24FBEA77FE472C7 /* SK2ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */; };
 		3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */; };
@@ -789,6 +790,7 @@
 		577A16EE2161E2CDEDFA48C0 /* GameControllerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerManager.swift; sourceTree = "<group>"; };
 		57AD390BC73341A49301B4AA /* ProductsFetcherSK2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsFetcherSK2.swift; sourceTree = "<group>"; };
 		57C7673988B39FB0BDEA8BE4 /* Date+IsoStringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoStringTests.swift"; sourceTree = "<group>"; };
+		5813618E0E26698492BC7485 /* SubscriptionStatusChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusChange.swift; sourceTree = "<group>"; };
 		582CE0C5BA6EA57C7FE3EE43 /* CheckNoPaywallAlreadyPresented.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNoPaywallAlreadyPresented.swift; sourceTree = "<group>"; };
 		5836EFACFA00594CE8F9F377 /* Experiment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
 		58466FF38687A9F8715F9B54 /* Array+Capability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Capability.swift"; sourceTree = "<group>"; };
@@ -2513,6 +2515,7 @@
 				C6BB83F17D20143827C28042 /* EntitlementsInfo.swift */,
 				E0A7F2B0E53BE42DC6B52873 /* EntitlementsStatus.swift */,
 				328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */,
+				5813618E0E26698492BC7485 /* SubscriptionStatusChange.swift */,
 				469037ACFCAE3F46CF751E43 /* SubscriptionStatusPublishing.swift */,
 				0D4F1B49114819E9E6923508 /* Product Fetching */,
 				E36E6C0CB40C3F44423C80CF /* Receipt Manager */,
@@ -3765,6 +3768,7 @@
 				91BA5E01D0FB528954ABB937 /* StripeStoreProductDiscount.swift in Sources */,
 				B60C3A3AD25CE2E2C513A2D2 /* Stubbable.swift in Sources */,
 				C34A4AF2C8CD9ACBD2C370F8 /* SubscriptionPeriod.swift in Sources */,
+				332915728292DE705DB09338 /* SubscriptionStatusChange.swift in Sources */,
 				C8540455BC520DAB75862A5D /* SubscriptionStatusPublishing.swift in Sources */,
 				B0AD4A89AD5101360F93652D /* SubscriptionTransaction.swift in Sources */,
 				CFEB0D797815E8EDFB059767 /* Superwall.swift in Sources */,

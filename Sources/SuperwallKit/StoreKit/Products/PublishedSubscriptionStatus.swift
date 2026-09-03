@@ -48,7 +48,7 @@ public struct PublishedSubscriptionStatus {
       return superwall[keyPath: storageKeyPath].storage
     }
     set {
-      superwall.publishSubscriptionStatus(assigned: newValue, isDeveloperAssignment: true)
+      superwall.publishSubscriptionStatus(.developerAssignment(newValue))
     }
   }
 

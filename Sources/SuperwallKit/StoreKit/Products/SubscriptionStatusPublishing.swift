@@ -60,7 +60,7 @@ extension Superwall {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(assigned: nil, isDeveloperAssignment: false)
+      publishSubscriptionStatus(.grantChange)
       refreshAutomaticCustomerInfoAfterGrantChange()
     }
   }
@@ -73,7 +73,7 @@ extension Superwall {
   /// is the developer's entry point and gets the developer-assignment
   /// treatment described on `publishSubscriptionStatus`.
   func setSubscriptionStatus(assigned status: SubscriptionStatus) {
-    publishSubscriptionStatus(assigned: status, isDeveloperAssignment: false)
+    publishSubscriptionStatus(.sdkAssignment(status))
   }
 
   /// Merges web entitlements into the device status and assigns the result,
@@ -115,21 +115,13 @@ extension Superwall {
   /// assigned value under the lock, then emits the merged status and runs the
   /// remaining side effects outside it.
   ///
-  /// Pass `nil` as `assigned` to re-publish from the current assigned status
-  /// — after a grant change — which is then read under the lock.
-  ///
-  /// `isDeveloperAssignment` is `true` for writes through the public
-  /// ``subscriptionStatus`` setter, which get two extra treatments: records
-  /// identical to a current grant are stripped, because a developer who reads
-  /// the published status and writes it back would otherwise hand the grants
-  /// back as their own and clearing them could never revoke; and an
-  /// `.inactive` assignment while active grants exist logs a one-time
-  /// warning, since the status publishes as active and otherwise looks
-  /// ignored.
-  func publishSubscriptionStatus(
-    assigned newAssigned: SubscriptionStatus?,
-    isDeveloperAssignment: Bool
-  ) {
+  /// A developer assignment gets two extra treatments: records identical to a
+  /// current grant are stripped, because a developer who reads the published
+  /// status and writes it back would otherwise hand the grants back as their
+  /// own and clearing them could never revoke; and an `.inactive` assignment
+  /// while active grants exist logs a one-time warning, since the status
+  /// publishes as active and otherwise looks ignored.
+  func publishSubscriptionStatus(_ change: SubscriptionStatusChange) {
     subscriptionStatusLock.lock()
 
     // Snapshot once, under the lock, so a concurrent grant write can't slip
@@ -138,7 +130,21 @@ extension Superwall {
     let granted = entitlements.granted
     let activeGrants = Entitlement.mergePrioritized(Array(granted.filter(\.isActive)))
 
-    var assigned = newAssigned ?? assignedSubscriptionStatus
+    var assigned: SubscriptionStatus
+    let isDeveloperAssignment: Bool
+    switch change {
+    case .developerAssignment(let status):
+      assigned = status
+      isDeveloperAssignment = true
+    case .sdkAssignment(let status):
+      assigned = status
+      isDeveloperAssignment = false
+    case .grantChange:
+      // The assigned status is unchanged; only the grants merged into it are.
+      assigned = assignedSubscriptionStatus
+      isDeveloperAssignment = false
+    }
+
     if isDeveloperAssignment {
       if case .active(let assignedEntitlements) = assigned {
         // Compared ignoring product IDs: the merge unions those across a
