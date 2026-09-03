@@ -380,6 +380,28 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
+  func externalController_customerInfoFollowsStatusAndGrants() {
+    // The suite's own container uses the internal controller, so this is the
+    // only test that exercises the external-controller recompute wired into
+    // publishSubscriptionStatus.
+    let container = DependencyContainer(
+      purchaseController: MockPurchaseController(),
+      cache: CacheMock()
+    )
+    let superwall = Superwall(dependencyContainer: container)
+
+    superwall.grantedEntitlements = [grantedEntitlement()]
+    superwall.subscriptionStatus = .active([deviceEntitlement(id: "premium")])
+
+    #expect(Set(superwall.customerInfo.entitlements.map(\.id)) == ["premium", "granted"])
+
+    // Clearing recomputes too, even though the status stays active.
+    superwall.grantedEntitlements = []
+
+    #expect(superwall.customerInfo.entitlements.map(\.id) == ["premium"])
+  }
+
+  @Test
   func grantChange_refreshesCustomerInfoOnAutomaticPath() {
     superwall.grantedEntitlements = [grantedEntitlement()]
     #expect(superwall.customerInfo.entitlements.contains { $0.id == "granted" && $0.isActive })

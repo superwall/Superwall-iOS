@@ -218,23 +218,30 @@ extension Superwall {
 
   /// Recomputes `customerInfo` for the external purchase controller path
   /// outside the lock, so `$customerInfo` subscribers don't run inside the
-  /// SDK's critical section. It's built from a consistent snapshot and
-  /// rebuilt if either input moved while it ran, so a slower writer can't
-  /// leave a stale customer info behind a newer publish.
+  /// SDK's critical section. It's built from a consistent snapshot, and
+  /// rebuilt once if either input moved while it ran, so a slower writer
+  /// can't leave a stale customer info behind a newer publish.
+  ///
+  /// The retry is deliberately bounded rather than a loop: this runs
+  /// synchronously on the caller's thread, which can be the main one, and a
+  /// write landing during the rebuild is both vanishingly rare and corrected
+  /// by that write's own publish.
   private func refreshExternalControllerCustomerInfo() {
-    var snapshot = publishedSnapshot()
-    while true {
-      customerInfo = CustomerInfo.forExternalPurchaseController(
-        storage: dependencyContainer.storage,
-        subscriptionStatus: snapshot.status,
-        granted: snapshot.granted
-      )
-      let newest = publishedSnapshot()
-      if newest == snapshot {
-        return
-      }
-      snapshot = newest
+    let snapshot = publishedSnapshot()
+    customerInfo = customerInfo(for: snapshot)
+
+    let newest = publishedSnapshot()
+    if newest != snapshot {
+      customerInfo = customerInfo(for: newest)
     }
+  }
+
+  private func customerInfo(for snapshot: PublishedSnapshot) -> CustomerInfo {
+    return CustomerInfo.forExternalPurchaseController(
+      storage: dependencyContainer.storage,
+      subscriptionStatus: snapshot.status,
+      granted: snapshot.granted
+    )
   }
 
   /// The status the SDK reports for `assigned`: active granted entitlements
@@ -333,62 +340,5 @@ extension Superwall {
           }
         )
       )
-  }
-}
-
-// MARK: - Property wrapper
-
-/// The property wrapper behind ``Superwall/subscriptionStatus``.
-///
-/// Every assignment is routed through `publishSubscriptionStatus`, so the
-/// stored and published value is always the merged one — subscribers never
-/// see the value a writer assigned before granted entitlements and test-mode
-/// overrides were applied. The projected value (`$subscriptionStatus`) replays
-/// the current value to new subscribers, like `@Published`.
-///
-/// Public only because a public property's wrapper type has to be; nothing
-/// but the projection is meant to be used. The enclosing-instance subscript
-/// is the same mechanism `@Published` itself uses to reach its owner.
-@propertyWrapper
-public struct PublishedSubscriptionStatus {
-  private var storage: SubscriptionStatus
-  private let subject: CurrentValueSubject<SubscriptionStatus, Never>
-
-  public init(wrappedValue: SubscriptionStatus) {
-    storage = wrappedValue
-    subject = CurrentValueSubject(wrappedValue)
-  }
-
-  @available(*, unavailable, message: "Only available on Superwall.")
-  public var wrappedValue: SubscriptionStatus {
-    get { fatalError("subscriptionStatus is only readable on Superwall.") }
-    set { fatalError("\(newValue) can only be assigned on Superwall.") }
-  }
-
-  public var projectedValue: AnyPublisher<SubscriptionStatus, Never> {
-    return subject.eraseToAnyPublisher()
-  }
-
-  public static subscript(
-    _enclosingInstance superwall: Superwall,
-    wrapped wrappedKeyPath: ReferenceWritableKeyPath<Superwall, SubscriptionStatus>,
-    storage storageKeyPath: ReferenceWritableKeyPath<Superwall, PublishedSubscriptionStatus>
-  ) -> SubscriptionStatus {
-    get {
-      return superwall[keyPath: storageKeyPath].storage
-    }
-    set {
-      superwall.publishSubscriptionStatus(assigned: newValue, isDeveloperAssignment: true)
-    }
-  }
-
-  /// Stores a merged status without emitting it.
-  mutating func store(_ merged: SubscriptionStatus) {
-    storage = merged
-  }
-
-  /// Emits a stored status to subscribers.
-  func emit(_ status: SubscriptionStatus) {
-    subject.send(status)
   }
 }

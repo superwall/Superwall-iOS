@@ -507,6 +507,7 @@
 		E0F3648081AB86077201EB5D /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83416F0F1B5294C350D5CF70 /* FeatureFlags.swift */; };
 		E0F69E406F64A1160FF55BFA /* SWProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460B6F98BADD9EC96A978E40 /* SWProduct.swift */; };
 		E1A838C9CE62C9479D0C68F4 /* SWDebugManagerLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C733A9BE56EA9E10D75B073B /* SWDebugManagerLogicTests.swift */; };
+		E20B1214CA9785C0D0C7AD7A /* PublishedSubscriptionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */; };
 		E2E0E2A82200943E73E3A92A /* AppSessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A767F107FB1FBBC2F22DB3 /* AppSessionManagerTests.swift */; };
 		E315F3C6BBCA8582BF540086 /* GetExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */; };
 		E3DC0E7597234DC8CC508A33 /* MapSwiftErrors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81D80A7C5B8A17B83C218656 /* MapSwiftErrors.swift */; };
@@ -720,6 +721,7 @@
 		311D187DE8B8A5D0699F31A2 /* hr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hr; path = hr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		320AA5349848F696950F441A /* IdentityOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityOptions.swift; sourceTree = "<group>"; };
 		323B5E3D7E69FB3E718EED02 /* TestModeModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeModal.swift; sourceTree = "<group>"; };
+		328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublishedSubscriptionStatus.swift; sourceTree = "<group>"; };
 		335888285131F832E1C91A8F /* Dictionary+Merging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dictionary+Merging.swift"; sourceTree = "<group>"; };
 		337B611696DC32BD227CD020 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		33A9E0597972B90E3B9DFFE1 /* SuperwallDelegateObjc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallDelegateObjc.swift; sourceTree = "<group>"; };
@@ -2510,6 +2512,7 @@
 			children = (
 				C6BB83F17D20143827C28042 /* EntitlementsInfo.swift */,
 				E0A7F2B0E53BE42DC6B52873 /* EntitlementsStatus.swift */,
+				328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */,
 				469037ACFCAE3F46CF751E43 /* SubscriptionStatusPublishing.swift */,
 				0D4F1B49114819E9E6923508 /* Product Fetching */,
 				E36E6C0CB40C3F44423C80CF /* Receipt Manager */,
@@ -3687,6 +3690,7 @@
 				F5CCDC90D8CBA5ED0C5BAD2E /* PublicGetPresentationResult.swift in Sources */,
 				0AB9CCC164DD87C81318AAB0 /* PublicIdentity.swift in Sources */,
 				8F24AAC773F119481E2C654F /* PublicPresentation.swift in Sources */,
+				E20B1214CA9785C0D0C7AD7A /* PublishedSubscriptionStatus.swift in Sources */,
 				D66461863D54A56BE9C29310 /* Publisher+Async.swift in Sources */,
 				4E078EFFD0C1992563021220 /* PurchaseController.swift in Sources */,
 				0F00D32C125E8B86EA477631 /* PurchaseControllerObjc.swift in Sources */,
