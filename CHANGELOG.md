@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
 - `$subscriptionStatus` is now an `AnyPublisher<SubscriptionStatus, Never>` that only ever emits the merged status; it can no longer be the target of `assign(to:)`.
+- Granted entitlements don't change an `unknown` subscription status. They're merged in as soon as the status is known.
 
 ### Fixes
 

@@ -99,11 +99,11 @@ extension Superwall {
     case .inactive:
       deviceAndWebStatus = activeWebEntitlements.isEmpty ? .inactive : .active(activeWebEntitlements)
     case .unknown:
-      // Web entitlements deliberately don't promote .unknown to active,
-      // unlike granted entitlements (see mergedSubscriptionStatus). This
-      // branch only runs without an external purchase controller, where the
-      // AutomaticPurchaseController is guaranteed to replace .unknown after
-      // loading purchased products — so .unknown is always transient here.
+      // Neither web nor granted entitlements turn .unknown into a decision
+      // (see mergedSubscriptionStatus). This branch only runs without an
+      // external purchase controller, where the AutomaticPurchaseController
+      // replaces .unknown after loading purchased products, so it's always
+      // transient here anyway.
       deviceAndWebStatus = .unknown
     }
     superwall.setSubscriptionStatus(assigned: deviceAndWebStatus)
@@ -265,13 +265,15 @@ extension Superwall {
       case .active(let entitlements):
         // Set<Entitlement>.union merges by priority, keeping one record per ID.
         status = .active(entitlements.union(activeGrants))
-      case .inactive, .unknown:
-        // .unknown promotes to active, unlike web entitlements (see
-        // internallySetSubscriptionStatus). With an external purchase
-        // controller the developer is the only writer of the status, so
-        // .unknown can be terminal — without promotion, a developer relying
-        // solely on granted entitlements would be locked out forever.
+      case .inactive:
         status = .active(activeGrants)
+      case .unknown:
+        // Left alone, exactly like web entitlements: .unknown means the
+        // status hasn't been determined yet, and grants don't determine it
+        // — they merge as soon as it is. Reporting active here would open
+        // the paywall presentation gate, which waits for a status other
+        // than .unknown, before a purchase controller has answered.
+        break
       }
     }
     // This must run after the granted merge, or a developer-assigned

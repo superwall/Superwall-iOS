@@ -88,11 +88,25 @@ final class GrantedEntitlementsTests {
   }
 
   @Test
-  func unknownStatus_promotesToActiveWithGranted() {
+  func unknownStatus_staysUnknownWithGranted() {
     superwall.subscriptionStatus = .unknown
     superwall.grantedEntitlements = [grantedEntitlement()]
 
-    #expect(superwall.subscriptionStatus.isActive)
+    // Grants don't decide a status that hasn't been determined — reporting
+    // active here would let a paywall present before a purchase controller
+    // has answered.
+    #expect(superwall.subscriptionStatus == .unknown)
+  }
+
+  @Test
+  func grantsSetWhileUnknown_mergeOnceTheStatusIsKnown() {
+    superwall.subscriptionStatus = .unknown
+    superwall.grantedEntitlements = [grantedEntitlement()]
+    #expect(superwall.subscriptionStatus == .unknown)
+
+    superwall.subscriptionStatus = .inactive
+
+    #expect(activeIds(superwall.subscriptionStatus) == ["granted"])
   }
 
   @Test
@@ -100,8 +114,8 @@ final class GrantedEntitlementsTests {
     superwall.subscriptionStatus = .inactive
     superwall.grantedEntitlements = [grantedEntitlement(isActive: false)]
 
-    // Inactive-only grants must not promote — the status stays .inactive,
-    // not an .active-cased status that's effectively inactive.
+    // The status stays .inactive, not an .active-cased status that's
+    // effectively inactive.
     #expect(superwall.subscriptionStatus == .inactive)
   }
 
@@ -494,6 +508,10 @@ final class GrantedEntitlementsTests {
 
   @Test
   func inactiveWritesWithGrant_doNotNotifyDelegate() async {
+    // The device has answered, so the grant has a determined status to
+    // merge into. Set before listening so only the grant is observed.
+    superwall.setSubscriptionStatus(assigned: .inactive)
+
     let delegate = MockSuperwallDelegate()
     dependencyContainer.delegateAdapter.swiftDelegate = delegate
     superwall.listenToSubscriptionStatus()
