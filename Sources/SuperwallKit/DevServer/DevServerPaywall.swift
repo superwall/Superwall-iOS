@@ -11,7 +11,21 @@ import Foundation
 import UIKit
 
 extension Paywall {
-  static func devServer(surface: DevServerSurface, url: URL) -> Paywall {
+  /// Builds the paywall a dev server surface presents.
+  ///
+  /// - Parameter published: the dashboard paywall this surface stands in for,
+  /// if any. The surface owns what renders and how — its bytes, products and
+  /// `config.ts` presentation style. Everything the dashboard configures that
+  /// a manifest can't express is inherited from `published` instead, so dev
+  /// mode changes how a paywall looks and never how it behaves.
+  ///
+  /// Anything added to `Paywall` later defaults to the local stub's value, so
+  /// if it is dashboard-owned behaviour it belongs in the inherited list below.
+  static func devServer(
+    surface: DevServerSurface,
+    url: URL,
+    inheriting published: Paywall? = nil
+  ) -> Paywall {
     let products = (surface.products ?? [:])
       .sorted { $0.key < $1.key }
       .map { reference, identifier in
@@ -23,11 +37,21 @@ extension Paywall {
         )
       }
 
+    let databaseId: String = surface.paywallId ?? "dev:\(surface.kind)/\(surface.id)"
+    let identifier: String = surface.identifier ?? "dev:\(surface.id)"
+    let cacheKey = "dev:\(surface.id):\(url.absoluteString)"
+    let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
+    let featureGating: FeatureGatingBehavior = published?.featureGating ?? .nonGated
+    let computedPropertyRequests: [ComputedPropertyRequest] = published?.computedPropertyRequests ?? []
+    let localNotifications: [LocalNotification] = published?.localNotifications ?? []
+    let surveys: [Survey] = published?.surveys ?? []
+    let introOfferEligibility: IntroOfferEligibility = published?.introOfferEligibility ?? .automatic
+
     var paywall = Paywall(
-      databaseId: surface.paywallId ?? "dev:\(surface.kind)/\(surface.id)",
-      identifier: surface.identifier ?? "dev:\(surface.id)",
+      databaseId: databaseId,
+      identifier: identifier,
       name: surface.id,
-      cacheKey: "dev:\(surface.id):\(url.absoluteString)",
+      cacheKey: cacheKey,
       buildId: "dev",
       url: url,
       urlConfig: WebViewURLConfig(
@@ -46,15 +70,28 @@ extension Paywall {
       productItems: products,
       productIds: products.map { $0.id },
       appStoreProductIds: products.map { $0.id },
-      responseLoadingInfo: .init(),
+      responseLoadingInfo: responseLoadingInfo,
       webviewLoadingInfo: .init(),
       productsLoadingInfo: .init(),
       shimmerLoadingInfo: .init(),
       paywalljsVersion: "",
+      // Feature gating decides whether a non-paying user gets the feature, so
+      // it can never come from local paywall code.
+      featureGating: featureGating,
+      // Dashboard-configured behaviour that fires around the paywall rather
+      // than inside it.
+      localNotifications: localNotifications,
+      // The variables the page reads: without these, a local render silently
+      // lacks computed properties that production resolves.
+      computedPropertyRequests: computedPropertyRequests,
+      surveys: surveys,
       isScrollEnabled: true,
-      introOfferEligibility: .automatic
+      // Drives displayed trial state and pricing, which is exactly what a
+      // local preview is checked against.
+      introOfferEligibility: introOfferEligibility
     )
     paywall.isLocal = true
+    paywall.experiment = published?.experiment
     return paywall
   }
 

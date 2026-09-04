@@ -21,10 +21,11 @@ struct DevServerManifest: Decodable, Equatable {
     // Per-element decoding: the CLI writing this manifest versions separately
     // from the SDK, so one surface the SDK can't read must not take down the
     // surfaces it can.
-    let decoded = try container.decodeIfPresent(
-      [Throwable<DevServerSurface>].self,
-      forKey: .surfaces
-    ) ?? []
+    // Required: `surfaces` is the only thing that tells this JSON apart from
+    // whatever else might answer on a candidate port, so a body without it
+    // must fail rather than end the port walk. A project with no surfaces
+    // still sends `{"surfaces": []}`.
+    let decoded = try container.decode([Throwable<DevServerSurface>].self, forKey: .surfaces)
     surfaces = decoded.compactMap { try? $0.result.get() }
 
     let dropped = decoded.count - surfaces.count

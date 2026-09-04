@@ -164,23 +164,16 @@ final class DevServerManifestTests: XCTestCase {
     XCTAssertNil(decoded.surfaces[0].presentation)
   }
 
-  func test_anUnknownFieldDoesNotDropTheSurface() throws {
-    let decoded = try manifest("""
-    {
-      "surfaces": [
-        {
-          "kind": "paywall",
-          "id": "pro",
-          "url": "/preview/paywall/pro",
-          "somethingTheCliAddedLater": { "a": 1 }
-        }
-      ]
+  func test_aBodyWithoutSurfacesIsNotAManifest() {
+    // `surfaces` is what tells this JSON apart from anything else that might
+    // answer on a candidate port, so these must not decode — otherwise the
+    // port walk stops on the wrong process.
+    for body in ["{}", #"{"detail": "Not Found"}"#, #"{"error": {"code": 404}}"#] {
+      XCTAssertThrowsError(try manifest(body), body)
     }
-    """)
-    XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro"])
   }
 
-  func test_missingSurfacesKeyDecodesAsEmpty() throws {
-    XCTAssertTrue(try manifest("{}").surfaces.isEmpty)
+  func test_anEmptySurfaceListIsStillAManifest() throws {
+    XCTAssertTrue(try manifest(#"{"surfaces": []}"#).surfaces.isEmpty)
   }
 }

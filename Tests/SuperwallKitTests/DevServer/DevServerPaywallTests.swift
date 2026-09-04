@@ -163,4 +163,105 @@ final class DevServerPaywallTests: XCTestCase {
     )
     XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 0))
   }
+
+  // MARK: - What the dashboard keeps owning
+
+  /// The manifest can't express any of these, so a bound surface has to take
+  /// them from the paywall it stands in for or they vanish silently.
+  func test_inheritsDashboardOwnedBehaviourFromThePublishedPaywall() {
+    var published = Paywall.stub()
+    published.featureGating = .gated
+    published.surveys = [Survey.stub()]
+    published.localNotifications = [LocalNotification.stub()]
+
+    let paywall = Paywall.devServer(
+      surface: surface(),
+      url: url,
+      inheriting: published
+    )
+
+    XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertEqual(paywall.surveys.count, 1)
+    XCTAssertEqual(paywall.localNotifications.count, 1)
+  }
+
+  func test_inheritsComputedPropertiesAndIntroOfferEligibility() throws {
+    let json = """
+    {
+      "computedPropertyRequests": [
+        { "type": "HOURS_SINCE", "eventName": "trigger1" }
+      ],
+      "introductoryOfferEligibility": "INELIGIBLE"
+    }
+    """
+    // Decoded rather than hand-built so the test pins the real dashboard shape.
+    struct Fields: Decodable {
+      let computedPropertyRequests: [ComputedPropertyRequest]
+      let introductoryOfferEligibility: IntroOfferEligibility
+    }
+    let fields = try JSONDecoder().decode(Fields.self, from: Data(json.utf8))
+
+    var published = Paywall.stub()
+    published = Paywall(
+      databaseId: published.databaseId,
+      identifier: published.identifier,
+      name: published.name,
+      cacheKey: published.cacheKey,
+      buildId: published.buildId,
+      url: published.url,
+      urlConfig: published.urlConfig,
+      htmlSubstitutions: published.htmlSubstitutions,
+      presentation: published.presentation,
+      backgroundColorHex: published.backgroundColorHex,
+      backgroundColor: published.backgroundColor,
+      darkBackgroundColorHex: nil,
+      darkBackgroundColor: nil,
+      productItems: [],
+      productIds: [],
+      appStoreProductIds: [],
+      responseLoadingInfo: .init(),
+      webviewLoadingInfo: .init(),
+      productsLoadingInfo: .init(),
+      shimmerLoadingInfo: .init(),
+      paywalljsVersion: "",
+      computedPropertyRequests: fields.computedPropertyRequests,
+      isScrollEnabled: true,
+      introOfferEligibility: fields.introductoryOfferEligibility
+    )
+
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+
+    XCTAssertEqual(paywall.computedPropertyRequests.count, 1)
+    XCTAssertEqual(paywall.introOfferEligibility, fields.introductoryOfferEligibility)
+  }
+
+  func test_anUnboundSurfaceKeepsTheSafeDefaults() {
+    // The debugger previews surfaces with no dashboard counterpart, so there
+    // is nothing to inherit and gating must stay off rather than guess.
+    let paywall = Paywall.devServer(surface: surface(), url: url)
+
+    XCTAssertEqual(paywall.featureGating, .nonGated)
+    XCTAssertTrue(paywall.surveys.isEmpty)
+    XCTAssertTrue(paywall.localNotifications.isEmpty)
+    XCTAssertTrue(paywall.computedPropertyRequests.isEmpty)
+    XCTAssertEqual(paywall.introOfferEligibility, .automatic)
+  }
+
+  func test_theLocalSurfaceStillOwnsWhatItRenders() {
+    var published = Paywall.stub()
+    published.featureGating = .gated
+
+    let paywall = Paywall.devServer(
+      surface: surface(products: ["plus": "local_product"], presentation: #"{"style": "modal"}"#),
+      url: url,
+      inheriting: published
+    )
+
+    // Inherited behaviour must not drag the published rendering along with it.
+    XCTAssertEqual(paywall.url, url)
+    XCTAssertEqual(paywall.productIds, ["local_product"])
+    XCTAssertEqual(paywall.presentation.style, .modal)
+    XCTAssertTrue(paywall.isLocal)
+    XCTAssertNil(paywall.manifest)
+  }
 }

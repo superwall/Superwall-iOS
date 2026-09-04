@@ -61,22 +61,4 @@ struct DevServerSurface: Decodable, Equatable {
     // read costs the surface its style, not its ability to be served.
     presentation = try? container.decodeIfPresent(Presentation.self, forKey: .presentation)
   }
-
-  init(
-    kind: String,
-    id: String,
-    url: String,
-    paywallId: String? = nil,
-    identifier: String? = nil,
-    products: [String: String]? = nil,
-    presentation: Presentation? = nil
-  ) {
-    self.kind = kind
-    self.id = id
-    self.url = url
-    self.paywallId = paywallId
-    self.identifier = identifier
-    self.products = products
-    self.presentation = presentation
-  }
 }

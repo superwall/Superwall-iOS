@@ -87,6 +87,30 @@ actor DevServerLocator {
     )
   }
 
+  /// Logs a body that carries `surfaces` but wouldn't decode.
+  ///
+  /// The probe walks several ports and can't know what is listening on each,
+  /// so this neither claims the responder is a dev server nor stays silent
+  /// when it plainly is one whose manifest this SDK can't read.
+  private func logUnreadableManifest(data: Data, base: URL, error: Error) {
+    let json = try? JSONSerialization.jsonObject(with: data)
+    guard let object = json as? [String: Any],
+      object["surfaces"] != nil
+    else {
+      // Not a manifest at all — something else answered. The port walk moves
+      // on, and `locate` reports it if nothing else turns up.
+      return
+    }
+    Logger.debug(
+      logLevel: .error,
+      scope: .superwallCore,
+      message: "Something at \(base.absoluteString) answered /device/manifest.json with a "
+        + "manifest this SDK couldn't read. Those paywalls will load their published "
+        + "versions. Check that superwall dev and SuperwallKit are on compatible versions.",
+      error: error
+    )
+  }
+
   private func fetchManifest(from base: URL) async -> DevServerManifest? {
     guard let manifestURL = URL(string: "/device/manifest.json", relativeTo: base) else {
       return nil
@@ -96,29 +120,26 @@ actor DevServerLocator {
     request.cachePolicy = .reloadIgnoringLocalCacheData
 
     do {
-      let data: Data = try await withCheckedThrowingContinuation { continuation in
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+      let (data, response): (Data, URLResponse?) = try await withCheckedThrowingContinuation { continuation in
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
           if let data = data {
-            continuation.resume(returning: data)
+            continuation.resume(returning: (data, response))
           } else {
             continuation.resume(throwing: error ?? URLError(.badServerResponse))
           }
         }
         task.resume()
       }
+      // Something else on this port may answer an unknown path with a JSON
+      // error body, so the status has to rule that out before the body does.
+      if let http = response as? HTTPURLResponse,
+        !(200..<300).contains(http.statusCode) {
+        return nil
+      }
       do {
         return try JSONDecoder().decode(DevServerManifest.self, from: data)
       } catch {
-        // A server answered; its manifest just didn't parse. Say so, or the
-        // caller's "no server found" log points at the wrong cause.
-        Logger.debug(
-          logLevel: .error,
-          scope: .superwallCore,
-          message: "The superwall dev server at \(base.absoluteString) answered with a manifest "
-            + "this SDK couldn't read. Paywalls will load their published versions. "
-            + "Check that superwall dev and SuperwallKit are on compatible versions.",
-          error: error
-        )
+        logUnreadableManifest(data: data, base: base, error: error)
         return nil
       }
     } catch {
