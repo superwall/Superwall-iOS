@@ -12,7 +12,9 @@ final class DevServerPaywallTests: XCTestCase {
     paywallId: String? = nil,
     identifier: String? = nil,
     products: [String: String]? = nil,
-    presentation: String? = nil
+    presentation: String? = nil,
+    featureGating: String? = nil,
+    introductoryOfferEligibility: String? = nil
   ) -> DevServerSurface {
     let json = """
     {
@@ -22,6 +24,10 @@ final class DevServerPaywallTests: XCTestCase {
       \(paywallId.map { "\"paywallId\": \"\($0)\"," } ?? "")
       \(identifier.map { "\"identifier\": \"\($0)\"," } ?? "")
       \(presentation.map { "\"presentation\": \($0)," } ?? "")
+      \(featureGating.map { "\"featureGating\": \"\($0)\"," } ?? "")
+      \(introductoryOfferEligibility.map {
+        "\"introductoryOfferEligibility\": \"\($0)\","
+      } ?? "")
       "products": \(products.map { dict in
         "{" + dict.map { "\"\($0.key)\": \"\($0.value)\"" }.sorted().joined(separator: ",") + "}"
       } ?? "null")
@@ -83,7 +89,24 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(params["is_local"] as? Bool, true)
   }
 
-  func test_presentsFullscreenWhenTheConfigSaysNothing() {
+  func test_inheritsTheDashboardStyleWhenTheManifestSaysNothing() {
+    // The shipped manifest carries no presentation, so a bound paywall has to
+    // keep the style the dashboard configured rather than snap to fullscreen.
+    var published = Paywall.stub()
+    XCTAssertEqual(published.presentation.style, .modal)
+
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+
+    XCTAssertEqual(paywall.presentation.style, .modal)
+
+    // Visual settings the manifest can't carry come from there too.
+    published = Paywall.stub()
+    let visuals = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+    XCTAssertEqual(visuals.backgroundColorHex, published.backgroundColorHex)
+    XCTAssertEqual(visuals.isScrollEnabled, published.isScrollEnabled)
+  }
+
+  func test_presentsFullscreenWhenNothingDeclaresAStyle() {
     let paywall = Paywall.devServer(surface: surface(), url: url)
     XCTAssertEqual(paywall.presentation.style, .fullscreen)
   }
@@ -118,13 +141,13 @@ final class DevServerPaywallTests: XCTestCase {
 
   // MARK: - Partly specified geometry
 
-  func test_drawerWithoutGeometryUsesTheDocumentedDefaults() {
+  func test_drawerWithoutGeometryUsesTheCliDefaults() {
     let drawer = Paywall.devServer(
       surface: surface(presentation: #"{"style": "drawer"}"#),
       url: url
     )
-    // 70% of the screen is what PaywallPresentationStyle.drawer documents.
-    XCTAssertEqual(drawer.presentation.style, .drawer(height: 70, cornerRadius: 0))
+    // Mirrors the CLI's DRAWER_DEFAULTS, which resolves the same values on push.
+    XCTAssertEqual(drawer.presentation.style, .drawer(height: 70, cornerRadius: 15))
   }
 
   func test_drawerKeepsTheValuesItDoesNameAndDefaultsTheRest() {
@@ -132,7 +155,7 @@ final class DevServerPaywallTests: XCTestCase {
       surface: surface(presentation: #"{"style": "drawer", "drawer": {"height": 420}}"#),
       url: url
     )
-    XCTAssertEqual(heightOnly.presentation.style, .drawer(height: 420, cornerRadius: 0))
+    XCTAssertEqual(heightOnly.presentation.style, .drawer(height: 420, cornerRadius: 15))
 
     let radiusOnly = Paywall.devServer(
       surface: surface(presentation: #"{"style": "drawer", "drawer": {"cornerRadius": 24}}"#),
@@ -141,27 +164,28 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(radiusOnly.presentation.style, .drawer(height: 70, cornerRadius: 24))
   }
 
-  func test_popupWithoutBothDimensionsFallsBackToFullscreen() {
-    // A popup has no documented default size, so a partial one can't be honoured.
-    let heightOnly = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "popup", "popup": {"height": 500}}"#),
-      url: url
-    )
-    XCTAssertEqual(heightOnly.presentation.style, .fullscreen)
-
+  func test_popupWithoutGeometryUsesTheCliDefaults() {
+    // Mirrors the CLI's POPUP_DEFAULTS rather than falling back to fullscreen,
+    // so a partly specified popup is still a popup.
     let noGeometry = Paywall.devServer(
       surface: surface(presentation: #"{"style": "popup"}"#),
       url: url
     )
-    XCTAssertEqual(noGeometry.presentation.style, .fullscreen)
+    XCTAssertEqual(noGeometry.presentation.style, .popup(height: 60, width: 80, cornerRadius: 15))
   }
 
-  func test_popupWithBothDimensionsDefaultsOnlyItsRadius() {
-    let popup = Paywall.devServer(
+  func test_popupKeepsTheValuesItDoesNameAndDefaultsTheRest() {
+    let heightOnly = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "popup", "popup": {"height": 500}}"#),
+      url: url
+    )
+    XCTAssertEqual(heightOnly.presentation.style, .popup(height: 500, width: 80, cornerRadius: 15))
+
+    let sized = Paywall.devServer(
       surface: surface(presentation: #"{"style": "popup", "popup": {"width": 300, "height": 500}}"#),
       url: url
     )
-    XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 0))
+    XCTAssertEqual(sized.presentation.style, .popup(height: 500, width: 300, cornerRadius: 15))
   }
 
   // MARK: - What the dashboard keeps owning
@@ -273,5 +297,59 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(paywall.presentation.style, .modal)
     XCTAssertTrue(paywall.isLocal)
     XCTAssertNil(paywall.manifest)
+  }
+
+  // MARK: - The surface's own settings win
+
+  func test_theSurfacesOwnGatingBeatsThePublishedPaywalls() {
+    var published = Paywall.stub()
+    published.featureGating = .gated
+
+    let paywall = Paywall.devServer(
+      surface: surface(featureGating: "nonGated"),
+      url: url,
+      inheriting: published
+    )
+
+    // An unpushed config.ts edit has to take effect, or dev mode shows the
+    // setting you just changed away from.
+    XCTAssertEqual(paywall.featureGating, .nonGated)
+  }
+
+  func test_theSurfacesOwnEligibilityBeatsThePublishedPaywalls() {
+    let paywall = Paywall.devServer(
+      surface: surface(introductoryOfferEligibility: "alwaysIneligible"),
+      url: url,
+      inheriting: Paywall.stub()
+    )
+    XCTAssertEqual(paywall.introOfferEligibility, .ineligible)
+  }
+
+  func test_settingsTheSurfaceOmitsStillComeFromTheDashboard() {
+    var published = Paywall.stub()
+    published.featureGating = .gated
+
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+
+    XCTAssertEqual(paywall.featureGating, .gated)
+  }
+
+  func test_aValueThisSdkDoesNotKnowFallsBackRatherThanGuessing() {
+    var published = Paywall.stub()
+    published.featureGating = .gated
+
+    // A CLI newer than this SDK must not silently ungate a paywall.
+    let paywall = Paywall.devServer(
+      surface: surface(featureGating: "someFutureMode"),
+      url: url,
+      inheriting: published
+    )
+
+    XCTAssertEqual(paywall.featureGating, .gated)
+  }
+
+  func test_anUnboundSurfaceStillHonoursItsOwnGating() {
+    let paywall = Paywall.devServer(surface: surface(featureGating: "gated"), url: url)
+    XCTAssertEqual(paywall.featureGating, .gated)
   }
 }

@@ -176,4 +176,28 @@ final class DevServerManifestTests: XCTestCase {
   func test_anEmptySurfaceListIsStillAManifest() throws {
     XCTAssertTrue(try manifest(#"{"surfaces": []}"#).surfaces.isEmpty)
   }
+
+  func test_matchesASurfaceBoundToSeveralPaywalls() {
+    // superwall.lock can bind one surface to several paywalls: the CLI sends
+    // the first as `paywallId` and the whole set as `paywallIds`.
+    // swiftlint:disable:next force_try
+    let decoded = try! manifest("""
+    {
+      "surfaces": [
+        { "kind": "paywall", "id": "pro", "url": "/preview/paywall/pro" },
+        {
+          "kind": "paywall",
+          "id": "shared",
+          "url": "/preview/paywall/shared",
+          "paywallId": "111",
+          "paywallIds": ["111", "222", "333"]
+        }
+      ]
+    }
+    """)
+    XCTAssertEqual(decoded.surface(forPaywallDatabaseId: "111")?.id, "shared")
+    XCTAssertEqual(decoded.surface(forPaywallDatabaseId: "222")?.id, "shared")
+    XCTAssertEqual(decoded.surface(forPaywallDatabaseId: "333")?.id, "shared")
+    XCTAssertNil(decoded.surface(forPaywallDatabaseId: "444"))
+  }
 }

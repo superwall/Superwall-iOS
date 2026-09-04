@@ -47,7 +47,15 @@ struct DevServerManifest: Decodable, Equatable {
   /// `superwall.lock` binding wins, otherwise a project with exactly one
   /// paywall serves it for everything.
   func surface(forPaywallDatabaseId databaseId: String) -> DevServerSurface? {
-    if let bound = surfaces.first(where: { $0.paywallId == databaseId }) {
+    let bound = surfaces.first { surface in
+      if surface.paywallId == databaseId {
+        return true
+      }
+      // superwall.lock can bind one surface to several paywalls; the CLI
+      // sends the first as `paywallId` and the whole set as `paywallIds`.
+      return surface.paywallIds?.contains(databaseId) ?? false
+    }
+    if let bound = bound {
       return bound
     }
     let paywalls = surfaces.filter { $0.kind == "paywall" }
