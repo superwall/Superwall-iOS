@@ -11,10 +11,7 @@ final class DevServerPaywallTests: XCTestCase {
     id: String = "pro",
     paywallId: String? = nil,
     identifier: String? = nil,
-    products: [String: String]? = nil,
-    presentation: String? = nil,
-    featureGating: String? = nil,
-    introductoryOfferEligibility: String? = nil
+    products: [String: String]? = nil
   ) -> DevServerSurface {
     let json = """
     {
@@ -23,11 +20,6 @@ final class DevServerPaywallTests: XCTestCase {
       "url": "/preview/paywall/\(id)",
       \(paywallId.map { "\"paywallId\": \"\($0)\"," } ?? "")
       \(identifier.map { "\"identifier\": \"\($0)\"," } ?? "")
-      \(presentation.map { "\"presentation\": \($0)," } ?? "")
-      \(featureGating.map { "\"featureGating\": \"\($0)\"," } ?? "")
-      \(introductoryOfferEligibility.map {
-        "\"introductoryOfferEligibility\": \"\($0)\","
-      } ?? "")
       "products": \(products.map { dict in
         "{" + dict.map { "\"\($0.key)\": \"\($0.value)\"" }.sorted().joined(separator: ",") + "}"
       } ?? "null")
@@ -111,82 +103,7 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(paywall.presentation.style, .fullscreen)
   }
 
-  func test_usesThePresentationStyleTheConfigDeclares() {
-    let modal = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "modal"}"#),
-      url: url
-    )
-    XCTAssertEqual(modal.presentation.style, .modal)
-
-    let drawer = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "drawer", "drawer": {"height": 420, "cornerRadius": 24}}"#),
-      url: url
-    )
-    XCTAssertEqual(drawer.presentation.style, .drawer(height: 420, cornerRadius: 24))
-
-    let popup = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "popup", "popup": {"width": 300, "height": 500, "cornerRadius": 16}}"#),
-      url: url
-    )
-    XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 16))
-  }
-
-  func test_fallsBackToFullscreenWhenAStyleIsUnknown() {
-    let unknown = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "hologram"}"#),
-      url: url
-    )
-    XCTAssertEqual(unknown.presentation.style, .fullscreen)
-  }
-
   // MARK: - Partly specified geometry
-
-  func test_drawerWithoutGeometryUsesTheCliDefaults() {
-    let drawer = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "drawer"}"#),
-      url: url
-    )
-    // Mirrors the CLI's DRAWER_DEFAULTS, which resolves the same values on push.
-    XCTAssertEqual(drawer.presentation.style, .drawer(height: 70, cornerRadius: 15))
-  }
-
-  func test_drawerKeepsTheValuesItDoesNameAndDefaultsTheRest() {
-    let heightOnly = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "drawer", "drawer": {"height": 420}}"#),
-      url: url
-    )
-    XCTAssertEqual(heightOnly.presentation.style, .drawer(height: 420, cornerRadius: 15))
-
-    let radiusOnly = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "drawer", "drawer": {"cornerRadius": 24}}"#),
-      url: url
-    )
-    XCTAssertEqual(radiusOnly.presentation.style, .drawer(height: 70, cornerRadius: 24))
-  }
-
-  func test_popupWithoutGeometryUsesTheCliDefaults() {
-    // Mirrors the CLI's POPUP_DEFAULTS rather than falling back to fullscreen,
-    // so a partly specified popup is still a popup.
-    let noGeometry = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "popup"}"#),
-      url: url
-    )
-    XCTAssertEqual(noGeometry.presentation.style, .popup(height: 60, width: 80, cornerRadius: 15))
-  }
-
-  func test_popupKeepsTheValuesItDoesNameAndDefaultsTheRest() {
-    let heightOnly = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "popup", "popup": {"height": 500}}"#),
-      url: url
-    )
-    XCTAssertEqual(heightOnly.presentation.style, .popup(height: 500, width: 80, cornerRadius: 15))
-
-    let sized = Paywall.devServer(
-      surface: surface(presentation: #"{"style": "popup", "popup": {"width": 300, "height": 500}}"#),
-      url: url
-    )
-    XCTAssertEqual(sized.presentation.style, .popup(height: 500, width: 300, cornerRadius: 15))
-  }
 
   // MARK: - What the dashboard keeps owning
 
@@ -286,43 +203,18 @@ final class DevServerPaywallTests: XCTestCase {
     published.featureGating = .gated
 
     let paywall = Paywall.devServer(
-      surface: surface(products: ["plus": "local_product"], presentation: #"{"style": "modal"}"#),
+      surface: surface(products: ["plus": "local_product"]),
       url: url,
       inheriting: published
     )
 
-    // Inherited behaviour must not drag the published rendering along with it.
+    // The surface owns what it serves: its URL and its own products.
     XCTAssertEqual(paywall.url, url)
     XCTAssertEqual(paywall.productIds, ["local_product"])
-    XCTAssertEqual(paywall.presentation.style, .modal)
     XCTAssertTrue(paywall.isLocal)
     XCTAssertNil(paywall.manifest)
-  }
-
-  // MARK: - The surface's own settings win
-
-  func test_theSurfacesOwnGatingBeatsThePublishedPaywalls() {
-    var published = Paywall.stub()
-    published.featureGating = .gated
-
-    let paywall = Paywall.devServer(
-      surface: surface(featureGating: "nonGated"),
-      url: url,
-      inheriting: published
-    )
-
-    // An unpushed config.ts edit has to take effect, or dev mode shows the
-    // setting you just changed away from.
-    XCTAssertEqual(paywall.featureGating, .nonGated)
-  }
-
-  func test_theSurfacesOwnEligibilityBeatsThePublishedPaywalls() {
-    let paywall = Paywall.devServer(
-      surface: surface(introductoryOfferEligibility: "alwaysIneligible"),
-      url: url,
-      inheriting: Paywall.stub()
-    )
-    XCTAssertEqual(paywall.introOfferEligibility, .ineligible)
+    // Inherited behaviour rides along without dragging the published bytes in.
+    XCTAssertEqual(paywall.featureGating, .gated)
   }
 
   func test_settingsTheSurfaceOmitsStillComeFromTheDashboard() {
@@ -334,22 +226,4 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(paywall.featureGating, .gated)
   }
 
-  func test_aValueThisSdkDoesNotKnowFallsBackRatherThanGuessing() {
-    var published = Paywall.stub()
-    published.featureGating = .gated
-
-    // A CLI newer than this SDK must not silently ungate a paywall.
-    let paywall = Paywall.devServer(
-      surface: surface(featureGating: "someFutureMode"),
-      url: url,
-      inheriting: published
-    )
-
-    XCTAssertEqual(paywall.featureGating, .gated)
-  }
-
-  func test_anUnboundSurfaceStillHonoursItsOwnGating() {
-    let paywall = Paywall.devServer(surface: surface(featureGating: "gated"), url: url)
-    XCTAssertEqual(paywall.featureGating, .gated)
-  }
 }

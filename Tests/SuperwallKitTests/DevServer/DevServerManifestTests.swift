@@ -147,22 +147,6 @@ final class DevServerManifestTests: XCTestCase {
     XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro", "max"])
   }
 
-  func test_malformedPresentationStillServesTheSurface() throws {
-    let decoded = try manifest("""
-    {
-      "surfaces": [
-        {
-          "kind": "paywall",
-          "id": "pro",
-          "url": "/preview/paywall/pro",
-          "presentation": "not-an-object"
-        }
-      ]
-    }
-    """)
-    XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro"])
-    XCTAssertNil(decoded.surfaces[0].presentation)
-  }
 
   func test_aBodyWithoutSurfacesIsNotAManifest() {
     // `surfaces` is what tells this JSON apart from anything else that might

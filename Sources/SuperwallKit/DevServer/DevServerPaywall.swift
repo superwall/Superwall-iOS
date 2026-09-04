@@ -32,24 +32,16 @@ extension Paywall {
     let identifier: String = surface.identifier ?? "dev:\(surface.id)"
     let cacheKey = "dev:\(surface.id):\(url.absoluteString)"
     let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
-    // The surface's own config.ts wins, then the dashboard's published
-    // setting, then the safe default. That order is what lets an unpushed
-    // config.ts edit take effect while a bound paywall still behaves like
-    // production until you change it.
-    let featureGating: FeatureGatingBehavior = gating(from: surface)
-      ?? published?.featureGating
-      ?? .nonGated
+    // A paywall's config.ts settings reach the SDK in the pushed snapshot,
+    // not the dev manifest, so they come from the published paywall this
+    // surface stands in for. Without one — a surface that has never been
+    // pushed — the safe defaults stand.
+    let featureGating: FeatureGatingBehavior = published?.featureGating ?? .nonGated
     let computedPropertyRequests: [ComputedPropertyRequest] = published?.computedPropertyRequests ?? []
     let surveys: [Survey] = published?.surveys ?? []
-    let introOfferEligibility: IntroOfferEligibility = eligibility(from: surface)
-      ?? published?.introOfferEligibility
-      ?? .automatic
-    let presentation: PaywallPresentationInfo
-    if let style = presentationStyle(for: surface) {
-      presentation = PaywallPresentationInfo(style: style, delay: 0)
-    } else {
-      presentation = published?.presentation ?? PaywallPresentationInfo(style: .fullscreen, delay: 0)
-    }
+    let introOfferEligibility: IntroOfferEligibility = published?.introOfferEligibility ?? .automatic
+    let presentation = published?.presentation
+      ?? PaywallPresentationInfo(style: .fullscreen, delay: 0)
 
     var paywall = Paywall(
       databaseId: databaseId,
@@ -111,85 +103,5 @@ extension Paywall {
           entitlements: []
         )
       }
-  }
-
-  /// Maps a surface's `config.ts` feature gating onto the SDK's enum.
-  ///
-  /// Returns nil for anything unrecognised — including a CLI newer than this
-  /// SDK — so the caller falls back rather than guessing how a feature gates.
-  private static func gating(from surface: DevServerSurface) -> FeatureGatingBehavior? {
-    switch surface.featureGating {
-    case "gated":
-      return .gated
-    case "nonGated":
-      return .nonGated
-    default:
-      return nil
-    }
-  }
-
-  /// Maps a surface's `config.ts` trial eligibility onto the SDK's enum,
-  /// returning nil for anything unrecognised.
-  private static func eligibility(from surface: DevServerSurface) -> IntroOfferEligibility? {
-    switch surface.introductoryOfferEligibility {
-    case "automatic":
-      return .automatic
-    case "alwaysEligible":
-      return .eligible
-    case "alwaysIneligible":
-      return .ineligible
-    default:
-      return nil
-    }
-  }
-
-  /// Geometry a `config.ts` presentation block gets when it doesn't name its
-  /// own. These mirror the `superwall` CLI's DRAWER_DEFAULTS and
-  /// POPUP_DEFAULTS, which resolve the same values on push, so a partly
-  /// specified block presents identically before and after one. The drawer
-  /// height also matches what `PaywallPresentationStyle/drawer` documents.
-  private static let defaultDrawerHeight: Double = 70
-  private static let defaultDrawerCornerRadius: Double = 15
-  private static let defaultPopupWidth: Double = 80
-  private static let defaultPopupHeight: Double = 60
-  private static let defaultPopupCornerRadius: Double = 15
-
-  /// Maps a surface's `config.ts` presentation onto the SDK's styles.
-  /// The framework documents `fullscreen` as its default, so anything
-  /// missing or unrecognized lands there.
-  private static func presentationStyle(
-    for surface: DevServerSurface
-  ) -> PaywallPresentationStyle? {
-    if surface.presentation == nil {
-      // The manifest says nothing about presentation, so the dashboard's
-      // style stands rather than being replaced by a guess.
-      return nil
-    }
-    switch surface.presentation?.style {
-    case "modal":
-      return .modal
-    case "push":
-      return .push
-    case "noAnimation":
-      return .fullscreenNoAnimation
-    case "drawer":
-      // A drawer that names only some of its geometry is still a drawer.
-      // These match the CLI's own DRAWER_DEFAULTS, so a partly specified
-      // drawer looks the same here as it will once it's pushed.
-      let drawer = surface.presentation?.drawer
-      return .drawer(
-        height: drawer?.height ?? defaultDrawerHeight,
-        cornerRadius: drawer?.cornerRadius ?? defaultDrawerCornerRadius
-      )
-    case "popup":
-      let popup = surface.presentation?.popup
-      return .popup(
-        height: popup?.height ?? defaultPopupHeight,
-        width: popup?.width ?? defaultPopupWidth,
-        cornerRadius: popup?.cornerRadius ?? defaultPopupCornerRadius
-      )
-    default:
-      return .fullscreen
-    }
   }
 }
