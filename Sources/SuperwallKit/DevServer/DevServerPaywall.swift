@@ -16,11 +16,12 @@ extension Paywall {
   /// - Parameter published: the dashboard paywall this surface stands in for,
   /// if any. The surface owns what renders — its bytes and its products.
   /// Everything else the dashboard configures, presentation included, is
-  /// inherited from `published`, so dev mode changes a paywall's content and
-  /// never its configuration.
+  /// inherited from `published` — bar `localNotifications`, see below — so dev
+  /// mode changes a paywall's content and never its configuration.
   ///
   /// Anything added to `Paywall` later defaults to the local stub's value, so
-  /// if the dashboard configures it, it belongs in the inherited list below.
+  /// if the dashboard configures it and the local paywall has no way of its
+  /// own to say otherwise, it belongs in the inherited list below.
   static func devServer(
     surface: DevServerSurface,
     url: URL,

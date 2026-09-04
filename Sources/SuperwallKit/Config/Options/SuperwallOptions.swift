@@ -414,6 +414,10 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// the dev server. So a `config.ts` change to any of them is not visible in dev mode
   /// until you push it.
   ///
+  /// Local notifications are the one exception: the published paywall's are ignored and
+  /// the ones your local `config.ts` declares fire straight away, without a push, because
+  /// they reach the SDK from the paywall itself rather than from the dashboard.
+  ///
   /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
   /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.
   ///
