@@ -51,10 +51,11 @@ final class DependencyContainer {
   init(
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    cache: Cache = Cache()
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
-    storage = Storage(factory: self)
+    storage = Storage(factory: self, cache: cache)
     storage.configure(apiKey: apiKey)
     entitlementsInfo = EntitlementsInfo(
       storage: storage,

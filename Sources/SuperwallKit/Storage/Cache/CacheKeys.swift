@@ -201,6 +201,16 @@ enum SubscriptionStatusKey: Storable {
   typealias Value = SubscriptionStatus
 }
 
+enum GrantedEntitlements: Storable {
+  static var key: String {
+    "store.grantedEntitlements"
+  }
+  // App-specific so that `Storage.reset()` doesn't wipe it: the developer owns
+  // this bucket and its lifecycle, including across `reset()`/`identify()`.
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = Set<Entitlement>
+}
+
 enum SurveyAssignmentKey: Storable {
   static var key: String {
     "store.surveyAssignmentKey"

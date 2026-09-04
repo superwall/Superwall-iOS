@@ -522,11 +522,15 @@ actor WebEntitlementRedeemer {
       let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
       mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
         storage: storage,
-        subscriptionStatus: subscriptionStatus
+        subscriptionStatus: subscriptionStatus,
+        granted: entitlementsInfo.granted
       )
     } else {
       let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+      mergedCustomerInfo = deviceCustomerInfo.merging(
+        with: webCustomerInfo,
+        granting: entitlementsInfo.granted
+      )
     }
 
     await MainActor.run {
@@ -974,20 +978,22 @@ actor WebEntitlementRedeemer {
           return
         }
 
-        let mergedCustomerInfo = await mergeAndApplyCustomerInfo(
+        _ = await mergeAndApplyCustomerInfo(
           webCustomerInfo: response.customerInfo,
           superwall: superwall
         )
 
-        let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
-        if activeEntitlements.isEmpty {
-          await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
-        } else {
-          await superwall.internallySetSubscriptionStatus(
-            to: .active(activeEntitlements),
-            superwall: superwall
-          )
-        }
+        // Derive the status from device + web only, as the redeem path does.
+        // The merged customer info also carries granted entitlements, which
+        // are applied when the status publishes and must never enter the
+        // assigned status — or clearing them could never revoke them.
+        let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+        let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+        let deviceAndWebEntitlements = activeDeviceEntitlements.union(
+          Set(response.customerInfo.entitlements)
+        )
+        let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
+        await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         // If there's a paywall, check if we should dismiss it
         if let paywallVc = superwall.paywallViewController {
