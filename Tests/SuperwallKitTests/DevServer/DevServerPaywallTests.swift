@@ -108,17 +108,59 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 16))
   }
 
-  func test_fallsBackToFullscreenWhenAStyleIsUnknownOrIncomplete() {
+  func test_fallsBackToFullscreenWhenAStyleIsUnknown() {
     let unknown = Paywall.devServer(
       surface: surface(presentation: #"{"style": "hologram"}"#),
       url: url
     )
     XCTAssertEqual(unknown.presentation.style, .fullscreen)
+  }
 
-    let drawerWithoutGeometry = Paywall.devServer(
+  // MARK: - Partly specified geometry
+
+  func test_drawerWithoutGeometryUsesTheDocumentedDefaults() {
+    let drawer = Paywall.devServer(
       surface: surface(presentation: #"{"style": "drawer"}"#),
       url: url
     )
-    XCTAssertEqual(drawerWithoutGeometry.presentation.style, .fullscreen)
+    // 70% of the screen is what PaywallPresentationStyle.drawer documents.
+    XCTAssertEqual(drawer.presentation.style, .drawer(height: 70, cornerRadius: 0))
+  }
+
+  func test_drawerKeepsTheValuesItDoesNameAndDefaultsTheRest() {
+    let heightOnly = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "drawer", "drawer": {"height": 420}}"#),
+      url: url
+    )
+    XCTAssertEqual(heightOnly.presentation.style, .drawer(height: 420, cornerRadius: 0))
+
+    let radiusOnly = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "drawer", "drawer": {"cornerRadius": 24}}"#),
+      url: url
+    )
+    XCTAssertEqual(radiusOnly.presentation.style, .drawer(height: 70, cornerRadius: 24))
+  }
+
+  func test_popupWithoutBothDimensionsFallsBackToFullscreen() {
+    // A popup has no documented default size, so a partial one can't be honoured.
+    let heightOnly = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "popup", "popup": {"height": 500}}"#),
+      url: url
+    )
+    XCTAssertEqual(heightOnly.presentation.style, .fullscreen)
+
+    let noGeometry = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "popup"}"#),
+      url: url
+    )
+    XCTAssertEqual(noGeometry.presentation.style, .fullscreen)
+  }
+
+  func test_popupWithBothDimensionsDefaultsOnlyItsRadius() {
+    let popup = Paywall.devServer(
+      surface: surface(presentation: #"{"style": "popup", "popup": {"width": 300, "height": 500}}"#),
+      url: url
+    )
+    XCTAssertEqual(popup.presentation.style, .popup(height: 500, width: 300, cornerRadius: 0))
   }
 }

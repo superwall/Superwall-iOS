@@ -45,13 +45,17 @@ extension PaywallRequestManager {
 
     // The local surface replaces the published paywall wholesale, so what
     // presents is exactly what its config.ts declares — products included.
-    // Only the assignment's experiment and the fetch timings carry over,
-    // keeping holdouts and analytics coherent. The synthesized cacheKey
-    // embeds the mount URL, so a moved dev server or a published fallback
-    // reloads the web view instead of presenting the stale page.
+    // The assignment's experiment and the fetch timings carry over, keeping
+    // holdouts and analytics coherent. The synthesized cacheKey embeds the
+    // mount URL, so a moved dev server or a published fallback reloads the
+    // web view instead of presenting the stale page.
     var devPaywall = Paywall.devServer(surface: surface, url: mountURL)
     devPaywall.experiment = paywall.experiment
     devPaywall.responseLoadingInfo = paywall.responseLoadingInfo
+    // Feature gating belongs to the dashboard, not to the paywall's code:
+    // dev mode previews how a paywall looks, and must never be what decides
+    // whether a non-paying user gets the feature.
+    devPaywall.featureGating = paywall.featureGating
 
     Logger.debug(
       logLevel: .info,

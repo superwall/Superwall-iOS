@@ -233,7 +233,11 @@ final class DebugViewController: UIViewController {
     else {
       return
     }
-    devServer = (base: location.base, surfaces: location.manifest.surfaces)
+    let located = (base: location.base, surfaces: location.manifest.surfaces)
+    devServer = located
+    // Presenting a `dev:` surface resolves it from the debug manager's copy,
+    // so both stores have to agree however the debugger was opened.
+    debugManager.devServer = located
   }
 
 	func finishLoadingPreview() async {

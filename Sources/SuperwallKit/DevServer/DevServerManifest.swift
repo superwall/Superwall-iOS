@@ -12,6 +12,36 @@ import Foundation
 struct DevServerManifest: Decodable, Equatable {
   let surfaces: [DevServerSurface]
 
+  private enum CodingKeys: String, CodingKey {
+    case surfaces
+  }
+
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    // Per-element decoding: the CLI writing this manifest versions separately
+    // from the SDK, so one surface the SDK can't read must not take down the
+    // surfaces it can.
+    let decoded = try container.decodeIfPresent(
+      [Throwable<DevServerSurface>].self,
+      forKey: .surfaces
+    ) ?? []
+    surfaces = decoded.compactMap { try? $0.result.get() }
+
+    let dropped = decoded.count - surfaces.count
+    if dropped > 0 {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Skipped \(dropped) of \(decoded.count) dev server surfaces that couldn't be "
+          + "read. Those paywalls will load their published versions."
+      )
+    }
+  }
+
+  init(surfaces: [DevServerSurface]) {
+    self.surfaces = surfaces
+  }
+
   /// Picks the local surface for a dashboard paywall: an explicit
   /// `superwall.lock` binding wins, otherwise a project with exactly one
   /// paywall serves it for everything.

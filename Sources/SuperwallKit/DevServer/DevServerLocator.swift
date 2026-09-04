@@ -106,7 +106,21 @@ actor DevServerLocator {
         }
         task.resume()
       }
-      return try JSONDecoder().decode(DevServerManifest.self, from: data)
+      do {
+        return try JSONDecoder().decode(DevServerManifest.self, from: data)
+      } catch {
+        // A server answered; its manifest just didn't parse. Say so, or the
+        // caller's "no server found" log points at the wrong cause.
+        Logger.debug(
+          logLevel: .error,
+          scope: .superwallCore,
+          message: "The superwall dev server at \(base.absoluteString) answered with a manifest "
+            + "this SDK couldn't read. Paywalls will load their published versions. "
+            + "Check that superwall dev and SuperwallKit are on compatible versions.",
+          error: error
+        )
+        return nil
+      }
     } catch {
       warnIfBlockedByAppTransportSecurity(error, base: base)
       return nil

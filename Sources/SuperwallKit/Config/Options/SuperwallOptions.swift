@@ -404,8 +404,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///
   /// Paywalls with a local counterpart on the dev server then render from your live, local
   /// paywall code instead of their published versions, while configuration, placements,
-  /// audience evaluation and assignment all stay real. Paywalls without a local counterpart
-  /// still load their published versions.
+  /// audience evaluation, assignment and feature gating all stay real. Paywalls without a
+  /// local counterpart still load their published versions.
+  ///
+  /// What the local surface does own is what it renders and how: its products and its
+  /// `config.ts` presentation style replace the published paywall's.
   ///
   /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
   /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.

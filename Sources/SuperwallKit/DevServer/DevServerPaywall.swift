@@ -58,6 +58,11 @@ extension Paywall {
     return paywall
   }
 
+  /// The height a drawer takes when its `config.ts` doesn't name one, as a
+  /// percentage of the screen. Matches what `PaywallPresentationStyle/drawer`
+  /// documents.
+  private static let defaultDrawerHeight: Double = 70
+
   /// Maps a surface's `config.ts` presentation onto the SDK's styles.
   /// The framework documents `fullscreen` as its default, so anything
   /// missing or unrecognized lands there.
@@ -72,13 +77,21 @@ extension Paywall {
     case "noAnimation":
       return .fullscreenNoAnimation
     case "drawer":
-      if let drawer = surface.presentation?.drawer {
-        return .drawer(height: drawer.height, cornerRadius: drawer.cornerRadius)
-      }
-      return .fullscreen
+      // A drawer that names only some of its geometry is still a drawer:
+      // PaywallPresentationStyle documents 70% of the screen as the default
+      // height, and an unset radius means no rounding.
+      let drawer = surface.presentation?.drawer
+      return .drawer(
+        height: drawer?.height ?? defaultDrawerHeight,
+        cornerRadius: drawer?.cornerRadius ?? 0
+      )
     case "popup":
-      if let popup = surface.presentation?.popup {
-        return .popup(height: popup.height, width: popup.width, cornerRadius: popup.cornerRadius)
+      // Unlike the drawer, a popup has no documented default size, so one
+      // without both dimensions falls back to fullscreen.
+      if let popup = surface.presentation?.popup,
+        let height = popup.height,
+        let width = popup.width {
+        return .popup(height: height, width: width, cornerRadius: popup.cornerRadius ?? 0)
       }
       return .fullscreen
     default:

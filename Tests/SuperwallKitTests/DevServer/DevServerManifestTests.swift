@@ -130,4 +130,57 @@ final class DevServerManifestTests: XCTestCase {
       XCTAssertNil(decoded.mountURL(for: surface, base: base), surface.id)
     }
   }
+
+  // MARK: - Tolerating what the SDK can't read
+
+  func test_oneUnreadableSurfaceDoesNotDropTheRest() throws {
+    // `id` is required, so the middle entry can't decode at all.
+    let decoded = try manifest("""
+    {
+      "surfaces": [
+        { "kind": "paywall", "id": "pro", "url": "/preview/paywall/pro" },
+        { "kind": "paywall", "url": "/preview/paywall/nameless" },
+        { "kind": "paywall", "id": "max", "url": "/preview/paywall/max" }
+      ]
+    }
+    """)
+    XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro", "max"])
+  }
+
+  func test_malformedPresentationStillServesTheSurface() throws {
+    let decoded = try manifest("""
+    {
+      "surfaces": [
+        {
+          "kind": "paywall",
+          "id": "pro",
+          "url": "/preview/paywall/pro",
+          "presentation": "not-an-object"
+        }
+      ]
+    }
+    """)
+    XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro"])
+    XCTAssertNil(decoded.surfaces[0].presentation)
+  }
+
+  func test_anUnknownFieldDoesNotDropTheSurface() throws {
+    let decoded = try manifest("""
+    {
+      "surfaces": [
+        {
+          "kind": "paywall",
+          "id": "pro",
+          "url": "/preview/paywall/pro",
+          "somethingTheCliAddedLater": { "a": 1 }
+        }
+      ]
+    }
+    """)
+    XCTAssertEqual(decoded.surfaces.map { $0.id }, ["pro"])
+  }
+
+  func test_missingSurfacesKeyDecodesAsEmpty() throws {
+    XCTAssertTrue(try manifest("{}").surfaces.isEmpty)
+  }
 }
