@@ -150,15 +150,7 @@ class ConfigManager {
 
       // Step 1: Determine fetch strategy based on subscription status and cached data
       let cachedConfig = storage.get(LatestConfig.self)
-      let cachedSubsStatus = storage.get(SubscriptionStatusKey.self)
-
-      let isTestModeSubscription = storage.get(IsTestModeActiveSubscription.self) ?? false
-      let isSubscribed: Bool
-      if case .active = cachedSubsStatus, !isTestModeSubscription {
-        isSubscribed = true
-      } else {
-        isSubscribed = false
-      }
+      let isSubscribed = hasActiveCachedSubscription()
 
       let shouldFetchAsync = cachedConfig != nil && isSubscribed
 
@@ -211,6 +203,23 @@ class ConfigManager {
 
   // MARK: - Config Fetch Helpers
 
+  /// Whether the cached subscription state indicates an active subscriber.
+  ///
+  /// The persisted status is the assigned value, before developer-granted
+  /// entitlements are merged in, so those are checked from their own storage.
+  private func hasActiveCachedSubscription() -> Bool {
+    if storage.get(IsTestModeActiveSubscription.self) ?? false {
+      return false
+    }
+    // isActive rather than a bare `case .active` match: the persisted status
+    // can be .active with no active entitlement (e.g. a developer-assigned
+    // .active([])).
+    if storage.get(SubscriptionStatusKey.self)?.isActive == true {
+      return true
+    }
+    return entitlementsInfo.granted.contains { $0.isActive }
+  }
+
   private struct ConfigFetchResult {
     let config: Config
     let isUsingCached: Bool
@@ -240,13 +249,7 @@ class ConfigManager {
       // Fetch config synchronously
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActiveSubscription: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self),
-        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
-        isActiveSubscription = true
-      } else {
-        isActiveSubscription = false
-      }
+      let isActiveSubscription = hasActiveCachedSubscription()
       let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       if let cachedConfig = cachedConfig,
@@ -294,13 +297,7 @@ class ConfigManager {
       // Fetch enrichment with timeout for sync path
       let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
 
-      let isActiveSubscription: Bool
-      if case .active = storage.get(SubscriptionStatusKey.self),
-        !(storage.get(IsTestModeActiveSubscription.self) ?? false) {
-        isActiveSubscription = true
-      } else {
-        isActiveSubscription = false
-      }
+      let isActiveSubscription = hasActiveCachedSubscription()
       let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
 
       let cachedEnrichment = storage.get(LatestEnrichment.self)
@@ -417,12 +414,14 @@ class ConfigManager {
       // loadPurchasedProducts / the controller itself will restore it.
       if testModeJustDeactivated,
         !factory.makeHasExternalPurchaseController() {
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(assigned: .inactive)
+        // Granted entitlements survive test mode, so the customer info has
+        // to keep carrying them while the status does.
         Superwall.shared.customerInfo = CustomerInfo(
           subscriptions: [],
           nonSubscriptions: [],
           entitlements: []
-        )
+        ).merging(with: .blank(), granting: entitlementsInfo.granted)
       }
       await factory.loadPurchasedProducts(config: config)
     }
@@ -745,7 +744,7 @@ class ConfigManager {
     testModeManager.overriddenCustomerInfo = testModeCustomerInfo
     Superwall.shared.customerInfo = testModeCustomerInfo
     testModeManager.overriddenSubscriptionStatus = .inactive
-    Superwall.shared.subscriptionStatus = .inactive
+    Superwall.shared.setSubscriptionStatus(assigned: .inactive)
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
@@ -808,11 +807,11 @@ class ConfigManager {
     if hasActiveEntitlements {
       let status = SubscriptionStatus.active(result.entitlements)
       testModeManager.overriddenSubscriptionStatus = status
-      Superwall.shared.subscriptionStatus = status
+      Superwall.shared.setSubscriptionStatus(assigned: status)
       storage.save(true, forType: IsTestModeActiveSubscription.self)
     } else {
       testModeManager.overriddenSubscriptionStatus = .inactive
-      Superwall.shared.subscriptionStatus = .inactive
+      Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
   }

@@ -255,7 +255,8 @@ public final class Entitlement: NSObject, Codable, Sendable {
     try container.encodeIfPresent(offerType, forKey: .offerType)
   }
 
-  // Override isEqual to define equality based on `id` and `type`
+  // Deep equality across all fields. For detecting logical status changes,
+  // use `identity` instead, which ignores transaction metadata.
   public override func isEqual(_ object: Any?) -> Bool {
     guard let other = object as? Entitlement else {
       return false
@@ -291,6 +292,50 @@ public final class Entitlement: NSObject, Codable, Sendable {
     hasher.combine(state)
     hasher.combine(offerType)
     return hasher.finalize()
+  }
+}
+
+// MARK: - Logical Identity
+extension Entitlement {
+  /// The fields that define which entitlement this is and whether it grants
+  /// access. Transaction metadata like dates, product IDs, and renewal state
+  /// can differ between writes of the same logical status, so it's excluded.
+  struct Identity: Hashable {
+    let id: String
+    let type: EntitlementType
+    let isActive: Bool
+  }
+
+  var identity: Identity {
+    return Identity(
+      id: id,
+      type: type,
+      isActive: isActive
+    )
+  }
+}
+
+// MARK: - Comparison
+extension Entitlement {
+  /// Whether `other` is this entitlement with possibly different product IDs
+  /// — the shape a merge leaves behind, since it unions product IDs across a
+  /// shared ID regardless of which record wins.
+  func isEqualIgnoringProductIds(to other: Entitlement) -> Bool {
+    return Entitlement(
+      id: id,
+      type: type,
+      isActive: isActive,
+      productIds: other.productIds,
+      latestProductId: latestProductId,
+      store: store,
+      startsAt: startsAt,
+      renewedAt: renewedAt,
+      expiresAt: expiresAt,
+      isLifetime: isLifetime,
+      willRenew: willRenew,
+      state: state,
+      offerType: offerType
+    ) == other
   }
 }
 

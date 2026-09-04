@@ -6,10 +6,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
+- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
 - Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 
 ### Fixes
 
+- Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.

@@ -187,39 +187,24 @@ actor ReceiptManager {
     // Save device-only CustomerInfo to storage for use when merging with web entitlements
     storage.save(onDeviceSnapshot.customerInfo, forType: LatestDeviceCustomerInfo.self)
 
-    // Merge with web customer info if available
-    let baseCustomerInfo: CustomerInfo
-    if let latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
-      baseCustomerInfo = onDeviceSnapshot.customerInfo.merging(with: latestRedeemResponse.customerInfo)
-    } else {
-      baseCustomerInfo = onDeviceSnapshot.customerInfo
-    }
+    // The other sources that merge with the device snapshot.
+    let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo
+    let grantedEntitlements = Superwall.shared.entitlements.granted
 
-    // If using an external purchase controller, preserve entitlements that came from it
-    // (The external controller's active entitlements won't necessarily be in device data)
     let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {
       let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
-
-      // Get entitlements that are only in current CustomerInfo (i.e., from external controller)
-      // by filtering out anything that matches device or web entitlements by ID
-      let deviceAndWebEntitlementIds = Set(baseCustomerInfo.entitlements.map { $0.id })
-      let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
-        // Keep external entitlement if it's not already in device/web
-        !deviceAndWebEntitlementIds.contains(entitlement.id)
-      }
-
-      // Merge external controller entitlements with device + web
-      let allEntitlements = baseCustomerInfo.entitlements + externalOnlyEntitlements
-      let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
-
-      mergedCustomerInfo = CustomerInfo(
-        subscriptions: baseCustomerInfo.subscriptions,
-        nonSubscriptions: baseCustomerInfo.nonSubscriptions,
-        entitlements: finalEntitlements.sorted { $0.id < $1.id }
+      mergedCustomerInfo = CustomerInfo.preservingExternalControllerEntitlements(
+        device: onDeviceSnapshot.customerInfo,
+        web: webCustomerInfo,
+        current: currentCustomerInfo,
+        granted: grantedEntitlements
       )
     } else {
-      mergedCustomerInfo = baseCustomerInfo
+      mergedCustomerInfo = onDeviceSnapshot.customerInfo.merging(
+        with: webCustomerInfo ?? .blank(),
+        granting: grantedEntitlements
+      )
     }
 
     await MainActor.run {
