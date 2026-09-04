@@ -16,8 +16,11 @@ extension Paywall {
   /// - Parameter published: the dashboard paywall this surface stands in for,
   /// if any. The surface owns what renders — its bytes and its products.
   /// Everything else the dashboard configures, presentation included, is
-  /// inherited from `published` — bar `localNotifications`, see below — so dev
-  /// mode changes a paywall's content and never its configuration.
+  /// inherited from `published`, so dev mode changes a paywall's content and
+  /// never its configuration. Two exceptions, both marked below:
+  /// `localNotifications`, which the local paywall declares itself, and
+  /// `onDeviceCache`, which stays `.disabled` so a live-reloading local page
+  /// is never served from the web view's cache.
   ///
   /// Anything added to `Paywall` later defaults to the local stub's value, so
   /// if the dashboard configures it and the local paywall has no way of its
@@ -81,6 +84,10 @@ extension Paywall {
       // Feature gating decides whether a non-paying user gets the feature, so
       // it can never come from local paywall code.
       featureGating: featureGating,
+      // Deliberately not inherited either: a dev server reloads the page on
+      // every edit, and DependencyContainer feeds this straight into the web
+      // view, so an enabled cache could serve a stale copy of the local page.
+      onDeviceCache: .disabled,
       // Deliberately not inherited: a local paywall declares its own
       // notifications in config.ts, and they reach the SDK as
       // `schedule_notification` messages rather than through this field.

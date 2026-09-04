@@ -115,6 +115,7 @@ final class DevServerPaywallTests: XCTestCase {
       shimmerLoadingInfo: .init(),
       paywalljsVersion: "",
       featureGating: .gated,
+      onDeviceCache: .enabled,
       isScrollEnabled: false,
       introOfferEligibility: .ineligible
     )
@@ -183,6 +184,13 @@ final class DevServerPaywallTests: XCTestCase {
 
     XCTAssertEqual(paywall.featureGating, .gated)
     XCTAssertEqual(paywall.surveys.count, 1)
+  }
+
+  func test_neverServesALocalPageFromTheWebViewCache() {
+    // The dashboard configures onDeviceCache, but a dev server reloads on
+    // every edit, so an inherited .enabled could serve a stale local page.
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published())
+    XCTAssertEqual(paywall.onDeviceCache, .disabled)
   }
 
   func test_doesNotInheritNotificationsTheLocalPaywallDeclaresItself() {
