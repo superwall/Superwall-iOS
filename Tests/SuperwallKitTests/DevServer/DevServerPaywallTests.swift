@@ -172,7 +172,6 @@ final class DevServerPaywallTests: XCTestCase {
     var published = Paywall.stub()
     published.featureGating = .gated
     published.surveys = [Survey.stub()]
-    published.localNotifications = [LocalNotification.stub()]
 
     let paywall = Paywall.devServer(
       surface: surface(),
@@ -182,7 +181,18 @@ final class DevServerPaywallTests: XCTestCase {
 
     XCTAssertEqual(paywall.featureGating, .gated)
     XCTAssertEqual(paywall.surveys.count, 1)
-    XCTAssertEqual(paywall.localNotifications.count, 1)
+  }
+
+  func test_doesNotInheritNotificationsTheLocalPaywallDeclaresItself() {
+    // config.ts can declare notifications, and they arrive as
+    // `schedule_notification` messages. Inheriting the dashboard's would let
+    // a stale copy win NotificationScheduler's paywallId+type dedupe.
+    var published = Paywall.stub()
+    published.localNotifications = [LocalNotification.stub()]
+
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+
+    XCTAssertTrue(paywall.localNotifications.isEmpty)
   }
 
   func test_inheritsComputedPropertiesAndIntroOfferEligibility() throws {

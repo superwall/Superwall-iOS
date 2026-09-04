@@ -43,7 +43,6 @@ extension Paywall {
     let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
     let featureGating: FeatureGatingBehavior = published?.featureGating ?? .nonGated
     let computedPropertyRequests: [ComputedPropertyRequest] = published?.computedPropertyRequests ?? []
-    let localNotifications: [LocalNotification] = published?.localNotifications ?? []
     let surveys: [Survey] = published?.surveys ?? []
     let introOfferEligibility: IntroOfferEligibility = published?.introOfferEligibility ?? .automatic
 
@@ -78,9 +77,12 @@ extension Paywall {
       // Feature gating decides whether a non-paying user gets the feature, so
       // it can never come from local paywall code.
       featureGating: featureGating,
-      // Dashboard-configured behaviour that fires around the paywall rather
-      // than inside it.
-      localNotifications: localNotifications,
+      // Deliberately not inherited: a local paywall declares its own
+      // notifications in config.ts, and they reach the SDK as
+      // `schedule_notification` messages rather than through this field.
+      // Inheriting the dashboard's would let a stale copy win the
+      // paywallId+type dedupe in NotificationScheduler.
+      localNotifications: [],
       // The variables the page reads: without these, a local render silently
       // lacks computed properties that production resolves.
       computedPropertyRequests: computedPropertyRequests,
