@@ -63,6 +63,10 @@ final class DeepLinkRouter {
       return true
     }
 
+    if DevServerPreview.handle(url: deepLinkUrl) {
+      return true
+    }
+
     // Return true for Superwall deep links (we handled it above)
     if isSuperwallDeepLink {
       return true
@@ -132,6 +136,15 @@ final class DeepLinkRouter {
 
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
+      return true
+    }
+
+    // Dev links count as Superwall's only while dev mode is verifiably on.
+    // Before initialization there are no options to check (and touching
+    // `Superwall.shared` would assert), so don't claim the link — it is
+    // stored above and routed again once config arrives.
+    if Superwall.isInitialized,
+      DevServerPreview.canHandle(url: url, options: Superwall.shared.options) {
       return true
     }
 
