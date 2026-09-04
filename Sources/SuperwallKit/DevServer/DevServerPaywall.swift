@@ -28,8 +28,17 @@ extension Paywall {
   ) -> Paywall {
     let products = productItems(from: surface)
 
-    let databaseId: String = surface.paywallId ?? "dev:\(surface.kind)/\(surface.id)"
-    let identifier: String = surface.identifier ?? "dev:\(surface.id)"
+    // Identity comes from the paywall being stood in for, not the surface:
+    // one surface can serve several dashboard paywalls (an explicit multi-way
+    // binding, or the single-paywall fallback), and these reach analytics as
+    // paywall_id/paywall_identifier and key the view controller cache. Taking
+    // them from the surface would collapse every paywall it serves into one.
+    let databaseId: String = published?.databaseId
+      ?? surface.paywallId
+      ?? "dev:\(surface.kind)/\(surface.id)"
+    let identifier: String = published?.identifier
+      ?? surface.identifier
+      ?? "dev:\(surface.id)"
     let cacheKey = "dev:\(surface.id):\(url.absoluteString)"
     let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
     // A paywall's config.ts settings reach the SDK in the pushed snapshot,

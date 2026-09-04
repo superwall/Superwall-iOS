@@ -81,21 +81,82 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(params["is_local"] as? Bool, true)
   }
 
-  func test_inheritsTheDashboardStyleWhenTheManifestSaysNothing() {
-    // The shipped manifest carries no presentation, so a bound paywall has to
-    // keep the style the dashboard configured rather than snap to fullscreen.
-    var published = Paywall.stub()
-    XCTAssertEqual(published.presentation.style, .modal)
+  /// A published paywall whose inheritable fields all differ from the values
+  /// `Paywall.devServer` would otherwise fall back to, so an assertion on any
+  /// of them fails if the inheritance is dropped.
+  private func published(
+    databaseId: String = "db-1",
+    identifier: String = "pro_v3"
+  ) -> Paywall {
+    let stub = Paywall.stub()
+    return Paywall(
+      databaseId: databaseId,
+      identifier: identifier,
+      name: "Published Pro",
+      cacheKey: stub.cacheKey,
+      buildId: stub.buildId,
+      url: stub.url,
+      urlConfig: stub.urlConfig,
+      htmlSubstitutions: "",
+      presentation: PaywallPresentationInfo(
+        style: .drawer(height: 42, cornerRadius: 7),
+        delay: 250
+      ),
+      backgroundColorHex: "#123456",
+      backgroundColor: .blue,
+      darkBackgroundColorHex: "#654321",
+      darkBackgroundColor: .black,
+      productItems: [],
+      productIds: [],
+      appStoreProductIds: [],
+      responseLoadingInfo: .init(),
+      webviewLoadingInfo: .init(),
+      productsLoadingInfo: .init(),
+      shimmerLoadingInfo: .init(),
+      paywalljsVersion: "",
+      featureGating: .gated,
+      isScrollEnabled: false,
+      introOfferEligibility: .ineligible
+    )
+  }
 
-    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: published)
+  func test_inheritsEverythingTheManifestCannotCarry() {
+    // The shipped manifest carries none of these, so a bound paywall keeps
+    // what the dashboard configured rather than the stub's defaults.
+    let dashboard = published()
+    let paywall = Paywall.devServer(surface: surface(), url: url, inheriting: dashboard)
 
-    XCTAssertEqual(paywall.presentation.style, .modal)
+    XCTAssertEqual(paywall.presentation.style, .drawer(height: 42, cornerRadius: 7))
+    XCTAssertEqual(paywall.presentation.delay, 250)
+    XCTAssertEqual(paywall.backgroundColorHex, "#123456")
+    XCTAssertEqual(paywall.darkBackgroundColorHex, "#654321")
+    XCTAssertFalse(paywall.isScrollEnabled)
+    XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertEqual(paywall.introOfferEligibility, .ineligible)
+  }
 
-    // Visual settings the manifest can't carry come from there too.
-    published = Paywall.stub()
-    let visuals = Paywall.devServer(surface: surface(), url: url, inheriting: published)
-    XCTAssertEqual(visuals.backgroundColorHex, published.backgroundColorHex)
-    XCTAssertEqual(visuals.isScrollEnabled, published.isScrollEnabled)
+  func test_takesItsIdentityFromThePaywallItStandsInFor() {
+    // One surface can serve several dashboard paywalls, and identity reaches
+    // analytics as paywall_id/paywall_identifier and keys the view controller
+    // cache — so it has to be the served paywall's, not the surface's.
+    let first = Paywall.devServer(
+      surface: surface(paywallId: "111", identifier: "surface_identifier"),
+      url: url,
+      inheriting: published(databaseId: "222", identifier: "pro_annual")
+    )
+    XCTAssertEqual(first.databaseId, "222")
+    XCTAssertEqual(first.identifier, "pro_annual")
+
+    let second = Paywall.devServer(
+      surface: surface(paywallId: "111", identifier: "surface_identifier"),
+      url: url,
+      inheriting: published(databaseId: "333", identifier: "pro_monthly")
+    )
+    XCTAssertEqual(second.databaseId, "333")
+    XCTAssertEqual(second.identifier, "pro_monthly")
+
+    // Distinct identities, so they can't collapse onto one cached controller.
+    XCTAssertNotEqual(first.identifier, second.identifier)
   }
 
   func test_presentsFullscreenWhenNothingDeclaresAStyle() {
