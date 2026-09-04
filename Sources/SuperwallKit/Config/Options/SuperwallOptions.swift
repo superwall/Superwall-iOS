@@ -407,8 +407,12 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// audience evaluation, assignment and feature gating all stay real. Paywalls without a
   /// local counterpart still load their published versions.
   ///
-  /// What the local surface does own is what it renders and how: its products and its
-  /// `config.ts` presentation style replace the published paywall's.
+  /// What the local surface owns is what it renders: its content and its products.
+  /// Everything else the dashboard configures — presentation style, feature gating,
+  /// intro offer eligibility, surveys — comes from the published paywall, because those
+  /// settings reach the SDK in the snapshot `superwall push` uploads rather than from
+  /// the dev server. So a `config.ts` change to any of them is not visible in dev mode
+  /// until you push it.
   ///
   /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
   /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.

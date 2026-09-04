@@ -43,9 +43,9 @@ extension PaywallRequestManager {
       return paywall
     }
 
-    // The local surface replaces the published paywall's bytes, products and
-    // presentation, and inherits everything the dashboard configures that a
-    // manifest can't express — see Paywall.devServer(surface:url:inheriting:).
+    // The local surface replaces the published paywall's bytes and products,
+    // and inherits everything the dashboard configures that a manifest can't
+    // express — see Paywall.devServer(surface:url:inheriting:).
     // The synthesized cacheKey embeds the mount URL, so a moved dev server or
     // a published fallback reloads the web view instead of presenting the
     // stale page.
