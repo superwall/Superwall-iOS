@@ -402,13 +402,13 @@ final class DebugViewController: UIViewController {
   /// The published paywalls to offer. The debugger's preview list needs the
   /// token a dashboard preview link carries; the downloaded config carries the
   /// same paywalls for free, which is what a `superwall dev` link relies on.
-  private var publishedPaywalls: [(id: String, identifier: String, name: String)] {
+  private var publishedPaywalls: [PaywallSummary] {
     if !previewPaywalls.isEmpty {
-      return previewPaywalls.map { (id: $0.id, identifier: $0.identifier, name: $0.name) }
+      return previewPaywalls
     }
     let config = Superwall.shared.dependencyContainer.configManager?.config
     return (config?.paywalls ?? []).map {
-      (id: $0.databaseId, identifier: $0.identifier, name: $0.name)
+      PaywallSummary(id: $0.databaseId, identifier: $0.identifier, name: $0.name)
     }
   }
 
