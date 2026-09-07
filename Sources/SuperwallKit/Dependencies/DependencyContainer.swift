@@ -470,7 +470,8 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
 
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
       since: placement,
-      computedPropertyRequests: computedPropertyRequests
+      computedPropertyRequests: computedPropertyRequests,
+      reportingUnknownFieldsAsNull: true
     )
     return [
       "user": userAttributes,

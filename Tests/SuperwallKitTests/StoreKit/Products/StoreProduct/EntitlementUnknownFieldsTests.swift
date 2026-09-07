@@ -19,8 +19,14 @@ import Testing
 struct EntitlementUnknownFieldsTests {
   /// The same trip an entitlement makes on its way to a filter:
   /// `JSONEncoder` -> `JSONSerialization` -> `[String: Any]`.
-  private func encodedDictionary(_ entitlement: Entitlement) throws -> [String: Any] {
-    let data = try JSONEncoder().encode(entitlement)
+  private func encodedDictionary(
+    _ entitlement: Entitlement,
+    reportingUnknownFieldsAsNull: Bool = true
+  ) throws -> [String: Any] {
+    let encoder = reportingUnknownFieldsAsNull
+      ? JSONEncoder.reportingUnknownFieldsAsNull()
+      : JSONEncoder()
+    let data = try encoder.encode(entitlement)
     let object = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
     return try #require(object as? [String: Any])
   }
@@ -100,6 +106,18 @@ struct EntitlementUnknownFieldsTests {
     #expect(dictionary["willRenew"] as? Bool == false)
   }
 
+  /// Everything that isn't an audience filter keeps the shape it always had, so
+  /// the enrichment request, paywall variables, session attributes and
+  /// `getDeviceAttributes()` don't start carrying nulls.
+  @Test func unknownFieldsStayOmittedForEveryOtherConsumer() throws {
+    let entitlement = Entitlement(id: "unlimited_access", isActive: true)
+    let dictionary = try encodedDictionary(entitlement, reportingUnknownFieldsAsNull: false)
+
+    for key in ["willRenew", "isLifetime", "state", "offerType", "latestProductId", "store"] {
+      #expect(dictionary.keys.contains(key) == false, "\(key) should be omitted")
+    }
+  }
+
   /// Dates are deliberately left out rather than nulled: filters compare them
   /// with `<` and `>`, and null on either side of an ordering comparison makes
   /// the whole filter evaluate to null.
@@ -110,6 +128,34 @@ struct EntitlementUnknownFieldsTests {
     #expect(dictionary.keys.contains("expiresAt") == false)
     #expect(dictionary.keys.contains("startsAt") == false)
     #expect(dictionary.keys.contains("renewedAt") == false)
+  }
+
+  /// The flag is set on the encoder for the whole device template, and the
+  /// entitlements sit two levels down inside it. This pins that `userInfo`
+  /// reaches a nested encoder, which is what the wiring depends on.
+  @Test func theNullFlagReachesNestedEntitlements() throws {
+    let customerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "unlimited_access", isActive: true)],
+      isPlaceholder: false
+    )
+
+    func willRenewEntry(using encoder: JSONEncoder) throws -> (present: Bool, isNull: Bool) {
+      let data = try encoder.encode(customerInfo)
+      let object = try JSONSerialization.jsonObject(with: data, options: .allowFragments)
+      let dictionary = try #require(object as? [String: Any])
+      let entitlements = try #require(dictionary["entitlements"] as? [[String: Any]])
+      let entitlement = try #require(entitlements.first)
+      return (entitlement.keys.contains("willRenew"), entitlement["willRenew"] is NSNull)
+    }
+
+    let forFilters = try willRenewEntry(using: .reportingUnknownFieldsAsNull())
+    #expect(forFilters.present)
+    #expect(forFilters.isNull)
+
+    let forEveryoneElse = try willRenewEntry(using: JSONEncoder())
+    #expect(forEveryoneElse.present == false)
   }
 
   @Test func nsNullBecomesPassableNull() {
