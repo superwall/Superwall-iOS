@@ -158,6 +158,45 @@ struct EntitlementUnknownFieldsTests {
     #expect(forEveryoneElse.present == false)
   }
 
+  /// Runs the real production call rather than a hand-built encoder, so that
+  /// removing `reportingUnknownFieldsAsNull: true` from
+  /// `makeAudienceFilterAttributes` fails a test instead of silently restoring
+  /// the incident. That one argument is the whole opt-in.
+  @Test func onlyTheAudienceFilterPathReportsUnknownFieldsAsNull() async throws {
+    let container = DependencyContainer()
+    let previous = Superwall.shared.customerInfo
+    defer { Superwall.shared.customerInfo = previous }
+
+    Superwall.shared.customerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "unlimited_access", isActive: true)],
+      isPlaceholder: false
+    )
+
+    func willRenewEntry(in device: [String: Any]) throws -> (present: Bool, isNull: Bool) {
+      let customerInfo = try #require(device["customerInfo"] as? [String: Any])
+      let entitlements = try #require(customerInfo["entitlements"] as? [[String: Any]])
+      let entitlement = try #require(
+        entitlements.first { $0["identifier"] as? String == "unlimited_access" }
+      )
+      return (entitlement.keys.contains("willRenew"), entitlement["willRenew"] is NSNull)
+    }
+
+    let filterAttributes = await container.makeAudienceFilterAttributes(
+      forPlacement: nil,
+      withComputedProperties: []
+    )
+    let filterDevice = try #require(filterAttributes["device"] as? [String: Any])
+    let forFilters = try willRenewEntry(in: filterDevice)
+    #expect(forFilters.present)
+    #expect(forFilters.isNull)
+
+    // The same data on the way to every other consumer keeps its old shape.
+    let template = await container.deviceHelper.getTemplateDevice()
+    #expect(try willRenewEntry(in: template).present == false)
+  }
+
   @Test func nsNullBecomesPassableNull() {
     if case PassableValue.null = toPassableValue(from: NSNull()) {
       return

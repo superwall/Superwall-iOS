@@ -1,5 +1,5 @@
 //
-//  KeyedEncodingContainer+EncodeNilOrValue.swift
+//  Encoder+ReportsUnknownFieldsAsNull.swift
 //  SuperwallKit
 //
 //  Created by Yusuf Tör on 07/09/2026.
