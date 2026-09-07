@@ -244,15 +244,26 @@ public final class Entitlement: NSObject, Codable, Sendable {
     try container.encode(type, forKey: .type)
     try container.encodeIfPresent(isActive, forKey: .isActive)
     try container.encodeIfPresent(productIds, forKey: .productIds)
-    try container.encodeIfPresent(latestProductId, forKey: .latestProductId)
-    try container.encodeIfPresent(store, forKey: .store)
     try container.encodeIfPresent(startsAt, forKey: .startsAt)
     try container.encodeIfPresent(renewedAt, forKey: .renewedAt)
     try container.encodeIfPresent(expiresAt, forKey: .expiresAt)
-    try container.encodeIfPresent(isLifetime, forKey: .isLifetime)
-    try container.encodeIfPresent(willRenew, forKey: .willRenew)
-    try container.encodeIfPresent(state, forKey: .state)
-    try container.encodeIfPresent(offerType, forKey: .offerType)
+    // When the encoder asks for it, a detail we have no value for is written as
+    // an explicit null rather than left out, so an audience filter can tell "we
+    // don't know" from "no". A Purchase Controller can't fill these in, and a
+    // filter gives a missing key the type default, which made a bare entitlement
+    // match `willRenew == false`. Only the filter attributes are encoded that
+    // way; every other consumer sees the keys omitted as before.
+    //
+    // The dates above are never nulled: filters compare them with `<` and `>`,
+    // and a null on either side of an ordering comparison makes the whole filter
+    // evaluate to null, taking unrelated parts of the filter with it.
+    let nilAsNull = encoder.reportsUnknownFieldsAsNull
+    try container.encode(latestProductId, forKey: .latestProductId, nilAsNull: nilAsNull)
+    try container.encode(store, forKey: .store, nilAsNull: nilAsNull)
+    try container.encode(isLifetime, forKey: .isLifetime, nilAsNull: nilAsNull)
+    try container.encode(willRenew, forKey: .willRenew, nilAsNull: nilAsNull)
+    try container.encode(state, forKey: .state, nilAsNull: nilAsNull)
+    try container.encode(offerType, forKey: .offerType, nilAsNull: nilAsNull)
   }
 
   // Deep equality across all fields. For detecting logical status changes,

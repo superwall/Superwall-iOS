@@ -794,11 +794,16 @@ class DeviceHelper {
     )
   }
 
+  /// - Parameter reportingUnknownFieldsAsNull: Only the audience filter
+  ///   attributes pass `true`. See ``CodingUserInfoKey/reportsUnknownFieldsAsNull``.
   func getDeviceAttributes(
     since placement: PlacementData?,
-    computedPropertyRequests: [ComputedPropertyRequest]
+    computedPropertyRequests: [ComputedPropertyRequest],
+    reportingUnknownFieldsAsNull: Bool = false
   ) async -> [String: Any] {
-    var dictionary = await getTemplateDevice()
+    var dictionary = await getTemplateDevice(
+      reportingUnknownFieldsAsNull: reportingUnknownFieldsAsNull
+    )
 
     let computedProperties = await getComputedDevicePropertiesSincePlacement(
       placement,
@@ -952,7 +957,7 @@ class DeviceHelper {
     }
   }
 
-  func getTemplateDevice() async -> [String: Any] {
+  func getTemplateDevice(reportingUnknownFieldsAsNull: Bool = false) async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
 
@@ -1028,7 +1033,11 @@ class DeviceHelper {
       deviceId: factory.makeDeviceId()
     )
 
-    var deviceDictionary = template.toDictionary()
+    var deviceDictionary = template.toDictionary(
+      encoder: reportingUnknownFieldsAsNull
+        ? .reportingUnknownFieldsAsNull()
+        : JSONEncoder()
+    )
 
     let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
       enrichment?.device.dictionaryObject ?? [:]
