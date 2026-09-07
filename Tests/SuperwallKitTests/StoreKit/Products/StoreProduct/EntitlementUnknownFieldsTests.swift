@@ -25,7 +25,16 @@ struct EntitlementUnknownFieldsTests {
     return try #require(object as? [String: Any])
   }
 
-  private func evaluate(_ expression: String, entitlement: Entitlement) throws -> String {
+  /// One container for the suite: building one spins up real storage and a
+  /// persistent container, which the sibling `CELEvaluatorTests` resets for the
+  /// same reason.
+  private static let dependencyContainer: DependencyContainer = {
+    let container = DependencyContainer()
+    container.storage.reset()
+    return container
+  }()
+
+  private func evaluate(_ expression: String, entitlement: Entitlement) throws -> Bool {
     let attributes: [String: Any] = [
       "device": [
         "customerInfo": [
@@ -39,20 +48,36 @@ struct EntitlementUnknownFieldsTests {
       variablesMap = dictionary
     }
 
+    // Mirrors what CELEvaluator passes in production.
+    let computedProperties = Dictionary(uniqueKeysWithValues:
+      ComputedPropertyRequestType.allCases.map {
+        ($0.description, [PassableValue.string("event_name")])
+      }
+    )
     let executionContext = ExecutionContext(
       variables: PassableMap(map: variablesMap),
-      computed: [:],
-      device: [:],
+      computed: computedProperties,
+      device: computedProperties,
       expression: expression
     )
     let jsonData = try JSONEncoder().encode(executionContext)
     let jsonString = try #require(String(data: jsonData, encoding: .utf8))
 
-    let dependencyContainer = DependencyContainer()
-    return evaluateWithContext(
+    let output = evaluateWithContext(
       definition: jsonString,
-      context: EvaluationContext(storage: dependencyContainer.storage)
+      context: EvaluationContext(storage: Self.dependencyContainer.storage)
     )
+
+    // Decoded rather than compared byte for byte, so a future Superscript bump
+    // that reshapes the wrapper doesn't read as a behaviour change.
+    let outputData = try #require(output.data(using: .utf8))
+    let result = try JSONDecoder().decode(EvaluationResult.self, from: outputData)
+    guard case let .success(value) = result,
+      case let .bool(matched) = value else {
+      Issue.record("Expected a boolean result, got \(output)")
+      return false
+    }
+    return matched
   }
 
   /// The audience from the incident: "active, and will not renew".
@@ -110,33 +135,55 @@ struct EntitlementUnknownFieldsTests {
 
   @Test func bareEntitlementDoesNotMatchWillNotRenew() throws {
     let entitlement = Entitlement(id: "unlimited_access", isActive: true)
-    let result = try evaluate(willNotRenewFilter, entitlement: entitlement)
-
-    #expect(result == #"{"Ok":{"type":"bool","value":false}}"#)
+    #expect(try evaluate(willNotRenewFilter, entitlement: entitlement) == false)
   }
 
   @Test func explicitlyNotRenewingStillMatches() throws {
     let entitlement = Entitlement(id: "unlimited_access", isActive: true, willRenew: false)
-    let result = try evaluate(willNotRenewFilter, entitlement: entitlement)
-
-    #expect(result == #"{"Ok":{"type":"bool","value":true}}"#)
+    #expect(try evaluate(willNotRenewFilter, entitlement: entitlement) == true)
   }
 
   @Test func explicitlyRenewingDoesNotMatch() throws {
     let entitlement = Entitlement(id: "unlimited_access", isActive: true, willRenew: true)
-    let result = try evaluate(willNotRenewFilter, entitlement: entitlement)
+    #expect(try evaluate(willNotRenewFilter, entitlement: entitlement) == false)
+  }
 
-    #expect(result == #"{"Ok":{"type":"bool","value":false}}"#)
+  /// The string-valued fields are nulled too, so equality against them has to
+  /// stay a plain no-match rather than becoming an error or a null that would
+  /// take the rest of the filter with it.
+  @Test(arguments: [
+    "device.customerInfo.entitlements.exists(e, e.store == \"APP_STORE\")",
+    "device.customerInfo.entitlements.exists(e, e.state == \"SUBSCRIBED\")",
+    "device.customerInfo.entitlements.exists(e, e.latestProductId == \"pro_yearly\")",
+    "device.customerInfo.entitlements.exists(e, e.isLifetime == true)"
+  ])
+  func unknownStringFieldsDoNotMatch(expression: String) throws {
+    let entitlement = Entitlement(id: "unlimited_access", isActive: true)
+
+    #expect(try evaluate(expression, entitlement: entitlement) == false)
+  }
+
+  /// The whole point of the change: the field is now present, so a filter can
+  /// tell that the SDK holds no opinion rather than reading a default.
+  @Test func unknownWillRenewIsReportedAsPresent() throws {
+    let entitlement = Entitlement(id: "unlimited_access", isActive: true)
+
+    #expect(
+      try evaluate(
+        "device.customerInfo.entitlements.exists(e, has(e.willRenew))",
+        entitlement: entitlement
+      ) == true
+    )
   }
 
   /// A filter can still ask whether the SDK knows the renewal state.
   @Test func unknownWillRenewComparesEqualToNull() throws {
     let entitlement = Entitlement(id: "unlimited_access", isActive: true)
-    let result = try evaluate(
-      "device.customerInfo.entitlements.exists(e, e.willRenew == null)",
-      entitlement: entitlement
+    #expect(
+      try evaluate(
+        "device.customerInfo.entitlements.exists(e, e.willRenew == null)",
+        entitlement: entitlement
+      ) == true
     )
-
-    #expect(result == #"{"Ok":{"type":"bool","value":true}}"#)
   }
 }

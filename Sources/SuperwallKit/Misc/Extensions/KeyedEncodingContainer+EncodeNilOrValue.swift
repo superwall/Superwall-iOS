@@ -14,6 +14,12 @@ extension KeyedEncodingContainer {
   /// between a value we know to be absent and one we never learned. Audience
   /// filters give a missing key the type default, so a dropped `Bool?` reads as
   /// `false`. Use this for any field a filter might compare by equality.
+  ///
+  /// Plain `encode(_:forKey:)` on an optional already writes a null, since
+  /// `Optional`'s own `Encodable` conformance calls `encodeNil()`. This spells
+  /// that out at the call site: the one-character difference between `encode`
+  /// and `encodeIfPresent` is easy to read as a typo and "tidy up" back into
+  /// the bug.
   mutating func encodeNilOrValue<T: Encodable>(
     _ value: T?,
     forKey key: Key
