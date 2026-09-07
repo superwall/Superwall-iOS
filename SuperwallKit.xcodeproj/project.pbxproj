@@ -126,6 +126,7 @@
 		342593FCA24FBEA77FE472C7 /* SK2ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */; };
 		3464196F9088F8A320FE24A4 /* PendingStripeCheckoutPollState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 797EC0356AA1065ED11835BF /* PendingStripeCheckoutPollState.swift */; };
 		35597883CB038DBEE63E162B /* EventData.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86D76FB5809C3B8122778A9 /* EventData.swift */; };
+		3584214186291379380E6823 /* KeyedEncodingContainer+EncodeNilOrValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D326F60B14F6911B6BDFD96B /* KeyedEncodingContainer+EncodeNilOrValue.swift */; };
 		3652D5EE4C172D623BDEE7E4 /* PresentationIdTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F306D67A9F3A43D082DD83 /* PresentationIdTests.swift */; };
 		369677E9A6E8754CFD20714D /* TrackingParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 764012CF0C0972240A73E3CF /* TrackingParameters.swift */; };
 		36B598D26A38D50CC713FD73 /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641BC3C3F8AC2D6E1EF44D55 /* ProductsManager.swift */; };
@@ -377,6 +378,7 @@
 		AEB9D461AF5103FB7257AD25 /* SwiftyJSON.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19F010DC597017F5BEAEDE86 /* SwiftyJSON.swift */; };
 		AECD80682E1909735CCDAA78 /* AdServicesAttributionAttempts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D538EA68425ECB218BA3CA /* AdServicesAttributionAttempts.swift */; };
 		AF4AD928FACF9056E00D5920 /* HandleTriggerResultOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B27F0D55EF3480E2B65C8DFD /* HandleTriggerResultOperatorTests.swift */; };
+		B002C22F935F04DE75E56183 /* EntitlementUnknownFieldsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6596655637A212AEE276585 /* EntitlementUnknownFieldsTests.swift */; };
 		B078481CA0ADD4B4F3BEFD15 /* LocalFileSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63B0C49F4A92D8C5C05FA026 /* LocalFileSchemeHandler.swift */; };
 		B0AD4A89AD5101360F93652D /* SubscriptionTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ACDC7427B6340E9D86F9B0F /* SubscriptionTransaction.swift */; };
 		B0B0AD9409CEFE7CA8225146 /* Array+SafeRemove.swift in Sources */ = {isa = PBXBuildFile; fileRef = C855DE8F5341D67C614E3AF5 /* Array+SafeRemove.swift */; };
@@ -1113,6 +1115,7 @@
 		D1443B535E6E1D572A74733F /* SubscriptionPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionPeriod.swift; sourceTree = "<group>"; };
 		D198C8645A213EEAD622C881 /* FakeLocationAuthorizationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeLocationAuthorizationStatus.swift; sourceTree = "<group>"; };
 		D31BB6D0C57337C6E929D617 /* ASN1Decoder+UnkeyedDecodingContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+UnkeyedDecodingContainer.swift"; sourceTree = "<group>"; };
+		D326F60B14F6911B6BDFD96B /* KeyedEncodingContainer+EncodeNilOrValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyedEncodingContainer+EncodeNilOrValue.swift"; sourceTree = "<group>"; };
 		D3479E4B3365290BC0C0A123 /* StripeProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StripeProduct.swift; sourceTree = "<group>"; };
 		D3506FCC35155DF104A1DFCA /* CustomURLSessionMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomURLSessionMock.swift; sourceTree = "<group>"; };
 		D36898353ABCE620BA7AEE59 /* SuperwallGraveyard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallGraveyard.swift; sourceTree = "<group>"; };
@@ -1125,6 +1128,7 @@
 		D5BF66C3986E287B7B2F5E27 /* SKProductSubscriptionPeriodMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SKProductSubscriptionPeriodMock.swift; sourceTree = "<group>"; };
 		D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyShowCondition.swift; sourceTree = "<group>"; };
 		D6340ACDA40937ACAC66FA3D /* EntitlementPriorityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementPriorityTests.swift; sourceTree = "<group>"; };
+		D6596655637A212AEE276585 /* EntitlementUnknownFieldsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementUnknownFieldsTests.swift; sourceTree = "<group>"; };
 		D69BCC259F5FBE15AB02D662 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 		D7434029CB9E4680C85D3FB6 /* PermissionHandler+Microphone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Microphone.swift"; sourceTree = "<group>"; };
 		D7B0C7BDA06D25D9D5A865A3 /* TestModeManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeManagerTests.swift; sourceTree = "<group>"; };
@@ -1678,6 +1682,7 @@
 				8DE36D141F461F6E945823FA /* Future+Async.swift */,
 				E2243C6BF6BE477794F568ED /* GCControllerElement+buttonName.swift */,
 				FD778E66506BA51BEB5EE89C /* JSONEncoder+Superwall.swift */,
+				D326F60B14F6911B6BDFD96B /* KeyedEncodingContainer+EncodeNilOrValue.swift */,
 				F4B35EF62D8C986B504B052C /* NSManagedObjectContext+mergeChanges.swift */,
 				AF5A8FFFC23826AD113D525A /* Publisher+Async.swift */,
 				A524F7AAE90E48C3B8D7E99A /* PurchaseResult+Internal.swift */,
@@ -2407,6 +2412,7 @@
 			isa = PBXGroup;
 			children = (
 				D6340ACDA40937ACAC66FA3D /* EntitlementPriorityTests.swift */,
+				D6596655637A212AEE276585 /* EntitlementUnknownFieldsTests.swift */,
 				BC580BF1CC720ECBC4E68A28 /* SK2PriceFormatRoundingTests.swift */,
 				F98E1C9554F6AFAECF9B3430 /* StoreProductBillingPlanTests.swift */,
 				2CF1F5EAC9C4E384EBBE5EA9 /* SubscriptionPeriodPriceTests.swift */,
@@ -3324,6 +3330,7 @@
 				49A7156A67C8BAB23F97EC39 /* EmailTests.swift in Sources */,
 				A03AC977AD8110290DABECBD /* EntitlementPriorityTests.swift in Sources */,
 				6BA614F410A95F36CBA42F93 /* EntitlementProcessorTests.swift in Sources */,
+				B002C22F935F04DE75E56183 /* EntitlementUnknownFieldsTests.swift in Sources */,
 				1225B991B40D16B7FB4EF1A5 /* EvaluateRulesOperatorTests.swift in Sources */,
 				158EBAAC2A96F73B93C48E15 /* ExpressionEvaluatorMock.swift in Sources */,
 				77ED3D92C176CC6D93D625B2 /* ExpressionLogicTests.swift in Sources */,
@@ -3583,6 +3590,7 @@
 				CDFE4C9A23CB583CAC113F59 /* IntroOfferTokenManager.swift in Sources */,
 				E63A7174E3B98690B073C373 /* JSONEncoder+Superwall.swift in Sources */,
 				3F3774A066285BB0DFE61B61 /* JSONToDict.swift in Sources */,
+				3584214186291379380E6823 /* KeyedEncodingContainer+EncodeNilOrValue.swift in Sources */,
 				5621A2D2FEC048847E22BF6C /* KeypathWritable.swift in Sources */,
 				88A5CA6515126BD3D09E0563 /* LimitedQueue.swift in Sources */,
 				68AF64973AC860BE2A41B8D4 /* LoadingInfo.swift in Sources */,
