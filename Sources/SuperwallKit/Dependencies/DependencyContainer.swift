@@ -614,6 +614,10 @@ extension DependencyContainer: ReceiptFactory {
         return false
       }
     }
+    // Config can be published before the first purchases load finishes (see
+    // `ConfigManager.fetchConfiguration`). The active subscription groups
+    // that gate upgrades come from that load, so wait for it.
+    await configManager.initialPurchasesLoad?.value
     return await receiptManager.isFreeTrialAvailable(for: product)
   }
 

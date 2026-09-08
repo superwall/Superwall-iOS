@@ -35,6 +35,11 @@ class ConfigManager {
 
   var configRetryCount = 0
 
+  /// The purchases load that `fetchConfiguration` starts before it publishes
+  /// `configState` on the cached-config path. Trial eligibility awaits it so a
+  /// paywall opened during the load still sees the active subscription groups.
+  private(set) var initialPurchasesLoad: Task<Void, Never>?
+
   private unowned let storeKitManager: StoreKitManager
   unowned let storage: Storage
   private unowned let network: Network
@@ -179,15 +184,36 @@ class ConfigManager {
         )
       }
 
-      // Step 5: Track device attributes
+      // Step 5: Process config and set state.
+      //
+      // On the cached-config path the user is a known subscriber and the
+      // config is already on disk, so nothing below needs the network. But
+      // `processConfig` reads StoreKit, which can take 10 to 25 seconds on a
+      // weak connection, and every `register` call waits on `configState`.
+      // Publishing before that read keeps gated features from stalling at
+      // cold launch. The sync path keeps its order: with no known subscriber,
+      // purchases are read before a paywall can be shown.
+      var didPublishConfig = false
+      if shouldFetchAsync {
+        didPublishConfig = await processConfig(
+          config,
+          isFirstTime: true,
+          publishBeforeLoadingPurchases: true
+        )
+      }
+
+      // Step 6: Track device attributes
       let deviceAttributes = await factory.makeSessionDeviceAttributes()
       await Superwall.shared.track(
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
-      // Step 6: Process config and set state
-      await processConfig(config, isFirstTime: true)
-      configState.send(.retrieved(config))
+      if !shouldFetchAsync {
+        await processConfig(config, isFirstTime: true)
+      }
+      if !didPublishConfig {
+        configState.send(.retrieved(config))
+      }
 
       // Step 7: Schedule background tasks
       scheduleBackgroundTasks(
@@ -387,10 +413,20 @@ class ConfigManager {
     )
   }
 
+  /// Applies `config` and loads purchases from StoreKit.
+  ///
+  /// - Parameter publishBeforeLoadingPurchases: When `true`, sends
+  ///   `configState` as soon as the config is applied and before the StoreKit
+  ///   read starts. Only safe when the subscription status on disk is already
+  ///   known, which is why `fetchConfiguration` passes it on the cached-config
+  ///   path alone. Ignored in test mode, where products come from the API.
+  /// - Returns: Whether `configState` was published here.
+  @discardableResult
   private func processConfig(
     _ config: Config,
-    isFirstTime: Bool
-  ) async {
+    isFirstTime: Bool,
+    publishBeforeLoadingPurchases: Bool = false
+  ) async -> Bool {
     storage.save(
       config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
     storage.save(config, forType: LatestConfig.self)
@@ -404,6 +440,7 @@ class ConfigManager {
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
+    var didPublishConfig = false
     if testModeManager.isTestMode {
       // In test mode, fetch products from API instead of StoreKit
       await fetchTestModeProducts(testModeManager: testModeManager)
@@ -423,7 +460,20 @@ class ConfigManager {
           entitlements: []
         ).merging(with: .blank(), granting: entitlementsInfo.granted)
       }
-      await factory.loadPurchasedProducts(config: config)
+      if publishBeforeLoadingPurchases {
+        // The task handle is stored before the publish so anything that
+        // presents on this config can await the load through
+        // `initialPurchasesLoad`.
+        let purchasesLoad = Task { [factory] in
+          await factory.loadPurchasedProducts(config: config)
+        }
+        initialPurchasesLoad = purchasesLoad
+        configState.send(.retrieved(config))
+        didPublishConfig = true
+        await purchasesLoad.value
+      } else {
+        await factory.loadPurchasedProducts(config: config)
+      }
     }
 
     if !testModeManager.isTestMode {
@@ -442,6 +492,8 @@ class ConfigManager {
       let reason = testModeManager.testModeReason {
       await presentTestModeModal(reason: reason, config: config)
     }
+
+    return didPublishConfig
   }
 
   /// Reassigns variants and preloads paywalls again.

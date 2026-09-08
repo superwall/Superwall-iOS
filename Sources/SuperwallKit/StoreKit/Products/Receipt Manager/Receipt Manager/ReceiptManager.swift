@@ -252,9 +252,11 @@ actor ReceiptManager {
       return true
     }
 
-    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`, which always
-    // completes before a paywall opens (config is only marked retrieved after it runs,
-    // and presentation waits for config), so this reflects current subscription state.
+    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`. On the
+    // sync config path that load completes before config is published. On the
+    // cached-config path config is published first, so paywall callers go through
+    // `DependencyContainer.isFreeTrialAvailable`, which awaits the load before
+    // reaching here.
     return !activeSubscriptionGroupIds.contains(subscriptionGroupId)
   }
 

@@ -13,6 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
+- Fixes `register` calls stalling for 10 seconds or more at cold launch for subscribers on a weak network. The SDK now marks its configuration ready before it reads purchases from StoreKit when the config is cached and the user is a known subscriber, so gated features run at once.
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
