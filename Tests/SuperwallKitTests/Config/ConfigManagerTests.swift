@@ -6,6 +6,7 @@
 //
 // swiftlint:disable all
 
+import Foundation
 @testable import SuperwallKit
 import Testing
 
@@ -596,5 +597,228 @@ struct ConfigManagerTests {
 
     // Wait for background tasks to complete before test ends
     try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
+  }
+}
+
+// MARK: - Cold-launch StoreKit stall
+
+// Regression tests for a cold-launch stall. A subscriber with a cached config
+// took the async config path, so the config itself was available at once, but
+// `configState` was not published until `loadPurchasedProducts` finished.
+// That call reads StoreKit, which can take 10 to 25 seconds on a weak network.
+// Every `register` call waits on `configState`, so gated features froze for
+// that long, and features that ran inside the closure were lost if the app
+// was killed first.
+//
+@Suite(.serialized)
+struct ConfigManagerStoreKitStallTests {
+  /// Held for the lifetime of each test: the managers keep `unowned`
+  /// references to the container.
+  let dependencyContainer = DependencyContainer()
+
+  private struct Harness {
+    let storage: StorageMock
+    let configManager: ConfigManager
+    let receipt: SlowReceiptManagerType
+    /// Kept alive: other container members hold `unowned` references to the
+    /// original receipt manager and to the products manager.
+    let originalReceiptManager: ReceiptManager
+    let productsManager: ProductsManager
+    /// Kept alive: `ConfigManager` holds these `unowned`.
+    let network: NetworkMock
+    let deviceHelper: DeviceHelperMock
+  }
+
+  /// Builds a config manager whose receipt loading takes `loadDelay` seconds
+  /// on the first call only, so the background refresh that follows does not
+  /// keep the test alive.
+  private func makeHarness(
+    isSubscribed: Bool,
+    loadDelay: TimeInterval
+  ) -> Harness {
+    let storage = StorageMock()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let deviceHelper = DeviceHelperMock(
+      api: dependencyContainer.api,
+      storage: storage,
+      network: network,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+
+    let receipt = SlowReceiptManagerType(loadDelay: loadDelay)
+    let productsFetcher = ProductsFetcherSK1Mock(
+      productCompletionResult: .success([]),
+      entitlementsInfo: dependencyContainer.entitlementsInfo
+    )
+    let productsManager = ProductsManager(
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      storeKitVersion: .storeKit1,
+      productsFetcher: productsFetcher
+    )
+    let originalReceiptManager: ReceiptManager = dependencyContainer.receiptManager
+    dependencyContainer.receiptManager = ReceiptManager(
+      storeKitVersion: .storeKit2,
+      shouldBypassAppTransactionCheck: true,
+      productsManager: productsManager,
+      receiptManager: receipt,
+      receiptDelegate: nil,
+      factory: dependencyContainer,
+      storage: storage
+    )
+
+    let cachedConfig: Config = .stub()
+      .setting(\.buildId, to: "cached_123")
+      .setting(\.featureFlags, to: .stub())
+    storage.save(cachedConfig, forType: LatestConfig.self)
+
+    if isSubscribed {
+      let activeEntitlements: Set<Entitlement> = [.stub()]
+      storage.save(SubscriptionStatus.active(activeEntitlements), forType: SubscriptionStatusKey.self)
+    } else {
+      storage.save(SubscriptionStatus.inactive, forType: SubscriptionStatusKey.self)
+    }
+
+    let enrichment = Enrichment(
+      user: JSON(["test_user_key": "test_user_value"]),
+      device: JSON(["test_device_key": "test_device_value"])
+    )
+    storage.save(enrichment, forType: LatestEnrichment.self)
+
+    let newConfig: Config = .stub()
+      .setting(\.buildId, to: "fresh_456")
+    network.configReturnValue = .success(newConfig)
+
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      factory: dependencyContainer
+    )
+    dependencyContainer.configManager = configManager
+
+    return Harness(
+      storage: storage,
+      configManager: configManager,
+      receipt: receipt,
+      originalReceiptManager: originalReceiptManager,
+      productsManager: productsManager,
+      network: network,
+      deviceHelper: deviceHelper
+    )
+  }
+
+  /// Polls until `configState` holds a config or `timeout` passes. Returns the
+  /// seconds it waited.
+  private func waitForConfig(
+    _ configManager: ConfigManager,
+    timeout: TimeInterval
+  ) async -> TimeInterval {
+    let start = Date()
+    while configManager.config == nil, Date().timeIntervalSince(start) < timeout {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    return Date().timeIntervalSince(start)
+  }
+
+  @Test("Subscriber with cached config: config is published before StoreKit finishes")
+  func subscriberWithCachedConfigDoesNotWaitForStoreKit() async {
+    let harness = makeHarness(isSubscribed: true, loadDelay: 2)
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+
+    #expect(harness.configManager.config?.buildId == "cached_123")
+    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    #expect(harness.receipt.didStartLoad, "purchases load must still be kicked off")
+    #expect(!harness.receipt.didFinishLoad, "config was published only after StoreKit finished")
+
+    await fetch.value
+    #expect(harness.receipt.didFinishLoad, "fetchConfiguration still waits for the purchases load")
+
+    // Let the background refresh finish before the container goes away.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+  }
+
+  @Test("Unknown subscriber: purchases still load before config is published")
+  func syncPathStillLoadsPurchasesBeforePublishing() async {
+    let harness = makeHarness(isSubscribed: false, loadDelay: 1)
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 0.5)
+
+    #expect(harness.configManager.config == nil, "sync path published config after \(waited)s, before purchases loaded")
+
+    await fetch.value
+    #expect(harness.receipt.didFinishLoad)
+    #expect(harness.configManager.config != nil)
+
+    try? await Task.sleep(nanoseconds: 300_000_000)
+  }
+
+  @Test("Trial eligibility waits for the purchases load that config no longer waits for")
+  func trialEligibilityWaitsForInitialPurchasesLoad() async {
+    let harness = makeHarness(isSubscribed: true, loadDelay: 1)
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    let product = StoreProduct(
+      sk1Product: MockSkProduct(
+        productIdentifier: "com.app.gold",
+        subscriptionGroupIdentifier: "group_A"
+      )
+    )
+    _ = await dependencyContainer.isFreeTrialAvailable(for: product)
+    #expect(harness.receipt.didFinishLoad, "eligibility was answered before active subscription groups were known")
+
+    await fetch.value
+    try? await Task.sleep(nanoseconds: 300_000_000)
+  }
+}
+
+/// A `ReceiptManagerType` whose first `loadPurchases` sleeps, standing in for a
+/// StoreKit read on a weak network.
+private final class SlowReceiptManagerType: ReceiptManagerType, @unchecked Sendable {
+  private let loadDelay: TimeInterval
+  private(set) var didStartLoad = false
+  private(set) var didFinishLoad = false
+  var purchases: Set<Purchase> = []
+  var transactionReceipts: [TransactionReceipt] = []
+  var latestSubscriptionPeriodType: LatestSubscription.PeriodType?
+  var latestSubscriptionWillAutoRenew: Bool?
+  var latestSubscriptionState: LatestSubscription.State?
+
+  init(loadDelay: TimeInterval) {
+    self.loadDelay = loadDelay
+  }
+
+  func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
+
+  func loadPurchases(serverEntitlementsByProductId _: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
+    let isFirstLoad = !didStartLoad
+    didStartLoad = true
+    if isFirstLoad {
+      try? await Task.sleep(nanoseconds: UInt64(loadDelay * 1_000_000_000))
+    }
+    didFinishLoad = true
+    return PurchaseSnapshot(
+      purchases: [],
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+  }
+
+  func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
+    return true
   }
 }
