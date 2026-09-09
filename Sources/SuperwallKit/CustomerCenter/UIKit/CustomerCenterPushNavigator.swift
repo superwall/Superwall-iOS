@@ -89,7 +89,10 @@ private final class CustomerCenterPushedHostingController<Content: View>: UIHost
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
-    if isMovingFromParent || isBeingDismissed {
+    // The whole chain, not just `self`: when the host dismisses a navigation controller that holds
+    // the Customer Center, UIKit marks the container rather than this screen, and treating that as
+    // a cover would veto the dismissal for a Customer Center that is genuinely gone.
+    if isLeavingHierarchyOrAContainerIs {
       reportRemoval()
       return
     }

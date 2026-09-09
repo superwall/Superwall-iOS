@@ -231,4 +231,44 @@ struct CustomerCenterSheetOwnershipTests {
 
     window.isHidden = true
   }
+
+  /// UIKit marks the controller it is directly removing, not the screens inside it. When a host
+  /// presents a navigation controller holding a pushed Customer Center and dismisses it while the
+  /// user is on a drill-down, nothing on the drill-down itself is set — so a check of `self` alone
+  /// reads a real teardown as a cover, vetoes the debounce, and delivers no dismissal at all. The
+  /// root underneath is covered, so it never gets a `viewDidDisappear` of its own to correct it.
+  @available(iOS 15.0, *)
+  @Test("dismissing a container the Customer Center sits inside is a teardown, not a cover")
+  func dismissingTheContainingNavigationControllerDismisses() async {
+    let debounce: TimeInterval = 0.2
+    let delegate = ProbeDelegate()
+    let viewModel = makeViewModel(delegate: delegate, dismissDebounceInterval: debounce)
+    let host = UIViewController()
+    let navigation = DismissingNavigationController(rootViewController: host)
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    spinRunLoop(timeout: 1) { host.viewIfLoaded?.window != nil }
+
+    let navigator = CustomerCenterPushNavigator(viewModel: viewModel)
+    navigator.presenter = host
+    navigator.push(Text("purchase history"))
+    spinRunLoop(timeout: 2) { navigation.viewControllers.last?.viewIfLoaded?.window != nil }
+
+    // The drill-down disappears because the container around it is being dismissed. SwiftUI has
+    // armed the debounce; nothing must cancel it.
+    viewModel.surfaceDidDisappear()
+    navigation.viewControllers.last?.viewDidDisappear(false)
+
+    try? await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(delegate.didDismissCount == 1, "a dismissed container is a dismissed Customer Center")
+
+    window.isHidden = true
+  }
+}
+
+/// Stands in for a navigation controller the host has presented and is now dismissing.
+/// `isBeingDismissed` is read-only, and a hostless test target never drives a modal transition to
+/// completion, so the one fact UIKit would report is supplied directly.
+private final class DismissingNavigationController: UINavigationController {
+  override var isBeingDismissed: Bool { true }
 }

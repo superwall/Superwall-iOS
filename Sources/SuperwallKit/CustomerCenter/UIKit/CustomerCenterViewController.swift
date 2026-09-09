@@ -206,6 +206,23 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   /// Paired with ``wasPresentedModally`` it becomes a sound signal again, and it backstops the
   /// modal path in case a dismissal ever completes with `isBeingDismissed` already cleared.
   private var isLeavingHierarchy: Bool {
+    if isLeavingHierarchyOrAContainerIs {
+      return true
+    }
+    return wasPresentedModally && presentingViewController == nil
+  }
+}
+
+@available(iOS 15.0, *)
+extension UIViewController {
+  /// Whether this controller, or any container it sits inside, is on its way out.
+  ///
+  /// UIKit sets `isBeingDismissed`/`isMovingFromParent` only on the controller it is directly
+  /// removing, so a screen inside a container the host tears down — a navigation controller that
+  /// was presented and is later dismissed, say — reads as merely covered unless the chain is
+  /// walked. Both the root Customer Center and its pushed drill-downs have to make that
+  /// distinction, and getting it wrong in either place turns a real teardown into a veto.
+  var isLeavingHierarchyOrAContainerIs: Bool {
     var controller: UIViewController? = self
     while let current = controller {
       if current.isBeingDismissed || current.isMovingFromParent {
@@ -213,6 +230,6 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
       }
       controller = current.parent
     }
-    return wasPresentedModally && presentingViewController == nil
+    return false
   }
 }

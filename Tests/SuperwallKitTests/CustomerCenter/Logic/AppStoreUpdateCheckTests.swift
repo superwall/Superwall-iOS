@@ -171,6 +171,148 @@ struct AppStoreUpdateCheckTests {
     #expect(AppStoreVersionLookup.parseVersion(from: Data(json.utf8)) == nil)
   }
 
+
+  // MARK: - The lookup itself
+
+  /// Everything above this point stops at `parseVersion`, so the network round trip, the 24h
+  /// cache and the region query item all shipped unexercised — despite `defaults`, `session` and
+  /// `now` existing on the initializer as seams for exactly this. A `URLProtocol` stub and a
+  /// throwaway suite of defaults cover them without touching the network.
+  private final class StubURLProtocol: URLProtocol {
+    nonisolated(unsafe) static var status = 200
+    nonisolated(unsafe) static var body = Data()
+    nonisolated(unsafe) static var requestedURLs: [URL] = []
+
+    static func reset(status: Int = 200, json: String = #"{"results":[{"version":"3.2.1"}]}"#) {
+      self.status = status
+      self.body = Data(json.utf8)
+      self.requestedURLs = []
+    }
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+      if let url = request.url {
+        Self.requestedURLs.append(url)
+      }
+      let response = HTTPURLResponse(
+        url: request.url ?? URL(fileURLWithPath: "/"),
+        statusCode: Self.status,
+        httpVersion: nil,
+        headerFields: nil
+      )
+      // swiftlint:disable:next force_unwrapping
+      client?.urlProtocol(self, didReceive: response!, cacheStoragePolicy: .notAllowed)
+      client?.urlProtocol(self, didLoad: Self.body)
+      client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+  }
+
+  private func makeStubbedSession() -> URLSession {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.protocolClasses = [StubURLProtocol.self]
+    return URLSession(configuration: configuration)
+  }
+
+  private func makeDefaults() throws -> UserDefaults {
+    let name = "customer-center-tests-\(UUID().uuidString)"
+    return try #require(UserDefaults(suiteName: name))
+  }
+
+  @Test("scopes the lookup to the bundle id and region")
+  func lookupSendsBundleIdAndRegion() async throws {
+    StubURLProtocol.reset()
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: "GB",
+      defaults: try makeDefaults(),
+      session: makeStubbedSession()
+    )
+
+    #expect(await lookup.latestAppStoreVersion() == "3.2.1")
+
+    let url = try #require(StubURLProtocol.requestedURLs.first)
+    let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+    #expect(items.contains(URLQueryItem(name: "bundleId", value: "com.acme.app")))
+    #expect(items.contains(URLQueryItem(name: "country", value: "GB")))
+  }
+
+  /// A device with no region set must still get a lookup, rather than one scoped to an empty
+  /// country the endpoint would reject.
+  @Test("omits the region when there isn't one", arguments: [nil, ""])
+  func lookupOmitsAnEmptyRegion(region: String?) async throws {
+    StubURLProtocol.reset()
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: region,
+      defaults: try makeDefaults(),
+      session: makeStubbedSession()
+    )
+
+    _ = await lookup.latestAppStoreVersion()
+
+    let url = try #require(StubURLProtocol.requestedURLs.first)
+    let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+    #expect(!items.contains { $0.name == "country" })
+  }
+
+  @Test("a non-2xx response is not an answer", arguments: [404, 429, 500])
+  func lookupIgnoresErrorResponses(status: Int) async throws {
+    StubURLProtocol.reset(status: status)
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      defaults: try makeDefaults(),
+      session: makeStubbedSession()
+    )
+
+    #expect(await lookup.latestAppStoreVersion() == nil)
+  }
+
+  @Test("a second check inside 24 hours is answered from the cache")
+  func lookupCachesWithinTheDay() async throws {
+    StubURLProtocol.reset()
+    let defaults = try makeDefaults()
+    let session = makeStubbedSession()
+    var clock = Date(timeIntervalSince1970: 1_000_000)
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      defaults: defaults,
+      session: session,
+      now: { clock }
+    )
+
+    #expect(await lookup.latestAppStoreVersion() == "3.2.1")
+    #expect(StubURLProtocol.requestedURLs.count == 1)
+
+    // A day minus a minute later, and the answer on the wire has changed. The cache must win.
+    clock = clock.addingTimeInterval(AppStoreVersionLookup.cacheDuration - 60)
+    StubURLProtocol.body = Data(#"{"results":[{"version":"9.9.9"}]}"#.utf8)
+    #expect(await lookup.latestAppStoreVersion() == "3.2.1", "still inside the cache window")
+    #expect(StubURLProtocol.requestedURLs.count == 1, "and no second request was made")
+  }
+
+  @Test("the cache expires after 24 hours")
+  func lookupRefetchesAfterTheDay() async throws {
+    StubURLProtocol.reset()
+    let defaults = try makeDefaults()
+    let session = makeStubbedSession()
+    var clock = Date(timeIntervalSince1970: 1_000_000)
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      defaults: defaults,
+      session: session,
+      now: { clock }
+    )
+
+    _ = await lookup.latestAppStoreVersion()
+    clock = clock.addingTimeInterval(AppStoreVersionLookup.cacheDuration + 1)
+    StubURLProtocol.body = Data(#"{"results":[{"version":"9.9.9"}]}"#.utf8)
+
+    #expect(await lookup.latestAppStoreVersion() == "9.9.9")
+    #expect(StubURLProtocol.requestedURLs.count == 2)
+  }
+
   // MARK: - Configuration round trip
 
   @Test("configuration written before the flag existed still decodes")

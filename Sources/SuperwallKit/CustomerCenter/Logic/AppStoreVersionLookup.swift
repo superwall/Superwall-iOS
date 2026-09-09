@@ -35,8 +35,14 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
   private static let fetchedAtKey = "com.superwall.customerCenter.latestAppStoreVersionFetchedAt"
 
   let bundleId: String?
-  /// Two-letter region for the storefront to query. Versions differ by region during a phased
-  /// release, so asking for the wrong one can report a version this device can't install.
+  /// Two-letter region to scope the lookup to. Versions differ by region during a phased release,
+  /// so asking for the wrong one can report a version this device can't install.
+  ///
+  /// This is the device's *region setting*, not the App Store storefront that actually decides
+  /// which listing exists — the two are configured independently. The storefront would be the
+  /// better source, but `Storefront.countryCode` is a three-letter code and this endpoint takes
+  /// two, with no first-party conversion between them. When they disagree and the app isn't
+  /// published in the device's region the lookup finds nothing, which hides the banner and logs.
   let regionCode: String?
   let defaults: UserDefaults
   let session: URLSession
@@ -44,7 +50,7 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
 
   init(
     bundleId: String? = Bundle.main.bundleIdentifier,
-    regionCode: String? = Locale.current.regionCode,
+    regionCode: String? = AppStoreVersionLookup.deviceRegionCode,
     defaults: UserDefaults = .standard,
     session: URLSession = .shared,
     now: @escaping () -> Date = Date.init
@@ -54,6 +60,15 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
     self.defaults = defaults
     self.session = session
     self.now = now
+  }
+
+  /// Guarded rather than reading `Locale.regionCode` directly, which is deprecated at iOS 16 —
+  /// `DeviceHelper.regionCode` makes the same split.
+  static var deviceRegionCode: String? {
+    if #available(iOS 16, *) {
+      return Locale.autoupdatingCurrent.language.region?.identifier
+    }
+    return Locale.autoupdatingCurrent.regionCode
   }
 
   func latestAppStoreVersion() async -> String? {
@@ -85,8 +100,10 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
         Logger.debug(
           logLevel: .warn,
           scope: .customerCenter,
-          message: "No App Store listing found for bundle id \(bundleId ?? "nil"). "
-            + "The update banner won't show. Set `latestAppVersion` to warn without a lookup."
+          message: "No App Store listing found for bundle id \(bundleId ?? "nil") "
+            + "in region \(regionCode ?? "none"). The update banner won't show. If the app is "
+            + "published elsewhere, that region is the likely reason. Set `latestAppVersion` to "
+            + "warn without a lookup."
         )
         return nil
       }

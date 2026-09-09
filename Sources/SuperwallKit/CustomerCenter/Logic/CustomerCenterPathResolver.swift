@@ -81,10 +81,13 @@ enum CustomerCenterPathResolver {
 
     guard [.stripe, .paddle, .superwall].contains(purchase.store) else { return nil }
 
-    // An entitlement with no transaction behind it — comped, or granted by hand — has a nil store
-    // that the builder reports as `.superwall`, which lands here. There is no subscription to
-    // manage, so offer the page only if one exists and never claim a receipt was sent.
-    if case .entitlementOnly = purchase.kind {
+    // A comped grant — an entitlement with no transaction *and* no store behind it — has nothing
+    // to manage anywhere, so offer the page only if one exists and never claim a receipt was
+    // sent. The signal is the nil store, not the missing transaction: a web purchase arrives as a
+    // bare entitlement whenever the backend sends no matching transaction, and that entitlement
+    // still carries its store. Keying on the kind alone would take the row back off the paying
+    // customers it exists for.
+    if case .entitlementOnly(let entitlement) = purchase.kind, entitlement.store == nil {
       return context.webManagementURL.map { ResolvedPathDestination.webManage($0) }
     }
     return context.webManagementURL.map { ResolvedPathDestination.webManage($0) } ?? .webManageUnavailable

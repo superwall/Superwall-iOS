@@ -111,17 +111,12 @@ struct WebSubscriptionPathTests {
     #expect(viewModel.sheet == .safari(managementURL))
   }
 
-  /// An entitlement with no transaction behind it — comped, or granted by hand — has a nil store
-  /// that the builder reports as `.superwall`, which reads as a web store. Sending that customer
-  /// to a management page, or telling them to find a link in a receipt they never got, is wrong.
-  @available(iOS 15.0, *)
-  @Test("a comped entitlement isn't told to check a receipt it never had")
-  func compedEntitlementGetsNoReceiptBlurb() async {
+  private func makeEntitlementOnlyViewModel(store: EntitlementStore?) async -> CustomerCenterViewModel {
     let (deps, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(
         subscriptions: [],
         nonSubscriptions: [],
-        entitlements: [Entitlement(id: "pro")]
+        entitlements: [Entitlement(id: "pro", store: store)]
       ),
       environment: EnvironmentMock(webManagementURL: nil)
     )
@@ -131,10 +126,41 @@ struct WebSubscriptionPathTests {
       strings: .english
     )
     await viewModel.load()
+    return viewModel
+  }
+
+  /// An entitlement with no transaction *and* no store behind it — comped, or granted by hand —
+  /// is reported by the builder as `.superwall`, which reads as a web store. Sending that customer
+  /// to a management page, or telling them to find a link in a receipt they never got, is wrong.
+  ///
+  /// `Entitlement(id:)` is no help here: the public convenience initializer hardcodes
+  /// `store: .appStore`, so the purchase never reaches the web branch and the case passes on the
+  /// App Store branch's `guard let sub` instead — green with this rule deleted.
+  @available(iOS 15.0, *)
+  @Test("a comped entitlement isn't told to check a receipt it never had")
+  func compedEntitlementGetsNoReceiptBlurb() async {
+    let viewModel = await makeEntitlementOnlyViewModel(store: nil)
+
+    let purchase = viewModel.purchases.first
+    #expect(purchase?.store == .superwall, "otherwise this never reaches the branch under test")
+    let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
+    #expect(manage == nil, "nothing to manage, so no row at all")
+  }
+
+  /// The other half of that rule, and the reason it keys on the store rather than the kind: a web
+  /// purchase arrives as a bare entitlement whenever the backend sends no matching transaction.
+  /// Those customers are paying, and the row telling them where the link is has to survive.
+  @available(iOS 15.0, *)
+  @Test("a web purchase with no transaction behind it keeps its management row", arguments: [
+    EntitlementStore.stripe, .paddle
+  ])
+  func webEntitlementWithoutATransactionKeepsTheRow(store: EntitlementStore) async {
+    let viewModel = await makeEntitlementOnlyViewModel(store: store)
 
     let purchase = viewModel.purchases.first
     let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
-    #expect(manage == nil, "nothing to manage, so no row at all")
+    #expect(manage != nil, "a paying customer must still be told where to manage this")
+    #expect(manage?.destination == .webManageUnavailable)
   }
 
   // MARK: - Surveys don't belong on a web flow
