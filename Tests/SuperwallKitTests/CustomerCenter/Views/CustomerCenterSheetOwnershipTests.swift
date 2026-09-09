@@ -127,6 +127,14 @@ struct CustomerCenterSheetOwnershipTests {
     // And the binding that does own the sheet still clears it.
     modifier.refundBinding.wrappedValue = false
     #expect(viewModel.sheet == nil)
+
+    // The owner keeps that right once it is no longer topmost. The depth drops on a pop with no
+    // regard for whether a sheet is up, which is why the setters are gated on identity rather
+    // than depth — an earlier depth-gated setter is exactly what stranded a sheet here.
+    viewModel.pushDepth = 1
+    viewModel.sheet = .manageSubscriptions(groupId: nil)
+    modifier.isManagePresented.wrappedValue = false
+    #expect(viewModel.sheet == nil, "the surface that opened a sheet must always be able to clear it")
   }
 
   // MARK: - Driving the real navigator

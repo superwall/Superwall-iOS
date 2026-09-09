@@ -64,10 +64,11 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   /// stable — swapping modifiers mid-update is what stopped the manage sheet appearing once
   /// before.
   ///
-  /// Only the getters are gated. Gating the setters too would let a screen lose the right to
-  /// clear a sheet it already has open: the depth drops when the screen is popped, without regard
-  /// for whether a sheet is up, so the dismissal would be vetoed, `sheetDidDismiss()` would never
-  /// run, and the root would re-present the stale sheet the moment it became topmost again.
+  /// Only the getters are gated on depth. The setters are gated on the sheet's identity instead:
+  /// gating them on depth too would let a screen lose the right to clear a sheet it already has
+  /// open, since the depth drops when the screen is popped without regard for whether a sheet is
+  /// up — the dismissal would be vetoed, `sheetDidDismiss()` would never run, and the root would
+  /// re-present the stale sheet the moment it became topmost again.
   private var isTopmost: Bool {
     CustomerCenterSheetOwnership.isTopmost(
       surfaceDepth: surfaceDepth,
