@@ -132,8 +132,10 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
       // Bounded deliberately. This sits on the path that leaves `.loading`, and the endpoint's
       // defaults are six retries with exponential backoff and no timeout — a failing backend
       // would otherwise hold the spinner for minutes on a screen whose prices are a nicety.
-      let response = try await withCatalogueTimeout {
-        try await container.network.getSuperwallProducts()
+      let response = try await CatalogueCache.shared.products {
+        try await withCatalogueTimeout {
+          try await container.network.getSuperwallProducts()
+        }
       }
       resolved = Self.fillingGaps(in: resolved, requested: ids, from: response.data)
     } catch {
@@ -179,7 +181,7 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
   /// How long the catalogue gets before the screen gives up on prices and renders without them.
   private static let catalogueTimeout: TimeInterval = 5
 
-  private func withCatalogueTimeout(
+  func withCatalogueTimeout(
     _ work: @escaping () async throws -> SuperwallProductsResponse
   ) async throws -> SuperwallProductsResponse {
     try await withThrowingTaskGroup(of: SuperwallProductsResponse.self) { group in
@@ -196,6 +198,43 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
     }
   }
 }
+/// Holds the Superwall catalogue for a short while.
+///
+/// `apply(customerInfo:refetchProducts:)` runs on load, on every restore, and after every sheet
+/// dismissal, and all four call sites refetch — so without this a web-store customer pays for the
+/// catalogue several times inside one visit, for a product list that changes on the dashboard's
+/// timescale rather than the customer's. The window is deliberately short: long enough to cover a
+/// single visit, short enough that a price edit shows up the next time anyone opens the screen.
+@available(iOS 15.0, *)
+actor CatalogueCache {
+  static let shared = CatalogueCache()
+  static let ttl: TimeInterval = 5 * 60
+
+  private var cached: (response: SuperwallProductsResponse, at: Date)?
+  private let now: () -> Date
+
+  init(now: @escaping () -> Date = Date.init) {
+    self.now = now
+  }
+
+  /// Returns the cached catalogue when it is still fresh, otherwise awaits `fetch` and keeps it.
+  /// A throwing `fetch` is not cached — a failed load should be retried, not remembered.
+  func products(
+    fetch: () async throws -> SuperwallProductsResponse
+  ) async throws -> SuperwallProductsResponse {
+    if let cached, isFresh(cached.at) {
+      return cached.response
+    }
+    let response = try await fetch()
+    cached = (response, now())
+    return response
+  }
+
+  func isFresh(_ date: Date) -> Bool {
+    now().timeIntervalSince(date) < Self.ttl
+  }
+}
+
 @available(iOS 15.0, *)
 struct LiveRestorer: CustomerCenterRestoring {
   func restorePurchases() async -> RestorationResult {
