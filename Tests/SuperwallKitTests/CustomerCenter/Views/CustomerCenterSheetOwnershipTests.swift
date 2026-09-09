@@ -78,6 +78,57 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(!CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 2, pushDepth: 1))
   }
 
+  /// The asymmetry that made this rule necessary: SwiftUI writes `false` to a boolean sheet
+  /// binding whenever its getter goes false, which happens to every surface the moment something
+  /// is pushed over it — not only when that surface's own sheet is dismissed. An unconditional
+  /// clear therefore let a covered screen tear down the sheet the visible one had just opened,
+  /// and run `sheetDidDismiss()` against it.
+  @Test("only the sheet that is actually up may clear itself", arguments: [
+    (CustomerCenterSheet.manageSubscriptions(groupId: nil), true, false),
+    (CustomerCenterSheet.refund(transactionId: 1, productId: "monthly_pro"), false, true),
+    (CustomerCenterSheet.survey(pathId: "cancel"), false, false),
+    (CustomerCenterSheet.webManageUnavailable, false, false)
+  ])
+  func dismissalOnlyClearsItsOwnSheet(
+    current: CustomerCenterSheet,
+    clearsManage: Bool,
+    clearsRefund: Bool
+  ) {
+    #expect(CustomerCenterSheetOwnership.dismissalClears(current, .manageSubscriptions) == clearsManage)
+    #expect(CustomerCenterSheetOwnership.dismissalClears(current, .refund) == clearsRefund)
+  }
+
+  @Test("a dismissal with no sheet up clears nothing")
+  func dismissalWithNothingPresentedClearsNothing() {
+    #expect(!CustomerCenterSheetOwnership.dismissalClears(nil, .manageSubscriptions))
+    #expect(!CustomerCenterSheetOwnership.dismissalClears(nil, .refund))
+  }
+
+  /// The two above prove the rule; this proves the binding applies it. Testing only the rule
+  /// would pass just as happily against the unguarded setter that made it necessary.
+  @available(iOS 15.0, *)
+  @Test("a stale dismissal write does not tear down another surface's sheet")
+  func staleDismissalLeavesTheOpenSheetAlone() async {
+    let viewModel = makeViewModel()
+    let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+
+    // A drill-down opens the refund sheet. The root's manage binding is still alive underneath.
+    viewModel.sheet = .refund(transactionId: 1, productId: "monthly_pro")
+    #expect(!modifier.isManagePresented.wrappedValue, "the manage sheet is not the one showing")
+
+    // SwiftUI writes `false` into it, as it does to every binding whose getter goes false.
+    modifier.isManagePresented.wrappedValue = false
+
+    #expect(
+      viewModel.sheet == .refund(transactionId: 1, productId: "monthly_pro"),
+      "the refund sheet must survive a dismissal meant for a sheet that was never up"
+    )
+
+    // And the binding that does own the sheet still clears it.
+    modifier.refundBinding.wrappedValue = false
+    #expect(viewModel.sheet == nil)
+  }
+
   // MARK: - Driving the real navigator
 
   @available(iOS 15.0, *)

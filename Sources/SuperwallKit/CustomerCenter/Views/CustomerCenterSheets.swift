@@ -27,10 +27,34 @@ enum CustomerCenterSheetOwnership {
   static func isTopmost(surfaceDepth: Int, pushDepth: Int) -> Bool {
     surfaceDepth == pushDepth
   }
+
+  /// The kind of sheet a boolean binding stands for. `CustomerCenterSheet`'s own cases carry
+  /// associated values, and a dismissal only needs to know which case it belongs to.
+  enum SheetKind {
+    case manageSubscriptions
+    case refund
+  }
+
+  /// Whether a `false` write from a boolean sheet binding should clear `sheet`.
+  ///
+  /// SwiftUI writes `false` when the sheet that binding drives goes away — but it also writes it
+  /// when the *getter* flips false for another reason, which happens to every surface that stops
+  /// being topmost. Clearing unconditionally therefore lets a covered screen tear down the sheet
+  /// the visible one just opened, and run `sheetDidDismiss()` — receipt refresh included —
+  /// against a sheet that was never showing. Only the sheet actually up may clear itself.
+  static func dismissalClears(_ current: CustomerCenterSheet?, _ kind: SheetKind) -> Bool {
+    switch (current, kind) {
+    case (.manageSubscriptions, .manageSubscriptions), (.refund, .refund): return true
+    default: return false
+    }
+  }
 }
 
+/// Internal rather than private so a test can drive the sheet bindings directly. The gate they
+/// apply has been wrong twice — once inert, once over-eager — and both times the bug was in the
+/// binding rather than in the rule it calls, which a test of the rule alone cannot catch.
 @available(iOS 15.0, *)
-private struct CustomerCenterSheetsModifier: ViewModifier {
+struct CustomerCenterSheetsModifier: ViewModifier {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let surfaceDepth: Int
   @Environment(\.customerCenterStrings) private var strings
@@ -51,22 +75,31 @@ private struct CustomerCenterSheetsModifier: ViewModifier {
     )
   }
 
-  private var isManagePresented: Binding<Bool> {
+  var isManagePresented: Binding<Bool> {
     .init(
       get: {
         guard isTopmost, case .manageSubscriptions = viewModel.sheet else { return false }
         return true
       },
-      set: { if !$0 { viewModel.sheet = nil; Task { await viewModel.sheetDidDismiss() } } }
+      set: {
+        guard !$0, CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .manageSubscriptions) else {
+          return
+        }
+        viewModel.sheet = nil
+        Task { await viewModel.sheetDidDismiss() }
+      }
     )
   }
-  private var refundBinding: Binding<Bool> {
+  var refundBinding: Binding<Bool> {
     .init(
       get: {
         guard isTopmost, case .refund = viewModel.sheet else { return false }
         return true
       },
-      set: { if !$0, case .refund = viewModel.sheet { viewModel.sheet = nil } }
+      set: {
+        guard !$0, CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .refund) else { return }
+        viewModel.sheet = nil
+      }
     )
   }
   private var itemSheet: Binding<CustomerCenterSheet?> {

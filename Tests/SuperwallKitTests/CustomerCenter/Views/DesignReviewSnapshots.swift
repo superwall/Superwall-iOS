@@ -307,6 +307,24 @@ struct DesignReviewSnapshots {
     }
   }
 
+  /// Captures the content of a `.sheet`. Deliberately not wrapped in a `NavigationView`: a page
+  /// sheet has no bar unless its content supplies one, so wrapping it would paint a title bar
+  /// production never shows — and hide the very thing the screenshot exists to reveal.
+  private func captureSheet<V: View>(
+    _ name: String,
+    directory: URL,
+    viewModel: CustomerCenterViewModel,
+    @ViewBuilder content: () -> V
+  ) {
+    let view = content()
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(Color(uiColor: .systemBackground))
+      .environment(\.customerCenterStrings, viewModel.strings)
+    for scheme in [ColorScheme.light, .dark] {
+      snapshot(view, named: name, colorScheme: scheme, directory: directory)
+    }
+  }
+
   // MARK: - The screens
 
   @available(iOS 15.0, *)
@@ -590,7 +608,7 @@ struct DesignReviewSnapshots {
       configuration: noWebURL,
       environment: EnvironmentMock(webManagementURL: nil)
     )
-    captureDetail(
+    captureSheet(
       "24-web-subscription-no-management-url",
       directory: directory,
       viewModel: unconfigured
