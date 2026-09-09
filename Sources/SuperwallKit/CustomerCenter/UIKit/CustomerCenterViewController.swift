@@ -160,7 +160,7 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
       // case, which has no way to tell a cover from a teardown; here we know, so veto it. Left to
       // fire it would deliver `customerCenterDidDismiss()` and track `customerCenterClose` while
       // the screen sits on the back stack, and latch, silencing the genuine teardown later.
-      viewModel.cancelPendingDismissal()
+      viewModel.suppressDismissalUntilNextAppearance()
       return
     }
     deliverDismissal()

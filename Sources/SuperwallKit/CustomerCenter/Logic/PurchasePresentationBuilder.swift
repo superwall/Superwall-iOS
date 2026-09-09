@@ -21,8 +21,8 @@ struct PurchasePresentationBuilder {
   ) {
     self.now = now
     self.strings = strings
-    // Dates must follow the same locale as the strings (`SuperwallOptions.localeIdentifier` via
-    // `CustomerCenterEnvironmentProviding.locale`), not the system locale.
+    // Dates must follow the same locale as the strings — `DeviceHelper.preferredLocaleIdentifier`
+    // via `CustomerCenterEnvironmentProviding.locale` — not the system locale.
     self.dateFormatter = dateFormatter ?? {
       let formatter = DateFormatter()
       formatter.dateStyle = .medium

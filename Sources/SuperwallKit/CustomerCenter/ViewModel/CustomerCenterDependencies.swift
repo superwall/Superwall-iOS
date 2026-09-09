@@ -135,17 +135,7 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
       let response = try await withCatalogueTimeout {
         try await container.network.getSuperwallProducts()
       }
-      // `missing` is every id StoreKit didn't return, which includes App Store products whenever
-      // a StoreKit lookup fails — `products(for:)` swallows that with `try?`. Filling those from
-      // the catalogue would quote the dashboard's storefront price instead of what the customer is
-      // actually charged, so restrict this to products StoreKit was never going to resolve.
-      for product in response.data
-      where missing.contains(product.identifier) && product.platform != .ios {
-        let entitlements = Set(product.entitlements.map { Entitlement(id: $0.identifier) })
-        let apiProduct = APIStoreProduct(superwallProduct: product, entitlements: entitlements)
-        let storeProduct = StoreProduct(catalogProduct: apiProduct)
-        resolved[product.identifier] = ProductDisplayInfo(storeProduct, name: product.name)
-      }
+      resolved = Self.fillingGaps(in: resolved, requested: ids, from: response.data)
     } catch {
       // Advisory: the cards still render, just without a price.
       Logger.debug(
@@ -156,6 +146,34 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
       )
     }
     return resolved
+  }
+
+  /// Fills the products StoreKit couldn't resolve from the Superwall catalogue.
+  ///
+  /// A static function on purpose: `products(for:)` reaches `Superwall.shared` and the container's
+  /// network, neither of which a test can stand in for, so the rule would otherwise ship
+  /// uncovered — and the rule is where the judgement is.
+  ///
+  /// The gap is every id StoreKit didn't return, which includes App Store products whenever a
+  /// StoreKit lookup fails — `products(for:)` swallows that with `try?`. Filling those from the
+  /// catalogue would quote the dashboard's storefront price instead of what the customer is
+  /// actually charged, so this is restricted to products StoreKit was never going to resolve.
+  static func fillingGaps(
+    in resolved: [String: ProductDisplayInfo],
+    requested ids: Set<String>,
+    from catalogue: [SuperwallProduct]
+  ) -> [String: ProductDisplayInfo] {
+    let missing = ids.subtracting(resolved.keys)
+    guard !missing.isEmpty else { return resolved }
+    var filled = resolved
+    for product in catalogue
+    where missing.contains(product.identifier) && product.platform != .ios {
+      let entitlements = Set(product.entitlements.map { Entitlement(id: $0.identifier) })
+      let apiProduct = APIStoreProduct(superwallProduct: product, entitlements: entitlements)
+      let storeProduct = StoreProduct(catalogProduct: apiProduct)
+      filled[product.identifier] = ProductDisplayInfo(storeProduct, name: product.name)
+    }
+    return filled
   }
 
   /// How long the catalogue gets before the screen gives up on prices and renders without them.

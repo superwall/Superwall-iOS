@@ -36,8 +36,10 @@ final class CustomerCenterViewModel: ObservableObject {
   var presentationMode = "sheet"
   private(set) var pendingSurvey: PendingSurvey?
 
-  /// Locale for date formatting, matching the locale the localized strings resolve against
-  /// (`SuperwallOptions.localeIdentifier` when set) rather than the system locale.
+  /// Locale for date formatting, matching the locale the localized strings resolve against:
+  /// `DeviceHelper.preferredLocaleIdentifier`, the device's preferred language. Not
+  /// `SuperwallOptions.localeIdentifier`, which applies only when there are no preferred
+  /// languages at all.
   var locale: Locale { dependencies.environment.locale }
 
   // Not `private`: the support-email extension in `CustomerCenterViewModel+Support.swift`
@@ -70,6 +72,9 @@ final class CustomerCenterViewModel: ObservableObject {
   /// reaches zero and stays zero past the debounce, the Customer Center is genuinely gone.
   private var visibleSurfaceCount = 0
   private var dismissDebounceTask: Task<Void, Never>?
+  /// Set by a host that knows this disappearance is a cover rather than a teardown. Cleared the
+  /// next time a surface appears. See ``suppressDismissalUntilNextAppearance()``.
+  private var isDismissalSuppressed = false
 
   init(
     configuration: CustomerCenterConfiguration,
@@ -118,8 +123,12 @@ final class CustomerCenterViewModel: ObservableObject {
       )
     }
     // Last, and deliberately so: this makes a network call, and everything above it — the first
-    // render and the open event — must not wait on it. Tracking open behind it would let a user
-    // who closes the screen mid-lookup emit close before open.
+    // render and the open event — must not wait on it.
+    //
+    // That orders open before the *lookup*, not before every close: `apply` above still awaits a
+    // StoreKit round trip, so closing while the spinner is up can still emit close first. Moving
+    // open ahead of `apply` would fix that and put the whole tracking pipeline in front of first
+    // paint, which is the worse trade.
     await refreshAppStoreVersion()
   }
 
@@ -332,6 +341,7 @@ extension CustomerCenterViewModel {
   /// tracks nested pushes correctly. Also cancels any pending dismissal from a prior disappear.
   func surfaceDidAppear() {
     visibleSurfaceCount += 1
+    isDismissalSuppressed = false
     dismissDebounceTask?.cancel()
     dismissDebounceTask = nil
   }
@@ -343,7 +353,7 @@ extension CustomerCenterViewModel {
   /// debounce elapses cancels it.
   func surfaceDidDisappear() {
     visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
-    guard visibleSurfaceCount == 0 else { return }
+    guard visibleSurfaceCount == 0, !isDismissalSuppressed else { return }
     dismissDebounceTask?.cancel()
     // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
     // followed by `@StateObject` releasing the view model, and a weak capture would let it
@@ -364,6 +374,18 @@ extension CustomerCenterViewModel {
   func cancelPendingDismissal() {
     dismissDebounceTask?.cancel()
     dismissDebounceTask = nil
+  }
+
+  /// The same veto, proof against the ordering it can't control.
+  ///
+  /// ``cancelPendingDismissal()`` only drops an already-armed dismissal, assuming SwiftUI has
+  /// delivered `onDisappear` by the time `viewDidDisappear` runs — a moment Apple documents as
+  /// view-type-dependent. Arriving a runloop turn later, it found nothing to cancel and armed
+  /// unopposed. Suppressing until the next appearance covers both orderings; a genuine teardown
+  /// is unaffected, since the controllers deliver those through ``dismiss()`` directly.
+  func suppressDismissalUntilNextAppearance() {
+    isDismissalSuppressed = true
+    cancelPendingDismissal()
   }
 
   func dismiss() {

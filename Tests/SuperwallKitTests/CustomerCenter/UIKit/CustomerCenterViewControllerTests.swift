@@ -115,11 +115,8 @@ struct CustomerCenterViewControllerTests {
     spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
 
     // Arm the debounce explicitly rather than trusting SwiftUI's `onDisappear` to have fired in
-    // this harness. The claim under test is that the veto cancels an *armed* dismissal, and with
-    // nothing armed the test would pass whether or not the veto works at all. This ordering is
-    // what the veto assumes in production — that `super.viewDidDisappear` forwards the
-    // disappearance into SwiftUI before the guard below runs — which Apple documents as
-    // view-type-dependent rather than guaranteed.
+    // this harness: with nothing armed the test would pass whether or not the veto works at all.
+    // Armed *before* the veto is the ordering the veto assumes, and the easier of the two.
     controller.viewModel.surfaceDidDisappear()
     controller.viewDidDisappear(false)
 
@@ -128,6 +125,42 @@ struct CustomerCenterViewControllerTests {
 
     // And the genuine teardown afterwards must still be delivered — the premature fire would have
     // latched `didDismiss` and made this silent.
+    navigation.popToRootViewController(animated: false)
+    spinRunLoop(timeout: 1) { delegate.didDismissCount > 0 }
+    #expect(delegate.didDismissCount == 1)
+
+    window.isHidden = true
+  }
+
+  /// The ordering the veto cannot assume. Apple documents `onDisappear`'s exact moment as
+  /// depending on the view type and ties it to no UIKit callback, so SwiftUI may deliver it a
+  /// runloop turn after `viewDidDisappear` returns — arming the debounce with nothing left to
+  /// cancel it. A veto that only drops an already-armed dismissal passes the test above and fires
+  /// the premature `didDismiss` here, latching and silencing the genuine teardown afterwards.
+  @available(iOS 15.0, *)
+  @Test("pushed: a cover survives SwiftUI reporting the disappearance late")
+  func pushedCoverSurvivesALateDisappearance() async {
+    let debounce: TimeInterval = 0.2
+    let delegate = ProbeDelegate()
+    let controller = makeController(style: .pushed, delegate: delegate, dismissDebounceInterval: debounce)
+
+    let navigation = UINavigationController(rootViewController: UIViewController())
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    navigation.pushViewController(controller, animated: false)
+    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window != nil }
+
+    navigation.pushViewController(UIViewController(), animated: false)
+    spinRunLoop(timeout: 1) { controller.viewIfLoaded?.window == nil }
+
+    // The veto runs first, and only then does SwiftUI get round to reporting the disappearance.
+    controller.viewDidDisappear(false)
+    controller.viewModel.surfaceDidDisappear()
+
+    try? await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(delegate.didDismissCount == 0, "a late disappearance must not resurrect the dismissal")
+
+    // And the real teardown still lands, which the premature fire would have latched away.
     navigation.popToRootViewController(animated: false)
     spinRunLoop(timeout: 1) { delegate.didDismissCount > 0 }
     #expect(delegate.didDismissCount == 1)

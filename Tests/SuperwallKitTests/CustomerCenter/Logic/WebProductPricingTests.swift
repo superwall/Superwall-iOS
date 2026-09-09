@@ -16,15 +16,17 @@ struct WebProductPricingTests {
   private func decodeProduct(
     amountInCents: Int,
     currency: String = "USD",
-    name: String? = nil
+    name: String? = nil,
+    identifier: String = "web_pro_monthly",
+    platform: String = "stripe"
   ) throws -> SuperwallProduct {
     let nameField = name.map { "\"name\": \"\($0)\"," } ?? ""
     let json = """
     {
       "object": "product",
-      "identifier": "web_pro_monthly",
+      "identifier": "\(identifier)",
       \(nameField)
-      "platform": "stripe",
+      "platform": "\(platform)",
       "price": { "amount": \(amountInCents), "currency": "\(currency)" },
       "subscription": {
         "period": "month",
@@ -93,8 +95,9 @@ struct WebProductPricingTests {
     #expect(card.title == "web_pro_monthly")
   }
 
-  /// The field the backend hasn't shipped yet. Once `/v1/products` returns a name, it's used
-  /// with no further change on this side — this test is what proves that wiring works today.
+  /// The field the backend hasn't shipped yet. Pins that `name` decodes off the payload and that
+  /// `ProductDisplayInfo` honours it; the call site that passes it through is covered separately,
+  /// by `catalogueNameReachesTheCard` below.
   @Test("uses the catalogue's display name as soon as the payload carries one")
   func usesDisplayNameWhenPresent() throws {
     let product = try decodeProduct(amountInCents: 999, name: "Pro")
@@ -125,5 +128,90 @@ struct WebProductPricingTests {
     )
     let display = ProductDisplayInfo(storeProduct)
     #expect(display.price == 0)
+  }
+
+  // MARK: - The rule that decides what the catalogue is allowed to fill
+
+  private func displayInfo(for identifier: String) throws -> ProductDisplayInfo {
+    let product = try decodeProduct(amountInCents: 100, identifier: identifier)
+    return ProductDisplayInfo(StoreProduct(catalogProduct: APIStoreProduct(superwallProduct: product, entitlements: [])))
+  }
+
+  @Test("fills only the products StoreKit couldn't resolve")
+  func fillsOnlyTheGaps() throws {
+    let fromStoreKit = try displayInfo(for: "ios_pro_monthly")
+    let catalogue = [
+      try decodeProduct(amountInCents: 999, identifier: "web_pro_monthly"),
+      try decodeProduct(amountInCents: 500, identifier: "web_unrelated")
+    ]
+
+    let filled = LiveProductsProvider.fillingGaps(
+      in: ["ios_pro_monthly": fromStoreKit],
+      requested: ["ios_pro_monthly", "web_pro_monthly"],
+      from: catalogue
+    )
+
+    #expect(filled.keys.sorted() == ["ios_pro_monthly", "web_pro_monthly"])
+    #expect(filled["web_pro_monthly"]?.localizedPrice?.contains("9.99") == true)
+    #expect(filled["web_unrelated"] == nil, "a catalogue entry nobody asked about is not a gap")
+  }
+
+  /// The restriction that matters for money. `products(for:)` swallows a failed StoreKit lookup
+  /// with `try?`, so an App Store product can land in the gap — and the catalogue holds the
+  /// dashboard's storefront price, not what this customer is actually charged in theirs.
+  @Test("never fills an App Store product from the catalogue")
+  func neverFillsAppStoreProducts() throws {
+    let catalogue = [try decodeProduct(amountInCents: 999, identifier: "ios_pro_monthly", platform: "ios")]
+
+    let filled = LiveProductsProvider.fillingGaps(
+      in: [:],
+      requested: ["ios_pro_monthly"],
+      from: catalogue
+    )
+
+    #expect(filled.isEmpty, "better no price than a price from the wrong storefront")
+  }
+
+  @Test("what StoreKit resolved is never overwritten")
+  func storeKitWins() throws {
+    let fromStoreKit = try displayInfo(for: "web_pro_monthly")
+    let catalogue = [try decodeProduct(amountInCents: 9_999, identifier: "web_pro_monthly")]
+
+    let filled = LiveProductsProvider.fillingGaps(
+      in: ["web_pro_monthly": fromStoreKit],
+      requested: ["web_pro_monthly"],
+      from: catalogue
+    )
+
+    #expect(filled["web_pro_monthly"]?.localizedPrice == fromStoreKit.localizedPrice)
+  }
+
+  /// The other half of `usesDisplayNameWhenPresent`: that the call site actually passes the name
+  /// through. Deleting `name:` from `fillingGaps` leaves that test green and fails this one.
+  @Test("the catalogue's name reaches the card")
+  func catalogueNameReachesTheCard() throws {
+    let catalogue = [try decodeProduct(amountInCents: 999, name: "Pro")]
+
+    let filled = LiveProductsProvider.fillingGaps(
+      in: [:],
+      requested: ["web_pro_monthly"],
+      from: catalogue
+    )
+
+    #expect(filled["web_pro_monthly"]?.title == "Pro")
+  }
+
+  @Test("nothing missing means nothing to do")
+  func noGapsNoWork() throws {
+    let fromStoreKit = try displayInfo(for: "web_pro_monthly")
+    let catalogue = [try decodeProduct(amountInCents: 9_999, identifier: "other")]
+
+    let filled = LiveProductsProvider.fillingGaps(
+      in: ["web_pro_monthly": fromStoreKit],
+      requested: ["web_pro_monthly"],
+      from: catalogue
+    )
+
+    #expect(filled.count == 1)
   }
 }

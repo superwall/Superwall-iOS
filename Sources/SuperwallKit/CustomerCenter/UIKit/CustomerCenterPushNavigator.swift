@@ -52,7 +52,7 @@ final class CustomerCenterPushNavigator: CustomerCenterNavigating {
       self.viewModel.pushDepth = min(self.viewModel.pushDepth, depth - 1)
     }
     controller.onCoveredWhileStillInStack = { [weak self] in
-      self?.viewModel.cancelPendingDismissal()
+      self?.viewModel.suppressDismissalUntilNextAppearance()
     }
     viewModel.pushDepth = depth
     navigationController.pushViewController(controller, animated: true)
