@@ -134,6 +134,17 @@ struct DesignReviewSnapshots {
         subscriptionGroupId: nil,
         isAutoRenewable: false
       ),
+      // A web product as it actually arrives: the catalogue supplies its price, but `/v1/products`
+      // carries no display name, so the card is headed with the raw identifier.
+      "web_pro_monthly": .init(
+        productId: "web_pro_monthly",
+        title: "web_pro_monthly",
+        localizedPrice: "$12.99",
+        price: 12.99,
+        localizedPeriod: "month",
+        subscriptionGroupId: nil,
+        isAutoRenewable: true
+      ),
       "extra_theme": .init(
         productId: "extra_theme",
         title: "Midnight Theme",
@@ -175,8 +186,13 @@ struct DesignReviewSnapshots {
     nonSubscriptions: [NonSubscriptionTransaction] = [],
     entitlements: [Entitlement] = [],
     configuration: CustomerCenterConfiguration? = nil,
-    environment: EnvironmentMock = EnvironmentMock()
+    environment: EnvironmentMock = EnvironmentMock(),
+    familyShared: Set<String> = []
   ) async -> CustomerCenterViewModel {
+    // Family sharing is the one gating input that isn't in `CustomerInfo` — it comes from a
+    // StoreKit transaction lookup — so it has to be faked separately.
+    let lookup = StoreKitTransactionLookupMock()
+    lookup.familyShared = familyShared
     let (dependencies, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(
         subscriptions: subscriptions,
@@ -184,7 +200,8 @@ struct DesignReviewSnapshots {
         entitlements: entitlements
       ),
       products: catalogue,
-      environment: environment
+      environment: environment,
+      lookup: lookup
     )
     let viewModel = CustomerCenterViewModel(
       configuration: configuration ?? defaultConfiguration(),
@@ -519,6 +536,102 @@ struct DesignReviewSnapshots {
     let restoreEmpty = await makeViewModel()
     restoreEmpty.restoreState = .notFound
     capture("22-restore-nothing-found", directory: directory, viewModel: restoreEmpty)
+
+    // MARK: - Mixed stores and multiple groups
+
+    let webSubscription = subscription(
+      productId: "web_pro_monthly",
+      transactionId: "w1",
+      purchaseDate: -20,
+      expiresIn: 10,
+      groupId: nil,
+      store: .stripe
+    )
+
+    // 23. A web subscription on its own. No Change plan or Refund — both are App Store only —
+    //     and the manage row points at the web management page instead.
+    capture(
+      "23-web-subscription-only",
+      directory: directory,
+      viewModel: await makeViewModel(subscriptions: [webSubscription])
+    )
+
+    // 24. The same customer with no management URL configured, which is what most apps will
+    //     have on day one: the row stays and explains where the link is.
+    let noWebURL = defaultConfiguration()
+    noWebURL.support.webManagementURL = nil
+    capture(
+      "24-web-subscription-no-management-url",
+      directory: directory,
+      viewModel: await makeViewModel(
+        subscriptions: [webSubscription],
+        configuration: noWebURL,
+        environment: EnvironmentMock(webManagementURL: nil)
+      )
+    )
+
+    // 25. App Store and web active at once — the case where the two stores sit side by side and
+    //     the duplicate warning fires.
+    let mixedStores = defaultConfiguration()
+    mixedStores.warnsAboutDuplicateSubscriptions = true
+    let mixed = await makeViewModel(
+      subscriptions: [subscription(), webSubscription],
+      configuration: mixedStores
+    )
+    capture("25-app-store-and-web", directory: directory, viewModel: mixed)
+
+    // 26 & 27. The point of the mixed case: the same screen offers different actions per
+    //          purchase, because what a store permits differs. Apple's sub can change plan and
+    //          request a refund; the web one can only be managed on the web.
+    if let appStorePurchase = mixed.purchases.first(where: { $0.store == .appStore }) {
+      captureDetail("26-mixed-detail-app-store", directory: directory, viewModel: mixed) {
+        PurchaseDetailScreenView(viewModel: mixed, purchase: appStorePurchase)
+      }
+    }
+    if let webPurchase = mixed.purchases.first(where: { $0.store == .stripe }) {
+      captureDetail("27-mixed-detail-web", directory: directory, viewModel: mixed) {
+        PurchaseDetailScreenView(viewModel: mixed, purchase: webPurchase)
+      }
+    }
+
+    // 28. Two App Store subscriptions in different subscription groups, drilled into one of
+    //     them. Change plan is scoped to that subscription's own group — Apple's sheet takes a
+    //     single group, so there is no combined plan picker to offer.
+    let twoGroups = await makeViewModel(
+      subscriptions: [
+        subscription(),
+        subscription(
+          productId: "coach_monthly",
+          transactionId: "t2",
+          purchaseDate: -10,
+          groupId: "group_coach"
+        )
+      ]
+    )
+    if let first = twoGroups.purchases.first {
+      captureDetail("28-two-groups-detail", directory: directory, viewModel: twoGroups) {
+        PurchaseDetailScreenView(viewModel: twoGroups, purchase: first)
+      }
+    }
+
+    // 29. An entitlement with no transaction behind it — comped, or granted by hand. There is
+    //     nothing to manage, so the management row is absent rather than pointing nowhere.
+    capture(
+      "29-comped-entitlement",
+      directory: directory,
+      viewModel: await makeViewModel(entitlements: [Entitlement(id: "pro")])
+    )
+
+    // 30. Shared through Family Sharing. Cancel, refund and change plan all disappear: the
+    //     purchase belongs to the organiser, not this customer.
+    capture(
+      "30-family-shared",
+      directory: directory,
+      viewModel: await makeViewModel(
+        subscriptions: [subscription()],
+        familyShared: ["monthly_pro"]
+      )
+    )
 
     let written = (try? FileManager.default.contentsOfDirectory(atPath: directory.path))?
       .filter { $0.hasSuffix(".png") }
