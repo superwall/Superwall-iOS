@@ -116,9 +116,10 @@ struct CustomerCenterViewControllerTests {
 
     // Arm the debounce explicitly rather than trusting SwiftUI's `onDisappear` to have fired in
     // this harness. The claim under test is that the veto cancels an *armed* dismissal, and with
-    // nothing armed the test would pass whether or not the veto works at all. In production the
-    // ordering is guaranteed the other way round: `viewDidDisappear` calls `super` first, which
-    // is what forwards the disappearance into SwiftUI and arms this.
+    // nothing armed the test would pass whether or not the veto works at all. This ordering is
+    // what the veto assumes in production — that `super.viewDidDisappear` forwards the
+    // disappearance into SwiftUI before the guard below runs — which Apple documents as
+    // view-type-dependent rather than guaranteed.
     controller.viewModel.surfaceDidDisappear()
     controller.viewDidDisappear(false)
 

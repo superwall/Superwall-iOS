@@ -189,10 +189,10 @@ public struct CustomerCenterView: View {
         // Opaque, so nothing shows through and no touch reaches a half-built screen. Matches the
         // `insetGrouped` list it becomes.
         //
-        // Deliberately not `theme.background`: nothing else in the SDK reads it, so honouring it
-        // here alone would tint the cover and then fade to an untinted list — a colour flip on
-        // exactly the screens that configured a background. It belongs here when background
-        // theming is wired up across the screens, not before.
+        // Deliberately not driven by a configured background colour: `Appearance` no longer
+        // exposes one, and honouring it here alone would tint the cover and then fade to an
+        // untinted list — a colour flip on exactly the screens that configured a background.
+        // It belongs here when background theming is wired up across the screens, not before.
         Color(uiColor: .systemGroupedBackground)
         ProgressView().accessibilityIdentifier("customer_center.loading")
       }

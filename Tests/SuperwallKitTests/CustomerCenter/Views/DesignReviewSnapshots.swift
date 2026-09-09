@@ -7,11 +7,17 @@
 //  Renders the Customer Center's screens across the customer states and configurations a
 //  designer needs to review, and writes them to disk as PNGs.
 //
-//  Not part of the suite's verification — it asserts nothing about behaviour. It is disabled by
-//  default and only runs when `CUSTOMER_CENTER_SNAPSHOT_DIR` is set:
+//  Not part of the suite's verification — it asserts nothing about behaviour. It is dormant
+//  unless `CUSTOMER_CENTER_SNAPSHOT_DIR` is set, which has to happen on the scheme: tick
+//  `CUSTOMER_CENTER_SNAPSHOT_DIR` under Edit Scheme → Test → Arguments and point it at a
+//  directory, then run `-only-testing:SuperwallKitTests/DesignReviewSnapshots`.
 //
-//      CUSTOMER_CENTER_SNAPSHOT_DIR=~/Desktop/customer-center-screens \
-//        xcodebuild test -only-testing:SuperwallKitTests/DesignReviewSnapshots ...
+//  Setting it on the command line does not work, in either form — neither
+//  `CUSTOMER_CENTER_SNAPSHOT_DIR=... xcodebuild test` nor xcodebuild's `TEST_RUNNER_` prefix
+//  reaches the test process running in the simulator, and the suite silently skips.
+//
+//  The run ends by recording an issue naming the file count. That is the report, not a failure;
+//  a passing run here would mean nothing was written.
 //
 
 import Testing
@@ -193,6 +199,13 @@ struct DesignReviewSnapshots {
     // StoreKit transaction lookup — so it has to be faked separately.
     let lookup = StoreKitTransactionLookupMock()
     lookup.familyShared = familyShared
+    // `EnvironmentMock` defaults this to the Unix epoch, which renders as "December 31, 1969" in
+    // Account details on nearly every screen. Harmless in a unit test, but in a design review it
+    // reads as a bug and costs the room a conversation. Give it a plausible install date.
+    var environment = environment
+    if environment.originalDownloadDate == Date(timeIntervalSince1970: 0) {
+      environment.originalDownloadDate = Self.now.addingTimeInterval(-400 * 24 * 60 * 60)
+    }
     let (dependencies, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(
         subscriptions: subscriptions,
@@ -539,6 +552,7 @@ struct DesignReviewSnapshots {
 
     // MARK: - Mixed stores and multiple groups
 
+    let webManagementURL = URL(string: "https://acme.com/account")
     let webSubscription = subscription(
       productId: "web_pro_monthly",
       transactionId: "w1",
@@ -550,33 +564,49 @@ struct DesignReviewSnapshots {
 
     // 23. A web subscription on its own. No Change plan or Refund — both are App Store only —
     //     and the manage row points at the web management page instead.
+    //
+    // `EnvironmentMock` takes the URL directly; only `LiveEnvironment` reads it out of the
+    // configuration. Set both, or this renders scenario 24's unconfigured screen instead.
+    let webConfigured = defaultConfiguration()
+    webConfigured.support.webManagementURL = webManagementURL
     capture(
       "23-web-subscription-only",
       directory: directory,
-      viewModel: await makeViewModel(subscriptions: [webSubscription])
+      viewModel: await makeViewModel(
+        subscriptions: [webSubscription],
+        configuration: webConfigured,
+        environment: EnvironmentMock(webManagementURL: webManagementURL)
+      )
     )
 
     // 24. The same customer with no management URL configured, which is what most apps will
-    //     have on day one: the row stays and explains where the link is.
+    //     have on day one. The list itself is identical to 23 — the row stays put, because
+    //     removing it would leave a paying customer with no way to manage anything — so the
+    //     screenshot has to be what the tap produces, which is where the two diverge.
     let noWebURL = defaultConfiguration()
     noWebURL.support.webManagementURL = nil
-    capture(
+    let unconfigured = await makeViewModel(
+      subscriptions: [webSubscription],
+      configuration: noWebURL,
+      environment: EnvironmentMock(webManagementURL: nil)
+    )
+    captureDetail(
       "24-web-subscription-no-management-url",
       directory: directory,
-      viewModel: await makeViewModel(
-        subscriptions: [webSubscription],
-        configuration: noWebURL,
-        environment: EnvironmentMock(webManagementURL: nil)
-      )
-    )
+      viewModel: unconfigured
+    ) {
+      Text(unconfigured.strings.string("customer_center_web_manage_unavailable")).padding()
+    }
 
     // 25. App Store and web active at once — the case where the two stores sit side by side and
     //     the duplicate warning fires.
     let mixedStores = defaultConfiguration()
     mixedStores.warnsAboutDuplicateSubscriptions = true
+    mixedStores.support.webManagementURL = webManagementURL
     let mixed = await makeViewModel(
       subscriptions: [subscription(), webSubscription],
-      configuration: mixedStores
+      configuration: mixedStores,
+      environment: EnvironmentMock(webManagementURL: webManagementURL)
     )
     capture("25-app-store-and-web", directory: directory, viewModel: mixed)
 
@@ -619,7 +649,7 @@ struct DesignReviewSnapshots {
     capture(
       "29-comped-entitlement",
       directory: directory,
-      viewModel: await makeViewModel(entitlements: [Entitlement(id: "pro")])
+      viewModel: await makeViewModel(entitlements: [Entitlement(id: "pro", store: nil)])
     )
 
     // 30. Shared through Family Sharing. Cancel, refund and change plan all disappear: the
