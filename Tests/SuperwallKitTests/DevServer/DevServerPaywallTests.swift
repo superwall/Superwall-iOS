@@ -11,7 +11,8 @@ final class DevServerPaywallTests: XCTestCase {
     id: String = "pro",
     paywallId: String? = nil,
     identifier: String? = nil,
-    products: [String: String]? = nil
+    products: [String: String]? = nil,
+    settings: String? = nil
   ) -> DevServerSurface {
     let json = """
     {
@@ -20,6 +21,7 @@ final class DevServerPaywallTests: XCTestCase {
       "url": "/preview/paywall/\(id)",
       \(paywallId.map { "\"paywallId\": \"\($0)\"," } ?? "")
       \(identifier.map { "\"identifier\": \"\($0)\"," } ?? "")
+      \(settings.map { "\"settings\": \($0)," } ?? "")
       "products": \(products.map { dict in
         "{" + dict.map { "\"\($0.key)\": \"\($0.value)\"" }.sorted().joined(separator: ",") + "}"
       } ?? "null")
@@ -165,7 +167,100 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(paywall.presentation.style, .fullscreen)
   }
 
-  // MARK: - Partly specified geometry
+  // MARK: - What config.ts owns
+
+  /// The settings block is the paywall's own config.ts, so it wins over the
+  /// published paywall — that is the whole point of serving it: a presentation
+  /// or background change shows on device with no push.
+  func test_takesEverySettingTheManifestDeclaresOverTheDashboards() {
+    let paywall = Paywall.devServer(
+      surface: surface(settings: """
+      {
+        "presentation_style": { "type": "POPUP", "width": 80, "height": 60, "corner_radius": 15 },
+        "feature_gating": "non_gated",
+        "scroll_enabled": true,
+        "background_color_hex": "#ffffff",
+        "dark_background_color_hex": "#0d0f12"
+      }
+      """),
+      url: url,
+      inheriting: published()
+    )
+
+    XCTAssertEqual(paywall.presentation.style, .popup(height: 60, width: 80, cornerRadius: 15))
+    XCTAssertEqual(paywall.featureGating, .nonGated)
+    XCTAssertTrue(paywall.isScrollEnabled)
+    XCTAssertEqual(paywall.backgroundColorHex, "#ffffff")
+    XCTAssertEqual(paywall.darkBackgroundColorHex, "#0d0f12")
+    // The colours are derived from the local hexes, not carried over with them.
+    XCTAssertEqual(paywall.backgroundColor, UIColor(hexString: "#ffffff"))
+    XCTAssertEqual(paywall.darkBackgroundColor, UIColor(hexString: "#0d0f12"))
+  }
+
+  /// config.ts has no word for the loading delay, so overriding the style must
+  /// not silently reset the dashboard's timing.
+  func test_keepsThePublishedLoadingDelayWhenTheManifestChangesTheStyle() {
+    let paywall = Paywall.devServer(
+      surface: surface(settings: """
+      { "presentation_style": { "type": "MODAL" } }
+      """),
+      url: url,
+      inheriting: published()
+    )
+
+    XCTAssertEqual(paywall.presentation.style, .modal)
+    XCTAssertEqual(paywall.presentation.delay, 250)
+  }
+
+  /// Each key stands alone: the block declaring a style says nothing about
+  /// gating, which still comes from the dashboard.
+  func test_inheritsTheSettingsTheBlockLeavesOut() {
+    let paywall = Paywall.devServer(
+      surface: surface(settings: """
+      { "presentation_style": { "type": "MODAL" } }
+      """),
+      url: url,
+      inheriting: published()
+    )
+
+    XCTAssertEqual(paywall.presentation.style, .modal)
+    XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertFalse(paywall.isScrollEnabled)
+    XCTAssertEqual(paywall.backgroundColorHex, "#123456")
+  }
+
+  /// A surface that has never been pushed has nothing to inherit, so its
+  /// config.ts is all there is — and it presents from it.
+  func test_presentsAnUnpushedSurfaceFromItsOwnConfig() {
+    let paywall = Paywall.devServer(
+      surface: surface(id: "draft", settings: """
+      {
+        "presentation_style": { "type": "DRAWER", "height": 60, "corner_radius": 15 },
+        "feature_gating": "gated",
+        "scroll_enabled": false
+      }
+      """),
+      url: url
+    )
+
+    XCTAssertEqual(paywall.presentation.style, .drawer(height: 60, cornerRadius: 15))
+    XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertFalse(paywall.isScrollEnabled)
+  }
+
+  /// The block reports the cache because push stamps it, and dev mode ignores
+  /// it either way — a live-reloading page must never come from the cache.
+  func test_stillDisablesTheCacheWhenTheManifestReportsItEnabled() {
+    let paywall = Paywall.devServer(
+      surface: surface(settings: """
+      { "on_device_cache": true, "presentation_style": { "type": "MODAL" } }
+      """),
+      url: url,
+      inheriting: published()
+    )
+
+    XCTAssertEqual(paywall.onDeviceCache, .disabled)
+  }
 
   // MARK: - What the dashboard keeps owning
 

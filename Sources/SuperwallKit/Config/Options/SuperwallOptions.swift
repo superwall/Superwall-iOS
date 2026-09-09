@@ -404,19 +404,24 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///
   /// Paywalls with a local counterpart on the dev server then render from your live, local
   /// paywall code instead of their published versions, while configuration, placements,
-  /// audience evaluation, assignment and feature gating all stay real. Paywalls without a
-  /// local counterpart still load their published versions.
+  /// audience evaluation, assignment and the enforcement of feature gating all stay real.
+  /// Paywalls without a local counterpart still load their published versions.
   ///
-  /// What the local surface owns is what it renders: its content and its products.
-  /// Everything else the dashboard configures — presentation style, feature gating,
-  /// intro offer eligibility, surveys — comes from the published paywall, because those
-  /// settings reach the SDK in the snapshot `superwall push` uploads rather than from
-  /// the dev server. So a `config.ts` change to any of them is not visible in dev mode
-  /// until you push it.
+  /// What the local surface owns is what it renders and the settings its `config.ts`
+  /// declares: content, products, presentation style, feature gating, scrolling and
+  /// background colours all come from your local code, so changing them shows on the
+  /// next presentation without a push. What `config.ts` cannot express — intro offer
+  /// eligibility, surveys, computed properties — comes from the published paywall the
+  /// surface stands in for, and so does any setting your `config.ts` leaves out.
   ///
-  /// Local notifications are the one exception: the published paywall's are ignored and
-  /// the ones your local `config.ts` declares fire straight away, without a push, because
-  /// they reach the SDK from the paywall itself rather than from the dashboard.
+  /// A dev server older than this SDK sends no settings at all, in which case every
+  /// setting comes from the published paywall.
+  ///
+  /// Two exceptions. Local notifications are always the local paywall's: the published
+  /// ones are ignored and the ones your `config.ts` declares fire without a push, because
+  /// they reach the SDK from the paywall itself rather than from the dashboard. And the
+  /// on-device cache stays off however either side configures it, so a page you are
+  /// editing is never served from the web view's cache.
   ///
   /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
   /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.

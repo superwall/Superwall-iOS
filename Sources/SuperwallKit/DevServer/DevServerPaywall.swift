@@ -14,13 +14,16 @@ extension Paywall {
   /// Builds the paywall a dev server surface presents.
   ///
   /// - Parameter published: the dashboard paywall this surface stands in for,
-  /// if any. The surface owns what renders — its bytes and its products.
-  /// Everything else the dashboard configures, presentation included, is
-  /// inherited from `published`, so dev mode changes a paywall's content and
-  /// never its configuration. Two exceptions, both marked below:
-  /// `localNotifications`, which the local paywall declares itself, and
-  /// `onDeviceCache`, which stays `.disabled` so a live-reloading local page
-  /// is never served from the web view's cache.
+  /// if any. The surface owns what renders — its bytes, its products, and
+  /// whatever its `config.ts` settings say, which the manifest carries. The
+  /// dashboard owns what the manifest cannot express, so `published` fills
+  /// every silence: a setting the manifest declares wins, one it leaves out
+  /// is inherited, and with neither the safe default stands.
+  ///
+  /// Two fields are never taken from the manifest, both marked below:
+  /// `localNotifications`, which the local paywall declares itself in messages
+  /// rather than here, and `onDeviceCache`, which stays `.disabled` so a
+  /// live-reloading local page is never served from the web view's cache.
   ///
   /// Anything added to `Paywall` later defaults to the local stub's value, so
   /// if the dashboard configures it and the local paywall has no way of its
@@ -45,16 +48,22 @@ extension Paywall {
       ?? "dev:\(surface.id)"
     let cacheKey = "dev:\(surface.id):\(url.absoluteString)"
     let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
-    // A paywall's config.ts settings reach the SDK in the pushed snapshot,
-    // not the dev manifest, so they come from the published paywall this
-    // surface stands in for. Without one — a surface that has never been
-    // pushed — the safe defaults stand.
-    let featureGating: FeatureGatingBehavior = published?.featureGating ?? .nonGated
+    // What config.ts declares comes off the manifest; what it cannot express
+    // comes off the published paywall; with neither, the safe default stands.
+    let settings = surface.settings
+    let featureGating: FeatureGatingBehavior = settings?.featureGating
+      ?? published?.featureGating
+      ?? .nonGated
     let computedPropertyRequests: [ComputedPropertyRequest] = published?.computedPropertyRequests ?? []
     let surveys: [Survey] = published?.surveys ?? []
     let introOfferEligibility: IntroOfferEligibility = published?.introOfferEligibility ?? .automatic
-    let presentation = published?.presentation
-      ?? PaywallPresentationInfo(style: .fullscreen, delay: 0)
+    let presentation = PaywallPresentationInfo(
+      style: settings?.presentationStyle ?? published?.presentation.style ?? .fullscreen,
+      delay: published?.presentation.delay ?? 0
+    )
+    let backgroundColorHex = settings?.backgroundColorHex ?? published?.backgroundColorHex
+    let darkBackgroundColorHex = settings?.darkBackgroundColorHex
+      ?? published?.darkBackgroundColorHex
 
     var paywall = Paywall(
       databaseId: databaseId,
@@ -69,10 +78,10 @@ extension Paywall {
       ),
       htmlSubstitutions: "",
       presentation: presentation,
-      backgroundColorHex: published?.backgroundColorHex ?? "#FFFFFF",
-      backgroundColor: published?.backgroundColor ?? .white,
-      darkBackgroundColorHex: published?.darkBackgroundColorHex,
-      darkBackgroundColor: published?.darkBackgroundColor,
+      backgroundColorHex: backgroundColorHex ?? "#FFFFFF",
+      backgroundColor: backgroundColorHex.map { UIColor(hexString: $0) } ?? .white,
+      darkBackgroundColorHex: darkBackgroundColorHex,
+      darkBackgroundColor: darkBackgroundColorHex.map { UIColor(hexString: $0) },
       productItems: products,
       productIds: products.map { $0.id },
       appStoreProductIds: products.map { $0.id },
@@ -81,12 +90,11 @@ extension Paywall {
       productsLoadingInfo: .init(),
       shimmerLoadingInfo: .init(),
       paywalljsVersion: "",
-      // Feature gating decides whether a non-paying user gets the feature, so
-      // it can never come from local paywall code.
       featureGating: featureGating,
-      // Deliberately not inherited either: a dev server reloads the page on
-      // every edit, and DependencyContainer feeds this straight into the web
-      // view, so an enabled cache could serve a stale copy of the local page.
+      // Never taken from either side: a dev server reloads the page on every
+      // edit, and DependencyContainer feeds this straight into the web view,
+      // so an enabled cache — which the manifest reports, because push stamps
+      // it — could serve a stale copy of the local page.
       onDeviceCache: .disabled,
       // Deliberately not inherited: a local paywall declares its own
       // notifications in config.ts, and they reach the SDK as
@@ -98,7 +106,7 @@ extension Paywall {
       // lacks computed properties that production resolves.
       computedPropertyRequests: computedPropertyRequests,
       surveys: surveys,
-      isScrollEnabled: published?.isScrollEnabled ?? true,
+      isScrollEnabled: settings?.isScrollEnabled ?? published?.isScrollEnabled ?? true,
       // Drives displayed trial state and pricing, which is exactly what a
       // local preview is checked against.
       introOfferEligibility: introOfferEligibility

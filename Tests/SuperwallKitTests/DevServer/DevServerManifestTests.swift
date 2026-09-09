@@ -184,4 +184,109 @@ final class DevServerManifestTests: XCTestCase {
     XCTAssertEqual(decoded.surface(forPaywallDatabaseId: "333")?.id, "shared")
     XCTAssertNil(decoded.surface(forPaywallDatabaseId: "444"))
   }
+
+  /// The manifest a running `superwall dev` actually serves, copied verbatim
+  /// from `/device/manifest.json`, so a change on either side of the wire
+  /// fails here rather than on someone's device.
+  func test_readsTheManifestTheCliServes() throws {
+    let decoded = try manifest("""
+    {
+      "surfaces": [
+        {
+          "kind": "paywall",
+          "id": "drawer",
+          "url": "/preview/paywall/drawer",
+          "paywallId": "208552",
+          "settings": {
+            "presentation_style": { "type": "DRAWER", "height": 60, "corner_radius": 15 },
+            "feature_gating": "gated",
+            "on_device_cache": false,
+            "scroll_enabled": true,
+            "game_controller_enabled": true
+          }
+        },
+        {
+          "kind": "paywall",
+          "id": "demo",
+          "url": "/preview/paywall/demo",
+          "products": { "primary": "demo_monthly" },
+          "settings": {
+            "presentation_style": { "type": "FULLSCREEN" },
+            "feature_gating": "non_gated",
+            "on_device_cache": true,
+            "scroll_enabled": true,
+            "game_controller_enabled": false,
+            "background_color_hex": "#ffffff",
+            "dark_background_color_hex": "#0d0f12"
+          }
+        },
+        {
+          "kind": "paywall",
+          "id": "hosted",
+          "url": "/preview/paywall/hosted",
+          "settings": {
+            "presentation_style": { "type": "FULLSCREEN" },
+            "feature_gating": "non_gated",
+            "on_device_cache": true,
+            "scroll_enabled": true,
+            "game_controller_enabled": false,
+            "web_checkout_destination": "EXTERNAL"
+          }
+        }
+      ]
+    }
+    """)
+
+    XCTAssertEqual(decoded.surfaces.count, 3)
+    let bound = try XCTUnwrap(decoded.surface(forPaywallDatabaseId: "208552"))
+    let url = try XCTUnwrap(URL(string: "http://localhost:6100/preview/paywall/drawer"))
+
+    // A published paywall that disagrees with config.ts on every setting the
+    // manifest carries, so nothing here can pass by accident.
+    let stub = Paywall.stub()
+    let published = Paywall(
+      databaseId: "208552",
+      identifier: "pro_published",
+      name: "Published Pro",
+      cacheKey: stub.cacheKey,
+      buildId: stub.buildId,
+      url: stub.url,
+      urlConfig: stub.urlConfig,
+      htmlSubstitutions: "",
+      presentation: PaywallPresentationInfo(style: .fullscreen, delay: 300),
+      backgroundColorHex: "#123456",
+      backgroundColor: .blue,
+      darkBackgroundColorHex: nil,
+      darkBackgroundColor: nil,
+      productItems: [],
+      productIds: [],
+      appStoreProductIds: [],
+      responseLoadingInfo: .init(),
+      webviewLoadingInfo: .init(),
+      productsLoadingInfo: .init(),
+      shimmerLoadingInfo: .init(),
+      paywalljsVersion: "",
+      featureGating: .nonGated,
+      onDeviceCache: .enabled,
+      isScrollEnabled: false,
+      introOfferEligibility: .automatic
+    )
+
+    let paywall = Paywall.devServer(surface: bound, url: url, inheriting: published)
+
+    XCTAssertEqual(paywall.presentation.style, .drawer(height: 60, cornerRadius: 15))
+    XCTAssertEqual(paywall.presentation.delay, 300)
+    XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertTrue(paywall.isScrollEnabled)
+    XCTAssertEqual(paywall.onDeviceCache, .disabled)
+
+    // Web-only and app-level settings have no paywall field to land on, so the
+    // surfaces carrying them still read cleanly.
+    let hosted = try XCTUnwrap(decoded.surfaces.first { $0.id == "hosted" })
+    XCTAssertEqual(hosted.settings?.presentationStyle, .fullscreen)
+
+    let demo = try XCTUnwrap(decoded.surfaces.first { $0.id == "demo" })
+    XCTAssertEqual(demo.settings?.backgroundColorHex, "#ffffff")
+    XCTAssertEqual(demo.settings?.darkBackgroundColorHex, "#0d0f12")
+  }
 }
