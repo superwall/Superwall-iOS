@@ -52,12 +52,12 @@ struct DevServerSettings: Decodable, Equatable {
     case popup = "POPUP"
   }
 
-  private enum WireGating: String, Decodable {
+  private enum WireGating: String {
     case gated
     case nonGated = "non_gated"
   }
 
-  private enum WireEligibility: String, Decodable {
+  private enum WireEligibility: String {
     case automatic
     case eligible = "always_eligible"
     case ineligible = "always_ineligible"
@@ -66,15 +66,20 @@ struct DevServerSettings: Decodable, Equatable {
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     presentationStyle = try Self.style(in: container)
-    switch try container.decodeIfPresent(WireGating.self, forKey: .featureGating) {
+    let gating = try container.decodeIfPresent(String.self, forKey: .featureGating)
+    switch gating.flatMap(WireGating.init(rawValue:)) {
     case .gated:
       featureGating = .gated
     case .nonGated:
       featureGating = .nonGated
     case nil:
+      if gating != nil {
+        Self.warnUnreadable("feature gating", gating)
+      }
       featureGating = nil
     }
-    switch try container.decodeIfPresent(WireEligibility.self, forKey: .introOfferEligibility) {
+    let eligibility = try container.decodeIfPresent(String.self, forKey: .introOfferEligibility)
+    switch eligibility.flatMap(WireEligibility.init(rawValue:)) {
     case .automatic:
       introOfferEligibility = .automatic
     case .eligible:
@@ -82,6 +87,9 @@ struct DevServerSettings: Decodable, Equatable {
     case .ineligible:
       introOfferEligibility = .ineligible
     case nil:
+      if eligibility != nil {
+        Self.warnUnreadable("intro offer eligibility", eligibility)
+      }
       introOfferEligibility = nil
     }
     isScrollEnabled = try container.decodeIfPresent(Bool.self, forKey: .isScrollEnabled)
@@ -131,13 +139,20 @@ struct DevServerSettings: Decodable, Equatable {
   }
 
   private static func unreadable(_ type: String?) -> PaywallPresentationStyle? {
+    warnUnreadable("presentation style", type)
+    return nil
+  }
+
+  /// Reports one setting the CLI names in a way this SDK can't read. The CLI
+  /// versions separately from the SDK, so a value added after this SDK shipped
+  /// costs that setting alone — the rest of the block still stands.
+  private static func warnUnreadable(_ name: String, _ value: String?) {
     Logger.debug(
       logLevel: .warn,
       scope: .superwallCore,
-      message: "Ignoring a dev server presentation style this SDK can't read "
-        + "(\(type ?? "no type")). The paywall presents as its published version does. "
+      message: "Ignoring a dev server \(name) this SDK can't read "
+        + "(\(value ?? "nothing")). The paywall uses its published version's \(name). "
         + "Updating SuperwallKit may fix this."
     )
-    return nil
   }
 }

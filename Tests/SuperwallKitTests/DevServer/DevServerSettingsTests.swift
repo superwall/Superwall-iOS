@@ -128,12 +128,23 @@ final class DevServerSettingsTests: XCTestCase {
     }
   }
 
-  func test_stillRefusesAnEligibilityItCannotName() throws {
-    XCTAssertThrowsError(try settings("{ \"introductory_offer_eligibility\": \"maybe\" }"))
-  }
+  /// A value named by a newer CLI costs that setting alone, the same way an
+  /// unreadable style does — the paywall falls back to its published gating
+  /// and eligibility, and keeps everything else its config.ts declares.
+  func test_dropsAGatingOrEligibilityItCannotNameAndKeepsTheRest() throws {
+    let decoded = try settings("""
+    {
+      "feature_gating": "sometimes",
+      "introductory_offer_eligibility": "maybe",
+      "scroll_enabled": false,
+      "background_color_hex": "#ffffff"
+    }
+    """)
 
-  func test_stillRefusesAGatingItCannotName() throws {
-    XCTAssertThrowsError(try settings("{ \"feature_gating\": \"sometimes\" }"))
+    XCTAssertNil(decoded.featureGating)
+    XCTAssertNil(decoded.introOfferEligibility)
+    XCTAssertEqual(decoded.isScrollEnabled, false)
+    XCTAssertEqual(decoded.backgroundColorHex, "#ffffff")
   }
 
   func test_aSurfaceFromAnOlderDevServerCarriesNoSettings() throws {
@@ -144,21 +155,22 @@ final class DevServerSettingsTests: XCTestCase {
     XCTAssertNil(decoded.settings)
   }
 
-  /// The surface still serves its local code when the block is unreadable —
-  /// it presents as its published version does instead of vanishing from the
-  /// manifest.
+  /// The surface still serves its local code when a setting is unreadable, and
+  /// keeps the block: only the setting it can't name falls back to the
+  /// published paywall's.
   func test_keepsASurfaceWhoseSettingsCannotBeRead() throws {
     let decoded = try surface("""
     {
       "kind": "paywall",
       "id": "pro",
       "url": "/preview/paywall/pro",
-      "settings": { "feature_gating": "sometimes" }
+      "settings": { "feature_gating": "sometimes", "scroll_enabled": false }
     }
     """)
 
     XCTAssertEqual(decoded.id, "pro")
-    XCTAssertNil(decoded.settings)
+    XCTAssertNil(decoded.settings?.featureGating)
+    XCTAssertEqual(decoded.settings?.isScrollEnabled, false)
   }
 
   func test_stillRefusesASurfaceMissingItsIdentity() throws {

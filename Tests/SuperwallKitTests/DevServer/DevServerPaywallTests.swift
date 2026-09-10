@@ -162,6 +162,29 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertNotEqual(first.identifier, second.identifier)
   }
 
+  /// A cached PaywallViewController is built from the settings once, so an
+  /// edited config.ts has to miss the cache rather than live-reload the page
+  /// inside the frame the old settings built.
+  func test_givesAChangedConfigItsOwnCacheKey() {
+    let modal = Paywall.devServer(
+      surface: surface(settings: "{ \"presentation_style\": { \"type\": \"MODAL\" } }"),
+      url: url
+    )
+    let fullscreen = Paywall.devServer(
+      surface: surface(settings: "{ \"presentation_style\": { \"type\": \"FULLSCREEN\" } }"),
+      url: url
+    )
+    let unchanged = Paywall.devServer(
+      surface: surface(settings: "{ \"presentation_style\": { \"type\": \"MODAL\" } }"),
+      url: url
+    )
+
+    XCTAssertNotEqual(modal.cacheKey, fullscreen.cacheKey)
+    XCTAssertNotEqual(modal.cacheKey, Paywall.devServer(surface: surface(), url: url).cacheKey)
+    // Same config.ts, same key: an unrelated presentation still reuses the view.
+    XCTAssertEqual(modal.cacheKey, unchanged.cacheKey)
+  }
+
   func test_presentsFullscreenWhenNothingDeclaresAStyle() {
     let paywall = Paywall.devServer(surface: surface(), url: url)
     XCTAssertEqual(paywall.presentation.style, .fullscreen)

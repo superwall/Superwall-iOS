@@ -20,6 +20,14 @@ extension Paywall {
   /// every silence: a setting the manifest declares wins, one it leaves out
   /// is inherited, and with neither the safe default stands.
   ///
+  /// In practice a current dev server declares all of them, so the dashboard's
+  /// copies go unread — including `featureGating`, which means a paywall gated
+  /// on the dashboard previews non-gated unless its `config.ts` says
+  /// `featureGating: "gated"`. That is what pushing it would do too, so a
+  /// preview showing the feature for free is the honest answer, not a bug.
+  /// `published` is left to fill in for the keys the CLI only sends sometimes
+  /// (the background colours) and for a dev server too old to send settings.
+  ///
   /// Two fields are never taken from the manifest, both marked below:
   /// `localNotifications`, which the local paywall declares itself in messages
   /// rather than here, and `onDeviceCache`, which stays `.disabled` so a
@@ -46,7 +54,11 @@ extension Paywall {
     let identifier: String = published?.identifier
       ?? surface.identifier
       ?? "dev:\(surface.id)"
-    let cacheKey = "dev:\(surface.id):\(url.absoluteString)"
+    // The settings are part of the key because a cached PaywallViewController
+    // is built from them once: `Paywall.update(from:)` carries `featureGating`
+    // across but not the style, scroll flag or colours, so without this an
+    // edited config.ts would live-reload the page inside a stale native frame.
+    let cacheKey = "dev:\(surface.id):\(url.absoluteString):\(fingerprint(of: surface.settings))"
     let responseLoadingInfo: LoadingInfo = published?.responseLoadingInfo ?? .init()
     // What config.ts declares comes off the manifest; what it cannot express
     // comes off the published paywall; with neither, the safe default stands.
@@ -113,6 +125,24 @@ extension Paywall {
     paywall.isLocal = true
     paywall.experiment = published?.experiment
     return paywall
+  }
+
+  /// Identifies a settings block, so a changed `config.ts` gets a new cache
+  /// key. Only the settings the paywall is built from count.
+  private static func fingerprint(of settings: DevServerSettings?) -> String {
+    guard let settings = settings else {
+      return "none"
+    }
+    return [
+      settings.presentationStyle.map { "\($0)" },
+      settings.featureGating.map { "\($0)" },
+      settings.introOfferEligibility.map { "\($0)" },
+      settings.isScrollEnabled.map { "\($0)" },
+      settings.backgroundColorHex,
+      settings.darkBackgroundColorHex
+    ]
+    .map { $0 ?? "-" }
+    .joined(separator: "|")
   }
 
   /// How the surface presents: config.ts picks the style, and the delay is
