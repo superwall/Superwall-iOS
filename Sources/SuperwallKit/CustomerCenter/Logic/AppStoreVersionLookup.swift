@@ -33,6 +33,7 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
 
   private static let versionKey = "com.superwall.customerCenter.latestAppStoreVersion"
   private static let fetchedAtKey = "com.superwall.customerCenter.latestAppStoreVersionFetchedAt"
+  private static let regionKey = "com.superwall.customerCenter.latestAppStoreVersionRegion"
 
   let bundleId: String?
   /// Two-letter region to scope the lookup to. Versions differ by region during a phased release,
@@ -147,7 +148,11 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
     guard
       let version = defaults.string(forKey: Self.versionKey),
       let fetchedAt = defaults.object(forKey: Self.fetchedAtKey) as? Date,
-      now().timeIntervalSince(fetchedAt) < Self.cacheDuration
+      now().timeIntervalSince(fetchedAt) < Self.cacheDuration,
+      // A version is only the answer for the region it was fetched for. Without this, someone who
+      // changes region is served the previous store's answer for the rest of the day — and that
+      // is exactly when the answer is most likely to be wrong.
+      defaults.string(forKey: Self.regionKey) == regionCode
     else {
       return nil
     }
@@ -157,5 +162,6 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
   private func cache(_ version: String) {
     defaults.set(version, forKey: Self.versionKey)
     defaults.set(now(), forKey: Self.fetchedAtKey)
+    defaults.set(regionCode, forKey: Self.regionKey)
   }
 }

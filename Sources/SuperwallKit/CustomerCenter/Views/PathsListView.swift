@@ -44,6 +44,13 @@ struct PathsListView: View {
   }
 
   private func title(for resolved: ResolvedPath) -> String {
+    Self.title(for: resolved, strings: strings)
+  }
+
+  /// What a row says. Static so the rule can be exercised directly: a title that reads the same
+  /// for two different paths is a bug you can only see by comparing two of them, which a rendered
+  /// view can't easily be asked about.
+  static func title(for resolved: ResolvedPath, strings: CustomerCenterStrings) -> String {
     let path = resolved.path
     if let title = path.title { return title }
     switch path.type {
@@ -58,7 +65,7 @@ struct PathsListView: View {
     case .refund: return strings.string("customer_center_path_refund")
     case .changePlan: return strings.string("customer_center_path_change_plan")
     case .contactSupport: return strings.string("customer_center_path_contact_support")
-    case .url(let url, _): return url.host ?? url.absoluteString
+    case .url(_, let title, _): return title
     case .custom(let identifier): return identifier
     }
   }

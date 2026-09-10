@@ -81,6 +81,16 @@ enum CustomerCenterPathResolver {
 
     guard [.stripe, .paddle, .superwall].contains(purchase.store) else { return nil }
 
+    // A one-off purchase has nothing to manage, and neither has a subscription that has lapsed or
+    // been revoked. The App Store branch above gates on both; this one gated on neither, so a
+    // single Stripe charge and an expired web subscription were each offered a management row.
+    switch purchase.kind {
+    case .nonSubscription: return nil
+    case .subscription(let sub) where sub.isRevoked: return nil
+    default: break
+    }
+    guard purchase.isActive else { return nil }
+
     // A comped grant — an entitlement with no transaction *and* no store behind it — has nothing
     // to manage anywhere, so offer the page only if one exists and never claim a receipt was
     // sent. The signal is the nil store, not the missing transaction: a web purchase arrives as a
@@ -112,7 +122,7 @@ enum CustomerCenterPathResolver {
     case .contactSupport:
       return context.supportEmailAvailable && context.canOpenURLs ? .contactSupport : nil
 
-    case let .url(url, method):
+    case let .url(url, _, method):
       guard context.canOpenURLs else { return nil }
       let isWeb = ["http", "https"].contains(url.scheme?.lowercased() ?? "")
       return .url(url, inApp: method == .inApp && isWeb)

@@ -9,7 +9,11 @@ import Testing
 import Foundation
 @testable import SuperwallKit
 
-@Suite("App Store update check")
+/// `.serialized` because `StubURLProtocol` below is the only way to stand in for the network here,
+/// and `URLSession` instantiates protocol classes itself — so its configuration and its record of
+/// what was requested have to be static. Run in parallel, the cases overwrite each other's stub
+/// responses and share a request count, which is how they passed locally and failed on CI.
+@Suite("App Store update check", .serialized)
 @MainActor
 struct AppStoreUpdateCheckTests {
   private func makeViewModel(
@@ -290,6 +294,38 @@ struct AppStoreUpdateCheckTests {
     StubURLProtocol.body = Data(#"{"results":[{"version":"9.9.9"}]}"#.utf8)
     #expect(await lookup.latestAppStoreVersion() == "3.2.1", "still inside the cache window")
     #expect(StubURLProtocol.requestedURLs.count == 1, "and no second request was made")
+  }
+
+  /// The cache holds one answer, and the answer is region-specific: a version that exists in one
+  /// store may not exist in another. Keying on time alone served the previous region's answer for
+  /// the rest of the day — precisely when it is most likely to be wrong.
+  @Test("changing region is a cache miss")
+  func lookupDoesNotServeAnotherRegionsAnswer() async throws {
+    StubURLProtocol.reset()
+    let defaults = try makeDefaults()
+    let session = makeStubbedSession()
+    let clock = Date(timeIntervalSince1970: 1_000_000)
+
+    let inGB = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: "GB",
+      defaults: defaults,
+      session: session,
+      now: { clock }
+    )
+    #expect(await inGB.latestAppStoreVersion() == "3.2.1")
+
+    StubURLProtocol.body = Data(#"{"results":[{"version":"1.0.0"}]}"#.utf8)
+    let inJP = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: "JP",
+      defaults: defaults,
+      session: session,
+      now: { clock }
+    )
+
+    #expect(await inJP.latestAppStoreVersion() == "1.0.0", "same second, different store")
+    #expect(StubURLProtocol.requestedURLs.count == 2)
   }
 
   @Test("the cache expires after 24 hours")

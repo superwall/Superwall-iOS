@@ -24,7 +24,7 @@ public enum CustomerCenterAction: Equatable, Sendable {
     case .refund: self = .refund
     case .changePlan: self = .changePlan
     case .contactSupport: self = .contactSupport
-    case .url(let url, _): self = .url(url)
+    case .url(let url, _, _): self = .url(url)
     case .custom(let identifier): self = .custom(identifier: identifier)
     }
   }

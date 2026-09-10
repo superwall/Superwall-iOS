@@ -32,11 +32,11 @@ extension CustomerCenterConfiguration.Path {
     }
   }
   @objc public var url: URL? {
-    if case .url(let url, _) = type { return url }
+    if case .url(let url, _, _) = type { return url }
     return nil
   }
   @objc public var openMethodObjc: CustomerCenterOpenMethodObjc {
-    if case .url(_, let method) = type, method == .external { return .external }
+    if case .url(_, _, let method) = type, method == .external { return .external }
     return .inApp
   }
   @objc public var customIdentifier: String? {
@@ -67,8 +67,10 @@ extension CustomerCenterConfiguration.Path {
   @objc public static func contactSupport(id: String, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .contactSupport, title: title)
   }
-  @objc public static func url(id: String, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String?) -> CustomerCenterConfiguration.Path {
-    .init(id: id, type: .url(url, openMethod: openMethod == .external ? .external : .inApp), title: title)
+  /// `title` is non-optional here, unlike the other path factories: a URL row has no default
+  /// name to fall back on.
+  @objc public static func url(id: String, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String) -> CustomerCenterConfiguration.Path {
+    .init(id: id, type: .url(url, title: title, openMethod: openMethod == .external ? .external : .inApp))
   }
   @objc public static func custom(id: String, identifier: String, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .custom(identifier: identifier), title: title)

@@ -183,7 +183,11 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     /// `productIds`: optional subset of the subscription group to offer. `nil` offers the whole group.
     case changePlan(productIds: [String]? = nil)
     case contactSupport
-    case url(URL, openMethod: OpenMethod)
+    /// `title`: what the row says. Required, because it is the one path type the SDK cannot name
+    /// for you — every other type has a fixed meaning and a localized default, while a URL could
+    /// be anything. Deriving a label from the URL doesn't work: the host is identical across an
+    /// app's own links, so FAQ, terms and privacy would all render as one repeated row.
+    case url(URL, title: String, openMethod: OpenMethod)
     case custom(identifier: String)
   }
 

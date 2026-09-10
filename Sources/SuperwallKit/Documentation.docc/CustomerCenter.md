@@ -111,7 +111,7 @@ options.customerCenter = CustomerCenterConfiguration(
       .init(id: "change_plan", type: .changePlan()),
       .init(id: "refund", type: .refund()),
       .init(id: "manage_subscription", type: .manageSubscription, survey: cancelSurvey),
-      .init(id: "faq", type: .url(URL(string: "https://mycompany.com/faq")!, openMethod: .inApp)),
+      .init(id: "faq", type: .url(URL(string: "https://mycompany.com/faq")!, title: "FAQ", openMethod: .inApp)),
       .init(id: "contact_support", type: .contactSupport)
     ]
   ),
@@ -126,9 +126,14 @@ Superwall.configure(apiKey: "MY_API_KEY", options: options)
 
 Every path is optional and reorderable. Built-in path types (``CustomerCenterConfiguration/PathType``)
 cover restoring purchases, managing or cancelling a subscription, requesting a refund, changing
-plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:openMethod:)`` opens a
-URL either in-app or externally, and ``CustomerCenterConfiguration/PathType/custom(identifier:)``
+plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:title:openMethod:)``
+opens a URL either in-app or externally, and ``CustomerCenterConfiguration/PathType/custom(identifier:)``
 lets you handle an action entirely yourself via the delegate.
+
+Every path type but `url` names its own row, so `title` on ``CustomerCenterConfiguration/Path`` is
+optional and overrides that default. `url` takes a title of its own because there is no sensible
+default: a URL could be anything, and its host is the same across all of your own links, so
+deriving one would render your FAQ, terms and privacy rows identically.
 
 ### Warning customers about old versions
 

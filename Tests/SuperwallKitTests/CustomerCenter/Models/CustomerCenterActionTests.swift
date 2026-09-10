@@ -12,7 +12,7 @@ struct CustomerCenterActionTests {
     #expect(CustomerCenterAction(pathType: .refund(window: 1)) == .refund)
     #expect(CustomerCenterAction(pathType: .changePlan(productIds: nil)) == .changePlan)
     #expect(CustomerCenterAction(pathType: .contactSupport) == .contactSupport)
-    #expect(CustomerCenterAction(pathType: .url(url, openMethod: .external)) == .url(url))
+    #expect(CustomerCenterAction(pathType: .url(url, title: "Help", openMethod: .external)) == .url(url))
     #expect(CustomerCenterAction(pathType: .custom(identifier: "x")) == .custom(identifier: "x"))
   }
 

@@ -32,7 +32,7 @@ struct CustomerCenterConfigurationTests {
     config.support.latestAppVersion = "2.1.0"
     config.support.webManagementURL = URL(string: "https://app.superwall.app/manage")
     config.appearance.accent = .init(light: "#112233", dark: "#AABBCC")
-    config.managementScreen.paths.append(.init(id: "faq", type: .url(URL(string: "https://app.com/faq")!, openMethod: .inApp), title: "FAQ"))
+    config.managementScreen.paths.append(.init(id: "faq", type: .url(URL(string: "https://app.com/faq")!, title: "FAQ", openMethod: .inApp)))
     config.managementScreen.paths.append(.init(id: "del", type: .custom(identifier: "delete_account")))
     config.managementScreen.paths.append(.init(id: "ref", type: .refund(window: 3600)))
     config.managementScreen.paths.append(.init(id: "chg", type: .changePlan(productIds: ["a", "b"])))

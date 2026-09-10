@@ -40,7 +40,7 @@ struct HomeView: View {
           .init(id: "change_plan", type: .changePlan()),
           .init(id: "refund", type: .refund()),
           .init(id: "manage_subscription", type: .manageSubscription),
-          .init(id: "faq", type: .url(URL(string: "https://superwall.com/faq")!, openMethod: .inApp)),
+          .init(id: "faq", type: .url(URL(string: "https://superwall.com/faq")!, title: "FAQ", openMethod: .inApp)),
           .init(id: "contact_support", type: .contactSupport)
         ]
       ),

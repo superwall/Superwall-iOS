@@ -14,16 +14,20 @@ import Foundation
 struct WebSubscriptionPathTests {
   private let managementURL = URL(string: "https://superwall.app/manage")!
 
-  private func webSubscription(store: ProductStore = .stripe) -> SubscriptionTransaction {
+  private func webSubscription(
+    store: ProductStore = .stripe,
+    isActive: Bool = true,
+    isRevoked: Bool = false
+  ) -> SubscriptionTransaction {
     SubscriptionTransaction(
       transactionId: "web_1",
       productId: "web_pro_monthly",
       purchaseDate: Date().addingTimeInterval(-30 * 86_400),
       willRenew: true,
-      isRevoked: false,
+      isRevoked: isRevoked,
       isInGracePeriod: false,
       isInBillingRetryPeriod: false,
-      isActive: true,
+      isActive: isActive,
       expirationDate: Date().addingTimeInterval(12 * 86_400),
       subscriptionGroupId: nil,
       store: store
@@ -33,11 +37,12 @@ struct WebSubscriptionPathTests {
   private func makeViewModel(
     store: ProductStore = .stripe,
     webManagementURL: URL?,
-    survey: CustomerCenterConfiguration.FeedbackSurvey? = nil
+    survey: CustomerCenterConfiguration.FeedbackSurvey? = nil,
+    subscriptions: [SubscriptionTransaction]? = nil
   ) async -> CustomerCenterViewModel {
     let (deps, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(
-        subscriptions: [webSubscription(store: store)],
+        subscriptions: subscriptions ?? [webSubscription(store: store)],
         nonSubscriptions: [],
         entitlements: []
       ),
@@ -161,6 +166,54 @@ struct WebSubscriptionPathTests {
     let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
     #expect(manage != nil, "a paying customer must still be told where to manage this")
     #expect(manage?.destination == .webManageUnavailable)
+  }
+
+  /// The App Store branch gates on the subscription being live; the web branch gated on the store
+  /// alone, so anything that merely *came from* a web store was offered a management row — a
+  /// single Stripe charge with no subscription behind it, and a subscription that had already
+  /// lapsed or been revoked.
+  @available(iOS 15.0, *)
+  @Test("nothing left to manage means no management row")
+  func nothingToManageMeansNoRow() async {
+    let lapsed = webSubscription(isActive: false, isRevoked: false)
+    let revoked = webSubscription(isActive: true, isRevoked: true)
+
+    for subscription in [lapsed, revoked] {
+      let viewModel = await makeViewModel(
+        webManagementURL: managementURL,
+        subscriptions: [subscription]
+      )
+      let manage = viewModel.paths(for: viewModel.purchases.first)
+        .first { $0.path.type == .manageSubscription }
+      #expect(manage == nil, "a subscription that has ended has nothing to manage")
+    }
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a one-off web purchase has no subscription to manage")
+  func oneOffWebPurchaseHasNoRow() async {
+    let purchase = NonSubscriptionTransaction(
+      transactionId: "web_1",
+      productId: "web_lifetime",
+      purchaseDate: Date().addingTimeInterval(-86_400),
+      isConsumable: false,
+      isRevoked: false,
+      store: .stripe
+    )
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [], nonSubscriptions: [purchase], entitlements: []),
+      environment: EnvironmentMock(webManagementURL: managementURL)
+    )
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english
+    )
+    await viewModel.load()
+
+    let manage = viewModel.paths(for: viewModel.purchases.first)
+      .first { $0.path.type == .manageSubscription }
+    #expect(manage == nil, "there is no subscription behind a one-time charge")
   }
 
   // MARK: - Surveys don't belong on a web flow

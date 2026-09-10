@@ -41,7 +41,7 @@ struct CustomerCenterPathResolverTests {
   @Test("screen level (no purchase): restore, contactSupport, url, custom only")
   func screenLevel() {
     var p = paths
-    p.append(.init(id: "faq", type: .url(URL(string: "https://a.b")!, openMethod: .inApp)))
+    p.append(.init(id: "faq", type: .url(URL(string: "https://a.b")!, title: "FAQ", openMethod: .inApp)))
     p.append(.init(id: "c", type: .custom(identifier: "x")))
     #expect(destinations(context(nil), p) == [.restore, .contactSupport, .url(URL(string: "https://a.b")!, inApp: true), .custom("x")])
   }
@@ -120,7 +120,7 @@ struct CustomerCenterPathResolverTests {
   @Test("family shared hides manage/refund/changePlan; app extension hides url/contact")
   func familyAndExtension() {
     #expect(destinations(context(presentation(sub(), product: monthly), product: monthly, family: true)) == [.contactSupport])
-    var p = paths; p.append(.init(id: "faq", type: .url(URL(string: "https://a.b")!, openMethod: .external)))
+    var p = paths; p.append(.init(id: "faq", type: .url(URL(string: "https://a.b")!, title: "FAQ", openMethod: .external)))
     #expect(destinations(context(nil, canOpen: false), p) == [.restore])
   }
 }

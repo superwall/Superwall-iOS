@@ -224,8 +224,8 @@ struct CustomerCenterViewModelTests {
     config.support.email = "help@app.com"
     let ext = URL(string: "https://a.b/ext")!, inApp = URL(string: "https://a.b/in")!
     config.managementScreen.paths += [
-      .init(id: "ext", type: .url(ext, openMethod: .external)),
-      .init(id: "in", type: .url(inApp, openMethod: .inApp)),
+      .init(id: "ext", type: .url(ext, title: "External", openMethod: .external)),
+      .init(id: "in", type: .url(inApp, title: "In app", openMethod: .inApp)),
       .init(id: "c", type: .custom(identifier: "delete"))
     ]
     let (vm, _, _) = make(info: info([sub()]), config: config, opener: opener)
