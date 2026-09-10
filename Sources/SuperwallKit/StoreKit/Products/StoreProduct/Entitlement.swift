@@ -84,10 +84,16 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   /// The purchase date of the first transaction that unlocked this entitlement.
   ///
+  /// Refunded purchases and consumables never unlocked it, so they don't count towards this.
+  ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let startsAt: Date?
 
   /// The date that the entitlement was last renewed.
+  ///
+  /// If more than one subscription unlocks this entitlement, this is the most recent renewal among them —
+  /// unlike ``expiresAt`` and ``willRenew``, a renewal counts whether or not it happened in the subscription
+  /// currently granting access.
   ///
   /// This could be `nil` if:
   ///   - There aren't any transactions that unlock this entitlement.

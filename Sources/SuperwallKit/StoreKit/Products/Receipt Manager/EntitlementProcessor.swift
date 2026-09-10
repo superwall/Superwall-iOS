@@ -295,12 +295,21 @@ enum EntitlementProcessor {
     }
 
     return bucketKeys.compactMap { key -> GrantSource? in
-      guard let bucket = buckets[key],
-        let representative = bucket.max(by: { $0.purchaseDate < $1.purchaseDate }) else {
+      guard let bucket = buckets[key] else {
         return nil
       }
       let isLifetime = key == lifetimeKey
       let unrevoked = bucket.filter { !$0.isRevoked }
+
+      // Describe the source by a purchase that still counts. A refunded
+      // transaction can be the newest one in its group, and letting it describe
+      // an active source would name the refunded product as the one granting
+      // the entitlement. Falling back to the whole bucket keeps a fully
+      // refunded source able to report its last known state.
+      guard let representative = (unrevoked.isEmpty ? bucket : unrevoked)
+        .max(by: { $0.purchaseDate < $1.purchaseDate }) else {
+        return nil
+      }
 
       return GrantSource(
         representative: representative,

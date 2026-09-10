@@ -931,6 +931,83 @@ struct PerGroupEntitlementResolutionTests {
     #expect(entitlement?.expiresAt == baseDate.addingTimeInterval(3600))
   }
 
+  @Test("A refund never describes a group that is still granting access")
+  func refundInsideAGroupDoesNotDescribeIt() async {
+    let baseDate = Date()
+    // Still paid for, but not the newest purchase in the group.
+    let paying = makeTransaction(
+      productId: "yearly",
+      transactionId: "txn_yearly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-86_400),
+      expirationDate: baseDate.addingTimeInterval(31_536_000)
+    )
+    // Newest in the group, and refunded.
+    let refunded = makeTransaction(
+      productId: "monthly",
+      transactionId: "txn_monthly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-60),
+      expirationDate: baseDate.addingTimeInterval(2_678_400),
+      isRevoked: true
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly", "yearly"])
+    var (_, subscriptions) = EntitlementProcessor.processTransactions(from: [paying, refunded])
+
+    let provider = MockSubscriptionStatusProvider(
+      statusesByGroupId: [
+        "group_1": ResolvedSubscriptionStatus(state: .subscribed, willRenew: true, offerType: nil)
+      ]
+    )
+
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [paying, refunded]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: provider
+    )
+
+    let entitlement = result["yearly"]?.first
+    #expect(entitlement?.isActive == true)
+    // Naming the refunded product here would go on to mark its purchase active.
+    #expect(entitlement?.latestProductId == "yearly")
+  }
+
+  @Test("A fully refunded group still reports its last known product")
+  func fullyRefundedGroupStillDescribesItself() {
+    let baseDate = Date()
+    let older = makeTransaction(
+      productId: "monthly",
+      transactionId: "txn_monthly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-86_400),
+      expirationDate: baseDate.addingTimeInterval(3600),
+      isRevoked: true
+    )
+    let newer = makeTransaction(
+      productId: "yearly",
+      transactionId: "txn_yearly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-60),
+      expirationDate: baseDate.addingTimeInterval(31_536_000),
+      isRevoked: true
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly", "yearly"])
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: ["premium": [older, newer]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds
+    )
+
+    let entitlement = result["yearly"]?.first
+    #expect(entitlement?.isActive == false)
+    #expect(entitlement?.latestProductId == "yearly")
+  }
+
   // MARK: - Expiry date of an active entitlement
 
   @Test("A grace period moves the expiry date to the end of the grace period")
@@ -1083,6 +1160,32 @@ struct PerGroupEntitlementResolutionTests {
     #expect(entitlement?.renewedAt == baseDate.addingTimeInterval(-600))
     // The entitlement started with the earliest purchase that unlocked it.
     #expect(entitlement?.startsAt == baseDate.addingTimeInterval(-31_536_000))
+  }
+
+  @Test("An entitlement with nothing but refunds has no start date")
+  func startsAtIsNilWhenEverythingIsRefunded() {
+    let baseDate = Date()
+    let refunded = makeTransaction(
+      productId: "monthly",
+      transactionId: "txn_refunded",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-86_400),
+      expirationDate: baseDate.addingTimeInterval(3600),
+      isRevoked: true
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly"])
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: ["premium": [refunded]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds
+    )
+
+    let entitlement = result["monthly"]?.first
+    #expect(entitlement?.isActive == false)
+    // Nothing here ever unlocked the entitlement, so it never started.
+    #expect(entitlement?.startsAt == nil)
   }
 
   @Test("A renewal in one group survives another group describing the entitlement")
