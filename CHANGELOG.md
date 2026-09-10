@@ -8,7 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
 - Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
-- Dev mode now presents a locally served paywall the way its `config.ts` says: presentation style, feature gating, scrolling and background colours come from your local code instead of the last pushed version, so changing them is visible without a push. Settings `config.ts` cannot express, and any it leaves out, still come from the published paywall. Needs a `superwall dev` server new enough to send them.
+- Dev mode now presents a locally served paywall the way its `config.ts` says: presentation style, feature gating, intro offer eligibility, scrolling and background colours come from your local code instead of the last pushed version, so changing them is visible without a push. Settings `config.ts` cannot express, and any it leaves out, still come from the published paywall. Needs a `superwall dev` server new enough to send them.
 - Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 
 ### Fixes

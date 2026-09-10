@@ -408,11 +408,11 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Paywalls without a local counterpart still load their published versions.
   ///
   /// What the local surface owns is what it renders and the settings its `config.ts`
-  /// declares: content, products, presentation style, feature gating, scrolling and
-  /// background colours all come from your local code, so changing them shows on the
-  /// next presentation without a push. What `config.ts` cannot express — intro offer
-  /// eligibility, surveys, computed properties — comes from the published paywall the
-  /// surface stands in for, and so does any setting your `config.ts` leaves out.
+  /// declares: content, products, presentation style, feature gating, intro offer
+  /// eligibility, scrolling and background colours all come from your local code, so
+  /// changing them shows on the next presentation without a push. What `config.ts`
+  /// cannot express — surveys, computed properties — comes from the published paywall
+  /// the surface stands in for, and so does any setting your `config.ts` leaves out.
   ///
   /// A dev server older than this SDK sends no settings at all, in which case every
   /// setting comes from the published paywall.

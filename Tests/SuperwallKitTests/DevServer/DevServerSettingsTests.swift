@@ -155,10 +155,9 @@ final class DevServerSettingsTests: XCTestCase {
     XCTAssertNil(decoded.settings)
   }
 
-  /// The surface still serves its local code when a setting is unreadable, and
-  /// keeps the block: only the setting it can't name falls back to the
-  /// published paywall's.
-  func test_keepsASurfaceWhoseSettingsCannotBeRead() throws {
+  /// A setting the SDK can't name costs that setting alone: the surface keeps
+  /// its local code and the rest of the block.
+  func test_keepsASurfaceWhoseSettingIsUnnameable() throws {
     let decoded = try surface("""
     {
       "kind": "paywall",
@@ -171,6 +170,24 @@ final class DevServerSettingsTests: XCTestCase {
     XCTAssertEqual(decoded.id, "pro")
     XCTAssertNil(decoded.settings?.featureGating)
     XCTAssertEqual(decoded.settings?.isScrollEnabled, false)
+  }
+
+  /// A block the SDK can't decode at all — a key of the wrong type rather than
+  /// a value it can't name — is still dropped whole by the `try?` in
+  /// `DevServerSurface`, and still costs the surface only its settings: it
+  /// serves its local code and presents as its published version does.
+  func test_keepsASurfaceWhoseSettingsBlockIsMalformed() throws {
+    let decoded = try surface("""
+    {
+      "kind": "paywall",
+      "id": "pro",
+      "url": "/preview/paywall/pro",
+      "settings": { "scroll_enabled": "yes" }
+    }
+    """)
+
+    XCTAssertEqual(decoded.id, "pro")
+    XCTAssertNil(decoded.settings)
   }
 
   func test_stillRefusesASurfaceMissingItsIdentity() throws {
