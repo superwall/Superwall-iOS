@@ -592,6 +592,13 @@ class DeviceHelper {
     return Self.detectSandbox()
   }
 
+  /// Whether the app is running outside App Store production: simulator,
+  /// TestFlight, or a development build. Unlike ``isSandbox`` this ignores
+  /// test mode, so it can be used to decide whether test mode may activate.
+  static var isSandboxEnvironment: Bool {
+    return detectSandbox() == "true"
+  }
+
   private static func detectSandbox() -> String {
     #if targetEnvironment(simulator)
       return "true"

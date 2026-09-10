@@ -388,6 +388,76 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// - `.always`: Test mode is always activated, regardless of configuration.
   public var testModeBehavior: TestModeBehavior = .automatic
 
+  /// A running `superwall dev` server for ``SuperwallOptions/devServer`` to connect to.
+  public enum DevServer: Equatable {
+    /// Finds the dev server on `localhost` ports 6100–6104, which reaches a server
+    /// running on the same machine from a simulator.
+    case `default`
+
+    /// The dev server at an exact address — the `Device` URL's origin that
+    /// `superwall dev` prints, e.g. `http://192.168.1.10:6100`. Use this on a
+    /// physical device, which can't reach your machine via `localhost`.
+    case url(URL)
+  }
+
+  /// Connects this SDK instance to a running `superwall dev` server, for development builds only.
+  ///
+  /// Paywalls with a local counterpart on the dev server then render from your live, local
+  /// paywall code instead of their published versions, while configuration, placements,
+  /// audience evaluation, assignment and the enforcement of feature gating all stay real.
+  /// Paywalls without a local counterpart still load their published versions.
+  ///
+  /// What the local surface owns is what it renders and the settings its `config.ts`
+  /// declares: content, products, presentation style, feature gating, intro offer
+  /// eligibility, scrolling and background colours all come from your local code, so
+  /// changing them shows on the next presentation without a push. What `config.ts`
+  /// cannot express — surveys, computed properties — comes from the published paywall
+  /// the surface stands in for, and so does any setting your `config.ts` leaves out.
+  ///
+  /// A dev server older than this SDK sends no settings at all, in which case every
+  /// setting comes from the published paywall.
+  ///
+  /// Two exceptions. Local notifications are always the local paywall's: the published
+  /// ones are ignored and the ones your `config.ts` declares fire without a push, because
+  /// they reach the SDK from the paywall itself rather than from the dashboard. And the
+  /// on-device cache stays off however either side configures it, so a page you are
+  /// editing is never served from the web view's cache.
+  ///
+  /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
+  /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.
+  ///
+  /// The dev server also activates test mode (simulated purchases, product data from the
+  /// dashboard), disables paywall preloading, and skips the test mode intro sheet.
+  ///
+  /// The host app must allow local networking in its `Info.plist`
+  /// (`NSAppTransportSecurity` → `NSAllowsLocalNetworking` and
+  /// `NSAllowsArbitraryLoadsInWebContent`).
+  @nonobjc public var devServer: DevServer?
+
+  /// Objective-C only: connects to a `superwall dev` server found on `localhost`.
+  @available(swift, obsoleted: 1.0)
+  public func enableDevServer() {
+    devServer = .default
+  }
+
+  /// Objective-C only: connects to the `superwall dev` server at this address.
+  @available(swift, obsoleted: 1.0)
+  public func enableDevServer(url: URL) {
+    devServer = .url(url)
+  }
+
+  var isDevServerEnabled: Bool {
+    return devServer != nil
+  }
+
+  /// Where ``devServer``'s ``DevServer/url(_:)`` case points, if that's what is set.
+  var devServerURL: URL? {
+    if case .url(let url) = devServer {
+      return url
+    }
+    return nil
+  }
+
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
   ///
