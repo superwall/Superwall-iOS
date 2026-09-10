@@ -54,6 +54,57 @@ actor SK2ReceiptManager: ReceiptManagerType {
     self.resolveIntroOfferEligibility = resolveIntroOfferEligibility
   }
 
+  /// Brings each purchase's active flag into line with the entitlements it unlocks.
+  ///
+  /// `Transaction.all` alone is not the last word on whether a product is still
+  /// paid for. It can hold a transaction with no revocation date or a future
+  /// expiry when the subscription as a whole has been refunded, and it holds
+  /// nothing at all to show that a lapsed subscription is in its billing grace
+  /// period. The entitlements have already been resolved against the live
+  /// subscription status, so they settle both directions:
+  ///
+  /// - Every entitlement the product unlocks is inactive: the purchase is
+  ///   inactive, whatever its own dates say.
+  /// - The product is the one currently unlocking an active entitlement: the
+  ///   purchase is active. Restricting this to the granting product stops a
+  ///   refunded subscription looking active just because a different
+  ///   subscription in another group still unlocks the same entitlement.
+  static func correctPurchases(
+    _ purchases: Set<Purchase>,
+    using entitlementsByProductId: [String: Set<Entitlement>]
+  ) -> Set<Purchase> {
+    var correctedPurchases: Set<Purchase> = []
+
+    for purchase in purchases {
+      let productEntitlements = entitlementsByProductId[purchase.id] ?? []
+      let allRevokedOrExpired = !productEntitlements.isEmpty && productEntitlements.allSatisfy {
+        !$0.isActive
+      }
+      let isGranting = productEntitlements.contains {
+        $0.isActive && $0.latestProductId == purchase.id
+      }
+
+      let correctedIsActive: Bool
+      if allRevokedOrExpired {
+        correctedIsActive = false
+      } else if isGranting {
+        correctedIsActive = true
+      } else {
+        correctedIsActive = purchase.isActive
+      }
+
+      if correctedIsActive == purchase.isActive {
+        correctedPurchases.insert(purchase)
+      } else {
+        correctedPurchases.insert(
+          Purchase(id: purchase.id, isActive: correctedIsActive, purchaseDate: purchase.purchaseDate)
+        )
+      }
+    }
+
+    return correctedPurchases
+  }
+
   /// No-op for StoreKit 2.
   ///
   /// Eligibility is resolved live in `isEligibleForIntroOffer(_:)` on every call
@@ -164,27 +215,10 @@ actor SK2ReceiptManager: ReceiptManagerType {
       capturedOfferType = offerType
     }
 
-    // Correct purchase active status using subscription-level state.
-    // A refund may revoke the subscription but individual transactions in
-    // Transaction.all may still appear active (no revocationDate). The
-    // entitlement's state from subscriptionStatus is authoritative, so if
-    // all entitlements for a product are revoked/expired we mark the
-    // purchase as inactive.
-    var correctedPurchases: Set<Purchase> = []
-    for purchase in purchases {
-      let productEntitlements = entitlementsByProductId[purchase.id] ?? []
-      let allRevokedOrExpired = !productEntitlements.isEmpty && productEntitlements.allSatisfy {
-        !$0.isActive
-      }
-      if allRevokedOrExpired && purchase.isActive {
-        correctedPurchases.insert(
-          Purchase(id: purchase.id, isActive: false, purchaseDate: purchase.purchaseDate)
-        )
-      } else {
-        correctedPurchases.insert(purchase)
-      }
-    }
-    purchases = correctedPurchases
+    purchases = SK2ReceiptManager.correctPurchases(
+      purchases,
+      using: entitlementsByProductId
+    )
 
     // Update actor-isolated properties after the async call
     if enableExperimentalDeviceVariables {

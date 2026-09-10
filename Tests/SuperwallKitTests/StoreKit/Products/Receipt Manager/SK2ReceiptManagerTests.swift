@@ -26,6 +26,88 @@ struct SK2ReceiptManagerTests {
     )
   }
 
+  // MARK: - Purchase correction
+
+  private func makeEntitlement(
+    id: String = "premium",
+    isActive: Bool,
+    latestProductId: String?,
+    productIds: Set<String>
+  ) -> Entitlement {
+    return Entitlement(
+      id: id,
+      type: .serviceLevel,
+      isActive: isActive,
+      productIds: productIds,
+      latestProductId: latestProductId,
+      store: .appStore
+    )
+  }
+
+  @Test("A purchase whose entitlements are all inactive is corrected to inactive")
+  func revokedEntitlementDeactivatesThePurchase() {
+    let purchase = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
+    let entitlement = makeEntitlement(
+      isActive: false,
+      latestProductId: "monthly",
+      productIds: ["monthly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: ["monthly": [entitlement]]
+    )
+
+    #expect(corrected.first?.isActive == false)
+  }
+
+  @Test("A purchase unlocking a grace-period entitlement is corrected to active")
+  func gracePeriodEntitlementReactivatesThePurchase() {
+    // The transaction's own expiry has passed, so the raw read says inactive.
+    let purchase = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "monthly",
+      productIds: ["monthly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: ["monthly": [entitlement]]
+    )
+
+    #expect(corrected.first?.isActive == true)
+  }
+
+  @Test("Another group's active subscription never reactivates a refunded purchase")
+  func otherGroupDoesNotReactivateARefundedPurchase() {
+    let refunded = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+    let paying = Purchase(id: "yearly", isActive: true, purchaseDate: Date())
+    // One entitlement, unlocked by both products, currently granted by the yearly.
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "yearly",
+      productIds: ["monthly", "yearly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [refunded, paying],
+      using: ["monthly": [entitlement], "yearly": [entitlement]]
+    )
+
+    #expect(corrected.first { $0.id == "monthly" }?.isActive == false)
+    #expect(corrected.first { $0.id == "yearly" }?.isActive == true)
+  }
+
+  @Test("A purchase that maps to no entitlement keeps its own active flag")
+  func unmappedPurchaseIsLeftAlone() {
+    let purchase = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
+
+    let corrected = SK2ReceiptManager.correctPurchases([purchase], using: [:])
+
+    #expect(corrected.first?.isActive == true)
+  }
+
   @Test("isEligibleForIntroOffer re-queries StoreKit on every call and is never cached")
   func eligibilityIsNotCached() async {
     guard #available(iOS 15.0, *) else {

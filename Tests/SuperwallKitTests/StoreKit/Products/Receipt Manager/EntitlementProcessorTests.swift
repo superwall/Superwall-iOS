@@ -1340,35 +1340,61 @@ struct EntitlementProcessorTests {
 
 @available(iOS 15.0, *)
 struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
-  var mockWillAutoRenew: Bool
-  var mockState: LatestSubscription.State?
-  var mockOfferType: LatestSubscription.OfferType?
+  /// Statuses keyed by subscription group ID, for tests that need each group to
+  /// answer differently. Anything not listed falls back to `defaultStatus`.
+  var statusesByGroupId: [String: ResolvedSubscriptionStatus]
+  var defaultStatus: ResolvedSubscriptionStatus?
+
+  /// Records the transactions the provider was asked about, so tests can assert
+  /// each subscription group is resolved on its own.
+  let resolvedTransactionIds = Recorder()
+
+  final class Recorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var ids: [String] = []
+
+    var all: [String] {
+      lock.lock()
+      defer { lock.unlock() }
+      return ids
+    }
+
+    func record(_ id: String) {
+      lock.lock()
+      defer { lock.unlock() }
+      ids.append(id)
+    }
+  }
 
   init(
     mockWillAutoRenew: Bool = true,
     mockState: LatestSubscription.State? = .subscribed,
     mockOfferType: LatestSubscription.OfferType? = nil
   ) {
-    self.mockWillAutoRenew = mockWillAutoRenew
-    self.mockState = mockState
-    self.mockOfferType = mockOfferType
+    self.statusesByGroupId = [:]
+    self.defaultStatus = ResolvedSubscriptionStatus(
+      state: mockState,
+      willRenew: mockWillAutoRenew,
+      offerType: mockOfferType
+    )
   }
 
-  func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
-    return nil // Simplified for testing
+  init(
+    statusesByGroupId: [String: ResolvedSubscriptionStatus],
+    defaultStatus: ResolvedSubscriptionStatus? = nil
+  ) {
+    self.statusesByGroupId = statusesByGroupId
+    self.defaultStatus = defaultStatus
   }
 
-  func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool {
-    return mockWillAutoRenew
-  }
+  func resolveStatus(for transaction: any EntitlementTransaction) async -> ResolvedSubscriptionStatus? {
+    resolvedTransactionIds.record(transaction.transactionId)
 
-  func getSubscriptionState(from status: StoreKit.Product.SubscriptionInfo.Status?) -> LatestSubscription.State? {
-    return mockState
-  }
-
-  @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
-  func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
-    return mockOfferType
+    if let groupId = transaction.subscriptionGroupId,
+      let status = statusesByGroupId[groupId] {
+      return status
+    }
+    return defaultStatus
   }
 }
 
