@@ -61,6 +61,24 @@ struct ResolvedSubscriptionStatus: Sendable {
   let state: LatestSubscription.State?
   let willRenew: Bool
   let offerType: LatestSubscription.OfferType?
+
+  /// The date the group's access actually runs to, when StoreKit knows it and the
+  /// transaction dates don't: the end of a billing grace period, or the next
+  /// renewal date of a subscription whose latest renewal hasn't reached
+  /// `Transaction.all` yet. `nil` when StoreKit doesn't report one.
+  let activeUntil: Date?
+
+  init(
+    state: LatestSubscription.State?,
+    willRenew: Bool,
+    offerType: LatestSubscription.OfferType?,
+    activeUntil: Date? = nil
+  ) {
+    self.state = state
+    self.willRenew = willRenew
+    self.offerType = offerType
+    self.activeUntil = activeUntil
+  }
 }
 
 /// Protocol for providing subscription status information.
@@ -91,8 +109,27 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
     return ResolvedSubscriptionStatus(
       state: getSubscriptionState(from: status),
       willRenew: getWillAutoRenew(from: status),
-      offerType: offerType
+      offerType: offerType,
+      activeUntil: getActiveUntil(from: status)
     )
+  }
+
+  /// The date StoreKit says the subscription's access runs to.
+  ///
+  /// In a grace period that's the end of the grace period; otherwise it's the next
+  /// renewal date, which covers a renewal Apple has taken but `Transaction.all`
+  /// hasn't caught up on.
+  func getActiveUntil(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date? {
+    guard case let .verified(info) = status?.renewalInfo else {
+      return nil
+    }
+    if let gracePeriodExpirationDate = info.gracePeriodExpirationDate {
+      return gracePeriodExpirationDate
+    }
+    if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
+      return info.renewalDate
+    }
+    return nil
   }
 
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool {
@@ -204,6 +241,11 @@ enum EntitlementProcessor {
     /// subscription group is the one queried for live status.
     let representative: any EntitlementTransaction
     let isLifetime: Bool
+
+    /// Whether any transaction in this source is still unrevoked. A source whose
+    /// every transaction has been revoked grants nothing, whatever the
+    /// group-level status says.
+    let hasUnrevokedTransaction: Bool
     var isActive: Bool
     var expiresAt: Date?
     var renewedAt: Date?
@@ -263,6 +305,7 @@ enum EntitlementProcessor {
       return GrantSource(
         representative: representative,
         isLifetime: isLifetime,
+        hasUnrevokedTransaction: !unrevoked.isEmpty,
         // A lifetime purchase never expires. Everything else grants access for
         // as long as an unrevoked transaction still has time left on it.
         isActive: isLifetime || unrevoked.contains { ($0.expirationDate ?? .distantPast) > now },
@@ -301,6 +344,18 @@ enum EntitlementProcessor {
     }
   }
 
+  /// Picks the source describing the most recently bought subscription.
+  ///
+  /// The `latestSubscription` device variables are about recency, not about which
+  /// source is granting access, so this deliberately differs from
+  /// ``representativeSource(from:)``: a yearly bought last year has more time left
+  /// on it than a monthly bought yesterday, but the monthly is the latest one.
+  static func latestSubscriptionSource(from sources: [GrantSource]) -> GrantSource? {
+    return sources
+      .filter { !$0.isLifetime }
+      .max { $0.latestPurchaseDate < $1.latestPurchaseDate }
+  }
+
   /// Process entitlements from transactions, enriching them with metadata
   static func buildEntitlementsFromTransactions(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
@@ -333,7 +388,12 @@ enum EntitlementProcessor {
       // entitlement is active if any source grants it.
       let isActive = sources.contains { $0.isActive }
       let grantingSource = representativeSource(from: sources)
-      let startsAt = transactions.map(\.originalPurchaseDate).min()
+      // Only transactions that could unlock the entitlement date its start — a
+      // refunded purchase or a consumable never did.
+      let startsAt = transactions
+        .filter { !$0.isRevoked && $0.entitlementProductType != .consumable }
+        .map(\.originalPurchaseDate)
+        .min()
 
       // Find all product IDs for this entitlement from server config
       let productIds = productIdsByEntitlementId[entitlementId] ?? []
@@ -397,11 +457,12 @@ enum EntitlementProcessor {
   ) async -> [String: Set<Entitlement>] {
     var sourcesByEntitlement: [String: [GrantSource]] = [:]
     var updatedSubscriptions = subscriptions
+    var latestSubscription: GrantSource?
 
-    // The same subscription group can back several entitlements. Cached by
-    // transaction ID so each group costs one status lookup rather than one per
-    // entitlement it grants. The value is itself optional, so an unwrapped
-    // `cached` here is a recorded "StoreKit had nothing to say".
+    // The same subscription group can back several entitlements. Cached by the
+    // transaction the group was resolved from, so entitlements sharing that
+    // transaction share one lookup. The value is itself optional, so an
+    // unwrapped `cached` here is a recorded "StoreKit had nothing to say".
     var statusCache: [String: ResolvedSubscriptionStatus?] = [:]
 
     for (entitlementId, transactions) in transactionsByEntitlement {
@@ -439,7 +500,20 @@ enum EntitlementProcessor {
         switch status.state {
         case .subscribed,
           .inGracePeriod:
-          sources[index].isActive = true
+          // A source whose every transaction has been revoked grants nothing.
+          // The group status isn't clearly scoped to one Family Sharing member,
+          // so it must never resurrect a refunded transaction.
+          if sources[index].hasUnrevokedTransaction {
+            sources[index].isActive = true
+
+            // Move the expiry date along with the grant. Leaving the lapsed date
+            // in place would make the entitlement active and already expired,
+            // which every downstream "good until" check reads as inactive.
+            if let activeUntil = status.activeUntil,
+              activeUntil > (sources[index].expiresAt ?? .distantPast) {
+              sources[index].expiresAt = activeUntil
+            }
+          }
         case .revoked,
           .expired:
           sources[index].isActive = false
@@ -461,16 +535,22 @@ enum EntitlementProcessor {
 
       sourcesByEntitlement[entitlementId] = sources
 
-      // Report the source that actually describes the entitlement rather than
-      // whichever group happened to be resolved last.
-      if let grantingSource = representativeSource(from: sources),
-        !grantingSource.isLifetime {
-        onLatestSubscriptionUpdate?(
-          grantingSource.state,
-          grantingSource.willRenew,
-          grantingSource.offerType
-        )
+      // These variables describe the latest subscription on the device, so the
+      // winner is the most recently bought one across every entitlement. Picking
+      // it up here and reporting it once keeps it out of the hands of dictionary
+      // iteration order.
+      if let candidate = latestSubscriptionSource(from: sources),
+        candidate.latestPurchaseDate > (latestSubscription?.latestPurchaseDate ?? .distantPast) {
+        latestSubscription = candidate
       }
+    }
+
+    if let latestSubscription = latestSubscription {
+      onLatestSubscriptionUpdate?(
+        latestSubscription.state,
+        latestSubscription.willRenew,
+        latestSubscription.offerType
+      )
     }
 
     subscriptions = updatedSubscriptions

@@ -18,6 +18,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
 - Fixes an entitlement being deactivated when one of the subscriptions granting it is refunded, even though another subscription in a different subscription group is still paid for and active. Each subscription group is now evaluated on its own.
 - Fixes a subscription in its billing grace period being reported as inactive after its expiry date has passed.
+- Fixes an entitlement in a billing grace period reporting an expiry date that has already passed. `expiresAt` is now the date the grace period ends.
+- An entitlement's `latestProductId`, `expiresAt` and `willRenew` now all describe the purchase currently unlocking it, so they no longer mix details from different subscriptions.
 
 ## 4.16.3
 
