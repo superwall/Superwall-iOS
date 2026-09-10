@@ -178,6 +178,7 @@ final class DevServerPaywallTests: XCTestCase {
       {
         "presentation_style": { "type": "POPUP", "width": 80, "height": 60, "corner_radius": 15 },
         "feature_gating": "non_gated",
+        "introductory_offer_eligibility": "always_eligible",
         "scroll_enabled": true,
         "background_color_hex": "#ffffff",
         "dark_background_color_hex": "#0d0f12"
@@ -189,6 +190,8 @@ final class DevServerPaywallTests: XCTestCase {
 
     XCTAssertEqual(paywall.presentation.style, .popup(height: 60, width: 80, cornerRadius: 15))
     XCTAssertEqual(paywall.featureGating, .nonGated)
+    // The dashboard says ineligible; the local config.ts is what's being tried.
+    XCTAssertEqual(paywall.introOfferEligibility, .eligible)
     XCTAssertTrue(paywall.isScrollEnabled)
     XCTAssertEqual(paywall.backgroundColorHex, "#ffffff")
     XCTAssertEqual(paywall.darkBackgroundColorHex, "#0d0f12")
@@ -225,6 +228,7 @@ final class DevServerPaywallTests: XCTestCase {
 
     XCTAssertEqual(paywall.presentation.style, .modal)
     XCTAssertEqual(paywall.featureGating, .gated)
+    XCTAssertEqual(paywall.introOfferEligibility, .ineligible)
     XCTAssertFalse(paywall.isScrollEnabled)
     XCTAssertEqual(paywall.backgroundColorHex, "#123456")
   }

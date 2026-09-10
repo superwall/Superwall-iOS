@@ -7,10 +7,9 @@
 //  bound to via `superwall.lock`, if any.
 //
 //  The manifest carries identity, products, and the settings the surface's
-//  config.ts declares. Anything it leaves out — intro offer eligibility,
-//  computed properties, surveys — reaches the SDK only in the pushed
-//  snapshot, so those come from the published paywall the surface stands in
-//  for.
+//  config.ts declares. Anything it leaves out — computed properties, surveys —
+//  reaches the SDK only in the pushed snapshot, so those come from the
+//  published paywall the surface stands in for.
 //
 
 import Foundation

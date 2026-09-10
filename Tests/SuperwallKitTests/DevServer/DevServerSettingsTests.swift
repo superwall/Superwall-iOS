@@ -24,12 +24,14 @@ final class DevServerSettingsTests: XCTestCase {
       "feature_gating": "non_gated",
       "on_device_cache": true,
       "scroll_enabled": true,
-      "game_controller_enabled": false
+      "game_controller_enabled": false,
+      "introductory_offer_eligibility": "automatic"
     }
     """)
 
     XCTAssertEqual(decoded.presentationStyle, .fullscreen)
     XCTAssertEqual(decoded.featureGating, .nonGated)
+    XCTAssertEqual(decoded.introOfferEligibility, .automatic)
     XCTAssertEqual(decoded.isScrollEnabled, true)
     XCTAssertNil(decoded.backgroundColorHex)
     XCTAssertNil(decoded.darkBackgroundColorHex)
@@ -78,6 +80,7 @@ final class DevServerSettingsTests: XCTestCase {
 
     XCTAssertNil(decoded.presentationStyle)
     XCTAssertNil(decoded.featureGating)
+    XCTAssertNil(decoded.introOfferEligibility)
     XCTAssertNil(decoded.isScrollEnabled)
     XCTAssertNil(decoded.backgroundColorHex)
     XCTAssertNil(decoded.darkBackgroundColorHex)
@@ -110,6 +113,23 @@ final class DevServerSettingsTests: XCTestCase {
       try settings("{ \"presentation_style\": { \"type\": \"POPUP\", \"height\": 60 } }")
         .presentationStyle
     )
+  }
+
+  func test_readsEveryEligibilityTheCliCanSend() throws {
+    let cases: [(String, IntroOfferEligibility)] = [
+      ("automatic", .automatic),
+      ("always_eligible", .eligible),
+      ("always_ineligible", .ineligible)
+    ]
+
+    for (wire, expected) in cases {
+      let decoded = try settings("{ \"introductory_offer_eligibility\": \"\(wire)\" }")
+      XCTAssertEqual(decoded.introOfferEligibility, expected, wire)
+    }
+  }
+
+  func test_stillRefusesAnEligibilityItCannotName() throws {
+    XCTAssertThrowsError(try settings("{ \"introductory_offer_eligibility\": \"maybe\" }"))
   }
 
   func test_stillRefusesAGatingItCannotName() throws {

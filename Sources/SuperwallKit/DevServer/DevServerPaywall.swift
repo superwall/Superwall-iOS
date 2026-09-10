@@ -56,11 +56,10 @@ extension Paywall {
       ?? .nonGated
     let computedPropertyRequests: [ComputedPropertyRequest] = published?.computedPropertyRequests ?? []
     let surveys: [Survey] = published?.surveys ?? []
-    let introOfferEligibility: IntroOfferEligibility = published?.introOfferEligibility ?? .automatic
-    let presentation = PaywallPresentationInfo(
-      style: settings?.presentationStyle ?? published?.presentation.style ?? .fullscreen,
-      delay: published?.presentation.delay ?? 0
-    )
+    let introOfferEligibility: IntroOfferEligibility = settings?.introOfferEligibility
+      ?? published?.introOfferEligibility
+      ?? .automatic
+    let presentation = presentationInfo(settings: settings, inheriting: published)
     let backgroundColorHex = settings?.backgroundColorHex ?? published?.backgroundColorHex
     let darkBackgroundColorHex = settings?.darkBackgroundColorHex
       ?? published?.darkBackgroundColorHex
@@ -108,12 +107,24 @@ extension Paywall {
       surveys: surveys,
       isScrollEnabled: settings?.isScrollEnabled ?? published?.isScrollEnabled ?? true,
       // Drives displayed trial state and pricing, which is exactly what a
-      // local preview is checked against.
+      // local preview is checked against, so config.ts gets to force it.
       introOfferEligibility: introOfferEligibility
     )
     paywall.isLocal = true
     paywall.experiment = published?.experiment
     return paywall
+  }
+
+  /// How the surface presents: config.ts picks the style, and the delay is
+  /// the dashboard's, since config.ts has no word for it.
+  private static func presentationInfo(
+    settings: DevServerSettings?,
+    inheriting published: Paywall?
+  ) -> PaywallPresentationInfo {
+    return PaywallPresentationInfo(
+      style: settings?.presentationStyle ?? published?.presentation.style ?? .fullscreen,
+      delay: published?.presentation.delay ?? 0
+    )
   }
 
   /// The products a surface's `config.ts` declares, in a stable order.

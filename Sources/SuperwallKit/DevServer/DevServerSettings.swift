@@ -22,6 +22,7 @@ import Foundation
 struct DevServerSettings: Decodable, Equatable {
   let presentationStyle: PaywallPresentationStyle?
   let featureGating: FeatureGatingBehavior?
+  let introOfferEligibility: IntroOfferEligibility?
   let isScrollEnabled: Bool?
   let backgroundColorHex: String?
   let darkBackgroundColorHex: String?
@@ -29,6 +30,7 @@ struct DevServerSettings: Decodable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case presentationStyle = "presentation_style"
     case featureGating = "feature_gating"
+    case introOfferEligibility = "introductory_offer_eligibility"
     case isScrollEnabled = "scroll_enabled"
     case backgroundColorHex = "background_color_hex"
     case darkBackgroundColorHex = "dark_background_color_hex"
@@ -55,6 +57,12 @@ struct DevServerSettings: Decodable, Equatable {
     case nonGated = "non_gated"
   }
 
+  private enum WireEligibility: String, Decodable {
+    case automatic
+    case eligible = "always_eligible"
+    case ineligible = "always_ineligible"
+  }
+
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     presentationStyle = try Self.style(in: container)
@@ -65,6 +73,16 @@ struct DevServerSettings: Decodable, Equatable {
       featureGating = .nonGated
     case nil:
       featureGating = nil
+    }
+    switch try container.decodeIfPresent(WireEligibility.self, forKey: .introOfferEligibility) {
+    case .automatic:
+      introOfferEligibility = .automatic
+    case .eligible:
+      introOfferEligibility = .eligible
+    case .ineligible:
+      introOfferEligibility = .ineligible
+    case nil:
+      introOfferEligibility = nil
     }
     isScrollEnabled = try container.decodeIfPresent(Bool.self, forKey: .isScrollEnabled)
     backgroundColorHex = try container.decodeIfPresent(String.self, forKey: .backgroundColorHex)
@@ -82,7 +100,7 @@ struct DevServerSettings: Decodable, Equatable {
     else {
       return nil
     }
-    
+
     let type = try style.decodeIfPresent(String.self, forKey: .type)
     let height = try? style.decode(Double.self, forKey: .height)
     let width = try? style.decode(Double.self, forKey: .width)
