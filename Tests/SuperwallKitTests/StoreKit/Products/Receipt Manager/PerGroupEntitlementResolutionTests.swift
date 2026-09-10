@@ -1048,8 +1048,8 @@ struct PerGroupEntitlementResolutionTests {
 
   // MARK: - Scalar fields
 
-  @Test("Renewals are dated from the group granting the entitlement")
-  func renewedAtComesFromTheGrantingGroup() {
+  @Test("The entitlement is dated by its most recent renewal in any group")
+  func renewedAtIsTheLatestRenewalAcrossGroups() {
     let baseDate = Date()
     let renewal = makeTransaction(
       productId: "yearly",
@@ -1079,9 +1079,46 @@ struct PerGroupEntitlementResolutionTests {
     let entitlement = result["yearly"]?.first
     // The yearly has the most time left on it, so it describes the entitlement.
     #expect(entitlement?.latestProductId == "yearly")
-    #expect(entitlement?.renewedAt == baseDate.addingTimeInterval(-3600))
+    // Both groups renewed; the monthly did so more recently.
+    #expect(entitlement?.renewedAt == baseDate.addingTimeInterval(-600))
     // The entitlement started with the earliest purchase that unlocked it.
     #expect(entitlement?.startsAt == baseDate.addingTimeInterval(-31_536_000))
+  }
+
+  @Test("A renewal in one group survives another group describing the entitlement")
+  func renewedAtSurvivesAcrossGroups() {
+    let baseDate = Date()
+    // First period, no renewal yet, but it runs the furthest into the future so
+    // it describes the entitlement.
+    let firstPeriod = makeTransaction(
+      productId: "yearly",
+      transactionId: "txn_yearly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-600),
+      expirationDate: baseDate.addingTimeInterval(31_536_000)
+    )
+    // Renewed last week, in a group of its own.
+    let renewed = makeTransaction(
+      productId: "monthly",
+      transactionId: "txn_monthly",
+      subscriptionGroupId: "group_2",
+      purchaseDate: baseDate.addingTimeInterval(-604_800),
+      originalPurchaseDate: baseDate.addingTimeInterval(-2_678_400),
+      expirationDate: baseDate.addingTimeInterval(3600)
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly", "yearly"])
+
+    let result = EntitlementProcessor.buildEntitlementsFromTransactions(
+      from: ["premium": [firstPeriod, renewed]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds
+    )
+
+    let entitlement = result["yearly"]?.first
+    #expect(entitlement?.latestProductId == "yearly")
+    // The entitlement has renewed, even though the group describing it hasn't.
+    #expect(entitlement?.renewedAt == baseDate.addingTimeInterval(-604_800))
   }
 
   @Test("A refund and a consumable never date the start of an entitlement")

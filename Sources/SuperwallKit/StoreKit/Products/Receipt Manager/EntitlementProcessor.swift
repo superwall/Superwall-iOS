@@ -388,6 +388,12 @@ enum EntitlementProcessor {
       // entitlement is active if any source grants it.
       let isActive = sources.contains { $0.isActive }
       let grantingSource = representativeSource(from: sources)
+
+      // Unlike `state` and `willRenew`, this isn't a property of the current
+      // subscription period, so it takes the latest renewal from any source. A
+      // group that renewed last week has renewed whether or not it's the one
+      // describing the entitlement today.
+      let renewedAt = sources.compactMap(\.renewedAt).max()
       // Only transactions that could unlock the entitlement date its start — a
       // refunded purchase or a consumable never did.
       let startsAt = transactions
@@ -414,7 +420,7 @@ enum EntitlementProcessor {
             latestProductId: grantingSource?.latestProductId,
             store: .appStore,
             startsAt: startsAt,
-            renewedAt: grantingSource?.renewedAt,
+            renewedAt: renewedAt,
             expiresAt: grantingSource?.expiresAt,
             isLifetime: grantingSource?.isLifetime ?? false,
             willRenew: grantingSource?.willRenew ?? false,
