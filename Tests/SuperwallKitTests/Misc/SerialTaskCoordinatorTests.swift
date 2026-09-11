@@ -131,7 +131,9 @@ struct SerialTaskCoordinatorTests {
   @Test("Operations run at the priority of whoever enqueued them")
   func runsAtEnqueuersPriority() async {
     // The coordinator is made here, so the task draining its stream takes this
-    // context's priority — the stand-in for an app calling `configure()`.
+    // context's priority — the stand-in for an app calling `configure()`. If
+    // that's already `.high`, the assertion below can't tell the two apart.
+    #expect(Task.currentPriority < .high)
     let coordinator = SerialTaskCoordinator()
     let recorder = PriorityRecorder()
 

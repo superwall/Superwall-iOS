@@ -60,10 +60,9 @@ final class SerialTaskCoordinator: Sendable {
   /// enqueued before it has finished.
   func enqueue(_ operation: @escaping Operation) {
     // Run the operation at the priority of whoever enqueued it. The task
-    // draining the stream takes its priority from the thread that made the
-    // coordinator, which is whoever called `configure()` — without this, an app
-    // configuring off the main thread would pin every later operation to that
-    // thread's priority for the rest of the process.
+    // draining the stream takes its priority from whatever made the
+    // coordinator — without this, one made on a low-priority thread would pin
+    // every later operation to that priority for as long as it lives.
     let priority = Task.currentPriority
     continuation.yield {
       await Task(priority: priority) {
