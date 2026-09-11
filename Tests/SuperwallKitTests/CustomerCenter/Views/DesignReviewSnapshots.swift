@@ -140,12 +140,12 @@ struct DesignReviewSnapshots {
         subscriptionGroupId: nil,
         isAutoRenewable: false
       ),
-      // A web product as it will arrive once `/v1/products` carries a display name. Until it does,
-      // a web purchase has no name and therefore no card — see `PurchasePresentationBuilder` — so
-      // the unnamed shape isn't worth a screenshot: it renders as an empty management screen.
+      // A web product as it arrives today: the catalogue supplies its price but `/v1/products`
+      // carries no display name, so the card shows no title (the fixture's `CustomerInfo` carries
+      // no entitlement for it either — with one, that entitlement would head the card instead).
       "web_pro_monthly": .init(
         productId: "web_pro_monthly",
-        title: "Pro",
+        title: nil,
         localizedPrice: "$12.99",
         price: 12.99,
         localizedPeriod: "month",

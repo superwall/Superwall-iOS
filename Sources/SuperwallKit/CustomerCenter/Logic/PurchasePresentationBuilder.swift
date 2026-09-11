@@ -33,8 +33,17 @@ struct PurchasePresentationBuilder {
   }
 
   func build(customerInfo: CustomerInfo, products: [String: ProductDisplayInfo]) -> [PurchasePresentation] {
-    let subs = subscriptionPresentations(customerInfo.subscriptions, products: products)
-    let nonSubs = nonSubscriptionPresentations(customerInfo.nonSubscriptions, products: products)
+    let entitlementsByProductId = customerInfo.entitlementsByProductId
+    let subs = subscriptionPresentations(
+      customerInfo.subscriptions,
+      products: products,
+      entitlementsByProductId: entitlementsByProductId
+    )
+    let nonSubs = nonSubscriptionPresentations(
+      customerInfo.nonSubscriptions,
+      products: products,
+      entitlementsByProductId: entitlementsByProductId
+    )
     let knownProductIds = Set(
       customerInfo.subscriptions.map(\.productId) + customerInfo.nonSubscriptions.map(\.productId)
     )
@@ -44,24 +53,21 @@ struct PurchasePresentationBuilder {
     return subs + nonSubs + entitlementOnly
   }
 
-  /// Whether a purchase backed by `product` is shown at all.
+  /// The title a purchase falls back to when its product has no display name: the entitlement it
+  /// unlocks. A purchase is always shown; this only decides what heads the card. With no product
+  /// name and no entitlement either, the card has no title — never the raw product identifier,
+  /// which for a Stripe price reads `test:price_1Tu…:no-trial`.
   ///
-  /// A card is titled with its product's display name, and a card without one reads as a raw
-  /// identifier — `test:price_1Tu…:no-trial` — which is worse than no card. So a product that
-  /// resolved *without* a name hides its purchase. A product that didn't resolve at all is left
-  /// alone: that is a lookup failure, not a naming decision, and turning every StoreKit hiccup
-  /// into a vanished subscription would be the wrong trade — the identifier fallback stays for it.
-  ///
-  /// Entitlement-only rows are outside this rule. They have no product to be named by, and the
-  /// entitlement's own identifier is what they show.
-  static func isNameable(_ product: ProductDisplayInfo?) -> Bool {
-    guard let product else { return true }
-    return product.hasDisplayName
+  /// A product can grant several entitlements; the lowest identifier is taken so the choice is
+  /// stable from one render to the next.
+  static func entitlementTitle(_ entitlements: Set<Entitlement>) -> String? {
+    entitlements.map(\.id).sorted().first
   }
 
   func subscriptionPresentations(
     _ subscriptions: [SubscriptionTransaction],
-    products: [String: ProductDisplayInfo]
+    products: [String: ProductDisplayInfo],
+    entitlementsByProductId: [String: Set<Entitlement>] = [:]
   ) -> [PurchasePresentation] {
     // `CustomerInfo.subscriptions` carries one entry per StoreKit transaction, which includes
     // every past renewal of a subscription. Collapse to one row per product: prefer the active
@@ -85,10 +91,8 @@ struct PurchasePresentationBuilder {
       case (nil, nil): return lhs.purchaseDate < rhs.purchaseDate
       }
     }
-    return sorted.compactMap { sub in
-      let product = products[sub.productId]
-      guard Self.isNameable(product) else { return nil }
-      return presentation(for: sub, product: product)
+    return sorted.map {
+      presentation(for: $0, product: products[$0.productId], entitlements: entitlementsByProductId[$0.productId] ?? [])
     }
   }
 
@@ -107,18 +111,18 @@ struct PurchasePresentationBuilder {
 
   func nonSubscriptionPresentations(
     _ purchases: [NonSubscriptionTransaction],
-    products: [String: ProductDisplayInfo]
+    products: [String: ProductDisplayInfo],
+    entitlementsByProductId: [String: Set<Entitlement>] = [:]
   ) -> [PurchasePresentation] {
-    purchases.sorted { $0.purchaseDate < $1.purchaseDate }.compactMap { purchase -> PurchasePresentation? in
+    purchases.sorted { $0.purchaseDate < $1.purchaseDate }.map { purchase in
       let product = products[purchase.productId]
-      guard Self.isNameable(product) else { return nil }
       // Keyed by transaction id, not product id: consumables can legitimately be purchased
       // multiple times, and each purchase gets its own row.
       return PurchasePresentation(
         id: purchase.transactionId,
         kind: .nonSubscription(purchase),
         productId: purchase.productId,
-        title: product?.title ?? purchase.productId,
+        title: product?.title ?? Self.entitlementTitle(entitlementsByProductId[purchase.productId] ?? []),
         priceLine: product?.localizedPrice,
         statusLine: purchase.isRevoked
           ? strings.string("customer_center_revoked")
@@ -133,7 +137,11 @@ struct PurchasePresentationBuilder {
     }
   }
 
-  private func presentation(for sub: SubscriptionTransaction, product: ProductDisplayInfo?) -> PurchasePresentation {
+  private func presentation(
+    for sub: SubscriptionTransaction,
+    product: ProductDisplayInfo?,
+    entitlements: Set<Entitlement>
+  ) -> PurchasePresentation {
     let badge = badge(for: sub)
     let price = product?.localizedPrice
     let date = sub.expirationDate.map { dateFormatter.string(from: $0) }
@@ -168,7 +176,7 @@ struct PurchasePresentationBuilder {
       id: sub.productId,
       kind: .subscription(sub),
       productId: sub.productId,
-      title: product?.title ?? sub.productId,
+      title: product?.title ?? Self.entitlementTitle(entitlements),
       priceLine: priceLine,
       statusLine: status,
       badge: badge,

@@ -14,23 +14,26 @@ struct PurchaseCardView: View {
   @Environment(\.customerCenterStrings) private var strings
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 6) {
-      HStack {
-        Text(purchase.title).font(.headline)
-        Spacer()
-        BadgeView(badge: purchase.badge, rowId: purchase.productId ?? purchase.id)
+    // The badge sits beside the text column rather than on a row of its own, so a card with no
+    // title — a web product the catalogue hasn't named — doesn't open with an empty line. The
+    // purchase is never hidden; only its title is allowed to be absent.
+    HStack(alignment: .top) {
+      VStack(alignment: .leading, spacing: 6) {
+        if let title = purchase.title { Text(title).font(.headline) }
+        if let price = purchase.priceLine { Text(price).font(.subheadline) }
+        Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
+        if let key = purchase.storeLabelKey {
+          Text(strings.string(key)).font(.caption).foregroundStyle(.secondary)
+        }
+        if let refundResult, refundResult.productId == purchase.productId {
+          let isSuccess = refundResult.status == .success
+          Text(strings.string(isSuccess ? "customer_center_refund_success" : "customer_center_refund_error"))
+            .font(.caption)
+            .foregroundStyle(isSuccess ? Color.green : Color.red)
+        }
       }
-      if let price = purchase.priceLine { Text(price).font(.subheadline) }
-      Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
-      if let key = purchase.storeLabelKey {
-        Text(strings.string(key)).font(.caption).foregroundStyle(.secondary)
-      }
-      if let refundResult, refundResult.productId == purchase.productId {
-        let isSuccess = refundResult.status == .success
-        Text(strings.string(isSuccess ? "customer_center_refund_success" : "customer_center_refund_error"))
-          .font(.caption)
-          .foregroundStyle(isSuccess ? Color.green : Color.red)
-      }
+      Spacer(minLength: 8)
+      BadgeView(badge: purchase.badge, rowId: purchase.productId ?? purchase.id)
     }
     .padding(.vertical, 4)
     .accessibilityElement(children: .combine)

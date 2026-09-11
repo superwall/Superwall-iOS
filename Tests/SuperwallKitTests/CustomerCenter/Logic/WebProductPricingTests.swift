@@ -56,25 +56,27 @@ struct WebProductPricingTests {
     #expect(display.localizedPeriod != nil, "the renewal line reads better with a period")
   }
 
-  /// A catalogue product with no display name yields no card. The price is there — that's what
-  /// the catalogue is for — but a card is titled with its product's name, and a card titled with
-  /// `test:price_…:no-trial` is worse than no card. The name is the backend's to send.
-  @Test("a web product with no display name is not shown", arguments: [199, 999, 7999])
-  func unnamedWebProductIsHidden(amountInCents: Int) throws {
+  /// A catalogue product with no display name still gets its card — the price is there, and
+  /// that's what the catalogue is for. What it doesn't get is a title made from the identifier:
+  /// `test:price_…:no-trial` is not a name. The name is the backend's to send.
+  @Test("a web product with no display name keeps its card and shows no title", arguments: [199, 999, 7999])
+  func unnamedWebProductShowsNoTitle(amountInCents: Int) throws {
     let product = try decodeProduct(amountInCents: amountInCents)
     let storeProduct = StoreProduct(
       catalogProduct: APIStoreProduct(superwallProduct: product, entitlements: [])
     )
     let display = ProductDisplayInfo(storeProduct)
     #expect(display.localizedPrice?.contains(".") == true, "the price itself resolved")
-    #expect(!display.hasDisplayName)
+    #expect(display.title == nil)
 
     let builder = PurchasePresentationBuilder(strings: .english, locale: Locale(identifier: "en_US"))
     let presentations = builder.build(
       customerInfo: CustomerInfo(subscriptions: [webSubscription()], nonSubscriptions: [], entitlements: []),
       products: ["web_pro_monthly": display]
     )
-    #expect(presentations.isEmpty, "no name, no card")
+    let card = try #require(presentations.first, "the purchase is never hidden")
+    #expect(card.title == nil)
+    #expect(card.priceLine != nil)
   }
 
   /// The same purchase once the catalogue names it: the card appears, titled by the catalogue,
@@ -126,7 +128,7 @@ struct WebProductPricingTests {
     )
 
     #expect(ProductDisplayInfo(storeProduct, name: product.name).title == "Pro")
-    #expect(ProductDisplayInfo(storeProduct).title == "web_pro_monthly", "no name given, no name used")
+    #expect(ProductDisplayInfo(storeProduct).title == nil, "no name given, no name used")
   }
 
   @Test("a product with no price still renders, just without one")

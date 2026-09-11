@@ -79,7 +79,7 @@ struct PurchaseDetailScreenView: View {
       }
     }
     .listStyle(.insetGrouped)
-    .navigationTitle(purchase.title)
+    .navigationTitle(purchase.title ?? "")
     .navigationBarTitleDisplayMode(.inline)
     .onAppear { viewModel.surfaceDidAppear() }
     .onDisappear { viewModel.surfaceDidDisappear() }

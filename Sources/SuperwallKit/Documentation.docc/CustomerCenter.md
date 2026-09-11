@@ -229,9 +229,10 @@ The Customer Center fires the following ``SuperwallEvent`` cases, which you can 
 ## Limitations
 
 - Requires iOS 15.0+. On earlier versions, presentation calls are unavailable at compile time.
-- A purchase whose product has no display name isn't shown. Today that is every web (Stripe,
-  Paddle) purchase, because the product catalogue doesn't return a name yet; they appear as soon
-  as it does. App Store purchases always have one.
+- A purchase whose product has no display name is headed by the entitlement it unlocks, or by
+  nothing — never by the product identifier. Today that is every web (Stripe, Paddle) purchase,
+  because the product catalogue doesn't return a name yet; the name is used as soon as it does.
+  App Store purchases always have one.
 - Promotional offers are not yet supported as a Customer Center path.
 - Remote configuration of the Customer Center from the Superwall dashboard is coming; today it's
   configured entirely in code via ``SuperwallOptions/customerCenter``.

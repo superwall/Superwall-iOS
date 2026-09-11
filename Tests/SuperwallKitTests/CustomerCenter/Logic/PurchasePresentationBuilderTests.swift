@@ -115,10 +115,10 @@ struct PurchasePresentationBuilderTests {
     #expect(status(sub("monthly", grace: true)) == "Billing issue – update your payment method to keep access")
   }
 
-  @Test("missing product falls back to product id and omits price")
+  @Test("missing product shows no title and omits price")
   func missingProduct() {
     let rows = builder.build(customerInfo: info(subs: [sub("monthly")]), products: [:])
-    #expect(rows[0].title == "monthly")
+    #expect(rows[0].title == nil)
     #expect(rows[0].priceLine == nil)
     #expect(rows[0].statusLine == "Renews on 2023-11-15")
   }
@@ -228,22 +228,29 @@ struct PurchasePresentationBuilderTests {
     #expect(rows.allSatisfy { $0.productId == "coins" })
   }
 
-  // MARK: - A card needs a name
+  // MARK: - What heads the card
 
   /// What a Stripe purchase looks like today: the catalogue resolved the product and priced it,
-  /// but sent no display name. The alternative to hiding it is a card titled
-  /// `test:price_1Tu…:no-trial`, which is the thing this rule exists to prevent.
-  @Test("a subscription whose product resolved without a display name is not shown")
-  func unnamedProductHidesTheSubscription() {
+  /// but sent no display name. The purchase is shown regardless — hiding a paying customer's
+  /// subscription was never on the table — with the entitlement it unlocks as its title.
+  @Test("a subscription whose product has no name is titled by the entitlement it unlocks")
+  func unnamedProductFallsBackToEntitlement() {
     var unnamed = monthly
-    unnamed.title = "monthly"
-    unnamed.hasDisplayName = false
-    let rows = builder.build(customerInfo: info(subs: [sub("monthly")]), products: ["monthly": unnamed])
-    #expect(rows.isEmpty)
+    unnamed.title = nil
+    let pro = Entitlement(id: "pro", isActive: true, productIds: ["monthly"], store: .stripe)
+    let rows = builder.build(
+      customerInfo: info(subs: [sub("monthly", store: .stripe)], entitlements: [pro]),
+      products: ["monthly": unnamed]
+    )
+    #expect(rows.count == 1)
+    #expect(rows[0].title == "pro")
+    #expect(rows[0].priceLine == "$9.99 / month", "the price still shows")
   }
 
-  @Test("a one-off purchase whose product resolved without a display name is not shown")
-  func unnamedProductHidesTheOneOff() {
+  /// No product name and no entitlement either: the card is still there, just headed by nothing.
+  /// Never the product identifier — for a Stripe price that reads `test:price_1Tu…:no-trial`.
+  @Test("with neither a product name nor an entitlement, the card shows no title")
+  func noNameNoEntitlementShowsNoTitle() {
     let coins = NonSubscriptionTransaction(
       transactionId: "n",
       productId: "coins",
@@ -254,31 +261,38 @@ struct PurchasePresentationBuilderTests {
     )
     let unnamed = ProductDisplayInfo(
       productId: "coins",
-      title: "coins",
+      title: nil,
       localizedPrice: "$0.99",
       price: 0.99,
       localizedPeriod: nil,
       subscriptionGroupId: nil,
-      isAutoRenewable: false,
-      hasDisplayName: false
+      isAutoRenewable: false
     )
     let rows = builder.build(customerInfo: info(nonSubs: [coins]), products: ["coins": unnamed])
-    #expect(rows.isEmpty)
+    #expect(rows.count == 1, "the purchase is never hidden")
+    #expect(rows[0].title == nil)
+    #expect(rows[0].priceLine == "$0.99")
   }
 
-  /// The rule is per card. One unnamed product must not take a named one down with it — and
-  /// `missingProduct` above pins the other edge: a product that didn't resolve at all keeps its
-  /// identifier, because that's a lookup failure rather than a naming decision.
-  @Test("hiding is per card, not all-or-nothing")
-  func hidingIsPerCard() {
-    var unnamed = monthly
-    unnamed.productId = "web"
-    unnamed.title = "web"
-    unnamed.hasDisplayName = false
+  /// A product can grant several entitlements. Pick one stably, so the title doesn't change
+  /// between renders.
+  @Test("several entitlements pick the lowest identifier, every time")
+  func entitlementFallbackIsStable() {
+    let set: Set<Entitlement> = [
+      Entitlement(id: "pro", isActive: true, store: .stripe),
+      Entitlement(id: "beta", isActive: true, store: .stripe)
+    ]
+    #expect(PurchasePresentationBuilder.entitlementTitle(set) == "beta")
+    #expect(PurchasePresentationBuilder.entitlementTitle([]) == nil)
+  }
+
+  @Test("a product name wins over the entitlement")
+  func productNameWinsOverEntitlement() {
+    let pro = Entitlement(id: "pro", isActive: true, productIds: ["monthly"], store: .appStore)
     let rows = builder.build(
-      customerInfo: info(subs: [sub("monthly"), sub("web", store: .stripe)]),
-      products: ["monthly": monthly, "web": unnamed]
+      customerInfo: info(subs: [sub("monthly")], entitlements: [pro]),
+      products: ["monthly": monthly]
     )
-    #expect(rows.map(\.id) == ["monthly"])
+    #expect(rows[0].title == "Monthly")
   }
 }

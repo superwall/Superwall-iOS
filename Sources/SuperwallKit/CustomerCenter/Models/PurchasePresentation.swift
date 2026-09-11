@@ -10,15 +10,14 @@ import Foundation
 /// Display-oriented product info, decoupled from `StoreProduct` for testability.
 struct ProductDisplayInfo: Equatable {
   var productId: String
-  var title: String
+  /// The product's display name, or `nil` when neither StoreKit nor the catalogue supplied one.
+  /// Never the identifier standing in for one: a card without a name shows no name.
+  var title: String?
   var localizedPrice: String?
   var price: Decimal?
   var localizedPeriod: String?
   var subscriptionGroupId: String?
   var isAutoRenewable: Bool?
-  /// Whether `title` is a real display name rather than the product identifier standing in for
-  /// one. A purchase is only shown when this is `true` — see `PurchasePresentationBuilder`.
-  var hasDisplayName = true
 }
 
 enum PurchaseBadge: Equatable {
@@ -35,7 +34,9 @@ struct PurchasePresentation: Identifiable, Equatable {
   var id: String
   var kind: PurchaseKind
   var productId: String?
-  var title: String
+  /// What the card is headed with: the product's display name, else the entitlement it unlocks,
+  /// else nothing. The purchase is always shown; only this label is allowed to be absent.
+  var title: String?
   var priceLine: String?
   var statusLine: String
   var badge: PurchaseBadge

@@ -93,13 +93,12 @@ extension ProductDisplayInfo {
     }
     self.init(
       productId: product.productIdentifier,
-      title: displayName ?? product.productIdentifier,
+      title: displayName,
       localizedPrice: product.localizedPrice,
       price: product.price,
       localizedPeriod: product.subscriptionPeriod == nil ? nil : product.period,
       subscriptionGroupId: product.subscriptionGroupIdentifier,
-      isAutoRenewable: isAutoRenewable,
-      hasDisplayName: displayName != nil
+      isAutoRenewable: isAutoRenewable
     )
   }
 }

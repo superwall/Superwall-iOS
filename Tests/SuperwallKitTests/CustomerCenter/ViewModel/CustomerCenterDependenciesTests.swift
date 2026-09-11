@@ -43,12 +43,14 @@ struct CustomerCenterDependenciesTests {
     #expect(info.isAutoRenewable == nil)
   }
 
-  @Test("ProductDisplayInfo init: title falls back to the product identifier when the sk1 title is empty")
+  /// The identifier is never promoted to a title. A product with no name has no name.
+  @Test("ProductDisplayInfo init: title is nil when the sk1 title is empty")
   func productDisplayInfoFromSK1WithoutTitle() {
     let sk1 = MockSkProduct(productIdentifier: "monthly")
     let storeProduct = StoreProduct(sk1Product: sk1, entitlements: [])
     let info = ProductDisplayInfo(storeProduct)
 
-    #expect(info.title == "monthly")
+    #expect(info.title == nil)
+    #expect(info.productId == "monthly")
   }
 }
