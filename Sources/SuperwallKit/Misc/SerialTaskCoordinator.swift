@@ -30,7 +30,7 @@ import Foundation
 /// stream keeps them in the order they were handed over, and ``enqueue(_:)``
 /// only hands one over, so no caller ever waits — including callers already
 /// running on the concurrency pool.
-final class SerialTaskCoordinator {
+final class SerialTaskCoordinator: Sendable {
   typealias Operation = @Sendable () async -> Void
 
   private let continuation: AsyncStream<Operation>.Continuation
@@ -59,6 +59,17 @@ final class SerialTaskCoordinator {
   /// Adds `operation` to the end of the queue. It starts only after everything
   /// enqueued before it has finished.
   func enqueue(_ operation: @escaping Operation) {
-    continuation.yield(operation)
+    // Run the operation at the priority of whoever enqueued it. The task
+    // draining the stream takes its priority from the thread that made the
+    // coordinator, which is whoever called `configure()` — without this, an app
+    // configuring off the main thread would pin every later operation to that
+    // thread's priority for the rest of the process.
+    let priority = Task.currentPriority
+    continuation.yield {
+      await Task(priority: priority) {
+        await operation()
+      }
+      .value
+    }
   }
 }

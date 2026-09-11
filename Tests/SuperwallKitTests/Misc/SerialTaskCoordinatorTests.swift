@@ -23,6 +23,15 @@ extension SerialTaskCoordinator {
 
 @Suite("SerialTaskCoordinator Tests")
 struct SerialTaskCoordinatorTests {
+  /// Records the priority an operation ran at.
+  private actor PriorityRecorder {
+    private(set) var recorded: TaskPriority?
+
+    func record(_ priority: TaskPriority) {
+      recorded = priority
+    }
+  }
+
   /// Records the order operations ran in and how many ran at the same time.
   private actor Recorder {
     private(set) var order: [Int] = []
@@ -117,5 +126,24 @@ struct SerialTaskCoordinatorTests {
 
     let order = await recorder.order
     #expect(order == [0, 1])
+  }
+
+  @Test("Operations run at the priority of whoever enqueued them")
+  func runsAtEnqueuersPriority() async {
+    // The coordinator is made here, so the task draining its stream takes this
+    // context's priority — the stand-in for an app calling `configure()`.
+    let coordinator = SerialTaskCoordinator()
+    let recorder = PriorityRecorder()
+
+    await Task(priority: .high) {
+      coordinator.enqueue {
+        await recorder.record(Task.currentPriority)
+      }
+    }
+    .value
+    await coordinator.drain()
+
+    let recorded = await recorder.recorded
+    #expect(recorded == .high)
   }
 }
