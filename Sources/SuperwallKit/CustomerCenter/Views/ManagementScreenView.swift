@@ -13,8 +13,8 @@ struct ManagementScreenView: View {
   @Environment(\.customerCenterStrings) private var strings
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-  private var subscriptions: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription != nil } }
-  private var others: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription == nil } }
+  private var subscriptions: [PurchasePresentation] { viewModel.purchases.filter(\.opensDetail) }
+  private var others: [PurchasePresentation] { viewModel.purchases.filter { !$0.opensDetail } }
 
   var body: some View {
     List {
@@ -25,9 +25,10 @@ struct ManagementScreenView: View {
         DuplicateSubscriptionBanner()
       }
       if !subscriptions.isEmpty {
-        // Every subscription is a row that opens its own detail screen, one or many alike. This
-        // screen keeps the actions that apply to the account; anything that only makes sense
-        // against one subscription — change plan, refund, cancel — lives where the row leads.
+        // Every subscription — and every entitlement-only purchase, see `opensDetail` — is a row
+        // that opens its own detail screen, one or many alike. This screen keeps the actions that
+        // apply to the account; anything that only makes sense against one purchase — change
+        // plan, refund, cancel, the web management page — lives where the row leads.
         Section(strings.string("customer_center_section_subscriptions")) {
           ForEach(subscriptions) { purchase in
             CustomerCenterDrillDown {

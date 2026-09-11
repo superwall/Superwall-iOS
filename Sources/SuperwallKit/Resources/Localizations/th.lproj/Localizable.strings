@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "ใช้งานอยู่";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "หมดอายุแล้ว";
-"customer_center_purchase_date" = "วันที่ซื้อ";
-"customer_center_expiration_date" = "วันหมดอายุ";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "ใช้งานอยู่";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "คัดลอก";
 "customer_center_copied" = "คัดลอกแล้ว";
 "customer_center_original_download_date" = "วันที่ดาวน์โหลดครั้งแรก";
-"customer_center_transaction_id" = "รหัสธุรกรรม";
-"customer_center_product_id" = "รหัสสินค้า";
-"customer_center_store" = "ร้านค้า";
-"customer_center_sandbox" = "แซนด์บ็อกซ์";
-"customer_center_offer" = "ข้อเสนอ";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "กำลังกู้คืน…";

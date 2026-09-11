@@ -50,4 +50,16 @@ struct PurchasePresentation: Identifiable, Equatable {
     if case .subscription(let sub) = kind { return sub }
     return nil
   }
+
+  /// Whether the row opens a detail screen — which is where a purchase's own actions live.
+  ///
+  /// A subscription does. So does an entitlement-only purchase: a web subscription arrives as a
+  /// bare entitlement whenever the backend sends no matching transaction, and that customer still
+  /// has a management page to reach. Splitting on `subscription != nil` alone stranded them —
+  /// the only row that could carry the management link had nowhere to open. A one-off purchase
+  /// has no action of its own, so it stays a plain card.
+  var opensDetail: Bool {
+    if case .nonSubscription = kind { return false }
+    return true
+  }
 }

@@ -211,6 +211,11 @@ actor CatalogueCache {
   static let ttl: TimeInterval = 5 * 60
 
   private var cached: (response: SuperwallProductsResponse, at: Date)?
+  /// The fetch in progress, if any, so a caller arriving mid-flight shares it rather than starting
+  /// its own. An actor is reentrant across `await`: without this, two `apply` calls overlapping on
+  /// a cold cache — `load()` and the customer-info publisher can do exactly that — both pass the
+  /// freshness check and both fetch.
+  private var inFlight: Task<SuperwallProductsResponse, Error>?
   private let now: () -> Date
 
   init(now: @escaping () -> Date = Date.init) {
@@ -218,14 +223,21 @@ actor CatalogueCache {
   }
 
   /// Returns the cached catalogue when it is still fresh, otherwise awaits `fetch` and keeps it.
-  /// A throwing `fetch` is not cached — a failed load should be retried, not remembered.
+  /// A throwing `fetch` is not cached — a failed load should be retried, not remembered — and
+  /// every caller sharing that flight sees the same error.
   func products(
-    fetch: () async throws -> SuperwallProductsResponse
+    fetch: @escaping () async throws -> SuperwallProductsResponse
   ) async throws -> SuperwallProductsResponse {
     if let cached, isFresh(cached.at) {
       return cached.response
     }
-    let response = try await fetch()
+    if let inFlight {
+      return try await inFlight.value
+    }
+    let task = Task { try await fetch() }
+    inFlight = task
+    defer { inFlight = nil }
+    let response = try await task.value
     cached = (response, now())
     return response
   }

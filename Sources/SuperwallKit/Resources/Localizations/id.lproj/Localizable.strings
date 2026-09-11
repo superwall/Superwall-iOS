@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Aktif";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Berakhir";
-"customer_center_purchase_date" = "Tanggal pembelian";
-"customer_center_expiration_date" = "Tanggal kedaluwarsa";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Aktif";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Salin";
 "customer_center_copied" = "Disalin";
 "customer_center_original_download_date" = "Tanggal unduhan asli";
-"customer_center_transaction_id" = "ID transaksi";
-"customer_center_product_id" = "ID produk";
-"customer_center_store" = "Toko";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Penawaran";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Memulihkan…";

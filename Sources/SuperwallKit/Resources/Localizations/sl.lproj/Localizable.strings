@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Aktivna";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Poteklo";
-"customer_center_purchase_date" = "Datum nakupa";
-"customer_center_expiration_date" = "Datum poteka";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Aktivna";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Kopiraj";
 "customer_center_copied" = "Kopirano";
 "customer_center_original_download_date" = "Datum prvotnega prenosa";
-"customer_center_transaction_id" = "ID transakcije";
-"customer_center_product_id" = "ID izdelka";
-"customer_center_store" = "Trgovina";
-"customer_center_sandbox" = "Peskovnik";
-"customer_center_offer" = "Ponudba";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Obnavljanje…";

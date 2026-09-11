@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "有効";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "終了しました";
-"customer_center_purchase_date" = "購入日";
-"customer_center_expiration_date" = "有効期限";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "有効";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "コピー";
 "customer_center_copied" = "コピーしました";
 "customer_center_original_download_date" = "初回ダウンロード日";
-"customer_center_transaction_id" = "取引ID";
-"customer_center_product_id" = "製品ID";
-"customer_center_store" = "ストア";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "オファー";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "復元中…";

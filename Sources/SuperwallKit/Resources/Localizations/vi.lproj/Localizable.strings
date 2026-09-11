@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Đang hoạt động";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Đã hết hạn";
-"customer_center_purchase_date" = "Ngày mua";
-"customer_center_expiration_date" = "Ngày hết hạn";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Đang hoạt động";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Sao chép";
 "customer_center_copied" = "Đã sao chép";
 "customer_center_original_download_date" = "Ngày tải xuống ban đầu";
-"customer_center_transaction_id" = "ID giao dịch";
-"customer_center_product_id" = "ID sản phẩm";
-"customer_center_store" = "Cửa hàng";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Ưu đãi";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Đang khôi phục…";

@@ -63,4 +63,32 @@ struct CatalogueCacheTests {
 
     #expect(fetches == 2)
   }
+
+  /// An actor is reentrant across `await`. Without an in-flight handoff, two callers landing on a
+  /// cold cache both pass the freshness check and both fetch — on the Customer Center that is
+  /// `load()` and the customer-info publisher calling `apply` at nearly the same moment.
+  @available(iOS 15.0, *)
+  @Test("callers overlapping on a cold cache share one fetch")
+  func overlappingCallersShareOneFetch() async throws {
+    let cache = CatalogueCache()
+    let fetches = Counter()
+
+    async let first = cache.products {
+      await fetches.increment()
+      try await Task.sleep(nanoseconds: 150_000_000)
+      return self.response()
+    }
+    async let second = cache.products {
+      await fetches.increment()
+      return self.response()
+    }
+    _ = try await (first, second)
+
+    #expect(await fetches.value == 1)
+  }
+}
+
+private actor Counter {
+  var value = 0
+  func increment() { value += 1 }
 }

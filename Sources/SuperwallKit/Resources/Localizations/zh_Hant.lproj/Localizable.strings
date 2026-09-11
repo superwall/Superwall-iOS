@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "有效";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "已過期";
-"customer_center_purchase_date" = "購買日期";
-"customer_center_expiration_date" = "到期日期";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "有效";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "複製";
 "customer_center_copied" = "已複製";
 "customer_center_original_download_date" = "首次下載日期";
-"customer_center_transaction_id" = "交易 ID";
-"customer_center_product_id" = "產品 ID";
-"customer_center_store" = "商店";
-"customer_center_sandbox" = "沙盒環境";
-"customer_center_offer" = "優惠";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "正在恢復…";

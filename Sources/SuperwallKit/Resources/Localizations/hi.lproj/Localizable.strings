@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "सक्रिय";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "समाप्त";
-"customer_center_purchase_date" = "खरीद की तारीख";
-"customer_center_expiration_date" = "समाप्ति तिथि";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "सक्रिय";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "कॉपी करें";
 "customer_center_copied" = "कॉपी हो गया";
 "customer_center_original_download_date" = "मूल डाउनलोड तिथि";
-"customer_center_transaction_id" = "लेनदेन आईडी";
-"customer_center_product_id" = "उत्पाद आईडी";
-"customer_center_store" = "स्टोर";
-"customer_center_sandbox" = "सैंडबॉक्स";
-"customer_center_offer" = "ऑफ़र";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "पुनर्स्थापित हो रहा है…";

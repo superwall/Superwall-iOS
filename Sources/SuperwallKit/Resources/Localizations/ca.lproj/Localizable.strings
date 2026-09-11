@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Actiu";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Caducat";
-"customer_center_purchase_date" = "Data de compra";
-"customer_center_expiration_date" = "Data de caducitat";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Actiu";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Copia";
 "customer_center_copied" = "Copiat";
 "customer_center_original_download_date" = "Data de descàrrega original";
-"customer_center_transaction_id" = "ID de transacció";
-"customer_center_product_id" = "ID del producte";
-"customer_center_store" = "Botiga";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Oferta";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Restaurant…";

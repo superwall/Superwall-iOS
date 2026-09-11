@@ -286,6 +286,28 @@ struct PurchasePresentationBuilderTests {
     #expect(PurchasePresentationBuilder.entitlementTitle([]) == nil)
   }
 
+  /// The management screen only gives a detail screen — and so a place for the purchase's own
+  /// actions — to rows that open one. A bare entitlement has to be among them: a web subscriber
+  /// whose backend sent no transaction is one, and their management link lives on that screen.
+  @Test("subscriptions and entitlement-only purchases open a detail screen; one-offs don't")
+  func whichRowsOpenDetail() {
+    let nonSub = NonSubscriptionTransaction(
+      transactionId: "n",
+      productId: "coins",
+      purchaseDate: now,
+      isConsumable: true,
+      isRevoked: false,
+      store: .appStore
+    )
+    let bareWebEntitlement = Entitlement(id: "pro", isActive: true, store: .stripe)
+    let rows = builder.build(
+      customerInfo: info(subs: [sub("monthly")], nonSubs: [nonSub], entitlements: [bareWebEntitlement]),
+      products: [:]
+    )
+    #expect(rows.map(\.id) == ["monthly", "n", "entitlement:pro"])
+    #expect(rows.map(\.opensDetail) == [true, false, true])
+  }
+
   @Test("a product name wins over the entitlement")
   func productNameWinsOverEntitlement() {
     let pro = Entitlement(id: "pro", isActive: true, productIds: ["monthly"], store: .appStore)

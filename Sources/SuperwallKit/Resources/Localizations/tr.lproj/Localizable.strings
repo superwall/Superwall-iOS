@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Aktif";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Süresi doldu";
-"customer_center_purchase_date" = "Satın alma tarihi";
-"customer_center_expiration_date" = "Son kullanma tarihi";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Aktif";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Kopyala";
 "customer_center_copied" = "Kopyalandı";
 "customer_center_original_download_date" = "Orijinal indirme tarihi";
-"customer_center_transaction_id" = "İşlem kimliği";
-"customer_center_product_id" = "Ürün kimliği";
-"customer_center_store" = "Mağaza";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Teklif";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Geri yükleniyor…";

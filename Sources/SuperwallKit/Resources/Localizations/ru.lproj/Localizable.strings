@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Активна";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Истекла";
-"customer_center_purchase_date" = "Дата покупки";
-"customer_center_expiration_date" = "Дата окончания";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Активна";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Копировать";
 "customer_center_copied" = "Скопировано";
 "customer_center_original_download_date" = "Дата первой загрузки";
-"customer_center_transaction_id" = "ID транзакции";
-"customer_center_product_id" = "ID продукта";
-"customer_center_store" = "Магазин";
-"customer_center_sandbox" = "Тестовая среда";
-"customer_center_offer" = "Предложение";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Восстановление…";

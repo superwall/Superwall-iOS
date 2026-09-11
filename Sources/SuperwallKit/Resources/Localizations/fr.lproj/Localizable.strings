@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Actif";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Expiré";
-"customer_center_purchase_date" = "Date d'achat";
-"customer_center_expiration_date" = "Date d'expiration";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Actif";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Copier";
 "customer_center_copied" = "Copié";
 "customer_center_original_download_date" = "Date de téléchargement d'origine";
-"customer_center_transaction_id" = "ID de transaction";
-"customer_center_product_id" = "ID du produit";
-"customer_center_store" = "Boutique";
-"customer_center_sandbox" = "Bac à sable";
-"customer_center_offer" = "Offre";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Restauration en cours…";

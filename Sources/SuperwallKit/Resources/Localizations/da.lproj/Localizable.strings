@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Aktiv";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Udløbet";
-"customer_center_purchase_date" = "Købsdato";
-"customer_center_expiration_date" = "Udløbsdato";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Aktiv";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Kopiér";
 "customer_center_copied" = "Kopieret";
 "customer_center_original_download_date" = "Oprindelig downloaddato";
-"customer_center_transaction_id" = "Transaktions-id";
-"customer_center_product_id" = "Produkt-id";
-"customer_center_store" = "Butik";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Tilbud";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Gendanner…";

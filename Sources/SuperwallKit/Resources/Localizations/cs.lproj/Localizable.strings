@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Aktivní";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Vypršelo";
-"customer_center_purchase_date" = "Datum nákupu";
-"customer_center_expiration_date" = "Datum vypršení platnosti";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Aktivní";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Kopírovat";
 "customer_center_copied" = "Zkopírováno";
 "customer_center_original_download_date" = "Datum původního stažení";
-"customer_center_transaction_id" = "ID transakce";
-"customer_center_product_id" = "ID produktu";
-"customer_center_store" = "Obchod";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Nabídka";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Obnovování…";

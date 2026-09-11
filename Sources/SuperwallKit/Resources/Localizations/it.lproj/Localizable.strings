@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Attivo";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Scaduto";
-"customer_center_purchase_date" = "Data di acquisto";
-"customer_center_expiration_date" = "Data di scadenza";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Attivo";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Copia";
 "customer_center_copied" = "Copiato";
 "customer_center_original_download_date" = "Data di download originale";
-"customer_center_transaction_id" = "ID transazione";
-"customer_center_product_id" = "ID prodotto";
-"customer_center_store" = "Store";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Offerta";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Ripristino in corso…";

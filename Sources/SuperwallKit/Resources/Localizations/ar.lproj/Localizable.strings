@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "نشط";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "منتهي الصلاحية";
-"customer_center_purchase_date" = "تاريخ الشراء";
-"customer_center_expiration_date" = "تاريخ انتهاء الصلاحية";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "نشط";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "نسخ";
 "customer_center_copied" = "تم النسخ";
 "customer_center_original_download_date" = "تاريخ التنزيل الأصلي";
-"customer_center_transaction_id" = "معرّف المعاملة";
-"customer_center_product_id" = "معرّف المنتج";
-"customer_center_store" = "المتجر";
-"customer_center_sandbox" = "بيئة اختبار (Sandbox)";
-"customer_center_offer" = "عرض";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "جارٍ الاستعادة…";

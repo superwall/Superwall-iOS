@@ -71,8 +71,6 @@ let englishStrings: [String: String] = [
   "customer_center_active_via_superwall": "Active",
   "customer_center_price_per_period": "%@ / %@",
   "customer_center_expired": "Expired",
-  "customer_center_purchase_date": "Purchase date",
-  "customer_center_expiration_date": "Expiration date",
   // Customer Center – badges
   "customer_center_badge_active": "Active",
   "customer_center_badge_free_trial": "Free trial",
@@ -96,11 +94,6 @@ let englishStrings: [String: String] = [
   "customer_center_copy": "Copy",
   "customer_center_copied": "Copied",
   "customer_center_original_download_date": "Original download date",
-  "customer_center_transaction_id": "Transaction ID",
-  "customer_center_product_id": "Product ID",
-  "customer_center_store": "Store",
-  "customer_center_sandbox": "Sandbox",
-  "customer_center_offer": "Offer",
   // Customer Center – restore
   "customer_center_restoring": "Restoring…",
   "customer_center_restore_success_title": "Purchases restored",

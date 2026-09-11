@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Ativa";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Expirada";
-"customer_center_purchase_date" = "Data de compra";
-"customer_center_expiration_date" = "Data de expiração";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Ativa";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Copiar";
 "customer_center_copied" = "Copiado";
 "customer_center_original_download_date" = "Data de transferência original";
-"customer_center_transaction_id" = "ID da transação";
-"customer_center_product_id" = "ID do produto";
-"customer_center_store" = "Loja";
-"customer_center_sandbox" = "Sandbox";
-"customer_center_offer" = "Oferta";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "A restaurar…";

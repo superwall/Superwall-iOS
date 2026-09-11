@@ -68,9 +68,14 @@ extension CustomerCenterConfiguration.Path {
     .init(id: id, type: .contactSupport, title: title)
   }
   /// `title` is non-optional here, unlike the other path factories: a URL row has no default
-  /// name to fall back on.
+  /// name to fall back on. It is set on the path as well as in the case, because `type` is
+  /// `@nonobjc` — without this, an Objective-C caller could hand a title in and never read it back.
   @objc public static func url(id: String, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String) -> CustomerCenterConfiguration.Path {
-    .init(id: id, type: .url(url, title: title, openMethod: openMethod == .external ? .external : .inApp))
+    .init(
+      id: id,
+      type: .url(url, title: title, openMethod: openMethod == .external ? .external : .inApp),
+      title: title
+    )
   }
   @objc public static func custom(id: String, identifier: String, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .custom(identifier: identifier), title: title)

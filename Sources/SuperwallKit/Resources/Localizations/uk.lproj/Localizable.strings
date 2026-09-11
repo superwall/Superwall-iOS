@@ -73,8 +73,6 @@
 "customer_center_active_via_superwall" = "Активна";
 "customer_center_price_per_period" = "%@ / %@";
 "customer_center_expired" = "Закінчилася";
-"customer_center_purchase_date" = "Дата покупки";
-"customer_center_expiration_date" = "Дата закінчення";
 
 /* Customer Center – badges */
 "customer_center_badge_active" = "Активна";
@@ -101,11 +99,6 @@
 "customer_center_copy" = "Копіювати";
 "customer_center_copied" = "Скопійовано";
 "customer_center_original_download_date" = "Дата первинного завантаження";
-"customer_center_transaction_id" = "Ідентифікатор транзакції";
-"customer_center_product_id" = "Ідентифікатор товару";
-"customer_center_store" = "Магазин";
-"customer_center_sandbox" = "Тестове середовище";
-"customer_center_offer" = "Пропозиція";
 
 /* Customer Center – restore */
 "customer_center_restoring" = "Відновлення…";

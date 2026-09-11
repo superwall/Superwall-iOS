@@ -232,7 +232,8 @@ The Customer Center fires the following ``SuperwallEvent`` cases, which you can 
 - A purchase whose product has no display name is headed by the entitlement it unlocks, or by
   nothing — never by the product identifier. Today that is every web (Stripe, Paddle) purchase,
   because the product catalogue doesn't return a name yet; the name is used as soon as it does.
-  App Store purchases always have one.
+  An App Store product has one once it is localized in App Store Connect — before that, StoreKit
+  reports an empty display name, which is treated the same way.
 - Promotional offers are not yet supported as a Customer Center path.
 - Remote configuration of the Customer Center from the Superwall dashboard is coming; today it's
   configured entirely in code via ``SuperwallOptions/customerCenter``.
