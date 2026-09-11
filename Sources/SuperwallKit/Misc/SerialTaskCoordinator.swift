@@ -61,13 +61,4 @@ final class SerialTaskCoordinator {
   func enqueue(_ operation: @escaping Operation) {
     continuation.yield(operation)
   }
-
-  /// Waits for everything enqueued so far to finish.
-  func drain() async {
-    await withCheckedContinuation { continuation in
-      enqueue {
-        continuation.resume()
-      }
-    }
-  }
 }

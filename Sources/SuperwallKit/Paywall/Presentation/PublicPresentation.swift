@@ -196,8 +196,9 @@ extension Superwall {
           }
         ))
 
-    // Wait until any register call already in flight is finished before
-    // continuing.
+    // Queue the work behind any register call already in flight and return.
+    // `register` can be called from any thread, so the queue has to be safe to
+    // add to from any thread.
     registerTaskCoordinator.enqueue { [weak self] in
       await self?.trackAndPresentPaywall(
         forPlacement: placement,

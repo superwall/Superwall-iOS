@@ -119,7 +119,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var didReceiveStripeCheckoutAbandonMessage = false
 
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
-  private var previousStripeCheckoutTask: Task<Void, Never>?
+  private let stripeCheckoutCoordinator = SerialTaskCoordinator()
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
@@ -1266,10 +1266,9 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   private func enqueueStripeCheckoutTask(
     _ operation: @escaping (PaywallViewController) async -> Void
   ) {
-    // Assign the current Stripe task while capturing the previous one.
-    previousStripeCheckoutTask = Task { [weak self, previousStripeCheckoutTask] in
-      // Wait until the previous task is finished before continuing.
-      await previousStripeCheckoutTask?.value
+    // Queue the callback behind any already in flight and return. The closure
+    // stays on the main actor so the callbacks run where they always have.
+    stripeCheckoutCoordinator.enqueue { @MainActor [weak self] in
       guard let self else {
         return
       }

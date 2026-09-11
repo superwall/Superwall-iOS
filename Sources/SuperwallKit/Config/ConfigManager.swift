@@ -565,9 +565,9 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    // Wait until any preload already in flight is finished before continuing.
-    // Preloading is kicked off from several places (config refresh, retry,
-    // reset, public API), so the queue has to be safe to add to from any thread.
+    // Queue the preload behind any that's already in flight and return. It's
+    // kicked off from several places (config refresh, retry, reset, public
+    // API), so the queue has to be safe to add to from any thread.
     preloadingCoordinator.enqueue { [weak self] in
       guard let self = self else {
         return

@@ -90,8 +90,8 @@ extension Superwall {
     forPlacement placement: Trackable,
     withData placementData: PlacementData
   ) async {
-    // Wait until any register call already in flight is finished before
-    // continuing.
+    // Queue the work behind any register call already in flight and return,
+    // so implicit triggers and `register` calls don't present over each other.
     registerTaskCoordinator.enqueue { [weak self] in
       await self?.internallyHandleImplicitTrigger(
         forPlacement: placement,

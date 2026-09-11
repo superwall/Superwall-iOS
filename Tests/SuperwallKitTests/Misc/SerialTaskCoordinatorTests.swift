@@ -10,6 +10,17 @@ import Testing
 
 @testable import SuperwallKit
 
+extension SerialTaskCoordinator {
+  /// Waits for everything enqueued so far to finish.
+  fileprivate func drain() async {
+    await withCheckedContinuation { continuation in
+      enqueue {
+        continuation.resume()
+      }
+    }
+  }
+}
+
 @Suite("SerialTaskCoordinator Tests")
 struct SerialTaskCoordinatorTests {
   /// Records the order operations ran in and how many ran at the same time.
