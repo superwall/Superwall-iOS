@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "מנויים";
 "customer_center_section_purchases" = "רכישות";
 "customer_center_section_actions" = "פעולות";
-"customer_center_see_all_purchases" = "הצג את כל הרכישות";
-"customer_center_purchase_history" = "היסטוריית רכישות";
-"customer_center_history_active" = "מנויים פעילים";
-"customer_center_history_expired" = "מנויים שפג תוקפם";
-"customer_center_history_other" = "רכישות אחרות";
 "customer_center_account_details" = "פרטי חשבון";
 "customer_center_user_id" = "מזהה משתמש";
 "customer_center_copy" = "העתקה";

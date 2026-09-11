@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Pretplate";
 "customer_center_section_purchases" = "Kupnje";
 "customer_center_section_actions" = "Radnje";
-"customer_center_see_all_purchases" = "Prikaži sve kupnje";
-"customer_center_purchase_history" = "Povijest kupnji";
-"customer_center_history_active" = "Aktivne pretplate";
-"customer_center_history_expired" = "Istekle pretplate";
-"customer_center_history_other" = "Ostale kupnje";
 "customer_center_account_details" = "Pojedinosti računa";
 "customer_center_user_id" = "ID korisnika";
 "customer_center_copy" = "Kopiraj";

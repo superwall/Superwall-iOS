@@ -56,17 +56,51 @@ struct WebProductPricingTests {
     #expect(display.localizedPeriod != nil, "the renewal line reads better with a period")
   }
 
-  /// Before this, a web subscription rendered with the raw product identifier as its title and no
-  /// price at all, because `products(for:)` only ever consulted StoreKit.
-  @Test("the card shows a price rather than a bare identifier", arguments: [199, 999, 7999])
-  func cardShowsPrice(amountInCents: Int) throws {
+  /// A catalogue product with no display name yields no card. The price is there — that's what
+  /// the catalogue is for — but a card is titled with its product's name, and a card titled with
+  /// `test:price_…:no-trial` is worse than no card. The name is the backend's to send.
+  @Test("a web product with no display name is not shown", arguments: [199, 999, 7999])
+  func unnamedWebProductIsHidden(amountInCents: Int) throws {
     let product = try decodeProduct(amountInCents: amountInCents)
     let storeProduct = StoreProduct(
       catalogProduct: APIStoreProduct(superwallProduct: product, entitlements: [])
     )
     let display = ProductDisplayInfo(storeProduct)
+    #expect(display.localizedPrice?.contains(".") == true, "the price itself resolved")
+    #expect(!display.hasDisplayName)
 
-    let subscription = SubscriptionTransaction(
+    let builder = PurchasePresentationBuilder(strings: .english, locale: Locale(identifier: "en_US"))
+    let presentations = builder.build(
+      customerInfo: CustomerInfo(subscriptions: [webSubscription()], nonSubscriptions: [], entitlements: []),
+      products: ["web_pro_monthly": display]
+    )
+    #expect(presentations.isEmpty, "no name, no card")
+  }
+
+  /// The same purchase once the catalogue names it: the card appears, titled by the catalogue,
+  /// with the price on it.
+  @Test("the card shows a price and the catalogue's name once there is one", arguments: [199, 999, 7999])
+  func cardShowsPrice(amountInCents: Int) throws {
+    let product = try decodeProduct(amountInCents: amountInCents, name: "Pro")
+    let storeProduct = StoreProduct(
+      catalogProduct: APIStoreProduct(superwallProduct: product, entitlements: [])
+    )
+    let display = ProductDisplayInfo(storeProduct, name: product.name)
+
+    let builder = PurchasePresentationBuilder(strings: .english, locale: Locale(identifier: "en_US"))
+    let presentations = builder.build(
+      customerInfo: CustomerInfo(subscriptions: [webSubscription()], nonSubscriptions: [], entitlements: []),
+      products: ["web_pro_monthly": display]
+    )
+    let card = try #require(presentations.first)
+
+    #expect(card.priceLine != nil)
+    #expect(card.statusLine.contains(display.localizedPrice ?? "!"), "the renewal line quotes the price")
+    #expect(card.title == "Pro")
+  }
+
+  private func webSubscription() -> SubscriptionTransaction {
+    SubscriptionTransaction(
       transactionId: "web_1",
       productId: "web_pro_monthly",
       purchaseDate: Date().addingTimeInterval(-30 * 86_400),
@@ -79,20 +113,6 @@ struct WebProductPricingTests {
       subscriptionGroupId: nil,
       store: .stripe
     )
-    let builder = PurchasePresentationBuilder(strings: .english, locale: Locale(identifier: "en_US"))
-    let presentations = builder.build(
-      customerInfo: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: []),
-      products: ["web_pro_monthly": display]
-    )
-    let card = try #require(presentations.first)
-
-    #expect(card.priceLine != nil)
-    #expect(card.statusLine.contains(display.localizedPrice ?? "!"), "the renewal line quotes the price")
-    // No name in the payload today, so the identifier stands in. Deliberately not prettified:
-    // a composed identifier like `live:price_123:no-trial` would tidy into a plausible-looking
-    // product name that is pure fiction, and the real Stripe name is per-product anyway
-    // ("Pro"), not per-price ("Pro Monthly").
-    #expect(card.title == "web_pro_monthly")
   }
 
   /// The field the backend hasn't shipped yet. Pins that `name` decodes off the payload and that

@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "订阅";
 "customer_center_section_purchases" = "购买项目";
 "customer_center_section_actions" = "操作";
-"customer_center_see_all_purchases" = "查看所有购买项目";
-"customer_center_purchase_history" = "购买记录";
-"customer_center_history_active" = "有效订阅";
-"customer_center_history_expired" = "已过期订阅";
-"customer_center_history_other" = "其他购买项目";
 "customer_center_account_details" = "账户详情";
 "customer_center_user_id" = "用户 ID";
 "customer_center_copy" = "复制";

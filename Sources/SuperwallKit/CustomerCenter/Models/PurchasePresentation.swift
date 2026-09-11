@@ -16,6 +16,9 @@ struct ProductDisplayInfo: Equatable {
   var localizedPeriod: String?
   var subscriptionGroupId: String?
   var isAutoRenewable: Bool?
+  /// Whether `title` is a real display name rather than the product identifier standing in for
+  /// one. A purchase is only shown when this is `true` — see `PurchasePresentationBuilder`.
+  var hasDisplayName = true
 }
 
 enum PurchaseBadge: Equatable {

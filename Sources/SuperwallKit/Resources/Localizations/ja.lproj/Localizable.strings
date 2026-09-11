@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "サブスクリプション";
 "customer_center_section_purchases" = "購入";
 "customer_center_section_actions" = "操作";
-"customer_center_see_all_purchases" = "すべての購入を見る";
-"customer_center_purchase_history" = "購入履歴";
-"customer_center_history_active" = "有効なサブスクリプション";
-"customer_center_history_expired" = "終了したサブスクリプション";
-"customer_center_history_other" = "その他の購入";
 "customer_center_account_details" = "アカウントの詳細";
 "customer_center_user_id" = "ユーザーID";
 "customer_center_copy" = "コピー";

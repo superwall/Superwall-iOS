@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Naročnine";
 "customer_center_section_purchases" = "Nakupi";
 "customer_center_section_actions" = "Dejanja";
-"customer_center_see_all_purchases" = "Prikaži vse nakupe";
-"customer_center_purchase_history" = "Zgodovina nakupov";
-"customer_center_history_active" = "Aktivne naročnine";
-"customer_center_history_expired" = "Potekle naročnine";
-"customer_center_history_other" = "Drugi nakupi";
 "customer_center_account_details" = "Podrobnosti računa";
 "customer_center_user_id" = "ID uporabnika";
 "customer_center_copy" = "Kopiraj";

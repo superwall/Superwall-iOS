@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "การสมัครสมาชิก";
 "customer_center_section_purchases" = "การซื้อ";
 "customer_center_section_actions" = "การดำเนินการ";
-"customer_center_see_all_purchases" = "ดูการซื้อทั้งหมด";
-"customer_center_purchase_history" = "ประวัติการซื้อ";
-"customer_center_history_active" = "การสมัครสมาชิกที่ใช้งานอยู่";
-"customer_center_history_expired" = "การสมัครสมาชิกที่หมดอายุ";
-"customer_center_history_other" = "การซื้ออื่นๆ";
 "customer_center_account_details" = "รายละเอียดบัญชี";
 "customer_center_user_id" = "รหัสผู้ใช้";
 "customer_center_copy" = "คัดลอก";

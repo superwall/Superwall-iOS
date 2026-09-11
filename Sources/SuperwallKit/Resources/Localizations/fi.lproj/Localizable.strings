@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Tilaukset";
 "customer_center_section_purchases" = "Ostokset";
 "customer_center_section_actions" = "Toiminnot";
-"customer_center_see_all_purchases" = "Näytä kaikki ostokset";
-"customer_center_purchase_history" = "Ostohistoria";
-"customer_center_history_active" = "Aktiiviset tilaukset";
-"customer_center_history_expired" = "Vanhentuneet tilaukset";
-"customer_center_history_other" = "Muut ostokset";
 "customer_center_account_details" = "Tilin tiedot";
 "customer_center_user_id" = "Käyttäjätunnus";
 "customer_center_copy" = "Kopioi";

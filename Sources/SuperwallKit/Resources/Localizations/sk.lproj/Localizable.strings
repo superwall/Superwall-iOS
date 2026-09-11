@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Predplatné";
 "customer_center_section_purchases" = "Nákupy";
 "customer_center_section_actions" = "Akcie";
-"customer_center_see_all_purchases" = "Zobraziť všetky nákupy";
-"customer_center_purchase_history" = "História nákupov";
-"customer_center_history_active" = "Aktívne predplatné";
-"customer_center_history_expired" = "Vypršané predplatné";
-"customer_center_history_other" = "Ostatné nákupy";
 "customer_center_account_details" = "Podrobnosti o účte";
 "customer_center_user_id" = "ID používateľa";
 "customer_center_copy" = "Kopírovať";

@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Підписки";
 "customer_center_section_purchases" = "Покупки";
 "customer_center_section_actions" = "Дії";
-"customer_center_see_all_purchases" = "Переглянути всі покупки";
-"customer_center_purchase_history" = "Історія покупок";
-"customer_center_history_active" = "Активні підписки";
-"customer_center_history_expired" = "Завершені підписки";
-"customer_center_history_other" = "Інші покупки";
 "customer_center_account_details" = "Дані облікового запису";
 "customer_center_user_id" = "Ідентифікатор користувача";
 "customer_center_copy" = "Копіювати";

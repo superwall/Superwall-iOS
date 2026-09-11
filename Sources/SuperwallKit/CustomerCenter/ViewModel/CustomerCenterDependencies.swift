@@ -78,14 +78,14 @@ extension ProductDisplayInfo {
   /// - Parameter name: A display name from outside StoreKit — the Superwall catalogue, for a web
   ///   product StoreKit can't resolve. Ignored when `nil` or empty, leaving the usual fallbacks.
   init(_ product: StoreProduct, name: String? = nil) {
-    var title = product.productIdentifier
+    var displayName: String?
     if #available(iOS 15.0, *), let name = product.sk2Product?.displayName, !name.isEmpty {
-      title = name
+      displayName = name
     } else if let name = product.sk1Product?.localizedTitle, !name.isEmpty {
-      title = name
+      displayName = name
     }
     if let name, !name.isEmpty {
-      title = name
+      displayName = name
     }
     var isAutoRenewable: Bool?
     if #available(iOS 15.0, *), let type = product.sk2Product?.type {
@@ -93,12 +93,13 @@ extension ProductDisplayInfo {
     }
     self.init(
       productId: product.productIdentifier,
-      title: title,
+      title: displayName ?? product.productIdentifier,
       localizedPrice: product.localizedPrice,
       price: product.price,
       localizedPeriod: product.subscriptionPeriod == nil ? nil : product.period,
       subscriptionGroupId: product.subscriptionGroupIdentifier,
-      isAutoRenewable: isAutoRenewable
+      isAutoRenewable: isAutoRenewable,
+      hasDisplayName: displayName != nil
     )
   }
 }

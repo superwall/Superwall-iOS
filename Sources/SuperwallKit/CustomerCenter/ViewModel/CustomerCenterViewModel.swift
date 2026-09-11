@@ -318,17 +318,6 @@ final class CustomerCenterViewModel: ObservableObject {
     }
     await apply(customerInfo: info, refetchProducts: true)
   }
-
-
-  // swiftlint:disable:next large_tuple
-  func historySections() -> (
-    active: [PurchasePresentation],
-    expired: [PurchasePresentation],
-    other: [PurchasePresentation]
-  ) {
-    let subs = purchases.filter { $0.subscription != nil }
-    return (subs.filter(\.isActive), subs.filter { !$0.isActive }, purchases.filter { $0.subscription == nil })
-  }
 }
 
 // MARK: - Visibility-driven dismissal

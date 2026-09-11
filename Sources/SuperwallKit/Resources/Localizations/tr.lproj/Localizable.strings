@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Abonelikler";
 "customer_center_section_purchases" = "Satın alımlar";
 "customer_center_section_actions" = "İşlemler";
-"customer_center_see_all_purchases" = "Tüm satın alımları gör";
-"customer_center_purchase_history" = "Satın alma geçmişi";
-"customer_center_history_active" = "Aktif abonelikler";
-"customer_center_history_expired" = "Süresi dolmuş abonelikler";
-"customer_center_history_other" = "Diğer satın alımlar";
 "customer_center_account_details" = "Hesap bilgileri";
 "customer_center_user_id" = "Kullanıcı kimliği";
 "customer_center_copy" = "Kopyala";

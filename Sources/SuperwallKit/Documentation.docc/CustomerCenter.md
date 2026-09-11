@@ -5,7 +5,7 @@ A native, self-service screen where users can view and manage their subscription
 ## Overview
 
 The Customer Center lets users restore purchases, manage or cancel a subscription, request a
-refund, change plans, contact support, answer exit surveys and browse purchase history — all
+refund, change plans, contact support, answer exit surveys and open any subscription for its details — all
 without leaving your app. It ships with sensible defaults and is fully configurable, so you can
 tailor which paths appear, their titles, surveys and accent colour to match your app.
 
@@ -39,9 +39,8 @@ navigationController?.pushViewController(customerCenter, animated: true)
 
 A pushed Customer Center renders into your navigation bar and leaves it alone — your title, your
 back button, your appearance, your swipe-to-go-back. It adds no close button, since your stack
-already provides the way back. Its own screens, purchase history and per-purchase detail, are
-pushed onto your stack as further view controllers, so they behave like any other screen you
-pushed yourself.
+already provides the way back. Its own screen — the detail for a subscription — is pushed onto
+your stack as a further view controller, so it behaves like any other screen you pushed yourself.
 
 > Important: A `CustomerCenterViewController` you construct yourself is yours, and the SDK does not
 > track it. ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)`` will present
@@ -230,6 +229,9 @@ The Customer Center fires the following ``SuperwallEvent`` cases, which you can 
 ## Limitations
 
 - Requires iOS 15.0+. On earlier versions, presentation calls are unavailable at compile time.
+- A purchase whose product has no display name isn't shown. Today that is every web (Stripe,
+  Paddle) purchase, because the product catalogue doesn't return a name yet; they appear as soon
+  as it does. App Store purchases always have one.
 - Promotional offers are not yet supported as a Customer Center path.
 - Remote configuration of the Customer Center from the Superwall dashboard is coming; today it's
   configured entirely in code via ``SuperwallOptions/customerCenter``.

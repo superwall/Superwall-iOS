@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "訂閱";
 "customer_center_section_purchases" = "購買項目";
 "customer_center_section_actions" = "操作";
-"customer_center_see_all_purchases" = "查看所有購買項目";
-"customer_center_purchase_history" = "購買記錄";
-"customer_center_history_active" = "有效訂閱";
-"customer_center_history_expired" = "已過期訂閱";
-"customer_center_history_other" = "其他購買項目";
 "customer_center_account_details" = "帳戶詳情";
 "customer_center_user_id" = "使用者 ID";
 "customer_center_copy" = "複製";

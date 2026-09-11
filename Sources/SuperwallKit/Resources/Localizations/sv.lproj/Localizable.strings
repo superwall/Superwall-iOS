@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Prenumerationer";
 "customer_center_section_purchases" = "Köp";
 "customer_center_section_actions" = "Åtgärder";
-"customer_center_see_all_purchases" = "Visa alla köp";
-"customer_center_purchase_history" = "Köphistorik";
-"customer_center_history_active" = "Aktiva prenumerationer";
-"customer_center_history_expired" = "Upphörda prenumerationer";
-"customer_center_history_other" = "Andra köp";
 "customer_center_account_details" = "Kontouppgifter";
 "customer_center_user_id" = "Användar-ID";
 "customer_center_copy" = "Kopiera";

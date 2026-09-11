@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "सदस्यताएं";
 "customer_center_section_purchases" = "खरीदारी";
 "customer_center_section_actions" = "कार्रवाइयां";
-"customer_center_see_all_purchases" = "सभी खरीदारी देखें";
-"customer_center_purchase_history" = "खरीद इतिहास";
-"customer_center_history_active" = "सक्रिय सदस्यताएं";
-"customer_center_history_expired" = "समाप्त हुई सदस्यताएं";
-"customer_center_history_other" = "अन्य खरीदारी";
 "customer_center_account_details" = "खाते का विवरण";
 "customer_center_user_id" = "उपयोगकर्ता आईडी";
 "customer_center_copy" = "कॉपी करें";

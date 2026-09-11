@@ -44,6 +44,21 @@ struct PurchasePresentationBuilder {
     return subs + nonSubs + entitlementOnly
   }
 
+  /// Whether a purchase backed by `product` is shown at all.
+  ///
+  /// A card is titled with its product's display name, and a card without one reads as a raw
+  /// identifier — `test:price_1Tu…:no-trial` — which is worse than no card. So a product that
+  /// resolved *without* a name hides its purchase. A product that didn't resolve at all is left
+  /// alone: that is a lookup failure, not a naming decision, and turning every StoreKit hiccup
+  /// into a vanished subscription would be the wrong trade — the identifier fallback stays for it.
+  ///
+  /// Entitlement-only rows are outside this rule. They have no product to be named by, and the
+  /// entitlement's own identifier is what they show.
+  static func isNameable(_ product: ProductDisplayInfo?) -> Bool {
+    guard let product else { return true }
+    return product.hasDisplayName
+  }
+
   func subscriptionPresentations(
     _ subscriptions: [SubscriptionTransaction],
     products: [String: ProductDisplayInfo]
@@ -70,7 +85,11 @@ struct PurchasePresentationBuilder {
       case (nil, nil): return lhs.purchaseDate < rhs.purchaseDate
       }
     }
-    return sorted.map { presentation(for: $0, product: products[$0.productId]) }
+    return sorted.compactMap { sub in
+      let product = products[sub.productId]
+      guard Self.isNameable(product) else { return nil }
+      return presentation(for: sub, product: product)
+    }
   }
 
   /// Whether `lhs` better represents its product than `rhs` when both are transactions of the
@@ -90,8 +109,9 @@ struct PurchasePresentationBuilder {
     _ purchases: [NonSubscriptionTransaction],
     products: [String: ProductDisplayInfo]
   ) -> [PurchasePresentation] {
-    purchases.sorted { $0.purchaseDate < $1.purchaseDate }.map { purchase in
+    purchases.sorted { $0.purchaseDate < $1.purchaseDate }.compactMap { purchase -> PurchasePresentation? in
       let product = products[purchase.productId]
+      guard Self.isNameable(product) else { return nil }
       // Keyed by transaction id, not product id: consumables can legitimately be purchased
       // multiple times, and each purchase gets its own row.
       return PurchasePresentation(

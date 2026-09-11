@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "الاشتراكات";
 "customer_center_section_purchases" = "المشتريات";
 "customer_center_section_actions" = "الإجراءات";
-"customer_center_see_all_purchases" = "عرض جميع المشتريات";
-"customer_center_purchase_history" = "سجل المشتريات";
-"customer_center_history_active" = "الاشتراكات النشطة";
-"customer_center_history_expired" = "الاشتراكات المنتهية";
-"customer_center_history_other" = "مشتريات أخرى";
 "customer_center_account_details" = "تفاصيل الحساب";
 "customer_center_user_id" = "معرّف المستخدم";
 "customer_center_copy" = "نسخ";

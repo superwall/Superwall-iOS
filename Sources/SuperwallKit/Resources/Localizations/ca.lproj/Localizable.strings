@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Subscripcions";
 "customer_center_section_purchases" = "Compres";
 "customer_center_section_actions" = "Accions";
-"customer_center_see_all_purchases" = "Veure totes les compres";
-"customer_center_purchase_history" = "Historial de compres";
-"customer_center_history_active" = "Subscripcions actives";
-"customer_center_history_expired" = "Subscripcions caducades";
-"customer_center_history_other" = "Altres compres";
 "customer_center_account_details" = "Detalls del compte";
 "customer_center_user_id" = "ID d'usuari";
 "customer_center_copy" = "Copia";

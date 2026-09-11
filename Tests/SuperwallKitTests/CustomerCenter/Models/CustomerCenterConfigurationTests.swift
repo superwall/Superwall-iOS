@@ -15,7 +15,7 @@ struct CustomerCenterConfigurationTests {
     #expect(manage.survey?.options.map(\.id) == ["too_expensive", "dont_use", "bought_by_mistake"])
     #expect(config.support.email == nil)
     #expect(config.support.shouldWarnToUpdate == true)
-    #expect(config.showsPurchaseHistory && config.showsAccountDetails && config.warnsAboutDuplicateSubscriptions)
+    #expect(config.showsAccountDetails && config.warnsAboutDuplicateSubscriptions)
   }
 
   @Test("default returns a fresh instance each time")

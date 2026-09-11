@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Abbonamenti";
 "customer_center_section_purchases" = "Acquisti";
 "customer_center_section_actions" = "Azioni";
-"customer_center_see_all_purchases" = "Vedi tutti gli acquisti";
-"customer_center_purchase_history" = "Cronologia acquisti";
-"customer_center_history_active" = "Abbonamenti attivi";
-"customer_center_history_expired" = "Abbonamenti scaduti";
-"customer_center_history_other" = "Altri acquisti";
 "customer_center_account_details" = "Dettagli account";
 "customer_center_user_id" = "ID utente";
 "customer_center_copy" = "Copia";

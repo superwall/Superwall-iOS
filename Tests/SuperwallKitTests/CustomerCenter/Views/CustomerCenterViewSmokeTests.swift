@@ -77,7 +77,8 @@ struct CustomerCenterViewSmokeTests {
     let purchase = vm.purchases[0]
     let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
     await vm.select(manage, purchase: purchase)
-    for view in [AnyView(FeedbackSurveyView(viewModel: vm)), AnyView(PurchaseHistoryView(viewModel: vm))] {
+    let detail = PurchaseDetailScreenView(viewModel: vm, purchase: purchase)
+    for view in [AnyView(FeedbackSurveyView(viewModel: vm)), AnyView(detail)] {
       let host = UIHostingController(rootView: view)
       host.view.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
       let window = UIWindow(frame: host.view.frame)

@@ -227,4 +227,58 @@ struct PurchasePresentationBuilderTests {
     #expect(Set(rows.map(\.id)).count == 2)
     #expect(rows.allSatisfy { $0.productId == "coins" })
   }
+
+  // MARK: - A card needs a name
+
+  /// What a Stripe purchase looks like today: the catalogue resolved the product and priced it,
+  /// but sent no display name. The alternative to hiding it is a card titled
+  /// `test:price_1Tu…:no-trial`, which is the thing this rule exists to prevent.
+  @Test("a subscription whose product resolved without a display name is not shown")
+  func unnamedProductHidesTheSubscription() {
+    var unnamed = monthly
+    unnamed.title = "monthly"
+    unnamed.hasDisplayName = false
+    let rows = builder.build(customerInfo: info(subs: [sub("monthly")]), products: ["monthly": unnamed])
+    #expect(rows.isEmpty)
+  }
+
+  @Test("a one-off purchase whose product resolved without a display name is not shown")
+  func unnamedProductHidesTheOneOff() {
+    let coins = NonSubscriptionTransaction(
+      transactionId: "n",
+      productId: "coins",
+      purchaseDate: now,
+      isConsumable: true,
+      isRevoked: false,
+      store: .stripe
+    )
+    let unnamed = ProductDisplayInfo(
+      productId: "coins",
+      title: "coins",
+      localizedPrice: "$0.99",
+      price: 0.99,
+      localizedPeriod: nil,
+      subscriptionGroupId: nil,
+      isAutoRenewable: false,
+      hasDisplayName: false
+    )
+    let rows = builder.build(customerInfo: info(nonSubs: [coins]), products: ["coins": unnamed])
+    #expect(rows.isEmpty)
+  }
+
+  /// The rule is per card. One unnamed product must not take a named one down with it — and
+  /// `missingProduct` above pins the other edge: a product that didn't resolve at all keeps its
+  /// identifier, because that's a lookup failure rather than a naming decision.
+  @Test("hiding is per card, not all-or-nothing")
+  func hidingIsPerCard() {
+    var unnamed = monthly
+    unnamed.productId = "web"
+    unnamed.title = "web"
+    unnamed.hasDisplayName = false
+    let rows = builder.build(
+      customerInfo: info(subs: [sub("monthly"), sub("web", store: .stripe)]),
+      products: ["monthly": monthly, "web": unnamed]
+    )
+    #expect(rows.map(\.id) == ["monthly"])
+  }
 }

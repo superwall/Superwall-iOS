@@ -15,7 +15,6 @@ struct ManagementScreenView: View {
 
   private var subscriptions: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription != nil } }
   private var others: [PurchasePresentation] { viewModel.purchases.filter { $0.subscription == nil } }
-  private var isSingle: Bool { viewModel.purchases.count == 1 }
 
   var body: some View {
     List {
@@ -26,37 +25,26 @@ struct ManagementScreenView: View {
         DuplicateSubscriptionBanner()
       }
       if !subscriptions.isEmpty {
+        // Every subscription is a row that opens its own detail screen, one or many alike. This
+        // screen keeps the actions that apply to the account; anything that only makes sense
+        // against one subscription — change plan, refund, cancel — lives where the row leads.
         Section(strings.string("customer_center_section_subscriptions")) {
           ForEach(subscriptions) { purchase in
-            if isSingle {
+            CustomerCenterDrillDown {
+              PurchaseDetailScreenView(viewModel: viewModel, purchase: purchase)
+            } label: {
               PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)
-            } else {
-              CustomerCenterDrillDown {
-                PurchaseDetailScreenView(viewModel: viewModel, purchase: purchase)
-              } label: {
-                PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)
-              }
             }
           }
         }
       }
       if !others.isEmpty {
         Section(strings.string("customer_center_section_purchases")) {
-          ForEach(visibleOthers) { PurchaseCardView(purchase: $0, refundResult: nil) }
+          ForEach(others) { PurchaseCardView(purchase: $0, refundResult: nil) }
         }
       }
       Section(strings.string("customer_center_section_actions")) {
-        PathsListView(viewModel: viewModel, purchase: isSingle ? viewModel.purchases.first : nil)
-      }
-      if viewModel.configuration.showsPurchaseHistory {
-        Section {
-          CustomerCenterDrillDown {
-            PurchaseHistoryView(viewModel: viewModel)
-          } label: {
-            Text(strings.string("customer_center_see_all_purchases"))
-          }
-          .accessibilityIdentifier("customer_center.purchase_history")
-        }
+        PathsListView(viewModel: viewModel, purchase: nil)
       }
       if viewModel.configuration.showsAccountDetails {
         AccountDetailsSection(viewModel: viewModel)
@@ -70,22 +58,13 @@ struct ManagementScreenView: View {
     .navigationBarTitleDisplayMode(.inline)
   }
 
-  /// Non-subscription purchases to show inline. Collapsing to the first few keeps the management
-  /// screen scannable, but that's only acceptable while the rest stay reachable — with
-  /// `showsPurchaseHistory` off there is no "See all purchases" row, so a cap would make anything
-  /// past it unreachable rather than merely collapsed.
-  var visibleOthers: [PurchasePresentation] {
-    viewModel.configuration.showsPurchaseHistory ? Array(others.prefix(Self.inlineOthersLimit)) : others
-  }
-
-  private static let inlineOthersLimit = 2
-
   private var navigationTitle: String {
     viewModel.configuration.managementScreen.title ?? strings.string("customer_center_management_title")
   }
 }
 
-/// Detail for one purchase when the user has several.
+/// Detail for one subscription, reached by tapping its row on the management screen. Carries the
+/// actions that only make sense against that subscription.
 @available(iOS 15.0, *)
 struct PurchaseDetailScreenView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel

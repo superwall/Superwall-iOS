@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Abonamente";
 "customer_center_section_purchases" = "Achiziții";
 "customer_center_section_actions" = "Acțiuni";
-"customer_center_see_all_purchases" = "Vezi toate achizițiile";
-"customer_center_purchase_history" = "Istoricul achizițiilor";
-"customer_center_history_active" = "Abonamente active";
-"customer_center_history_expired" = "Abonamente expirate";
-"customer_center_history_other" = "Alte achiziții";
 "customer_center_account_details" = "Detaliile contului";
 "customer_center_user_id" = "ID utilizator";
 "customer_center_copy" = "Copiază";

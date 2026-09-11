@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Abonnementen";
 "customer_center_section_purchases" = "Aankopen";
 "customer_center_section_actions" = "Acties";
-"customer_center_see_all_purchases" = "Alle aankopen bekijken";
-"customer_center_purchase_history" = "Aankoopgeschiedenis";
-"customer_center_history_active" = "Actieve abonnementen";
-"customer_center_history_expired" = "Verlopen abonnementen";
-"customer_center_history_other" = "Overige aankopen";
 "customer_center_account_details" = "Accountgegevens";
 "customer_center_user_id" = "Gebruikers-ID";
 "customer_center_copy" = "Kopiëren";

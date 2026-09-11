@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Abonnementer";
 "customer_center_section_purchases" = "Kjøp";
 "customer_center_section_actions" = "Handlinger";
-"customer_center_see_all_purchases" = "Se alle kjøp";
-"customer_center_purchase_history" = "Kjøpshistorikk";
-"customer_center_history_active" = "Aktive abonnementer";
-"customer_center_history_expired" = "Utløpte abonnementer";
-"customer_center_history_other" = "Andre kjøp";
 "customer_center_account_details" = "Kontodetaljer";
 "customer_center_user_id" = "Bruker-ID";
 "customer_center_copy" = "Kopier";

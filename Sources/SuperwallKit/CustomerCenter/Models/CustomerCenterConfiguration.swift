@@ -23,8 +23,6 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   public var support: Support
   /// Optional color overrides. `nil` values use system colors.
   public var appearance: Appearance
-  /// Shows a "See all purchases" link to the purchase history screen. Defaults to `true`.
-  public var showsPurchaseHistory: Bool
   /// Shows the account details section (user ID, original download date). Defaults to `true`.
   public var showsAccountDetails: Bool
   /// Warns when both an App Store and a web subscription are active. Defaults to `true`.
@@ -35,7 +33,6 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     noPurchasesScreen: Screen,
     support: Support = Support(),
     appearance: Appearance = Appearance(),
-    showsPurchaseHistory: Bool = true,
     showsAccountDetails: Bool = true,
     warnsAboutDuplicateSubscriptions: Bool = true
   ) {
@@ -43,7 +40,6 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     self.noPurchasesScreen = noPurchasesScreen
     self.support = support
     self.appearance = appearance
-    self.showsPurchaseHistory = showsPurchaseHistory
     self.showsAccountDetails = showsAccountDetails
     self.warnsAboutDuplicateSubscriptions = warnsAboutDuplicateSubscriptions
   }
@@ -87,7 +83,6 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       && noPurchasesScreen == other.noPurchasesScreen
       && support == other.support
       && appearance == other.appearance
-      && showsPurchaseHistory == other.showsPurchaseHistory
       && showsAccountDetails == other.showsAccountDetails
       && warnsAboutDuplicateSubscriptions == other.warnsAboutDuplicateSubscriptions
   }
@@ -98,7 +93,6 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     hasher.combine(noPurchasesScreen)
     hasher.combine(support)
     hasher.combine(appearance)
-    hasher.combine(showsPurchaseHistory)
     hasher.combine(showsAccountDetails)
     hasher.combine(warnsAboutDuplicateSubscriptions)
     return hasher.finalize()

@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "구독";
 "customer_center_section_purchases" = "구매 항목";
 "customer_center_section_actions" = "작업";
-"customer_center_see_all_purchases" = "모든 구매 항목 보기";
-"customer_center_purchase_history" = "구매 내역";
-"customer_center_history_active" = "활성 구독";
-"customer_center_history_expired" = "만료된 구독";
-"customer_center_history_other" = "기타 구매 항목";
 "customer_center_account_details" = "계정 세부정보";
 "customer_center_user_id" = "사용자 ID";
 "customer_center_copy" = "복사";

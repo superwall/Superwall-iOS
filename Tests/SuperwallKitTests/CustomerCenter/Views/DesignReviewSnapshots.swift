@@ -140,11 +140,12 @@ struct DesignReviewSnapshots {
         subscriptionGroupId: nil,
         isAutoRenewable: false
       ),
-      // A web product as it actually arrives: the catalogue supplies its price, but `/v1/products`
-      // carries no display name, so the card is headed with the raw identifier.
+      // A web product as it will arrive once `/v1/products` carries a display name. Until it does,
+      // a web purchase has no name and therefore no card — see `PurchasePresentationBuilder` — so
+      // the unnamed shape isn't worth a screenshot: it renders as an empty management screen.
       "web_pro_monthly": .init(
         productId: "web_pro_monthly",
-        title: "web_pro_monthly",
+        title: "Pro",
         localizedPrice: "$12.99",
         price: 12.99,
         localizedPeriod: "month",
@@ -336,8 +337,8 @@ struct DesignReviewSnapshots {
     // 1. Nothing purchased — the empty state.
     capture("01-no-purchases", directory: directory, viewModel: await makeViewModel())
 
-    // 2. One active auto-renewing subscription. The single-purchase layout, which shows the
-    //    purchase card and its actions together rather than a drill-down list.
+    // 2. One active auto-renewing subscription. Its row opens the detail screen, which is where
+    //    the subscription's own actions live.
     capture(
       "02-active-subscription",
       directory: directory,
@@ -435,8 +436,7 @@ struct DesignReviewSnapshots {
       viewModel: await makeViewModel(nonSubscriptions: [nonSubscription()])
     )
 
-    // 12. More one-off purchases than the management screen shows inline, with the purchase
-    //     history screen available to show the rest.
+    // 12. A subscription alongside several one-off purchases, every one of them shown.
     let manyPurchases = await makeViewModel(
       subscriptions: [subscription()],
       nonSubscriptions: [
@@ -446,12 +446,7 @@ struct DesignReviewSnapshots {
         nonSubscription(productId: "coins_500", transactionId: "n4", purchaseDate: -8, isConsumable: true)
       ]
     )
-    capture("12-many-purchases-collapsed", directory: directory, viewModel: manyPurchases)
-
-    // 13. The purchase history screen those rows lead to.
-    captureDetail("13-purchase-history", directory: directory, viewModel: manyPurchases) {
-      PurchaseHistoryView(viewModel: manyPurchases)
-    }
+    capture("12-many-purchases", directory: directory, viewModel: manyPurchases)
 
     // 14. The per-purchase detail screen, reached from the multi-subscription list.
     let multi = await makeViewModel(
@@ -537,9 +532,8 @@ struct DesignReviewSnapshots {
       )
     )
 
-    // 19. History and account details switched off — the most stripped-back screen.
+    // 19. Account details switched off — the most stripped-back screen.
     let minimal = defaultConfiguration()
-    minimal.showsPurchaseHistory = false
     minimal.showsAccountDetails = false
     capture(
       "19-minimal-configuration",

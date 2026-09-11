@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Előfizetések";
 "customer_center_section_purchases" = "Vásárlások";
 "customer_center_section_actions" = "Műveletek";
-"customer_center_see_all_purchases" = "Összes vásárlás megtekintése";
-"customer_center_purchase_history" = "Vásárlási előzmények";
-"customer_center_history_active" = "Aktív előfizetések";
-"customer_center_history_expired" = "Lejárt előfizetések";
-"customer_center_history_other" = "Egyéb vásárlások";
 "customer_center_account_details" = "Fiók adatai";
 "customer_center_user_id" = "Felhasználói azonosító";
 "customer_center_copy" = "Másolás";

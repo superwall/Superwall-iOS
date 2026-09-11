@@ -96,11 +96,6 @@
 "customer_center_section_subscriptions" = "Συνδρομές";
 "customer_center_section_purchases" = "Αγορές";
 "customer_center_section_actions" = "Ενέργειες";
-"customer_center_see_all_purchases" = "Προβολή όλων των αγορών";
-"customer_center_purchase_history" = "Ιστορικό αγορών";
-"customer_center_history_active" = "Ενεργές συνδρομές";
-"customer_center_history_expired" = "Ληγμένες συνδρομές";
-"customer_center_history_other" = "Άλλες αγορές";
 "customer_center_account_details" = "Στοιχεία λογαριασμού";
 "customer_center_user_id" = "Αναγνωριστικό χρήστη";
 "customer_center_copy" = "Αντιγραφή";
