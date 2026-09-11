@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Supportförfrågan";
 "customer_center_support_body" = "Beskriv ditt problem eller din fråga.";
 "customer_center_no_mail_app" = "Ingen e-postapp är konfigurerad på den här enheten. Du kan nå oss på %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Det finns inget att hantera för det här köpet.";
+"customer_center_detail_managed_through" = "Hantera den här prenumerationen via %@.";
+"customer_center_detail_managed_where_bought" = "Hantera den här prenumerationen där du köpte den.";

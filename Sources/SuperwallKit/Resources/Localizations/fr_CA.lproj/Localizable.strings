@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Demande d'assistance";
 "customer_center_support_body" = "Merci de décrire votre problème ou votre question.";
 "customer_center_no_mail_app" = "Aucune application de messagerie n'est configurée sur cet appareil. Vous pouvez nous contacter à l'adresse %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Il n'y a rien à gérer pour cet achat.";
+"customer_center_detail_managed_through" = "Gérez cet abonnement via %@.";
+"customer_center_detail_managed_where_bought" = "Gérez cet abonnement là où vous l'avez acheté.";

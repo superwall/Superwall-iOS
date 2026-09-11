@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Solicitare de asistență";
 "customer_center_support_body" = "Vă rugăm să descrieți problema sau întrebarea dvs.";
 "customer_center_no_mail_app" = "Nu este configurată nicio aplicație de e-mail pe acest dispozitiv. Ne puteți contacta la %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Nu există nimic de gestionat pentru această achiziție.";
+"customer_center_detail_managed_through" = "Gestionează acest abonament prin %@.";
+"customer_center_detail_managed_where_bought" = "Gestionează acest abonament acolo unde l-ai cumpărat.";

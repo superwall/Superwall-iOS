@@ -75,18 +75,21 @@ struct PurchaseDetailScreenView: View {
   var body: some View {
     List {
       Section { PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult) }
-      if viewModel.hasActions(for: purchase) {
-        Section(strings.string("customer_center_section_actions")) {
-          PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
-        }
-      } else {
-        // The row opened this screen regardless — see `hasActions(for:)` — so say what there is
-        // to say rather than head an empty list with "Actions".
+      if let empty = viewModel.detailEmptyState(for: purchase) {
+        // The row opened this screen regardless — see `detailEmptyState(for:)` — so say what
+        // there is to say rather than head an empty list with "Actions". Which sentence depends
+        // on the purchase: a subscription the customer is still paying for, from a store this
+        // SDK can't drive, is told where to manage it; only a purchase with genuinely nothing
+        // left to do is told that.
         Section {
-          Text(strings.string("customer_center_detail_nothing_to_manage"))
+          Text(emptyStateText(empty))
             .font(.subheadline)
             .foregroundStyle(.secondary)
             .accessibilityIdentifier("customer_center.detail.nothing_to_manage")
+        }
+      } else {
+        Section(strings.string("customer_center_section_actions")) {
+          PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
         }
       }
     }
@@ -95,5 +98,17 @@ struct PurchaseDetailScreenView: View {
     .navigationBarTitleDisplayMode(.inline)
     .onAppear { viewModel.surfaceDidAppear() }
     .onDisappear { viewModel.surfaceDidDisappear() }
+  }
+
+  private func emptyStateText(_ state: CustomerCenterViewModel.DetailEmptyState) -> String {
+    switch state {
+    case .nothingToDo:
+      return strings.string("customer_center_detail_nothing_to_manage")
+    case .managedElsewhere(let storeLabelKey):
+      guard let storeLabelKey else {
+        return strings.string("customer_center_detail_managed_where_bought")
+      }
+      return strings.string("customer_center_detail_managed_through", strings.string(storeLabelKey))
+    }
   }
 }

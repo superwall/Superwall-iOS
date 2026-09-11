@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Permintaan dukungan";
 "customer_center_support_body" = "Silakan jelaskan masalah atau pertanyaan Anda.";
 "customer_center_no_mail_app" = "Tidak ada aplikasi email yang dikonfigurasi di perangkat ini. Anda dapat menghubungi kami di %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Tidak ada yang perlu dikelola untuk pembelian ini.";
+"customer_center_detail_managed_through" = "Kelola langganan ini melalui %@.";
+"customer_center_detail_managed_where_bought" = "Kelola langganan ini di tempat Anda membelinya.";

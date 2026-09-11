@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Запит до підтримки";
 "customer_center_support_body" = "Будь ласка, опишіть вашу проблему або запитання.";
 "customer_center_no_mail_app" = "На цьому пристрої не налаштовано жодного поштового застосунку. Ви можете зв'язатися з нами за адресою %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Для цієї покупки немає чим керувати.";
+"customer_center_detail_managed_through" = "Керуйте цією підпискою через %@.";
+"customer_center_detail_managed_where_bought" = "Керуйте цією підпискою там, де ви її оформили.";

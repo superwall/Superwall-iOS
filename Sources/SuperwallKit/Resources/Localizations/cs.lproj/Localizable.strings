@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Žádost o podporu";
 "customer_center_support_body" = "Popište prosím svůj problém nebo dotaz.";
 "customer_center_no_mail_app" = "V tomto zařízení není nastavena žádná e-mailová aplikace. Můžete nás kontaktovat na %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "U tohoto nákupu není co spravovat.";
+"customer_center_detail_managed_through" = "Toto předplatné spravujte přes %@.";
+"customer_center_detail_managed_where_bought" = "Toto předplatné spravujte tam, kde jste ho zakoupili.";

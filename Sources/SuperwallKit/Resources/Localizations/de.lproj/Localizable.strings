@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Support-Anfrage";
 "customer_center_support_body" = "Bitte beschreiben Sie Ihr Problem oder Ihre Frage.";
 "customer_center_no_mail_app" = "Auf diesem Gerät ist keine Mail-App eingerichtet. Sie erreichen uns unter %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Für diesen Kauf gibt es nichts zu verwalten.";
+"customer_center_detail_managed_through" = "Verwalte dieses Abo über %@.";
+"customer_center_detail_managed_where_bought" = "Verwalte dieses Abo dort, wo du es gekauft hast.";

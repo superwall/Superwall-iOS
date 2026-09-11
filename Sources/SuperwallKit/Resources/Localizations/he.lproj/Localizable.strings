@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "בקשת תמיכה";
 "customer_center_support_body" = "אנא תאר את הבעיה או השאלה שלך.";
 "customer_center_no_mail_app" = "לא הוגדרה אפליקציית אימייל במכשיר זה. תוכל ליצור איתנו קשר בכתובת %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "אין מה לנהל ברכישה זו.";
+"customer_center_detail_managed_through" = "נהלו את המינוי הזה דרך %@.";
+"customer_center_detail_managed_where_bought" = "נהלו את המינוי הזה במקום שבו רכשתם אותו.";

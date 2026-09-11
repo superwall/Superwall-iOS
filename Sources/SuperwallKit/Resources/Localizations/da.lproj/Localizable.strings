@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Supportanmodning";
 "customer_center_support_body" = "Beskriv venligst dit problem eller spørgsmål.";
 "customer_center_no_mail_app" = "Der er ikke konfigureret en mailapp på denne enhed. Du kan kontakte os på %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Der er intet at administrere for dette køb.";
+"customer_center_detail_managed_through" = "Administrer dette abonnement via %@.";
+"customer_center_detail_managed_where_bought" = "Administrer dette abonnement dér, hvor du købte det.";

@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "सहायता अनुरोध";
 "customer_center_support_body" = "कृपया अपनी समस्या या प्रश्न का वर्णन करें।";
 "customer_center_no_mail_app" = "इस डिवाइस पर कोई मेल ऐप कॉन्फ़िगर नहीं है। आप हमसे %@ पर संपर्क कर सकते हैं।";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "इस खरीद के लिए प्रबंधित करने के लिए कुछ नहीं है।";
+"customer_center_detail_managed_through" = "इस सदस्यता को %@ के माध्यम से प्रबंधित करें।";
+"customer_center_detail_managed_where_bought" = "इस सदस्यता को वहीं प्रबंधित करें जहाँ से आपने इसे खरीदा था।";

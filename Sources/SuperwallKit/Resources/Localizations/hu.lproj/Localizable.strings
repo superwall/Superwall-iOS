@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Támogatási kérelem";
 "customer_center_support_body" = "Kérjük, írja le a problémáját vagy kérdését.";
 "customer_center_no_mail_app" = "Ezen az eszközön nincs beállítva levelezőalkalmazás. Elérhet minket a következő címen: %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Ehhez a vásárláshoz nincs mit kezelni.";
+"customer_center_detail_managed_through" = "Kezeld ezt az előfizetést itt: %@.";
+"customer_center_detail_managed_where_bought" = "Kezeld ezt az előfizetést ott, ahol megvásároltad.";

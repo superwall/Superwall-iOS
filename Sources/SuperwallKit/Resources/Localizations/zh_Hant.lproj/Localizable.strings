@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "支援請求";
 "customer_center_support_body" = "請描述您的問題或疑問。";
 "customer_center_no_mail_app" = "此裝置未設定郵件應用程式。您可以透過 %@ 與我們聯絡。";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "此購買項目沒有可管理的內容。";
+"customer_center_detail_managed_through" = "請透過%@管理此訂閱。";
+"customer_center_detail_managed_where_bought" = "請在購買處管理此訂閱。";

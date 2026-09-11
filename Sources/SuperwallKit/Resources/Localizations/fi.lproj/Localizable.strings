@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Tukipyyntö";
 "customer_center_support_body" = "Kuvaile ongelmaasi tai kysymystäsi.";
 "customer_center_no_mail_app" = "Tähän laitteeseen ei ole määritetty sähköpostisovellusta. Voit tavoittaa meidät osoitteessa %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Tässä ostoksessa ei ole mitään hallittavaa.";
+"customer_center_detail_managed_through" = "Hallitse tätä tilausta palvelussa %@.";
+"customer_center_detail_managed_where_bought" = "Hallitse tätä tilausta siellä, mistä ostit sen.";

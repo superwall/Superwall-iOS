@@ -318,18 +318,6 @@ final class CustomerCenterViewModel: ObservableObject {
     }
     await apply(customerInfo: info, refetchProducts: true)
   }
-
-  /// Whether the detail screen for `purchase` has anything to act on.
-  ///
-  /// Every subscription row opens its detail screen; that is the rule, and it holds whether or
-  /// not there is anything left to do. This decides what the screen shows once it is open: the
-  /// resolved actions, or a line saying there are none — a revoked App Store subscription, a
-  /// lapsed web one, a purchase from another store, or a comped grant with no management page
-  /// all resolve to nothing under the default configuration, and an "Actions" heading over an
-  /// empty list is worse than saying so.
-  func hasActions(for purchase: PurchasePresentation) -> Bool {
-    !paths(for: purchase, isScreenLevel: false).isEmpty
-  }
 }
 
 // MARK: - Visibility-driven dismissal

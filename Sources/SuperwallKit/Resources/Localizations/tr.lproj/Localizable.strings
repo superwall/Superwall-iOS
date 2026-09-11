@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Destek talebi";
 "customer_center_support_body" = "Lütfen sorununuzu veya sorunuzu açıklayın.";
 "customer_center_no_mail_app" = "Bu cihazda yapılandırılmış bir posta uygulaması yok. Bize %@ adresinden ulaşabilirsiniz.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "Bu satın alma için yönetilecek bir şey yok.";
+"customer_center_detail_managed_through" = "Bu aboneliği %@ üzerinden yönetin.";
+"customer_center_detail_managed_where_bought" = "Bu aboneliği satın aldığınız yerden yönetin.";

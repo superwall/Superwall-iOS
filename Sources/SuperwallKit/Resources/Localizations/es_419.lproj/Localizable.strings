@@ -125,4 +125,6 @@
 "customer_center_support_subject" = "Solicitud de soporte";
 "customer_center_support_body" = "Describe tu problema o pregunta.";
 "customer_center_no_mail_app" = "Este dispositivo no tiene ninguna aplicación de correo configurada. Puedes contactarnos en %@.";
-"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
+"customer_center_detail_nothing_to_manage" = "No hay nada que administrar en esta compra.";
+"customer_center_detail_managed_through" = "Administra esta suscripción a través de %@.";
+"customer_center_detail_managed_where_bought" = "Administra esta suscripción donde la compraste.";
