@@ -196,11 +196,10 @@ extension Superwall {
           }
         ))
 
-    // Assign the current register task while capturing the previous one.
-    previousRegisterTask = Task { [weak self, previousRegisterTask] in
-      // Wait until the previous task is finished before continuing.
-      await previousRegisterTask?.value
-
+    // Queue the work behind any register call already in flight and return.
+    // `register` can be called from any thread, so the queue has to be safe to
+    // add to from any thread.
+    registerTaskCoordinator.enqueue { [weak self] in
       await self?.trackAndPresentPaywall(
         forPlacement: placement,
         params: params,
