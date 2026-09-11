@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Zgłoszenie do pomocy technicznej";
 "customer_center_support_body" = "Opisz swój problem lub pytanie.";
 "customer_center_no_mail_app" = "Na tym urządzeniu nie skonfigurowano aplikacji pocztowej. Możesz się z nami skontaktować pod adresem %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

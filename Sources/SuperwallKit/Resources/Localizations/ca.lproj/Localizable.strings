@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Sol·licitud d'assistència";
 "customer_center_support_body" = "Descriu el teu problema o dubte.";
 "customer_center_no_mail_app" = "Aquest dispositiu no té cap aplicació de correu configurada. Ens pots contactar a %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

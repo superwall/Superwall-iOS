@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Yêu cầu hỗ trợ";
 "customer_center_support_body" = "Vui lòng mô tả vấn đề hoặc câu hỏi của bạn.";
 "customer_center_no_mail_app" = "Không có ứng dụng thư nào được định cấu hình trên thiết bị này. Bạn có thể liên hệ với chúng tôi tại %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

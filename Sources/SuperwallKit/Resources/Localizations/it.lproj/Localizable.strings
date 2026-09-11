@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Richiesta di assistenza";
 "customer_center_support_body" = "Descrivi il tuo problema o la tua domanda.";
 "customer_center_no_mail_app" = "Su questo dispositivo non è configurata alcuna app di posta. Puoi contattarci all'indirizzo %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

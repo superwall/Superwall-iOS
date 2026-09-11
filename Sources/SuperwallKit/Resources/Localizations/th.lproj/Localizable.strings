@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "คำขอการสนับสนุน";
 "customer_center_support_body" = "โปรดอธิบายปัญหาหรือคำถามของคุณ";
 "customer_center_no_mail_app" = "ไม่มีแอปอีเมลที่ตั้งค่าไว้บนอุปกรณ์นี้ คุณสามารถติดต่อเราได้ที่ %@";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

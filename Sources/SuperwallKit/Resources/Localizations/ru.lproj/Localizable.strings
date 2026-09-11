@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Запрос в поддержку";
 "customer_center_support_body" = "Пожалуйста, опишите вашу проблему или вопрос.";
 "customer_center_no_mail_app" = "На этом устройстве не настроено почтовое приложение. Вы можете связаться с нами по адресу %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

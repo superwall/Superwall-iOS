@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Támogatási kérelem";
 "customer_center_support_body" = "Kérjük, írja le a problémáját vagy kérdését.";
 "customer_center_no_mail_app" = "Ezen az eszközön nincs beállítva levelezőalkalmazás. Elérhet minket a következő címen: %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

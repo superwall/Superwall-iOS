@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "طلب دعم";
 "customer_center_support_body" = "يرجى وصف مشكلتك أو سؤالك.";
 "customer_center_no_mail_app" = "لا يوجد تطبيق بريد مُهيأ على هذا الجهاز. يمكنك التواصل معنا عبر %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

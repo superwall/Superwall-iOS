@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "サポートリクエスト";
 "customer_center_support_body" = "問題やご質問の内容をご記入ください。";
 "customer_center_no_mail_app" = "このデバイスにはメールアプリが設定されていません。%@までご連絡ください。";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

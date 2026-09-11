@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Permohonan sokongan";
 "customer_center_support_body" = "Sila terangkan masalah atau soalan anda.";
 "customer_center_no_mail_app" = "Tiada aplikasi mel dikonfigurasikan pada peranti ini. Anda boleh menghubungi kami di %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

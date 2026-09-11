@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Zahteva za podporo";
 "customer_center_support_body" = "Opišite svojo težavo ali vprašanje.";
 "customer_center_no_mail_app" = "V tej napravi ni nastavljena aplikacija za e-pošto. Lahko nas kontaktirate na %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

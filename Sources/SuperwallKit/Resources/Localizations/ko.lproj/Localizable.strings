@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "지원 요청";
 "customer_center_support_body" = "문제나 질문을 설명해 주세요.";
 "customer_center_no_mail_app" = "이 기기에 메일 앱이 설정되어 있지 않습니다. %@로 문의해 주세요.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

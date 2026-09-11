@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Ondersteuningsverzoek";
 "customer_center_support_body" = "Beschrijf uw probleem of vraag.";
 "customer_center_no_mail_app" = "Er is geen mail-app geconfigureerd op dit apparaat. U kunt ons bereiken via %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

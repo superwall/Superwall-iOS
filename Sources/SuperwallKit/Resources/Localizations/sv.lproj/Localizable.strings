@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Supportförfrågan";
 "customer_center_support_body" = "Beskriv ditt problem eller din fråga.";
 "customer_center_no_mail_app" = "Ingen e-postapp är konfigurerad på den här enheten. Du kan nå oss på %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Αίτημα υποστήριξης";
 "customer_center_support_body" = "Περιγράψτε το πρόβλημα ή την ερώτησή σας.";
 "customer_center_no_mail_app" = "Δεν έχει ρυθμιστεί εφαρμογή αλληλογραφίας σε αυτή τη συσκευή. Μπορείτε να επικοινωνήσετε μαζί μας στο %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";

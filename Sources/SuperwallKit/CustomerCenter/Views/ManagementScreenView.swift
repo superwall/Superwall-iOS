@@ -75,8 +75,19 @@ struct PurchaseDetailScreenView: View {
   var body: some View {
     List {
       Section { PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult) }
-      Section(strings.string("customer_center_section_actions")) {
-        PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
+      if viewModel.hasActions(for: purchase) {
+        Section(strings.string("customer_center_section_actions")) {
+          PathsListView(viewModel: viewModel, purchase: purchase, isScreenLevel: false)
+        }
+      } else {
+        // The row opened this screen regardless — see `hasActions(for:)` — so say what there is
+        // to say rather than head an empty list with "Actions".
+        Section {
+          Text(strings.string("customer_center_detail_nothing_to_manage"))
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+            .accessibilityIdentifier("customer_center.detail.nothing_to_manage")
+        }
       }
     }
     .listStyle(.insetGrouped)

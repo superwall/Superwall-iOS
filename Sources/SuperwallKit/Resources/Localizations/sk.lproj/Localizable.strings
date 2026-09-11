@@ -125,3 +125,4 @@
 "customer_center_support_subject" = "Žiadosť o podporu";
 "customer_center_support_body" = "Opíšte, prosím, váš problém alebo otázku.";
 "customer_center_no_mail_app" = "V tomto zariadení nie je nastavená žiadna e-mailová aplikácia. Môžete nás kontaktovať na %@.";
+"customer_center_detail_nothing_to_manage" = "There's nothing to manage for this purchase.";
