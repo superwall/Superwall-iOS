@@ -25,28 +25,33 @@ import Foundation
 /// it's torn down. It also loses one of the two new tasks, so the chaining the
 /// code is there to provide silently stops happening.
 ///
-/// Holding the swap behind a lock fixes both.
+/// Doing the swap on a serial queue fixes both. Only the swap runs on the
+/// queue — making a task doesn't start it — so a caller never waits on the
+/// work itself, only on another caller's swap.
 final class SerialTaskCoordinator: @unchecked Sendable {
-  private let lock = NSLock()
+  private let queue: DispatchQueue
   private var currentTask: Task<Void, Never>?
 
   /// The task at the end of the queue, if there is one.
   var lastTask: Task<Void, Never>? {
-    lock.lock()
-    defer { lock.unlock() }
-    return currentTask
+    queue.sync { currentTask }
+  }
+
+  /// - Parameter label: Names the queue so it can be told apart from other
+  /// coordinators in crash reports and Instruments.
+  init(label: String) {
+    queue = DispatchQueue(label: "com.superwall.\(label)")
   }
 
   /// Adds `operation` to the end of the queue. It starts only after everything
   /// enqueued before it has finished.
   func enqueue(_ operation: @escaping @Sendable () async -> Void) {
-    lock.lock()
-    defer { lock.unlock() }
-
-    let previous = currentTask
-    currentTask = Task {
-      await previous?.value
-      await operation()
+    queue.sync {
+      let previous = currentTask
+      currentTask = Task {
+        await previous?.value
+        await operation()
+      }
     }
   }
 }
