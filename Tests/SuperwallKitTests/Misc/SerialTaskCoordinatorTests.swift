@@ -31,7 +31,7 @@ struct SerialTaskCoordinatorTests {
 
   @Test("Operations run in the order they were enqueued")
   func runsOperationsInOrder() async {
-    let coordinator = SerialTaskCoordinator(label: "test")
+    let coordinator = SerialTaskCoordinator()
     let recorder = Recorder()
 
     for id in 0..<20 {
@@ -41,7 +41,7 @@ struct SerialTaskCoordinatorTests {
         await recorder.didFinish()
       }
     }
-    await coordinator.lastTask?.value
+    await coordinator.drain()
 
     let order = await recorder.order
     let maxRunningAtOnce = await recorder.maxRunningAtOnce
@@ -51,7 +51,7 @@ struct SerialTaskCoordinatorTests {
 
   @Test("Only one operation runs at a time when enqueued from many threads")
   func runsOneOperationAtATimeAcrossThreads() async {
-    let coordinator = SerialTaskCoordinator(label: "test")
+    let coordinator = SerialTaskCoordinator()
     let recorder = Recorder()
     let operationCount = 200
 
@@ -75,7 +75,7 @@ struct SerialTaskCoordinatorTests {
         continuation.resume()
       }
     }
-    await coordinator.lastTask?.value
+    await coordinator.drain()
 
     let order = await recorder.order
     let maxRunningAtOnce = await recorder.maxRunningAtOnce
@@ -89,20 +89,20 @@ struct SerialTaskCoordinatorTests {
 
   @Test("Operations enqueued after the queue has drained still run")
   func runsOperationsEnqueuedAfterDraining() async {
-    let coordinator = SerialTaskCoordinator(label: "test")
+    let coordinator = SerialTaskCoordinator()
     let recorder = Recorder()
 
     coordinator.enqueue {
       await recorder.didStart(0)
       await recorder.didFinish()
     }
-    await coordinator.lastTask?.value
+    await coordinator.drain()
 
     coordinator.enqueue {
       await recorder.didStart(1)
       await recorder.didFinish()
     }
-    await coordinator.lastTask?.value
+    await coordinator.drain()
 
     let order = await recorder.order
     #expect(order == [0, 1])

@@ -46,7 +46,7 @@ class ConfigManager {
 
   /// Runs preloads one at a time so concurrent callers can't race on the task
   /// reference. See ``preloadAllPaywalls()``.
-  private let preloadingCoordinator = SerialTaskCoordinator(label: "preloading")
+  private let preloadingCoordinator = SerialTaskCoordinator()
 
   typealias Factory = RequestFactory
     & AudienceFilterAttributesFactory

@@ -393,7 +393,7 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// `register(placement:)` can be called from any thread, so the queue of
   /// register tasks has to be safe to add to from any thread.
-  let registerTaskCoordinator = SerialTaskCoordinator(label: "register")
+  let registerTaskCoordinator = SerialTaskCoordinator()
 
   /// The integration attributes to send to the server when `appTransactionId`
   /// is available. Protected by a queue for thread safety.

@@ -25,32 +25,48 @@ import Foundation
 /// it's torn down. It also loses one of the two new tasks, so the chaining the
 /// code is there to provide silently stops happening.
 ///
-/// Doing the swap on a serial queue fixes both. Only the swap runs on the
-/// queue — making a task doesn't start it — so a caller never waits on the
-/// work itself, only on another caller's swap.
-final class SerialTaskCoordinator: @unchecked Sendable {
-  private let queue: DispatchQueue
-  private var currentTask: Task<Void, Never>?
+/// Handing operations to a single long-lived task through a stream avoids the
+/// problem rather than guarding it: there's no task reference to swap. The
+/// stream keeps them in the order they were handed over, and ``enqueue(_:)``
+/// only hands one over, so no caller ever waits — including callers already
+/// running on the concurrency pool.
+final class SerialTaskCoordinator {
+  typealias Operation = @Sendable () async -> Void
 
-  /// The task at the end of the queue, if there is one.
-  var lastTask: Task<Void, Never>? {
-    queue.sync { currentTask }
+  private let continuation: AsyncStream<Operation>.Continuation
+
+  init() {
+    // `AsyncStream` hands over the continuation before its initializer
+    // returns, so this is always set by the time it's read.
+    // swiftlint:disable:next implicitly_unwrapped_optional
+    var continuation: AsyncStream<Operation>.Continuation!
+    let operations = AsyncStream<Operation>(bufferingPolicy: .unbounded) {
+      continuation = $0
+    }
+    self.continuation = continuation
+
+    Task {
+      for await operation in operations {
+        await operation()
+      }
+    }
   }
 
-  /// - Parameter label: Names the queue so it can be told apart from other
-  /// coordinators in crash reports and Instruments.
-  init(label: String) {
-    queue = DispatchQueue(label: "com.superwall.\(label)")
+  deinit {
+    continuation.finish()
   }
 
   /// Adds `operation` to the end of the queue. It starts only after everything
   /// enqueued before it has finished.
-  func enqueue(_ operation: @escaping @Sendable () async -> Void) {
-    queue.sync {
-      let previous = currentTask
-      currentTask = Task {
-        await previous?.value
-        await operation()
+  func enqueue(_ operation: @escaping Operation) {
+    continuation.yield(operation)
+  }
+
+  /// Waits for everything enqueued so far to finish.
+  func drain() async {
+    await withCheckedContinuation { continuation in
+      enqueue {
+        continuation.resume()
       }
     }
   }
