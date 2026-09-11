@@ -34,7 +34,10 @@ extension CustomerCenterViewModel {
   /// `nil` when the detail screen has actions to show; otherwise which sentence to show instead.
   func detailEmptyState(for purchase: PurchasePresentation) -> DetailEmptyState? {
     if hasActions(for: purchase) { return nil }
-    let isLive = purchase.isActive && purchase.badge != .revoked
+    // A lifetime grant is excluded on purpose: nothing renews, so there is nothing to manage
+    // anywhere — the same guard the resolver applies to change-plan. Sending its owner to the
+    // Play Store to "manage this subscription" would point at a renewal that doesn't exist.
+    let isLive = purchase.isActive && purchase.badge != .revoked && purchase.badge != .lifetime
     let isDrivable: Bool = [.appStore, .stripe, .paddle, .superwall].contains(purchase.store)
     guard isLive, !isDrivable else { return .nothingToDo }
     // Only a store with a real name fills the sentence. `.other` and `.custom` carry the label

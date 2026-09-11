@@ -86,6 +86,19 @@ struct PurchaseDetailActionsTests {
     #expect(try emptyState(viewModel) == .nothingToDo)
   }
 
+  /// A lifetime grant from a store this SDK can't drive is not "managed elsewhere": nothing
+  /// renews, so there is nothing to manage anywhere, and the card's "Lifetime" badge would sit
+  /// over a sentence about a subscription. Liveness alone isn't the test; renewal is.
+  @available(iOS 15.0, *)
+  @Test("a lifetime Play Store grant: nothing to do, not a subscription to manage elsewhere")
+  func lifetimePlayStoreGrant() async throws {
+    let lifetime = Entitlement(id: "pro", isActive: true, store: .playStore, isLifetime: true)
+    let viewModel = await makeViewModel(entitlements: [lifetime])
+    let purchase = try #require(viewModel.purchases.first)
+    #expect(purchase.badge == .lifetime, "the shape under test")
+    #expect(viewModel.detailEmptyState(for: purchase) == .nothingToDo)
+  }
+
   // MARK: Still paying, but not here
 
   /// The shape the last review caught: an active Play Store subscription on an iOS client. Its
