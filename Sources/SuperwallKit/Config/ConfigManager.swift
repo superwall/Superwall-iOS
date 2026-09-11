@@ -44,9 +44,9 @@ class ConfigManager {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   let expressionEvaluator: CELEvaluator
 
-  /// Serializes preloading so concurrent callers can't race on the task
+  /// Runs preloads one at a time so concurrent callers can't race on the task
   /// reference. See ``preloadAllPaywalls()``.
-  private let preloadingCoordinator = PreloadingTaskCoordinator()
+  private let preloadingCoordinator = SerialTaskCoordinator()
 
   typealias Factory = RequestFactory
     & AudienceFilterAttributesFactory
@@ -565,13 +565,10 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    // Chain onto any in-flight preload through the coordinator. The coordinator
-    // is an actor, so swapping in the new task is serialized. Previously this was
-    // `self.currentPreloadingTask = Task { ... }` on a non-isolated class, so
-    // concurrent callers (config refresh, retry, reset, public API) raced on the
-    // task reference and over-released it, crashing in `swift_release` during
-    // task teardown.
-    await preloadingCoordinator.enqueue { [weak self] in
+    // Wait until any preload already in flight is finished before continuing.
+    // Preloading is kicked off from several places (config refresh, retry,
+    // reset, public API), so the queue has to be safe to add to from any thread.
+    preloadingCoordinator.enqueue { [weak self] in
       guard let self = self else {
         return
       }
@@ -609,23 +606,6 @@ class ConfigManager {
         paywallIds.remove(presentedPaywallId)
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)
-    }
-  }
-
-  /// Serializes the read-modify-write of the preloading task so it can't be
-  /// mutated from multiple tasks at once. Each enqueued operation runs only
-  /// after the previously enqueued one finishes, preserving the original
-  /// chaining behavior while making the swap data-race free.
-  private actor PreloadingTaskCoordinator {
-    private var currentTask: Task<Void, Never>?
-
-    /// Atomically chains `operation` after any in-flight preloading task.
-    func enqueue(_ operation: @escaping @Sendable () async -> Void) {
-      let previous = currentTask
-      currentTask = Task {
-        await previous?.value
-        await operation()
-      }
     }
   }
 

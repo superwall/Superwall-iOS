@@ -82,6 +82,7 @@
 		213E7FC262106BFBC44462AC /* SWLocalizationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE7D1E1AF61D199E17B5C05 /* SWLocalizationViewController.swift */; };
 		2205A0CC8F059B3D6231C603 /* PaywallLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */; };
 		2231B31B4B9A25778069B20A /* PaddleProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */; };
+		223E12D4EDBF41D8F5515E53 /* SerialTaskCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D555619C0738B6016C62DF0E /* SerialTaskCoordinator.swift */; };
 		225D6F5363B1520744EABD86 /* RedeemResponseTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C339E7D08CDD7B1808AD4069 /* RedeemResponseTests.swift */; };
 		22B3763157DF592D4E3B27A0 /* InAppReceipt+ASN1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E80C81546752BCF32016A27 /* InAppReceipt+ASN1.swift */; };
 		234C1753A4606242CA765CA7 /* ManagedTriggerRuleOccurrence.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCFFBE357699F5CAAB803DA7 /* ManagedTriggerRuleOccurrence.swift */; };
@@ -144,6 +145,7 @@
 		3CB65E105ADED11AEE69DEAF /* InAppReceiptAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9553EC1E394EF7AE8788291 /* InAppReceiptAttribute.swift */; };
 		3CD2C23BAC2EA11174237785 /* AttributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */; };
 		3CF2307C2CB994D00A35FADD /* LoadingModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866F99509EDFBE8BAE10E575 /* LoadingModel.swift */; };
+		3D5684BAF13C86ABED458EB9 /* SerialTaskCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224B526C168B5DB83E1F50D2 /* SerialTaskCoordinatorTests.swift */; };
 		3DCE95BAC148CCC7E6E7F608 /* DeviceTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D3E5C31CEEDC9C2853D91C50 /* DeviceTemplate.swift */; };
 		3EA92DE86764CBAC557F8522 /* Capabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27E41300E7467F017BCD5E5C /* Capabilities.swift */; };
 		3EE4C1C4EC45718C2EED34E5 /* EventTrackingBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93D8033AAF5549E30ACDA3EA /* EventTrackingBehavior.swift */; };
@@ -677,6 +679,7 @@
 		21903EACCA9AA13BB10917EC /* PermissionHandler+Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Camera.swift"; sourceTree = "<group>"; };
 		21C52F36F0BFF59363EBB4C7 /* GameControllerEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerEvent.swift; sourceTree = "<group>"; };
 		22439CFFFC5166F34D0DA524 /* WebViewURLConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewURLConfig.swift; sourceTree = "<group>"; };
+		224B526C168B5DB83E1F50D2 /* SerialTaskCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SerialTaskCoordinatorTests.swift; sourceTree = "<group>"; };
 		22919EFD263425D38E7D9D38 /* WebEntitlementRedeemer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebEntitlementRedeemer.swift; sourceTree = "<group>"; };
 		22D96B4C9B546F7B0EC73397 /* PaywallViewControllerWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerWrapper.swift; sourceTree = "<group>"; };
 		23307BBFD80385233DDD4C43 /* AssetResource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssetResource.swift; sourceTree = "<group>"; };
@@ -1123,6 +1126,7 @@
 		D449672964023589DA5535E3 /* String+MD5.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+MD5.swift"; sourceTree = "<group>"; };
 		D47AA8B18B4570F0C24B7389 /* Encoder+ReportsUnknownFieldsAsNull.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Encoder+ReportsUnknownFieldsAsNull.swift"; sourceTree = "<group>"; };
 		D4F676D3A0F5B540052D36B1 /* PublicGetPresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicGetPresentationResult.swift; sourceTree = "<group>"; };
+		D555619C0738B6016C62DF0E /* SerialTaskCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SerialTaskCoordinator.swift; sourceTree = "<group>"; };
 		D561728FDB68F572D5E33223 /* PermissionsHandler+Contacts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionsHandler+Contacts.swift"; sourceTree = "<group>"; };
 		D570217FF965FF087585931C /* PaywallPreloadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPreloadingTests.swift; sourceTree = "<group>"; };
 		D5BF66C3986E287B7B2F5E27 /* SKProductSubscriptionPeriodMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SKProductSubscriptionPeriodMock.swift; sourceTree = "<group>"; };
@@ -1905,6 +1909,7 @@
 		4D7656D6A565958F58A644AF /* Misc */ = {
 			isa = PBXGroup;
 			children = (
+				224B526C168B5DB83E1F50D2 /* SerialTaskCoordinatorTests.swift */,
 				F2F75130AF54DFC4C7FA839A /* Extensions */,
 			);
 			path = Misc;
@@ -3037,6 +3042,7 @@
 				7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */,
 				E09C238ADC0B019047FAB1DF /* JSONToDict.swift */,
 				2E2027BFC214905CBE589AF2 /* KeypathWritable.swift */,
+				D555619C0738B6016C62DF0E /* SerialTaskCoordinator.swift */,
 				19F010DC597017F5BEAEDE86 /* SwiftyJSON.swift */,
 				62EC6A60945A85646E1230C1 /* ThrowableDecodable.swift */,
 				848592ACE8760E53F2163F01 /* Typealiases.swift */,
@@ -3401,6 +3407,7 @@
 				E1A838C9CE62C9479D0C68F4 /* SWDebugManagerLogicTests.swift in Sources */,
 				C77A626D379969A86B900488 /* SWWebViewLoadingHandlerTests.swift in Sources */,
 				EE5646D09161237C649731F4 /* SWWebViewLogicTests.swift in Sources */,
+				3D5684BAF13C86ABED458EB9 /* SerialTaskCoordinatorTests.swift in Sources */,
 				919A08D7F25BD2DF27A22697 /* StorageMock.swift in Sources */,
 				713A1F9D9861C6A1E5EB9174 /* StorageTests.swift in Sources */,
 				701B1B586B6C1E3F0B3AF560 /* StoreKitManagerTests.swift in Sources */,
@@ -3750,6 +3757,7 @@
 				CE411644469AB99AC9DBB492 /* SWWebViewLoadingHandler.swift in Sources */,
 				074EBBBF7E3B2B207B00A275 /* SWWebViewLogic.swift in Sources */,
 				1753820CBFBDD8FF70455D71 /* ScaleAnimation.swift in Sources */,
+				223E12D4EDBF41D8F5515E53 /* SerialTaskCoordinator.swift in Sources */,
 				AD5EBB6DBA919E3CBC5B85B7 /* SessionEventsRequest.swift in Sources */,
 				5A6D06700C4E4E2C6C9BC1B2 /* ShimmerView.swift in Sources */,
 				18B147198F2E19C69013BA4B /* Sk1StoreProduct.swift in Sources */,
