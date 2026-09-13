@@ -114,3 +114,11 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
+
+### Integration device attributes
+
+AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and
+on app activation after an integration has been configured. Compare the complete
+refreshed snapshot, not just provider IDs. Sync device values into user attributes
+(the server integration router reads those); explicit nulls clear stale IDs after
+ATT revocation. ATT is serialized as a numeric string in integration attributes.

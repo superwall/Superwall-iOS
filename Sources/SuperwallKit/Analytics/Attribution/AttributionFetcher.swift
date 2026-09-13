@@ -19,6 +19,9 @@ final class AttributionFetcher {
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
   private let timerQueue = DispatchQueue(label: "com.superwall.attributionfetcher.timer")
   private var redeemTimer: DispatchSourceTimer?
+  private var activeObserver: NSObjectProtocol?
+  private let deviceAttributesProvider: (() -> [String: String])?
+  private let syncDeviceAttributes: ([String: Any?]) -> Void
   private var _integrationAttributes: [String: String] = [:]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
@@ -135,12 +138,61 @@ final class AttributionFetcher {
   init(
     storage: Storage,
     deviceHelper: DeviceHelper,
-    webEntitlementRedeemer: WebEntitlementRedeemer
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    deviceAttributesProvider: (() -> [String: String])? = nil,
+    syncDeviceAttributes: @escaping ([String: Any?]) -> Void = {
+      Superwall.shared.setUserAttributes($0)
+    }
   ) {
+    self.syncDeviceAttributes = syncDeviceAttributes
+    self.deviceAttributesProvider = deviceAttributesProvider
     self.storage = storage
     self.deviceHelper = deviceHelper
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self._integrationAttributes = storage.get(IntegrationAttributes.self) ?? [:]
+    if let notification = SystemInfo.applicationDidBecomeActiveNotification {
+      activeObserver = NotificationCenter.default.addObserver(
+        forName: notification,
+        object: nil,
+        queue: nil
+      ) { [weak self] _ in
+        self?.refreshDeviceAttributes()
+      }
+    }
+  }
+
+  deinit {
+    if let activeObserver {
+      NotificationCenter.default.removeObserver(activeObserver)
+    }
+  }
+
+  private var currentDeviceAttributes: [String: String] {
+    if let deviceAttributesProvider {
+      return deviceAttributesProvider()
+    }
+    var attributes: [String: String] = [:]
+    let vendorId = deviceHelper.vendorId
+    if !vendorId.isEmpty { attributes["idfv"] = vendorId }
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
+    if #available(iOS 14, macCatalyst 14, tvOS 14, macOS 11, *) {
+      let status = TrackingManagerProxy().trackingAuthorizationStatus()
+      attributes["attStatus"] = String(status)
+      if status == 3 { attributes["idfa"] = identifierForAdvertisers }
+    } else {
+      attributes["idfa"] = identifierForAdvertisers
+    }
+    #endif
+    return attributes
+  }
+
+  func refreshDeviceAttributes() {
+    queue.async { [weak self] in
+      guard let self, !self._integrationAttributes.isEmpty else { return }
+      if self._mergeIntegrationAttributes(attributes: [:]) {
+        self._debouncedRedeem()
+      }
+    }
   }
 
   func setIntegrationAttribute(
@@ -159,30 +211,11 @@ final class AttributionFetcher {
     queue.async { [weak self] in
       guard let self = self else { return }
 
-      // Check if any values have actually changed
-      var hasChanges = false
-      for (key, newValue) in attributes {
-        let currentValue = self._integrationAttributes[key]
-        if currentValue != newValue {
-          hasChanges = true
-          break
-        }
+      // Compare after refreshing device data: the provider ID can stay the
+      // same while ATT changes or a previously unavailable IDFV appears.
+      if self._mergeIntegrationAttributes(attributes: attributes) {
+        self._debouncedRedeem()
       }
-
-      // If no changes, don't proceed
-      guard hasChanges else {
-        return
-      }
-
-      // Update attributes immediately
-      self._mergeIntegrationAttributes(
-        attributes: attributes,
-        appTransactionId: appTransactionId,
-        shouldRedeem: false // Don't redeem immediately
-      )
-
-      // Debounce only the redeem call
-      self._debouncedRedeem()
     }
   }
 
@@ -222,52 +255,35 @@ final class AttributionFetcher {
     }
   }
 
-  private func _mergeIntegrationAttributes(
-    attributes: [String: String?],
-    appTransactionId: String,
-    shouldRedeem: Bool = true
-  ) {
+  private func _mergeIntegrationAttributes(attributes: [String: String?]) -> Bool {
     var mergedAttributes = _integrationAttributes
-    var hasChanges = false
-
-    mergedAttributes["idfa"] = identifierForAdvertisers
-
-    let identifierForVendor = deviceHelper.vendorId
-    mergedAttributes["idfv"] = identifierForVendor
-
-    for key in attributes.keys {
-      let newValue = attributes[key]
-      let currentValue = _integrationAttributes[key]
-
-      if currentValue != newValue {
-        hasChanges = true
-        if let value = newValue {
-          mergedAttributes[key] = value
-        } else {
-          mergedAttributes.removeValue(forKey: key)
-        }
-      }
+    for (key, value) in attributes {
+      mergedAttributes[key] = value
+    }
+    let device = currentDeviceAttributes
+    for key in ["idfa", "idfv", "attStatus"] {
+      mergedAttributes[key] = device[key]
     }
 
-    // Only proceed if there are actual changes
-    guard hasChanges else {
-      return
+    // The router reads user attributes, not the integration_attributes event.
+    // Explicit nulls clear an IDFA retained from before consent was revoked.
+    // Sync even when identifiers are unchanged (e.g. after an identify/reset).
+    var userAttributes: [String: Any?] = [:]
+    for key in ["idfa", "idfv", "attStatus"] {
+      userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
     }
+    syncDeviceAttributes(userAttributes)
 
+    guard mergedAttributes != _integrationAttributes else { return false }
+    let updatedAttributes = mergedAttributes
     Task {
-      let attributes = InternalSuperwallEvent.IntegrationAttributes(
-        audienceFilterParams: mergedAttributes
+      let event = InternalSuperwallEvent.IntegrationAttributes(
+        audienceFilterParams: updatedAttributes
       )
-      await Superwall.shared.track(attributes)
+      await Superwall.shared.track(event)
     }
-
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
-
-    if shouldRedeem {
-      Task {
-        await webEntitlementRedeemer.redeem(.integrationAttributes)
-      }
-    }
+    return true
   }
 }
