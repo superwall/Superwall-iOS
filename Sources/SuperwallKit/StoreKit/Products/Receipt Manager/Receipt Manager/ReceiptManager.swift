@@ -31,9 +31,9 @@ actor ReceiptManager {
   private unowned let factory: Factory
   private unowned let storage: Storage
   /// Subscription group IDs the user currently has an active subscription in. Computed
-  /// during `loadPurchasedProducts` from the active purchases and their fetched products,
-  /// so it works for both StoreKit 1 and StoreKit 2. Used to suppress free trials on
-  /// upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
+  /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which
+  /// carry the group ID; on StoreKit 1 from the fetched purchased products. Used to suppress
+  /// free trials on upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
   private var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
@@ -215,16 +215,20 @@ actor ReceiptManager {
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
 
-    let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
-
-    guard let storeProducts = try? await productsManager.products(
-      identifiers: purchasedProductIds,
-      forPaywall: nil,
-      placement: nil
-    ) else {
-      // Fetch failed: refresh from the snapshot alone so the set still reflects this load.
-      // We assign only *after* the await (here and below), never before, so a re-entrant
-      // `isFreeTrialAvailable` during the suspension can't observe a half-built set.
+    // StoreKit 2 transactions carry their subscription group ID, so the active
+    // groups come straight from the snapshot. Only StoreKit 1 has to fetch the
+    // purchased products to find them. Skipping the fetch keeps a network round
+    // trip off the cold-launch path, which `configState` waits on.
+    guard manager.loadsSubscriptionGroupsFromProducts,
+      let storeProducts = try? await productsManager.products(
+        identifiers: Set(onDeviceSnapshot.purchases.map { $0.id }),
+        forPaywall: nil,
+        placement: nil
+      )
+    else {
+      // Fetch skipped or failed: refresh from the snapshot alone so the set still reflects
+      // this load. We assign only *after* the await (here and below), never before, so a
+      // re-entrant `isFreeTrialAvailable` during the suspension can't observe a half-built set.
       activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
       return
     }

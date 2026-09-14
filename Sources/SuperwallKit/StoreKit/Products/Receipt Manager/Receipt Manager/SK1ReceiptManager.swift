@@ -8,6 +8,7 @@
 import Foundation
 
 final class SK1ReceiptManager: ReceiptManagerType {
+  let loadsSubscriptionGroupsFromProducts = true
   private let receiptData: () -> Data?
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
