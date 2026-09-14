@@ -251,6 +251,11 @@ class ConfigManager {
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
       return nil
     }
+    // A developer-granted entitlement is the developer's own verdict. The read
+    // merges it back in on every load, so nothing it learns can change it.
+    if entitlementsInfo.granted.contains(where: { $0.isActive }) {
+      return customerInfo
+    }
     // A lifetime purchase has no expiry to check and can only be refunded,
     // which is the same risk the expiry case already accepts.
     let isStillEntitled = customerInfo.entitlements.contains {

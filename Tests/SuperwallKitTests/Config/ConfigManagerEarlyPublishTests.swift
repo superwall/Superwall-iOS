@@ -409,6 +409,27 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
+  @Test("A developer-granted entitlement takes the fast path with nothing else saved")
+  func publishesEarlyForGrantedEntitlement() async {
+    // Granted entitlements carry whatever the developer set; usually no expiry.
+    dependencyContainer.entitlementsInfo.setGranted([Entitlement(id: "pro")])
+    defer { dependencyContainer.entitlementsInfo.setGranted([]) }
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: nil,
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+
+    #expect(harness.configManager.config != nil)
+    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+
+    await fetch.value
+    await settle()
+  }
+
   @Test("A lifetime purchase has no expiry and takes the fast path")
   func publishesEarlyForLifetimePurchase() async {
     let harness = makeHarness(
