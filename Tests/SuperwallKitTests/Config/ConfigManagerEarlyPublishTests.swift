@@ -118,6 +118,34 @@ struct ConfigManagerEarlyPublishTests {
     )
   }
 
+  /// A web-only subscriber: one Stripe subscription unlocking `pro` on the
+  /// silver product, no App Store purchases at all.
+  private func savedWebOnlyCustomerInfo() -> CustomerInfo {
+    let expiresAt = Date().addingTimeInterval(3600)
+    let web = SubscriptionTransaction(
+      transactionId: "web-1",
+      productId: Self.silverProductId,
+      purchaseDate: Date().addingTimeInterval(-600),
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: expiresAt,
+      store: .stripe
+    )
+    let pro = Entitlement(
+      id: "pro",
+      isActive: true,
+      productIds: [Self.silverProductId],
+      latestProductId: Self.silverProductId,
+      store: .stripe,
+      expiresAt: expiresAt,
+      willRenew: true
+    )
+    return CustomerInfo(subscriptions: [web], nonSubscriptions: [], entitlements: [pro])
+  }
+
   /// A lifetime purchase: active, no expiry, `isLifetime` set.
   private func savedLifetimeCustomerInfo() -> CustomerInfo {
     let pro = Entitlement(
@@ -350,6 +378,32 @@ struct ConfigManagerEarlyPublishTests {
     )
     _ = await dependencyContainer.isFreeTrialAvailable(for: gold)
     #expect(harness.receipt.didFinishLoad, "eligibility was answered before the load finished")
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("A web-only subscriber takes the fast path with no device purchases seeded")
+  func publishesEarlyForWebOnlySubscriber() async {
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedWebOnlyCustomerInfo(),
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+
+    #expect(harness.configManager.config != nil)
+    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // Device purchases stay empty, as they are after the read for a web
+    // subscriber, while the entitlement map carries the web entitlement.
+    #expect(await harness.receiptManager.getActiveProductIds().isEmpty)
+    let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
+    #expect(silverEntitlements.first?.isActive == true)
+    #expect(silverEntitlements.first?.store == .stripe)
 
     await fetch.value
     await settle()
