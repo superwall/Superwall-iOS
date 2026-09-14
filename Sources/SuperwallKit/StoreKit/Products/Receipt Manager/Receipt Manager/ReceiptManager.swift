@@ -182,9 +182,7 @@ actor ReceiptManager {
     let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
 
     // Get device snapshot
-    let purchasesLoadStart = Date()
     let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
-    logPhase("Loaded purchases from StoreKit.", startedAt: purchasesLoadStart, count: onDeviceSnapshot.purchases.count)
 
     // Save device-only CustomerInfo to storage for use when merging with web entitlements
     storage.save(onDeviceSnapshot.customerInfo, forType: LatestDeviceCustomerInfo.self)
@@ -222,7 +220,11 @@ actor ReceiptManager {
     // purchased products to find them. Skipping the fetch keeps a network round
     // trip off the cold-launch path, which `configState` waits on.
     guard manager.loadsSubscriptionGroupsFromProducts,
-      let storeProducts = await fetchPurchasedProducts(from: onDeviceSnapshot)
+      let storeProducts = try? await productsManager.products(
+        identifiers: Set(onDeviceSnapshot.purchases.map { $0.id }),
+        forPaywall: nil,
+        placement: nil
+      )
     else {
       // Fetch skipped or failed: refresh from the snapshot alone so the set still reflects
       // this load. We assign only *after* the await (here and below), never before, so a
@@ -234,26 +236,6 @@ actor ReceiptManager {
     activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: storeProducts)
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
-  }
-
-  /// Fetches the purchased products off the snapshot, returning `nil` when the fetch fails.
-  private func fetchPurchasedProducts(from snapshot: PurchaseSnapshot) async -> Set<StoreProduct>? {
-    let startedAt = Date()
-    let storeProducts = try? await productsManager.products(
-      identifiers: Set(snapshot.purchases.map { $0.id }), forPaywall: nil, placement: nil
-    )
-    let outcome = storeProducts == nil ? "Failed to fetch" : "Fetched"
-    logPhase("\(outcome) purchased products from StoreKit.", startedAt: startedAt, count: storeProducts?.count ?? 0)
-    return storeProducts
-  }
-
-  private func logPhase(_ message: String, startedAt: Date, count: Int) {
-    Logger.debug(
-      logLevel: .debug,
-      scope: .receipts,
-      message: message,
-      info: ["duration_ms": Int(Date().timeIntervalSince(startedAt) * 1000), "count": count]
-    )
   }
 
   /// Determines whether a free trial will actually be granted when the user purchases `storeProduct`.
