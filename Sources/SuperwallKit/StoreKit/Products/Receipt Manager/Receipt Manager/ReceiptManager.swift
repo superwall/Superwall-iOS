@@ -31,9 +31,9 @@ actor ReceiptManager {
   private unowned let factory: Factory
   private unowned let storage: Storage
   /// Subscription group IDs the user currently has an active subscription in. Computed
-  /// during `loadPurchasedProducts` from the active purchases and their fetched products,
-  /// so it works for both StoreKit 1 and StoreKit 2. Used to suppress free trials on
-  /// upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
+  /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which
+  /// carry the group ID; on StoreKit 1 from the fetched purchased products. Used to suppress
+  /// free trials on upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
   private var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
@@ -242,7 +242,8 @@ actor ReceiptManager {
     let storeProducts = try? await productsManager.products(
       identifiers: Set(snapshot.purchases.map { $0.id }), forPaywall: nil, placement: nil
     )
-    logPhase("Fetched purchased products from StoreKit.", startedAt: startedAt, count: storeProducts?.count ?? 0)
+    let outcome = storeProducts == nil ? "Failed to fetch" : "Fetched"
+    logPhase("\(outcome) purchased products from StoreKit.", startedAt: startedAt, count: storeProducts?.count ?? 0)
     return storeProducts
   }
 
