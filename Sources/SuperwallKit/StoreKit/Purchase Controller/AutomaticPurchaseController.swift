@@ -62,7 +62,11 @@ final class AutomaticPurchaseController {
         // device-derived entitlements always carry it), so nil is protected
         // too. Entitlements with no expiry date never hold the status, so a
         // revoked lifetime purchase can still deactivate here.
-        if case .active(let currentEntitlements) = superwall.subscriptionStatus {
+        //
+        // The check reads the assigned status (device + web), not the
+        // published one: that also carries developer-granted entitlements,
+        // which would hold a lapsed App Store entitlement in place.
+        if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
           let holdsStatus = currentEntitlements.contains { entitlement in
             guard entitlement.isActive,
               (entitlement.expiresAt ?? .distantPast) > Date() else {

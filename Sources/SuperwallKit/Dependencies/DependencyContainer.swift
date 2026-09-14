@@ -73,10 +73,11 @@ final class DependencyContainer {
   init(
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    cache: Cache = Cache()
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
-    storage = Storage(factory: self)
+    storage = Storage(factory: self, cache: cache)
     storage.configure(apiKey: apiKey)
     entitlementsInfo = EntitlementsInfo(
       storage: storage,
@@ -491,7 +492,8 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
 
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
       since: placement,
-      computedPropertyRequests: computedPropertyRequests
+      computedPropertyRequests: computedPropertyRequests,
+      reportingUnknownFieldsAsNull: true
     )
     return [
       "user": userAttributes,

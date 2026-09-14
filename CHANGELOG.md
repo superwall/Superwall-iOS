@@ -6,6 +6,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
+- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
 - Adds the Customer Center: a native, self-service screen where users can view their subscriptions and purchases, restore purchases, manage or cancel a subscription, request a refund, change plans, contact support, answer exit surveys and open any subscription for its details. Present it with `Superwall.shared.presentCustomerCenter()`, embed `CustomerCenterView` in SwiftUI, or use `CustomerCenterViewController` in UIKit. Configure it via `SuperwallOptions.customerCenter` (`CustomerCenterConfiguration`), including an accent colour for light and dark. Requires iOS 15+.
 - Adds `CustomerCenterDelegate` callbacks and the `customerCenterOpen`, `customerCenterClose`, `customerCenterAction`, `customerCenterSurveyResponse` and `customerCenterRefundRequest` events.
 - The Customer Center's update banner now finds the published version itself, by looking the app up on the App Store, so `latestAppVersion` no longer has to be kept current by hand. Set `SuperwallOptions.customerCenter.support.checksAppStoreForUpdates = false` to opt out, or keep setting `latestAppVersion` — a configured version always wins and skips the lookup. The check is skipped on TestFlight, sandbox and simulator builds, whose version is normally ahead of the App Store. Note that Apple phases releases in over seven days while the lookup sees a new version immediately, so early in a release some customers may be prompted to update before the build reaches them.
@@ -15,8 +17,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
+- Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
+- Fixes audiences matching users they shouldn't when you use a Purchase Controller.
 
 ## 4.16.3
 

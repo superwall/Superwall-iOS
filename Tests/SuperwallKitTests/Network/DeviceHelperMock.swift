@@ -24,7 +24,7 @@ final class DeviceHelperMock: DeviceHelper {
     // Don't actually fetch enrichment in tests - just return immediately
   }
 
-  override func getTemplateDevice() async -> [String: Any] {
+  override func getTemplateDevice(reportingUnknownFieldsAsNull: Bool = false) async -> [String: Any] {
     // Return mock device attributes without async calls
     return [
       "publicApiKey": "test_key",

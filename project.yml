@@ -12,7 +12,11 @@ targets:
     scheme:
       testTargets:
         - name: SuperwallKitTests
-          parallelizable: true
+          # Serial on purpose. Under parallel testing the suite stalls partway through and never
+          # finishes — the generated scheme has carried `parallelizable = "NO"` since 7e87a07,
+          # and regenerating it from `parallelizable: true` silently reintroduced the hang. The
+          # source of truth now says what the scheme has to say.
+          parallelizable: false
       commandLineArguments:
         SUPERWALL_UNIT_TESTS: true
       environmentVariables:
