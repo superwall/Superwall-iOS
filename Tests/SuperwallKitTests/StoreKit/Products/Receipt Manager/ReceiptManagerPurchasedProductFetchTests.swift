@@ -96,6 +96,10 @@ private final class SnapshotReceiptManagerType: ReceiptManagerType {
 
   func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
 
+  func seedPurchases(_ purchases: Set<Purchase>) async {
+    self.purchases = purchases
+  }
+
   func loadPurchases(serverEntitlementsByProductId _: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     let silver = SubscriptionTransaction(
       transactionId: "1",

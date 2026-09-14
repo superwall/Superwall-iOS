@@ -26,6 +26,7 @@ final class TransactionManager {
     & HasExternalPurchaseControllerFactory
     & RestoreAccessFactory
     & TestModeManagerFactory
+    & ReceiptFactory
   enum State {
     case observing
     case purchasing(PurchaseSource)
@@ -731,6 +732,9 @@ final class TransactionManager {
       return await isCustomProductFreeTrialAvailable(for: product)
     }
 
+    // Same wait as `DependencyContainer.isFreeTrialAvailable`: the buy button
+    // can be tapped while the first purchases load is still running.
+    await factory.waitForInitialPurchasesLoad()
     return await receiptManager.isFreeTrialAvailable(for: product)
   }
 

@@ -360,21 +360,33 @@ func computeActiveSubscriptionGroupIds(
   return Set(transactionGroupIds).union(productGroupIds)
 }
 
-final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {
-  weak var receiptManager: ReceiptManager?
+// MARK: - Restoring from the previous launch
 
-  func requestDidFinish(_ request: SKRequest) {
-    Task {
-      await receiptManager?.receiptRefreshDidFinish(request: request)
+extension ReceiptManager {
+  /// Rebuilds the in-memory purchase state from the customer info saved by the
+  /// previous launch, so config can be published before this launch's StoreKit
+  /// read finishes. `loadPurchasedProducts` overwrites all of it when it lands.
+  func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
+    let subscriptionPurchases = customerInfo.subscriptions.map {
+      Purchase(id: $0.productId, isActive: $0.isActive, purchaseDate: $0.purchaseDate)
     }
-  }
+    let nonSubscriptionPurchases = customerInfo.nonSubscriptions.map {
+      Purchase(id: $0.productId, isActive: !$0.isRevoked, purchaseDate: $0.purchaseDate)
+    }
+    let purchases = Set(subscriptionPurchases + nonSubscriptionPurchases)
+    await manager.seedPurchases(purchases)
 
-  func request(_ request: SKRequest, didFailWithError error: Error) {
-    Task {
-      await receiptManager?.receiptRefreshDidFail(
-        request: request,
-        error: error
-      )
-    }
+    // Config knows every product and the entitlements it unlocks. The saved
+    // customer info knows which of those were active, and carries fields like
+    // willRenew that audience filters read, so its copy wins where both have one.
+    let savedById = Dictionary(customerInfo.entitlements.map { ($0.id, $0) }) { $1 }
+    let entitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
+      .mapValues { Set($0.map { savedById[$0.id] ?? $0 }) }
+    Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)
+
+    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(
+      from: PurchaseSnapshot(purchases: purchases, customerInfo: customerInfo),
+      storeProducts: []
+    )
   }
 }

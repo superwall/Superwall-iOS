@@ -598,6 +598,14 @@ extension DependencyContainer: ReceiptFactory {
     await receiptManager.loadPurchasedProducts(config: config)
   }
 
+  func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
+    await receiptManager.restorePurchases(from: customerInfo, config: config)
+  }
+
+  func waitForInitialPurchasesLoad() async {
+    await configManager.initialPurchasesLoad?.value
+  }
+
   func refreshSK1Receipt() async {
     return await receiptManager.refreshSK1Receipt()
   }
@@ -614,6 +622,10 @@ extension DependencyContainer: ReceiptFactory {
         return false
       }
     }
+    // Config can be published before the first purchases load finishes (see
+    // `ConfigManager.fetchConfiguration`). The active subscription groups that
+    // gate upgrades come from that load, so wait for it.
+    await waitForInitialPurchasesLoad()
     return await receiptManager.isFreeTrialAvailable(for: product)
   }
 
