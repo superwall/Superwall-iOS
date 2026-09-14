@@ -251,8 +251,10 @@ class ConfigManager {
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
       return nil
     }
+    // A lifetime purchase has no expiry to check and can only be refunded,
+    // which is the same risk the expiry case already accepts.
     let isStillEntitled = customerInfo.entitlements.contains {
-      $0.isActive && ($0.expiresAt ?? .distantPast) > Date()
+      $0.isActive && ($0.isLifetime == true || ($0.expiresAt ?? .distantPast) > Date())
     }
     return isStillEntitled ? customerInfo : nil
   }

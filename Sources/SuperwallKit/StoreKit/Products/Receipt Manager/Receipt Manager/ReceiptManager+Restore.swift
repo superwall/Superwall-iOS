@@ -14,21 +14,28 @@ extension ReceiptManager {
   ///
   /// Each saved item carries its own expiry, which the store asserted, so
   /// anything past it has lapsed since the last launch and is restored inactive.
+  /// A nil expiry can't be shown to have lapsed, so it keeps its saved state.
   func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
     let now = Date()
+    // The saved copy is the merged one, with web subscriptions appended. The
+    // purchases the read produces are device-only, so only App Store rows are
+    // seeded; otherwise `activeProducts` would change shape when the read lands.
     let activeSubscriptions = customerInfo.subscriptions.filter {
-      $0.isActive && !hasExpired($0.expirationDate, at: now)
+      $0.store == .appStore && $0.isActive && !hasExpired($0.expirationDate, at: now)
     }
-    let subscriptionPurchases = customerInfo.subscriptions.map { subscription in
-      Purchase(
-        id: subscription.productId,
-        isActive: activeSubscriptions.contains { $0 === subscription },
-        purchaseDate: subscription.purchaseDate
-      )
-    }
-    let nonSubscriptionPurchases = customerInfo.nonSubscriptions.map {
-      Purchase(id: $0.productId, isActive: !$0.isRevoked, purchaseDate: $0.purchaseDate)
-    }
+    let activeTransactionIds = Set(activeSubscriptions.map { $0.transactionId })
+    let subscriptionPurchases = customerInfo.subscriptions
+      .filter { $0.store == .appStore }
+      .map {
+        Purchase(
+          id: $0.productId,
+          isActive: activeTransactionIds.contains($0.transactionId),
+          purchaseDate: $0.purchaseDate
+        )
+      }
+    let nonSubscriptionPurchases = customerInfo.nonSubscriptions
+      .filter { $0.store == .appStore }
+      .map { Purchase(id: $0.productId, isActive: !$0.isRevoked, purchaseDate: $0.purchaseDate) }
     let purchases = Set(subscriptionPurchases + nonSubscriptionPurchases)
     await manager.seedPurchases(purchases)
 

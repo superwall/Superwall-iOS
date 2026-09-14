@@ -603,6 +603,10 @@ extension DependencyContainer: ReceiptFactory {
   }
 
   func waitForInitialPurchasesLoad() async {
+    // nil means the load already finished (or config was never published
+    // early). It is also nil for the moment before `processConfig` stores the
+    // task; a purchase started that early skips the wait, which only affects
+    // whether the transaction is reported as a trial start.
     await configManager.initialPurchasesLoad?.value
   }
 

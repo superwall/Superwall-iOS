@@ -39,9 +39,13 @@ struct ConfigManagerEarlyPublishTests {
   private static let goldProductId = "com.app.gold"
   /// A second product in its own group, unlocking a separate entitlement.
   private static let legacyProductId = "com.app.legacy"
+  private static let webProductId = "com.app.web"
 
-  /// Customer info the way the previous launch would have saved it: one active
+  /// Customer info the way the previous launch would have saved it: one
   /// subscription in `group_A` unlocking `pro`, expiring `expiresIn` from now.
+  /// The saved `isActive` flag is always true: when `expiresIn` is negative
+  /// that's the stale shape, the flag frozen at the last launch and the date
+  /// since passed.
   private func savedCustomerInfo(expiresIn: TimeInterval, willRenew: Bool = false) -> CustomerInfo {
     let expiresAt = Date().addingTimeInterval(expiresIn)
     let silver = SubscriptionTransaction(
@@ -52,13 +56,13 @@ struct ConfigManagerEarlyPublishTests {
       isRevoked: false,
       isInGracePeriod: false,
       isInBillingRetryPeriod: false,
-      isActive: expiresIn > 0,
+      isActive: true,
       expirationDate: expiresAt,
       subscriptionGroupId: "group_A"
     )
     let pro = Entitlement(
       id: "pro",
-      isActive: expiresIn > 0,
+      isActive: true,
       productIds: [Self.silverProductId, Self.goldProductId],
       latestProductId: Self.silverProductId,
       store: .appStore,
@@ -94,11 +98,38 @@ struct ConfigManagerEarlyPublishTests {
       expiresAt: lapsedAt,
       willRenew: true
     )
+    // The saved copy is the merged one, so it also carries a web subscription.
+    let web = SubscriptionTransaction(
+      transactionId: "3",
+      productId: Self.webProductId,
+      purchaseDate: Date().addingTimeInterval(-600),
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: Date().addingTimeInterval(3600),
+      store: .stripe
+    )
     return CustomerInfo(
-      subscriptions: valid.subscriptions + [legacy],
+      subscriptions: valid.subscriptions + [legacy, web],
       nonSubscriptions: [],
       entitlements: valid.entitlements + [legacyEntitlement]
     )
+  }
+
+  /// A lifetime purchase: active, no expiry, `isLifetime` set.
+  private func savedLifetimeCustomerInfo() -> CustomerInfo {
+    let pro = Entitlement(
+      id: "pro",
+      isActive: true,
+      productIds: [Self.silverProductId],
+      latestProductId: Self.silverProductId,
+      store: .appStore,
+      expiresAt: nil,
+      isLifetime: true
+    )
+    return CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [pro])
   }
 
   /// Builds a config manager whose receipt loading takes `loadDelay` seconds
@@ -286,9 +317,11 @@ struct ConfigManagerEarlyPublishTests {
     _ = await waitForConfig(harness.configManager, timeout: 1.5)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
-    // The still-valid silver keeps the fast path, but legacy is past its expiry.
+    // The still-valid silver keeps the fast path, but legacy is past its expiry
+    // and the web row isn't a device purchase.
     #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
     #expect(await harness.receiptManager.isSubscribed(to: Self.legacyProductId) == false)
+    #expect(await harness.receiptManager.isSubscribed(to: Self.webProductId) == false)
     let legacyEntitlements = Superwall.shared.entitlements.byProductId(Self.legacyProductId)
     #expect(legacyEntitlements.first?.isActive == false)
     #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
@@ -322,7 +355,25 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
-  @Test("Saved entitlement expired: purchases still load before config is published")
+  @Test("A lifetime purchase has no expiry and takes the fast path")
+  func publishesEarlyForLifetimePurchase() async {
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedLifetimeCustomerInfo(),
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+
+    #expect(harness.configManager.config != nil)
+    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("Saved entitlement still flagged active but past its expiry: config waits")
   func waitsWhenSavedEntitlementHasExpired() async {
     let harness = makeHarness(
       isSubscribed: true,
@@ -341,8 +392,10 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
-  @Test("An active status on disk with no saved customer info is not enough")
-  func waitsWithoutSavedCustomerInfo() async {
+  @Test("An active status on disk with a blank saved customer info is not enough")
+  func waitsWithBlankSavedCustomerInfo() async {
+    // `Superwall.init` persists `.blank()` before the first read, so this is
+    // the real first-launch shape; the harness stores it for a nil input.
     let harness = makeHarness(
       isSubscribed: true,
       savedCustomerInfo: nil,
