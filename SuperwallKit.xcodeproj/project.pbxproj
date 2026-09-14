@@ -160,6 +160,7 @@
 		42B707D898A49DCB2B33837C /* CustomCallbackRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45B3BC4249A9E9BA8E99EC7C /* CustomCallbackRegistry.swift */; };
 		42FDAFD5AB3EC83713941E32 /* SK2ReceiptManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B1E659458AE78C3908562B /* SK2ReceiptManagerTests.swift */; };
 		432FB2AE172725B4ED208416 /* DebugManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5383FA48A6E9EF8F30683C9B /* DebugManager.swift */; };
+		43555DB889239C0F1FB73AE1 /* ReceiptManager+Restore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120238C4AA04D65D43DB1820 /* ReceiptManager+Restore.swift */; };
 		43EF1A9F46DECE0EECFD0368 /* HiddenListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */; };
 		44829144E9EFA0CE4A75BBA1 /* ExpressionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = A154A9E99D00B9BD8837B798 /* ExpressionLogic.swift */; };
 		44E2AE9B0AED16C48027CD21 /* CustomCallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = E439B70BB6190AFF6DDB81F2 /* CustomCallback.swift */; };
@@ -645,6 +646,7 @@
 		1099A063D46DE7373CFABC4C /* GrantedEntitlementsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GrantedEntitlementsTests.swift; sourceTree = "<group>"; };
 		10D5ABDB23D56393EFDCF73A /* NetworkMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkMock.swift; sourceTree = "<group>"; };
 		115132479C9C41D57C9E3BA9 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		120238C4AA04D65D43DB1820 /* ReceiptManager+Restore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ReceiptManager+Restore.swift"; sourceTree = "<group>"; };
 		124F219E38F8398A65A7EB32 /* DependencyContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DependencyContainer.swift; sourceTree = "<group>"; };
 		1528915438E6714B1F7F7BD4 /* PaywallRequestManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallRequestManager.swift; sourceTree = "<group>"; };
 		153C660FB51D0D1DFE56D462 /* PaywallPresentationStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationStyle.swift; sourceTree = "<group>"; };
@@ -2815,6 +2817,7 @@
 			isa = PBXGroup;
 			children = (
 				B730226BC4F32B0A3A0FA6E9 /* ReceiptManager.swift */,
+				120238C4AA04D65D43DB1820 /* ReceiptManager+Restore.swift */,
 				B812E74B11477D98D21421F9 /* ReceiptRefreshDelegateWrapper.swift */,
 				9C4966E857D1F9596B96910E /* SK1ReceiptManager.swift */,
 				050BC76657949DBB5F3D551C /* SK2ReceiptManager.swift */,
@@ -3731,6 +3734,7 @@
 				7477EFEA4C42BB441B92D096 /* RawPaywallResponse.swift in Sources */,
 				B3E6E82C0240EE6048360C9B /* RawWebMessageHandler.swift in Sources */,
 				4E7761949715C8BF8DEEF35C /* ReceiptLogic.swift in Sources */,
+				43555DB889239C0F1FB73AE1 /* ReceiptManager+Restore.swift in Sources */,
 				5634C4E0E082754F7939BB60 /* ReceiptManager.swift in Sources */,
 				2F8329A05DF5BFF975FFA8B7 /* ReceiptRefreshDelegateWrapper.swift in Sources */,
 				4D37588A69A4C770C86FC585 /* RedeemRequest.swift in Sources */,

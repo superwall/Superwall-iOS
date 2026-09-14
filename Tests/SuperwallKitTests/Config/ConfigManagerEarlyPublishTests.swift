@@ -37,6 +37,8 @@ struct ConfigManagerEarlyPublishTests {
 
   private static let silverProductId = "com.app.silver"
   private static let goldProductId = "com.app.gold"
+  /// A second product in its own group, unlocking a separate entitlement.
+  private static let legacyProductId = "com.app.legacy"
 
   /// Customer info the way the previous launch would have saved it: one active
   /// subscription in `group_A` unlocking `pro`, expiring `expiresIn` from now.
@@ -64,6 +66,39 @@ struct ConfigManagerEarlyPublishTests {
       willRenew: willRenew
     )
     return CustomerInfo(subscriptions: [silver], nonSubscriptions: [], entitlements: [pro])
+  }
+
+  /// The valid `silver` subscription plus a `legacy` one in `group_B` that was
+  /// active when saved but whose expiry has since passed.
+  private func savedCustomerInfoWithLapsedSecondSubscription() -> CustomerInfo {
+    let valid = savedCustomerInfo(expiresIn: 3600)
+    let lapsedAt = Date().addingTimeInterval(-60)
+    let legacy = SubscriptionTransaction(
+      transactionId: "2",
+      productId: Self.legacyProductId,
+      purchaseDate: Date().addingTimeInterval(-7200),
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: lapsedAt,
+      subscriptionGroupId: "group_B"
+    )
+    let legacyEntitlement = Entitlement(
+      id: "legacy",
+      isActive: true,
+      productIds: [Self.legacyProductId],
+      latestProductId: Self.legacyProductId,
+      store: .appStore,
+      expiresAt: lapsedAt,
+      willRenew: true
+    )
+    return CustomerInfo(
+      subscriptions: valid.subscriptions + [legacy],
+      nonSubscriptions: [],
+      entitlements: valid.entitlements + [legacyEntitlement]
+    )
   }
 
   /// Builds a config manager whose receipt loading takes `loadDelay` seconds
@@ -117,7 +152,14 @@ struct ConfigManagerEarlyPublishTests {
     // saved customer info says which is active.
     let products = [Self.silverProductId, Self.goldProductId].map {
       Product(name: $0, type: .appStore(.init(id: $0)), id: $0, entitlements: [Entitlement(id: "pro")])
-    }
+    } + [
+      Product(
+        name: Self.legacyProductId,
+        type: .appStore(.init(id: Self.legacyProductId)),
+        id: Self.legacyProductId,
+        entitlements: [Entitlement(id: "legacy")]
+      )
+    ]
     let cachedConfig: Config = .stub()
       .setting(\.buildId, to: "cached_123")
       .setting(\.featureFlags, to: .stub())
@@ -232,6 +274,29 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
+  @Test("A second subscription that lapsed since the last launch is restored inactive")
+  func restoresLapsedSecondSubscriptionAsInactive() async {
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithLapsedSecondSubscription(),
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The still-valid silver keeps the fast path, but legacy is past its expiry.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(await harness.receiptManager.isSubscribed(to: Self.legacyProductId) == false)
+    let legacyEntitlements = Superwall.shared.entitlements.byProductId(Self.legacyProductId)
+    #expect(legacyEntitlements.first?.isActive == false)
+    #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
+
+    await fetch.value
+    await settle()
+  }
+
   @Test("Trial eligibility waits for the purchases load that config no longer waits for")
   func trialEligibilityWaitsForInitialPurchasesLoad() async {
     let harness = makeHarness(
@@ -313,23 +378,24 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
-  @Test("With a purchase controller the status isn't ours to assume, so config waits")
-  func waitsWithExternalPurchaseController() async {
+  @Test("A purchase controller takes the fast path too")
+  func publishesEarlyWithExternalPurchaseController() async {
     let controllerContainer = DependencyContainer(purchaseController: MockPurchaseController())
     let harness = makeHarness(
       container: controllerContainer,
       isSubscribed: true,
       savedCustomerInfo: savedCustomerInfo(expiresIn: 3600),
-      loadDelay: 1
+      loadDelay: 2
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 0.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
 
-    #expect(harness.configManager.config == nil)
+    #expect(harness.configManager.config != nil)
+    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    #expect(!harness.receipt.didFinishLoad)
 
     await fetch.value
-    #expect(harness.configManager.config != nil)
     await settle()
   }
 }

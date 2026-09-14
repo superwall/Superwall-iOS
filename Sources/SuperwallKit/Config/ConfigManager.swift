@@ -244,12 +244,10 @@ class ConfigManager {
   /// config can be published before this launch's StoreKit read. `expiresAt` is
   /// a date the store asserted, and a subscription can't lapse before it, so a
   /// future date is a guarantee, not a guess. Refunds are the one thing it can't
-  /// see, and the read catches those seconds later. Not used with a purchase
-  /// controller, where the status isn't ours to assume.
+  /// see, and the read catches those seconds later. A purchase controller
+  /// changes nothing here: the read never sets the status in that setup, and
+  /// the saved entitlements it preserves carry the same expiry.
   private func savedCustomerInfoForEarlyPublish() -> CustomerInfo? {
-    if factory.makeHasExternalPurchaseController() {
-      return nil
-    }
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
       return nil
     }
@@ -471,7 +469,9 @@ class ConfigManager {
           entitlements: []
         ).merging(with: .blank(), granting: entitlementsInfo.granted)
       }
-      if let savedCustomerInfo = savedCustomerInfo {
+      // The saved copy from a test-mode launch can still hold test
+      // entitlements, so it isn't restored when test mode just turned off.
+      if let savedCustomerInfo = savedCustomerInfo, !testModeJustDeactivated {
         await factory.restorePurchases(from: savedCustomerInfo, config: config)
         // Stored before the send so anything that presents on this config can
         // wait for the load through `initialPurchasesLoad`.

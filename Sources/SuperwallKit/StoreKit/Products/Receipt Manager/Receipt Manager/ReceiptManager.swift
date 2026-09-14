@@ -26,7 +26,7 @@ actor ReceiptManager {
   private weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let shouldBypassAppTransactionCheck: Bool
-  private let manager: ReceiptManagerType
+  let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   private unowned let factory: Factory
   private unowned let storage: Storage
@@ -34,7 +34,7 @@ actor ReceiptManager {
   /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which
   /// carry the group ID; on StoreKit 1 from the fetched purchased products. Used to suppress
   /// free trials on upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
-  private var activeSubscriptionGroupIds: Set<String>
+  var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
   /// Set from `AppTransaction.shared` when available (iOS 16+).
@@ -358,35 +358,4 @@ func computeActiveSubscriptionGroupIds(
     .compactMap { $0.subscriptionGroupIdentifier }
 
   return Set(transactionGroupIds).union(productGroupIds)
-}
-
-// MARK: - Restoring from the previous launch
-
-extension ReceiptManager {
-  /// Rebuilds the in-memory purchase state from the customer info saved by the
-  /// previous launch, so config can be published before this launch's StoreKit
-  /// read finishes. `loadPurchasedProducts` overwrites all of it when it lands.
-  func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
-    let subscriptionPurchases = customerInfo.subscriptions.map {
-      Purchase(id: $0.productId, isActive: $0.isActive, purchaseDate: $0.purchaseDate)
-    }
-    let nonSubscriptionPurchases = customerInfo.nonSubscriptions.map {
-      Purchase(id: $0.productId, isActive: !$0.isRevoked, purchaseDate: $0.purchaseDate)
-    }
-    let purchases = Set(subscriptionPurchases + nonSubscriptionPurchases)
-    await manager.seedPurchases(purchases)
-
-    // Config knows every product and the entitlements it unlocks. The saved
-    // customer info knows which of those were active, and carries fields like
-    // willRenew that audience filters read, so its copy wins where both have one.
-    let savedById = Dictionary(customerInfo.entitlements.map { ($0.id, $0) }) { $1 }
-    let entitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
-      .mapValues { Set($0.map { savedById[$0.id] ?? $0 }) }
-    Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)
-
-    activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(
-      from: PurchaseSnapshot(purchases: purchases, customerInfo: customerInfo),
-      storeProducts: []
-    )
-  }
 }
