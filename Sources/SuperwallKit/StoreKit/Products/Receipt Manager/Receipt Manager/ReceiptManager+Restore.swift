@@ -18,8 +18,9 @@ extension ReceiptManager {
   func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
     let now = Date()
     // The saved copy is the merged one, with web subscriptions appended. The
-    // purchases the read produces are device-only, so only App Store rows are
-    // seeded; otherwise `activeProducts` would change shape when the read lands.
+    // purchases the StoreKit 2 read produces are device-only, so only App Store
+    // rows are seeded; otherwise `activeProducts` would change shape when the
+    // read lands. (The fast path is StoreKit 2 only; see `ConfigManager`.)
     let activeSubscriptions = customerInfo.subscriptions.filter {
       $0.store == .appStore && $0.isActive && !hasExpired($0.expirationDate, at: now)
     }
@@ -33,9 +34,16 @@ extension ReceiptManager {
           purchaseDate: $0.purchaseDate
         )
       }
+    // Same rule as the read: with no expiry, only a non-consumable stays active.
     let nonSubscriptionPurchases = customerInfo.nonSubscriptions
       .filter { $0.store == .appStore }
-      .map { Purchase(id: $0.productId, isActive: !$0.isRevoked, purchaseDate: $0.purchaseDate) }
+      .map {
+        Purchase(
+          id: $0.productId,
+          isActive: !$0.isRevoked && !$0.isConsumable,
+          purchaseDate: $0.purchaseDate
+        )
+      }
     let purchases = Set(subscriptionPurchases + nonSubscriptionPurchases)
     await manager.seedPurchases(purchases)
 

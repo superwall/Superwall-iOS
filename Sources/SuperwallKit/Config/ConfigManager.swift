@@ -248,6 +248,12 @@ class ConfigManager {
   /// changes nothing here: the read never sets the status in that setup, and
   /// the saved entitlements it preserves carry the same expiry.
   private func savedCustomerInfoForEarlyPublish() -> CustomerInfo? {
+    // StoreKit 2 only: its read is the slow one, and it is the only one that
+    // saves the device rows the restore rebuilds from. A StoreKit 1 receipt is
+    // parsed locally and saves no rows, so there would be nothing to restore.
+    guard #available(iOS 15.0, *), options.storeKitVersion == .storeKit2 else {
+      return nil
+    }
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
       return nil
     }

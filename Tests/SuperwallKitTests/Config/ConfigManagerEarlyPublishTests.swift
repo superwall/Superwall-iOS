@@ -40,6 +40,7 @@ struct ConfigManagerEarlyPublishTests {
   /// A second product in its own group, unlocking a separate entitlement.
   private static let legacyProductId = "com.app.legacy"
   private static let webProductId = "com.app.web"
+  private static let coinsProductId = "com.app.coins"
 
   /// Customer info the way the previous launch would have saved it: one
   /// subscription in `group_A` unlocking `pro`, expiring `expiresIn` from now.
@@ -146,8 +147,23 @@ struct ConfigManagerEarlyPublishTests {
     return CustomerInfo(subscriptions: [web], nonSubscriptions: [], entitlements: [pro])
   }
 
-  /// A lifetime purchase: active, no expiry, `isLifetime` set.
+  /// A lifetime purchase: the non-consumable row that unlocks `pro` with no
+  /// expiry and `isLifetime` set, plus a consumable the user also bought.
   private func savedLifetimeCustomerInfo() -> CustomerInfo {
+    let lifetime = NonSubscriptionTransaction(
+      transactionId: "life-1",
+      productId: Self.silverProductId,
+      purchaseDate: Date().addingTimeInterval(-86_400),
+      isConsumable: false,
+      isRevoked: false
+    )
+    let coins = NonSubscriptionTransaction(
+      transactionId: "coins-1",
+      productId: Self.coinsProductId,
+      purchaseDate: Date().addingTimeInterval(-600),
+      isConsumable: true,
+      isRevoked: false
+    )
     let pro = Entitlement(
       id: "pro",
       isActive: true,
@@ -157,7 +173,7 @@ struct ConfigManagerEarlyPublishTests {
       expiresAt: nil,
       isLifetime: true
     )
-    return CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [pro])
+    return CustomerInfo(subscriptions: [], nonSubscriptions: [lifetime, coins], entitlements: [pro])
   }
 
   /// Builds a config manager whose receipt loading takes `loadDelay` seconds
@@ -166,6 +182,7 @@ struct ConfigManagerEarlyPublishTests {
   /// launch wrote to disk.
   private func makeHarness(
     container: DependencyContainer? = nil,
+    storeKitVersion: SuperwallOptions.StoreKitVersion = .storeKit2,
     isSubscribed: Bool,
     savedCustomerInfo: CustomerInfo?,
     loadDelay: TimeInterval
@@ -242,8 +259,10 @@ struct ConfigManagerEarlyPublishTests {
       .setting(\.buildId, to: "fresh_456")
     network.configReturnValue = .success(newConfig)
 
+    let options = SuperwallOptions()
+    options.storeKitVersion = storeKitVersion
     let configManager = ConfigManager(
-      options: SuperwallOptions(),
+      options: options,
       storeKitManager: dependencyContainer.storeKitManager,
       storage: storage,
       network: network,
@@ -443,8 +462,32 @@ struct ConfigManagerEarlyPublishTests {
 
     #expect(harness.configManager.config != nil)
     #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The non-consumable is active, the consumable isn't, same as after the read.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(await harness.receiptManager.isSubscribed(to: Self.coinsProductId) == false)
 
     await fetch.value
+    await settle()
+  }
+
+  @Test("StoreKit 1 has no saved device rows to restore from, so config waits")
+  func waitsOnStoreKit1() async {
+    let harness = makeHarness(
+      storeKitVersion: .storeKit1,
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfo(expiresIn: 3600),
+      loadDelay: 1
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 0.5)
+
+    #expect(harness.configManager.config == nil)
+
+    await fetch.value
+    #expect(harness.configManager.config != nil)
     await settle()
   }
 
