@@ -182,7 +182,9 @@ actor ReceiptManager {
     let configEntitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
 
     // Get device snapshot
+    let purchasesLoadStart = Date()
     let onDeviceSnapshot = await manager.loadPurchases(serverEntitlementsByProductId: configEntitlementsByProductId)
+    logPhase("Loaded purchases from StoreKit.", startedAt: purchasesLoadStart, count: onDeviceSnapshot.purchases.count)
 
     // Save device-only CustomerInfo to storage for use when merging with web entitlements
     storage.save(onDeviceSnapshot.customerInfo, forType: LatestDeviceCustomerInfo.self)
@@ -215,16 +217,16 @@ actor ReceiptManager {
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
 
-    let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
-
-    guard let storeProducts = try? await productsManager.products(
-      identifiers: purchasedProductIds,
-      forPaywall: nil,
-      placement: nil
-    ) else {
-      // Fetch failed: refresh from the snapshot alone so the set still reflects this load.
-      // We assign only *after* the await (here and below), never before, so a re-entrant
-      // `isFreeTrialAvailable` during the suspension can't observe a half-built set.
+    // StoreKit 2 transactions carry their subscription group ID, so the active
+    // groups come straight from the snapshot. Only StoreKit 1 has to fetch the
+    // purchased products to find them. Skipping the fetch keeps a network round
+    // trip off the cold-launch path, which `configState` waits on.
+    guard manager.loadsSubscriptionGroupsFromProducts,
+      let storeProducts = await fetchPurchasedProducts(from: onDeviceSnapshot)
+    else {
+      // Fetch skipped or failed: refresh from the snapshot alone so the set still reflects
+      // this load. We assign only *after* the await (here and below), never before, so a
+      // re-entrant `isFreeTrialAvailable` during the suspension can't observe a half-built set.
       activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
       return
     }
@@ -232,6 +234,25 @@ actor ReceiptManager {
     activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: storeProducts)
 
     await manager.loadIntroOfferEligibility(forProducts: storeProducts)
+  }
+
+  /// Fetches the purchased products off the snapshot, returning `nil` when the fetch fails.
+  private func fetchPurchasedProducts(from snapshot: PurchaseSnapshot) async -> Set<StoreProduct>? {
+    let startedAt = Date()
+    let storeProducts = try? await productsManager.products(
+      identifiers: Set(snapshot.purchases.map { $0.id }), forPaywall: nil, placement: nil
+    )
+    logPhase("Fetched purchased products from StoreKit.", startedAt: startedAt, count: storeProducts?.count ?? 0)
+    return storeProducts
+  }
+
+  private func logPhase(_ message: String, startedAt: Date, count: Int) {
+    Logger.debug(
+      logLevel: .debug,
+      scope: .receipts,
+      message: message,
+      info: ["duration_ms": Int(Date().timeIntervalSince(startedAt) * 1000), "count": count]
+    )
   }
 
   /// Determines whether a free trial will actually be granted when the user purchases `storeProduct`.

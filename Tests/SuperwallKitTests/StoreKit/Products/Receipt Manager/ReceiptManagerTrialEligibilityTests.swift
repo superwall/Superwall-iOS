@@ -208,6 +208,7 @@ struct ReceiptManagerTrialEligibilityTests {
 /// Minimal `ReceiptManagerType` whose `isEligibleForIntroOffer` is fully controlled,
 /// so tests can isolate `ReceiptManager`'s upgrade/crossgrade gating logic.
 private final class MockReceiptManagerType: ReceiptManagerType {
+  let loadsSubscriptionGroupsFromProducts = false
   let isEligibleForIntroOfferResult: Bool
   var purchases: Set<Purchase> = []
   var transactionReceipts: [TransactionReceipt] = []
