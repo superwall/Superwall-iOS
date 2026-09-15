@@ -250,13 +250,20 @@ struct ConfigManagerEarlyPublishTests {
     // The config knows both products and the entitlement they unlock; the
     // saved customer info says which is active.
     let products = [Self.silverProductId, Self.goldProductId].map {
-      Product(name: $0, type: .appStore(.init(id: $0)), id: $0, entitlements: [Entitlement(id: "pro")])
+      // Decoded config entitlements default to inactive; only the saved copy
+      // or a grant can make one active.
+      Product(
+        name: $0,
+        type: .appStore(.init(id: $0)),
+        id: $0,
+        entitlements: [Entitlement(id: "pro", isActive: false)]
+      )
     } + [
       Product(
         name: Self.legacyProductId,
         type: .appStore(.init(id: Self.legacyProductId)),
         id: Self.legacyProductId,
-        entitlements: [Entitlement(id: "legacy")]
+        entitlements: [Entitlement(id: "legacy", isActive: false)]
       )
     ]
     let cachedConfig: Config = .stub()

@@ -247,6 +247,10 @@ actor ReceiptManager {
   /// - Parameter purchasesLoad: The load that config was published ahead of, if
   ///   any. Awaited only in the branch that reads the active subscription groups,
   ///   so a paywall whose answer can't depend on the load isn't held up by it.
+  ///   This is only non-nil on StoreKit 2 (see `ConfigManager`), which matters
+  ///   for the placement: StoreKit 2 resolves intro eligibility live from Apple,
+  ///   while StoreKit 1 answers it from state the load fills in, so on StoreKit 1
+  ///   the eligibility check above would have to wait too.
   func isFreeTrialAvailable(
     for storeProduct: StoreProduct,
     waitingFor purchasesLoad: Task<Void, Never>? = nil

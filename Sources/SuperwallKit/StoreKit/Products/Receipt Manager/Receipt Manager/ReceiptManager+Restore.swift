@@ -14,7 +14,8 @@ extension ReceiptManager {
   ///
   /// Each saved item carries its own expiry, which the store asserted, so
   /// anything past it has lapsed since the last launch and is restored inactive.
-  /// A nil expiry can't be shown to have lapsed, so it keeps its saved state.
+  /// A nil expiry keeps its saved state, except on a subscription: nothing can
+  /// show one is still current, so it isn't restored active.
   func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
     let now = Date()
     // The saved copy is the merged one, with web subscriptions appended. The
@@ -56,16 +57,14 @@ extension ReceiptManager {
     // Config knows every product and the entitlements it unlocks. The saved
     // customer info knows which of those were active, and carries fields like
     // willRenew that audience filters read, so its copy wins where both have one.
-    let saved = customerInfo.entitlements.map { entitlement in
-      let lapsed = entitlement.isActive && hasExpired(entitlement.expiresAt, at: now)
-      return (entitlement.id, lapsed ? deactivated(entitlement) : entitlement)
-    }
-    // Every load merges the developer's grants back in, so the restore carries
-    // them too. Otherwise a grant made since the last launch, which the saved
-    // copy predates, would look inactive until the read lands. The developer's
-    // own verdict wins over the saved copy.
-    let granted = Superwall.shared.entitlements.granted.map { ($0.id, $0) }
-    let savedById = Dictionary(saved + granted) { $1 }
+    // `savedCustomerInfoForEarlyPublish` has already merged the developer's
+    // grants into this copy, the same way every load merges them.
+    let savedById = Dictionary(
+      customerInfo.entitlements.map { entitlement in
+        let lapsed = entitlement.isActive && hasExpired(entitlement.expiresAt, at: now)
+        return (entitlement.id, lapsed ? deactivated(entitlement) : entitlement)
+      }
+    ) { $1 }
     let entitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
       .mapValues { Set($0.map { savedById[$0.id] ?? $0 }) }
     Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)
