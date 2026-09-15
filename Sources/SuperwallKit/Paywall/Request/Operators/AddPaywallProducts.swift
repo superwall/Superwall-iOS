@@ -367,6 +367,13 @@ extension PaywallRequestManager {
     if productEntitlementIds.isEmpty {
       return false
     }
+    // Same reason as `hasActiveIntroOffer`: config can be published before the
+    // purchases load finishes, and until it does `customerInfo` is the copy
+    // restored from disk. The `isPlaceholder` check below can't stand in for
+    // this — the early publish only happens when a non-blank copy is saved,
+    // which is exactly when `isPlaceholder` is false.
+    await factory.initialPurchasesLoad?.value
+
     let customerInfo = await MainActor.run {
       Superwall.shared.customerInfo
     }
