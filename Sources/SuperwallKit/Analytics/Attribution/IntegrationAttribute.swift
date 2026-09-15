@@ -8,73 +8,120 @@
 /// An enum that represents attributes for third-party integrations with Superwall.
 @objc(SWKIntegrationAttribute)
 public enum IntegrationAttribute: Int {
-  /// The unique Adjust identifier for the user.
+  /// The unique Adjust identifier for the device.
+  ///
+  /// Kept when you reset or identify a different user.
   case adjustId
 
   /// The Amplitude device identifier.
+  ///
+  /// Kept when you reset or identify a different user.
   case amplitudeDeviceId
 
   /// The Amplitude user identifier.
+  ///
+  /// Cleared when you reset or identify a different user.
   case amplitudeUserId
 
-  /// The unique Appsflyer identifier for the user.
+  /// The unique Appsflyer identifier for the device.
+  ///
+  /// Kept when you reset or identify a different user.
   case appsflyerId
 
   /// The Braze `alias_name` in User Alias Object.
+  ///
+  /// Cleared when you reset or identify a different user.
   case brazeAliasName
 
   /// The Braze `alias_label` in User Alias Object.
+  ///
+  /// Cleared when you reset or identify a different user.
   case brazeAliasLabel
 
   /// The OneSignal User ID (`onesignal_id`) for the user.
+  ///
+  /// Cleared when you reset or identify a different user.
   case onesignalId
 
-  /// The Facebook Anonymous identifier for the user.
+  /// The Facebook Anonymous identifier for the app install.
+  ///
+  /// Kept when you reset or identify a different user.
   case fbAnonId
 
   /// The Firebase instance identifier.
+  ///
+  /// Kept when you reset or identify a different user.
   case firebaseAppInstanceId
 
   /// The Firebase installation ID.
+  ///
+  /// Kept when you reset or identify a different user.
   case firebaseInstallationId
 
   /// The Iterable identifier for the user.
+  ///
+  /// Cleared when you reset or identify a different user.
   case iterableUserId
 
   /// The Iterable campaign identifier.
+  ///
+  /// Cleared when you reset or identify a different user.
   case iterableCampaignId
 
   /// The Iterable template identifier.
+  ///
+  /// Cleared when you reset or identify a different user.
   case iterableTemplateId
 
   /// The Mixpanel user identifier.
+  ///
+  /// Cleared when you reset or identify a different user.
   case mixpanelDistinctId
 
   /// The unique mParticle user identifier (mpid).
+  ///
+  /// Cleared when you reset or identify a different user.
   case mparticleId
 
   /// The CleverTap user identifier.
+  ///
+  /// Cleared when you reset or identify a different user.
   case clevertapId
 
-  /// The Airship channel identifier for the user.
+  /// The Airship channel identifier, which registers the device rather than
+  /// the named user.
+  ///
+  /// Kept when you reset or identify a different user.
   case airshipChannelId
 
   /// The unique Kochava device identifier.
+  ///
+  /// Kept when you reset or identify a different user.
   case kochavaDeviceId
 
-  /// The Tenjin identifier.
+  /// The Tenjin device identifier.
+  ///
+  /// Kept when you reset or identify a different user.
   case tenjinId
 
   /// The PostHog User identifer
+  ///
+  /// Cleared when you reset or identify a different user.
   case posthogUserId
 
   /// The Customer.io person's identifier (`id)`.
+  ///
+  /// Cleared when you reset or identify a different user.
   case customerioId
 
-  /// The Appstack identifier.
+  /// The Appstack device identifier.
+  ///
+  /// Kept when you reset or identify a different user.
   case appstackId
 
   /// The Singular device identifier (SDID).
+  ///
+  /// Kept when you reset or identify a different user.
   case singularDeviceId
 }
 
@@ -171,16 +218,23 @@ extension IntegrationAttribute {
     }
   }
 
-  /// The keys of every identifier that survives a reset.
-  static let installScopedKeys: Set<String> = {
-    let all: [IntegrationAttribute] = [
-      .adjustId, .amplitudeDeviceId, .amplitudeUserId, .appsflyerId,
-      .brazeAliasName, .brazeAliasLabel, .onesignalId, .fbAnonId,
-      .firebaseAppInstanceId, .firebaseInstallationId, .iterableUserId,
-      .iterableCampaignId, .iterableTemplateId, .mixpanelDistinctId,
-      .mparticleId, .clevertapId, .airshipChannelId, .kochavaDeviceId,
-      .tenjinId, .posthogUserId, .customerioId, .appstackId, .singularDeviceId
-    ]
-    return Set(all.filter(\.isInstallScoped).map(\.description))
+  /// Every case, in declaration order.
+  ///
+  /// Walks the raw values rather than listing the cases, so a new integration
+  /// is picked up on its own and can't be left out of the scope split by
+  /// accident.
+  static let allAttributes: [IntegrationAttribute] = {
+    var attributes: [IntegrationAttribute] = []
+    var rawValue = 0
+    while let attribute = IntegrationAttribute(rawValue: rawValue) {
+      attributes.append(attribute)
+      rawValue += 1
+    }
+    return attributes
   }()
+
+  /// The keys of every identifier that survives a reset.
+  static let installScopedKeys: Set<String> = Set(
+    allAttributes.filter(\.isInstallScoped).map(\.description)
+  )
 }

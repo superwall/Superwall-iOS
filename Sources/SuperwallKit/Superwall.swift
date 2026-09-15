@@ -419,6 +419,23 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Drops the attributes waiting on the app transaction id that identify the
+  /// person rather than the device.
+  ///
+  /// They were set for the user that `reset()` just replaced, so replaying them
+  /// when the id arrives would hand someone else's identity to the new user —
+  /// the same reason `AttributionFetcher.resetIntegrationAttributes()` drops
+  /// them from the attributes it already holds.
+  func resetEnqueuedIntegrationAttributes() {
+    enqueuedAttributesQueue.sync {
+      guard let enqueued = _enqueuedIntegrationAttributes else {
+        return
+      }
+      let kept = enqueued.filter { $0.key.isInstallScoped }
+      _enqueuedIntegrationAttributes = kept.isEmpty ? nil : kept
+    }
+  }
+
   // MARK: - Value Resolution
 
   private func resolvedCustomerInfo(
@@ -1082,6 +1099,7 @@ public final class Superwall: NSObject, ObservableObject {
     // signing out, and the reset just wiped them out of the user's attributes
     // and off disk. Keep the install-scoped half for the new user, drop the rest.
     dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

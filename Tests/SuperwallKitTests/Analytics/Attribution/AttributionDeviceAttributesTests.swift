@@ -238,10 +238,33 @@ struct AttributionDeviceAttributesTests {
   }
 
   @Test func everyIntegrationAttributeIsScoped() {
+    // The walk over the raw values has to reach every case, or an integration
+    // would be treated as person-scoped and dropped on reset without anyone
+    // deciding that. Bump both numbers when adding one, having picked a side.
+    #expect(IntegrationAttribute.allAttributes.count == 23)
+    #expect(IntegrationAttribute.allAttributes.last == .singularDeviceId)
+    #expect(IntegrationAttribute.installScopedKeys.count == 11)
+
     #expect(IntegrationAttribute.installScopedKeys.contains("appsflyerId"))
     #expect(IntegrationAttribute.installScopedKeys.contains("adjustId"))
     #expect(!IntegrationAttribute.installScopedKeys.contains("amplitudeUserId"))
     #expect(!IntegrationAttribute.installScopedKeys.contains("customerioId"))
-    #expect(IntegrationAttribute.installScopedKeys.count == 11)
+  }
+
+  @Test func resetDropsThePersonScopedAttributesWaitingOnTheTransactionId() {
+    let superwall = Superwall.shared
+    superwall.enqueuedIntegrationAttributes = [
+      .appsflyerId: "af-1",
+      .amplitudeUserId: "person-1"
+    ]
+    defer { superwall.enqueuedIntegrationAttributes = nil }
+
+    // Called directly rather than through `reset()`, whose storage wipe and
+    // config reset would reach well beyond this suite.
+    superwall.resetEnqueuedIntegrationAttributes()
+
+    let enqueued = superwall.enqueuedIntegrationAttributes
+    #expect(enqueued?[.appsflyerId] == "af-1")
+    #expect(enqueued?[.amplitudeUserId] == nil)
   }
 }
