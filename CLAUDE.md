@@ -120,5 +120,9 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and
 on app activation after an integration has been configured. Compare the complete
 refreshed snapshot, not just provider IDs. Sync device values into user attributes
-(the server integration router reads those); explicit nulls clear stale IDs after
+(the server integration router reads those) only when that snapshot changes, since
+every sync costs a `user_attributes` event; explicit nulls clear stale IDs after
 ATT revocation. ATT is serialized as a numeric string in integration attributes.
+`idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
+change to that set in the changelog and the online docs. Don't gate the IDFA on
+the ATT status: `identifierForAdvertisers` already filters the all-zero id.

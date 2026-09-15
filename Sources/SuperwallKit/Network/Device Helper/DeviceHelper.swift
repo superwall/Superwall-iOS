@@ -64,9 +64,23 @@ class DeviceHelper {
     UIDevice.modelName
   }()
 
-  let vendorId: String = {
-    UIDevice.current.identifierForVendor?.uuidString ?? ""
-  }()
+  @DispatchQueueBacked
+  private var cachedVendorId = ""
+
+  /// `identifierForVendor` is `nil` until the device has been unlocked once, so
+  /// an app launched in the background before first unlock would be stuck with
+  /// an empty id for the whole process if this were read only at init. Latch the
+  /// first non-empty read instead, so a later read picks the id up once it
+  /// exists and every read after that is a plain load.
+  var vendorId: String {
+    let cached = cachedVendorId
+    if !cached.isEmpty {
+      return cached
+    }
+    let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    cachedVendorId = vendorId
+    return vendorId
+  }
 
   var languageCode: String {
     if #available(iOS 16, *) {
@@ -180,9 +194,9 @@ class DeviceHelper {
   /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
   /// trait collections — must sit behind this check, and the check must come
   /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
-  /// unguarded `UIDevice` reads at init (`model`, `vendorId`, `interfaceType`)
-  /// are exempt: they don't touch the trait system, and the sample-app repro
-  /// keeps its tint with them in place.
+  /// unguarded `UIDevice` reads (`model` and `interfaceType` at init, `vendorId`
+  /// on first use) are exempt: they don't touch the trait system, and the
+  /// sample-app repro keeps its tint with them in place.
   ///
   /// A missing application object doesn't always mean that window, though: some
   /// processes never create one (unit-test runners, app extensions) yet can read

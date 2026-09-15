@@ -4,24 +4,47 @@ import Testing
 
 @Suite(.serialized)
 struct AttributionDeviceAttributesTests {
-  @Test func unchangedProviderRefreshesDeviceIdentifiersAndConsent() {
-    let container = DependencyContainer()
-    var device = ["idfv": "vendor-1", "idfa": "advertiser-1", "attStatus": "3"]
-    var syncedAttributes: [String: Any?] = [:]
-    let fetcher = AttributionFetcher(
+  private func makeFetcher(
+    container: DependencyContainer,
+    vendorId: @escaping () -> String = { "vendor-1" },
+    attStatus: @escaping () -> Int? = { 3 },
+    idfa: @escaping () -> String? = { "advertiser-1" },
+    sync: @escaping ([String: Any?]) -> Void = { _ in }
+  ) -> AttributionFetcher {
+    return AttributionFetcher(
       storage: container.storage,
       deviceHelper: container.deviceHelper,
       webEntitlementRedeemer: container.webEntitlementRedeemer,
-      deviceAttributesProvider: { device },
-      syncDeviceAttributes: { syncedAttributes = $0 }
+      vendorIdProvider: vendorId,
+      attStatusProvider: attStatus,
+      idfaProvider: idfa,
+      syncDeviceAttributes: sync
+    )
+  }
+
+  @Test func unchangedProviderRefreshesDeviceIdentifiersAndConsent() {
+    let container = DependencyContainer()
+    var status: Int? = 3
+    var idfa: String? = "advertiser-1"
+    var vendorId = "vendor-1"
+    var syncedAttributes: [String: Any?] = [:]
+    let fetcher = makeFetcher(
+      container: container,
+      vendorId: { vendorId },
+      attStatus: { status },
+      idfa: { idfa },
+      sync: { syncedAttributes = $0 }
     )
     defer { fetcher.cancelPendingOperations() }
-    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"], appTransactionId: "tx-1")
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["attStatus"] == "3")
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
 
-    device = ["idfv": "vendor-2", "attStatus": "2"]
-    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"], appTransactionId: "tx-1")
+    vendorId = "vendor-2"
+    status = 2
+    idfa = nil
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(fetcher.integrationAttributes["idfv"] == "vendor-2")
     #expect(fetcher.integrationAttributes["attStatus"] == "2")
@@ -33,20 +56,112 @@ struct AttributionDeviceAttributesTests {
 
   @Test func activationRefreshesWithoutSettingProviderAgain() {
     let container = DependencyContainer()
-    var device = ["idfv": "vendor-1", "attStatus": "0"]
-    let fetcher = AttributionFetcher(
-      storage: container.storage,
-      deviceHelper: container.deviceHelper,
-      webEntitlementRedeemer: container.webEntitlementRedeemer,
-      deviceAttributesProvider: { device },
-      syncDeviceAttributes: { _ in }
+    var status: Int? = 0
+    var idfa: String?
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { status },
+      idfa: { idfa }
     )
     defer { fetcher.cancelPendingOperations() }
-    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"], appTransactionId: "tx-1")
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["attStatus"] == "0")
-    device = ["idfv": "vendor-1", "idfa": "advertiser-1", "attStatus": "3"]
+
+    status = 3
+    idfa = "advertiser-1"
     fetcher.refreshDeviceAttributes()
     #expect(fetcher.integrationAttributes["attStatus"] == "3")
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
+  }
+
+  @Test func omitsVendorIdWhenItIsUnavailable() {
+    let container = DependencyContainer()
+    var syncedAttributes: [String: Any?] = [:]
+    let fetcher = makeFetcher(
+      container: container,
+      vendorId: { "" },
+      sync: { syncedAttributes = $0 }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["idfv"] == nil)
+    #expect(syncedAttributes["idfv"] as? NSNull != nil)
+  }
+
+  @Test func keepsIdfaWhileConsentIsUndecided() {
+    let container = DependencyContainer()
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { 0 },
+      idfa: { "advertiser-1" }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    // Before iOS 14.5 the IDFA is readable while ATT still reads
+    // `notDetermined`, and a build that can't resolve `ATTrackingManager`
+    // reports the same status, so the status mustn't gate the IDFA.
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["attStatus"] == "0")
+    #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
+  }
+
+  @Test func omitsAttStatusWhereTheOsHasNoConsentPrompt() {
+    let container = DependencyContainer()
+    var syncedAttributes: [String: Any?] = [:]
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { nil },
+      sync: { syncedAttributes = $0 }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["attStatus"] == nil)
+    #expect(syncedAttributes["attStatus"] as? NSNull != nil)
+  }
+
+  @Test func onlySyncsUserAttributesWhenTheDeviceSnapshotChanges() {
+    let container = DependencyContainer()
+    var status: Int? = 3
+    var syncCount = 0
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { status },
+      sync: { _ in syncCount += 1 }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    fetcher.refreshDeviceAttributes()
+    fetcher.refreshDeviceAttributes()
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
+    #expect(syncCount == 1)
+
+    status = 2
+    fetcher.refreshDeviceAttributes()
+    #expect(fetcher.integrationAttributes["attStatus"] == "2")
+    #expect(syncCount == 2)
+
+  }
+
+  @Test func resyncSendsTheIdentifiersAgainAfterAReset() {
+    let container = DependencyContainer()
+    var syncCount = 0
+    let fetcher = makeFetcher(container: container, sync: { _ in syncCount += 1 })
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    fetcher.resyncDeviceAttributes()
+    #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
+    #expect(syncCount == 2)
   }
 }

@@ -20,9 +20,19 @@ final class AttributionFetcher {
   private let timerQueue = DispatchQueue(label: "com.superwall.attributionfetcher.timer")
   private var redeemTimer: DispatchSourceTimer?
   private var activeObserver: NSObjectProtocol?
-  private let deviceAttributesProvider: (() -> [String: String])?
+  private let vendorIdProvider: (() -> String)?
+  private let attStatusProvider: (() -> Int?)?
+  private let idfaProvider: (() -> String?)?
   private let syncDeviceAttributes: ([String: Any?]) -> Void
   private var _integrationAttributes: [String: String] = [:]
+
+  /// The last device snapshot handed to `syncDeviceAttributes`. Only a change
+  /// is worth syncing: every sync costs a `user_attributes` event, a delegate
+  /// callback, a Core Data row and a re-encode of the whole attribute dict.
+  private var _lastSyncedDeviceAttributes: [String: String]?
+
+  /// The device keys the SDK owns in both integration and user attributes.
+  private static let deviceAttributeKeys = ["idfa", "idfv", "attStatus"]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -139,13 +149,17 @@ final class AttributionFetcher {
     storage: Storage,
     deviceHelper: DeviceHelper,
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    deviceAttributesProvider: (() -> [String: String])? = nil,
+    vendorIdProvider: (() -> String)? = nil,
+    attStatusProvider: (() -> Int?)? = nil,
+    idfaProvider: (() -> String?)? = nil,
     syncDeviceAttributes: @escaping ([String: Any?]) -> Void = {
       Superwall.shared.setUserAttributes($0)
     }
   ) {
     self.syncDeviceAttributes = syncDeviceAttributes
-    self.deviceAttributesProvider = deviceAttributesProvider
+    self.vendorIdProvider = vendorIdProvider
+    self.attStatusProvider = attStatusProvider
+    self.idfaProvider = idfaProvider
     self.storage = storage
     self.deviceHelper = deviceHelper
     self.webEntitlementRedeemer = webEntitlementRedeemer
@@ -167,22 +181,39 @@ final class AttributionFetcher {
     }
   }
 
-  private var currentDeviceAttributes: [String: String] {
-    if let deviceAttributesProvider {
-      return deviceAttributesProvider()
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  private var attStatus: Int? {
+    if let attStatusProvider {
+      return attStatusProvider()
     }
-    var attributes: [String: String] = [:]
-    let vendorId = deviceHelper.vendorId
-    if !vendorId.isEmpty { attributes["idfv"] = vendorId }
     #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
     if #available(iOS 14, macCatalyst 14, tvOS 14, macOS 11, *) {
-      let status = TrackingManagerProxy().trackingAuthorizationStatus()
-      attributes["attStatus"] = String(status)
-      if status == 3 { attributes["idfa"] = identifierForAdvertisers }
-    } else {
-      attributes["idfa"] = identifierForAdvertisers
+      return TrackingManagerProxy().trackingAuthorizationStatus()
     }
     #endif
+    return nil
+  }
+
+  private var currentDeviceAttributes: [String: String] {
+    var attributes: [String: String] = [:]
+
+    let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
+    if !vendorId.isEmpty {
+      attributes["idfv"] = vendorId
+    }
+
+    if let attStatus {
+      attributes["attStatus"] = String(attStatus)
+    }
+
+    // Don't gate this on the ATT status. Before iOS 14.5 the IDFA is available
+    // while ATT still reads `notDetermined`, and `TrackingManagerProxy` returns
+    // `notDetermined` both for a genuine one and for a build where the class
+    // can't be found, so the status can't tell those apart. The OS hands back
+    // the all-zero id when it doesn't want to share one, and
+    // `identifierForAdvertisers` already filters that out.
+    attributes["idfa"] = idfaProvider?() ?? identifierForAdvertisers
+
     return attributes
   }
 
@@ -195,19 +226,25 @@ final class AttributionFetcher {
     }
   }
 
-  func setIntegrationAttribute(
-    attribute: IntegrationAttribute,
-    value: String?,
-    appTransactionId: String
-  ) {
-    let attributes = [attribute.description: value]
-    mergeIntegrationAttributes(attributes: attributes, appTransactionId: appTransactionId)
+  /// Sends the device identifiers again after a reset, which wipes the user's
+  /// attributes. Without this the sync's change check would see the same device
+  /// snapshot as before and leave the new user without them.
+  func resyncDeviceAttributes() {
+    queue.async { [weak self] in
+      guard let self, !self._integrationAttributes.isEmpty else { return }
+      self._lastSyncedDeviceAttributes = nil
+      _ = self._mergeIntegrationAttributes(attributes: [:])
+    }
   }
 
-  func mergeIntegrationAttributes(
-    attributes: [String: String?],
-    appTransactionId: String
+  func setIntegrationAttribute(
+    attribute: IntegrationAttribute,
+    value: String?
   ) {
+    mergeIntegrationAttributes(attributes: [attribute.description: value])
+  }
+
+  func mergeIntegrationAttributes(attributes: [String: String?]) {
     queue.async { [weak self] in
       guard let self = self else { return }
 
@@ -261,18 +298,20 @@ final class AttributionFetcher {
       mergedAttributes[key] = value
     }
     let device = currentDeviceAttributes
-    for key in ["idfa", "idfv", "attStatus"] {
+    for key in Self.deviceAttributeKeys {
       mergedAttributes[key] = device[key]
     }
 
     // The router reads user attributes, not the integration_attributes event.
     // Explicit nulls clear an IDFA retained from before consent was revoked.
-    // Sync even when identifiers are unchanged (e.g. after an identify/reset).
-    var userAttributes: [String: Any?] = [:]
-    for key in ["idfa", "idfv", "attStatus"] {
-      userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
+    if device != _lastSyncedDeviceAttributes {
+      _lastSyncedDeviceAttributes = device
+      var userAttributes: [String: Any?] = [:]
+      for key in Self.deviceAttributeKeys {
+        userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
+      }
+      syncDeviceAttributes(userAttributes)
     }
-    syncDeviceAttributes(userAttributes)
 
     guard mergedAttributes != _integrationAttributes else { return false }
     let updatedAttributes = mergedAttributes

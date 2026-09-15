@@ -11,7 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Refreshes IDFV, IDFA and ATT status for integrations when the app becomes active or integration attributes are set again. Device identifiers now also sync to user attributes for server-side integrations such as AppsFlyer, and revoked consent clears the previous IDFA.
+- Refreshes the IDFV, IDFA and tracking consent for integrations when the app becomes active or integration attributes are set again, and clears the IDFA when consent is revoked. These now also go into the user attributes `idfv`, `idfa` and `attStatus`, so server-side integrations such as AppsFlyer can read them. The SDK owns those three keys and will overwrite any value your app has set on them.
 
 - Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
