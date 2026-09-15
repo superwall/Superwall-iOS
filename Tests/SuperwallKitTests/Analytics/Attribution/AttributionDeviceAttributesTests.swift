@@ -11,6 +11,9 @@ struct AttributionDeviceAttributesTests {
     idfa: @escaping () -> String? = { "advertiser-1" },
     sync: @escaping ([String: Any?]) -> Void = { _ in }
   ) -> AttributionFetcher {
+    // Storage is backed by the same files across containers, so a dictionary
+    // left by an earlier test would be loaded here as a starting state.
+    container.storage.delete(IntegrationAttributes.self)
     return AttributionFetcher(
       storage: container.storage,
       deviceHelper: container.deviceHelper,
@@ -149,7 +152,7 @@ struct AttributionDeviceAttributesTests {
     #expect(syncCount == 2)
   }
 
-  @Test func resyncRestoresTheWholeSetAfterAReset() {
+  @Test func resetKeepsTheInstallScopedAttributesForTheNewUser() {
     let container = DependencyContainer()
     var syncedAttributes: [String: Any?] = [:]
     var syncCount = 0
@@ -162,21 +165,83 @@ struct AttributionDeviceAttributesTests {
     )
     defer { fetcher.cancelPendingOperations() }
 
-    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    fetcher.mergeIntegrationAttributes(
+      attributes: [
+        "appsflyerId": "af-1",
+        "amplitudeUserId": "person-1"
+      ]
+    )
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
     #expect(syncedAttributes["appsflyerId"] == nil)
 
     // A reset deletes the user-specific copy and empties the user's attributes.
     container.storage.delete(IntegrationAttributes.self)
+    fetcher.resetIntegrationAttributes()
 
-    fetcher.resyncDeviceAttributes()
+    // The AppsFlyer id describes the device, so the new user keeps it. The
+    // Amplitude user id describes the person who just signed out.
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == nil)
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
     #expect(syncCount == 2)
-    // The provider id goes back to the new user, not just the device keys.
+
+    // The kept ids go back to the new user, alongside the device ones.
     #expect(syncedAttributes["appsflyerId"] as? String == "af-1")
+    #expect(syncedAttributes["amplitudeUserId"] == nil)
     #expect(syncedAttributes["idfv"] as? String == "vendor-1")
-    // And the dictionary is on disk again, so the next launch still refreshes.
-    #expect(container.storage.get(IntegrationAttributes.self)?["appsflyerId"] == "af-1")
+
+    // And they're on disk again, so the next launch still refreshes and the
+    // redeem that follows the reset doesn't ship empty metadata.
+    let stored = container.storage.get(IntegrationAttributes.self)
+    #expect(stored?["appsflyerId"] == "af-1")
+    #expect(stored?["amplitudeUserId"] == nil)
+  }
+
+  @Test func resetKeepsTheDeviceKeysWhenNoProviderIdIsInstallScoped() {
+    let container = DependencyContainer()
+    let fetcher = makeFetcher(container: container)
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["amplitudeUserId": "person-1"])
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == "person-1")
+
+    container.storage.delete(IntegrationAttributes.self)
+    fetcher.resetIntegrationAttributes()
+
+    // Nothing of the old user's is left, but the device keys are the SDK's own,
+    // so they stay and the activation refresh keeps working for the new user.
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == nil)
+    #expect(fetcher.integrationAttributes["idfv"] == "vendor-1")
+    #expect(container.storage.get(IntegrationAttributes.self)?["amplitudeUserId"] == nil)
+    #expect(container.storage.get(IntegrationAttributes.self)?["idfv"] == "vendor-1")
+  }
+
+  @Test func resetClearsEverythingWhenTheDeviceOffersNoIdentifiers() {
+    let container = DependencyContainer()
+    let fetcher = makeFetcher(
+      container: container,
+      vendorId: { "" },
+      attStatus: { nil },
+      idfa: { nil }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["amplitudeUserId": "person-1"])
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == "person-1")
+
+    container.storage.delete(IntegrationAttributes.self)
+    fetcher.resetIntegrationAttributes()
+
+    #expect(fetcher.integrationAttributes.isEmpty)
+    #expect(container.storage.get(IntegrationAttributes.self) == nil)
+  }
+
+  @Test func everyIntegrationAttributeIsScoped() {
+    #expect(IntegrationAttribute.installScopedKeys.contains("appsflyerId"))
+    #expect(IntegrationAttribute.installScopedKeys.contains("adjustId"))
+    #expect(!IntegrationAttribute.installScopedKeys.contains("amplitudeUserId"))
+    #expect(!IntegrationAttribute.installScopedKeys.contains("customerioId"))
+    #expect(IntegrationAttribute.installScopedKeys.count == 11)
   }
 }

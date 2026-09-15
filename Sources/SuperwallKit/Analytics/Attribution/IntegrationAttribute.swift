@@ -131,3 +131,56 @@ extension IntegrationAttribute: CustomStringConvertible {
     }
   }
 }
+
+// MARK: - Scope
+extension IntegrationAttribute {
+  /// Whether the identifier belongs to the app install rather than to the
+  /// person using it.
+  ///
+  /// A reset or an `identify` to a different user keeps the install-scoped
+  /// identifiers — they describe the same device either way — and drops the
+  /// rest, which belong to whoever was just signed out. The switch is
+  /// exhaustive on purpose: a new integration has to be placed on one side.
+  var isInstallScoped: Bool {
+    switch self {
+    case .adjustId,
+      .amplitudeDeviceId,
+      .appsflyerId,
+      .fbAnonId,
+      .firebaseAppInstanceId,
+      .firebaseInstallationId,
+      .airshipChannelId,
+      .kochavaDeviceId,
+      .tenjinId,
+      .appstackId,
+      .singularDeviceId:
+      return true
+    case .amplitudeUserId,
+      .brazeAliasName,
+      .brazeAliasLabel,
+      .onesignalId,
+      .iterableUserId,
+      .iterableCampaignId,
+      .iterableTemplateId,
+      .mixpanelDistinctId,
+      .mparticleId,
+      .clevertapId,
+      .posthogUserId,
+      .customerioId:
+      return false
+    }
+  }
+
+  /// The keys of every identifier that survives a reset.
+  static let installScopedKeys: Set<String> = {
+    let all: [IntegrationAttribute] = [
+      .adjustId, .amplitudeDeviceId, .amplitudeUserId, .appsflyerId,
+      .brazeAliasName, .brazeAliasLabel, .onesignalId, .fbAnonId,
+      .firebaseAppInstanceId, .firebaseInstallationId, .iterableUserId,
+      .iterableCampaignId, .iterableTemplateId, .mixpanelDistinctId,
+      .mparticleId, .clevertapId, .airshipChannelId, .kochavaDeviceId,
+      .tenjinId, .posthogUserId, .customerioId, .appstackId, .singularDeviceId
+    ]
+    return Set(all.filter(\.isInstallScoped).map(\.description))
+  }()
+}

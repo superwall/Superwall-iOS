@@ -1078,9 +1078,10 @@ public final class Superwall: NSObject, ObservableObject {
     // logout after that would otherwise leave the new user without attributes.
     dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
 
-    // The device identifiers are install-scoped too, and the reset just wiped
-    // them out of the user's attributes, so send them to the new user again.
-    dependencyContainer.attributionFetcher.resyncDeviceAttributes()
+    // Integration attributes are part install-scoped, part tied to the person
+    // signing out, and the reset just wiped them out of the user's attributes
+    // and off disk. Keep the install-scoped half for the new user, drop the rest.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

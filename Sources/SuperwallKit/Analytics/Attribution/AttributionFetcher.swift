@@ -236,15 +236,8 @@ final class AttributionFetcher {
     }
   }
 
-  /// - Parameter includeProviderIds: Whether to hand the provider ids to
-  /// `syncDeviceAttributes` alongside the device identifiers. Only the device
-  /// identifiers are the SDK's to own; the provider ids are already in the
-  /// user's attributes except right after a reset, which wipes them.
   /// - Returns: Whether the integration attributes changed.
-  private func _mergeIntegrationAttributes(
-    attributes: [String: String?],
-    includeProviderIds: Bool = false
-  ) -> Bool {
+  private func _mergeIntegrationAttributes(attributes: [String: String?]) -> Bool {
     var mergedAttributes = _integrationAttributes
     for (key, value) in attributes {
       mergedAttributes[key] = value
@@ -259,11 +252,6 @@ final class AttributionFetcher {
     if device != _lastSyncedDeviceAttributes {
       _lastSyncedDeviceAttributes = device
       var userAttributes: [String: Any?] = [:]
-      if includeProviderIds {
-        for (key, value) in mergedAttributes where !Self.deviceAttributeKeys.contains(key) {
-          userAttributes[key] = value
-        }
-      }
       for key in Self.deviceAttributeKeys {
         userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
       }
@@ -331,25 +319,56 @@ extension AttributionFetcher {
     }
   }
 
-  /// Restores the integration attributes for the user that `reset()` just
+  /// Re-scopes the integration attributes for the user that `reset()` just
   /// created.
   ///
-  /// A reset clears the user's attributes and deletes the stored copy of the
-  /// integration attributes, which live in the user-specific directory. That
-  /// leaves the in-memory dictionary as the only remaining source of the
-  /// provider ids, so write it back to disk as well as handing the whole set —
-  /// provider ids and device identifiers — to the new user. Without the file
-  /// the next cold launch would start empty and the activation refresh would
-  /// never run again, so a later consent change would never clear the IDFA.
+  /// Identifiers that describe the person — see `isInstallScoped` — belong to
+  /// whoever was just signed out, so they go. The install-scoped ones describe
+  /// the same device either way and stay, along with the device identifiers.
   ///
-  /// No redeem is scheduled: none of the attributes changed, and the identity
-  /// redeems for the new user once it settles.
-  func resyncDeviceAttributes() {
-    queue.async { [weak self] in
-      guard let self, !self._integrationAttributes.isEmpty else { return }
-      self.storage.save(self._integrationAttributes, forType: IntegrationAttributes.self)
-      self._lastSyncedDeviceAttributes = nil
-      _ = self._mergeIntegrationAttributes(attributes: [:], includeProviderIds: true)
+  /// A reset clears the user's attributes and deletes the stored copy of the
+  /// integration attributes, which live in the user-specific directory, while
+  /// the in-memory copy outlives it. So write what's kept back to disk and hand
+  /// all of it — not just what changed — to the new user, who has none of it.
+  /// Without the file the next cold launch would start empty and the activation
+  /// refresh would never run again, so a later consent change would never clear
+  /// the IDFA.
+  ///
+  /// Runs synchronously. `identify` redeems for the new user immediately after
+  /// the reset, and that request reads the stored attributes rather than this
+  /// object, so they have to be settled before this returns. No redeem is
+  /// scheduled from here; the identity redeems on its own.
+  func resetIntegrationAttributes() {
+    queue.sync {
+      if _integrationAttributes.isEmpty {
+        return
+      }
+      var kept = _integrationAttributes.filter { key, _ in
+        Self.deviceAttributeKeys.contains(key)
+          || IntegrationAttribute.installScopedKeys.contains(key)
+      }
+      if kept.isEmpty {
+        _integrationAttributes = [:]
+        _lastSyncedDeviceAttributes = nil
+        return
+      }
+
+      let device = currentDeviceAttributes
+      for key in Self.deviceAttributeKeys {
+        kept[key] = device[key]
+      }
+      _integrationAttributes = kept
+      _lastSyncedDeviceAttributes = device
+      storage.save(kept, forType: IntegrationAttributes.self)
+
+      var userAttributes: [String: Any?] = [:]
+      for (key, value) in kept where !Self.deviceAttributeKeys.contains(key) {
+        userAttributes[key] = value
+      }
+      for key in Self.deviceAttributeKeys {
+        userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
+      }
+      syncDeviceAttributes(userAttributes)
     }
   }
 }
