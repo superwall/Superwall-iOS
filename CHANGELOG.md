@@ -15,6 +15,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
 - Fixes slow cold launches for subscribers on a weak network by no longer fetching their purchased products from StoreKit before the SDK is ready. Applies to StoreKit 2.
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
+- Fixes a crash when `register` is called from more than one thread at a time.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
 
