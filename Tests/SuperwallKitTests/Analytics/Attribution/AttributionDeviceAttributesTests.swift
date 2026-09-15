@@ -238,13 +238,9 @@ struct AttributionDeviceAttributesTests {
   }
 
   @Test func everyIntegrationAttributeIsScoped() {
-    // Every case has to land on one side of the split, or an integration would
-    // be dropped on reset without anyone deciding that.
-    #expect(
-      IntegrationAttribute.allCases.count
-        == IntegrationAttribute.installScopedKeys.count
-        + IntegrationAttribute.allCases.filter { !$0.isInstallScoped }.count
-    )
+    // Every case lands on one side of the split — the exhaustive switch in
+    // `isInstallScoped` forces that. Bump both counts when adding a case, so
+    // nobody adds an integration without picking a side.
     #expect(IntegrationAttribute.allCases.count == 23)
     #expect(IntegrationAttribute.installScopedKeys.count == 11)
 
