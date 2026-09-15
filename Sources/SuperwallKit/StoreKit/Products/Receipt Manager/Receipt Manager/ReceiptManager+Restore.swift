@@ -21,8 +21,14 @@ extension ReceiptManager {
     // purchases the StoreKit 2 read produces are device-only, so only App Store
     // rows are seeded; otherwise `activeProducts` would change shape when the
     // read lands. (The fast path is StoreKit 2 only; see `ConfigManager`.)
+    //
+    // A subscription with no expiry can't be shown to be current, and the read
+    // doesn't count one as active either, so it isn't restored active.
     let activeSubscriptions = customerInfo.subscriptions.filter {
-      $0.store == .appStore && $0.isActive && !hasExpired($0.expirationDate, at: now)
+      guard let expiresAt = $0.expirationDate else {
+        return false
+      }
+      return $0.store == .appStore && $0.isActive && expiresAt > now
     }
     let activeTransactionIds = Set(activeSubscriptions.map { $0.transactionId })
     let subscriptionPurchases = customerInfo.subscriptions
@@ -50,12 +56,16 @@ extension ReceiptManager {
     // Config knows every product and the entitlements it unlocks. The saved
     // customer info knows which of those were active, and carries fields like
     // willRenew that audience filters read, so its copy wins where both have one.
-    let savedById = Dictionary(
-      customerInfo.entitlements.map { entitlement in
-        let lapsed = entitlement.isActive && hasExpired(entitlement.expiresAt, at: now)
-        return (entitlement.id, lapsed ? deactivated(entitlement) : entitlement)
-      }
-    ) { $1 }
+    let saved = customerInfo.entitlements.map { entitlement in
+      let lapsed = entitlement.isActive && hasExpired(entitlement.expiresAt, at: now)
+      return (entitlement.id, lapsed ? deactivated(entitlement) : entitlement)
+    }
+    // Every load merges the developer's grants back in, so the restore carries
+    // them too. Otherwise a grant made since the last launch, which the saved
+    // copy predates, would look inactive until the read lands. The developer's
+    // own verdict wins over the saved copy.
+    let granted = Superwall.shared.entitlements.granted.map { ($0.id, $0) }
+    let savedById = Dictionary(saved + granted) { $1 }
     let entitlementsByProductId = ConfigLogic.extractEntitlements(from: config)
       .mapValues { Set($0.map { savedById[$0.id] ?? $0 }) }
     Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)

@@ -147,6 +147,29 @@ struct ConfigManagerEarlyPublishTests {
     return CustomerInfo(subscriptions: [web], nonSubscriptions: [], entitlements: [pro])
   }
 
+  /// A valid subscription plus one saved active with no expiry at all, which
+  /// nothing can show is still current.
+  private func savedCustomerInfoWithUndatedSubscription() -> CustomerInfo {
+    let valid = savedCustomerInfo(expiresIn: 3600)
+    let undated = SubscriptionTransaction(
+      transactionId: "4",
+      productId: Self.legacyProductId,
+      purchaseDate: Date().addingTimeInterval(-7200),
+      willRenew: false,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: nil,
+      subscriptionGroupId: "group_B"
+    )
+    return CustomerInfo(
+      subscriptions: valid.subscriptions + [undated],
+      nonSubscriptions: [],
+      entitlements: valid.entitlements
+    )
+  }
+
   /// A lifetime purchase: the non-consumable row that unlocks `pro` with no
   /// expiry and `isLifetime` set, plus a consumable the user also bought.
   private func savedLifetimeCustomerInfo() -> CustomerInfo {
@@ -444,6 +467,33 @@ struct ConfigManagerEarlyPublishTests {
 
     #expect(harness.configManager.config != nil)
     #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // Every load merges grants back in, so the restore has to carry them too.
+    let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
+    #expect(silverEntitlements.first?.id == "pro")
+    #expect(silverEntitlements.first?.isActive == true)
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("A subscription saved with no expiry is not restored active")
+  func doesNotRestoreUndatedSubscriptionAsActive() async {
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithUndatedSubscription(),
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // Only the dated, unexpired silver is active. The undated row can't be
+    // shown to be current, and the read wouldn't count it either.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(await harness.receiptManager.isSubscribed(to: Self.legacyProductId) == false)
 
     await fetch.value
     await settle()
