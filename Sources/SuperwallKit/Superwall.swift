@@ -923,6 +923,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
   public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
+    // The fetcher doesn't take the app transaction id, but it still has to wait
+    // for one: setting attributes debounces a redeem, and the redeemer reads the
+    // id for itself.
     guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes(props)
@@ -944,6 +947,8 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - attribute: The ``IntegrationAttribute`` key specifying the integration provider.
   ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
   public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
+    // Waits for the app transaction id for the same reason as
+    // `setIntegrationAttributes(_:)` above.
     guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes([attribute: value])

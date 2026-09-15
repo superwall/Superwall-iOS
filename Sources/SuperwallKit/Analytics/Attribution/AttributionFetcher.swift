@@ -181,62 +181,6 @@ final class AttributionFetcher {
     }
   }
 
-  /// The ATT authorization status, or `nil` where the OS has no such concept.
-  private var attStatus: Int? {
-    if let attStatusProvider {
-      return attStatusProvider()
-    }
-    #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
-    if #available(iOS 14, macCatalyst 14, tvOS 14, macOS 11, *) {
-      return TrackingManagerProxy().trackingAuthorizationStatus()
-    }
-    #endif
-    return nil
-  }
-
-  private var currentDeviceAttributes: [String: String] {
-    var attributes: [String: String] = [:]
-
-    let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
-    if !vendorId.isEmpty {
-      attributes["idfv"] = vendorId
-    }
-
-    if let attStatus {
-      attributes["attStatus"] = String(attStatus)
-    }
-
-    // Don't gate this on the ATT status. Before iOS 14.5 the IDFA is available
-    // while ATT still reads `notDetermined`, and `TrackingManagerProxy` returns
-    // `notDetermined` both for a genuine one and for a build where the class
-    // can't be found, so the status can't tell those apart. The OS hands back
-    // the all-zero id when it doesn't want to share one, and
-    // `identifierForAdvertisers` already filters that out.
-    attributes["idfa"] = idfaProvider?() ?? identifierForAdvertisers
-
-    return attributes
-  }
-
-  func refreshDeviceAttributes() {
-    queue.async { [weak self] in
-      guard let self, !self._integrationAttributes.isEmpty else { return }
-      if self._mergeIntegrationAttributes(attributes: [:]) {
-        self._debouncedRedeem()
-      }
-    }
-  }
-
-  /// Sends the device identifiers again after a reset, which wipes the user's
-  /// attributes. Without this the sync's change check would see the same device
-  /// snapshot as before and leave the new user without them.
-  func resyncDeviceAttributes() {
-    queue.async { [weak self] in
-      guard let self, !self._integrationAttributes.isEmpty else { return }
-      self._lastSyncedDeviceAttributes = nil
-      _ = self._mergeIntegrationAttributes(attributes: [:])
-    }
-  }
-
   func setIntegrationAttribute(
     attribute: IntegrationAttribute,
     value: String?
@@ -292,7 +236,15 @@ final class AttributionFetcher {
     }
   }
 
-  private func _mergeIntegrationAttributes(attributes: [String: String?]) -> Bool {
+  /// - Parameter includeProviderIds: Whether to hand the provider ids to
+  /// `syncDeviceAttributes` alongside the device identifiers. Only the device
+  /// identifiers are the SDK's to own; the provider ids are already in the
+  /// user's attributes except right after a reset, which wipes them.
+  /// - Returns: Whether the integration attributes changed.
+  private func _mergeIntegrationAttributes(
+    attributes: [String: String?],
+    includeProviderIds: Bool = false
+  ) -> Bool {
     var mergedAttributes = _integrationAttributes
     for (key, value) in attributes {
       mergedAttributes[key] = value
@@ -307,6 +259,11 @@ final class AttributionFetcher {
     if device != _lastSyncedDeviceAttributes {
       _lastSyncedDeviceAttributes = device
       var userAttributes: [String: Any?] = [:]
+      if includeProviderIds {
+        for (key, value) in mergedAttributes where !Self.deviceAttributeKeys.contains(key) {
+          userAttributes[key] = value
+        }
+      }
       for key in Self.deviceAttributeKeys {
         userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
       }
@@ -324,5 +281,75 @@ final class AttributionFetcher {
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
     return true
+  }
+}
+
+// MARK: - Device attributes
+extension AttributionFetcher {
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  private var attStatus: Int? {
+    if let attStatusProvider {
+      return attStatusProvider()
+    }
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
+    if #available(iOS 14, macCatalyst 14, tvOS 14, macOS 11, *) {
+      return TrackingManagerProxy().trackingAuthorizationStatus()
+    }
+    #endif
+    return nil
+  }
+
+  private var currentDeviceAttributes: [String: String] {
+    var attributes: [String: String] = [:]
+
+    let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
+    if !vendorId.isEmpty {
+      attributes["idfv"] = vendorId
+    }
+
+    if let attStatus {
+      attributes["attStatus"] = String(attStatus)
+    }
+
+    // Don't gate this on the ATT status. Before iOS 14.5 the IDFA is available
+    // while ATT still reads `notDetermined`, and `TrackingManagerProxy` returns
+    // `notDetermined` both for a genuine one and for a build where the class
+    // can't be found, so the status can't tell those apart. The OS hands back
+    // the all-zero id when it doesn't want to share one, and
+    // `identifierForAdvertisers` already filters that out.
+    attributes["idfa"] = idfaProvider?() ?? identifierForAdvertisers
+
+    return attributes
+  }
+
+  func refreshDeviceAttributes() {
+    queue.async { [weak self] in
+      guard let self, !self._integrationAttributes.isEmpty else { return }
+      if self._mergeIntegrationAttributes(attributes: [:]) {
+        self._debouncedRedeem()
+      }
+    }
+  }
+
+  /// Restores the integration attributes for the user that `reset()` just
+  /// created.
+  ///
+  /// A reset clears the user's attributes and deletes the stored copy of the
+  /// integration attributes, which live in the user-specific directory. That
+  /// leaves the in-memory dictionary as the only remaining source of the
+  /// provider ids, so write it back to disk as well as handing the whole set —
+  /// provider ids and device identifiers — to the new user. Without the file
+  /// the next cold launch would start empty and the activation refresh would
+  /// never run again, so a later consent change would never clear the IDFA.
+  ///
+  /// No redeem is scheduled: none of the attributes changed, and the identity
+  /// redeems for the new user once it settles.
+  func resyncDeviceAttributes() {
+    queue.async { [weak self] in
+      guard let self, !self._integrationAttributes.isEmpty else { return }
+      self.storage.save(self._integrationAttributes, forType: IntegrationAttributes.self)
+      self._lastSyncedDeviceAttributes = nil
+      _ = self._mergeIntegrationAttributes(attributes: [:], includeProviderIds: true)
+    }
   }
 }

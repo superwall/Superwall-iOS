@@ -72,6 +72,13 @@ class DeviceHelper {
   /// an empty id for the whole process if this were read only at init. Latch the
   /// first non-empty read instead, so a later read picks the id up once it
   /// exists and every read after that is a plain load.
+  ///
+  /// This also settles `makeDeviceId()`, so the `$SuperwallDevice:` identity can
+  /// change once mid-process in that window. That's the point: the value it
+  /// replaces is the empty suffix, which isn't a per-device identity at all —
+  /// every device in this state shares it — so there's nothing there worth
+  /// keeping stable or reconciling against. The window closes at first unlock,
+  /// and the repeated `UIDevice` read inside it is cheap.
   var vendorId: String {
     let cached = cachedVendorId
     if !cached.isEmpty {

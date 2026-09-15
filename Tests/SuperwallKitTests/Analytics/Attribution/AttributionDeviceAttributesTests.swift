@@ -147,21 +147,36 @@ struct AttributionDeviceAttributesTests {
     fetcher.refreshDeviceAttributes()
     #expect(fetcher.integrationAttributes["attStatus"] == "2")
     #expect(syncCount == 2)
-
   }
 
-  @Test func resyncSendsTheIdentifiersAgainAfterAReset() {
+  @Test func resyncRestoresTheWholeSetAfterAReset() {
     let container = DependencyContainer()
+    var syncedAttributes: [String: Any?] = [:]
     var syncCount = 0
-    let fetcher = makeFetcher(container: container, sync: { _ in syncCount += 1 })
+    let fetcher = makeFetcher(
+      container: container,
+      sync: {
+        syncedAttributes = $0
+        syncCount += 1
+      }
+    )
     defer { fetcher.cancelPendingOperations() }
 
     fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
+    #expect(syncedAttributes["appsflyerId"] == nil)
+
+    // A reset deletes the user-specific copy and empties the user's attributes.
+    container.storage.delete(IntegrationAttributes.self)
 
     fetcher.resyncDeviceAttributes()
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
     #expect(syncCount == 2)
+    // The provider id goes back to the new user, not just the device keys.
+    #expect(syncedAttributes["appsflyerId"] as? String == "af-1")
+    #expect(syncedAttributes["idfv"] as? String == "vendor-1")
+    // And the dictionary is on disk again, so the next launch still refreshes.
+    #expect(container.storage.get(IntegrationAttributes.self)?["appsflyerId"] == "af-1")
   }
 }
