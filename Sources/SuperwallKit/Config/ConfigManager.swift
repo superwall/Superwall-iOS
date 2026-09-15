@@ -39,7 +39,21 @@ class ConfigManager {
   /// of, when the saved customer info proved the user was still entitled. Trial
   /// eligibility waits on it so an upgrade during the load still sees the active
   /// subscription groups.
-  private(set) var initialPurchasesLoad: Task<Void, Never>?
+  ///
+  /// Protected by a queue: it's written on the config fetch and read from the
+  /// purchase path, which doesn't wait for config.
+  private var _initialPurchasesLoad: Task<Void, Never>?
+  private let initialPurchasesLoadQueue = DispatchQueue(
+    label: "com.superwall.initialPurchasesLoad"
+  )
+
+  var initialPurchasesLoad: Task<Void, Never>? {
+    initialPurchasesLoadQueue.sync { _initialPurchasesLoad }
+  }
+
+  private func setInitialPurchasesLoad(_ task: Task<Void, Never>) {
+    initialPurchasesLoadQueue.sync { _initialPurchasesLoad = task }
+  }
 
   private unowned let storeKitManager: StoreKitManager
   unowned let storage: Storage
@@ -491,7 +505,7 @@ class ConfigManager {
         let purchasesLoad = Task { [factory] in
           await factory.loadPurchasedProducts(config: config)
         }
-        initialPurchasesLoad = purchasesLoad
+        setInitialPurchasesLoad(purchasesLoad)
         configState.send(.retrieved(config))
         didPublishConfig = true
         await purchasesLoad.value

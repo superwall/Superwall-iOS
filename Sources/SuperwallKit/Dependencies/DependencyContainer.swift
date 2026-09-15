@@ -602,12 +602,12 @@ extension DependencyContainer: ReceiptFactory {
     await receiptManager.restorePurchases(from: customerInfo, config: config)
   }
 
-  func waitForInitialPurchasesLoad() async {
-    // nil means the load already finished (or config was never published
-    // early). It is also nil for the moment before `processConfig` stores the
-    // task; a purchase started that early skips the wait, which only affects
-    // whether the transaction is reported as a trial start.
-    await configManager.initialPurchasesLoad?.value
+  /// nil means the load already finished, or config was never published early.
+  /// It is also nil for the moment before `processConfig` stores the task; a
+  /// purchase started that early skips the wait, which only affects whether the
+  /// transaction is reported as a trial start.
+  var initialPurchasesLoad: Task<Void, Never>? {
+    configManager.initialPurchasesLoad
   }
 
   func refreshSK1Receipt() async {
@@ -627,10 +627,12 @@ extension DependencyContainer: ReceiptFactory {
       }
     }
     // Config can be published before the first purchases load finishes (see
-    // `ConfigManager.fetchConfiguration`). The active subscription groups that
-    // gate upgrades come from that load, so wait for it.
-    await waitForInitialPurchasesLoad()
-    return await receiptManager.isFreeTrialAvailable(for: product)
+    // `ConfigManager.fetchConfiguration`). Only the upgrade check inside reads
+    // what that load computes, so it waits there rather than here.
+    return await receiptManager.isFreeTrialAvailable(
+      for: product,
+      waitingFor: initialPurchasesLoad
+    )
   }
 
   var isTestMode: Bool {

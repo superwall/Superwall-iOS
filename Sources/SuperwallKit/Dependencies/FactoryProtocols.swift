@@ -158,8 +158,8 @@ protocol UserAttributesPlacementFactory: AnyObject {
 protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
   func restorePurchases(from customerInfo: CustomerInfo, config: Config) async
-  /// Waits for the purchases load that config was published ahead of, if any.
-  func waitForInitialPurchasesLoad() async
+  /// The purchases load that config was published ahead of, if any.
+  var initialPurchasesLoad: Task<Void, Never>? { get }
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
   var isTestMode: Bool { get }

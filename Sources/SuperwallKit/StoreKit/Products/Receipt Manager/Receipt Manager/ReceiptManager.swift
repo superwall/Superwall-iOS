@@ -244,7 +244,13 @@ actor ReceiptManager {
   /// *consumed* an intro in the group): Apple doesn't apply intro offers to upgrades, crossgrades,
   /// or downgrades, so we also require no active subscription in the product's group. Once the
   /// existing subscription lapses, a fresh purchase is eligible again.
-  func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
+  /// - Parameter purchasesLoad: The load that config was published ahead of, if
+  ///   any. Awaited only in the branch that reads the active subscription groups,
+  ///   so a paywall whose answer can't depend on the load isn't held up by it.
+  func isFreeTrialAvailable(
+    for storeProduct: StoreProduct,
+    waitingFor purchasesLoad: Task<Void, Never>? = nil
+  ) async -> Bool {
     let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
     if !isEligibleForIntroOffer {
       return false
@@ -256,9 +262,12 @@ actor ReceiptManager {
       return true
     }
 
-    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`, which always
-    // completes before a paywall opens (config is only marked retrieved after it runs,
-    // and presentation waits for config), so this reflects current subscription state.
+    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`. On the
+    // sync config path that load completes before config is published. On the
+    // early-publish path it's still running, so wait for it here. The actor is
+    // free during that wait, which is what lets the load finish.
+    await purchasesLoad?.value
+
     return !activeSubscriptionGroupIds.contains(subscriptionGroupId)
   }
 

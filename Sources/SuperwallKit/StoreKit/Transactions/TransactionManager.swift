@@ -734,8 +734,10 @@ final class TransactionManager {
 
     // Same wait as `DependencyContainer.isFreeTrialAvailable`: the buy button
     // can be tapped while the first purchases load is still running.
-    await factory.waitForInitialPurchasesLoad()
-    return await receiptManager.isFreeTrialAvailable(for: product)
+    return await receiptManager.isFreeTrialAvailable(
+      for: product,
+      waitingFor: factory.initialPurchasesLoad
+    )
   }
 
   /// Custom products don't have StoreKit intro-offer state, so use entitlement history
