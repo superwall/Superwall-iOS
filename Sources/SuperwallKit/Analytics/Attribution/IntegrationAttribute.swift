@@ -7,7 +7,7 @@
 
 /// An enum that represents attributes for third-party integrations with Superwall.
 @objc(SWKIntegrationAttribute)
-public enum IntegrationAttribute: Int {
+public enum IntegrationAttribute: Int, CaseIterable {
   /// The unique Adjust identifier for the device.
   ///
   /// Kept when you reset or identify a different user.
@@ -218,23 +218,8 @@ extension IntegrationAttribute {
     }
   }
 
-  /// Every case, in declaration order.
-  ///
-  /// Walks the raw values rather than listing the cases, so a new integration
-  /// is picked up on its own and can't be left out of the scope split by
-  /// accident.
-  static let allAttributes: [IntegrationAttribute] = {
-    var attributes: [IntegrationAttribute] = []
-    var rawValue = 0
-    while let attribute = IntegrationAttribute(rawValue: rawValue) {
-      attributes.append(attribute)
-      rawValue += 1
-    }
-    return attributes
-  }()
-
   /// The keys of every identifier that survives a reset.
   static let installScopedKeys: Set<String> = Set(
-    allAttributes.filter(\.isInstallScoped).map(\.description)
+    allCases.filter(\.isInstallScoped).map(\.description)
   )
 }

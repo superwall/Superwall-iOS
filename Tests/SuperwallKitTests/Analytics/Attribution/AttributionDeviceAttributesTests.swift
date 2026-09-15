@@ -238,11 +238,14 @@ struct AttributionDeviceAttributesTests {
   }
 
   @Test func everyIntegrationAttributeIsScoped() {
-    // The walk over the raw values has to reach every case, or an integration
-    // would be treated as person-scoped and dropped on reset without anyone
-    // deciding that. Bump both numbers when adding one, having picked a side.
-    #expect(IntegrationAttribute.allAttributes.count == 23)
-    #expect(IntegrationAttribute.allAttributes.last == .singularDeviceId)
+    // Every case has to land on one side of the split, or an integration would
+    // be dropped on reset without anyone deciding that.
+    #expect(
+      IntegrationAttribute.allCases.count
+        == IntegrationAttribute.installScopedKeys.count
+        + IntegrationAttribute.allCases.filter { !$0.isInstallScoped }.count
+    )
+    #expect(IntegrationAttribute.allCases.count == 23)
     #expect(IntegrationAttribute.installScopedKeys.count == 11)
 
     #expect(IntegrationAttribute.installScopedKeys.contains("appsflyerId"))
