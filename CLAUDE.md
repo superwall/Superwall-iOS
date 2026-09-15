@@ -114,3 +114,10 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
+
+### Device IP enrichment
+
+`DeviceIPCollector` owns session-local, timestamped IP observations. Keep collection
+independent of enrichment success and purchase/configuration latency, preserve each family
+separately, and filter stale cached enrichment IP fields before exposing device attributes.
+Do not add customer attributes or authentication headers to the public IPv4 collection request.

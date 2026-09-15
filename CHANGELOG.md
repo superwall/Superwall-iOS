@@ -4,6 +4,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.17.0
 
+- Adds best-effort public IPv4 and observed IPv6 device attributes, with separate observation timestamps for downstream integrations.
+
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
