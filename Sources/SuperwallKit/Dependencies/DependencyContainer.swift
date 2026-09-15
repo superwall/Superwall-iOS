@@ -598,8 +598,16 @@ extension DependencyContainer: ReceiptFactory {
     await receiptManager.loadPurchasedProducts(config: config)
   }
 
-  func restorePurchases(from customerInfo: CustomerInfo, config: Config) async {
-    await receiptManager.restorePurchases(from: customerInfo, config: config)
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async {
+    await receiptManager.restorePurchases(
+      from: customerInfo,
+      grantedEntitlements: grantedEntitlements,
+      config: config
+    )
   }
 
   /// nil means the load already finished, or config was never published early.

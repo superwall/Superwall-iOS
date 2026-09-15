@@ -407,6 +407,45 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
+  @Test("The read replaces everything the restore seeded")
+  func readReplacesRestoredState() async {
+    // The stand-in read returns an empty snapshot, so anything still showing
+    // the saved copy after it lands is state the read failed to replace.
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfo(expiresIn: 3600),
+      loadDelay: 1
+    )
+    let gold = StoreProduct(
+      sk1Product: MockSkProduct(
+        productIdentifier: Self.goldProductId,
+        subscriptionGroupIdentifier: "group_A"
+      )
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // Mid-load: purchases, the entitlement map and the active groups all come
+    // from the saved copy. The group is seeded, so no trial on an upgrade.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(Superwall.shared.entitlements.byProductId(Self.silverProductId).isEmpty == false)
+    #expect(await harness.receiptManager.isFreeTrialAvailable(for: gold) == false)
+
+    await fetch.value
+    #expect(harness.receipt.didFinishLoad)
+
+    // After the read: the snapshot it returned, not the seed.
+    #expect(await harness.receiptManager.getActiveProductIds().isEmpty)
+    #expect(await harness.receiptManager.isSubscribed(to: Self.silverProductId) == false)
+    #expect(Superwall.shared.entitlements.byProductId(Self.silverProductId).isEmpty)
+    // The seeded group is gone too, so the upgrade is trial-eligible again.
+    #expect(await harness.receiptManager.isFreeTrialAvailable(for: gold) == true)
+
+    await settle()
+  }
+
   @Test("Trial eligibility waits for the purchases load that config no longer waits for")
   func trialEligibilityWaitsForInitialPurchasesLoad() async {
     let harness = makeHarness(
@@ -480,6 +519,33 @@ struct ConfigManagerEarlyPublishTests {
     let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
     #expect(silverEntitlements.first?.id == "pro")
     #expect(silverEntitlements.first?.isActive == true)
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("A grant survives a saved row with the same id that has lapsed")
+  func grantSurvivesLapsedSavedRowWithSameId() async {
+    // The grant and the saved `pro` row share an id, and the saved row lapsed
+    // since the last launch. The developer's verdict has to win.
+    dependencyContainer.entitlementsInfo.setGranted([Entitlement(id: "pro")])
+    defer { dependencyContainer.entitlementsInfo.setGranted([]) }
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfo(expiresIn: -60),
+      loadDelay: 2
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
+    #expect(silverEntitlements.first?.id == "pro")
+    #expect(
+      silverEntitlements.first?.isActive == true,
+      "the lapsed saved row deactivated the grant"
+    )
 
     await fetch.value
     await settle()

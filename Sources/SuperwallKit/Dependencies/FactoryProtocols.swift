@@ -157,7 +157,11 @@ protocol UserAttributesPlacementFactory: AnyObject {
 
 protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
-  func restorePurchases(from customerInfo: CustomerInfo, config: Config) async
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async
   /// The purchases load that config was published ahead of, if any.
   var initialPurchasesLoad: Task<Void, Never>? { get }
   func refreshSK1Receipt() async

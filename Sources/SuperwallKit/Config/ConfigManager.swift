@@ -271,25 +271,17 @@ class ConfigManager {
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
       return nil
     }
-    // Every load merges the developer's grants back in, so the copy handed to
-    // the restore carries them too. Otherwise a grant made since the last
-    // launch, which the saved copy predates, would look inactive until the read
-    // lands. `merging` is what the load uses, so where an id is in both the
-    // richer copy wins rather than the grant blanking the saved expiry.
-    let granted = entitlementsInfo.granted
-    let customerInfoWithGrants = customerInfo.merging(with: .blank(), granting: granted)
-
     // A developer-granted entitlement is the developer's own verdict. The read
     // merges it back in on every load, so nothing it learns can change it.
-    if granted.contains(where: { $0.isActive }) {
-      return customerInfoWithGrants
+    if entitlementsInfo.granted.contains(where: { $0.isActive }) {
+      return customerInfo
     }
     // A lifetime purchase has no expiry to check and can only be refunded,
     // which is the same risk the expiry case already accepts.
-    let isStillEntitled = customerInfoWithGrants.entitlements.contains {
+    let isStillEntitled = customerInfo.entitlements.contains {
       $0.isActive && ($0.isLifetime == true || ($0.expiresAt ?? .distantPast) > Date())
     }
-    return isStillEntitled ? customerInfoWithGrants : nil
+    return isStillEntitled ? customerInfo : nil
   }
 
   private struct ConfigFetchResult {
@@ -507,7 +499,11 @@ class ConfigManager {
       // The saved copy from a test-mode launch can still hold test
       // entitlements, so it isn't restored when test mode just turned off.
       if let savedCustomerInfo = savedCustomerInfo, !testModeJustDeactivated {
-        await factory.restorePurchases(from: savedCustomerInfo, config: config)
+        await factory.restorePurchases(
+          from: savedCustomerInfo,
+          grantedEntitlements: entitlementsInfo.granted,
+          config: config
+        )
         // Stored before the send so anything that presents on this config can
         // wait for the load through `initialPurchasesLoad`.
         let purchasesLoad = Task { [factory] in
