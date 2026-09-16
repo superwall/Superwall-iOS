@@ -44,9 +44,25 @@ enum DeviceIdentifiers {
     forKey key: String,
     in lastSynced: [String: String]
   ) -> Bool {
-    if let sent = lastSynced[key] {
-      return value as? String == sent
+    guard let sent = lastSynced[key] else {
+      return value is NSNull
     }
-    return value is NSNull
+    return stringValue(of: value) == sent
+  }
+
+  /// What a value says, rather than what it's boxed as.
+  ///
+  /// `attStatus` goes out as a quoted number and comes back through whatever
+  /// echoes the user's attributes, so a server holding it as a JSON number
+  /// returns an `NSNumber` carrying the same answer. Reading that as a
+  /// different value would charge a redundant sync for every round trip.
+  private static func stringValue(of value: Any?) -> String? {
+    if let string = value as? String {
+      return string
+    }
+    if let number = value as? NSNumber {
+      return number.stringValue
+    }
+    return nil
   }
 }

@@ -276,6 +276,20 @@ struct AttributionDeviceIdentifiersTests {
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
 
+    // Nor does the same answer in a different box: whatever echoes the user's
+    // attributes back may hold `attStatus` as a JSON number rather than the
+    // quoted one the SDK sent.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["attStatus": NSNumber(value: 3)])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    // A different status is still a different status.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["attStatus": NSNumber(value: 2)])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 2)
+
     // Neither does a write echoing back exactly what the SDK sent — which is
     // what the SDK's own sync and the enrichment response both look like.
     fetcher.forgetSyncedDeviceIdentifiers(
@@ -287,7 +301,7 @@ struct AttributionDeviceIdentifiersTests {
     )
     fetcher.refreshDeviceIdentifiers()
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
-    #expect(syncCount == 1)
+    #expect(syncCount == 2)
   }
 
   @Test func resendsWhenAnIdentifierTheSdkLeftOutIsGivenAValue() {
