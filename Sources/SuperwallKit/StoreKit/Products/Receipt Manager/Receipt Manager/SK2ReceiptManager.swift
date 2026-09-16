@@ -15,8 +15,16 @@ protocol ReceiptManagerType: AnyObject {
   var latestSubscriptionPeriodType: LatestSubscription.PeriodType? { get async }
   var latestSubscriptionWillAutoRenew: Bool? { get async }
   var latestSubscriptionState: LatestSubscription.State? { get async }
+  /// Whether the active subscription groups have to be read off fetched products.
+  /// StoreKit 1 receipts don't carry a subscription group ID, so SK1 fetches the
+  /// purchased products to find them (and to seed its intro-offer eligibility).
+  /// StoreKit 2 transactions carry the group ID, so SK2 skips that fetch.
+  var loadsSubscriptionGroupsFromProducts: Bool { get }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
+  /// Replaces the in-memory purchases with ones rebuilt from the previous launch's
+  /// customer info. The next `loadPurchases` overwrites them.
+  func seedPurchases(_ purchases: Set<Purchase>) async
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool
 }
@@ -28,6 +36,7 @@ struct PurchaseSnapshot {
 
 @available(iOS 15.0, *)
 actor SK2ReceiptManager: ReceiptManagerType {
+  nonisolated let loadsSubscriptionGroupsFromProducts = false
   /// Resolves intro-offer eligibility live from StoreKit. Injectable so tests can
   /// verify eligibility is re-evaluated on every call rather than cached.
   private let resolveIntroOfferEligibility: @Sendable (StoreProduct) async -> Bool
@@ -61,6 +70,10 @@ actor SK2ReceiptManager: ReceiptManagerType {
   /// the lifetime of the process — it survived `reset()` and user identity switches —
   /// which could surface a free trial that Apple would not actually grant.
   func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
+
+  func seedPurchases(_ purchases: Set<Purchase>) {
+    self.purchases = purchases
+  }
 
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     var purchases: Set<Purchase> = []

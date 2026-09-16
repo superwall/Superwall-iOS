@@ -389,8 +389,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
 
-  /// Used to serially execute register calls.
-  var previousRegisterTask: Task<Void, Never>?
+  /// Runs register calls one at a time, in the order they came in.
+  ///
+  /// `register(placement:)` can be called from any thread, so the queue of
+  /// register tasks has to be safe to add to from any thread.
+  let registerTaskCoordinator = SerialTaskCoordinator()
 
   /// The integration attributes to send to the server when `appTransactionId`
   /// is available. Protected by a queue for thread safety.
