@@ -29,7 +29,7 @@ actor ReceiptManager {
   let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
   unowned let factory: Factory
-  private unowned let storage: Storage
+  unowned let storage: Storage
   /// Subscription group IDs the user currently has an active subscription in. Computed
   /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which
   /// carry the group ID; on StoreKit 1 from the fetched purchased products. Used to suppress

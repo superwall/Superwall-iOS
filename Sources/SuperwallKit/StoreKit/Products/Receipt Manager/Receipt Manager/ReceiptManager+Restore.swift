@@ -86,18 +86,36 @@ extension ReceiptManager {
     // status via the same delegate call, from the seeded purchases and the
     // corrected entitlement map. Audience filters read these while config is
     // already published, so they see the same state as `entitlementsByProductId`.
-    //
-    // With an external purchase controller the status is the controller's and
-    // the customer info is rebuilt from it, so the saved copy is left alone:
-    // replacing it here would drop an entitlement the controller set since
-    // launch, and the delegate call is a no-op on that path anyway.
+    await publishRestoredCustomerInfo(
+      from: customerInfo,
+      activeTransactionIds: activeTransactionIds,
+      savedEntitlements: saved,
+      mergedEntitlements: merged,
+      grantedEntitlements: grantedEntitlements,
+      at: now
+    )
+    // With an external purchase controller the status is the controller's.
     if factory.makeHasExternalPurchaseController() {
       return
     }
-    // Rows follow the seeded purchases: an App Store subscription with no
-    // expiry can't be shown to be current, so it's inactive here even though
-    // its entitlement, which follows the entitlement rule above, keeps its
-    // saved state.
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
+  }
+
+  /// Assigns the saved customer info with rows that lapsed since the last
+  /// launch marked inactive.
+  ///
+  /// Rows follow the seeded purchases: an App Store subscription with no
+  /// expiry can't be shown to be current, so it's inactive here even though
+  /// its entitlement, which follows the entitlement rule in `restorePurchases`,
+  /// keeps its saved state.
+  private func publishRestoredCustomerInfo(
+    from customerInfo: CustomerInfo,
+    activeTransactionIds: Set<String>,
+    savedEntitlements: [Entitlement],
+    mergedEntitlements: Set<Entitlement>,
+    grantedEntitlements: Set<Entitlement>,
+    at now: Date
+  ) async {
     let subscriptions = customerInfo.subscriptions.map { subscription -> SubscriptionTransaction in
       let stillActive: Bool
       if subscription.store == .appStore {
@@ -107,16 +125,36 @@ extension ReceiptManager {
       }
       return subscription.isActive && !stillActive ? deactivated(subscription) : subscription
     }
-    let restoredCustomerInfo = CustomerInfo(
-      subscriptions: subscriptions,
-      nonSubscriptions: customerInfo.nonSubscriptions,
-      entitlements: merged.sorted { $0.id < $1.id },
-      isPlaceholder: customerInfo.isPlaceholder
-    )
+
+    // With an external purchase controller the status is the controller's, and
+    // the customer info is rebuilt from it on every publish using the device
+    // rows in storage. Save the corrected App Store rows there and rebuild the
+    // same way, so the controller's entitlements are kept while a row that
+    // lapsed since the last launch reads inactive.
+    let restoredCustomerInfo: CustomerInfo
+    if factory.makeHasExternalPurchaseController() {
+      let deviceCustomerInfo = CustomerInfo(
+        subscriptions: subscriptions.filter { $0.store == .appStore },
+        nonSubscriptions: customerInfo.nonSubscriptions.filter { $0.store == .appStore },
+        entitlements: savedEntitlements.filter { $0.store == .appStore }.sorted { $0.id < $1.id }
+      )
+      storage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
+      restoredCustomerInfo = CustomerInfo.forExternalPurchaseController(
+        storage: storage,
+        subscriptionStatus: Superwall.shared.subscriptionStatus,
+        granted: grantedEntitlements
+      )
+    } else {
+      restoredCustomerInfo = CustomerInfo(
+        subscriptions: subscriptions,
+        nonSubscriptions: customerInfo.nonSubscriptions,
+        entitlements: mergedEntitlements.sorted { $0.id < $1.id },
+        isPlaceholder: customerInfo.isPlaceholder
+      )
+    }
     await MainActor.run {
       Superwall.shared.customerInfo = restoredCustomerInfo
     }
-    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
   }
 
   /// A nil expiry never lapses: lifetime purchases and web entitlements without one.
