@@ -372,7 +372,13 @@ extension PaywallRequestManager {
     // restored from disk. The `isPlaceholder` check below can't stand in for
     // this — the early publish only happens when a non-blank copy is saved,
     // which is exactly when `isPlaceholder` is false.
-    await factory.initialPurchasesLoad?.value
+    //
+    // The read only ever adds App Store history, so an entitlement nothing on
+    // the App Store unlocks can't change when it lands. Those are answered
+    // without waiting, which is what keeps a web-only paywall quick.
+    if factory.hasAppStoreProduct(forEntitlementIds: productEntitlementIds) {
+      await factory.initialPurchasesLoad?.value
+    }
 
     let customerInfo = await MainActor.run {
       Superwall.shared.customerInfo

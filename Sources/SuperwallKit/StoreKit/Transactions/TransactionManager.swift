@@ -27,6 +27,7 @@ final class TransactionManager {
     & RestoreAccessFactory
     & TestModeManagerFactory
     & ReceiptFactory
+    & ConfigManagerFactory
   enum State {
     case observing
     case purchasing(PurchaseSource)
@@ -756,7 +757,13 @@ final class TransactionManager {
     // restored from disk. The `isPlaceholder` check below can't stand in for
     // this — the early publish only happens when a non-blank copy is saved,
     // which is exactly when `isPlaceholder` is false.
-    await factory.initialPurchasesLoad?.value
+    //
+    // Waiting on the same rule the paywall used, so the trial it advertised
+    // and the transaction it produces are decided from the same state.
+    let productEntitlementIds = Set(product.entitlements.map(\.id))
+    if factory.hasAppStoreProduct(forEntitlementIds: productEntitlementIds) {
+      await factory.initialPurchasesLoad?.value
+    }
 
     let customerInfo = await MainActor.run {
       Superwall.shared.customerInfo
@@ -768,7 +775,6 @@ final class TransactionManager {
       return false
     }
 
-    let productEntitlementIds = Set(product.entitlements.map(\.id))
     let userEntitlementIds = Set(
       customerInfo.entitlements
         .filter { $0.latestProductId != nil || $0.store == .superwall || $0.isActive }

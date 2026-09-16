@@ -78,6 +78,13 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
+
+  /// Whether any App Store product unlocks one of `entitlementIds`.
+  ///
+  /// The purchases read only ever adds App Store history, so when nothing on
+  /// the App Store unlocks an entitlement, the read can't change what the SDK
+  /// knows about it and callers don't have to wait for it.
+  func hasAppStoreProduct(forEntitlementIds entitlementIds: Set<String>) -> Bool
 }
 
 protocol IdentityFactory: AnyObject {

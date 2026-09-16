@@ -24,3 +24,48 @@ struct DependencyContainerInitTests {
     }
   }
 }
+
+/// The purchases read only ever adds App Store history, so callers ask this
+/// before deciding whether an entitlement's answer can change when it lands.
+@Suite(.serialized)
+struct AppStoreEntitlementLookupTests {
+  private func makeProduct(
+    id: String,
+    entitlementId: String,
+    isAppStore: Bool
+  ) -> SuperwallKit.Product {
+    return SuperwallKit.Product(
+      name: id,
+      type: isAppStore ? .appStore(.init(id: id)) : .stripe(.init(id: id, trialDays: nil)),
+      id: id,
+      entitlements: [Entitlement(id: entitlementId)]
+    )
+  }
+
+  @Test("Only App Store products put an entitlement within the read's reach")
+  func onlyAppStoreProductsCount() {
+    let container = DependencyContainer()
+    let config: Config = .stub()
+      .setting(
+        \.products,
+        to: [
+          makeProduct(id: "com.app.pro", entitlementId: "pro", isAppStore: true),
+          makeProduct(id: "com.app.web", entitlementId: "web_only", isAppStore: false)
+        ]
+      )
+    container.configManager.configState.send(.retrieved(config))
+
+    #expect(container.hasAppStoreProduct(forEntitlementIds: ["pro"]))
+    #expect(container.hasAppStoreProduct(forEntitlementIds: ["web_only"]) == false)
+    // A web product sharing an entitlement with an App Store one still waits.
+    #expect(container.hasAppStoreProduct(forEntitlementIds: ["web_only", "pro"]))
+    #expect(container.hasAppStoreProduct(forEntitlementIds: []) == false)
+  }
+
+  @Test("Without config the read can't be ruled out, so callers wait")
+  func waitsWhenConfigIsMissing() {
+    let container = DependencyContainer()
+    #expect(container.configManager.config == nil)
+    #expect(container.hasAppStoreProduct(forEntitlementIds: ["pro"]))
+  }
+}

@@ -484,6 +484,20 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
 // MARK: - ConfigManagerFactory
 extension DependencyContainer: ConfigManagerFactory {
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
+  func hasAppStoreProduct(forEntitlementIds entitlementIds: Set<String>) -> Bool {
+    guard let config = configManager.config else {
+      // Without config we can't rule the read out, so say yes and let the
+      // caller wait.
+      return true
+    }
+    return config.products.contains { product in
+      guard case .appStore = product.type else {
+        return false
+      }
+      return product.entitlements.contains { entitlementIds.contains($0.id) }
+    }
+  }
+
   func makeStaticPaywall(
     withId paywallId: String?,
     isDebuggerLaunched: Bool
