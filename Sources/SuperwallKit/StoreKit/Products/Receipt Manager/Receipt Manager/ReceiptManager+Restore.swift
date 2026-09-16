@@ -86,6 +86,18 @@ extension ReceiptManager {
     // status via the same delegate call, from the seeded purchases and the
     // corrected entitlement map. Audience filters read these while config is
     // already published, so they see the same state as `entitlementsByProductId`.
+    //
+    // With an external purchase controller the status is the controller's and
+    // the customer info is rebuilt from it, so the saved copy is left alone:
+    // replacing it here would drop an entitlement the controller set since
+    // launch, and the delegate call is a no-op on that path anyway.
+    if factory.makeHasExternalPurchaseController() {
+      return
+    }
+    // Rows follow the seeded purchases: an App Store subscription with no
+    // expiry can't be shown to be current, so it's inactive here even though
+    // its entitlement, which follows the entitlement rule above, keeps its
+    // saved state.
     let subscriptions = customerInfo.subscriptions.map { subscription -> SubscriptionTransaction in
       let stillActive: Bool
       if subscription.store == .appStore {

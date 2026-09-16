@@ -27,10 +27,12 @@ final class SubscriptionStatusEmissionTests {
     return .active([Entitlement(id: id, type: .serviceLevel, isActive: true)])
   }
 
-  /// Every value that concurrent writers store reaches subscribers once, in
-  /// the order it was stored, and the last emission is the stored value.
+  /// Every value that concurrent writers store reaches subscribers exactly
+  /// once, and the last emission is the stored value. Ordering is covered by
+  /// `reentrantAssignment_isEmittedAfterTheTriggeringValue`, where the store
+  /// order is known.
   @Test
-  func concurrentWrites_emitEveryStoredValueInOrder() {
+  func concurrentWrites_emitEveryStoredValueOnce() {
     let emissions = Locked<[SubscriptionStatus]>([])
     let cancellable = superwall.$subscriptionStatus
       .dropFirst()
@@ -80,7 +82,7 @@ final class SubscriptionStatusEmissionTests {
   /// for that thread's subscribers, so a subscriber blocked on the writer's
   /// thread can't deadlock it.
   @Test
-  func writerNeverWaitsOnASubscriber() async {
+  func writerNeverWaitsOnASubscriber() {
     let subscriberEntered = DispatchSemaphore(value: 0)
     let releaseSubscriber = DispatchSemaphore(value: 0)
     let cancellable = superwall.$subscriptionStatus
@@ -93,36 +95,34 @@ final class SubscriptionStatusEmissionTests {
         }
       }
 
-    let background = Task.detached { [superwall] in
+    // Plain threads rather than tasks: the blocked subscriber must not take
+    // a cooperative-pool thread with it, and every wait is bounded so a
+    // regression fails the test instead of hanging the run.
+    let backgroundFinished = DispatchSemaphore(value: 0)
+    DispatchQueue.global().async { [superwall] in
       superwall.subscriptionStatus = self.status("blocking")
+      backgroundFinished.signal()
     }
-    subscriberEntered.wait()
+    #expect(subscriberEntered.wait(timeout: .now() + 2) == .success, "the subscriber never ran")
 
     // The emitting thread is stuck inside its subscriber. This write must
     // return without waiting for it.
-    let writeReturned = Task.detached { [superwall] in
+    let writeReturned = DispatchSemaphore(value: 0)
+    DispatchQueue.global().async { [superwall] in
       superwall.subscriptionStatus = self.status("meanwhile")
-      return true
+      writeReturned.signal()
     }
-    let didReturn = await withTaskGroup(of: Bool.self) { group -> Bool in
-      group.addTask { await writeReturned.value }
-      group.addTask {
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
-        return false
-      }
-      let first = await group.next() ?? false
-      group.cancelAll()
-      return first
-    }
-    #expect(didReturn, "the writer waited on a blocked subscriber")
+    #expect(writeReturned.wait(timeout: .now() + 2) == .success, "the writer waited on a blocked subscriber")
 
     releaseSubscriber.signal()
-    await background.value
+    #expect(backgroundFinished.wait(timeout: .now() + 2) == .success, "the drain never finished")
     #expect(superwall.subscriptionStatus == status("meanwhile"))
     cancellable.cancel()
   }
 
-  /// Reads and writes from many threads at once don't tear or crash.
+  /// Reads and writes from many threads at once don't tear or crash. This is
+  /// a smoke test meant for a Thread Sanitizer run; the locking itself is
+  /// pinned by the tests above.
   @Test
   func concurrentReadsAndWrites_staySafe() {
     DispatchQueue.concurrentPerform(iterations: 500) { index in

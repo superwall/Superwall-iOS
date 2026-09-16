@@ -14,9 +14,10 @@ import Foundation
 /// stored and published value is always the merged one — subscribers never
 /// see the value a writer assigned before granted entitlements and test-mode
 /// overrides were applied. The projected value (`$subscriptionStatus`) replays
-/// the current value to new subscribers, like `@Published`. Reads take the
-/// same lock as writes, so a read on one thread never races an assignment
-/// on another.
+/// the latest emitted value to new subscribers, like `@Published`; while
+/// emissions are still queued behind a slow subscriber that can trail the
+/// stored value until their turn comes. Reads take the same lock as writes,
+/// so a read on one thread never races an assignment on another.
 ///
 /// Public only because a public property's wrapper type has to be; nothing
 /// but the projection is meant to be used. The enclosing-instance subscript

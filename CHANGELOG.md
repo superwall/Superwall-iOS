@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Breaking Changes
 
-- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
+- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`. Changes are now delivered in order, and when several threads change the status at once one of them may deliver the others' changes, so a subscriber that blocks holds up every writer.
 
 ### Enhancements
 
