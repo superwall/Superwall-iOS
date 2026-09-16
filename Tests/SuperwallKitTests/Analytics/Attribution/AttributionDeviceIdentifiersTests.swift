@@ -3,7 +3,7 @@ import Testing
 @testable import SuperwallKit
 
 @Suite(.serialized)
-struct AttributionDeviceAttributesTests {
+struct AttributionDeviceIdentifiersTests {
   private func makeFetcher(
     container: DependencyContainer,
     vendorId: @escaping () -> String = { "vendor-1" },
@@ -21,7 +21,7 @@ struct AttributionDeviceAttributesTests {
       vendorIdProvider: vendorId,
       attStatusProvider: attStatus,
       idfaProvider: idfa,
-      syncDeviceAttributes: sync
+      syncDeviceIdentifiers: sync
     )
   }
 
@@ -73,7 +73,7 @@ struct AttributionDeviceAttributesTests {
 
     status = 3
     idfa = "advertiser-1"
-    fetcher.refreshDeviceAttributes()
+    fetcher.refreshDeviceIdentifiers()
     #expect(fetcher.integrationAttributes["attStatus"] == "3")
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
   }
@@ -140,14 +140,14 @@ struct AttributionDeviceAttributesTests {
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
 
-    fetcher.refreshDeviceAttributes()
-    fetcher.refreshDeviceAttributes()
+    fetcher.refreshDeviceIdentifiers()
+    fetcher.refreshDeviceIdentifiers()
     fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
     #expect(syncCount == 1)
 
     status = 2
-    fetcher.refreshDeviceAttributes()
+    fetcher.refreshDeviceIdentifiers()
     #expect(fetcher.integrationAttributes["attStatus"] == "2")
     #expect(syncCount == 2)
   }
@@ -237,6 +237,45 @@ struct AttributionDeviceAttributesTests {
     #expect(container.storage.get(IntegrationAttributes.self) == nil)
   }
 
+  @Test func resendsTheIdentifiersWhenSomethingElseDropsThem() {
+    let container = DependencyContainer()
+    var syncCount = 0
+    let fetcher = makeFetcher(container: container, sync: { _ in syncCount += 1 })
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    // Nothing about the device changed, so there's nothing to say.
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    // But an app that writes over one of the SDK's keys has to be answered,
+    // otherwise the router loses the identifier until one of them changes.
+    fetcher.forgetSyncedDeviceIdentifiers(ifTouching: ["email", "idfv"])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 2)
+  }
+
+  @Test func keepsQuietWhenTheAppWritesItsOwnAttributes() {
+    let container = DependencyContainer()
+    var syncCount = 0
+    let fetcher = makeFetcher(container: container, sync: { _ in syncCount += 1 })
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    fetcher.forgetSyncedDeviceIdentifiers(ifTouching: ["email", "name"])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+  }
+
   @Test func everyIntegrationAttributeIsScoped() {
     // Every case lands on one side of the split — the exhaustive switch in
     // `isInstallScoped` forces that. Bump both counts when adding a case, so
@@ -251,12 +290,12 @@ struct AttributionDeviceAttributesTests {
   }
 
   @Test func resetDropsThePersonScopedAttributesWaitingOnTheTransactionId() {
-    let superwall = Superwall.shared
+    let container = DependencyContainer()
+    let superwall = Superwall(dependencyContainer: container)
     superwall.enqueuedIntegrationAttributes = [
       .appsflyerId: "af-1",
       .amplitudeUserId: "person-1"
     ]
-    defer { superwall.enqueuedIntegrationAttributes = nil }
 
     // Called directly rather than through `reset()`, whose storage wipe and
     // config reset would reach well beyond this suite.

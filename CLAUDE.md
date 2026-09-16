@@ -115,7 +115,7 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
-### Integration device attributes
+### Integration device identifiers
 
 AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and
 on app activation after an integration has been configured. Compare the complete

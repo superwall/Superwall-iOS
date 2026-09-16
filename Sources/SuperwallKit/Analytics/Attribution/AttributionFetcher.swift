@@ -23,16 +23,16 @@ final class AttributionFetcher {
   private let vendorIdProvider: (() -> String)?
   private let attStatusProvider: (() -> Int?)?
   private let idfaProvider: (() -> String?)?
-  private let syncDeviceAttributes: ([String: Any?]) -> Void
+  private let syncDeviceIdentifiers: ([String: Any?]) -> Void
   private var _integrationAttributes: [String: String] = [:]
 
-  /// The last device snapshot handed to `syncDeviceAttributes`. Only a change
+  /// The identifiers last handed to `syncDeviceIdentifiers`. Only a change
   /// is worth syncing: every sync costs a `user_attributes` event, a delegate
   /// callback, a Core Data row and a re-encode of the whole attribute dict.
-  private var _lastSyncedDeviceAttributes: [String: String]?
+  private var _lastSyncedDeviceIdentifiers: [String: String]?
 
   /// The device keys the SDK owns in both integration and user attributes.
-  private static let deviceAttributeKeys = ["idfa", "idfv", "attStatus"]
+  private static let deviceIdentifierKeys = ["idfa", "idfv", "attStatus"]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -152,11 +152,11 @@ final class AttributionFetcher {
     vendorIdProvider: (() -> String)? = nil,
     attStatusProvider: (() -> Int?)? = nil,
     idfaProvider: (() -> String?)? = nil,
-    syncDeviceAttributes: @escaping ([String: Any?]) -> Void = {
-      Superwall.shared.setUserAttributes($0)
+    syncDeviceIdentifiers: @escaping ([String: Any?]) -> Void = {
+      Superwall.shared.setDeviceIdentifierAttributes($0)
     }
   ) {
-    self.syncDeviceAttributes = syncDeviceAttributes
+    self.syncDeviceIdentifiers = syncDeviceIdentifiers
     self.vendorIdProvider = vendorIdProvider
     self.attStatusProvider = attStatusProvider
     self.idfaProvider = idfaProvider
@@ -170,7 +170,7 @@ final class AttributionFetcher {
         object: nil,
         queue: nil
       ) { [weak self] _ in
-        self?.refreshDeviceAttributes()
+        self?.refreshDeviceIdentifiers()
       }
     }
   }
@@ -242,20 +242,16 @@ final class AttributionFetcher {
     for (key, value) in attributes {
       mergedAttributes[key] = value
     }
-    let device = currentDeviceAttributes
-    for key in Self.deviceAttributeKeys {
+    let device = currentDeviceIdentifiers
+    for key in Self.deviceIdentifierKeys {
       mergedAttributes[key] = device[key]
     }
 
     // The router reads user attributes, not the integration_attributes event.
     // Explicit nulls clear an IDFA retained from before consent was revoked.
-    if device != _lastSyncedDeviceAttributes {
-      _lastSyncedDeviceAttributes = device
-      var userAttributes: [String: Any?] = [:]
-      for key in Self.deviceAttributeKeys {
-        userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
-      }
-      syncDeviceAttributes(userAttributes)
+    if device != _lastSyncedDeviceIdentifiers {
+      _lastSyncedDeviceIdentifiers = device
+      syncDeviceIdentifiers(Self.userAttributes(for: device))
     }
 
     guard mergedAttributes != _integrationAttributes else { return false }
@@ -272,8 +268,42 @@ final class AttributionFetcher {
   }
 }
 
-// MARK: - Device attributes
+// MARK: - Device identifiers
 extension AttributionFetcher {
+  /// The device identifiers as the user's attributes should carry them.
+  ///
+  /// A missing identifier is sent as an explicit `NSNull()` rather than left
+  /// out: `setUserAttributes` treats a Swift `nil` as "delete this key", which
+  /// would leave the server holding the last value it saw. A null overwrites
+  /// it, which is what clears an IDFA after consent is revoked.
+  private static func userAttributes(for device: [String: String]) -> [String: Any?] {
+    var userAttributes: [String: Any?] = [:]
+    for key in deviceIdentifierKeys {
+      if let value = device[key] {
+        userAttributes[key] = value
+      } else {
+        userAttributes[key] = NSNull()
+      }
+    }
+    return userAttributes
+  }
+
+  /// Forgets what was last synced when something else writes to one of the
+  /// keys the SDK owns, so the next merge puts the SDK's value back.
+  ///
+  /// The sync gate compares against what the SDK last sent rather than what the
+  /// user's attributes actually hold, so without this an app that removed
+  /// `idfv` would keep it missing until an identifier itself changed — which on
+  /// a settled device may be never.
+  func forgetSyncedDeviceIdentifiers(ifTouching keys: [String]) {
+    if !keys.contains(where: { Self.deviceIdentifierKeys.contains($0) }) {
+      return
+    }
+    queue.async { [weak self] in
+      self?._lastSyncedDeviceIdentifiers = nil
+    }
+  }
+
   /// The ATT authorization status, or `nil` where the OS has no such concept.
   private var attStatus: Int? {
     if let attStatusProvider {
@@ -287,7 +317,7 @@ extension AttributionFetcher {
     return nil
   }
 
-  private var currentDeviceAttributes: [String: String] {
+  private var currentDeviceIdentifiers: [String: String] {
     var attributes: [String: String] = [:]
 
     let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
@@ -310,7 +340,7 @@ extension AttributionFetcher {
     return attributes
   }
 
-  func refreshDeviceAttributes() {
+  func refreshDeviceIdentifiers() {
     queue.async { [weak self] in
       guard let self, !self._integrationAttributes.isEmpty else { return }
       if self._mergeIntegrationAttributes(attributes: [:]) {
@@ -326,49 +356,44 @@ extension AttributionFetcher {
   /// whoever was just signed out, so they go. The install-scoped ones describe
   /// the same device either way and stay, along with the device identifiers.
   ///
-  /// A reset clears the user's attributes and deletes the stored copy of the
-  /// integration attributes, which live in the user-specific directory, while
-  /// the in-memory copy outlives it. So write what's kept back to disk and hand
-  /// all of it — not just what changed — to the new user, who has none of it.
-  /// Without the file the next cold launch would start empty and the activation
-  /// refresh would never run again, so a later consent change would never clear
-  /// the IDFA.
+  /// A reset clears the user's attributes and deletes the stored copy, which
+  /// lives in the user-specific directory, while the in-memory copy outlives
+  /// it. So write what's kept back to disk and hand all of it — not just what
+  /// changed — to the new user, who has none of it. Without the file the next
+  /// cold launch would start empty and the activation refresh would never run
+  /// again, so a later consent change would never clear the IDFA.
   ///
-  /// Runs synchronously. `identify` redeems for the new user immediately after
-  /// the reset, and that request reads the stored attributes rather than this
-  /// object, so they have to be settled before this returns. No redeem is
-  /// scheduled from here; the identity redeems on its own.
+  /// Runs synchronously: `identify` redeems for the new user right after the
+  /// reset, and that request reads the stored attributes rather than this
+  /// object. No redeem is scheduled here; the identity redeems on its own.
   func resetIntegrationAttributes() {
     queue.sync {
       if _integrationAttributes.isEmpty {
         return
       }
       var kept = _integrationAttributes.filter { key, _ in
-        Self.deviceAttributeKeys.contains(key)
+        Self.deviceIdentifierKeys.contains(key)
           || IntegrationAttribute.installScopedKeys.contains(key)
       }
       if kept.isEmpty {
         _integrationAttributes = [:]
-        _lastSyncedDeviceAttributes = nil
+        _lastSyncedDeviceIdentifiers = nil
         return
       }
 
-      let device = currentDeviceAttributes
-      for key in Self.deviceAttributeKeys {
+      let device = currentDeviceIdentifiers
+      for key in Self.deviceIdentifierKeys {
         kept[key] = device[key]
       }
       _integrationAttributes = kept
-      _lastSyncedDeviceAttributes = device
+      _lastSyncedDeviceIdentifiers = device
       storage.save(kept, forType: IntegrationAttributes.self)
 
-      var userAttributes: [String: Any?] = [:]
-      for (key, value) in kept where !Self.deviceAttributeKeys.contains(key) {
+      var userAttributes = Self.userAttributes(for: device)
+      for (key, value) in kept where !Self.deviceIdentifierKeys.contains(key) {
         userAttributes[key] = value
       }
-      for key in Self.deviceAttributeKeys {
-        userAttributes[key] = device[key].map { $0 as Any } ?? NSNull()
-      }
-      syncDeviceAttributes(userAttributes)
+      syncDeviceIdentifiers(userAttributes)
     }
   }
 }

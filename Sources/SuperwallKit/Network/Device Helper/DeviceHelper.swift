@@ -64,14 +64,16 @@ class DeviceHelper {
     UIDevice.modelName
   }()
 
-  @DispatchQueueBacked
+  private let vendorIdLock = NSLock()
   private var cachedVendorId = ""
 
   /// `identifierForVendor` is `nil` until the device has been unlocked once, so
   /// an app launched in the background before first unlock would be stuck with
   /// an empty id for the whole process if this were read only at init. Latch the
   /// first non-empty read instead, so a later read picks the id up once it
-  /// exists and every read after that is a plain load.
+  /// exists and every read after that is a compare behind an uncontended lock.
+  /// It has to stay that cheap: the `X-Vendor-ID` header reads it on every
+  /// request, and so do `makeDeviceId()` and `getTemplateDevice()`.
   ///
   /// This also settles `makeDeviceId()`, so the `$SuperwallDevice:` identity can
   /// change once mid-process in that window. That's the point: the value it
@@ -80,13 +82,14 @@ class DeviceHelper {
   /// keeping stable or reconciling against. The window closes at first unlock,
   /// and the repeated `UIDevice` read inside it is cheap.
   var vendorId: String {
-    let cached = cachedVendorId
-    if !cached.isEmpty {
-      return cached
+    vendorIdLock.lock()
+    defer { vendorIdLock.unlock() }
+
+    if !cachedVendorId.isEmpty {
+      return cachedVendorId
     }
-    let vendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
-    cachedVendorId = vendorId
-    return vendorId
+    cachedVendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    return cachedVendorId
   }
 
   var languageCode: String {

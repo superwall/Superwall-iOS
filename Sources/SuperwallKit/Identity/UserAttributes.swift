@@ -32,6 +32,19 @@ extension Superwall {
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
   public func setUserAttributes(_ attributes: [String: Any?]) {
+    dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
+      ifTouching: Array(attributes.keys)
+    )
+    mergeAttributes(attributes)
+  }
+
+  /// Sets the device identifiers the SDK owns without treating the write as one
+  /// of the app's.
+  ///
+  /// `AttributionFetcher` skips a sync when the identifiers haven't changed
+  /// since it last sent them, and going through the public setter would tell it
+  /// to forget that and send them again on every merge.
+  func setDeviceIdentifierAttributes(_ attributes: [String: Any?]) {
     mergeAttributes(attributes)
   }
 
@@ -63,6 +76,9 @@ extension Superwall {
       swiftDictionary[key] = keyValue
     }
 
+    dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
+      ifTouching: keys
+    )
     mergeAttributes(swiftDictionary)
   }
 
