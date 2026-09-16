@@ -331,6 +331,28 @@ struct AttributionDeviceIdentifiersTests {
     #expect(syncCount == 2)
   }
 
+  @Test func treatsABooleanStatusAsAnOverwrite() {
+    let container = DependencyContainer()
+    var syncCount = 0
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { 1 },
+      sync: { _ in syncCount += 1 }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["attStatus"] == "1")
+    #expect(syncCount == 1)
+
+    // `true` renders as "1" through NSNumber, which is what the SDK sent for
+    // `restricted` — but it isn't a status, so the real one has to go back.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["attStatus": true])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["attStatus"] == "1")
+    #expect(syncCount == 2)
+  }
+
   @Test func everyIntegrationAttributeIsScoped() {
     // Every case lands on one side of the split — the exhaustive switch in
     // `isInstallScoped` forces that. Bump both counts when adding a case, so

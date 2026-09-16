@@ -56,11 +56,16 @@ enum DeviceIdentifiers {
   /// echoes the user's attributes, so a server holding it as a JSON number
   /// returns an `NSNumber` carrying the same answer. Reading that as a
   /// different value would charge a redundant sync for every round trip.
+  ///
+  /// Booleans are not numbers here, whatever `NSNumber` says: `true` renders as
+  /// `"1"` and would pass for the `restricted` status, so an app writing one
+  /// would keep it instead of having the real status put back.
   private static func stringValue(of value: Any?) -> String? {
     if let string = value as? String {
       return string
     }
-    if let number = value as? NSNumber {
+    if let number = value as? NSNumber,
+      CFGetTypeID(number) != CFBooleanGetTypeID() {
       return number.stringValue
     }
     return nil
