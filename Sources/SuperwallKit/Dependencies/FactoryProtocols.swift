@@ -79,12 +79,16 @@ protocol ConfigManagerFactory: AnyObject {
     isDebuggerLaunched: Bool
   ) -> Paywall?
 
-  /// Whether any App Store product unlocks one of `entitlementIds`.
+  /// Whether the purchases load could change what the SDK knows about
+  /// `entitlementIds`, and so whether callers have to wait for it.
   ///
-  /// The purchases read only ever adds App Store history, so when nothing on
-  /// the App Store unlocks an entitlement, the read can't change what the SDK
-  /// knows about it and callers don't have to wait for it.
-  func hasAppStoreProduct(forEntitlementIds entitlementIds: Set<String>) -> Bool
+  /// The load re-merges the web and granted sources when it lands, so it isn't
+  /// only the App Store half that can move. But the redeemer assigns
+  /// `customerInfo` itself when web entitlements change, and so does the
+  /// granted-entitlements setter, so the copy read during the window is never
+  /// behind on those — except that the grant refresh skips apps with a purchase
+  /// controller, which is why an entitlement granted right now counts too.
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool
 }
 
 protocol IdentityFactory: AnyObject {

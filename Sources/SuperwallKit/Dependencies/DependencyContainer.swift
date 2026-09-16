@@ -484,20 +484,6 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
 // MARK: - ConfigManagerFactory
 extension DependencyContainer: ConfigManagerFactory {
   /// Gets the paywall response from the static config, if the device locale starts with "en" and no more specific version can be found.
-  func hasAppStoreProduct(forEntitlementIds entitlementIds: Set<String>) -> Bool {
-    guard let config = configManager.config else {
-      // Without config we can't rule the read out, so say yes and let the
-      // caller wait.
-      return true
-    }
-    return config.products.contains { product in
-      guard case .appStore = product.type else {
-        return false
-      }
-      return product.entitlements.contains { entitlementIds.contains($0.id) }
-    }
-  }
-
   func makeStaticPaywall(
     withId paywallId: String?,
     isDebuggerLaunched: Bool
@@ -511,6 +497,28 @@ extension DependencyContainer: ConfigManagerFactory {
       config: configManager.config,
       deviceLocale: deviceInfo.locale
     )
+  }
+
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool {
+    if entitlementIds.isEmpty {
+      return false
+    }
+    // A grant made during the window only reaches `customerInfo` through the
+    // load when the app has a purchase controller, so treat it as in reach.
+    if entitlementsInfo.granted.contains(where: { entitlementIds.contains($0.id) }) {
+      return true
+    }
+    guard let config = configManager.config else {
+      // Without config we can't rule the load out, so say yes and let the
+      // caller wait.
+      return true
+    }
+    return config.products.contains { product in
+      guard case .appStore = product.type else {
+        return false
+      }
+      return product.entitlements.contains { entitlementIds.contains($0.id) }
+    }
   }
 }
 

@@ -761,7 +761,7 @@ final class TransactionManager {
     // Waiting on the same rule the paywall used, so the trial it advertised
     // and the transaction it produces are decided from the same state.
     let productEntitlementIds = Set(product.entitlements.map(\.id))
-    if factory.hasAppStoreProduct(forEntitlementIds: productEntitlementIds) {
+    if factory.purchasesLoadCouldChange(entitlementIds: productEntitlementIds) {
       await factory.initialPurchasesLoad?.value
     }
 

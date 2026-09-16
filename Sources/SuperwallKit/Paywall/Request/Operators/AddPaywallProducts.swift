@@ -373,10 +373,9 @@ extension PaywallRequestManager {
     // this — the early publish only happens when a non-blank copy is saved,
     // which is exactly when `isPlaceholder` is false.
     //
-    // The read only ever adds App Store history, so an entitlement nothing on
-    // the App Store unlocks can't change when it lands. Those are answered
-    // without waiting, which is what keeps a web-only paywall quick.
-    if factory.hasAppStoreProduct(forEntitlementIds: productEntitlementIds) {
+    // An entitlement the load can't move is answered without waiting, which is
+    // what keeps a web-only paywall quick.
+    if factory.purchasesLoadCouldChange(entitlementIds: productEntitlementIds) {
       await factory.initialPurchasesLoad?.value
     }
 

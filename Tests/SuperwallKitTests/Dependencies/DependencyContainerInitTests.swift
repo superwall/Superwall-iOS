@@ -55,17 +55,35 @@ struct AppStoreEntitlementLookupTests {
       )
     container.configManager.configState.send(.retrieved(config))
 
-    #expect(container.hasAppStoreProduct(forEntitlementIds: ["pro"]))
-    #expect(container.hasAppStoreProduct(forEntitlementIds: ["web_only"]) == false)
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["pro"]))
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
     // A web product sharing an entitlement with an App Store one still waits.
-    #expect(container.hasAppStoreProduct(forEntitlementIds: ["web_only", "pro"]))
-    #expect(container.hasAppStoreProduct(forEntitlementIds: []) == false)
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only", "pro"]))
+    #expect(container.purchasesLoadCouldChange(entitlementIds: []) == false)
   }
 
-  @Test("Without config the read can't be ruled out, so callers wait")
+  @Test("Without config the load can't be ruled out, so callers wait")
   func waitsWhenConfigIsMissing() {
     let container = DependencyContainer()
     #expect(container.configManager.config == nil)
-    #expect(container.hasAppStoreProduct(forEntitlementIds: ["pro"]))
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["pro"]))
+  }
+
+  @Test("A granted entitlement is in reach even when only a web product sells it")
+  func grantedEntitlementIsInReach() {
+    let container = DependencyContainer()
+    let config: Config = .stub()
+      .setting(
+        \.products,
+        to: [makeProduct(id: "com.app.web", entitlementId: "web_only", isAppStore: false)]
+      )
+    container.configManager.configState.send(.retrieved(config))
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
+
+    // The grant refresh skips purchase-controller apps, so the load is the only
+    // thing that would bring this into `customerInfo` for them.
+    container.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
+    defer { container.entitlementsInfo.setGranted([]) }
+    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]))
   }
 }
