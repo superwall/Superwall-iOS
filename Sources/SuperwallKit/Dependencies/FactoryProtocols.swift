@@ -87,7 +87,7 @@ protocol ConfigManagerFactory: AnyObject {
   /// `customerInfo` itself when web entitlements change, and so does the
   /// granted-entitlements setter, so the copy read during the window is never
   /// behind on those — except that the grant refresh skips apps with a purchase
-  /// controller, which is why an entitlement granted right now counts too.
+  /// controller, so for those an entitlement granted right now counts too.
   func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool
 }
 

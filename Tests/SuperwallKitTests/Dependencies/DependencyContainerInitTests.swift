@@ -69,21 +69,28 @@ struct AppStoreEntitlementLookupTests {
     #expect(container.purchasesLoadCouldChange(entitlementIds: ["pro"]))
   }
 
-  @Test("A granted entitlement is in reach even when only a web product sells it")
-  func grantedEntitlementIsInReach() {
-    let container = DependencyContainer()
-    let config: Config = .stub()
+  @Test("A grant is only in reach for apps with a purchase controller")
+  func grantedEntitlementIsInReachOnlyWithPurchaseController() {
+    let webOnly: Config = .stub()
       .setting(
         \.products,
         to: [makeProduct(id: "com.app.web", entitlementId: "web_only", isAppStore: false)]
       )
-    container.configManager.configState.send(.retrieved(config))
-    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
 
-    // The grant refresh skips purchase-controller apps, so the load is the only
-    // thing that would bring this into `customerInfo` for them.
-    container.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
-    defer { container.entitlementsInfo.setGranted([]) }
-    #expect(container.purchasesLoadCouldChange(entitlementIds: ["web_only"]))
+    // Without a purchase controller, setting a grant rebuilds `customerInfo`
+    // there and then, so the load has nothing to add.
+    let automatic = DependencyContainer()
+    automatic.configManager.configState.send(.retrieved(webOnly))
+    automatic.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
+    defer { automatic.entitlementsInfo.setGranted([]) }
+    #expect(automatic.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
+
+    // With one, that refresh is skipped and the load is the only thing that
+    // folds the grant in.
+    let controlled = DependencyContainer(purchaseController: MockPurchaseController())
+    controlled.configManager.configState.send(.retrieved(webOnly))
+    controlled.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
+    defer { controlled.entitlementsInfo.setGranted([]) }
+    #expect(controlled.purchasesLoadCouldChange(entitlementIds: ["web_only"]))
   }
 }
