@@ -23,16 +23,14 @@ final class AttributionFetcher {
   private let vendorIdProvider: (() -> String)?
   private let attStatusProvider: (() -> Int?)?
   private let idfaProvider: (() -> String?)?
-  private let syncDeviceIdentifiers: ([String: Any?]) -> Void
+  private let syncUserAttributes: ([String: Any?]) -> Void
   private var _integrationAttributes: [String: String] = [:]
 
-  /// The identifiers last handed to `syncDeviceIdentifiers`. Only a change
+  /// The identifiers last handed to `syncUserAttributes`. Only a change
   /// is worth syncing: every sync costs a `user_attributes` event, a delegate
   /// callback, a Core Data row and a re-encode of the whole attribute dict.
   private var _lastSyncedDeviceIdentifiers: [String: String]?
 
-  /// The device keys the SDK owns in both integration and user attributes.
-  private static let deviceIdentifierKeys = ["idfa", "idfv", "attStatus"]
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -152,11 +150,11 @@ final class AttributionFetcher {
     vendorIdProvider: (() -> String)? = nil,
     attStatusProvider: (() -> Int?)? = nil,
     idfaProvider: (() -> String?)? = nil,
-    syncDeviceIdentifiers: @escaping ([String: Any?]) -> Void = {
-      Superwall.shared.setDeviceIdentifierAttributes($0)
+    syncUserAttributes: @escaping ([String: Any?]) -> Void = {
+      Superwall.shared.setUserAttributes($0)
     }
   ) {
-    self.syncDeviceIdentifiers = syncDeviceIdentifiers
+    self.syncUserAttributes = syncUserAttributes
     self.vendorIdProvider = vendorIdProvider
     self.attStatusProvider = attStatusProvider
     self.idfaProvider = idfaProvider
@@ -243,7 +241,7 @@ final class AttributionFetcher {
       mergedAttributes[key] = value
     }
     let device = currentDeviceIdentifiers
-    for key in Self.deviceIdentifierKeys {
+    for key in DeviceIdentifiers.keys {
       mergedAttributes[key] = device[key]
     }
 
@@ -251,7 +249,7 @@ final class AttributionFetcher {
     // Explicit nulls clear an IDFA retained from before consent was revoked.
     if device != _lastSyncedDeviceIdentifiers {
       _lastSyncedDeviceIdentifiers = device
-      syncDeviceIdentifiers(Self.userAttributes(for: device))
+      syncUserAttributes(DeviceIdentifiers.userAttributes(for: device))
     }
 
     guard mergedAttributes != _integrationAttributes else { return false }
@@ -270,37 +268,36 @@ final class AttributionFetcher {
 
 // MARK: - Device identifiers
 extension AttributionFetcher {
-  /// The device identifiers as the user's attributes should carry them.
-  ///
-  /// A missing identifier is sent as an explicit `NSNull()` rather than left
-  /// out: `setUserAttributes` treats a Swift `nil` as "delete this key", which
-  /// would leave the server holding the last value it saw. A null overwrites
-  /// it, which is what clears an IDFA after consent is revoked.
-  private static func userAttributes(for device: [String: String]) -> [String: Any?] {
-    var userAttributes: [String: Any?] = [:]
-    for key in deviceIdentifierKeys {
-      if let value = device[key] {
-        userAttributes[key] = value
-      } else {
-        userAttributes[key] = NSNull()
-      }
-    }
-    return userAttributes
-  }
-
-  /// Forgets what was last synced when something else writes to one of the
-  /// keys the SDK owns, so the next merge puts the SDK's value back.
+  /// Forgets what was last synced when a write lands on one of the SDK's keys
+  /// carrying something other than what the SDK put there, so the next merge
+  /// puts its own value back.
   ///
   /// The sync gate compares against what the SDK last sent rather than what the
   /// user's attributes actually hold, so without this an app that removed
   /// `idfv` would keep it missing until an identifier itself changed — which on
   /// a settled device may be never.
-  func forgetSyncedDeviceIdentifiers(ifTouching keys: [String]) {
-    if !keys.contains(where: { Self.deviceIdentifierKeys.contains($0) }) {
+  ///
+  /// Compares the values rather than just the keys because the SDK's own sync
+  /// comes back through this same setter, as do internal writers like the
+  /// enrichment response, which echoes the user's attributes back verbatim. A
+  /// write that agrees with what was sent isn't an overwrite and mustn't cost a
+  /// resync.
+  func forgetSyncedDeviceIdentifiers(ifChangedBy attributes: [String: Any?]) {
+    let touched = attributes.filter { DeviceIdentifiers.keys.contains($0.key) }
+    if touched.isEmpty {
       return
     }
     queue.async { [weak self] in
-      self?._lastSyncedDeviceIdentifiers = nil
+      guard let self,
+        let lastSynced = self._lastSyncedDeviceIdentifiers else {
+        return
+      }
+      let isOverwritten = touched.contains { key, value in
+        !DeviceIdentifiers.isWhatWasSent(value, forKey: key, in: lastSynced)
+      }
+      if isOverwritten {
+        self._lastSyncedDeviceIdentifiers = nil
+      }
     }
   }
 
@@ -372,7 +369,7 @@ extension AttributionFetcher {
         return
       }
       var kept = _integrationAttributes.filter { key, _ in
-        Self.deviceIdentifierKeys.contains(key)
+        DeviceIdentifiers.keys.contains(key)
           || IntegrationAttribute.installScopedKeys.contains(key)
       }
       if kept.isEmpty {
@@ -382,18 +379,18 @@ extension AttributionFetcher {
       }
 
       let device = currentDeviceIdentifiers
-      for key in Self.deviceIdentifierKeys {
+      for key in DeviceIdentifiers.keys {
         kept[key] = device[key]
       }
       _integrationAttributes = kept
       _lastSyncedDeviceIdentifiers = device
       storage.save(kept, forType: IntegrationAttributes.self)
 
-      var userAttributes = Self.userAttributes(for: device)
-      for (key, value) in kept where !Self.deviceIdentifierKeys.contains(key) {
+      var userAttributes = DeviceIdentifiers.userAttributes(for: device)
+      for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
         userAttributes[key] = value
       }
-      syncDeviceIdentifiers(userAttributes)
+      syncUserAttributes(userAttributes)
     }
   }
 }

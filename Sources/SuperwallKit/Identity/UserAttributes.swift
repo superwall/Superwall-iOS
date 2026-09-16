@@ -31,20 +31,14 @@ extension Superwall {
   /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
+  ///
+  /// Note: `idfv`, `idfa` and `attStatus` are owned by the SDK, which keeps them
+  /// in step with the device. A value you set on one of those keys is replaced
+  /// the next time the app becomes active or you set an integration attribute.
   public func setUserAttributes(_ attributes: [String: Any?]) {
     dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
-      ifTouching: Array(attributes.keys)
+      ifChangedBy: attributes
     )
-    mergeAttributes(attributes)
-  }
-
-  /// Sets the device identifiers the SDK owns without treating the write as one
-  /// of the app's.
-  ///
-  /// `AttributionFetcher` skips a sync when the identifiers haven't changed
-  /// since it last sent them, and going through the public setter would tell it
-  /// to forget that and send them again on every merge.
-  func setDeviceIdentifierAttributes(_ attributes: [String: Any?]) {
     mergeAttributes(attributes)
   }
 
@@ -77,7 +71,7 @@ extension Superwall {
     }
 
     dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
-      ifTouching: keys
+      ifChangedBy: swiftDictionary
     )
     mergeAttributes(swiftDictionary)
   }

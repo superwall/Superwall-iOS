@@ -21,7 +21,7 @@ struct AttributionDeviceIdentifiersTests {
       vendorIdProvider: vendorId,
       attStatusProvider: attStatus,
       idfaProvider: idfa,
-      syncDeviceIdentifiers: sync
+      syncUserAttributes: sync
     )
   }
 
@@ -254,7 +254,7 @@ struct AttributionDeviceIdentifiersTests {
 
     // But an app that writes over one of the SDK's keys has to be answered,
     // otherwise the router loses the identifier until one of them changes.
-    fetcher.forgetSyncedDeviceIdentifiers(ifTouching: ["email", "idfv"])
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["email": "a@b.com", "idfv": nil])
     fetcher.refreshDeviceIdentifiers()
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 2)
@@ -270,10 +270,51 @@ struct AttributionDeviceIdentifiersTests {
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
 
-    fetcher.forgetSyncedDeviceIdentifiers(ifTouching: ["email", "name"])
+    // Keys the SDK doesn't own say nothing about its own.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["email": "a@b.com"])
     fetcher.refreshDeviceIdentifiers()
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
+
+    // Neither does a write echoing back exactly what the SDK sent — which is
+    // what the SDK's own sync and the enrichment response both look like.
+    fetcher.forgetSyncedDeviceIdentifiers(
+      ifChangedBy: [
+        "idfv": "vendor-1",
+        "idfa": "advertiser-1",
+        "attStatus": "3"
+      ]
+    )
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+  }
+
+  @Test func resendsWhenAnIdentifierTheSdkLeftOutIsGivenAValue() {
+    let container = DependencyContainer()
+    var syncCount = 0
+    let fetcher = makeFetcher(
+      container: container,
+      idfa: { nil },
+      sync: { _ in syncCount += 1 }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    // The SDK sent `idfa` as an explicit null, so a null back is a match.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["idfa": NSNull()])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    // An app putting its own value there is not.
+    fetcher.forgetSyncedDeviceIdentifiers(ifChangedBy: ["idfa": "made-up"])
+    fetcher.refreshDeviceIdentifiers()
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 2)
   }
 
   @Test func everyIntegrationAttributeIsScoped() {
