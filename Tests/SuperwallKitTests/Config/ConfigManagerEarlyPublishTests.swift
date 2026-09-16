@@ -739,6 +739,53 @@ struct ConfigManagerEarlyPublishTests {
     await fetch.value
     await settle()
   }
+
+  @Test("With a purchase controller the restore seeds purchases but leaves the status and customer info alone")
+  func restoreLeavesControllerStateAloneWithExternalPurchaseController() async {
+    let controllerContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    // Would publish the status if the restore reached it; the guard must stop
+    // it getting that far.
+    let purchaseController = AutomaticPurchaseController(
+      factory: controllerContainer,
+      entitlementsInfo: Superwall.shared.entitlements
+    )
+    let harness = makeHarness(
+      container: controllerContainer,
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithLapsedSecondSubscription(),
+      loadDelay: 2,
+      receiptDelegate: purchaseController
+    )
+
+    // State the developer's controller set since launch, which the saved copy
+    // predates and must not replace.
+    let controllerEntitlement = Entitlement(id: "controller_only", isActive: true)
+    let controllerCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [controllerEntitlement]
+    )
+    await MainActor.run {
+      Superwall.shared.customerInfo = controllerCustomerInfo
+    }
+    Superwall.shared.subscriptionStatus = .active([controllerEntitlement])
+    let statusBefore = Superwall.shared.subscriptionStatus
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The purchase state is still seeded from the saved copy.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(Superwall.shared.entitlements.byProductId(Self.silverProductId).isEmpty == false)
+
+    // The controller's state is untouched.
+    #expect(Superwall.shared.customerInfo == controllerCustomerInfo)
+    #expect(Superwall.shared.subscriptionStatus == statusBefore)
+
+    await fetch.value
+    await settle()
+  }
 }
 
 /// A `ReceiptManagerType` whose first `loadPurchases` sleeps, standing in for a

@@ -15,8 +15,8 @@ import Foundation
 /// see the value a writer assigned before granted entitlements and test-mode
 /// overrides were applied. The projected value (`$subscriptionStatus`) replays
 /// the latest emitted value to new subscribers, like `@Published`; while
-/// emissions are still queued behind a slow subscriber that can trail the
-/// stored value until their turn comes. Reads take the same lock as writes,
+/// emissions are queued behind a slow subscriber, that replay can trail the
+/// stored value until its turn comes. Reads take the same lock as writes,
 /// so a read on one thread never races an assignment on another.
 ///
 /// Public only because a public property's wrapper type has to be; nothing
