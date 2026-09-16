@@ -463,6 +463,23 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Drops the attributes waiting on the app transaction id that identify the
+  /// person rather than the device.
+  ///
+  /// They were set for the user that `reset()` just replaced, so replaying them
+  /// when the id arrives would hand someone else's identity to the new user —
+  /// the same reason `AttributionFetcher.resetIntegrationAttributes()` drops
+  /// them from the attributes it already holds.
+  func resetEnqueuedIntegrationAttributes() {
+    enqueuedAttributesQueue.sync {
+      guard let enqueued = _enqueuedIntegrationAttributes else {
+        return
+      }
+      let kept = enqueued.filter { $0.key.isInstallScoped }
+      _enqueuedIntegrationAttributes = kept.isEmpty ? nil : kept
+    }
+  }
+
   // MARK: - Value Resolution
 
   private func resolvedCustomerInfo(
@@ -967,7 +984,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
   public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // The fetcher doesn't take the app transaction id, but it still has to wait
+    // for one: setting attributes debounces a redeem, and the redeemer reads the
+    // id for itself.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes(props)
       return
@@ -978,10 +998,7 @@ public final class Superwall: NSObject, ObservableObject {
       result[pair.key.description] = pair.value
     }
 
-    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(
-      attributes: props,
-      appTransactionId: appTransactionId
-    )
+    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(attributes: props)
     setUserAttributes(props)
   }
 
@@ -991,7 +1008,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - attribute: The ``IntegrationAttribute`` key specifying the integration provider.
   ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
   public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // Waits for the app transaction id for the same reason as
+    // `setIntegrationAttributes(_:)` above.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes([attribute: value])
       return
@@ -1000,8 +1019,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     dependencyContainer.attributionFetcher.setIntegrationAttribute(
       attribute: attribute,
-      value: value,
-      appTransactionId: appTransactionId
+      value: value
     )
     setUserAttributes([attribute.description: value])
   }
@@ -1120,6 +1138,12 @@ public final class Superwall: NSObject, ObservableObject {
     // — the backend match only succeeds within the 7-day install window, so a
     // logout after that would otherwise leave the new user without attributes.
     dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
+
+    // Integration attributes are part install-scoped, part tied to the person
+    // signing out, and the reset just wiped them out of the user's attributes
+    // and off disk. Keep the install-scoped half for the new user, drop the rest.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()
