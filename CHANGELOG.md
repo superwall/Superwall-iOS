@@ -4,10 +4,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.17.0
 
+### Breaking Changes
+
+- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
+
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
-- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
 
 ### Fixes
 

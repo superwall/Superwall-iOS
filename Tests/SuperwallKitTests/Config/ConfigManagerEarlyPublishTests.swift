@@ -208,7 +208,8 @@ struct ConfigManagerEarlyPublishTests {
     storeKitVersion: SuperwallOptions.StoreKitVersion = .storeKit2,
     isSubscribed: Bool,
     savedCustomerInfo: CustomerInfo?,
-    loadDelay: TimeInterval
+    loadDelay: TimeInterval,
+    receiptDelegate: ReceiptDelegate? = nil
   ) -> Harness {
     let dependencyContainer = container ?? self.dependencyContainer
     let storage = StorageMock()
@@ -241,7 +242,7 @@ struct ConfigManagerEarlyPublishTests {
       shouldBypassAppTransactionCheck: true,
       productsManager: productsManager,
       receiptManager: receipt,
-      receiptDelegate: nil,
+      receiptDelegate: receiptDelegate,
       factory: dependencyContainer,
       storage: storage
     )
@@ -402,6 +403,52 @@ struct ConfigManagerEarlyPublishTests {
     let legacyEntitlements = Superwall.shared.entitlements.byProductId(Self.legacyProductId)
     #expect(legacyEntitlements.first?.isActive == false)
     #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("The restore publishes the lapse-corrected status and customer info")
+  func restorePublishesCorrectedStatusAndCustomerInfo() async {
+    // The controller reads the entitlement map the restore writes, which
+    // belongs to the shared instance, so it has to look at that one.
+    let purchaseController = AutomaticPurchaseController(
+      factory: dependencyContainer,
+      entitlementsInfo: Superwall.shared.entitlements
+    )
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithLapsedSecondSubscription(),
+      loadDelay: 2,
+      receiptDelegate: purchaseController
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The status is rebuilt from the seeded purchases, so silver's `pro`
+    // is active and the lapsed `legacy` isn't part of it. The shared
+    // instance can carry web entitlements from other suites, so only these
+    // two are checked.
+    guard case .active(let entitlements) = Superwall.shared.subscriptionStatus else {
+      Issue.record("expected an active status, got \(Superwall.shared.subscriptionStatus)")
+      await fetch.value
+      await settle()
+      return
+    }
+    #expect(entitlements.contains { $0.id == "pro" && $0.isActive })
+    #expect(!entitlements.contains { $0.id == "legacy" })
+
+    // The customer info carries every saved row, with the lapsed one corrected.
+    let customerInfo = Superwall.shared.customerInfo
+    let legacy = customerInfo.entitlements.first { $0.id == "legacy" }
+    #expect(legacy?.isActive == false)
+    #expect(legacy?.willRenew == true, "the rest of the saved copy carries over")
+    #expect(customerInfo.entitlements.first { $0.id == "pro" }?.isActive == true)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.legacyProductId }?.isActive == false)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.silverProductId }?.isActive == true)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.webProductId }?.isActive == true)
 
     await fetch.value
     await settle()

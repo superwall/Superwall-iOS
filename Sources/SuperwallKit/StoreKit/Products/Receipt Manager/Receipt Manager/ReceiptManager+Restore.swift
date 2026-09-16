@@ -79,6 +79,32 @@ extension ReceiptManager {
     Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)
 
     activeSubscriptionGroupIds = Set(activeSubscriptions.compactMap { $0.subscriptionGroupId })
+
+    // The customer info and status were restored from disk exactly as saved, so
+    // a row that lapsed since the last launch still reads active through them.
+    // Publish both lapse-corrected, the way the read does when it lands: the
+    // status via the same delegate call, from the seeded purchases and the
+    // corrected entitlement map. Audience filters read these while config is
+    // already published, so they see the same state as `entitlementsByProductId`.
+    let subscriptions = customerInfo.subscriptions.map { subscription -> SubscriptionTransaction in
+      let stillActive: Bool
+      if subscription.store == .appStore {
+        stillActive = activeTransactionIds.contains(subscription.transactionId)
+      } else {
+        stillActive = subscription.isActive && !hasExpired(subscription.expirationDate, at: now)
+      }
+      return subscription.isActive && !stillActive ? deactivated(subscription) : subscription
+    }
+    let restoredCustomerInfo = CustomerInfo(
+      subscriptions: subscriptions,
+      nonSubscriptions: customerInfo.nonSubscriptions,
+      entitlements: merged.sorted { $0.id < $1.id },
+      isPlaceholder: customerInfo.isPlaceholder
+    )
+    await MainActor.run {
+      Superwall.shared.customerInfo = restoredCustomerInfo
+    }
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
   }
 
   /// A nil expiry never lapses: lifetime purchases and web entitlements without one.
@@ -87,6 +113,23 @@ extension ReceiptManager {
       return false
     }
     return expiresAt <= now
+  }
+
+  private func deactivated(_ subscription: SubscriptionTransaction) -> SubscriptionTransaction {
+    return SubscriptionTransaction(
+      transactionId: subscription.transactionId,
+      productId: subscription.productId,
+      purchaseDate: subscription.purchaseDate,
+      willRenew: subscription.willRenew,
+      isRevoked: subscription.isRevoked,
+      isInGracePeriod: subscription.isInGracePeriod,
+      isInBillingRetryPeriod: subscription.isInBillingRetryPeriod,
+      isActive: false,
+      expirationDate: subscription.expirationDate,
+      offerType: subscription.offerType,
+      subscriptionGroupId: subscription.subscriptionGroupId,
+      store: subscription.store
+    )
   }
 
   private func deactivated(_ entitlement: Entitlement) -> Entitlement {

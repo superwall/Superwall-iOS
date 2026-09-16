@@ -23,7 +23,7 @@ actor ReceiptManager {
 
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
-  private weak var receiptDelegate: ReceiptDelegate?
+  weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let shouldBypassAppTransactionCheck: Bool
   let manager: ReceiptManagerType

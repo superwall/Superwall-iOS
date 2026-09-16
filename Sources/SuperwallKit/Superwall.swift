@@ -230,41 +230,79 @@ public final class Superwall: NSObject, ObservableObject {
   /// before granted entitlements and test-mode overrides are merged in.
   /// ``subscriptionStatus`` is always derived from this, never the reverse,
   /// so clearing granted entitlements can recompute it.
-  var assignedSubscriptionStatus: SubscriptionStatus = .unknown
+  ///
+  /// Read and written under `subscriptionStatusLock`, like ``subscriptionStatus``.
+  var assignedSubscriptionStatus: SubscriptionStatus {
+    get {
+      subscriptionStatusLock.lock()
+      defer {
+        subscriptionStatusLock.unlock()
+      }
+      return lockedAssignedSubscriptionStatus
+    }
+    set {
+      subscriptionStatusLock.lock()
+      lockedAssignedSubscriptionStatus = newValue
+      subscriptionStatusLock.unlock()
+    }
+  }
+  private var lockedAssignedSubscriptionStatus: SubscriptionStatus = .unknown
 
-  /// Serializes status assignment and publishing across threads. Recursive so
+  /// Serializes every read and write of the status across threads. Recursive so
   /// a subscriber that assigns the status from within an emission re-enters
   /// the pipeline instead of deadlocking.
   let subscriptionStatusLock = NSRecursiveLock()
+
+  /// Merged statuses that have been stored but not yet emitted, oldest first.
+  /// Guarded by `subscriptionStatusLock`.
+  private var pendingSubscriptionStatusEmissions: [SubscriptionStatus] = []
+
+  /// Whether a thread is currently emitting the pending statuses. Guarded by
+  /// `subscriptionStatusLock`.
+  private var isEmittingSubscriptionStatus = false
 
   /// Whether the one-time warning about granted entitlements overriding an
   /// `.inactive` assignment has been logged.
   var hasLoggedGrantedEntitlementsWarning = false
 
-  /// Stores the merged status. Only `publishSubscriptionStatus` calls this,
-  /// with `subscriptionStatusLock` held; the emission follows in
-  /// `emitSubscriptionStatus()` once the lock is released.
+  /// Stores the merged status and queues it for emission. Only
+  /// `publishSubscriptionStatus` calls this, with `subscriptionStatusLock`
+  /// held; `emitSubscriptionStatus()` sends it once the lock is released.
   func storeMergedSubscriptionStatus(_ merged: SubscriptionStatus) {
-    objectWillChange.send()
     _subscriptionStatus.store(merged)
+    pendingSubscriptionStatusEmissions.append(merged)
   }
 
-  /// Emits the stored status to `$subscriptionStatus` subscribers. Called
-  /// after the lock is released, so subscribers never run inside the SDK's
-  /// critical section. A store that landed on another thread between the
-  /// read and the emission is emitted again afterwards, so the publisher's
-  /// current value can't end up behind the stored one.
+  /// Emits every stored status to `$subscriptionStatus` subscribers in the
+  /// order it was stored, with the lock released while subscribers run.
+  ///
+  /// One thread drains the queue at a time. A writer that stores while a
+  /// drain is in progress returns straight away and the draining thread
+  /// sends its value next, so each value is emitted once, none is emitted
+  /// behind a newer one, and no writer ever waits on a subscriber. That last
+  /// point is what stops a subscriber that blocks on another thread from
+  /// deadlocking a writer on that thread.
   func emitSubscriptionStatus() {
     subscriptionStatusLock.lock()
-    let emitted = subscriptionStatus
+    if isEmittingSubscriptionStatus {
+      subscriptionStatusLock.unlock()
+      return
+    }
+    isEmittingSubscriptionStatus = true
     subscriptionStatusLock.unlock()
-    _subscriptionStatus.emit(emitted)
 
-    subscriptionStatusLock.lock()
-    let newest = subscriptionStatus
-    subscriptionStatusLock.unlock()
-    if newest != emitted {
-      _subscriptionStatus.emit(newest)
+    while true {
+      subscriptionStatusLock.lock()
+      if pendingSubscriptionStatusEmissions.isEmpty {
+        isEmittingSubscriptionStatus = false
+        subscriptionStatusLock.unlock()
+        return
+      }
+      let next = pendingSubscriptionStatusEmissions.removeFirst()
+      subscriptionStatusLock.unlock()
+
+      objectWillChange.send()
+      _subscriptionStatus.emit(next)
     }
   }
 
