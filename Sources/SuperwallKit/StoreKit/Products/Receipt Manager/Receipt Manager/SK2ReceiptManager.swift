@@ -22,6 +22,9 @@ protocol ReceiptManagerType: AnyObject {
   var loadsSubscriptionGroupsFromProducts: Bool { get }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async
+  /// Replaces the in-memory purchases with ones rebuilt from the previous launch's
+  /// customer info. The next `loadPurchases` overwrites them.
+  func seedPurchases(_ purchases: Set<Purchase>) async
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool
 }
@@ -67,6 +70,10 @@ actor SK2ReceiptManager: ReceiptManagerType {
   /// the lifetime of the process — it survived `reset()` and user identity switches —
   /// which could surface a free trial that Apple would not actually grant.
   func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
+
+  func seedPurchases(_ purchases: Set<Purchase>) {
+    self.purchases = purchases
+  }
 
   func loadPurchases(serverEntitlementsByProductId: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     var purchases: Set<Purchase> = []
