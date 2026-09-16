@@ -86,18 +86,22 @@ extension ReceiptManager {
     // status via the same delegate call, from the seeded purchases and the
     // corrected entitlement map. Audience filters read these while config is
     // already published, so they see the same state as `entitlementsByProductId`.
-    await publishRestoredCustomerInfo(
-      from: customerInfo,
-      activeTransactionIds: activeTransactionIds,
-      savedEntitlements: saved,
-      mergedEntitlements: merged,
-      grantedEntitlements: grantedEntitlements,
-      at: now
-    )
-    // With an external purchase controller the status is the controller's.
+    //
+    // Not with an external purchase controller. There the status is the
+    // controller's and the customer info is rebuilt from it on every publish,
+    // from the device rows the read saves. The saved copy is merged, so a device
+    // copy carved out of it would be mis-sourced, and a write here would race
+    // the controller's own assignments. The rows stay as saved until the read
+    // lands, which is what happened before the early publish existed.
     if factory.makeHasExternalPurchaseController() {
       return
     }
+    await publishRestoredCustomerInfo(
+      from: customerInfo,
+      activeTransactionIds: activeTransactionIds,
+      mergedEntitlements: merged,
+      at: now
+    )
     await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
   }
 
@@ -111,9 +115,7 @@ extension ReceiptManager {
   private func publishRestoredCustomerInfo(
     from customerInfo: CustomerInfo,
     activeTransactionIds: Set<String>,
-    savedEntitlements: [Entitlement],
     mergedEntitlements: Set<Entitlement>,
-    grantedEntitlements: Set<Entitlement>,
     at now: Date
   ) async {
     let subscriptions = customerInfo.subscriptions.map { subscription -> SubscriptionTransaction in
@@ -125,33 +127,12 @@ extension ReceiptManager {
       }
       return subscription.isActive && !stillActive ? deactivated(subscription) : subscription
     }
-
-    // With an external purchase controller the status is the controller's, and
-    // the customer info is rebuilt from it on every publish using the device
-    // rows in storage. Save the corrected App Store rows there and rebuild the
-    // same way, so the controller's entitlements are kept while a row that
-    // lapsed since the last launch reads inactive.
-    let restoredCustomerInfo: CustomerInfo
-    if factory.makeHasExternalPurchaseController() {
-      let deviceCustomerInfo = CustomerInfo(
-        subscriptions: subscriptions.filter { $0.store == .appStore },
-        nonSubscriptions: customerInfo.nonSubscriptions.filter { $0.store == .appStore },
-        entitlements: savedEntitlements.filter { $0.store == .appStore }.sorted { $0.id < $1.id }
-      )
-      storage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
-      restoredCustomerInfo = CustomerInfo.forExternalPurchaseController(
-        storage: storage,
-        subscriptionStatus: Superwall.shared.subscriptionStatus,
-        granted: grantedEntitlements
-      )
-    } else {
-      restoredCustomerInfo = CustomerInfo(
-        subscriptions: subscriptions,
-        nonSubscriptions: customerInfo.nonSubscriptions,
-        entitlements: mergedEntitlements.sorted { $0.id < $1.id },
-        isPlaceholder: customerInfo.isPlaceholder
-      )
-    }
+    let restoredCustomerInfo = CustomerInfo(
+      subscriptions: subscriptions,
+      nonSubscriptions: customerInfo.nonSubscriptions,
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id },
+      isPlaceholder: customerInfo.isPlaceholder
+    )
     await MainActor.run {
       Superwall.shared.customerInfo = restoredCustomerInfo
     }

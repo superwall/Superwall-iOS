@@ -740,8 +740,8 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
-  @Test("With a purchase controller the restore keeps the controller's entitlements and status while correcting lapsed rows")
-  func restoreKeepsControllerStateWithExternalPurchaseController() async {
+  @Test("With a purchase controller the restore seeds purchases but leaves the status and customer info alone")
+  func restoreLeavesControllerStateAloneWithExternalPurchaseController() async {
     // Put back afterwards: the SDK never overwrites controller-set state on
     // this path, so it would otherwise leak into suites running alongside.
     let originalCustomerInfo = Superwall.shared.customerInfo
@@ -752,8 +752,8 @@ struct ConfigManagerEarlyPublishTests {
     }
 
     let controllerContainer = DependencyContainer(purchaseController: MockPurchaseController())
-    // Would publish the status if the restore reached it; the controller path
-    // must leave the status to the controller.
+    // Would publish the status if the restore reached it; the guard must stop
+    // it getting that far.
     let purchaseController = AutomaticPurchaseController(
       factory: controllerContainer,
       entitlementsInfo: Superwall.shared.entitlements
@@ -788,13 +788,9 @@ struct ConfigManagerEarlyPublishTests {
     #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
     #expect(Superwall.shared.entitlements.byProductId(Self.silverProductId).isEmpty == false)
 
-    // The status is the controller's, and its entitlement survives the rebuild
-    // while the lapsed saved row reads inactive.
+    // The controller's state is untouched.
+    #expect(Superwall.shared.customerInfo == controllerCustomerInfo)
     #expect(Superwall.shared.subscriptionStatus == statusBefore)
-    let customerInfo = Superwall.shared.customerInfo
-    #expect(customerInfo.entitlements.contains { $0.id == "controller_only" && $0.isActive })
-    #expect(customerInfo.subscriptions.first { $0.productId == Self.legacyProductId }?.isActive == false)
-    #expect(customerInfo.subscriptions.first { $0.productId == Self.silverProductId }?.isActive == true)
 
     await fetch.value
     await settle()
