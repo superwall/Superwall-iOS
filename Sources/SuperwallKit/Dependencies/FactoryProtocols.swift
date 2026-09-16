@@ -83,11 +83,11 @@ protocol ConfigManagerFactory: AnyObject {
   /// `entitlementIds`, and so whether callers have to wait for it.
   ///
   /// The load re-merges the web and granted sources when it lands, so it isn't
-  /// only the App Store half that can move. But the redeemer assigns
-  /// `customerInfo` itself when web entitlements change, and so does the
-  /// granted-entitlements setter, so the copy read during the window is never
-  /// behind on those — except that the grant refresh skips apps with a purchase
-  /// controller, so for those an entitlement granted right now counts too.
+  /// only the App Store half that can move. But both of those assign
+  /// `customerInfo` themselves as they change — the redeemer when web
+  /// entitlements arrive, and the granted-entitlements setter on both its
+  /// paths — so the copy read during the window is never behind on them. That
+  /// leaves the device half, which is why only App Store products count.
   func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool
 }
 

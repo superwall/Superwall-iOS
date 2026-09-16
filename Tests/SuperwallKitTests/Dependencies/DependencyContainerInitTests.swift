@@ -69,28 +69,28 @@ struct AppStoreEntitlementLookupTests {
     #expect(container.purchasesLoadCouldChange(entitlementIds: ["pro"]))
   }
 
-  @Test("A grant is only in reach for apps with a purchase controller")
-  func grantedEntitlementIsInReachOnlyWithPurchaseController() {
+  @Test("A granted web-only entitlement still skips the wait, with or without a controller")
+  func grantedWebOnlyEntitlementIsNotInReach() {
     let webOnly: Config = .stub()
       .setting(
         \.products,
         to: [makeProduct(id: "com.app.web", entitlementId: "web_only", isAppStore: false)]
       )
 
-    // Without a purchase controller, setting a grant rebuilds `customerInfo`
-    // there and then, so the load has nothing to add.
+    // Setting a grant assigns `customerInfo` before the setter returns on both
+    // paths — `refreshAutomaticCustomerInfoAfterGrantChange` without a purchase
+    // controller, `refreshExternalControllerCustomerInfo` with one — so the
+    // load has nothing to add either way.
     let automatic = DependencyContainer()
     automatic.configManager.configState.send(.retrieved(webOnly))
     automatic.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
     defer { automatic.entitlementsInfo.setGranted([]) }
     #expect(automatic.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
 
-    // With one, that refresh is skipped and the load is the only thing that
-    // folds the grant in.
     let controlled = DependencyContainer(purchaseController: MockPurchaseController())
     controlled.configManager.configState.send(.retrieved(webOnly))
     controlled.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
     defer { controlled.entitlementsInfo.setGranted([]) }
-    #expect(controlled.purchasesLoadCouldChange(entitlementIds: ["web_only"]))
+    #expect(controlled.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
   }
 }

@@ -503,14 +503,6 @@ extension DependencyContainer: ConfigManagerFactory {
     if entitlementIds.isEmpty {
       return false
     }
-    // Setting a grant normally rebuilds `customerInfo` there and then, so the
-    // load finds nothing new. That refresh skips apps with a purchase
-    // controller though, and for them the load is the only thing that folds a
-    // grant in, so it can still move the answer.
-    if makeHasExternalPurchaseController(),
-      entitlementsInfo.granted.contains(where: { entitlementIds.contains($0.id) }) {
-      return true
-    }
     guard let config = configManager.config else {
       // Without config we can't rule the load out, so say yes and let the
       // caller wait.
