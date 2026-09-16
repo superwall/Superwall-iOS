@@ -449,6 +449,7 @@
 		C86B9D3992BBD1E8A1105F3C /* SuperwallDelegateObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33A9E0597972B90E3B9DFFE1 /* SuperwallDelegateObjc.swift */; };
 		C8BCF3C0404622139D002893 /* PushTransitionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC74F16DC5A17489E97061EA /* PushTransitionLogic.swift */; };
 		C90E075C3BEE92968BBC4E1B /* LocalizationConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67C4FC41FEE0B47EA402D738 /* LocalizationConfig.swift */; };
+		C9766A8FAF76F716D5F16BD2 /* AttributionDeviceIdentifiersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43C6C8966D32B889BEA06F70 /* AttributionDeviceIdentifiersTests.swift */; };
 		C9BE2675C944542B6282E5B5 /* SWProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62AC69B94A568B7E14A391A8 /* SWProductDiscount.swift */; };
 		C9C5355AE4077E6A021F30FF /* IdentityInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C1EB433A4E4342E03BB7744 /* IdentityInfo.swift */; };
 		C9F6A490E3E09401494E7DCB /* CheckDebuggerPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9777790D2B73EFF94E7C648 /* CheckDebuggerPresentation.swift */; };
@@ -498,6 +499,7 @@
 		D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57C7673988B39FB0BDEA8BE4 /* Date+IsoStringTests.swift */; };
 		D978EAD4FA4865B5E07BF03B /* Future+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE36D141F461F6E945823FA /* Future+Async.swift */; };
 		DB6FF170AE90FF8623A31E14 /* DispatchQueueBacked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */; };
+		DB7506D37B2BE86074BFF901 /* DeviceIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9D282044746C11A110A325 /* DeviceIdentifiers.swift */; };
 		DB7858A959C145FA32F6C9EC /* PaywallPresentationInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831F679BDAC779043091DB7E /* PaywallPresentationInfoTests.swift */; };
 		DBF70D987418DD9EB504FBDE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42956918D4FFA5FBA79F3AA5 /* Constants.swift */; };
 		DCE85B4A9DBD672B658F6EB3 /* MockSKPaymentTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B1A6ADFFB9FA982BF69C134 /* MockSKPaymentTransaction.swift */; };
@@ -758,6 +760,7 @@
 		4078AB25B84478F020D1B055 /* ReceiptManagerPurchasedProductFetchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptManagerPurchasedProductFetchTests.swift; sourceTree = "<group>"; };
 		40AE19B5A9B237A2552D5F36 /* IdentityLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityLogicTests.swift; sourceTree = "<group>"; };
 		42956918D4FFA5FBA79F3AA5 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		43C6C8966D32B889BEA06F70 /* AttributionDeviceIdentifiersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionDeviceIdentifiersTests.swift; sourceTree = "<group>"; };
 		440ABDF6DAE2C15579B93DF1 /* PushTransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTransitionDelegate.swift; sourceTree = "<group>"; };
 		45AFD6EE9BED296D075A9618 /* ASN1Templates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ASN1Templates.swift; sourceTree = "<group>"; };
 		45B3BC4249A9E9BA8E99EC7C /* CustomCallbackRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCallbackRegistry.swift; sourceTree = "<group>"; };
@@ -971,6 +974,7 @@
 		9C2580C3CD6A8BF0C5258665 /* SWWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWWebView.swift; sourceTree = "<group>"; };
 		9C4966E857D1F9596B96910E /* SK1ReceiptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK1ReceiptManager.swift; sourceTree = "<group>"; };
 		9C5DCFB58EF4DBC9084A6B89 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
+		9C9D282044746C11A110A325 /* DeviceIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentifiers.swift; sourceTree = "<group>"; };
 		9DC4D23D1EDDA249C928930D /* PaddingListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddingListener.swift; sourceTree = "<group>"; };
 		9E1EFE389B54C304F2B01620 /* DeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfo.swift; sourceTree = "<group>"; };
 		9E3DAD767490972EA30257F9 /* EntitlementProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementProcessorTests.swift; sourceTree = "<group>"; };
@@ -2675,6 +2679,7 @@
 				64EAB177118BC78B02C3C00A /* AttributionFetcher.swift */,
 				0B31ACE25727649F21DEEBAF /* AttributionPoster.swift */,
 				D8749262F8F31B90DA975B26 /* AttributionTypeFactory.swift */,
+				9C9D282044746C11A110A325 /* DeviceIdentifiers.swift */,
 				BB868CF67AB2AE72895F864E /* IntegrationAttribute.swift */,
 				77827761E38CB30B06E3ABF2 /* MMPAttributionManager.swift */,
 			);
@@ -2968,6 +2973,7 @@
 			isa = PBXGroup;
 			children = (
 				A82783401B92298C47BF14F7 /* AdServicesAttributionTests.swift */,
+				43C6C8966D32B889BEA06F70 /* AttributionDeviceIdentifiersTests.swift */,
 				6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */,
 			);
 			path = Attribution;
@@ -3316,6 +3322,7 @@
 				A9FC64A249BF2242BB526521 /* AppStoreProductTests.swift in Sources */,
 				59685CE55D34FA6A96A8F890 /* AssignmentLogicTests.swift in Sources */,
 				BC8A62869C7BACE6D0867195 /* AssignmentTests.swift in Sources */,
+				C9766A8FAF76F716D5F16BD2 /* AttributionDeviceIdentifiersTests.swift in Sources */,
 				3CD2C23BAC2EA11174237785 /* AttributionTests.swift in Sources */,
 				D5C9A71CFB166225C082CAFB /* AutomaticPurchaseControllerTests.swift in Sources */,
 				B0DC8290B081B74CC65E9305 /* CELEvaluatorTests.swift in Sources */,
@@ -3535,6 +3542,7 @@
 				CB2F2B4DA3709F171E54CBB8 /* DeepLinkRouter.swift in Sources */,
 				3F4BE7ECC80EEA757454F9B6 /* DependencyContainer.swift in Sources */,
 				7FCDAF6C945FA04FC4C4E8E3 /* DeviceHelper.swift in Sources */,
+				DB7506D37B2BE86074BFF901 /* DeviceIdentifiers.swift in Sources */,
 				191AA8FBBF617251EF6F8628 /* DeviceInfo.swift in Sources */,
 				6CF900F9770237D75585A681 /* DevicePreloadScript.swift in Sources */,
 				3DCE95BAC148CCC7E6E7F608 /* DeviceTemplate.swift in Sources */,
