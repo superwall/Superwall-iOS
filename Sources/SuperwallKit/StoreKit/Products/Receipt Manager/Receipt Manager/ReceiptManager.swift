@@ -23,12 +23,12 @@ actor ReceiptManager {
 
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
-  private weak var receiptDelegate: ReceiptDelegate?
+  weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let shouldBypassAppTransactionCheck: Bool
   let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
-  private unowned let factory: Factory
+  unowned let factory: Factory
   private unowned let storage: Storage
   /// Subscription group IDs the user currently has an active subscription in. Computed
   /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which

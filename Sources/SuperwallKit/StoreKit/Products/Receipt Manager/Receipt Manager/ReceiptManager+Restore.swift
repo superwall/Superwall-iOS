@@ -79,6 +79,63 @@ extension ReceiptManager {
     Superwall.shared.entitlements.setEntitlementsFromConfig(entitlementsByProductId)
 
     activeSubscriptionGroupIds = Set(activeSubscriptions.compactMap { $0.subscriptionGroupId })
+
+    // The customer info and status were restored from disk exactly as saved, so
+    // a row that lapsed since the last launch still reads active through them.
+    // Publish both lapse-corrected, the way the read does when it lands: the
+    // status via the same delegate call, from the seeded purchases and the
+    // corrected entitlement map. Audience filters read these while config is
+    // already published, so they see the same state as `entitlementsByProductId`.
+    //
+    // Not with an external purchase controller. There the status is the
+    // controller's and the customer info is rebuilt from it on every publish,
+    // from the device rows the read saves. The saved copy is merged, so a device
+    // copy carved out of it would be mis-sourced, and a write here would race
+    // the controller's own assignments. The rows stay as saved until the read
+    // lands, which is what happened before the early publish existed.
+    if factory.makeHasExternalPurchaseController() {
+      return
+    }
+    await publishRestoredCustomerInfo(
+      from: customerInfo,
+      activeTransactionIds: activeTransactionIds,
+      mergedEntitlements: merged,
+      at: now
+    )
+    await receiptDelegate?.syncSubscriptionStatus(purchases: purchases)
+  }
+
+  /// Assigns the saved customer info with rows that lapsed since the last
+  /// launch marked inactive.
+  ///
+  /// Rows follow the seeded purchases: an App Store subscription with no
+  /// expiry can't be shown to be current, so it's inactive here even though
+  /// its entitlement, which follows the entitlement rule in `restorePurchases`,
+  /// keeps its saved state.
+  private func publishRestoredCustomerInfo(
+    from customerInfo: CustomerInfo,
+    activeTransactionIds: Set<String>,
+    mergedEntitlements: Set<Entitlement>,
+    at now: Date
+  ) async {
+    let subscriptions = customerInfo.subscriptions.map { subscription -> SubscriptionTransaction in
+      let stillActive: Bool
+      if subscription.store == .appStore {
+        stillActive = activeTransactionIds.contains(subscription.transactionId)
+      } else {
+        stillActive = subscription.isActive && !hasExpired(subscription.expirationDate, at: now)
+      }
+      return subscription.isActive && !stillActive ? deactivated(subscription) : subscription
+    }
+    let restoredCustomerInfo = CustomerInfo(
+      subscriptions: subscriptions,
+      nonSubscriptions: customerInfo.nonSubscriptions,
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id },
+      isPlaceholder: customerInfo.isPlaceholder
+    )
+    await MainActor.run {
+      Superwall.shared.customerInfo = restoredCustomerInfo
+    }
   }
 
   /// A nil expiry never lapses: lifetime purchases and web entitlements without one.
@@ -87,6 +144,23 @@ extension ReceiptManager {
       return false
     }
     return expiresAt <= now
+  }
+
+  private func deactivated(_ subscription: SubscriptionTransaction) -> SubscriptionTransaction {
+    return SubscriptionTransaction(
+      transactionId: subscription.transactionId,
+      productId: subscription.productId,
+      purchaseDate: subscription.purchaseDate,
+      willRenew: subscription.willRenew,
+      isRevoked: subscription.isRevoked,
+      isInGracePeriod: subscription.isInGracePeriod,
+      isInBillingRetryPeriod: subscription.isInBillingRetryPeriod,
+      isActive: false,
+      expirationDate: subscription.expirationDate,
+      offerType: subscription.offerType,
+      subscriptionGroupId: subscription.subscriptionGroupId,
+      store: subscription.store
+    )
   }
 
   private func deactivated(_ entitlement: Entitlement) -> Entitlement {

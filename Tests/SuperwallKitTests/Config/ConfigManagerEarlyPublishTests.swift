@@ -208,7 +208,8 @@ struct ConfigManagerEarlyPublishTests {
     storeKitVersion: SuperwallOptions.StoreKitVersion = .storeKit2,
     isSubscribed: Bool,
     savedCustomerInfo: CustomerInfo?,
-    loadDelay: TimeInterval
+    loadDelay: TimeInterval,
+    receiptDelegate: ReceiptDelegate? = nil
   ) -> Harness {
     let dependencyContainer = container ?? self.dependencyContainer
     let storage = StorageMock()
@@ -241,7 +242,7 @@ struct ConfigManagerEarlyPublishTests {
       shouldBypassAppTransactionCheck: true,
       productsManager: productsManager,
       receiptManager: receipt,
-      receiptDelegate: nil,
+      receiptDelegate: receiptDelegate,
       factory: dependencyContainer,
       storage: storage
     )
@@ -402,6 +403,52 @@ struct ConfigManagerEarlyPublishTests {
     let legacyEntitlements = Superwall.shared.entitlements.byProductId(Self.legacyProductId)
     #expect(legacyEntitlements.first?.isActive == false)
     #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("The restore publishes the lapse-corrected status and customer info")
+  func restorePublishesCorrectedStatusAndCustomerInfo() async {
+    // The controller reads the entitlement map the restore writes, which
+    // belongs to the shared instance, so it has to look at that one.
+    let purchaseController = AutomaticPurchaseController(
+      factory: dependencyContainer,
+      entitlementsInfo: Superwall.shared.entitlements
+    )
+    let harness = makeHarness(
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithLapsedSecondSubscription(),
+      loadDelay: 2,
+      receiptDelegate: purchaseController
+    )
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The status is rebuilt from the seeded purchases, so silver's `pro`
+    // is active and the lapsed `legacy` isn't part of it. The shared
+    // instance can carry web entitlements from other suites, so only these
+    // two are checked.
+    guard case .active(let entitlements) = Superwall.shared.subscriptionStatus else {
+      Issue.record("expected an active status, got \(Superwall.shared.subscriptionStatus)")
+      await fetch.value
+      await settle()
+      return
+    }
+    #expect(entitlements.contains { $0.id == "pro" && $0.isActive })
+    #expect(!entitlements.contains { $0.id == "legacy" })
+
+    // The customer info carries every saved row, with the lapsed one corrected.
+    let customerInfo = Superwall.shared.customerInfo
+    let legacy = customerInfo.entitlements.first { $0.id == "legacy" }
+    #expect(legacy?.isActive == false)
+    #expect(legacy?.willRenew == true, "the rest of the saved copy carries over")
+    #expect(customerInfo.entitlements.first { $0.id == "pro" }?.isActive == true)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.legacyProductId }?.isActive == false)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.silverProductId }?.isActive == true)
+    #expect(customerInfo.subscriptions.first { $0.productId == Self.webProductId }?.isActive == true)
 
     await fetch.value
     await settle()
@@ -688,6 +735,62 @@ struct ConfigManagerEarlyPublishTests {
     #expect(harness.configManager.config != nil)
     #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
     #expect(!harness.receipt.didFinishLoad)
+
+    await fetch.value
+    await settle()
+  }
+
+  @Test("With a purchase controller the restore seeds purchases but leaves the status and customer info alone")
+  func restoreLeavesControllerStateAloneWithExternalPurchaseController() async {
+    // Put back afterwards: the SDK never overwrites controller-set state on
+    // this path, so it would otherwise leak into suites running alongside.
+    let originalCustomerInfo = Superwall.shared.customerInfo
+    let originalStatus = Superwall.shared.subscriptionStatus
+    defer {
+      Superwall.shared.customerInfo = originalCustomerInfo
+      Superwall.shared.subscriptionStatus = originalStatus
+    }
+
+    let controllerContainer = DependencyContainer(purchaseController: MockPurchaseController())
+    // Would publish the status if the restore reached it; the guard must stop
+    // it getting that far.
+    let purchaseController = AutomaticPurchaseController(
+      factory: controllerContainer,
+      entitlementsInfo: Superwall.shared.entitlements
+    )
+    let harness = makeHarness(
+      container: controllerContainer,
+      isSubscribed: true,
+      savedCustomerInfo: savedCustomerInfoWithLapsedSecondSubscription(),
+      loadDelay: 2,
+      receiptDelegate: purchaseController
+    )
+
+    // State the developer's controller set since launch, which the saved copy
+    // predates and must not replace.
+    let controllerEntitlement = Entitlement(id: "controller_only", isActive: true, store: .appStore)
+    let controllerCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [controllerEntitlement]
+    )
+    await MainActor.run {
+      Superwall.shared.customerInfo = controllerCustomerInfo
+    }
+    Superwall.shared.subscriptionStatus = .active([controllerEntitlement])
+    let statusBefore = Superwall.shared.subscriptionStatus
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+
+    // The purchase state is still seeded from the saved copy.
+    #expect(await harness.receiptManager.getActiveProductIds() == [Self.silverProductId])
+    #expect(Superwall.shared.entitlements.byProductId(Self.silverProductId).isEmpty == false)
+
+    // The controller's state is untouched.
+    #expect(Superwall.shared.customerInfo == controllerCustomerInfo)
+    #expect(Superwall.shared.subscriptionStatus == statusBefore)
 
     await fetch.value
     await settle()

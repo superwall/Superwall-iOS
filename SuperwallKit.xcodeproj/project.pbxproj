@@ -299,6 +299,7 @@
 		880BBB2099D3112F256E6AE2 /* IntroOfferEligibility.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93FACE677755EAA3EA4E67A8 /* IntroOfferEligibility.swift */; };
 		88A5CA6515126BD3D09E0563 /* LimitedQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B921746BEC8F63DDB65C634 /* LimitedQueue.swift */; };
 		88D22C84ACDED44E3952C786 /* SK2ObserverModePurchaseDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC8705042D6AA74D40350A9 /* SK2ObserverModePurchaseDetector.swift */; };
+		899C32DE12E630CE296556FA /* SubscriptionStatusEmissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6765992D172AD32F53E008BD /* SubscriptionStatusEmissionTests.swift */; };
 		89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002FEEF20120D3A6B2AE923 /* SurveyManagerTests.swift */; };
 		8ACC4731031DA94C709915CF /* Transaction+LatestSince.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36CB341B28F250F5252A8DF /* Transaction+LatestSince.swift */; };
 		8AEB577682D9AB9354CB8EE9 /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2888B05A273E9EB6E9382332 /* UIColor+Hex.swift */; };
@@ -842,6 +843,7 @@
 		672776875A4286319C2F2D61 /* PaywallViewControllerCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerCacheTests.swift; sourceTree = "<group>"; };
 		6752063E4547657E20072CE7 /* ConfirmHoldoutAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmHoldoutAssignment.swift; sourceTree = "<group>"; };
 		67602AF9B2543CAD0B42F3CF /* CacheMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheMock.swift; sourceTree = "<group>"; };
+		6765992D172AD32F53E008BD /* SubscriptionStatusEmissionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusEmissionTests.swift; sourceTree = "<group>"; };
 		67C4FC41FEE0B47EA402D738 /* LocalizationConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationConfig.swift; sourceTree = "<group>"; };
 		67D9C2B45E15025BF7D783AD /* zh_Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh_Hans; path = zh_Hans.lproj/Localizable.strings; sourceTree = "<group>"; };
 		682AB10207309C439F64BC69 /* PlacementsQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlacementsQueueTests.swift; sourceTree = "<group>"; };
@@ -1617,6 +1619,7 @@
 				BD6BA222CB2EAA4B65F362C5 /* ProductsFetcherSK1.swift */,
 				0ECD75DF8F3EB6A68A21444D /* ProductsFetcherSK2Tests.swift */,
 				B00929DACD8621FC32F83927 /* SK2StoreProductCyclesTests.swift */,
+				6765992D172AD32F53E008BD /* SubscriptionStatusEmissionTests.swift */,
 				A1D175537791B3A913425F88 /* SubscriptionStatusLogicalEqualityTests.swift */,
 				0E9A13ACB22951C865722510 /* Receipt Manager */,
 				9160DE1504D8084C3DF51ADC /* StoreProduct */,
@@ -3436,6 +3439,7 @@
 				B162BE92B3568078BC0ADD1B /* StoreProductBillingPlanTests.swift in Sources */,
 				5E51E14716E29C9B88B8A6F2 /* StripeTrialEligibilityTests.swift in Sources */,
 				097719E21BBD153BA6FD6785 /* SubscriptionPeriodPriceTests.swift in Sources */,
+				899C32DE12E630CE296556FA /* SubscriptionStatusEmissionTests.swift in Sources */,
 				1B071A6918B1B36BF6BCC0C2 /* SubscriptionStatusLogicalEqualityTests.swift in Sources */,
 				E9F892ABB9BDA85F4794E3CF /* SubscriptionStatusResolutionTests.swift in Sources */,
 				89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */,
