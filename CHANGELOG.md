@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
 - Adds `CaseIterable` conformance to `IntegrationAttribute`, so you can list every integration the SDK supports.
+- Adds `userAttributes` to the `RedemptionInfo` you get from `didRedeemLink`, so you can read the answers someone gave on your web paywall funnel after they redeem in your app.
 
 ### Fixes
 

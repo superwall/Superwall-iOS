@@ -127,16 +127,26 @@ public class RedemptionResultObjc: NSObject {
     /// The entitlements array.
     public let entitlements: Set<Entitlement>
 
+    /// The attributes collected on the web paywall funnel that led to the
+    /// purchase, merged across every checkout the code redeems.
+    ///
+    /// This is `nil` when the funnel collected no attributes, which is always
+    /// the case for purchases made before the web paywall started recording
+    /// them. Values are strings, numbers, booleans, or arrays of those.
+    public let userAttributes: [String: Any]?
+
     public init(
       ownership: Ownership,
       purchaserInfo: PurchaserInfo,
       paywallInfo: PaywallInfo?,
-      entitlements: Set<Entitlement>
+      entitlements: Set<Entitlement>,
+      userAttributes: [String: Any]?
     ) {
       self.ownership = ownership
       self.purchaserInfo = purchaserInfo
       self.paywallInfo = paywallInfo
       self.entitlements = entitlements
+      self.userAttributes = userAttributes
       super.init()
     }
   }

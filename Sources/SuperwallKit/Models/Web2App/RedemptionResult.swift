@@ -93,6 +93,14 @@ public enum RedemptionResult: Codable {
     /// The entitlements array
     public let entitlements: Set<Entitlement>
 
+    /// The attributes collected on the web paywall funnel that led to the
+    /// purchase, merged across every checkout the code redeems.
+    ///
+    /// This is `nil` when the funnel collected no attributes, which is always
+    /// the case for purchases made before the web paywall started recording
+    /// them. Values are strings, numbers, booleans, or arrays of those.
+    public let userAttributes: [String: Any]?
+
     /// Enum specifiying code ownership.
     public enum Ownership: Codable {
       /// The code belongs to the identified user.
@@ -428,23 +436,49 @@ public enum RedemptionResult: Codable {
       }
     }
 
+    enum CodingKeys: String, CodingKey {
+      case ownership
+      case purchaserInfo
+      case paywallInfo
+      case entitlements
+      case userAttributes
+    }
+
     public init(from decoder: Decoder) throws {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       self.ownership = try container.decode(Ownership.self, forKey: .ownership)
       self.purchaserInfo = try container.decode(PurchaserInfo.self, forKey: .purchaserInfo)
       self.paywallInfo = try container.decodeIfPresent(PaywallInfo.self, forKey: .paywallInfo)
       self.entitlements = try container.decode(Set<Entitlement>.self, forKey: .entitlements)
+
+      let userAttributesJSON = try container.decodeIfPresent(JSON.self, forKey: .userAttributes)
+      let userAttributes = userAttributesJSON?.dictionaryObject
+      self.userAttributes = userAttributes?.isEmpty == true ? nil : userAttributes
+    }
+
+    public func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(ownership, forKey: .ownership)
+      try container.encode(purchaserInfo, forKey: .purchaserInfo)
+      try container.encodeIfPresent(paywallInfo, forKey: .paywallInfo)
+      try container.encode(entitlements, forKey: .entitlements)
+
+      if let userAttributes = userAttributes {
+        try container.encode(JSON(userAttributes), forKey: .userAttributes)
+      }
     }
 
     init(
       ownership: Ownership,
       purchaserInfo: PurchaserInfo,
-      entitlements: Set<Entitlement>
+      entitlements: Set<Entitlement>,
+      userAttributes: [String: Any]? = nil
     ) {
       self.ownership = ownership
       self.purchaserInfo = purchaserInfo
       self.entitlements = entitlements
       self.paywallInfo = nil
+      self.userAttributes = userAttributes
     }
 
     public func toObjc() -> RedemptionResultObjc.RedemptionInfo {
@@ -455,7 +489,8 @@ public enum RedemptionResult: Codable {
         ownership: objcOwnership,
         purchaserInfo: objcPurchaserInfo,
         paywallInfo: objcPaywallInfo,
-        entitlements: entitlements
+        entitlements: entitlements,
+        userAttributes: userAttributes
       )
     }
   }
