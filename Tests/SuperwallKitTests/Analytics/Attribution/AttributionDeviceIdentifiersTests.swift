@@ -260,26 +260,6 @@ struct AttributionDeviceIdentifiersTests {
     #expect(syncCount == 2)
   }
 
-  @Test func resendsTheIdentifiersWhenAPaywallOverwritesThem() {
-    let container = DependencyContainer()
-    var syncCount = 0
-    let fetcher = makeFetcher(container: container, sync: { _ in syncCount += 1 })
-    defer { fetcher.cancelPendingOperations() }
-    container.attributionFetcher = fetcher
-    let superwall = Superwall(dependencyContainer: container)
-
-    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
-    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
-    #expect(syncCount == 1)
-
-    // A paywall's attribute write doesn't go through `setUserAttributes`, but
-    // it has to be answered the same way.
-    superwall.setUserAttributesFromPaywall(["idfv": "made-up"])
-    fetcher.refreshDeviceIdentifiers()
-    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
-    #expect(syncCount == 2)
-  }
-
   @Test func keepsQuietWhenTheAppWritesItsOwnAttributes() {
     let container = DependencyContainer()
     var syncCount = 0

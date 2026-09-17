@@ -1504,7 +1504,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
           attributesDict[key] = attribute["value"].object
         }
       }
-      setUserAttributesFromPaywall(attributesDict)
+      dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributesDict)
     case let .requestCallback(name, behavior, requestId, _):
       Logger.debug(
         logLevel: .debug,

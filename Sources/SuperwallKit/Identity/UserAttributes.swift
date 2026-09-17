@@ -94,16 +94,6 @@ extension Superwall {
     setUserAttributes(userAttributes)
   }
 
-  /// Merges attributes set from a paywall and notifies the delegate. Runs the
-  /// same overwrite check as ``setUserAttributes(_:)-1wq0n``, so a paywall that
-  /// writes one of the SDK-owned keys is answered by a resync too.
-  func setUserAttributesFromPaywall(_ attributes: [String: Any]) {
-    dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
-      ifChangedBy: attributes
-    )
-    dependencyContainer.identityManager.mergeUserAttributesAndNotify(attributes)
-  }
-
   private func mergeAttributes(_ attributes: [String: Any?]) {
     var customAttributes: [String: Any?] = [:]
 
