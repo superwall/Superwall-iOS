@@ -46,6 +46,9 @@ struct IdentifyUserSwitchTests {
       Issue.record("the identity queue is hung")
       return
     }
+    // The reset re-applies the cached attribution to the new user. Its merge
+    // was queued from inside the identify block, so it lands ahead of this read.
+    #expect(identityManager.userAttributes["acquisition_source"] as? String == "test_network")
     superwall.reset()
   }
 }

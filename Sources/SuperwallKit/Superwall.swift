@@ -1111,6 +1111,10 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
+  ///
+  /// When `duringIdentify` is true this runs on the identity manager's queue,
+  /// so nothing it calls may wait on that queue, such as reading
+  /// `identityManager.userAttributes`, or the queue hangs for good.
   func reset(duringIdentify: Bool) {
     // Warn here rather than in the public reset() so the identify-triggered
     // reset — the actual user-switch moment — warns too.
