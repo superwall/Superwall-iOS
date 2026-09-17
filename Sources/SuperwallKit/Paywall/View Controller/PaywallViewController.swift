@@ -823,15 +823,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
   }
 
-  private func apply(_ claim: Claim) {
-    if claim.paywall.cacheKey == paywall.cacheKey {
-      paywall.update(from: claim.paywall)
-    } else {
-      // The request resolved a newer version of the paywall than the one
-      // loaded, so show that version rather than only its products.
-      paywall = claim.paywall
-      loadWebView()
-    }
+  /// Applies a claim. Returns whether it started a web view load.
+  @discardableResult
+  private func apply(_ claim: Claim) -> Bool {
+    // Install the claim's delegate and request first, so anything the
+    // reload below announces goes to the claim that owns it.
     delegate = claim.request.flags.type.getPaywallVcDelegateAdapter()
     request = claim.request
     if claim.paywallStatePublisher == nil {
@@ -841,6 +837,16 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     paywallStateSubject = claim.paywallStatePublisher
     unsavedOccurrence = claim.unsavedOccurrence
     currentClaim = claim
+
+    if claim.paywall.cacheKey == paywall.cacheKey {
+      paywall.update(from: claim.paywall)
+      return false
+    }
+    // The request resolved a different version of the paywall from the one
+    // loaded, so show that version rather than only its products.
+    paywall = claim.paywall
+    loadWebView()
+    return true
   }
 
   func present(
@@ -1505,11 +1511,12 @@ extension PaywallViewController {
     // another request has claimed it since. Report the app's placement. Only
     // on an appearance that starts a presentation: `viewWillAppear` also fires
     // when the paywall is already on screen, such as after Safari closes.
+    var didStartLoadForClaim = false
     if presentationWillPrepare,
       !isPresentedBySDK,
       handedOutClaimNeedsRestoring,
       let claim = handedOutClaim {
-      apply(claim)
+      didStartLoadForClaim = apply(claim)
       handedOutClaimNeedsRestoring = false
     }
     cache?.activePaywallVcKey = cacheKey
@@ -1523,7 +1530,8 @@ extension PaywallViewController {
       webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
     }
 
-    if webView.loadingHandler.didFailToLoad {
+    if webView.loadingHandler.didFailToLoad,
+      !didStartLoadForClaim {
       loadWebView()
     }
 

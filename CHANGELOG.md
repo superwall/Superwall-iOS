@@ -19,7 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a hang when identifying a different user after an install attribution match had been found.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
-- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen.
+- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen. A paywall fetched with `getPaywall` now shows the version it resolved when presented.
 
 ## 4.16.3
 
