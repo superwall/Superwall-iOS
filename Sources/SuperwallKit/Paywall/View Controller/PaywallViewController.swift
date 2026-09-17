@@ -767,12 +767,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     unsavedOccurrence: TriggerAudienceOccurrence?
   ) {
     if isActive {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .paywallPresentation,
-        message: "Ignoring request for a paywall that is already presented.",
-        info: ["placement": request.presentationInfo.placementName ?? ""]
-      )
       return
     }
     let claim = Claim(
