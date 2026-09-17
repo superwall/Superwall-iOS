@@ -754,7 +754,6 @@ class ConfigManager {
             for: paywall,
             isDebuggerLaunched: request.isDebuggerLaunched,
             isForPresentation: true,
-            isPreloading: true,
             delegate: nil
           )
         }

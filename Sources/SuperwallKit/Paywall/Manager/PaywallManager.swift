@@ -89,7 +89,6 @@ class PaywallManager {
     for paywall: Paywall,
     isDebuggerLaunched: Bool,
     isForPresentation: Bool,
-    isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     let deviceInfo = factory.makeDeviceInfo()
@@ -100,10 +99,17 @@ class PaywallManager {
 
     if !isDebuggerLaunched,
       let viewController = self.cache.getPaywallViewController(forKey: cacheKey) {
+      // There is one view controller per paywall. While it's on screen it
+      // belongs to that presentation, so leave it alone. The experiment,
+      // products and delegate for a request are applied when the request
+      // claims the view controller, in `set(request:paywall:...)`.
+      if viewController.isActive {
+        return viewController
+      }
+
       let outcomes = PaywallManagerLogic.handleCachedPaywall(
         newPaywall: paywall,
         oldPaywall: viewController.paywall,
-        isPreloading: isPreloading,
         isForPresentation: isForPresentation
       )
 
@@ -113,10 +119,6 @@ class PaywallManager {
           viewController.loadWebView()
         case .replacePaywall:
           viewController.paywall = paywall
-        case .setDelegate:
-          viewController.delegate = delegate
-        case .updatePaywall:
-          viewController.paywall.update(from: paywall)
         }
       }
 

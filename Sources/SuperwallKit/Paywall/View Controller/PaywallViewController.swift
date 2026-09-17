@@ -41,6 +41,25 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The cache key for the view controller.
   var cacheKey: String
 
+  /// What a request applies when it claims the view controller.
+  private struct Claim {
+    let request: PresentationRequest
+    let paywall: Paywall
+    let paywallStatePublisher: PassthroughSubject<PaywallState, Never>
+    let unsavedOccurrence: TriggerAudienceOccurrence?
+  }
+
+  /// The claim made through `getPaywall`. Kept so that a view controller the
+  /// app is holding reports that placement when the app shows it, even if the
+  /// SDK presented this paywall for another placement in the meantime.
+  private var handedOutClaim: Claim?
+
+  /// Whether the SDK claimed the view controller after it was handed out.
+  private var handedOutClaimNeedsRestoring = false
+
+  /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
+  private var isPresentedBySDK = false
+
   /// Determines whether the paywall is presented or not.
   var isActive: Bool {
     return isPresented || isBeingPresented
@@ -735,20 +754,55 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Presentation Logic
 
-  /// Sets data before presenting the paywall.
+  /// Claims the view controller for a request: binds the request and applies
+  /// the paywall resolved for it, so the placement, experiment and products
+  /// reported for this presentation all come from the same request.
+  ///
+  /// A view controller that's on screen stays with the request that put it
+  /// there, so a claim made while it's active is ignored.
   func set(
     request: PresentationRequest,
+    paywall: Paywall,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     unsavedOccurrence: TriggerAudienceOccurrence?
   ) {
-    self.request = request
-    self.paywallStateSubject = paywallStatePublisher
-    self.unsavedOccurrence = unsavedOccurrence
+    if isActive {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallPresentation,
+        message: "Ignoring request for a paywall that is already presented.",
+        info: ["placement": request.presentationInfo.placementName ?? ""]
+      )
+      return
+    }
+    let claim = Claim(
+      request: request,
+      paywall: paywall,
+      paywallStatePublisher: paywallStatePublisher,
+      unsavedOccurrence: unsavedOccurrence
+    )
+    apply(claim)
+
+    if case .getPaywall = request.flags.type {
+      handedOutClaim = claim
+      handedOutClaimNeedsRestoring = false
+    } else if handedOutClaim != nil {
+      handedOutClaimNeedsRestoring = true
+    }
+  }
+
+  private func apply(_ claim: Claim) {
+    paywall.update(from: claim.paywall)
+    delegate = claim.request.flags.type.getPaywallVcDelegateAdapter()
+    request = claim.request
+    paywallStateSubject = claim.paywallStatePublisher
+    unsavedOccurrence = claim.unsavedOccurrence
   }
 
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
+    paywall: Paywall,
     unsavedOccurrence: TriggerAudienceOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
@@ -763,11 +817,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     set(
       request: request,
+      paywall: paywall,
       paywallStatePublisher: paywallStatePublisher,
       unsavedOccurrence: unsavedOccurrence
     )
 
     setPresentationStyle(withOverride: presentationStyleOverride)
+    isPresentedBySDK = true
 
     presenter.present(
       self,
@@ -1401,6 +1457,14 @@ extension PaywallViewController {
 
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    // The app is showing a view controller it got from `getPaywall`, and the
+    // SDK has used it for another placement since. Report the app's placement.
+    if !isPresentedBySDK,
+      handedOutClaimNeedsRestoring,
+      let claim = handedOutClaim {
+      apply(claim)
+      handedOutClaimNeedsRestoring = false
+    }
     cache?.activePaywallVcKey = cacheKey
 
     if isSafariVCPresented {
@@ -1668,6 +1732,7 @@ extension PaywallViewController {
     paywallResult = nil
     cache?.activePaywallVcKey = nil
     isPresented = false
+    isPresentedBySDK = false
 
     dismissCompletionBlock?()
     dismissCompletionBlock = nil

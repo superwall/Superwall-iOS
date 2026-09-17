@@ -13,7 +13,7 @@ extension Superwall {
   /// and sends back a `presented` state to the paywall state publisher.
   ///
   /// - Parameters:
-  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - paywall: The paywall resolved for the request.
   ///   - presenter: The view controller to present that paywall on.
   ///   - unsavedOccurrence: The audience occurrence to save, if available.
   ///   - debugInfo: Information to help with debugging.
@@ -24,6 +24,7 @@ extension Superwall {
   @MainActor
   func presentPaywallViewController(
     _ paywallViewController: PaywallViewController,
+    paywall: Paywall,
     on presenter: UIViewController,
     unsavedOccurrence: TriggerAudienceOccurrence?,
     debugInfo: [String: Any],
@@ -43,6 +44,7 @@ extension Superwall {
       paywallViewController.present(
         on: presenter,
         request: request,
+        paywall: paywall,
         unsavedOccurrence: unsavedOccurrence,
         presentationStyleOverride: request.paywallOverrides?.presentationStyle,
         paywallStatePublisher: paywallStatePublisher

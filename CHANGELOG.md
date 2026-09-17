@@ -23,6 +23,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a crash when `register` is called from more than one thread at a time.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
+- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen.
 
 ## 4.16.3
 
