@@ -431,8 +431,9 @@ struct PaywallSharedControllerAttributionTests {
     claim(viewController, placement: "session_start", paywall: sessionStartPaywall)
     show(viewController)
 
-    let stored = try #require(Superwall.shared.presentationItems.last?.statePublisher)
-    #expect(stored !== publisher)
+    let stored = try #require(Superwall.shared.presentationItems.last)
+    #expect(stored.request.presentationInfo.placementName == "embedded")
+    #expect(stored.statePublisher !== publisher)
     expectEmbeddedAttribution(viewController.info)
   }
 
