@@ -196,6 +196,51 @@ struct PaywallSharedControllerAttributionTests {
   }
 
   @Test
+  func claimWithANewPaywallVersionLoadsThatVersion() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    #expect(!viewController.didLoadWebView)
+
+    var newVersion = campaignPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "campaign_trigger", paywall: newVersion)
+
+    #expect(viewController.paywall.cacheKey == "newVersion")
+    #expect(viewController.didLoadWebView)
+    #expect(viewController.info.experiment?.id == "181395")
+  }
+
+  @Test
+  func claimWithTheSamePaywallVersionDoesNotReload() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+
+    claim(viewController, placement: "campaign_trigger", paywall: campaignPaywall)
+
+    #expect(!viewController.didLoadWebView)
+    #expect(viewController.info.experiment?.id == "181395")
+  }
+
+  @Test
+  func restoredClaimWithANewPaywallVersionLoadsThatVersion() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    viewController.isOnScreen = true
+
+    // The paywall is republished while on screen, and the app fetches it.
+    var newVersion = embeddedPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "embedded", paywall: newVersion, type: getPaywallType)
+    #expect(viewController.paywall.cacheKey == sessionStartPaywall.cacheKey)
+    #expect(!viewController.didLoadWebView)
+
+    // The presentation ends and the app shows its handle.
+    viewController.isOnScreen = false
+    viewController.viewWillAppear(false)
+
+    #expect(viewController.paywall.cacheKey == "newVersion")
+    #expect(viewController.didLoadWebView)
+    expectEmbeddedAttribution(viewController.info)
+  }
+
+  @Test
   func interleavedRequestsReportThePresentingRequest() async throws {
     let paywallManager = try #require(dependencyContainer.paywallManager)
     let paywallA = sessionStartPaywall

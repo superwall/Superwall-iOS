@@ -824,7 +824,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   private func apply(_ claim: Claim) {
-    paywall.update(from: claim.paywall)
+    if claim.paywall.cacheKey == paywall.cacheKey {
+      paywall.update(from: claim.paywall)
+    } else {
+      // The request resolved a newer version of the paywall than the one
+      // loaded, so show that version rather than only its products.
+      paywall = claim.paywall
+      loadWebView()
+    }
     delegate = claim.request.flags.type.getPaywallVcDelegateAdapter()
     request = claim.request
     if claim.paywallStatePublisher == nil {
