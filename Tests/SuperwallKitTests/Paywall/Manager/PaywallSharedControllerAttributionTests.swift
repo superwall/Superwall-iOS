@@ -10,10 +10,33 @@ import Testing
 import Combine
 @testable import SuperwallKit
 
-/// Lets a test say whether the view controller is on screen.
+/// Lets a test say whether the view controller is on screen, and records
+/// whether the web view was asked to load.
 private final class ActivePaywallViewController: PaywallViewController {
   var isOnScreen = false
+  var didLoadWebView = false
+
   override var isActive: Bool { isOnScreen }
+
+  override func loadWebView() {
+    didLoadWebView = true
+  }
+}
+
+/// Counts occurrence saves instead of writing to Core Data.
+private final class OccurrenceCountingCoreDataManager: CoreDataManager {
+  var savedOccurrences = 0
+
+  init() {
+    super.init(coreDataStack: CoreDataStackMock())
+  }
+
+  override func save(
+    triggerAudienceOccurrence audienceOccurence: TriggerAudienceOccurrence,
+    completion: ((ManagedTriggerRuleOccurrence) -> Void)? = nil
+  ) {
+    savedOccurrences += 1
+  }
 }
 
 /// Two campaigns share one paywall, so both requests get the one cached view
@@ -23,6 +46,11 @@ private final class ActivePaywallViewController: PaywallViewController {
 @MainActor
 struct PaywallSharedControllerAttributionTests {
   private let dependencyContainer = DependencyContainer()
+
+  /// The view controller only holds its storage and dependencies unowned, and
+  /// showing it starts tracking tasks that outlive the test, so anything it
+  /// depends on must live for the rest of the process.
+  private static var retained: [AnyObject] = []
 
   private func paywall(
     experimentId: String,
@@ -37,6 +65,18 @@ struct PaywallSharedControllerAttributionTests {
     )
     paywall.presentationSourceType = source
     return paywall
+  }
+
+  private var sessionStartPaywall: Paywall {
+    paywall(experimentId: "180872", variantId: "632038", source: "implicit")
+  }
+
+  private var campaignPaywall: Paywall {
+    paywall(experimentId: "181395", variantId: "633524", source: "register")
+  }
+
+  private var embeddedPaywall: Paywall {
+    paywall(experimentId: "166736", variantId: "634019", source: "getPaywall")
   }
 
   private func request(
@@ -66,20 +106,22 @@ struct PaywallSharedControllerAttributionTests {
     _ viewController: PaywallViewController,
     placement: String,
     paywall: Paywall,
-    type: PresentationRequestType = .presentation
+    type: PresentationRequestType = .presentation,
+    unsavedOccurrence: TriggerAudienceOccurrence? = nil
   ) {
     viewController.set(
       request: request(placement: placement, type: type),
       paywall: paywall,
       paywallStatePublisher: .init(),
-      unsavedOccurrence: nil
+      unsavedOccurrence: unsavedOccurrence
     )
   }
 
   /// Puts a view controller for `paywall` in the cache, claimed by `placement`.
   private func cachedViewController(
     for paywall: Paywall,
-    placement: String
+    placement: String,
+    storage: Storage? = nil
   ) -> ActivePaywallViewController {
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -98,7 +140,7 @@ struct PaywallSharedControllerAttributionTests {
       paywall: paywall,
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
-      storage: dependencyContainer.storage,
+      storage: storage ?? dependencyContainer.storage,
       network: dependencyContainer.network,
       webView: webView,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
@@ -111,6 +153,18 @@ struct PaywallSharedControllerAttributionTests {
     return viewController
   }
 
+  /// Runs the appearance callbacks the way UIKit does when the app shows the view controller.
+  private func show(_ viewController: PaywallViewController) {
+    Self.retained.append(dependencyContainer)
+    viewController.viewWillAppear(false)
+    viewController.viewDidAppear(false)
+  }
+
+  private func hide(_ viewController: PaywallViewController) {
+    viewController.viewWillDisappear(false)
+    viewController.viewDidDisappear(false)
+  }
+
   private func expectSessionStartAttribution(_ info: PaywallInfo) {
     #expect(info.presentedByPlacementWithName == "session_start")
     #expect(info.experiment?.id == "180872")
@@ -118,13 +172,20 @@ struct PaywallSharedControllerAttributionTests {
     #expect(info.presentationSourceType == "implicit")
   }
 
+  private func expectEmbeddedAttribution(_ info: PaywallInfo) {
+    #expect(info.presentedByPlacementWithName == "embedded")
+    #expect(info.experiment?.id == "166736")
+    #expect(info.experiment?.variant.id == "634019")
+    #expect(info.presentationSourceType == "getPaywall")
+  }
+
+  // MARK: - Claiming
+
   @Test
   func claimAppliesTheRequestsPaywall() {
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    let viewController = cachedViewController(for: paywallA, placement: "session_start")
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
 
-    let paywallB = paywall(experimentId: "181395", variantId: "633524", source: "register")
-    claim(viewController, placement: "campaign_trigger", paywall: paywallB)
+    claim(viewController, placement: "campaign_trigger", paywall: campaignPaywall)
 
     let info = viewController.info
     #expect(info.presentedByPlacementWithName == "campaign_trigger")
@@ -134,79 +195,9 @@ struct PaywallSharedControllerAttributionTests {
   }
 
   @Test
-  func requestWhilePresentedLeavesViewControllerAlone() async throws {
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    let presented = cachedViewController(for: paywallA, placement: "session_start")
-    presented.isOnScreen = true
-
-    // A main-campaign placement whose variant uses the same paywall fires
-    // while the session-start paywall is on screen.
-    let paywallB = paywall(experimentId: "181395", variantId: "633524", source: "register")
-    let paywallManager = try #require(dependencyContainer.paywallManager)
-    let viewControllerB = try await paywallManager.getViewController(
-      for: paywallB,
-      isDebuggerLaunched: false,
-      isForPresentation: true,
-      delegate: nil
-    )
-
-    #expect(viewControllerB === presented)
-    expectSessionStartAttribution(presented.info)
-  }
-
-  @Test
-  func presentedViewControllerCannotBeClaimedByAnotherRequest() {
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    let presented = cachedViewController(for: paywallA, placement: "session_start")
-    presented.isOnScreen = true
-
-    // `getPaywall` claims after fetching. If the view controller went on
-    // screen for another placement in between, the claim must not take it.
-    let paywallB = paywall(experimentId: "181395", variantId: "633524", source: "register")
-    claim(presented, placement: "campaign_trigger", paywall: paywallB)
-
-    expectSessionStartAttribution(presented.info)
-  }
-
-  @Test
-  func handedOutViewControllerReportsItsOwnPlacementWhenTheAppShowsIt() {
-    let paywallEmbedded = paywall(experimentId: "166736", variantId: "634019", source: "getPaywall")
-    let viewController = cachedViewController(for: paywallEmbedded, placement: "embedded")
-    // The app fetched it with `getPaywall` and is holding on to it.
-    claim(viewController, placement: "embedded", paywall: paywallEmbedded, type: getPaywallType)
-
-    // `register` presents the same paywall for another placement, then it's dismissed.
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    claim(viewController, placement: "session_start", paywall: paywallA)
-    viewController.isOnScreen = true
-    #expect(viewController.info.presentedByPlacementWithName == "session_start")
-    viewController.isOnScreen = false
-
-    // The app now shows the view controller it was holding.
-    viewController.viewWillAppear(false)
-
-    let info = viewController.info
-    #expect(info.presentedByPlacementWithName == "embedded")
-    #expect(info.experiment?.id == "166736")
-    #expect(info.experiment?.variant.id == "634019")
-    #expect(info.presentationSourceType == "getPaywall")
-  }
-
-  @Test
-  func appearingWithoutAHandedOutClaimKeepsTheCurrentRequest() {
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    let viewController = cachedViewController(for: paywallA, placement: "session_start")
-
-    viewController.viewWillAppear(false)
-
-    expectSessionStartAttribution(viewController.info)
-  }
-
-  @Test
   func interleavedRequestsReportThePresentingRequest() async throws {
     let paywallManager = try #require(dependencyContainer.paywallManager)
-    let paywallA = paywall(experimentId: "180872", variantId: "632038", source: "implicit")
-    let paywallB = paywall(experimentId: "181395", variantId: "633524", source: "register")
+    let paywallA = sessionStartPaywall
 
     // Both requests fetch the view controller before either presents.
     let viewControllerA = try await paywallManager.getViewController(
@@ -216,7 +207,7 @@ struct PaywallSharedControllerAttributionTests {
       delegate: nil
     )
     let viewControllerB = try await paywallManager.getViewController(
-      for: paywallB,
+      for: campaignPaywall,
       isDebuggerLaunched: false,
       isForPresentation: true,
       delegate: nil
@@ -227,5 +218,168 @@ struct PaywallSharedControllerAttributionTests {
     claim(viewControllerA, placement: "session_start", paywall: paywallA)
 
     expectSessionStartAttribution(viewControllerA.info)
+  }
+
+  // MARK: - While on screen
+
+  @Test
+  func requestWhilePresentedLeavesViewControllerAlone() async throws {
+    let presented = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    presented.isOnScreen = true
+
+    // A main-campaign placement whose variant uses the same paywall fires
+    // while the session-start paywall is on screen.
+    let paywallManager = try #require(dependencyContainer.paywallManager)
+    let viewControllerB = try await paywallManager.getViewController(
+      for: campaignPaywall,
+      isDebuggerLaunched: false,
+      isForPresentation: true,
+      delegate: nil
+    )
+
+    #expect(viewControllerB === presented)
+    expectSessionStartAttribution(presented.info)
+  }
+
+  @Test
+  func presentedViewControllerIsNotReplacedByANewPaywallVersion() async throws {
+    let paywallA = sessionStartPaywall
+    let presented = cachedViewController(for: paywallA, placement: "session_start")
+    presented.isOnScreen = true
+
+    // The paywall was republished, so the same request now resolves to a new
+    // version. The cache would normally swap it in and reload the web view.
+    var newVersion = campaignPaywall
+    newVersion.cacheKey = "newVersion"
+    let paywallManager = try #require(dependencyContainer.paywallManager)
+    let viewController = try await paywallManager.getViewController(
+      for: newVersion,
+      isDebuggerLaunched: false,
+      isForPresentation: true,
+      delegate: nil
+    )
+
+    #expect(viewController === presented)
+    #expect(presented.paywall.cacheKey == paywallA.cacheKey)
+    #expect(!presented.didLoadWebView)
+    expectSessionStartAttribution(presented.info)
+  }
+
+  @Test
+  func presentedViewControllerCannotBeClaimedByAnotherRequest() {
+    let presented = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    presented.isOnScreen = true
+
+    // `getPaywall` claims after fetching. If the view controller went on
+    // screen for another placement in between, the claim must not take it.
+    claim(presented, placement: "campaign_trigger", paywall: campaignPaywall)
+
+    expectSessionStartAttribution(presented.info)
+  }
+
+  // MARK: - Handed out via getPaywall
+
+  @Test
+  func getPaywallClaimWhilePresentedIsRestoredWhenTheAppShowsIt() {
+    let presented = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    presented.isOnScreen = true
+
+    // The app calls `getPaywall` for the paywall that's on screen. It gets the
+    // view controller back, but the presentation must not change.
+    claim(presented, placement: "embedded", paywall: embeddedPaywall, type: getPaywallType)
+    expectSessionStartAttribution(presented.info)
+    #expect(presented.delegate == nil)
+
+    // The presentation ends and the app shows the view controller it holds.
+    presented.isOnScreen = false
+    presented.viewWillAppear(false)
+
+    expectEmbeddedAttribution(presented.info)
+    #expect(presented.delegate != nil)
+  }
+
+  @Test
+  func handedOutViewControllerReportsItsOwnPlacementWhenTheAppShowsIt() {
+    let viewController = cachedViewController(for: embeddedPaywall, placement: "embedded")
+    // The app fetched it with `getPaywall` and is holding on to it.
+    claim(viewController, placement: "embedded", paywall: embeddedPaywall, type: getPaywallType)
+
+    // `register` presents the same paywall for another placement, then it's dismissed.
+    claim(viewController, placement: "session_start", paywall: sessionStartPaywall)
+    viewController.isOnScreen = true
+    #expect(viewController.info.presentedByPlacementWithName == "session_start")
+    viewController.isOnScreen = false
+
+    // The app now shows the view controller it was holding.
+    viewController.viewWillAppear(false)
+
+    expectEmbeddedAttribution(viewController.info)
+  }
+
+  @Test
+  func handedOutOccurrenceIsSavedWhenTheAppFirstShowsIt() {
+    let coreDataManager = OccurrenceCountingCoreDataManager()
+    let storage = Storage(factory: dependencyContainer, cache: Cache(), coreDataManager: coreDataManager)
+    Self.retained.append(storage)
+    let viewController = cachedViewController(
+      for: embeddedPaywall,
+      placement: "embedded",
+      storage: storage
+    )
+    claim(
+      viewController,
+      placement: "embedded",
+      paywall: embeddedPaywall,
+      type: getPaywallType,
+      unsavedOccurrence: .stub()
+    )
+
+    // `register` claims the paywall before the app has shown its handle.
+    claim(viewController, placement: "session_start", paywall: sessionStartPaywall)
+
+    show(viewController)
+
+    #expect(coreDataManager.savedOccurrences == 1)
+    expectEmbeddedAttribution(viewController.info)
+  }
+
+  @Test
+  func restoredClaimDoesNotSaveItsOccurrenceAgain() {
+    let coreDataManager = OccurrenceCountingCoreDataManager()
+    let storage = Storage(factory: dependencyContainer, cache: Cache(), coreDataManager: coreDataManager)
+    Self.retained.append(storage)
+    let viewController = cachedViewController(
+      for: embeddedPaywall,
+      placement: "embedded",
+      storage: storage
+    )
+    claim(
+      viewController,
+      placement: "embedded",
+      paywall: embeddedPaywall,
+      type: getPaywallType,
+      unsavedOccurrence: .stub()
+    )
+
+    // The app shows and hides its handle, which saves the occurrence.
+    show(viewController)
+    hide(viewController)
+    #expect(coreDataManager.savedOccurrences == 1)
+
+    // `register` claims the paywall, then the app shows its handle again.
+    claim(viewController, placement: "session_start", paywall: sessionStartPaywall)
+    show(viewController)
+
+    #expect(coreDataManager.savedOccurrences == 1)
+    expectEmbeddedAttribution(viewController.info)
+  }
+
+  @Test
+  func appearingWithoutAHandedOutClaimKeepsTheCurrentRequest() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+
+    viewController.viewWillAppear(false)
+
+    expectSessionStartAttribution(viewController.info)
   }
 }
