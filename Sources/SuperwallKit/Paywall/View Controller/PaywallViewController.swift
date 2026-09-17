@@ -1494,9 +1494,12 @@ extension PaywallViewController {
 
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    // The app is showing a view controller it got from `getPaywall`, and the
-    // SDK has used it for another placement since. Report the app's placement.
-    if !isPresentedBySDK,
+    // The app is showing a view controller it got from `getPaywall`, and
+    // another request has claimed it since. Report the app's placement. Only
+    // on an appearance that starts a presentation: `viewWillAppear` also fires
+    // when the paywall is already on screen, such as after Safari closes.
+    if presentationWillPrepare,
+      !isPresentedBySDK,
       handedOutClaimNeedsRestoring,
       let claim = handedOutClaim {
       apply(claim)

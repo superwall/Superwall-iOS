@@ -107,12 +107,13 @@ struct PaywallSharedControllerAttributionTests {
     placement: String,
     paywall: Paywall,
     type: PresentationRequestType = .presentation,
-    unsavedOccurrence: TriggerAudienceOccurrence? = nil
+    unsavedOccurrence: TriggerAudienceOccurrence? = nil,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never> = .init()
   ) {
     viewController.set(
       request: request(placement: placement, type: type),
       paywall: paywall,
-      paywallStatePublisher: .init(),
+      paywallStatePublisher: paywallStatePublisher,
       unsavedOccurrence: unsavedOccurrence
     )
   }
@@ -299,6 +300,31 @@ struct PaywallSharedControllerAttributionTests {
   }
 
   @Test
+  func secondGetPaywallWhileTheAppShowsItDoesNotChangeThePresentation() {
+    let viewController = cachedViewController(for: embeddedPaywall, placement: "embedded")
+    claim(viewController, placement: "embedded", paywall: embeddedPaywall, type: getPaywallType)
+    show(viewController)
+    viewController.isOnScreen = true
+    let delegate = viewController.delegate
+
+    // The app calls `getPaywall` again for the same paywall while it's showing
+    // it, then something like Safari closing makes it appear again.
+    claim(viewController, placement: "campaign_trigger", paywall: campaignPaywall, type: getPaywallType)
+    viewController.viewWillAppear(false)
+
+    expectEmbeddedAttribution(viewController.info)
+    #expect(viewController.delegate === delegate)
+
+    // Once that presentation ends, the newer claim is what the app gets.
+    hide(viewController)
+    viewController.isOnScreen = false
+    viewController.viewWillAppear(false)
+
+    #expect(viewController.info.presentedByPlacementWithName == "campaign_trigger")
+    #expect(viewController.info.experiment?.id == "181395")
+  }
+
+  @Test
   func handedOutViewControllerReportsItsOwnPlacementWhenTheAppShowsIt() {
     let viewController = cachedViewController(for: embeddedPaywall, placement: "embedded")
     // The app fetched it with `getPaywall` and is holding on to it.
@@ -371,6 +397,42 @@ struct PaywallSharedControllerAttributionTests {
     show(viewController)
 
     #expect(coreDataManager.savedOccurrences == 1)
+    expectEmbeddedAttribution(viewController.info)
+  }
+
+  @Test
+  func restoredClaimGetsAFreshStatePublisherAfterTheOldOneCompleted() async throws {
+    let viewController = cachedViewController(for: embeddedPaywall, placement: "embedded")
+    let publisher = PassthroughSubject<PaywallState, Never>()
+    final class Completion { var done = false }
+    let completion = Completion()
+    let subscription = publisher.sink(
+      receiveCompletion: { _ in completion.done = true },
+      receiveValue: { _ in }
+    )
+    defer { subscription.cancel() }
+    claim(
+      viewController,
+      placement: "embedded",
+      paywall: embeddedPaywall,
+      type: getPaywallType,
+      paywallStatePublisher: publisher
+    )
+
+    // The app shows and hides its handle. Dismissal completes the publisher.
+    show(viewController)
+    hide(viewController)
+    for _ in 0..<200 where !completion.done {
+      try await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(completion.done)
+
+    // `register` claims the paywall, then the app shows its handle again.
+    claim(viewController, placement: "session_start", paywall: sessionStartPaywall)
+    show(viewController)
+
+    let stored = try #require(Superwall.shared.presentationItems.last?.statePublisher)
+    #expect(stored !== publisher)
     expectEmbeddedAttribution(viewController.info)
   }
 
