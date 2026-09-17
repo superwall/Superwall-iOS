@@ -41,6 +41,47 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// The cache key for the view controller.
   var cacheKey: String
 
+  /// What a request applies when it claims the view controller.
+  ///
+  /// The occurrence and publisher are cleared once used, so restoring the
+  /// claim later doesn't save the occurrence again or reinstall a publisher
+  /// that has already completed.
+  private final class Claim {
+    let request: PresentationRequest
+    let paywall: Paywall
+    var paywallStatePublisher: PassthroughSubject<PaywallState, Never>?
+    var unsavedOccurrence: TriggerAudienceOccurrence?
+
+    init(
+      request: PresentationRequest,
+      paywall: Paywall,
+      paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+      unsavedOccurrence: TriggerAudienceOccurrence?
+    ) {
+      self.request = request
+      self.paywall = paywall
+      self.paywallStatePublisher = paywallStatePublisher
+      self.unsavedOccurrence = unsavedOccurrence
+    }
+  }
+
+  /// The claim currently applied to the view controller.
+  private var currentClaim: Claim?
+
+  /// The claim made through `getPaywall`. Kept so that a view controller the
+  /// app is holding reports that placement when the app shows it, even if the
+  /// SDK presented this paywall for another placement in the meantime.
+  ///
+  /// This is held for the life of the cached view controller on purpose: the
+  /// app can show the handle it was given at any time.
+  private var handedOutClaim: Claim?
+
+  /// Whether the SDK claimed the view controller after it was handed out.
+  private var handedOutClaimNeedsRestoring = false
+
+  /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
+  private var isPresentedBySDK = false
+
   /// Determines whether the paywall is presented or not.
   var isActive: Bool {
     return isPresented || isBeingPresented
@@ -735,20 +776,70 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   // MARK: - Presentation Logic
 
-  /// Sets data before presenting the paywall.
+  /// Claims the view controller for a request: binds the request and applies
+  /// the paywall resolved for it, so the placement, experiment and products
+  /// reported for this presentation all come from the same request.
+  ///
+  /// A view controller that's on screen stays with the request that put it
+  /// there, so a claim made while it's active is ignored.
   func set(
     request: PresentationRequest,
+    paywall: Paywall,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
     unsavedOccurrence: TriggerAudienceOccurrence?
   ) {
-    self.request = request
-    self.paywallStateSubject = paywallStatePublisher
-    self.unsavedOccurrence = unsavedOccurrence
+    let claim = Claim(
+      request: request,
+      paywall: paywall,
+      paywallStatePublisher: paywallStatePublisher,
+      unsavedOccurrence: unsavedOccurrence
+    )
+    let isHandedOut: Bool
+    if case .getPaywall = request.flags.type {
+      isHandedOut = true
+    } else {
+      isHandedOut = false
+    }
+
+    if isActive {
+      // The app still gets this view controller back from `getPaywall`, so
+      // keep its claim for when the app shows it after the current
+      // presentation ends.
+      if isHandedOut {
+        handedOutClaim = claim
+        handedOutClaimNeedsRestoring = true
+      }
+      return
+    }
+
+    apply(claim)
+    isPresentedBySDK = false
+
+    if isHandedOut {
+      handedOutClaim = claim
+      handedOutClaimNeedsRestoring = false
+    } else if handedOutClaim != nil {
+      handedOutClaimNeedsRestoring = true
+    }
+  }
+
+  private func apply(_ claim: Claim) {
+    paywall.update(from: claim.paywall)
+    delegate = claim.request.flags.type.getPaywallVcDelegateAdapter()
+    request = claim.request
+    if claim.paywallStatePublisher == nil {
+      // The previous one completed when the paywall was last dismissed.
+      claim.paywallStatePublisher = PassthroughSubject()
+    }
+    paywallStateSubject = claim.paywallStatePublisher
+    unsavedOccurrence = claim.unsavedOccurrence
+    currentClaim = claim
   }
 
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
+    paywall: Paywall,
     unsavedOccurrence: TriggerAudienceOccurrence?,
     presentationStyleOverride: PaywallPresentationStyle?,
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
@@ -763,11 +854,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     set(
       request: request,
+      paywall: paywall,
       paywallStatePublisher: paywallStatePublisher,
       unsavedOccurrence: unsavedOccurrence
     )
 
     setPresentationStyle(withOverride: presentationStyleOverride)
+    isPresentedBySDK = true
 
     presenter.present(
       self,
@@ -1401,6 +1494,17 @@ extension PaywallViewController {
 
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    // The app is showing a view controller it got from `getPaywall`, and
+    // another request has claimed it since. Report the app's placement. Only
+    // on an appearance that starts a presentation: `viewWillAppear` also fires
+    // when the paywall is already on screen, such as after Safari closes.
+    if presentationWillPrepare,
+      !isPresentedBySDK,
+      handedOutClaimNeedsRestoring,
+      let claim = handedOutClaim {
+      apply(claim)
+      handedOutClaimNeedsRestoring = false
+    }
     cache?.activePaywallVcKey = cacheKey
 
     if isSafariVCPresented {
@@ -1515,6 +1619,7 @@ extension PaywallViewController {
     if let unsavedOccurrence = unsavedOccurrence {
       storage.coreDataManager.save(triggerAudienceOccurrence: unsavedOccurrence)
       self.unsavedOccurrence = nil
+      currentClaim?.unsavedOccurrence = nil
     }
     isPresented = true
     Superwall.shared.dependencyContainer.delegateAdapter.didPresentPaywall(withInfo: info)
@@ -1668,6 +1773,7 @@ extension PaywallViewController {
     paywallResult = nil
     cache?.activePaywallVcKey = nil
     isPresented = false
+    isPresentedBySDK = false
 
     dismissCompletionBlock?()
     dismissCompletionBlock = nil
@@ -1685,6 +1791,7 @@ extension PaywallViewController {
     if paywall.closeReason.stateShouldComplete {
       paywallStateSubject?.send(completion: .finished)
       paywallStateSubject = nil
+      currentClaim?.paywallStatePublisher = nil
     }
 
     Superwall.shared.dependencyContainer.delegateAdapter.didDismissPaywall(withInfo: info)
