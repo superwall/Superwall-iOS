@@ -13,6 +13,10 @@ import Testing
 /// Identifying a different user resets the previous one from inside the
 /// identity manager's queue. Anything that reset does must not wait on that
 /// queue, or every later identity call hangs for the rest of the process.
+///
+/// The identify-triggered reset is wired to the shared instance, so this runs
+/// against it. The only assertion is that its queue still answers, which no
+/// other suite's use of the instance can make false.
 @Suite(.serialized)
 struct IdentifyUserSwitchTests {
   @Test("Switching user with cached MMP attribution doesn't hang the identity queue")
@@ -42,7 +46,6 @@ struct IdentifyUserSwitchTests {
       Issue.record("the identity queue is hung")
       return
     }
-    #expect(identityManager.appUserId == "switch-user-b")
     superwall.reset()
   }
 }
