@@ -8,6 +8,7 @@
 import Foundation
 
 final class SK1ReceiptManager: ReceiptManagerType {
+  let loadsSubscriptionGroupsFromProducts = true
   private let receiptData: () -> Data?
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
@@ -23,6 +24,10 @@ final class SK1ReceiptManager: ReceiptManagerType {
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
     self.receiptData = receiptData
+  }
+
+  func seedPurchases(_ purchases: Set<Purchase>) async {
+    self.purchases = purchases
   }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {

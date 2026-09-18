@@ -135,7 +135,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case let .transactionComplete(trialEndDate, productIdentifier):
+    case let .transactionComplete(trialEndDate, productIdentifier, didStartFreeTrial):
       Task {
         // Send transaction_complete to trigger post-purchase actions
         let transactionComplete = SuperwallEventObjc.transactionComplete.description
@@ -144,6 +144,13 @@ final class PaywallMessageHandler: WebEventDelegate {
           from: paywall,
           payload: ["product_identifier": productIdentifier]
         )
+
+        // Only tell the paywall a trial started when one actually did. The paywall
+        // schedules its trial reminder off this message whenever a trial_end_date is
+        // present, and StoreKit exposes the intro offer even to ineligible users.
+        guard didStartFreeTrial else {
+          return
+        }
 
         // Send freeTrial_start for notification scheduling
         let freeTrialStart = SuperwallEventObjc.freeTrialStart.description

@@ -14,7 +14,10 @@ import Foundation
 /// stored and published value is always the merged one — subscribers never
 /// see the value a writer assigned before granted entitlements and test-mode
 /// overrides were applied. The projected value (`$subscriptionStatus`) replays
-/// the current value to new subscribers, like `@Published`.
+/// the latest emitted value to new subscribers, like `@Published`; while
+/// emissions are queued behind a slow subscriber, that replay can trail the
+/// stored value until its turn comes. Reads take the same lock as writes,
+/// so a read on one thread never races an assignment on another.
 ///
 /// Public only because a public property's wrapper type has to be; nothing
 /// but the projection is meant to be used. The enclosing-instance subscript
@@ -45,6 +48,10 @@ public struct PublishedSubscriptionStatus {
     storage storageKeyPath: ReferenceWritableKeyPath<Superwall, PublishedSubscriptionStatus>
   ) -> SubscriptionStatus {
     get {
+      superwall.subscriptionStatusLock.lock()
+      defer {
+        superwall.subscriptionStatusLock.unlock()
+      }
       return superwall[keyPath: storageKeyPath].storage
     }
     set {

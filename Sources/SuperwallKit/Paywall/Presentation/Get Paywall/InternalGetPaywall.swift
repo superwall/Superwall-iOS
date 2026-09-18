@@ -12,6 +12,8 @@ import UIKit
 extension Superwall {
   struct PaywallComponents {
     let viewController: PaywallViewController
+    /// The paywall resolved for the request, including its experiment.
+    let paywall: Paywall
     let presenter: UIViewController?
     let audienceOutcome: AudienceFilterEvaluationOutcome
     let debugInfo: [String: Any]
@@ -33,6 +35,7 @@ extension Superwall {
 
       await paywallComponents.viewController.set(
         request: request,
+        paywall: paywallComponents.paywall,
         paywallStatePublisher: publisher,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence
       )

@@ -110,6 +110,68 @@ struct ReceiptManagerTrialEligibilityTests {
     #expect(await manager.isFreeTrialAvailable(for: gold) == true)
   }
 
+  /// Stands in for the purchases load config was published ahead of.
+  private func slowPurchasesLoad(seconds: TimeInterval) -> Task<Void, Never> {
+    return Task {
+      try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+    }
+  }
+
+  @Test("A product with no subscription group answers without waiting for the load")
+  func doesNotWaitForLoadWithoutSubscriptionGroup() async {
+    let (manager, productsManager) = makeReceiptManager(
+      isEligibleForIntroOffer: true,
+      activeSubscriptionGroupIds: []
+    )
+    _ = productsManager
+    let consumable = makeProduct(id: "com.app.coins", subscriptionGroup: nil)
+    let load = slowPurchasesLoad(seconds: 2)
+
+    let startedAt = Date()
+    let isAvailable = await manager.isFreeTrialAvailable(for: consumable, waitingFor: load)
+    let waited = Date().timeIntervalSince(startedAt)
+
+    #expect(isAvailable == true)
+    #expect(waited < 1, "waited \(waited)s on a load that can't change the answer")
+    load.cancel()
+  }
+
+  @Test("An intro-ineligible customer answers without waiting for the load")
+  func doesNotWaitForLoadWhenIntroIneligible() async {
+    let (manager, productsManager) = makeReceiptManager(
+      isEligibleForIntroOffer: false,
+      activeSubscriptionGroupIds: []
+    )
+    _ = productsManager
+    let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
+    let load = slowPurchasesLoad(seconds: 2)
+
+    let startedAt = Date()
+    let isAvailable = await manager.isFreeTrialAvailable(for: gold, waitingFor: load)
+    let waited = Date().timeIntervalSince(startedAt)
+
+    #expect(isAvailable == false)
+    #expect(waited < 1, "waited \(waited)s on a load that can't change the answer")
+    load.cancel()
+  }
+
+  @Test("The upgrade check waits for the load that computes the active groups")
+  func waitsForLoadBeforeCheckingActiveGroups() async {
+    let (manager, productsManager) = makeReceiptManager(
+      isEligibleForIntroOffer: true,
+      activeSubscriptionGroupIds: []
+    )
+    _ = productsManager
+    let gold = makeProduct(id: "com.app.gold", subscriptionGroup: "group_A")
+    let load = slowPurchasesLoad(seconds: 0.5)
+
+    let startedAt = Date()
+    _ = await manager.isFreeTrialAvailable(for: gold, waitingFor: load)
+    let waited = Date().timeIntervalSince(startedAt)
+
+    #expect(waited >= 0.5, "answered from active groups the load hadn't computed yet")
+  }
+
   @Test("No trial when StoreKit reports the customer is intro-ineligible")
   func noTrialWhenIneligible() async {
     // Ineligible short-circuits before the active-subscription check.
@@ -208,6 +270,7 @@ struct ReceiptManagerTrialEligibilityTests {
 /// Minimal `ReceiptManagerType` whose `isEligibleForIntroOffer` is fully controlled,
 /// so tests can isolate `ReceiptManager`'s upgrade/crossgrade gating logic.
 private final class MockReceiptManagerType: ReceiptManagerType {
+  let loadsSubscriptionGroupsFromProducts = false
   let isEligibleForIntroOfferResult: Bool
   var purchases: Set<Purchase> = []
   var transactionReceipts: [TransactionReceipt] = []
@@ -220,6 +283,10 @@ private final class MockReceiptManagerType: ReceiptManagerType {
   }
 
   func loadIntroOfferEligibility(forProducts _: Set<StoreProduct>) async {}
+
+  func seedPurchases(_ purchases: Set<Purchase>) async {
+    self.purchases = purchases
+  }
 
   func loadPurchases(serverEntitlementsByProductId _: [String: Set<Entitlement>]) async -> PurchaseSnapshot {
     return PurchaseSnapshot(

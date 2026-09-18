@@ -64,9 +64,33 @@ class DeviceHelper {
     UIDevice.modelName
   }()
 
-  let vendorId: String = {
-    UIDevice.current.identifierForVendor?.uuidString ?? ""
-  }()
+  private let vendorIdLock = NSLock()
+  private var cachedVendorId = ""
+
+  /// `identifierForVendor` is `nil` until the device has been unlocked once, so
+  /// an app launched in the background before first unlock would be stuck with
+  /// an empty id for the whole process if this were read only at init. Latch the
+  /// first non-empty read instead, so a later read picks the id up once it
+  /// exists and every read after that is a compare behind an uncontended lock.
+  /// It has to stay that cheap: the `X-Vendor-ID` header reads it on every
+  /// request, and so do `makeDeviceId()` and `getTemplateDevice()`.
+  ///
+  /// This also settles `makeDeviceId()`, so the `$SuperwallDevice:` identity can
+  /// change once mid-process in that window. That's the point: the value it
+  /// replaces is the empty suffix, which isn't a per-device identity at all —
+  /// every device in this state shares it — so there's nothing there worth
+  /// keeping stable or reconciling against. The window closes at first unlock,
+  /// and the repeated `UIDevice` read inside it is cheap.
+  var vendorId: String {
+    vendorIdLock.lock()
+    defer { vendorIdLock.unlock() }
+
+    if !cachedVendorId.isEmpty {
+      return cachedVendorId
+    }
+    cachedVendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    return cachedVendorId
+  }
 
   var languageCode: String {
     if #available(iOS 16, *) {
@@ -180,9 +204,9 @@ class DeviceHelper {
   /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
   /// trait collections — must sit behind this check, and the check must come
   /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
-  /// unguarded `UIDevice` reads at init (`model`, `vendorId`, `interfaceType`)
-  /// are exempt: they don't touch the trait system, and the sample-app repro
-  /// keeps its tint with them in place.
+  /// unguarded `UIDevice` reads (`model` and `interfaceType` at init, `vendorId`
+  /// on first use) are exempt: they don't touch the trait system, and the
+  /// sample-app repro keeps its tint with them in place.
   ///
   /// A missing application object doesn't always mean that window, though: some
   /// processes never create one (unit-test runners, app extensions) yet can read
@@ -590,6 +614,13 @@ class DeviceHelper {
       return "true"
     }
     return Self.detectSandbox()
+  }
+
+  /// Whether the app is running outside App Store production: simulator,
+  /// TestFlight, or a development build. Unlike ``isSandbox`` this ignores
+  /// test mode, so it can be used to decide whether test mode may activate.
+  static var isSandboxEnvironment: Bool {
+    return detectSandbox() == "true"
   }
 
   private static func detectSandbox() -> String {

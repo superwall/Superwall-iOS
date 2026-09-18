@@ -28,7 +28,7 @@ struct Paywall: Codable {
   var url: URL
 
   /// An array of potential URLs to load the paywall from.
-  let urlConfig: WebViewURLConfig
+  var urlConfig: WebViewURLConfig
 
   /// Contains the website modifications that are made on the paywall editor to be accepted
   /// by the webview.
@@ -86,6 +86,10 @@ struct Paywall: Codable {
 
   /// Indicates whether scrolling is enabled on the webview.
   var isScrollEnabled: Bool
+
+  /// Whether this paywall was synthesized from a `superwall dev` server
+  /// surface rather than fetched from the dashboard.
+  var isLocal = false
 
   /// Indicates how intro offer eligiblity should be treat on products. Defaults to
   /// `.automatic`.
@@ -151,7 +155,7 @@ struct Paywall: Codable {
 
   /// A listing of all the files referenced in a paywall to be able to preload the whole
   /// paywall into a web archive.
-  let manifest: ArchiveManifest?
+  var manifest: ArchiveManifest?
 
   /// The state of the paywall, updated on paywall did dismiss.
   var state: [String: Any] = [:]
@@ -189,6 +193,7 @@ struct Paywall: Codable {
     case surveys
     case manifest
     case isScrollEnabled
+    case isLocal
     case introductoryOfferEligibility
 
     case responseLoadStartTime
@@ -305,6 +310,7 @@ struct Paywall: Codable {
 
     manifest = try values.decodeIfPresent(ArchiveManifest.self, forKey: .manifest)
     isScrollEnabled = try values.decodeIfPresent(Bool.self, forKey: .isScrollEnabled) ?? true
+    isLocal = try values.decodeIfPresent(Bool.self, forKey: .isLocal) ?? false
     introOfferEligibility = try values
       .decodeIfPresent(IntroOfferEligibility.self, forKey: .introductoryOfferEligibility) ?? .automatic
   }
@@ -363,11 +369,12 @@ struct Paywall: Codable {
 
     try container.encodeIfPresent(manifest, forKey: .manifest)
     try container.encodeIfPresent(isScrollEnabled, forKey: .isScrollEnabled)
+    try container.encode(isLocal, forKey: .isLocal)
     try container.encodeIfPresent(introOfferEligibility, forKey: .introductoryOfferEligibility)
   }
 
-  // Only used in stub
-  private init(
+  // Used by the stub and by `Paywall.devServer(surface:url:)`.
+  init(
     databaseId: String,
     identifier: String,
     name: String,
@@ -471,6 +478,7 @@ struct Paywall: Codable {
       surveys: surveys,
       presentation: presentation,
       isScrollEnabled: isScrollEnabled,
+      isLocal: isLocal,
       state: state,
       introOfferEligibility: introOfferEligibility
     )

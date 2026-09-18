@@ -109,6 +109,11 @@ final class TestModeManager {
   /// Evaluates whether the current user should be in test mode based on the config
   /// and the `testModeBehavior` option. Called on every config refresh.
   func evaluateTestMode(config: Config, options: SuperwallOptions) {
+    if DevMode.isActive(options) {
+      isTestMode = true
+      testModeReason = .testModeOption
+      return
+    }
     switch options.testModeBehavior {
     case .never:
       isTestMode = false

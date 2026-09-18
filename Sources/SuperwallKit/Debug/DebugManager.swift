@@ -12,6 +12,10 @@ final class DebugManager {
   @MainActor var viewController: DebugViewController?
 	var isDebuggerLaunched = false
 
+  /// The surfaces a running `superwall dev` server exposes, and where it lives.
+  /// Set when the debugger is opened from a `superwall_dev` deep link.
+  @MainActor var devServer: (base: URL, surfaces: [DevServerSurface])?
+
   private unowned let storage: Storage
   private unowned let factory: ViewControllerFactory
   struct DeepLinkOutcome {
@@ -68,31 +72,39 @@ final class DebugManager {
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
   @MainActor
-  func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+  func launchDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    devSurfaceId: String? = nil
+  ) async {
     if Superwall.shared.isPaywallPresented {
       await Superwall.shared.dismiss()
-      await launchDebugger(withPaywallId: paywallDatabaseId)
+      await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 		} else {
 			if viewController == nil {
         let milliseconds = 200
         let nanoseconds = UInt64(milliseconds * 1_000_000)
         try? await Task.sleep(nanoseconds: nanoseconds)
-        await presentDebugger(withPaywallId: paywallDatabaseId)
+        await presentDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 			} else {
         await closeDebugger(animated: true)
-        await launchDebugger(withPaywallId: paywallDatabaseId)
+        await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 			}
 		}
 	}
 
   @MainActor
-	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+	func presentDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    devSurfaceId: String? = nil
+  ) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
       if viewController.isBeingPresented {
         return
       }
 			viewController.paywallDatabaseId = paywallDatabaseId
+      viewController.devServer = devServer
+      viewController.selectDevSurface(id: devSurfaceId)
 			await viewController.loadPreview()
 			await UIViewController.topMostViewController?.present(
         viewController,
@@ -100,6 +112,8 @@ final class DebugManager {
       )
 		} else {
       let viewController = factory.makeDebugViewController(withDatabaseId: paywallDatabaseId)
+      viewController.devServer = devServer
+      viewController.selectDevSurface(id: devSurfaceId)
 			UIViewController.topMostViewController?.present(
         viewController,
         animated: true,

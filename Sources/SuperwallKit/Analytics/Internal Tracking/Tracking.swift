@@ -90,11 +90,9 @@ extension Superwall {
     forPlacement placement: Trackable,
     withData placementData: PlacementData
   ) async {
-    // Assign the current register task while capturing the previous one.
-    previousRegisterTask = Task { [weak self, previousRegisterTask] in
-      // Wait until the previous register task is finished before continuing.
-      await previousRegisterTask?.value
-
+    // Queue the work behind any register call already in flight and return,
+    // so implicit triggers and `register` calls don't present over each other.
+    registerTaskCoordinator.enqueue { [weak self] in
       await self?.internallyHandleImplicitTrigger(
         forPlacement: placement,
         withData: placementData
