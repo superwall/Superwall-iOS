@@ -330,6 +330,19 @@ struct ConfigManagerEarlyPublishTests {
     return Date().timeIntervalSince(start)
   }
 
+  /// Polls until the purchases load has started or `timeout` passes. Making
+  /// the load's `Task` doesn't run its first line, so it can start a moment
+  /// after config is published rather than before.
+  private func waitForLoadToStart(
+    _ receipt: SlowReceiptManagerType,
+    timeout: TimeInterval
+  ) async {
+    let start = Date()
+    while !receipt.didStartLoad, Date().timeIntervalSince(start) < timeout {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+  }
+
   private func settle() async {
     // Let the background refresh finish before the container goes away.
     try? await Task.sleep(nanoseconds: 300_000_000)
@@ -348,6 +361,7 @@ struct ConfigManagerEarlyPublishTests {
 
     #expect(harness.configManager.config?.buildId == "cached_123")
     #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    await waitForLoadToStart(harness.receipt, timeout: 1)
     #expect(harness.receipt.didStartLoad, "purchases load must still be kicked off")
     #expect(!harness.receipt.didFinishLoad, "config was published only after StoreKit finished")
 
