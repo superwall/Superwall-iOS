@@ -65,9 +65,14 @@ public final class Entitlement: NSObject, Codable, Sendable {
   /// All product identifiers that map to the entitlement.
   public let productIds: Set<String>
 
-  /// The product identifer of the latest transaction to unlock this entitlement.
+  /// The product identifer of the product currently unlocking this entitlement.
   ///
-  /// If one or more lifetime products unlock this entitlement, the `latestProductId` will always be the product identifier of the first lifetime product.
+  /// An entitlement can be unlocked by more than one purchase at once — a lifetime product, or subscriptions in
+  /// separate subscription groups. This is the product of whichever one is granting it: a lifetime product first,
+  /// then the active subscription with the most time left on it. Once nothing is active, it's the product of the
+  /// most recent purchase.
+  ///
+  /// If more than one lifetime product unlocks this entitlement, this is the most recently bought one.
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public let latestProductId: String?
@@ -79,10 +84,16 @@ public final class Entitlement: NSObject, Codable, Sendable {
 
   /// The purchase date of the first transaction that unlocked this entitlement.
   ///
+  /// Refunded purchases and consumables never unlocked it, so they don't count towards this.
+  ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement.
   public let startsAt: Date?
 
   /// The date that the entitlement was last renewed.
+  ///
+  /// If more than one subscription unlocks this entitlement, this is the most recent renewal among them —
+  /// unlike ``expiresAt`` and ``willRenew``, a renewal counts whether or not it happened in the subscription
+  /// currently granting access.
   ///
   /// This could be `nil` if:
   ///   - There aren't any transactions that unlock this entitlement.
@@ -90,7 +101,11 @@ public final class Entitlement: NSObject, Codable, Sendable {
   ///   - If the entitlement belongs to a non-renewing subscription or non-consumable product.
   public let renewedAt: Date?
 
-  /// The expiry date of the last transaction that unlocked this entitlement.
+  /// The date the purchase currently unlocking this entitlement runs out.
+  ///
+  /// This is the expiry of the same purchase that ``latestProductId`` names, so it always describes the
+  /// subscription actually granting access rather than an unrelated one in another subscription group. For a
+  /// subscription in a billing grace period, it's the end of the grace period.
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement or
   /// if a lifetime product unlocked this entitlement.
@@ -112,7 +127,9 @@ public final class Entitlement: NSObject, Codable, Sendable {
     return state == .revoked
   }
 
-  /// Indicates whether the last subscription transaction associated with this entitlement will auto renew.
+  /// Indicates whether the subscription currently unlocking this entitlement will auto renew.
+  ///
+  /// This describes the same purchase that ``latestProductId`` names.
   ///
   /// This is `nil` if there aren't any transactions that unlock this entitlement or if it was manually granted from Superwall.
   public let willRenew: Bool?
