@@ -14,12 +14,16 @@ import Combine
 /// whether the web view was asked to load.
 private final class ActivePaywallViewController: PaywallViewController {
   var isOnScreen = false
-  var didLoadWebView = false
+  var didLoadWebView: Bool { loadWebViewCount > 0 }
+  var loadWebViewCount = 0
+  /// The delegate installed at the moment a load was asked for.
+  var delegateAtLoad: PaywallViewControllerDelegateAdapter?
 
   override var isActive: Bool { isOnScreen }
 
   override func loadWebView() {
-    didLoadWebView = true
+    loadWebViewCount += 1
+    delegateAtLoad = delegate
   }
 }
 
@@ -193,6 +197,83 @@ struct PaywallSharedControllerAttributionTests {
     #expect(info.experiment?.id == "181395")
     #expect(info.experiment?.variant.id == "633524")
     #expect(info.presentationSourceType == "register")
+  }
+
+  @Test
+  func claimWithANewPaywallVersionLoadsThatVersion() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    #expect(!viewController.didLoadWebView)
+
+    var newVersion = campaignPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "campaign_trigger", paywall: newVersion)
+
+    #expect(viewController.paywall.cacheKey == "newVersion")
+    #expect(viewController.didLoadWebView)
+    #expect(viewController.info.experiment?.id == "181395")
+  }
+
+  @Test
+  func reloadForANewVersionIsAnnouncedToTheClaimsDelegate() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+
+    var newVersion = embeddedPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "embedded", paywall: newVersion, type: getPaywallType)
+
+    #expect(viewController.delegateAtLoad != nil)
+    #expect(viewController.delegateAtLoad === viewController.delegate)
+  }
+
+  @Test
+  func restoreWithANewVersionStartsOneLoadEvenAfterAFailedLoad() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    // The view is loaded before a paywall is ever shown, which does the first load.
+    viewController.loadViewIfNeeded()
+    viewController.loadWebViewCount = 0
+    viewController.isOnScreen = true
+    var newVersion = embeddedPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "embedded", paywall: newVersion, type: getPaywallType)
+    viewController.isOnScreen = false
+
+    // The web content process died while off screen.
+    viewController.webView.loadingHandler.didFailToLoad = true
+    viewController.viewWillAppear(false)
+
+    #expect(viewController.loadWebViewCount == 1)
+    #expect(viewController.paywall.cacheKey == "newVersion")
+  }
+
+  @Test
+  func claimWithTheSamePaywallVersionDoesNotReload() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+
+    claim(viewController, placement: "campaign_trigger", paywall: campaignPaywall)
+
+    #expect(!viewController.didLoadWebView)
+    #expect(viewController.info.experiment?.id == "181395")
+  }
+
+  @Test
+  func restoredClaimWithANewPaywallVersionLoadsThatVersion() {
+    let viewController = cachedViewController(for: sessionStartPaywall, placement: "session_start")
+    viewController.isOnScreen = true
+
+    // The paywall is republished while on screen, and the app fetches it.
+    var newVersion = embeddedPaywall
+    newVersion.cacheKey = "newVersion"
+    claim(viewController, placement: "embedded", paywall: newVersion, type: getPaywallType)
+    #expect(viewController.paywall.cacheKey == sessionStartPaywall.cacheKey)
+    #expect(!viewController.didLoadWebView)
+
+    // The presentation ends and the app shows its handle.
+    viewController.isOnScreen = false
+    viewController.viewWillAppear(false)
+
+    #expect(viewController.paywall.cacheKey == "newVersion")
+    #expect(viewController.didLoadWebView)
+    expectEmbeddedAttribution(viewController.info)
   }
 
   @Test
