@@ -132,7 +132,8 @@ public class RedemptionResultObjc: NSObject {
     ///
     /// This is `nil` when the funnel collected no attributes, which is always
     /// the case for purchases made before the web paywall started recording
-    /// them. Values are strings, numbers, booleans, or arrays of those.
+    /// them. Values are strings, numbers, booleans, `NSNull` for an answer that
+    /// was left blank, or arrays of those.
     public let userAttributes: [String: Any]?
 
     public init(
@@ -148,6 +149,21 @@ public class RedemptionResultObjc: NSObject {
       self.entitlements = entitlements
       self.userAttributes = userAttributes
       super.init()
+    }
+
+    public convenience init(
+      ownership: Ownership,
+      purchaserInfo: PurchaserInfo,
+      paywallInfo: PaywallInfo?,
+      entitlements: Set<Entitlement>
+    ) {
+      self.init(
+        ownership: ownership,
+        purchaserInfo: purchaserInfo,
+        paywallInfo: paywallInfo,
+        entitlements: entitlements,
+        userAttributes: nil
+      )
     }
   }
 

@@ -285,4 +285,23 @@ final class RedeemResponseTests {
     #expect(userAttributes["goal"] as? String == "build_muscle")
     #expect(userAttributes["equipment"] as? [String] == ["dumbbells", "bench"])
   }
+
+  @Test("The Objective-C model keeps its initialiser that predates user attributes")
+  func testObjcRedemptionInfoInitWithoutUserAttributes() throws {
+    let redemptionInfo = RedemptionResultObjc.RedemptionInfo(
+      ownership: RedemptionResultObjc.Ownership(appUserId: "abc"),
+      purchaserInfo: RedemptionResultObjc.PurchaserInfo(
+        appUserId: "abc",
+        email: nil,
+        storeIdentifiers: RedemptionResultObjc.StoreIdentifiers(
+          stripeWithCustomerId: "cus_123",
+          subscriptionIds: ["sub_123"]
+        )
+      ),
+      paywallInfo: nil,
+      entitlements: []
+    )
+
+    #expect(redemptionInfo.userAttributes == nil)
+  }
 }

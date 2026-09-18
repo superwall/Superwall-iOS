@@ -98,7 +98,8 @@ public enum RedemptionResult: Codable {
     ///
     /// This is `nil` when the funnel collected no attributes, which is always
     /// the case for purchases made before the web paywall started recording
-    /// them. Values are strings, numbers, booleans, or arrays of those.
+    /// them. Values are strings, numbers, booleans, `NSNull` for an answer that
+    /// was left blank, or arrays of those.
     public let userAttributes: [String: Any]?
 
     /// Enum specifiying code ownership.
