@@ -234,21 +234,51 @@ enum EntitlementProcessor {
   /// entitlement from a single most-recently-purchased transaction instead lets a
   /// refund in one group cancel out a paid, active subscription in another.
   struct GrantSource {
-    /// The transaction in this source with the greatest purchase date. Its
-    /// subscription group is the one queried for live status.
-    let representative: any EntitlementTransaction
-    let isLifetime: Bool
+    /// The newest transaction in this source that hasn't been refunded, if any.
+    let unrevokedRepresentative: (any EntitlementTransaction)?
 
-    /// Whether any transaction in this source is still unrevoked. A source whose
-    /// every transaction has been revoked grants nothing, whatever the
-    /// group-level status says.
-    let hasUnrevokedTransaction: Bool
+    /// The newest transaction in this source, refunded or not.
+    let lastKnownRepresentative: any EntitlementTransaction
+    let isLifetime: Bool
     var isActive: Bool
     var expiresAt: Date?
     var renewedAt: Date?
     var willRenew: Bool
     var state: LatestSubscription.State?
     var offerType: LatestSubscription.OfferType?
+
+    /// Whether any transaction in this source is still unrevoked. A source whose
+    /// every transaction has been revoked grants nothing, whatever the
+    /// group-level status says.
+    var hasUnrevokedTransaction: Bool { unrevokedRepresentative != nil }
+
+    /// The transaction that describes this source.
+    ///
+    /// While the source is granting access only a purchase that still counts may
+    /// describe it, or a refund would name the product unlocking the
+    /// entitlement. Once it grants nothing there is no such claim to protect, so
+    /// the most recent purchase describes it whether or not it was refunded —
+    /// which is what lets a refund be told apart from a plain lapse.
+    ///
+    /// This reads off `isActive` rather than being fixed when the source is
+    /// built, because the live subscription status can promote a source that the
+    /// transaction dates alone called lapsed.
+    var representative: any EntitlementTransaction {
+      if isActive,
+        let unrevokedRepresentative = unrevokedRepresentative {
+        return unrevokedRepresentative
+      }
+      return lastKnownRepresentative
+    }
+
+    /// The transaction whose subscription group is queried for live status.
+    ///
+    /// Prefers one that still counts, since that names the subscription the
+    /// customer actually holds. Unlike ``representative`` it never moves, so the
+    /// status lookup can't depend on a value that lookup goes on to change.
+    var statusTransaction: any EntitlementTransaction {
+      return unrevokedRepresentative ?? lastKnownRepresentative
+    }
 
     var latestProductId: String { representative.productId }
     var latestPurchaseDate: Date { representative.purchaseDate }
@@ -297,35 +327,29 @@ enum EntitlementProcessor {
       }
       let isLifetime = key == lifetimeKey
       let unrevoked = bucket.filter { !$0.isRevoked }
-      // A lifetime purchase never expires. Everything else grants access for
-      // as long as an unrevoked transaction still has time left on it.
-      let isActive = isLifetime || unrevoked.contains { ($0.expirationDate ?? .distantPast) > now }
-
-      // While the source is granting access, only a purchase that still counts
-      // may describe it, or a refund would name the product unlocking the
-      // entitlement. Once it grants nothing there is no such claim to protect,
-      // so the most recent purchase describes it whether or not it was
-      // refunded — which is what lets a refund be told apart from a plain lapse.
-      let candidates = isActive && !unrevoked.isEmpty ? unrevoked : bucket
-      guard let representative = candidates
+      guard let lastKnownRepresentative = bucket
         .max(by: { $0.purchaseDate < $1.purchaseDate }) else {
         return nil
       }
 
-      return GrantSource(
-        representative: representative,
+      var source = GrantSource(
+        unrevokedRepresentative: unrevoked.max(by: { $0.purchaseDate < $1.purchaseDate }),
+        lastKnownRepresentative: lastKnownRepresentative,
         isLifetime: isLifetime,
-        hasUnrevokedTransaction: !unrevoked.isEmpty,
-        isActive: isActive,
+        // A lifetime purchase never expires. Everything else grants access for
+        // as long as an unrevoked transaction still has time left on it.
+        isActive: isLifetime || unrevoked.contains { ($0.expirationDate ?? .distantPast) > now },
         expiresAt: isLifetime ? nil : unrevoked.compactMap(\.expirationDate).max(),
         renewedAt: unrevoked
           .filter { $0.entitlementProductType == .autoRenewable && $0.originalPurchaseDate < $0.purchaseDate }
           .map(\.purchaseDate)
           .max(),
-        willRenew: representative.willRenew,
+        willRenew: false,
         state: nil,
         offerType: nil
       )
+      source.willRenew = source.representative.willRenew
+      return source
     }
   }
 
@@ -489,14 +513,16 @@ enum EntitlementProcessor {
         if sources[index].isLifetime {
           continue
         }
-        let representative = sources[index].representative
+        // Never `representative`: this lookup decides `isActive`, which
+        // `representative` is derived from.
+        let statusTransaction = sources[index].statusTransaction
 
         let resolvedStatus: ResolvedSubscriptionStatus?
-        if let cached = statusCache[representative.transactionId] {
+        if let cached = statusCache[statusTransaction.transactionId] {
           resolvedStatus = cached
         } else {
-          resolvedStatus = await subscriptionStatusProvider.resolveStatus(for: representative)
-          statusCache[representative.transactionId] = resolvedStatus
+          resolvedStatus = await subscriptionStatusProvider.resolveStatus(for: statusTransaction)
+          statusCache[statusTransaction.transactionId] = resolvedStatus
         }
 
         guard let status = resolvedStatus else {
@@ -541,7 +567,7 @@ enum EntitlementProcessor {
         }
 
         if let subscriptionIndex = updatedSubscriptions.firstIndex(
-          where: { $0.transactionId == representative.transactionId }
+          where: { $0.transactionId == statusTransaction.transactionId }
         ) {
           updatedSubscriptions[subscriptionIndex].willRenew = status.willRenew
           updatedSubscriptions[subscriptionIndex].isInGracePeriod = status.state == .inGracePeriod

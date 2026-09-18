@@ -1154,6 +1154,61 @@ struct PerGroupEntitlementResolutionTests {
     #expect(grantingProductIds.isEmpty)
   }
 
+  @Test("A live status promoting a group never names its refunded purchase")
+  func promotedGroupIsNotNamedByARefund() async {
+    let baseDate = Date()
+    // Still counts, but its own dates have lapsed.
+    let lapsed = makeTransaction(
+      productId: "monthly_a",
+      transactionId: "txn_a",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-5_184_000),
+      expirationDate: baseDate.addingTimeInterval(-60)
+    )
+    // A later purchase in the same group that was refunded.
+    let refunded = makeTransaction(
+      productId: "monthly_b",
+      transactionId: "txn_b",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-86_400),
+      expirationDate: baseDate.addingTimeInterval(-30),
+      isRevoked: true
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly_a", "monthly_b"])
+    var (_, subscriptions) = EntitlementProcessor.processTransactions(from: [lapsed, refunded])
+
+    // The renewal Apple has taken hasn't reached `Transaction.all` yet, so the
+    // group is subscribed while every transaction on file looks dead.
+    let provider = MockSubscriptionStatusProvider(
+      statusesByGroupId: [
+        "group_1": ResolvedSubscriptionStatus(
+          state: .subscribed,
+          willRenew: true,
+          offerType: nil,
+          activeUntil: baseDate.addingTimeInterval(2_592_000)
+        )
+      ]
+    )
+
+    var grantingProductIds: Set<String> = []
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [lapsed, refunded]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: provider,
+      onGrantingProductIds: { grantingProductIds = $0 }
+    )
+
+    let entitlement = result["monthly_a"]?.first
+    #expect(entitlement?.isActive == true)
+    // The group is granting, so a purchase that still counts has to name it —
+    // never the refunded one, which would reach `isSubscribed(to:)`.
+    #expect(entitlement?.latestProductId == "monthly_a")
+    #expect(grantingProductIds == ["monthly_a"])
+  }
+
   @Test("A renewal StoreKit knows about beats the stale transaction expiry")
   func subscribedCarriesTheRenewalDate() async {
     let baseDate = Date()
