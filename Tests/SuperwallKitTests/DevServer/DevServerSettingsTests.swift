@@ -102,6 +102,21 @@ final class DevServerSettingsTests: XCTestCase {
     XCTAssertEqual(decoded.isScrollEnabled, false)
   }
 
+  /// `NONE` is the push API's "use the dashboard's". The SDK reads it fine, it
+  /// just leaves the style to the published paywall, which is what a missing
+  /// style means here — so it isn't a value this SDK can't read.
+  func test_readsNoneAsInheritingTheDashboardsStyle() throws {
+    let decoded = try settings("""
+    {
+      "presentation_style": { "type": "NONE" },
+      "feature_gating": "gated"
+    }
+    """)
+
+    XCTAssertNil(decoded.presentationStyle)
+    XCTAssertEqual(decoded.featureGating, .gated)
+  }
+
   /// Geometry the SDK can't trust is treated the same way: the CLI resolves
   /// height and radius before serving them, so a partial one is unreadable
   /// rather than something to guess a default for.

@@ -82,7 +82,7 @@ extension PaywallRequestManager {
     }) else {
       return nil
     }
-    guard let surface = devServer.surfaces.first(where: { "dev:\($0.id)" == paywallId }) else {
+    guard let surface = devServer.surfaces.first(where: { $0.previewIdentifier == paywallId }) else {
       return nil
     }
     guard let mountURL = DevServerManifest(surfaces: devServer.surfaces)

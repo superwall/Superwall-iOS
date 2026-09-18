@@ -40,7 +40,64 @@ struct DevServerLocatorTests {
     }
   }
 
+  /// Holds a request for one origin until the test releases it, so two
+  /// lookups can be interleaved.
+  private actor GatedProbe {
+    private let serving: Set<String>
+    private let gatedOrigin: String
+    private var gate: [CheckedContinuation<Void, Never>] = []
+    private var arrival: CheckedContinuation<Void, Never>?
+    private var hasArrived = false
+
+    init(serving: Set<String>, gating gatedOrigin: String) {
+      self.serving = serving
+      self.gatedOrigin = gatedOrigin
+    }
+
+    /// Returns once a request for the gated origin is waiting.
+    func waitUntilGated() async {
+      if hasArrived {
+        return
+      }
+      await withCheckedContinuation { arrival = $0 }
+    }
+
+    func release() {
+      for continuation in gate {
+        continuation.resume()
+      }
+      gate = []
+    }
+
+    func load(_ request: URLRequest) async -> (Data, URLResponse?) {
+      guard let url = request.url else {
+        return (Data(), nil)
+      }
+      let origin = "\(url.scheme ?? "")://\(url.host ?? ""):\(url.port ?? 0)"
+      if origin == gatedOrigin {
+        hasArrived = true
+        arrival?.resume()
+        arrival = nil
+        await withCheckedContinuation { gate.append($0) }
+      }
+      let isServing = serving.contains(origin)
+      let response = HTTPURLResponse(
+        url: url,
+        statusCode: isServing ? 200 : 404,
+        httpVersion: nil,
+        headerFields: nil
+      )
+      return (isServing ? DevServerLocatorTests.manifest : Data(), response)
+    }
+  }
+
   private func locator(_ probe: Probe) -> DevServerLocator {
+    return DevServerLocator { request in
+      await probe.load(request)
+    }
+  }
+
+  private func locator(_ probe: GatedProbe) -> DevServerLocator {
     return DevServerLocator { request in
       await probe.load(request)
     }
@@ -122,6 +179,31 @@ struct DevServerLocatorTests {
 
     let located = await locator.locate(devServerURL: new)
     #expect(located?.base == new)
+  }
+
+  @Test("A lookup still in flight for the old address can't refill the cache")
+  func locate_staleLookupDoesNotOverwriteTheNewAddress() async throws {
+    let old = try url("http://192.168.1.10:6100")
+    let new = try url("http://192.168.1.20:6100")
+    let probe = GatedProbe(
+      serving: [old.absoluteString, new.absoluteString],
+      gating: old.absoluteString
+    )
+    let locator = locator(probe)
+
+    let stale = Task { await locator.locate(devServerURL: old) }
+    await probe.waitUntilGated()
+
+    // devServer is pointed at the new address while the old probe is waiting.
+    let current = await locator.locate(devServerURL: new)
+    #expect(current?.base == new)
+
+    await probe.release()
+    let staleResult = await stale.value
+    #expect(staleResult == nil)
+
+    let afterStaleFinished = await locator.locate(devServerURL: new)
+    #expect(afterStaleFinished?.base == new)
   }
 
   @Test("Forgetting drops the cached server and the pin")

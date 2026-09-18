@@ -4,7 +4,7 @@
 //
 //  The surface list a running `superwall dev` server exposes at
 //  /device/manifest.json, used to map dashboard paywalls to locally
-//  served paywall code when `SuperwallOptions/devMode` is on.
+//  served paywall code when `SuperwallOptions/devServer` is set.
 //
 
 import Foundation

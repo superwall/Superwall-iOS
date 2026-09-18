@@ -75,6 +75,16 @@ final class DevServerPaywallTests: XCTestCase {
     XCTAssertEqual(paywall.identifier, "chatgpt-plus")
   }
 
+  /// The paywall is named by the dashboard, but presenting under that name
+  /// fetches its published version, so the debugger opens a surface under the
+  /// id that resolves back to the local bytes.
+  func test_theDebuggerPreviewsUnderTheSyntheticDevId() {
+    let pushed = surface(paywallId: "253583", identifier: "chatgpt-plus")
+
+    XCTAssertEqual(Paywall.devServer(surface: pushed, url: url).identifier, "chatgpt-plus")
+    XCTAssertEqual(pushed.previewIdentifier, "dev:pro")
+  }
+
   func test_isMarkedLocalSoEventsCanSaySo() {
     let paywall = Paywall.devServer(surface: surface(), url: url)
 
@@ -333,7 +343,7 @@ final class DevServerPaywallTests: XCTestCase {
       "computedPropertyRequests": [
         { "type": "HOURS_SINCE", "eventName": "trigger1" }
       ],
-      "introductoryOfferEligibility": "INELIGIBLE"
+      "introductoryOfferEligibility": "ALWAYS_INELIGIBLE"
     }
     """
     // Decoded rather than hand-built so the test pins the real dashboard shape.

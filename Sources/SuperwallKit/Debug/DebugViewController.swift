@@ -396,7 +396,7 @@ final class DebugViewController: UIViewController {
     // store has no record of yet, and the preview must still render.
     paywall.productVariables = await storeKitManager.getProductVariables(for: paywall)
     self.paywall = paywall
-    paywallIdentifier = paywall.identifier
+    paywallIdentifier = surface.previewIdentifier
     paywallDatabaseId = paywall.databaseId
     previewPickerButton.setTitle("\(surface.id) (local)", for: .normal)
     activityIndicator.stopAnimating()

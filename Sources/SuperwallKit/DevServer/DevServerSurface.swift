@@ -34,6 +34,14 @@ struct DevServerSurface: Decodable, Equatable {
   /// paywall's settings stand.
   let settings: DevServerSettings?
 
+  /// The identifier the debugger presents this surface under. Always the
+  /// synthetic `dev:` form, never the dashboard `identifier` the manifest may
+  /// carry: only this one routes the presentation back to the local surface
+  /// instead of fetching the paywall's published version.
+  var previewIdentifier: String {
+    return "dev:\(id)"
+  }
+
   private enum CodingKeys: String, CodingKey {
     case kind
     case id

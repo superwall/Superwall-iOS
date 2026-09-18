@@ -8,6 +8,7 @@
 import Foundation
 import Testing
 import Combine
+import UIKit
 @testable import SuperwallKit
 
 /// Lets a test say whether the view controller is on screen, and records
@@ -24,6 +25,21 @@ private final class ActivePaywallViewController: PaywallViewController {
   override func loadWebView() {
     loadWebViewCount += 1
     delegateAtLoad = delegate
+  }
+}
+
+/// Stands in for the view controller UIKit would present from: the SDK's
+/// `present` only needs the presenter to say the presentation finished.
+private final class CompletingPresenter: UIViewController {
+  var presented: UIViewController?
+
+  override func present(
+    _ viewControllerToPresent: UIViewController,
+    animated: Bool,
+    completion: (() -> Void)? = nil
+  ) {
+    presented = viewControllerToPresent
+    completion?()
   }
 }
 
@@ -421,6 +437,32 @@ struct PaywallSharedControllerAttributionTests {
     viewController.viewWillAppear(false)
 
     expectEmbeddedAttribution(viewController.info)
+  }
+
+  /// The mirror of the test above: the same armed handle, but the SDK is the
+  /// one presenting, so the appearance belongs to the SDK's request.
+  @Test
+  func sdkPresentationReportsItsOwnPlacementOverAHandedOutClaim() {
+    let viewController = cachedViewController(for: embeddedPaywall, placement: "embedded")
+    // The app fetched it with `getPaywall` and is holding on to it.
+    claim(viewController, placement: "embedded", paywall: embeddedPaywall, type: getPaywallType)
+
+    // `register` presents the same paywall for another placement.
+    let presenter = CompletingPresenter()
+    viewController.present(
+      on: presenter,
+      request: request(placement: "session_start"),
+      paywall: sessionStartPaywall,
+      unsavedOccurrence: nil,
+      presentationStyleOverride: nil,
+      paywallStatePublisher: .init(),
+      completion: { _ in }
+    )
+    #expect(presenter.presented === viewController)
+
+    viewController.viewWillAppear(false)
+
+    expectSessionStartAttribution(viewController.info)
   }
 
   @Test

@@ -43,14 +43,9 @@ struct DevServerSettings: Decodable, Equatable {
     case cornerRadius = "corner_radius"
   }
 
-  private enum WireStyle: String {
-    case fullscreen = "FULLSCREEN"
-    case modal = "MODAL"
-    case push = "PUSH"
-    case noAnimation = "NO_ANIMATION"
-    case drawer = "DRAWER"
-    case popup = "POPUP"
-  }
+  /// The CLI sends the push API's presentation styles, so read them with the
+  /// push API's own enum rather than a copy that drifts from it.
+  private typealias WireStyle = PaywallPresentationStyle.InternalPresentationStyle
 
   private enum WireGating: String {
     case gated
@@ -114,14 +109,21 @@ struct DevServerSettings: Decodable, Equatable {
     let width = try? style.decode(Double.self, forKey: .width)
     let cornerRadius = try? style.decode(Double.self, forKey: .cornerRadius)
 
-    switch type.flatMap(WireStyle.init(rawValue:)) {
+    guard let wireStyle = type.flatMap(WireStyle.init(rawValue:)) else {
+      if type == nil {
+        return nil
+      }
+      return unreadable(type)
+    }
+
+    switch wireStyle {
     case .fullscreen:
       return .fullscreen
     case .modal:
       return .modal
     case .push:
       return .push
-    case .noAnimation:
+    case .fullscreenNoAnimation:
       return .fullscreenNoAnimation
     case .drawer:
       guard let height = height, let cornerRadius = cornerRadius else {
@@ -133,8 +135,10 @@ struct DevServerSettings: Decodable, Equatable {
         return unreadable(type)
       }
       return .popup(height: height, width: width, cornerRadius: cornerRadius)
-    case nil:
-      return type == nil ? nil : unreadable(type)
+    case .none:
+      // `NONE` is the push API's "use the dashboard's", which is what a missing
+      // style already means here, so it inherits rather than being unreadable.
+      return nil
     }
   }
 

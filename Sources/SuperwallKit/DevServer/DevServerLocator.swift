@@ -76,7 +76,15 @@ actor DevServerLocator {
     }
 
     for base in bases {
-      if let manifest = await fetchManifest(from: base) {
+      let manifest = await fetchManifest(from: base)
+      // Probing suspends the actor, so `devServer` can be pointed somewhere
+      // else while this one is in flight. What comes back describes the
+      // address that was asked for rather than the one in force now, so it
+      // neither lands in the cache nor goes back to the caller.
+      if devServerURL != requestedURL {
+        return nil
+      }
+      if let manifest = manifest {
         let location = DevServerLocation(base: base, manifest: manifest)
         cached = (location, Date())
         lastMissAt = nil
