@@ -16,6 +16,14 @@ final class MockSuperwallDelegate: SuperwallDelegate {
   var willRedeemCallCount = 0
   var willRedeemCalledAt: Date?
   var didRedeemCalledAt: Date?
+  var subscriptionStatusChanges: [(from: SubscriptionStatus, to: SubscriptionStatus)] = []
+
+  func subscriptionStatusDidChange(
+    from oldValue: SubscriptionStatus,
+    to newValue: SubscriptionStatus
+  ) {
+    subscriptionStatusChanges.append((from: oldValue, to: newValue))
+  }
 
   func didRedeemLink(result: RedemptionResult) {
     receivedResult = result

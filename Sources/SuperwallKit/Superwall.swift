@@ -206,31 +206,106 @@ public final class Superwall: NSObject, ObservableObject {
   /// `PurchaseController`, you must set this.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever it changes.
+  /// notified whenever it changes. The publisher only ever emits the merged
+  /// status – never a value you assigned before granted entitlements were
+  /// applied. Changes are delivered in the order they were made. Subscribers
+  /// are usually called on the thread that changed the status, which is often
+  /// a background one; when several threads change it at once, one of them
+  /// delivers the others' changes too, and a slow subscriber holds those up.
+  /// Use `receive(on:)` before updating UI, and don't block in a subscriber.
   ///
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
-  /// to receive a callback every time it changes.
-  @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown {
-    didSet {
-      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
-      if resolved != subscriptionStatus {
-        subscriptionStatus = resolved
+  /// to receive a callback whenever the logical status changes.
+  ///
+  /// - Warning: If you've set ``grantedEntitlements``, they are merged into
+  /// every value you assign here. Assigning `.inactive` does **not** remove
+  /// them — the status stays active for as long as ``grantedEntitlements``
+  /// contains an active entitlement. To revoke them, set
+  /// ``grantedEntitlements`` to an empty set.
+  @PublishedSubscriptionStatus
+  public var subscriptionStatus: SubscriptionStatus = .unknown
+
+  // MARK: - Subscription status state
+
+  /// The status last handed to the SDK — device + web entitlements on the
+  /// automatic path, or the developer's value with a purchase controller —
+  /// before granted entitlements and test-mode overrides are merged in.
+  /// ``subscriptionStatus`` is always derived from this, never the reverse,
+  /// so clearing granted entitlements can recompute it.
+  ///
+  /// Read and written under `subscriptionStatusLock`, like ``subscriptionStatus``.
+  var assignedSubscriptionStatus: SubscriptionStatus {
+    get {
+      subscriptionStatusLock.lock()
+      defer {
+        subscriptionStatusLock.unlock()
+      }
+      return lockedAssignedSubscriptionStatus
+    }
+    set {
+      subscriptionStatusLock.lock()
+      lockedAssignedSubscriptionStatus = newValue
+      subscriptionStatusLock.unlock()
+    }
+  }
+  private var lockedAssignedSubscriptionStatus: SubscriptionStatus = .unknown
+
+  /// Serializes every read and write of the status across threads. Recursive so
+  /// a subscriber that assigns the status from within an emission re-enters
+  /// the pipeline instead of deadlocking.
+  let subscriptionStatusLock = NSRecursiveLock()
+
+  /// Merged statuses that have been stored but not yet emitted, oldest first.
+  /// Guarded by `subscriptionStatusLock`.
+  private var pendingSubscriptionStatusEmissions: [SubscriptionStatus] = []
+
+  /// Whether a thread is currently emitting the pending statuses. Guarded by
+  /// `subscriptionStatusLock`.
+  private var isEmittingSubscriptionStatus = false
+
+  /// Whether the one-time warning about granted entitlements overriding an
+  /// `.inactive` assignment has been logged.
+  var hasLoggedGrantedEntitlementsWarning = false
+
+  /// Stores the merged status and queues it for emission. Only
+  /// `publishSubscriptionStatus` calls this, with `subscriptionStatusLock`
+  /// held; `emitSubscriptionStatus()` sends it once the lock is released.
+  func storeMergedSubscriptionStatus(_ merged: SubscriptionStatus) {
+    _subscriptionStatus.store(merged)
+    pendingSubscriptionStatusEmissions.append(merged)
+  }
+
+  /// Emits every stored status to `$subscriptionStatus` subscribers in the
+  /// order it was stored, with the lock released while subscribers run.
+  ///
+  /// One thread drains the queue at a time. A writer that stores while a
+  /// drain is in progress returns straight away and the draining thread
+  /// sends its value next, so each value is emitted once, none is emitted
+  /// behind a newer one, and no writer ever waits on a subscriber. That last
+  /// point is what stops a subscriber that blocks on another thread from
+  /// deadlocking a writer on that thread.
+  func emitSubscriptionStatus() {
+    subscriptionStatusLock.lock()
+    if isEmittingSubscriptionStatus {
+      subscriptionStatusLock.unlock()
+      return
+    }
+    isEmittingSubscriptionStatus = true
+    subscriptionStatusLock.unlock()
+
+    while true {
+      subscriptionStatusLock.lock()
+      if pendingSubscriptionStatusEmissions.isEmpty {
+        isEmittingSubscriptionStatus = false
+        subscriptionStatusLock.unlock()
         return
       }
-      entitlements.subscriptionStatusDidSet(subscriptionStatus)
+      let next = pendingSubscriptionStatusEmissions.removeFirst()
+      subscriptionStatusLock.unlock()
 
-      // When using an external purchase controller, update CustomerInfo.entitlements
-      // to reflect the entitlements from the purchase controller.
-      // Skip this in test mode — test mode manages its own CustomerInfo.
-      if dependencyContainer.makeHasExternalPurchaseController(),
-        dependencyContainer.testModeManager?.isTestMode != true {
-        customerInfo = CustomerInfo.forExternalPurchaseController(
-          storage: dependencyContainer.storage,
-          subscriptionStatus: subscriptionStatus
-        )
-      }
+      objectWillChange.send()
+      _subscriptionStatus.emit(next)
     }
   }
 
@@ -277,40 +352,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// Gets properties stored about the device that are used in audience filters.
   public func getDeviceAttributes() async -> [String: Any] {
     return await dependencyContainer.deviceHelper.getTemplateDevice()
-  }
-
-  /// Gets web entitlements and merges them with device entitlements before
-  /// setting the status if no external purchase controller.
-  @MainActor
-  func internallySetSubscriptionStatus(
-    to status: SubscriptionStatus,
-    superwall: Superwall? = nil
-  ) {
-    if dependencyContainer.makeHasExternalPurchaseController() {
-      return
-    }
-    let activeWebEntitlements = dependencyContainer.entitlementsInfo.web
-    let superwall = superwall ?? Superwall.shared
-    switch status {
-    case .active(let entitlements):
-      // Use mergePrioritized to intelligently merge device and web entitlements
-      // This ensures the highest priority version is kept for each entitlement ID
-      let combinedEntitlements = Array(entitlements) + Array(activeWebEntitlements)
-      let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
-      if mergedEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(mergedEntitlements)
-      }
-    case .inactive:
-      if activeWebEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(activeWebEntitlements)
-      }
-    case .unknown:
-      superwall.subscriptionStatus = .unknown
-    }
   }
 
   /// Returns the subscription status of the user.
@@ -389,8 +430,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
 
-  /// Used to serially execute register calls.
-  var previousRegisterTask: Task<Void, Never>?
+  /// Runs register calls one at a time, in the order they came in.
+  ///
+  /// `register(placement:)` can be called from any thread, so the queue of
+  /// register tasks has to be safe to add to from any thread.
+  let registerTaskCoordinator = SerialTaskCoordinator()
 
   /// The integration attributes to send to the server when `appTransactionId`
   /// is available. Protected by a queue for thread safety.
@@ -419,22 +463,24 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  // MARK: - Value Resolution
-
-  private func resolvedSubscriptionStatus(
-    _ status: SubscriptionStatus
-  ) -> SubscriptionStatus {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenSubscriptionStatus {
-      return override
+  /// Drops the attributes waiting on the app transaction id that identify the
+  /// person rather than the device.
+  ///
+  /// They were set for the user that `reset()` just replaced, so replaying them
+  /// when the id arrives would hand someone else's identity to the new user —
+  /// the same reason `AttributionFetcher.resetIntegrationAttributes()` drops
+  /// them from the attributes it already holds.
+  func resetEnqueuedIntegrationAttributes() {
+    enqueuedAttributesQueue.sync {
+      guard let enqueued = _enqueuedIntegrationAttributes else {
+        return
+      }
+      let kept = enqueued.filter { $0.key.isInstallScoped }
+      _enqueuedIntegrationAttributes = kept.isEmpty ? nil : kept
     }
-    if case .active(let entitlements) = status,
-      entitlements.isEmpty {
-      return .inactive
-    }
-    return status
   }
+
+  // MARK: - Value Resolution
 
   private func resolvedCustomerInfo(
     _ info: CustomerInfo
@@ -468,10 +514,15 @@ public final class Superwall: NSObject, ObservableObject {
 
     customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
-    subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
+    setSubscriptionStatus(assigned: dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown)
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
 
     addListeners()
+
+    // Recover any Stripe checkout that was pending when the app was killed.
+    // Kicked off here rather than inside an initializer so the redeemer's
+    // background poll can only ever see a fully-built dependency container.
+    dependencyContainer.webEntitlementRedeemer.pollPendingStripeCheckoutOnColdLaunch()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -559,44 +610,6 @@ public final class Superwall: NSObject, ObservableObject {
             }
           }
         ))
-  }
-
-  private func listenToSubscriptionStatus() {
-    $subscriptionStatus
-      .removeDuplicates()
-      .dropFirst()
-      .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
-        // Shift the current value to previous, and set the new status as the current value
-        (previous: previousPair.current, current: newStatus)
-      }
-      .receive(on: DispatchQueue.main)
-      .subscribe(
-        Subscribers.Sink(
-          receiveCompletion: { _ in },
-          receiveValue: { [weak self] statusPair in
-            guard let self = self else {
-              return
-            }
-            let oldStatus = statusPair.previous
-            let newStatus = statusPair.current
-
-            self.dependencyContainer.storage.save(newStatus, forType: SubscriptionStatusKey.self)
-
-            Task {
-              await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
-                from: oldStatus, to: newStatus)
-              let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
-              await self.track(event)
-            }
-            Task {
-              let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
-              let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
-                deviceAttributes: deviceAttributes)
-              await self.track(deviceAttributesPlacement)
-            }
-          }
-        )
-      )
   }
 
   private func listenToCustomerInfo() {
@@ -971,7 +984,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
   public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // The fetcher doesn't take the app transaction id, but it still has to wait
+    // for one: setting attributes debounces a redeem, and the redeemer reads the
+    // id for itself.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes(props)
       return
@@ -982,10 +998,7 @@ public final class Superwall: NSObject, ObservableObject {
       result[pair.key.description] = pair.value
     }
 
-    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(
-      attributes: props,
-      appTransactionId: appTransactionId
-    )
+    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(attributes: props)
     setUserAttributes(props)
   }
 
@@ -995,7 +1008,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - attribute: The ``IntegrationAttribute`` key specifying the integration provider.
   ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
   public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // Waits for the app transaction id for the same reason as
+    // `setIntegrationAttributes(_:)` above.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes([attribute: value])
       return
@@ -1004,8 +1019,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     dependencyContainer.attributionFetcher.setIntegrationAttribute(
       attribute: attribute,
-      value: value,
-      appTransactionId: appTransactionId
+      value: value
     )
     setUserAttributes([attribute.description: value])
   }
@@ -1088,12 +1102,30 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Reset
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
+  ///
+  /// - Note: ``grantedEntitlements`` are not reset — you own that bucket and
+  /// its lifecycle. Set it again immediately after calling this if the next
+  /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
     reset(duringIdentify: false)
   }
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
+  ///
+  /// When `duringIdentify` is true this runs on the identity manager's queue,
+  /// so nothing it calls may wait on that queue, such as reading
+  /// `identityManager.userAttributes`, or the queue hangs for good.
   func reset(duringIdentify: Bool) {
+    // Warn here rather than in the public reset() so the identify-triggered
+    // reset — the actual user-switch moment — warns too.
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "The user was reset but grantedEntitlements persist across reset() "
+          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
+      )
+    }
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     // Cancel any in-flight attribution post before wiping its storage, so a
     // late-completing post can't race the new user's state.
@@ -1110,6 +1142,12 @@ public final class Superwall: NSObject, ObservableObject {
     // — the backend match only succeeds within the 7-day install window, so a
     // logout after that would otherwise leave the new user without attributes.
     dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
+
+    // Integration attributes are part install-scoped, part tied to the person
+    // signing out, and the reset just wiped them out of the user's attributes
+    // and off disk. Keep the install-scoped half for the new user, drop the rest.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
 
     dependencyContainer.paywallManager.resetCache()
     presentationItems.reset()

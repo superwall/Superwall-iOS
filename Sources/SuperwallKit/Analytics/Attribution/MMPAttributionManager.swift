@@ -103,7 +103,15 @@ final class MMPAttributionManager {
     guard let cached = storage.get(MMPAcquisitionDataStorage.self) else {
       return
     }
-    mergeAcquisitionAttributesIfNeeded(cached)
+    let attributes = convertJSONToDictionary(attribution: cached)
+    if attributes.isEmpty {
+      return
+    }
+    // Merged without checking the current attributes first. The reset just
+    // wiped them, so there is nothing to compare against, and on the
+    // `identify()` path this runs on the identity manager's queue, where
+    // reading `userAttributes` would wait on that same queue and hang it.
+    Superwall.shared.setUserAttributes(attributes)
   }
 
   private func mergeAcquisitionAttributesIfNeeded(_ acquisitionAttributes: [String: JSON]) {

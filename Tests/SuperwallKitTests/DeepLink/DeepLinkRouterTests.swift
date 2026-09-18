@@ -95,6 +95,15 @@ struct DeepLinkRouterTests {
     #expect(result == false)
   }
 
+  // MARK: - Dev Server Preview URLs
+
+  @Test("Returns false for a superwall_dev link when no dev server is set")
+  func storeDeepLink_devServerLink_devServerOff() {
+    let url = URL(string: "myapp://?superwall_dev=http://localhost:6100")!
+    let result = DeepLinkRouter.storeDeepLink(url)
+    #expect(result == false)
+  }
+
   // MARK: - Non-Superwall URLs
 
   @Test("Returns false for generic app URL")

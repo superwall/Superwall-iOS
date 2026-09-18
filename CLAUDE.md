@@ -72,6 +72,10 @@ When bumping the version, update all three files:
 3. `CHANGELOG.md` (add new version entry at top)
 
 - Follows semantic versioning
+- **Never use an `## Unreleased` heading in `CHANGELOG.md`.** Unreleased changes always live under the next concrete version number (e.g. `## 4.16.4`).
+- To pick that number, compare the version on `develop` with the version on `master`:
+  - If develop's version is **above** master's, a release is already staged — add your entries to that existing top section. Do not bump again.
+  - If develop's version **equals** master's, start the next release: add a new version section and bump all three files together (patch/minor/major per the change).
 
 ### Testing
 
@@ -110,3 +114,15 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
+
+### Integration device identifiers
+
+AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and
+on app activation after an integration has been configured. Compare the complete
+refreshed snapshot, not just provider IDs. Sync device values into user attributes
+(the server integration router reads those) only when that snapshot changes, since
+every sync costs a `user_attributes` event; explicit nulls clear stale IDs after
+ATT revocation. ATT is serialized as a numeric string in integration attributes.
+`idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
+change to that set in the changelog and the online docs. Don't gate the IDFA on
+the ATT status: `identifierForAdvertisers` already filters the all-zero id.

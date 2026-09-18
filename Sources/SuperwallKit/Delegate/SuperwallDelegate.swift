@@ -16,7 +16,14 @@ import Foundation
 /// To learn how to conform to the delegate in your app and best practices, see
 /// [our docs](https://docs.superwall.com/docs/3rd-party-analytics).
 public protocol SuperwallDelegate: AnyObject {
-  /// Called when the ``Superwall/subscriptionStatus`` changes.
+  /// Called when the logical state of ``Superwall/subscriptionStatus`` changes:
+  /// the status moves between unknown, inactive, and active, an entitlement is
+  /// gained or lost, or an entitlement's `isActive` flag changes.
+  ///
+  /// Updates that only change transaction metadata — such as expiry dates,
+  /// renewal state, or the store an entitlement came from — don't trigger this
+  /// callback. Use ``SuperwallDelegate/customerInfoDidChange(from:to:)`` to
+  /// react to those.
   ///
   /// You can use this function to update the state of your application. Alternatively, you can
   /// use the published property ``Superwall/subscriptionStatus`` to react to

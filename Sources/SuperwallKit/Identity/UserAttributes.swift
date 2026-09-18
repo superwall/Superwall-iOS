@@ -31,7 +31,14 @@ extension Superwall {
   /// attributes you'd like to store for the user. Values can be any JSON encodable value, `URL`s or `Date`s.
   /// Note: Keys beginning with `$` are reserved for Superwall and will be dropped. Arrays and dictionaries
   /// as values are not supported at this time, and will be dropped.
+  ///
+  /// Note: `idfv`, `idfa` and `attStatus` are owned by the SDK, which keeps them
+  /// in step with the device. A value you set on one of those keys is replaced
+  /// the next time the app becomes active or you set an integration attribute.
   public func setUserAttributes(_ attributes: [String: Any?]) {
+    dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
+      ifChangedBy: attributes
+    )
     mergeAttributes(attributes)
   }
 
@@ -63,6 +70,9 @@ extension Superwall {
       swiftDictionary[key] = keyValue
     }
 
+    dependencyContainer.attributionFetcher?.forgetSyncedDeviceIdentifiers(
+      ifChangedBy: swiftDictionary
+    )
     mergeAttributes(swiftDictionary)
   }
 

@@ -112,12 +112,17 @@ actor WebEntitlementRedeemer {
       name: UIApplication.willEnterForegroundNotification,
       object: nil
     )
+  }
 
-    // Also check once on SDK initialization so pending Stripe checkouts can be
-    // recovered on cold launch. Guard on factory readiness to avoid accessing
-    // dependencies (e.g. deviceHelper) before the container is fully set up.
+  /// Checks once on SDK initialization so pending Stripe checkouts can be
+  /// recovered on cold launch.
+  ///
+  /// Called by `Superwall` after the dependency container is fully built,
+  /// rather than from this actor's own `init`: the poll reads container state
+  /// from a background task, so it must not start while the container is
+  /// still being set up.
+  nonisolated func pollPendingStripeCheckoutOnColdLaunch() {
     Task {
-      guard factory.makeIsContainerReady() else { return }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
   }
@@ -517,11 +522,15 @@ actor WebEntitlementRedeemer {
       let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
       mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
         storage: storage,
-        subscriptionStatus: subscriptionStatus
+        subscriptionStatus: subscriptionStatus,
+        granted: entitlementsInfo.granted
       )
     } else {
       let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+      mergedCustomerInfo = deviceCustomerInfo.merging(
+        with: webCustomerInfo,
+        granting: entitlementsInfo.granted
+      )
     }
 
     await MainActor.run {
@@ -920,6 +929,31 @@ actor WebEntitlementRedeemer {
         deviceId: factory.makeDeviceId()
       )
 
+      // A response with zero entitlements must not replace cached web
+      // entitlements that are still within their expiry date. The server
+      // reports a revocation by returning the entitlement as inactive —
+      // and it enumerates every config-mapped entitlement even for users
+      // with no purchases — so a fully empty array is a backend or config
+      // artifact (alias mismatch, failed upstream lookup), not a
+      // revocation. Real revocations arrive non-empty and apply
+      // immediately through the save below. If an empty response replaced
+      // the cache, the next cold launch would read the user as inactive
+      // until a network poll recovered them. Entitlements with no expiry
+      // date are not protected by this guard. We skip saving the fetch
+      // date so the next poll retries without waiting out
+      // `entitlementsMaxAge`.
+      let hasUnexpiredWebEntitlements = existingWebEntitlements.contains {
+        $0.isActive && ($0.expiresAt ?? .distantPast) > Date()
+      }
+      if response.customerInfo.entitlements.isEmpty && hasUnexpiredWebEntitlements {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .webEntitlements,
+          message: "Ignoring empty web entitlements response because unexpired web entitlements are cached."
+        )
+        return
+      }
+
       // Update the latest redeem response with the entitlements and customer info from the response.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
         latestRedeemResponse.customerInfo = response.customerInfo
@@ -944,20 +978,22 @@ actor WebEntitlementRedeemer {
           return
         }
 
-        let mergedCustomerInfo = await mergeAndApplyCustomerInfo(
+        _ = await mergeAndApplyCustomerInfo(
           webCustomerInfo: response.customerInfo,
           superwall: superwall
         )
 
-        let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
-        if activeEntitlements.isEmpty {
-          await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
-        } else {
-          await superwall.internallySetSubscriptionStatus(
-            to: .active(activeEntitlements),
-            superwall: superwall
-          )
-        }
+        // Derive the status from device + web only, as the redeem path does.
+        // The merged customer info also carries granted entitlements, which
+        // are applied when the status publishes and must never enter the
+        // assigned status — or clearing them could never revoke them.
+        let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+        let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+        let deviceAndWebEntitlements = activeDeviceEntitlements.union(
+          Set(response.customerInfo.entitlements)
+        )
+        let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
+        await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         // If there's a paywall, check if we should dismiss it
         if let paywallVc = superwall.paywallViewController {

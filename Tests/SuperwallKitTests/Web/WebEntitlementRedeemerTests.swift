@@ -29,7 +29,7 @@ struct WebEntitlementRedeemerTests {
 
   init() {
     // Clear any pending stripe checkout state left on disk by a previous test
-    // to prevent the WebEntitlementRedeemer init Task from triggering unexpected saves.
+    // so foreground/cold-launch polls triggered later can't see stale state.
     dependencyContainer.storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
@@ -648,6 +648,158 @@ struct WebEntitlementRedeemerTests {
     // Verify the LatestRedeemResponse was updated with empty entitlements
     let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
     #expect(savedRedeemResponse?.customerInfo.entitlements.isEmpty == true, "Saved redeem response should have no entitlements")
+  }
+
+  @Test("Empty poll response does not clobber unexpired web entitlements")
+  func testPollWebEntitlements_emptyResponse_keepsUnexpiredWebEntitlements() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A Stripe subscriber with a paid-through web entitlement in the cache.
+    let stripeEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(
+        \.customerInfo,
+        to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [stripeEntitlement])
+      )
+    dependencyContainer.storage.save(previousRedeemResponse, forType: LatestRedeemResponse.self)
+    dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([stripeEntitlement])
+    }
+
+    // The backend answers with zero entitlements. The poll is keyed on
+    // appUserId/deviceId alone, so an alias mismatch or backend hiccup
+    // produces exactly this response for a still-paying subscriber. Before
+    // the fix, this response poisoned the cache. The next cold launch then
+    // read the user as inactive until a network poll recovered them.
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    mockNetwork.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: dependencyContainer.storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+        to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL(string: "https://superwall.com")!)
+      )
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    // The cache keeps the unexpired entitlement.
+    let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(
+      savedRedeemResponse?.customerInfo.entitlements.contains(stripeEntitlement) == true,
+      "An empty poll response must not remove an unexpired web entitlement"
+    )
+
+    // The status stays active.
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status == .active([stripeEntitlement]))
+
+    // The fetch date is not saved, so the next poll retries without
+    // waiting out entitlementsMaxAge.
+    #expect(dependencyContainer.storage.get(LastWebEntitlementsFetchDate.self) == nil)
+
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+  }
+
+  @Test("Empty poll response removes expired web entitlements")
+  func testPollWebEntitlements_emptyResponse_removesExpiredWebEntitlements() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The cached entitlement expired a day ago, so nothing protects it.
+    let expiredEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(-86_400),
+      isLifetime: false,
+      willRenew: false,
+      state: nil,
+      offerType: nil
+    )
+    let previousRedeemResponse = RedeemResponse.stub()
+      .setting(
+        \.customerInfo,
+        to: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [expiredEntitlement])
+      )
+    dependencyContainer.storage.save(previousRedeemResponse, forType: LatestRedeemResponse.self)
+
+    let options = dependencyContainer.makeSuperwallOptions()
+    let mockNetwork = NetworkMock(
+      options: options,
+      factory: dependencyContainer
+    )
+    mockNetwork.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    )
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: dependencyContainer.storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+    let config = Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+        to: .init(entitlementsMaxAge: 60, restoreAccessURL: URL(string: "https://superwall.com")!)
+      )
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: true)
+
+    let savedRedeemResponse = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(
+      savedRedeemResponse?.customerInfo.entitlements.isEmpty == true,
+      "An empty poll response must remove an expired web entitlement"
+    )
+
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
   }
 
   @Test("External purchase controller with mixed web + appStore entitlements - polling removes web entitlements")
@@ -2788,6 +2940,87 @@ struct WebEntitlementRedeemerTests {
     await redeemer.handleStripeCheckoutComplete(contextId: "ctx_new", productId: "prod_new")
 
     // Failed status clears pending state, but we can verify the poll happened
+    #expect(mockNetwork.pollRedemptionResultCallCount == 1)
+  }
+
+  @Test("Init doesn't start the cold-launch Stripe poll")
+  func testInit_doesNotStartColdLaunchPoll() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    // Seed a pending checkout so a poll would fire if anything kicked one off.
+    mockStorage.save(
+      PendingStripeCheckoutPollState(
+        checkoutContextId: "ctx_cold",
+        productId: "prod_cold"
+      ),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    mockNetwork.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+
+    _ = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    // Give a stray init-spawned task time to run before asserting it didn't.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(mockNetwork.pollRedemptionResultCallCount == 0)
+  }
+
+  @Test("Cold-launch kick-off polls a pending Stripe checkout")
+  func testPollPendingStripeCheckoutOnColdLaunch_pollsPendingCheckout() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let mockNetwork = NetworkMock(
+      options: dependencyContainer.makeSuperwallOptions(),
+      factory: dependencyContainer
+    )
+
+    mockStorage.save(
+      PendingStripeCheckoutPollState(
+        checkoutContextId: "ctx_cold",
+        productId: "prod_cold"
+      ),
+      forType: PendingStripeCheckoutPollStorage.self
+    )
+    mockNetwork.pollRedemptionResultResponses = [.failure(NetworkError.unknown)]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    redeemer.pollPendingStripeCheckoutOnColdLaunch()
+
+    // The kick-off spawns a task; wait for the poll to land.
+    for _ in 0..<100 where mockNetwork.pollRedemptionResultCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 50_000_000)
+    }
     #expect(mockNetwork.pollRedemptionResultCallCount == 1)
   }
 }
