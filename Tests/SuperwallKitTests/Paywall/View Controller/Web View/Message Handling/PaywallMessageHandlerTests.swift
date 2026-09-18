@@ -82,7 +82,6 @@ struct PaywallMessageHandlerTests {
   @Test
   func transactionComplete_withoutTrial_doesNotSendFreeTrialStart() async {
     let (messageHandler, webView, delegate) = makeHandler()
-    _ = delegate
 
     messageHandler.handle(
       .transactionComplete(
@@ -100,12 +99,15 @@ struct PaywallMessageHandlerTests {
     try? await Task.sleep(nanoseconds: 300_000_000)
     let names = passedEvents(in: webView).compactMap { $0["event_name"] as? String }
     #expect(!names.contains("freeTrial_start"))
+
+    // The handler's delegate is weak and the webview is reached through it, so the
+    // mock has to outlive the waits above.
+    withExtendedLifetime(delegate) {}
   }
 
   @Test
   func transactionComplete_withTrial_sendsFreeTrialStartWithEndDate() async {
     let (messageHandler, webView, delegate) = makeHandler()
-    _ = delegate
     let trialEndDate = Date(timeIntervalSince1970: 1_800_000_000)
 
     messageHandler.handle(
@@ -122,6 +124,8 @@ struct PaywallMessageHandlerTests {
     let freeTrialStart = await waitForEvent(named: "freeTrial_start", in: webView)
     #expect(freeTrialStart?["product_identifier"] as? String == "product1")
     #expect(freeTrialStart?["trial_end_date"] as? Int == 1_800_000_000_000)
+
+    withExtendedLifetime(delegate) {}
   }
 
   @Test
