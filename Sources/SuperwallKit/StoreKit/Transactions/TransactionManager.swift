@@ -1128,13 +1128,22 @@ final class TransactionManager {
 
     let paywallInfo: PaywallInfo
     let eventSource: InternalSuperwallEvent.Transaction.Source
-    let trialEndDate = product.trialPeriodEndDate
+    // The product's intro offer is visible even when the user isn't eligible for it, so only
+    // report a trial (and its end date) to the paywall when this transaction started one.
+    let didStartFreeTrial = type == .freeTrialStart
+    let trialEndDate = didStartFreeTrial ? product.trialPeriodEndDate : nil
     switch source {
     case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
       await paywallViewController.webView.messageHandler
-        .handle(.transactionComplete(trialEndDate: trialEndDate, productIdentifier: product.productIdentifier))
+        .handle(
+          .transactionComplete(
+            trialEndDate: trialEndDate,
+            productIdentifier: product.productIdentifier,
+            didStartFreeTrial: didStartFreeTrial
+          )
+        )
     case .purchaseFunc,
       .observeFunc:
       paywallInfo = .empty()
