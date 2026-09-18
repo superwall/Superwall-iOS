@@ -12,10 +12,21 @@ import Foundation
 actor DevServerLocator {
   static let shared = DevServerLocator()
 
+  /// Loads a request. Injectable so tests can drive the probing and caching
+  /// without a server on the other end.
+  typealias Load = (URLRequest) async throws -> (Data, URLResponse?)
+
+  private let load: Load
   private var cached: (location: DevServerLocation, fetchedAt: Date)?
   private var lastMissAt: Date?
   private var pinnedBase: URL?
+  private var requestedURL: URL?
+  private var hasBeenAsked = false
   private var hasWarnedAboutTransportSecurity = false
+
+  init(load: @escaping Load = DevServerLocator.loadWithURLSession) {
+    self.load = load
+  }
 
   func pin(base: URL) {
     pinnedBase = base
@@ -23,7 +34,28 @@ actor DevServerLocator {
     lastMissAt = nil
   }
 
+  /// Drops everything this knows about the server it was last pointed at: the
+  /// cached hit, the cached miss, and any base a deep link pinned.
+  func forget() {
+    cached = nil
+    lastMissAt = nil
+    pinnedBase = nil
+  }
+
   func locate(devServerURL: URL?) async -> DevServerLocation? {
+    // The caches and the pin all describe one server, and `devServer` can be
+    // pointed somewhere else at any time. Answering for the address that used
+    // to be there would serve another project's paywalls.
+    //
+    // A deep link pins its base before the first `locate`, so the first call
+    // must not count as a change and throw that pin away.
+    if hasBeenAsked,
+      devServerURL != requestedURL {
+      forget()
+    }
+    hasBeenAsked = true
+    requestedURL = devServerURL
+
     if let cached = cached,
       Date().timeIntervalSince(cached.fetchedAt) < 2 {
       return cached.location
@@ -65,8 +97,9 @@ actor DevServerLocator {
     return nil
   }
 
-  /// App Transport Security blocks plain-http requests unless the app opts in,
-  /// and the failure is otherwise indistinguishable from "no server there".
+  /// App Transport Security blocks plain-http requests to a named host unless
+  /// the app opts in, and the failure is otherwise indistinguishable from
+  /// "no server there".
   private func warnIfBlockedByAppTransportSecurity(_ error: Error, base: URL) {
     let code = (error as NSError).code
     guard code == NSURLErrorAppTransportSecurityRequiresSecureConnection else {
@@ -82,7 +115,6 @@ actor DevServerLocator {
       message: "App Transport Security blocked \(base.absoluteString). Add this to the app's "
         + "Info.plist to preview local paywalls:\n"
         + "<key>NSAppTransportSecurity</key>\n<dict>\n"
-        + "  <key>NSAllowsArbitraryLoadsInWebContent</key><true/>\n"
         + "  <key>NSAllowsLocalNetworking</key><true/>\n</dict>"
     )
   }
@@ -120,16 +152,7 @@ actor DevServerLocator {
     request.cachePolicy = .reloadIgnoringLocalCacheData
 
     do {
-      let (data, response): (Data, URLResponse?) = try await withCheckedThrowingContinuation { continuation in
-        let task = URLSession.shared.dataTask(with: request) { data, response, error in
-          if let data = data {
-            continuation.resume(returning: (data, response))
-          } else {
-            continuation.resume(throwing: error ?? URLError(.badServerResponse))
-          }
-        }
-        task.resume()
-      }
+      let (data, response) = try await load(request)
       // Something else on this port may answer an unknown path with a JSON
       // error body, so the status has to rule that out before the body does.
       if let http = response as? HTTPURLResponse,
@@ -145,6 +168,19 @@ actor DevServerLocator {
     } catch {
       warnIfBlockedByAppTransportSecurity(error, base: base)
       return nil
+    }
+  }
+
+  private static func loadWithURLSession(_ request: URLRequest) async throws -> (Data, URLResponse?) {
+    return try await withCheckedThrowingContinuation { continuation in
+      let task = URLSession.shared.dataTask(with: request) { data, response, error in
+        if let data = data {
+          continuation.resume(returning: (data, response))
+        } else {
+          continuation.resume(throwing: error ?? URLError(.badServerResponse))
+        }
+      }
+      task.resume()
     }
   }
 }

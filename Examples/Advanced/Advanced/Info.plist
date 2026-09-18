@@ -17,8 +17,6 @@
 	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoadsInWebContent</key>
-		<true/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>

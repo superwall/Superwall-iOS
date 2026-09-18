@@ -556,6 +556,7 @@
 		E9E0BD599F353CC471B7A546 /* PresentationInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00CE1D40C874F73A3BEC090 /* PresentationInfo.swift */; };
 		E9F80BA7BCAB71270E0E1CC1 /* AttributionFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64EAB177118BC78B02C3C00A /* AttributionFetcher.swift */; };
 		E9F892ABB9BDA85F4794E3CF /* SubscriptionStatusResolutionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C15CF29C17FE1EE3BFDEDC /* SubscriptionStatusResolutionTests.swift */; };
+		EA21B417513519FEDE6232D4 /* DevServerLocatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C1CF3FA0D1266FFF8A29FF /* DevServerLocatorTests.swift */; };
 		EA50607230AA07B509E90E10 /* TestStoreUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7162E1E791297A3BF80B65A4 /* TestStoreUser.swift */; };
 		EA66951B1DF341C4F0448C9F /* PlacementsQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 682AB10207309C439F64BC69 /* PlacementsQueueTests.swift */; };
 		EA6F422EB1C1F0E6882E4AEF /* DevServerPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DE9BCE12E3F4300AD2379B4 /* DevServerPaywall.swift */; };
@@ -705,6 +706,7 @@
 		2123B84F5C786278E128152D /* OccurrenceLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OccurrenceLogicTests.swift; sourceTree = "<group>"; };
 		214622367ACC8F66EB392105 /* AppSessionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionLogic.swift; sourceTree = "<group>"; };
 		21903EACCA9AA13BB10917EC /* PermissionHandler+Camera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Camera.swift"; sourceTree = "<group>"; };
+		21C1CF3FA0D1266FFF8A29FF /* DevServerLocatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerLocatorTests.swift; sourceTree = "<group>"; };
 		21C52F36F0BFF59363EBB4C7 /* GameControllerEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameControllerEvent.swift; sourceTree = "<group>"; };
 		22439CFFFC5166F34D0DA524 /* WebViewURLConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewURLConfig.swift; sourceTree = "<group>"; };
 		224B526C168B5DB83E1F50D2 /* SerialTaskCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SerialTaskCoordinatorTests.swift; sourceTree = "<group>"; };
@@ -2753,6 +2755,7 @@
 			isa = PBXGroup;
 			children = (
 				577D25646DA26238881BF6AB /* DevModeTests.swift */,
+				21C1CF3FA0D1266FFF8A29FF /* DevServerLocatorTests.swift */,
 				A349A124DD1DF28EEF04592C /* DevServerManifestTests.swift */,
 				A4FD16729844D83A3EAA02FC /* DevServerPaywallTests.swift */,
 				6E0A1ED94DE7737BCB7D4D8C /* DevServerPreviewTests.swift */,
@@ -3428,6 +3431,7 @@
 				01BE837B492223B76A95CB5D /* DeepLinkRouterTests.swift in Sources */,
 				4ABF9FB54105917343865145 /* DependencyContainerInitTests.swift in Sources */,
 				FEA3AED0B70D730993A16B2C /* DevModeTests.swift in Sources */,
+				EA21B417513519FEDE6232D4 /* DevServerLocatorTests.swift in Sources */,
 				069391992F6191874022F2BA /* DevServerManifestTests.swift in Sources */,
 				669B86B82B4CCD7BC7D02B55 /* DevServerPaywallTests.swift in Sources */,
 				EE1A7003F266DF3C1481EEBA /* DevServerPreviewTests.swift in Sources */,
