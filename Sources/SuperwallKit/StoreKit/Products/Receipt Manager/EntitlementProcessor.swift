@@ -126,10 +126,7 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
     if let gracePeriodExpirationDate = info.gracePeriodExpirationDate {
       return gracePeriodExpirationDate
     }
-    if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-      return info.renewalDate
-    }
-    return nil
+    return info.renewalDate
   }
 
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool {
