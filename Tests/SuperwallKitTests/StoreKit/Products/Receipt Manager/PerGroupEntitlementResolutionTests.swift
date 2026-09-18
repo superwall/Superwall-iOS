@@ -1152,18 +1152,25 @@ struct PerGroupEntitlementResolutionTests {
     #expect(entitlement?.latestProductId == "premium_monthly")
     #expect(entitlement?.isRevoked == true)
     #expect(grantingProductIds.isEmpty)
+    // The refund names the entitlement, but the live flags still go to the
+    // transaction that was never refunded — the two are chosen separately.
+    #expect(subscriptions.first { $0.transactionId == "txn_legacy" }?.willRenew == false)
+    #expect(subscriptions.first { $0.transactionId == "txn_premium" }?.willRenew == true)
   }
 
   @Test("A live status promoting a group never names its refunded purchase")
   func promotedGroupIsNotNamedByARefund() async {
     let baseDate = Date()
     // Still counts, but its own dates have lapsed.
+    // Both are on file as not renewing, so the live status's `willRenew: true`
+    // shows which transaction the write-back below landed on.
     let lapsed = makeTransaction(
       productId: "monthly_a",
       transactionId: "txn_a",
       subscriptionGroupId: "group_1",
       purchaseDate: baseDate.addingTimeInterval(-5_184_000),
-      expirationDate: baseDate.addingTimeInterval(-60)
+      expirationDate: baseDate.addingTimeInterval(-60),
+      willRenew: false
     )
     // A later purchase in the same group that was refunded.
     let refunded = makeTransaction(
@@ -1172,7 +1179,8 @@ struct PerGroupEntitlementResolutionTests {
       subscriptionGroupId: "group_1",
       purchaseDate: baseDate.addingTimeInterval(-86_400),
       expirationDate: baseDate.addingTimeInterval(-30),
-      isRevoked: true
+      isRevoked: true,
+      willRenew: false
     )
 
     let (raw, productIds) = fixtures(for: ["monthly_a", "monthly_b"])
@@ -1207,6 +1215,9 @@ struct PerGroupEntitlementResolutionTests {
     // never the refunded one, which would reach `isSubscribed(to:)`.
     #expect(entitlement?.latestProductId == "monthly_a")
     #expect(grantingProductIds == ["monthly_a"])
+    // The live flags belong to the purchase that still counts, not the refund.
+    #expect(subscriptions.first { $0.transactionId == "txn_a" }?.willRenew == true)
+    #expect(subscriptions.first { $0.transactionId == "txn_b" }?.willRenew == false)
   }
 
   @Test("A renewal StoreKit knows about beats the stale transaction expiry")
