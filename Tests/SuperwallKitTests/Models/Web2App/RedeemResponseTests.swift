@@ -271,6 +271,7 @@ final class RedeemResponseTests {
     #expect(userAttributes["experience"] as? Int == 3)
     #expect(userAttributes["wantsReminders"] as? Bool == true)
     #expect(userAttributes["equipment"] as? [String] == ["dumbbells", "bench"])
+    #expect(userAttributes["nickname"] is NSNull)
   }
 
   @Test("User attributes are carried onto the Objective-C model")
