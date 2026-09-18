@@ -35,6 +35,26 @@ class ConfigManager {
 
   var configRetryCount = 0
 
+  /// The purchases load that `fetchConfiguration` published `configState` ahead
+  /// of, when the saved customer info proved the user was still entitled. Trial
+  /// eligibility waits on it so an upgrade during the load still sees the active
+  /// subscription groups.
+  ///
+  /// Protected by a queue: it's written on the config fetch and read from the
+  /// purchase path, which doesn't wait for config.
+  private var _initialPurchasesLoad: Task<Void, Never>?
+  private let initialPurchasesLoadQueue = DispatchQueue(
+    label: "com.superwall.initialPurchasesLoad"
+  )
+
+  var initialPurchasesLoad: Task<Void, Never>? {
+    initialPurchasesLoadQueue.sync { _initialPurchasesLoad }
+  }
+
+  private func setInitialPurchasesLoad(_ task: Task<Void, Never>) {
+    initialPurchasesLoadQueue.sync { _initialPurchasesLoad = task }
+  }
+
   private unowned let storeKitManager: StoreKitManager
   unowned let storage: Storage
   private unowned let network: Network
@@ -44,9 +64,9 @@ class ConfigManager {
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   let expressionEvaluator: CELEvaluator
 
-  /// Serializes preloading so concurrent callers can't race on the task
+  /// Runs preloads one at a time so concurrent callers can't race on the task
   /// reference. See ``preloadAllPaywalls()``.
-  private let preloadingCoordinator = PreloadingTaskCoordinator()
+  private let preloadingCoordinator = SerialTaskCoordinator()
 
   typealias Factory = RequestFactory
     & AudienceFilterAttributesFactory
@@ -185,9 +205,23 @@ class ConfigManager {
         InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes)
       )
 
-      // Step 6: Process config and set state
-      await processConfig(config, isFirstTime: true)
-      configState.send(.retrieved(config))
+      // Step 6: Process config and set state.
+      //
+      // `processConfig` reads StoreKit, which can take many seconds on a weak
+      // network, and every `register` call waits on `configState`. When the
+      // customer info saved by the previous launch proves the user is entitled
+      // through a date that hasn't arrived yet, config is published before that
+      // read and the in-memory purchase state is rebuilt from the saved copy.
+      // Only changes made since the last launch can then be missed, and the
+      // read corrects those when it lands.
+      let didPublishConfig = await processConfig(
+        config,
+        isFirstTime: true,
+        publishingEarlyFrom: shouldFetchAsync ? savedCustomerInfoForEarlyPublish() : nil
+      )
+      if !didPublishConfig {
+        configState.send(.retrieved(config))
+      }
 
       // Step 7: Schedule background tasks
       scheduleBackgroundTasks(
@@ -218,6 +252,36 @@ class ConfigManager {
       return true
     }
     return entitlementsInfo.granted.contains { $0.isActive }
+  }
+
+  /// The saved customer info when it proves the user is still entitled, so
+  /// config can be published before this launch's StoreKit read. `expiresAt` is
+  /// a date the store asserted, and a subscription can't lapse before it, so a
+  /// future date is a guarantee, not a guess. Refunds are the one thing it can't
+  /// see, and the read catches those seconds later. A purchase controller
+  /// changes nothing here: the read never sets the status in that setup, and
+  /// the saved entitlements it preserves carry the same expiry.
+  private func savedCustomerInfoForEarlyPublish() -> CustomerInfo? {
+    // StoreKit 2 only: its read is the slow one, and it is the only one that
+    // saves the device rows the restore rebuilds from. A StoreKit 1 receipt is
+    // parsed locally and saves no rows, so there would be nothing to restore.
+    guard #available(iOS 15.0, *), options.storeKitVersion == .storeKit2 else {
+      return nil
+    }
+    guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
+      return nil
+    }
+    // A developer-granted entitlement is the developer's own verdict. The read
+    // merges it back in on every load, so nothing it learns can change it.
+    if entitlementsInfo.granted.contains(where: { $0.isActive }) {
+      return customerInfo
+    }
+    // A lifetime purchase has no expiry to check and can only be refunded,
+    // which is the same risk the expiry case already accepts.
+    let isStillEntitled = customerInfo.entitlements.contains {
+      $0.isActive && ($0.isLifetime == true || ($0.expiresAt ?? .distantPast) > Date())
+    }
+    return isStillEntitled ? customerInfo : nil
   }
 
   private struct ConfigFetchResult {
@@ -387,10 +451,18 @@ class ConfigManager {
     )
   }
 
+  /// Applies `config` and loads purchases from StoreKit.
+  ///
+  /// - Parameter savedCustomerInfo: When given, `configState` is sent before the
+  ///   StoreKit read starts, with the in-memory purchase state rebuilt from this
+  ///   saved copy. Ignored in test mode, where products come from the API.
+  /// - Returns: Whether `configState` was sent here.
+  @discardableResult
   private func processConfig(
     _ config: Config,
-    isFirstTime: Bool
-  ) async {
+    isFirstTime: Bool,
+    publishingEarlyFrom savedCustomerInfo: CustomerInfo? = nil
+  ) async -> Bool {
     storage.save(
       config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
     storage.save(config, forType: LatestConfig.self)
@@ -404,6 +476,7 @@ class ConfigManager {
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
+    var didPublishConfig = false
     if testModeManager.isTestMode {
       // In test mode, fetch products from API instead of StoreKit
       await fetchTestModeProducts(testModeManager: testModeManager)
@@ -423,7 +496,26 @@ class ConfigManager {
           entitlements: []
         ).merging(with: .blank(), granting: entitlementsInfo.granted)
       }
-      await factory.loadPurchasedProducts(config: config)
+      // The saved copy from a test-mode launch can still hold test
+      // entitlements, so it isn't restored when test mode just turned off.
+      if let savedCustomerInfo = savedCustomerInfo, !testModeJustDeactivated {
+        await factory.restorePurchases(
+          from: savedCustomerInfo,
+          grantedEntitlements: entitlementsInfo.granted,
+          config: config
+        )
+        // Stored before the send so anything that presents on this config can
+        // wait for the load through `initialPurchasesLoad`.
+        let purchasesLoad = Task { [factory] in
+          await factory.loadPurchasedProducts(config: config)
+        }
+        setInitialPurchasesLoad(purchasesLoad)
+        configState.send(.retrieved(config))
+        didPublishConfig = true
+        await purchasesLoad.value
+      } else {
+        await factory.loadPurchasedProducts(config: config)
+      }
     }
 
     if !testModeManager.isTestMode {
@@ -446,6 +538,8 @@ class ConfigManager {
         await presentTestModeModal(reason: reason, config: config)
       }
     }
+
+    return didPublishConfig
   }
 
   /// Reassigns variants and preloads paywalls again.
@@ -572,13 +666,10 @@ class ConfigManager {
 
   /// Preloads paywalls referenced by triggers.
   func preloadAllPaywalls() async {
-    // Chain onto any in-flight preload through the coordinator. The coordinator
-    // is an actor, so swapping in the new task is serialized. Previously this was
-    // `self.currentPreloadingTask = Task { ... }` on a non-isolated class, so
-    // concurrent callers (config refresh, retry, reset, public API) raced on the
-    // task reference and over-released it, crashing in `swift_release` during
-    // task teardown.
-    await preloadingCoordinator.enqueue { [weak self] in
+    // Queue the preload behind any that's already in flight and return. It's
+    // kicked off from several places (config refresh, retry, reset, public
+    // API), so the queue has to be safe to add to from any thread.
+    preloadingCoordinator.enqueue { [weak self] in
       guard let self = self else {
         return
       }
@@ -616,23 +707,6 @@ class ConfigManager {
         paywallIds.remove(presentedPaywallId)
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)
-    }
-  }
-
-  /// Serializes the read-modify-write of the preloading task so it can't be
-  /// mutated from multiple tasks at once. Each enqueued operation runs only
-  /// after the previously enqueued one finishes, preserving the original
-  /// chaining behavior while making the swap data-race free.
-  private actor PreloadingTaskCoordinator {
-    private var currentTask: Task<Void, Never>?
-
-    /// Atomically chains `operation` after any in-flight preloading task.
-    func enqueue(_ operation: @escaping @Sendable () async -> Void) {
-      let previous = currentTask
-      currentTask = Task {
-        await previous?.value
-        await operation()
-      }
     }
   }
 
@@ -687,7 +761,6 @@ class ConfigManager {
             for: paywall,
             isDebuggerLaunched: request.isDebuggerLaunched,
             isForPresentation: true,
-            isPreloading: true,
             delegate: nil
           )
         }

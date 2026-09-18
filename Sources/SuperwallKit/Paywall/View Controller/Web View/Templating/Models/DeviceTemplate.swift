@@ -70,8 +70,8 @@ struct DeviceTemplate: Codable {
   var localResourceIds: String
   var deviceId: String
 
-  func toDictionary() -> [String: Any] {
-    guard let data = try? JSONEncoder().encode(self) else {
+  func toDictionary(encoder: JSONEncoder = JSONEncoder()) -> [String: Any] {
+    guard let data = try? encoder.encode(self) else {
       return [:]
     }
     let jsonObject = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)

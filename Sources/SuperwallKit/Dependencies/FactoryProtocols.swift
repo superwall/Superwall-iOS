@@ -78,6 +78,17 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
+
+  /// Whether the purchases load could change what the SDK knows about
+  /// `entitlementIds`, and so whether callers have to wait for it.
+  ///
+  /// The load re-merges the web and granted sources when it lands, so it isn't
+  /// only the App Store half that can move. But both of those assign
+  /// `customerInfo` themselves as they change — the redeemer when web
+  /// entitlements arrive, and the granted-entitlements setter on both its
+  /// paths — so the copy read during the window is never behind on them. That
+  /// leaves the device half, which is why only App Store products count.
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool
 }
 
 protocol IdentityFactory: AnyObject {
@@ -157,6 +168,13 @@ protocol UserAttributesPlacementFactory: AnyObject {
 
 protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async
+  /// The purchases load that config was published ahead of, if any.
+  var initialPurchasesLoad: Task<Void, Never>? { get }
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
   var isTestMode: Bool { get }
