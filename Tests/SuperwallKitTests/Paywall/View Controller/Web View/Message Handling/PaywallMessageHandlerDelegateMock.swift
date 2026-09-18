@@ -24,14 +24,17 @@ final class FakePermissionHandler: PermissionHandling {
 
 final class FakeWebView: SWWebView {
   var willHandleJs = false
+  var evaluatedScripts: [String] = []
 
   #if compiler(>=6.0)
   override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
     willHandleJs = true
+    evaluatedScripts.append(javaScriptString)
   }
   #else
   override func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, (any Error)?) -> Void)? = nil) {
     willHandleJs = true
+    evaluatedScripts.append(javaScriptString)
   }
   #endif
 }

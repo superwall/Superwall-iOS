@@ -27,6 +27,103 @@ struct PaywallMessageHandlerTests {
     return webView.willHandleJs
   }
 
+  /// Decodes the `event_name`s of every `accept64` message passed to the webview.
+  private func passedEvents(in webView: FakeWebView) -> [[String: Any]] {
+    return webView.evaluatedScripts.flatMap { script -> [[String: Any]] in
+      guard
+        let start = script.range(of: "accept64('"),
+        let end = script.range(of: "')", range: start.upperBound..<script.endIndex),
+        let data = Data(base64Encoded: String(script[start.upperBound..<end.lowerBound])),
+        let events = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+      else {
+        return []
+      }
+      return events
+    }
+  }
+
+  private func waitForEvent(
+    named name: String,
+    in webView: FakeWebView
+  ) async -> [String: Any]? {
+    for _ in 0..<250 {
+      if let event = passedEvents(in: webView).first(where: { $0["event_name"] as? String == name }) {
+        return event
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+    return nil
+  }
+
+  private func makeHandler() -> (PaywallMessageHandler, FakeWebView, PaywallMessageHandlerDelegateMock) {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    return (messageHandler, webView, delegate)
+  }
+
+  // Regression: the paywall schedules its trial reminder off `freeTrial_start`, so a purchase
+  // that didn't start a trial (e.g. the user already used it) must not send that message.
+  @Test
+  func transactionComplete_withoutTrial_doesNotSendFreeTrialStart() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+    _ = delegate
+
+    messageHandler.handle(
+      .transactionComplete(
+        trialEndDate: nil,
+        productIdentifier: "product1",
+        didStartFreeTrial: false
+      )
+    )
+
+    let complete = await waitForEvent(named: "transaction_complete", in: webView)
+    #expect(complete?["product_identifier"] as? String == "product1")
+
+    // transaction_complete is sent first in the same task, so give freeTrial_start a
+    // chance to arrive before asserting it never did.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    let names = passedEvents(in: webView).compactMap { $0["event_name"] as? String }
+    #expect(!names.contains("freeTrial_start"))
+  }
+
+  @Test
+  func transactionComplete_withTrial_sendsFreeTrialStartWithEndDate() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+    _ = delegate
+    let trialEndDate = Date(timeIntervalSince1970: 1_800_000_000)
+
+    messageHandler.handle(
+      .transactionComplete(
+        trialEndDate: trialEndDate,
+        productIdentifier: "product1",
+        didStartFreeTrial: true
+      )
+    )
+
+    let complete = await waitForEvent(named: "transaction_complete", in: webView)
+    #expect(complete != nil)
+
+    let freeTrialStart = await waitForEvent(named: "freeTrial_start", in: webView)
+    #expect(freeTrialStart?["product_identifier"] as? String == "product1")
+    #expect(freeTrialStart?["trial_end_date"] as? Int == 1_800_000_000_000)
+  }
+
   @Test
   func handleTemplateParams() async {
     let dependencyContainer = DependencyContainer()
