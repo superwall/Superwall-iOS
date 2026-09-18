@@ -728,7 +728,9 @@ struct PerGroupEntitlementResolutionTests {
 
     let provider = MockSubscriptionStatusProvider(
       statusesByGroupId: [
-        "group_1": ResolvedSubscriptionStatus(state: .expired, willRenew: false, offerType: .promotional),
+        // Still active, and with the furthest expiry: picking by time left would
+        // report this one's `false` / `.promotional`.
+        "group_1": ResolvedSubscriptionStatus(state: .subscribed, willRenew: false, offerType: .promotional),
         "group_2": ResolvedSubscriptionStatus(state: .subscribed, willRenew: true, offerType: .trial)
       ]
     )
