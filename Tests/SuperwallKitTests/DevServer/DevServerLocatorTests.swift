@@ -48,6 +48,7 @@ struct DevServerLocatorTests {
     private var gate: [CheckedContinuation<Void, Never>] = []
     private var arrival: CheckedContinuation<Void, Never>?
     private var hasArrived = false
+    private var isOpen = false
 
     init(serving: Set<String>, gating gatedOrigin: String) {
       self.serving = serving
@@ -63,6 +64,7 @@ struct DevServerLocatorTests {
     }
 
     func release() {
+      isOpen = true
       for continuation in gate {
         continuation.resume()
       }
@@ -74,7 +76,8 @@ struct DevServerLocatorTests {
         return (Data(), nil)
       }
       let origin = "\(url.scheme ?? "")://\(url.host ?? ""):\(url.port ?? 0)"
-      if origin == gatedOrigin {
+      if origin == gatedOrigin,
+        !isOpen {
         hasArrived = true
         arrival?.resume()
         arrival = nil
@@ -204,6 +207,32 @@ struct DevServerLocatorTests {
 
     let afterStaleFinished = await locator.locate(devServerURL: new)
     #expect(afterStaleFinished?.base == new)
+  }
+
+  @Test("A pin landing mid-lookup wins over the walk already in flight")
+  func locate_pinDuringLookupWinsOverTheWalkInFlight() async throws {
+    let configured = try url("http://192.168.1.10:6100")
+    let pinned = try url("http://192.168.1.30:6100")
+    let probe = GatedProbe(
+      serving: [configured.absoluteString, pinned.absoluteString],
+      gating: configured.absoluteString
+    )
+    let locator = locator(probe)
+
+    let inFlight = Task { await locator.locate(devServerURL: configured) }
+    await probe.waitUntilGated()
+
+    // A superwall_dev link lands while that walk is still waiting.
+    await locator.pin(base: pinned)
+    let afterPin = await locator.locate(devServerURL: configured)
+    #expect(afterPin?.base == pinned)
+
+    await probe.release()
+    let inFlightResult = await inFlight.value
+    #expect(inFlightResult == nil)
+
+    let afterWalkFinished = await locator.locate(devServerURL: configured)
+    #expect(afterWalkFinished?.base == pinned)
   }
 
   @Test("Forgetting drops the cached server and the pin")

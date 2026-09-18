@@ -430,10 +430,10 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// dashboard), disables paywall preloading, and skips the test mode intro sheet.
   ///
   /// The host app must allow local networking in its `Info.plist`
-  /// (`NSAppTransportSecurity` → `NSAllowsLocalNetworking`), which covers the
-  /// `localhost` and `.local` addresses `superwall dev` prints. App Transport
-  /// Security doesn't apply to plain IP addresses, so the `Device` URL needs
-  /// nothing more than that.
+  /// (`NSAppTransportSecurity` → `NSAllowsLocalNetworking`). That one key covers
+  /// every address `superwall dev` prints: `localhost`, `.local` hosts, and the
+  /// plain IP address in the `Device` URL, which App Transport Security stopped
+  /// permitting by default in iOS 17.
   @nonobjc public var devServer: DevServer?
 
   /// Objective-C only: connects to a `superwall dev` server found on `localhost`.

@@ -22,6 +22,9 @@ actor DevServerLocator {
   private var pinnedBase: URL?
   private var requestedURL: URL?
   private var hasBeenAsked = false
+  /// Bumped whenever what this is looking for changes. A walk that suspended
+  /// before the change is answering about a server nobody is asking for now.
+  private var generation = 0
   private var hasWarnedAboutTransportSecurity = false
 
   init(load: @escaping Load = DevServerLocator.loadWithURLSession) {
@@ -32,6 +35,7 @@ actor DevServerLocator {
     pinnedBase = base
     cached = nil
     lastMissAt = nil
+    generation += 1
   }
 
   /// Drops everything this knows about the server it was last pointed at: the
@@ -40,6 +44,7 @@ actor DevServerLocator {
     cached = nil
     lastMissAt = nil
     pinnedBase = nil
+    generation += 1
   }
 
   func locate(devServerURL: URL?) async -> DevServerLocation? {
@@ -55,6 +60,7 @@ actor DevServerLocator {
     }
     hasBeenAsked = true
     requestedURL = devServerURL
+    let walkGeneration = generation
 
     if let cached = cached,
       Date().timeIntervalSince(cached.fetchedAt) < 2 {
@@ -77,11 +83,12 @@ actor DevServerLocator {
 
     for base in bases {
       let manifest = await fetchManifest(from: base)
-      // Probing suspends the actor, so `devServer` can be pointed somewhere
-      // else while this one is in flight. What comes back describes the
-      // address that was asked for rather than the one in force now, so it
-      // neither lands in the cache nor goes back to the caller.
-      if devServerURL != requestedURL {
+      // Probing suspends the actor for as long as each candidate takes to
+      // answer, so `devServer` can be repointed or a deep link can pin a base
+      // while this walk is in flight. What comes back then describes a server
+      // nobody is asking for, so it neither lands in the cache nor goes back
+      // to the caller.
+      if generation != walkGeneration {
         return nil
       }
       if let manifest = manifest {
