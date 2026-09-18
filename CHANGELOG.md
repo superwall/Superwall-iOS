@@ -27,6 +27,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a subscription in its billing grace period being reported as inactive after its expiry date has passed.
 - Fixes an entitlement in a billing grace period reporting an expiry date that has already passed. `expiresAt` is now the date the grace period ends.
 - An entitlement's `latestProductId`, `expiresAt` and `willRenew` now all describe the purchase currently unlocking it, so they no longer mix details from different subscriptions.
+- Fixes `isSubscribed(to:)` and the `activeProducts` device attribute leaving out a product whose subscription is in its billing grace period.
 
 ## 4.16.3
 

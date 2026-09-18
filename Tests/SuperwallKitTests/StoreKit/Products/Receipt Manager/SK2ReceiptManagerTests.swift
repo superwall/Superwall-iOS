@@ -55,7 +55,8 @@ struct SK2ReceiptManagerTests {
 
     let corrected = SK2ReceiptManager.correctPurchases(
       [purchase],
-      using: ["monthly": [entitlement]]
+      using: ["monthly": [entitlement]],
+      grantingProductIds: []
     )
 
     #expect(corrected.first?.isActive == false)
@@ -73,7 +74,8 @@ struct SK2ReceiptManagerTests {
 
     let corrected = SK2ReceiptManager.correctPurchases(
       [purchase],
-      using: ["monthly": [entitlement]]
+      using: ["monthly": [entitlement]],
+      grantingProductIds: ["monthly"]
     )
 
     #expect(corrected.first?.isActive == true)
@@ -92,10 +94,36 @@ struct SK2ReceiptManagerTests {
 
     let corrected = SK2ReceiptManager.correctPurchases(
       [refunded, paying],
-      using: ["monthly": [entitlement], "yearly": [entitlement]]
+      using: ["monthly": [entitlement], "yearly": [entitlement]],
+      // The refunded monthly's group grants nothing, so it isn't named here.
+      grantingProductIds: ["yearly"]
     )
 
     #expect(corrected.first { $0.id == "monthly" }?.isActive == false)
+    #expect(corrected.first { $0.id == "yearly" }?.isActive == true)
+  }
+
+  @Test("A grace-period group is active even when another group describes the entitlement")
+  func gracePeriodGroupIsActiveAlongsideALongerGroup() {
+    // Its own expiry has passed, so the raw read says inactive, but the group
+    // is in its billing grace period and still unlocking access.
+    let inGrace = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+    let longer = Purchase(id: "yearly", isActive: true, purchaseDate: Date())
+    // One entitlement, two groups. The yearly has more time left, so it is the
+    // one describing the entitlement.
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "yearly",
+      productIds: ["monthly", "yearly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [inGrace, longer],
+      using: ["monthly": [entitlement], "yearly": [entitlement]],
+      grantingProductIds: ["monthly", "yearly"]
+    )
+
+    #expect(corrected.first { $0.id == "monthly" }?.isActive == true)
     #expect(corrected.first { $0.id == "yearly" }?.isActive == true)
   }
 
@@ -103,7 +131,11 @@ struct SK2ReceiptManagerTests {
   func unmappedPurchaseIsLeftAlone() {
     let purchase = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
 
-    let corrected = SK2ReceiptManager.correctPurchases([purchase], using: [:])
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: [:],
+      grantingProductIds: []
+    )
 
     #expect(corrected.first?.isActive == true)
   }

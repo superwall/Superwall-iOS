@@ -297,13 +297,17 @@ enum EntitlementProcessor {
       }
       let isLifetime = key == lifetimeKey
       let unrevoked = bucket.filter { !$0.isRevoked }
+      // A lifetime purchase never expires. Everything else grants access for
+      // as long as an unrevoked transaction still has time left on it.
+      let isActive = isLifetime || unrevoked.contains { ($0.expirationDate ?? .distantPast) > now }
 
-      // Describe the source by a purchase that still counts. A refunded
-      // transaction can be the newest one in its group, and letting it describe
-      // an active source would name the refunded product as the one granting
-      // the entitlement. Falling back to the whole bucket keeps a fully
-      // refunded source able to report its last known state.
-      guard let representative = (unrevoked.isEmpty ? bucket : unrevoked)
+      // While the source is granting access, only a purchase that still counts
+      // may describe it, or a refund would name the product unlocking the
+      // entitlement. Once it grants nothing there is no such claim to protect,
+      // so the most recent purchase describes it whether or not it was
+      // refunded — which is what lets a refund be told apart from a plain lapse.
+      let candidates = isActive && !unrevoked.isEmpty ? unrevoked : bucket
+      guard let representative = candidates
         .max(by: { $0.purchaseDate < $1.purchaseDate }) else {
         return nil
       }
@@ -312,9 +316,7 @@ enum EntitlementProcessor {
         representative: representative,
         isLifetime: isLifetime,
         hasUnrevokedTransaction: !unrevoked.isEmpty,
-        // A lifetime purchase never expires. Everything else grants access for
-        // as long as an unrevoked transaction still has time left on it.
-        isActive: isLifetime || unrevoked.contains { ($0.expirationDate ?? .distantPast) > now },
+        isActive: isActive,
         expiresAt: isLifetime ? nil : unrevoked.compactMap(\.expirationDate).max(),
         renewedAt: unrevoked
           .filter { $0.entitlementProductType == .autoRenewable && $0.originalPurchaseDate < $0.purchaseDate }
@@ -465,9 +467,11 @@ enum EntitlementProcessor {
     subscriptions: inout [SubscriptionTransaction],
     subscriptionStatusProvider: SubscriptionStatusProvider,
     enableExperimentalDeviceVariables: Bool = false,
-    onLatestSubscriptionUpdate: ((LatestSubscription.State?, Bool?, LatestSubscription.OfferType?) -> Void)? = nil
+    onLatestSubscriptionUpdate: ((LatestSubscription.State?, Bool?, LatestSubscription.OfferType?) -> Void)? = nil,
+    onGrantingProductIds: ((Set<String>) -> Void)? = nil
   ) async -> [String: Set<Entitlement>] {
     var sourcesByEntitlement: [String: [GrantSource]] = [:]
+    var grantingProductIds: Set<String> = []
     var updatedSubscriptions = subscriptions
     var latestSubscription: GrantSource?
 
@@ -547,6 +551,14 @@ enum EntitlementProcessor {
 
       sourcesByEntitlement[entitlementId] = sources
 
+      // Every source that is granting names a product that is genuinely paid
+      // for, not just the one describing the entitlement. A group in its
+      // billing grace period alongside a group with more time left on it is
+      // still unlocking access, so its product counts as active too.
+      for source in sources where source.isActive {
+        grantingProductIds.insert(source.latestProductId)
+      }
+
       // These variables describe the latest subscription on the device, so the
       // winner is the most recently bought one across every entitlement. Picking
       // it up here and reporting it once keeps it out of the hands of dictionary
@@ -556,6 +568,8 @@ enum EntitlementProcessor {
         latestSubscription = candidate
       }
     }
+
+    onGrantingProductIds?(grantingProductIds)
 
     if let latestSubscription = latestSubscription {
       onLatestSubscriptionUpdate?(
