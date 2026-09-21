@@ -143,7 +143,6 @@ class ConfigManager {
       await paywallManager.removePaywalls(withIds: removedOrChangedPaywallIds)
 
       await processConfig(newConfig, isFirstTime: false)
-      configState.send(.retrieved(newConfig))
 
       let configRefresh = InternalSuperwallEvent.ConfigRefresh(
         buildId: newConfig.buildId,
@@ -214,14 +213,11 @@ class ConfigManager {
       // read and the in-memory purchase state is rebuilt from the saved copy.
       // Only changes made since the last launch can then be missed, and the
       // read corrects those when it lands.
-      let didPublishConfig = await processConfig(
+      await processConfig(
         config,
         isFirstTime: true,
         publishingEarlyFrom: shouldFetchAsync ? savedCustomerInfoForEarlyPublish() : nil
       )
-      if !didPublishConfig {
-        configState.send(.retrieved(config))
-      }
 
       // Step 7: Schedule background tasks
       scheduleBackgroundTasks(
@@ -451,18 +447,16 @@ class ConfigManager {
     )
   }
 
-  /// Applies `config` and loads purchases from StoreKit.
+  /// Applies `config`, loads purchases from StoreKit, and sends `configState`.
   ///
   /// - Parameter savedCustomerInfo: When given, `configState` is sent before the
   ///   StoreKit read starts, with the in-memory purchase state rebuilt from this
   ///   saved copy. Ignored in test mode, where products come from the API.
-  /// - Returns: Whether `configState` was sent here.
-  @discardableResult
   private func processConfig(
     _ config: Config,
     isFirstTime: Bool,
     publishingEarlyFrom savedCustomerInfo: CustomerInfo? = nil
-  ) async -> Bool {
+  ) async {
     storage.save(
       config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
     storage.save(config, forType: LatestConfig.self)
@@ -476,7 +470,7 @@ class ConfigManager {
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
-    var didPublishConfig = false
+    var hasPublishedConfig = false
     if testModeManager.isTestMode {
       // In test mode, fetch products from API instead of StoreKit
       await fetchTestModeProducts(testModeManager: testModeManager)
@@ -511,7 +505,7 @@ class ConfigManager {
         }
         setInitialPurchasesLoad(purchasesLoad)
         configState.send(.retrieved(config))
-        didPublishConfig = true
+        hasPublishedConfig = true
         await purchasesLoad.value
       } else {
         await factory.loadPurchasedProducts(config: config)
@@ -528,18 +522,21 @@ class ConfigManager {
     }
 
     // Show test mode alert if it's the first time OR if test mode just became active
-    let shouldShowTestModeAlert = isFirstTime || testModeJustActivated
-    if shouldShowTestModeAlert,
+    if isFirstTime || testModeJustActivated,
       testModeManager.isTestMode,
-      testModeManager.testModeReason != nil {
+      let reason = testModeManager.testModeReason {
       if DevMode.isActive(options) {
         await applyDefaultTestModeState(testModeManager: testModeManager)
-      } else if let reason = testModeManager.testModeReason {
+      } else {
         await presentTestModeModal(reason: reason, config: config)
       }
     }
 
-    return didPublishConfig
+    // Last on purpose: the test mode modal above waits for the tester to pick
+    // entitlements, and anything waiting on config must see that choice.
+    if !hasPublishedConfig {
+      configState.send(.retrieved(config))
+    }
   }
 
   /// Reassigns variants and preloads paywalls again.
