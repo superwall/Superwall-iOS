@@ -67,17 +67,18 @@ final class AutomaticPurchaseController {
         // published one: that also carries developer-granted entitlements,
         // which would hold a lapsed App Store entitlement in place.
         //
-        // Each entitlement is judged on its own. One that holds keeps only
-        // itself: a refunded App Store entitlement next to a live web one
-        // must still drop out, not ride along with it.
+        // Two separate questions. Whether an entitlement holds the status up
+        // needs an expiry the read can be bounded by. Whether it stays in
+        // the status only needs the read to have no authority over it: a
+        // lifetime App Store unlock has no expiry, so it can't hold, but an
+        // empty read said nothing about it either, so it is not dropped
+        // while another entitlement holds. Only an App Store entitlement
+        // the read had authority over and did not confirm is dropped — a
+        // refunded subscription next to a live web one, say.
         if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
-          let heldEntitlements = currentEntitlements.filter { entitlement in
-            guard entitlement.isActive,
-              (entitlement.expiresAt ?? .distantPast) > Date() else {
-              return false
-            }
+          func isRefuted(_ entitlement: Entitlement) -> Bool {
             if purchases.isEmpty || entitlement.store != .appStore {
-              return true
+              return false
             }
             // A still-active purchase that unlocks this entitlement means
             // the empty entitlement set is a mapping failure. With the
@@ -85,18 +86,23 @@ final class AutomaticPurchaseController {
             // `Purchase.isActive` is disabled too, so this is the raw
             // transaction-level value and can miss a revocation that sets
             // no `revocationDate`. The hold is still bounded by the expiry
-            // gate above, which beats locking out a paying subscriber over
+            // gate below, which beats locking out a paying subscriber over
             // a lost product mapping.
-            return entitlement.productIds.contains { activeProductIds.contains($0) }
+            return !entitlement.productIds.contains { activeProductIds.contains($0) }
           }
-          if heldEntitlements == currentEntitlements {
-            return
+          let holdsStatus = currentEntitlements.contains { entitlement in
+            entitlement.isActive
+              && (entitlement.expiresAt ?? .distantPast) > Date()
+              && !isRefuted(entitlement)
           }
-          if !heldEntitlements.isEmpty {
-            superwall.internallySetSubscriptionStatus(
-              to: .active(heldEntitlements),
-              superwall: superwall
-            )
+          if holdsStatus {
+            let survivors = currentEntitlements.filter { !isRefuted($0) }
+            if survivors != currentEntitlements {
+              superwall.internallySetSubscriptionStatus(
+                to: .active(survivors),
+                superwall: superwall
+              )
+            }
             return
           }
         }

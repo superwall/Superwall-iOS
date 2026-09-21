@@ -431,6 +431,50 @@ struct AutomaticPurchaseControllerTests {
     }
   }
 
+  @Test("An empty device read keeps a lifetime App Store entitlement beside a held one")
+  func testEmptyDeviceRead_lifetimeBesideHeldEntitlement_keepsBoth() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A lifetime unlock has no expiry, so it can't hold the status up on its
+    // own. But an empty read is a non-answer about it too, so while the web
+    // subscription holds, the lifetime entitlement must not be dropped and
+    // persisted as gone.
+    let webEntitlement = stripeEntitlement(expiresAt: Date().addingTimeInterval(30 * 86_400))
+    let lifetimeEntitlement = Entitlement(
+      id: "lifetime",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["lifetime_product"],
+      latestProductId: "lifetime_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: nil,
+      isLifetime: true,
+      willRenew: nil,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, lifetimeEntitlement])
+    }
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        entitlements.contains(lifetimeEntitlement),
+        "An empty read has no authority over a lifetime unlock, so it must survive"
+      )
+    } else {
+      Issue.record("A held web entitlement must keep the status active; got \(status)")
+    }
+  }
+
   @Test("Inactive purchases cannot refute a nil-store entitlement")
   func testInactivePurchases_nilStoreStatus_staysActive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
