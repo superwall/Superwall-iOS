@@ -185,9 +185,14 @@ final class DevServerManifestTests: XCTestCase {
     XCTAssertNil(decoded.surface(forPaywallDatabaseId: "444"))
   }
 
-  /// The manifest a running `superwall dev` actually serves, copied verbatim
-  /// from `/device/manifest.json`, so a change on either side of the wire
-  /// fails here rather than on someone's device.
+  /// The manifest a running `superwall dev` actually serves, copied from
+  /// `/device/manifest.json`, so a change on either side of the wire fails
+  /// here rather than on someone's device. The CLI writes every key from one
+  /// serializer (`packages/runtime/src/config.ts`, `paywallSettingsOf`):
+  /// `presentation_style.type` and `web_checkout_destination` in the push
+  /// API's uppercase, `feature_gating` and `introductory_offer_eligibility`
+  /// lowercase, and the eligibility key on every surface, defaulting to
+  /// `automatic`.
   func test_readsTheManifestTheCliServes() throws {
     let decoded = try manifest("""
     {
@@ -202,7 +207,8 @@ final class DevServerManifestTests: XCTestCase {
             "feature_gating": "gated",
             "on_device_cache": false,
             "scroll_enabled": true,
-            "game_controller_enabled": true
+            "game_controller_enabled": true,
+            "introductory_offer_eligibility": "always_ineligible"
           }
         },
         {
@@ -216,6 +222,7 @@ final class DevServerManifestTests: XCTestCase {
             "on_device_cache": true,
             "scroll_enabled": true,
             "game_controller_enabled": false,
+            "introductory_offer_eligibility": "automatic",
             "background_color_hex": "#ffffff",
             "dark_background_color_hex": "#0d0f12"
           }
@@ -230,6 +237,7 @@ final class DevServerManifestTests: XCTestCase {
             "on_device_cache": true,
             "scroll_enabled": true,
             "game_controller_enabled": false,
+            "introductory_offer_eligibility": "automatic",
             "web_checkout_destination": "EXTERNAL"
           }
         }
@@ -279,6 +287,7 @@ final class DevServerManifestTests: XCTestCase {
     XCTAssertEqual(paywall.featureGating, .gated)
     XCTAssertTrue(paywall.isScrollEnabled)
     XCTAssertEqual(paywall.onDeviceCache, .disabled)
+    XCTAssertEqual(paywall.introOfferEligibility, .ineligible)
 
     // Web-only and app-level settings have no paywall field to land on, so the
     // surfaces carrying them still read cleanly.
