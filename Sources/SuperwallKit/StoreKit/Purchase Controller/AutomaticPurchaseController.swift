@@ -74,9 +74,15 @@ final class AutomaticPurchaseController {
         // Store unlock has no expiry, so it can't hold, but an empty read
         // said nothing about it either, so it stays while another
         // entitlement holds. A refunded subscription next to a live web one
-        // is dropped because the read refuted it, and a subscription whose
-        // cached expiry is already behind us is dropped because the clock
-        // did — time passing needs no read to confirm it.
+        // is dropped because the read refuted it, and an App Store
+        // subscription whose cached expiry is already behind us is dropped
+        // because the clock did — time passing needs no read to confirm it.
+        //
+        // The clock only settles App Store and nil-store records here. Web
+        // entitlements are merged back in from the redeem cache by
+        // `internallySetSubscriptionStatus`, which is authoritative for
+        // them, so a lapsed web record comes straight back until the web
+        // poll says otherwise.
         if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
           func isLapsed(_ entitlement: Entitlement) -> Bool {
             guard let expiresAt = entitlement.expiresAt else {
