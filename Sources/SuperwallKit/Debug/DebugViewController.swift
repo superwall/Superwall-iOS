@@ -227,7 +227,8 @@ final class DebugViewController: UIViewController {
   /// The manifest is fetched again on every load, not only the first: a
   /// surface's products and presentation settings come from its config.ts,
   /// and edits made since the debugger opened must show up in the preview.
-  /// When the server can't be reached the last snapshot stands.
+  /// When the server can't be reached the last snapshot stands; a surface the
+  /// server no longer lists is dropped, since presenting it would fail too.
   private func ensureDevServer() async {
     guard
       DevMode.isActive(Superwall.shared.options),
@@ -244,8 +245,23 @@ final class DebugViewController: UIViewController {
     debugManager.devServer = located
     // The selected surface was picked from the previous manifest; carry the
     // selection over to the fresh one so the preview renders what it says now.
-    if let devSurface = devSurface {
-      self.devSurface = located.surfaces.first { $0.id == devSurface.id } ?? devSurface
+    guard let devSurface = devSurface else {
+      return
+    }
+    if let refreshed = located.surfaces.first(where: { $0.id == devSurface.id }) {
+      self.devSurface = refreshed
+      return
+    }
+    Logger.debug(
+      logLevel: .warn,
+      scope: .debugViewController,
+      message: "The dev server no longer lists the surface \(devSurface.id). "
+        + "Pick another paywall to preview."
+    )
+    self.devSurface = nil
+    if paywallIdentifier == devSurface.previewIdentifier {
+      paywallIdentifier = nil
+      paywallDatabaseId = nil
     }
   }
 
@@ -276,6 +292,9 @@ final class DebugViewController: UIViewController {
         return
       }
     } else {
+      // Nothing selected: leave the picker for the developer rather than a
+      // spinner with nothing behind it.
+      activityIndicator.stopAnimating()
       return
     }
 
