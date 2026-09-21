@@ -245,11 +245,17 @@ final class DebugViewController: UIViewController {
     debugManager.devServer = located
     // The selected surface was picked from the previous manifest; carry the
     // selection over to the fresh one so the preview renders what it says now.
+    // Resolved the same way Present resolves it, so the two can't disagree
+    // about whether the surface still exists.
     guard let devSurface = devSurface else {
       return
     }
-    if let refreshed = located.surfaces.first(where: { $0.id == devSurface.id }) {
-      self.devSurface = refreshed
+    if let resolved = DevServerPreview.resolveSurface(
+      previewIdentifier: devSurface.previewIdentifier,
+      fresh: location,
+      snapshot: nil
+    ) {
+      self.devSurface = resolved.surface
       return
     }
     Logger.debug(
@@ -263,6 +269,8 @@ final class DebugViewController: UIViewController {
       paywallIdentifier = nil
       paywallDatabaseId = nil
     }
+    // The title still named the dropped surface over an empty preview.
+    previewPickerButton.setTitle("Choose a paywall", for: .normal)
   }
 
 	func finishLoadingPreview() async {
