@@ -6,7 +6,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
-- Adds `CaseIterable` conformance to `IntegrationAttribute`, so you can list every integration the SDK supports.
 - Adds `userAttributes` to the `RedemptionInfo` you get from `didRedeemLink`, so you can read the answers someone gave on your web paywall funnel after they redeem in your app.
 - Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 

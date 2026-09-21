@@ -448,7 +448,7 @@ actor WebEntitlementRedeemer {
 
     storage.save(response, forType: LatestRedeemResponse.self)
 
-    _ = await mergeAndApplyCustomerInfo(
+    await mergeAndApplyCustomerInfo(
       webCustomerInfo: response.customerInfo,
       superwall: superwall
     )
@@ -516,7 +516,7 @@ actor WebEntitlementRedeemer {
   private func mergeAndApplyCustomerInfo(
     webCustomerInfo: CustomerInfo,
     superwall: Superwall
-  ) async -> CustomerInfo {
+  ) async {
     let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {
       let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
@@ -536,8 +536,6 @@ actor WebEntitlementRedeemer {
     await MainActor.run {
       superwall.customerInfo = mergedCustomerInfo
     }
-
-    return mergedCustomerInfo
   }
 
   private func updateSubscriptionStatus(
@@ -978,7 +976,7 @@ actor WebEntitlementRedeemer {
           return
         }
 
-        _ = await mergeAndApplyCustomerInfo(
+        await mergeAndApplyCustomerInfo(
           webCustomerInfo: response.customerInfo,
           superwall: superwall
         )
