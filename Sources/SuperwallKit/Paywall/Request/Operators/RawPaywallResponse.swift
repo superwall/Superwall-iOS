@@ -66,7 +66,12 @@ extension PaywallRequestManager {
 
   /// Resolves a synthetic `dev:` identifier — a dev-server surface the
   /// debugger selected that has never been pushed to the dashboard — from the
-  /// debugger's manifest, since the backend has nothing to fetch for it.
+  /// dev server's manifest, since the backend has nothing to fetch for it.
+  ///
+  /// The manifest is fetched again here rather than read from the copy the
+  /// debugger took when it opened: the surface's products and presentation
+  /// settings come from its config.ts, and edits made since must reach the
+  /// next presentation.
   private func devServerPaywall(forId paywallId: String?) async -> Paywall? {
     guard let paywallId = paywallId else {
       return nil
@@ -74,23 +79,36 @@ extension PaywallRequestManager {
     guard paywallId.hasPrefix("dev:") else {
       return nil
     }
-    guard DevMode.isActive(factory.makeSuperwallOptions()) else {
+    let options = factory.makeSuperwallOptions()
+    guard DevMode.isActive(options) else {
       return nil
     }
-    guard let devServer = await MainActor.run(body: {
+    // `dev:` identifiers only come from the debugger, so without its snapshot
+    // there is nothing to present and no reason to probe for a server.
+    guard let snapshot = await MainActor.run(body: {
       Superwall.shared.dependencyContainer.debugManager.devServer
     }) else {
       return nil
     }
-    guard let surface = devServer.surfaces.first(where: { $0.previewIdentifier == paywallId }) else {
+    let fresh = await DevServerLocator.shared.locate(devServerURL: options.devServerURL)
+    if let fresh = fresh {
+      // The debugger's picker and any later presentation read this copy, so
+      // it has to describe the same server the presentation does.
+      await MainActor.run {
+        Superwall.shared.dependencyContainer.debugManager.devServer = (
+          base: fresh.base,
+          surfaces: fresh.manifest.surfaces
+        )
+      }
+    }
+    guard let resolved = DevServerPreview.resolveSurface(
+      previewIdentifier: paywallId,
+      fresh: fresh,
+      snapshot: snapshot
+    ) else {
       return nil
     }
-    guard let mountURL = DevServerManifest(surfaces: devServer.surfaces)
-      .mountURL(for: surface, base: devServer.base)
-    else {
-      return nil
-    }
-    return Paywall.devServer(surface: surface, url: mountURL)
+    return Paywall.devServer(surface: resolved.surface, url: resolved.url)
   }
 
   private func getPaywallResponse(

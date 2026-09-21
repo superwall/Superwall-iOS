@@ -65,6 +65,11 @@ struct DevServerManifest: Decodable, Equatable {
     return nil
   }
 
+  /// The surface the debugger presents under a `dev:` identifier.
+  func surface(forPreviewIdentifier previewIdentifier: String) -> DevServerSurface? {
+    return surfaces.first { $0.previewIdentifier == previewIdentifier }
+  }
+
   func mountURL(for surface: DevServerSurface, base: URL) -> URL? {
     guard let resolved = URL(string: surface.url, relativeTo: base)?.absoluteURL else {
       return nil

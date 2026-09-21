@@ -223,9 +223,13 @@ final class DebugViewController: UIViewController {
 
   /// Dev mode's local surfaces belong in the debugger however it was opened —
   /// a dashboard preview link should list them too, not just a dev link.
+  ///
+  /// The manifest is fetched again on every load, not only the first: a
+  /// surface's products and presentation settings come from its config.ts,
+  /// and edits made since the debugger opened must show up in the preview.
+  /// When the server can't be reached the last snapshot stands.
   private func ensureDevServer() async {
     guard
-      devServer == nil,
       DevMode.isActive(Superwall.shared.options),
       let location = await DevServerLocator.shared.locate(
         devServerURL: Superwall.shared.options.devServerURL
@@ -238,6 +242,11 @@ final class DebugViewController: UIViewController {
     // Presenting a `dev:` surface resolves it from the debug manager's copy,
     // so both stores have to agree however the debugger was opened.
     debugManager.devServer = located
+    // The selected surface was picked from the previous manifest; carry the
+    // selection over to the fresh one so the preview renders what it says now.
+    if let devSurface = devSurface {
+      self.devSurface = located.surfaces.first { $0.id == devSurface.id } ?? devSurface
+    }
   }
 
 	func finishLoadingPreview() async {
@@ -379,13 +388,14 @@ final class DebugViewController: UIViewController {
   /// manifest (local URL + the products its `config.ts` declares). Nothing is
   /// fetched from the dashboard, so a paywall that has never been pushed —
   /// or whose app lives in another environment — still previews.
+  ///
+  /// `ensureDevServer` has just refreshed `devServer`, so the surface passed
+  /// in is the one the manifest describes now.
   private func loadDevServerPreview(surface: DevServerSurface) async {
     guard
       let devServer = devServer,
-      let location = await DevServerLocator.shared.locate(
-        devServerURL: Superwall.shared.options.devServerURL
-      ),
-      let url = location.manifest.mountURL(for: surface, base: devServer.base)
+      let url = DevServerManifest(surfaces: devServer.surfaces)
+        .mountURL(for: surface, base: devServer.base)
     else {
       activityIndicator.stopAnimating()
       return

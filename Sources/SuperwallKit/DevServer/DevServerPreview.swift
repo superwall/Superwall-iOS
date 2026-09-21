@@ -84,6 +84,37 @@ enum DevServerPreview {
     }
   }
 
+  /// Where a `dev:` surface is served from, and what its config.ts says now.
+  ///
+  /// The surface's products and presentation settings live in its config.ts,
+  /// which the developer can edit at any time after the debugger opened. So
+  /// the manifest the server is serving now wins, and the snapshot taken when
+  /// the debugger opened only stands in while the server can't be reached.
+  static func resolveSurface(
+    previewIdentifier: String,
+    fresh: DevServerLocation?,
+    snapshot: (base: URL, surfaces: [DevServerSurface])?
+  ) -> (surface: DevServerSurface, url: URL)? {
+    let location: DevServerLocation
+    if let fresh = fresh {
+      location = fresh
+    } else if let snapshot = snapshot {
+      location = DevServerLocation(
+        base: snapshot.base,
+        manifest: DevServerManifest(surfaces: snapshot.surfaces)
+      )
+    } else {
+      return nil
+    }
+    guard let surface = location.manifest.surface(forPreviewIdentifier: previewIdentifier) else {
+      return nil
+    }
+    guard let url = location.manifest.mountURL(for: surface, base: location.base) else {
+      return nil
+    }
+    return (surface, url)
+  }
+
   static func handle(url: URL) -> Bool {
     guard let outcome = outcomeForDeepLink(url: url) else {
       return false

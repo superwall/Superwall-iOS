@@ -17,6 +17,77 @@ struct DevServerPreviewTests {
     return options
   }
 
+  private func surface(id: String, products: [String: String]?) throws -> DevServerSurface {
+    let productsJSON = products.map { dict in
+      "{" + dict.map { "\"\($0.key)\": \"\($0.value)\"" }.sorted().joined(separator: ",") + "}"
+    } ?? "null"
+    let json = """
+    {"kind": "paywall", "id": "\(id)", "url": "/preview/paywall/\(id)", "products": \(productsJSON)}
+    """
+    return try JSONDecoder().decode(DevServerSurface.self, from: Data(json.utf8))
+  }
+
+  // MARK: - Resolving a dev: surface
+
+  @Test("A dev: surface is resolved from the manifest the server serves now")
+  func resolveSurface_prefersTheFreshManifest() throws {
+    // The debugger opened while config.ts declared one product. It has since
+    // been edited to declare another, and the server's manifest says so.
+    let base = try #require(URL(string: "http://localhost:6100"))
+    let stale = try surface(id: "pro", products: ["primary": "old_product"])
+    let edited = try surface(id: "pro", products: ["primary": "new_product"])
+
+    let resolved = try #require(
+      DevServerPreview.resolveSurface(
+        previewIdentifier: "dev:pro",
+        fresh: DevServerLocation(base: base, manifest: DevServerManifest(surfaces: [edited])),
+        snapshot: (base: base, surfaces: [stale])
+      )
+    )
+    #expect(resolved.surface == edited)
+    #expect(resolved.url.absoluteString == "http://localhost:6100/preview/paywall/pro")
+  }
+
+  @Test("A dev: surface falls back to the debugger's snapshot when the server is unreachable")
+  func resolveSurface_fallsBackToTheSnapshot() throws {
+    let base = try #require(URL(string: "http://localhost:6100"))
+    let snapshotSurface = try surface(id: "pro", products: ["primary": "old_product"])
+
+    let resolved = try #require(
+      DevServerPreview.resolveSurface(
+        previewIdentifier: "dev:pro",
+        fresh: nil,
+        snapshot: (base: base, surfaces: [snapshotSurface])
+      )
+    )
+    #expect(resolved.surface == snapshotSurface)
+    #expect(resolved.url.absoluteString == "http://localhost:6100/preview/paywall/pro")
+  }
+
+  @Test("A dev: surface the server no longer lists is not resolved from the snapshot")
+  func resolveSurface_freshManifestWithoutTheSurface_returnsNil() throws {
+    let base = try #require(URL(string: "http://localhost:6100"))
+    let removed = try surface(id: "pro", products: nil)
+    let other = try surface(id: "winback", products: nil)
+
+    let resolved = DevServerPreview.resolveSurface(
+      previewIdentifier: "dev:pro",
+      fresh: DevServerLocation(base: base, manifest: DevServerManifest(surfaces: [other])),
+      snapshot: (base: base, surfaces: [removed])
+    )
+    #expect(resolved == nil)
+  }
+
+  @Test("Without a snapshot or a server there is nothing to resolve")
+  func resolveSurface_nothingToResolve() {
+    let resolved = DevServerPreview.resolveSurface(
+      previewIdentifier: "dev:pro",
+      fresh: nil,
+      snapshot: nil
+    )
+    #expect(resolved == nil)
+  }
+
   // MARK: - Deep link parsing
 
   @Test("Parses the base and surface from a dev link")
