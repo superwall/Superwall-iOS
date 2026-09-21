@@ -475,6 +475,49 @@ struct AutomaticPurchaseControllerTests {
     }
   }
 
+  @Test("An empty device read drops an App Store entitlement whose own expiry has passed")
+  func testEmptyDeviceRead_lapsedAppStoreBesideHeldEntitlement_dropsLapsed() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The web subscription holds the status. The App Store subscription's
+    // cached expiry was yesterday: an empty read says nothing about it, but
+    // the clock does, so it must not keep granting access beside the web one.
+    let webEntitlement = stripeEntitlement(expiresAt: Date().addingTimeInterval(30 * 86_400))
+    let lapsedEntitlement = Entitlement(
+      id: "app_store_pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-400 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(-86_400),
+      isLifetime: false,
+      willRenew: false,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, lapsedEntitlement])
+    }
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        !entitlements.contains { $0.id == lapsedEntitlement.id },
+        "A subscription past its own expiry must not survive on an empty read"
+      )
+    } else {
+      Issue.record("A held web entitlement must keep the status active; got \(status)")
+    }
+  }
+
   @Test("Inactive purchases cannot refute a nil-store entitlement")
   func testInactivePurchases_nilStoreStatus_staysActive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)

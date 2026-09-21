@@ -69,13 +69,21 @@ final class AutomaticPurchaseController {
         //
         // Two separate questions. Whether an entitlement holds the status up
         // needs an expiry the read can be bounded by. Whether it stays in
-        // the status only needs the read to have no authority over it: a
-        // lifetime App Store unlock has no expiry, so it can't hold, but an
-        // empty read said nothing about it either, so it is not dropped
-        // while another entitlement holds. Only an App Store entitlement
-        // the read had authority over and did not confirm is dropped — a
-        // refunded subscription next to a live web one, say.
+        // the status needs two things: the read had no authority over it or
+        // confirmed it, and its own expiry hasn't passed. A lifetime App
+        // Store unlock has no expiry, so it can't hold, but an empty read
+        // said nothing about it either, so it stays while another
+        // entitlement holds. A refunded subscription next to a live web one
+        // is dropped because the read refuted it, and a subscription whose
+        // cached expiry is already behind us is dropped because the clock
+        // did — time passing needs no read to confirm it.
         if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
+          func isLapsed(_ entitlement: Entitlement) -> Bool {
+            guard let expiresAt = entitlement.expiresAt else {
+              return false
+            }
+            return expiresAt <= Date()
+          }
           func isRefuted(_ entitlement: Entitlement) -> Bool {
             if purchases.isEmpty || entitlement.store != .appStore {
               return false
@@ -92,11 +100,12 @@ final class AutomaticPurchaseController {
           }
           let holdsStatus = currentEntitlements.contains { entitlement in
             entitlement.isActive
-              && (entitlement.expiresAt ?? .distantPast) > Date()
+              && entitlement.expiresAt != nil
+              && !isLapsed(entitlement)
               && !isRefuted(entitlement)
           }
           if holdsStatus {
-            let survivors = currentEntitlements.filter { !isRefuted($0) }
+            let survivors = currentEntitlements.filter { !isRefuted($0) && !isLapsed($0) }
             if survivors != currentEntitlements {
               superwall.internallySetSubscriptionStatus(
                 to: .active(survivors),
