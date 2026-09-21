@@ -368,6 +368,69 @@ struct AutomaticPurchaseControllerTests {
     )
   }
 
+  @Test("A live web entitlement cannot hold a refunded App Store entitlement in place")
+  func testRefundedAppStoreEntitlement_besideWebEntitlement_isDropped() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A Stripe subscriber who also bought "annual_product" on the App Store
+    // and then got it refunded. The device read has no authority over the
+    // web entitlement, so the status stays active, but it is authoritative
+    // about the App Store one: that must not survive alongside the web one.
+    let webEntitlement = Entitlement(
+      id: "web_pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    let refundedEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(300 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, refundedEntitlement])
+    }
+
+    let controller = makeController()
+    let refundedPurchase = Purchase(
+      id: "annual_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [refundedPurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        !entitlements.contains { $0.id == refundedEntitlement.id },
+        "A refunded App Store entitlement must not keep granting access beside a web one"
+      )
+    } else {
+      Issue.record("A web entitlement must survive an App Store refund; got \(status)")
+    }
+  }
+
   @Test("Inactive purchases cannot refute a nil-store entitlement")
   func testInactivePurchases_nilStoreStatus_staysActive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)

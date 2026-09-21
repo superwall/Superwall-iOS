@@ -66,8 +66,12 @@ final class AutomaticPurchaseController {
         // The check reads the assigned status (device + web), not the
         // published one: that also carries developer-granted entitlements,
         // which would hold a lapsed App Store entitlement in place.
+        //
+        // Each entitlement is judged on its own. One that holds keeps only
+        // itself: a refunded App Store entitlement next to a live web one
+        // must still drop out, not ride along with it.
         if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
-          let holdsStatus = currentEntitlements.contains { entitlement in
+          let heldEntitlements = currentEntitlements.filter { entitlement in
             guard entitlement.isActive,
               (entitlement.expiresAt ?? .distantPast) > Date() else {
               return false
@@ -85,7 +89,14 @@ final class AutomaticPurchaseController {
             // a lost product mapping.
             return entitlement.productIds.contains { activeProductIds.contains($0) }
           }
-          if holdsStatus {
+          if heldEntitlements == currentEntitlements {
+            return
+          }
+          if !heldEntitlements.isEmpty {
+            superwall.internallySetSubscriptionStatus(
+              to: .active(heldEntitlements),
+              superwall: superwall
+            )
             return
           }
         }
