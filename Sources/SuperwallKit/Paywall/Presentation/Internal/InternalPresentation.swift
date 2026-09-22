@@ -38,6 +38,7 @@ extension Superwall {
 
       try await presentPaywallViewController(
         paywallComponents.viewController,
+        paywall: paywallComponents.paywall,
         on: presenter,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence,
         debugInfo: paywallComponents.debugInfo,

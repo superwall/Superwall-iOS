@@ -3,6 +3,9 @@ excluded:
   - ${PWD}/Pods
   - ${PWD}/DerivedData
   - ${PWD}/.build
+  # Git worktrees live here, each holding a full copy of the SDK source, so
+  # linting them reports another branch's violations against this one.
+  - ${PWD}/.claude
   - ${PWD}/Examples
   - ${PWD}/Tests
   - ${PWD}/Sources/SuperwallKit/StoreKit/Products/Receipt Manager/ASN1Swift

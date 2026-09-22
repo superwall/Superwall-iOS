@@ -23,18 +23,18 @@ actor ReceiptManager {
 
   private var receiptRefreshCompletion: ((Bool) -> Void)?
   private unowned let productsManager: ProductsManager
-  private weak var receiptDelegate: ReceiptDelegate?
+  weak var receiptDelegate: ReceiptDelegate?
   private let storeKitVersion: SuperwallOptions.StoreKitVersion
   private let shouldBypassAppTransactionCheck: Bool
-  private let manager: ReceiptManagerType
+  let manager: ReceiptManagerType
   private let delegateWrapper: ReceiptRefreshDelegateWrapper
-  private unowned let factory: Factory
+  unowned let factory: Factory
   private unowned let storage: Storage
   /// Subscription group IDs the user currently has an active subscription in. Computed
-  /// during `loadPurchasedProducts` from the active purchases and their fetched products,
-  /// so it works for both StoreKit 1 and StoreKit 2. Used to suppress free trials on
-  /// upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
-  private var activeSubscriptionGroupIds: Set<String>
+  /// during `loadPurchasedProducts`: on StoreKit 2 from the snapshot's transactions, which
+  /// carry the group ID; on StoreKit 1 from the fetched purchased products. Used to suppress
+  /// free trials on upgrades/crossgrades/downgrades, which Apple won't apply an intro offer to.
+  var activeSubscriptionGroupIds: Set<String>
   static var appTransactionId: String?
   static var appId: UInt64?
   /// Set from `AppTransaction.shared` when available (iOS 16+).
@@ -187,39 +187,24 @@ actor ReceiptManager {
     // Save device-only CustomerInfo to storage for use when merging with web entitlements
     storage.save(onDeviceSnapshot.customerInfo, forType: LatestDeviceCustomerInfo.self)
 
-    // Merge with web customer info if available
-    let baseCustomerInfo: CustomerInfo
-    if let latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
-      baseCustomerInfo = onDeviceSnapshot.customerInfo.merging(with: latestRedeemResponse.customerInfo)
-    } else {
-      baseCustomerInfo = onDeviceSnapshot.customerInfo
-    }
+    // The other sources that merge with the device snapshot.
+    let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo
+    let grantedEntitlements = Superwall.shared.entitlements.granted
 
-    // If using an external purchase controller, preserve entitlements that came from it
-    // (The external controller's active entitlements won't necessarily be in device data)
     let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {
       let currentCustomerInfo = await MainActor.run { Superwall.shared.customerInfo }
-
-      // Get entitlements that are only in current CustomerInfo (i.e., from external controller)
-      // by filtering out anything that matches device or web entitlements by ID
-      let deviceAndWebEntitlementIds = Set(baseCustomerInfo.entitlements.map { $0.id })
-      let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
-        // Keep external entitlement if it's not already in device/web
-        !deviceAndWebEntitlementIds.contains(entitlement.id)
-      }
-
-      // Merge external controller entitlements with device + web
-      let allEntitlements = baseCustomerInfo.entitlements + externalOnlyEntitlements
-      let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
-
-      mergedCustomerInfo = CustomerInfo(
-        subscriptions: baseCustomerInfo.subscriptions,
-        nonSubscriptions: baseCustomerInfo.nonSubscriptions,
-        entitlements: finalEntitlements.sorted { $0.id < $1.id }
+      mergedCustomerInfo = CustomerInfo.preservingExternalControllerEntitlements(
+        device: onDeviceSnapshot.customerInfo,
+        web: webCustomerInfo,
+        current: currentCustomerInfo,
+        granted: grantedEntitlements
       )
     } else {
-      mergedCustomerInfo = baseCustomerInfo
+      mergedCustomerInfo = onDeviceSnapshot.customerInfo.merging(
+        with: webCustomerInfo ?? .blank(),
+        granting: grantedEntitlements
+      )
     }
 
     await MainActor.run {
@@ -230,16 +215,20 @@ actor ReceiptManager {
 
     await receiptDelegate?.syncSubscriptionStatus(purchases: onDeviceSnapshot.purchases)
 
-    let purchasedProductIds = Set(onDeviceSnapshot.purchases.map { $0.id })
-
-    guard let storeProducts = try? await productsManager.products(
-      identifiers: purchasedProductIds,
-      forPaywall: nil,
-      placement: nil
-    ) else {
-      // Fetch failed: refresh from the snapshot alone so the set still reflects this load.
-      // We assign only *after* the await (here and below), never before, so a re-entrant
-      // `isFreeTrialAvailable` during the suspension can't observe a half-built set.
+    // StoreKit 2 transactions carry their subscription group ID, so the active
+    // groups come straight from the snapshot. Only StoreKit 1 has to fetch the
+    // purchased products to find them. Skipping the fetch keeps a network round
+    // trip off the cold-launch path, which `configState` waits on.
+    guard manager.loadsSubscriptionGroupsFromProducts,
+      let storeProducts = try? await productsManager.products(
+        identifiers: Set(onDeviceSnapshot.purchases.map { $0.id }),
+        forPaywall: nil,
+        placement: nil
+      )
+    else {
+      // Fetch skipped or failed: refresh from the snapshot alone so the set still reflects
+      // this load. We assign only *after* the await (here and below), never before, so a
+      // re-entrant `isFreeTrialAvailable` during the suspension can't observe a half-built set.
       activeSubscriptionGroupIds = computeActiveSubscriptionGroupIds(from: onDeviceSnapshot, storeProducts: [])
       return
     }
@@ -255,7 +244,17 @@ actor ReceiptManager {
   /// *consumed* an intro in the group): Apple doesn't apply intro offers to upgrades, crossgrades,
   /// or downgrades, so we also require no active subscription in the product's group. Once the
   /// existing subscription lapses, a fresh purchase is eligible again.
-  func isFreeTrialAvailable(for storeProduct: StoreProduct) async -> Bool {
+  /// - Parameter purchasesLoad: The load that config was published ahead of, if
+  ///   any. Awaited only in the branch that reads the active subscription groups,
+  ///   so a paywall whose answer can't depend on the load isn't held up by it.
+  ///   This is only non-nil on StoreKit 2 (see `ConfigManager`), which matters
+  ///   for the placement: StoreKit 2 resolves intro eligibility live from Apple,
+  ///   while StoreKit 1 answers it from state the load fills in, so on StoreKit 1
+  ///   the eligibility check above would have to wait too.
+  func isFreeTrialAvailable(
+    for storeProduct: StoreProduct,
+    waitingFor purchasesLoad: Task<Void, Never>? = nil
+  ) async -> Bool {
     let isEligibleForIntroOffer = await manager.isEligibleForIntroOffer(storeProduct)
     if !isEligibleForIntroOffer {
       return false
@@ -267,9 +266,12 @@ actor ReceiptManager {
       return true
     }
 
-    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`, which always
-    // completes before a paywall opens (config is only marked retrieved after it runs,
-    // and presentation waits for config), so this reflects current subscription state.
+    // `activeSubscriptionGroupIds` is populated in `loadPurchasedProducts`. On the
+    // sync config path that load completes before config is published. On the
+    // early-publish path it's still running, so wait for it here. The actor is
+    // free during that wait, which is what lets the load finish.
+    await purchasesLoad?.value
+
     return !activeSubscriptionGroupIds.contains(subscriptionGroupId)
   }
 
@@ -369,23 +371,4 @@ func computeActiveSubscriptionGroupIds(
     .compactMap { $0.subscriptionGroupIdentifier }
 
   return Set(transactionGroupIds).union(productGroupIds)
-}
-
-final class ReceiptRefreshDelegateWrapper: NSObject, SKRequestDelegate {
-  weak var receiptManager: ReceiptManager?
-
-  func requestDidFinish(_ request: SKRequest) {
-    Task {
-      await receiptManager?.receiptRefreshDidFinish(request: request)
-    }
-  }
-
-  func request(_ request: SKRequest, didFailWithError error: Error) {
-    Task {
-      await receiptManager?.receiptRefreshDidFail(
-        request: request,
-        error: error
-      )
-    }
-  }
 }
