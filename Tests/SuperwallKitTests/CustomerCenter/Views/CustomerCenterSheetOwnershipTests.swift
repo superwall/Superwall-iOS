@@ -177,30 +177,56 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(offMainPublishes.count == 0, "the view model published from a background thread")
   }
 
-  /// StoreKit's `refundRequestSheet` reads the transaction from the render before the one that
-  /// presents it. Both come from `sheet`, so presenting in the same render asks StoreKit about the
-  /// previous transaction — 0, a refund request that can only fail.
+  /// StoreKit's sheets read their parameter from the render before the one that presents them.
+  /// Both parameters come from `sheet`, so presenting in the render they change in hands StoreKit
+  /// the previous value: transaction 0, a refund request that can only fail, or no subscription
+  /// group, a manage sheet with no subscriptions on it.
   @available(iOS 15.0, *)
-  @Test("the refund sheet waits until its transaction has been rendered")
-  func refundSheetWaitsForItsTransaction() {
+  @Test("a StoreKit sheet waits until its parameter has been rendered", arguments: [
+    CustomerCenterSheetOwnership.SheetKind.refund,
+    .manageSubscriptions
+  ])
+  func storeKitSheetWaitsForItsParameter(kind: CustomerCenterSheetOwnership.SheetKind) {
+    let viewModel = makeViewModel()
+    let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+    let binding: Binding<Bool>
+    var rendered = StoreKitSheetParameters()
+    switch kind {
+    case .refund:
+      viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+      binding = modifier.refundBinding
+      rendered.refundTransactionId = 7
+    case .manageSubscriptions:
+      viewModel.sheet = .manageSubscriptions(groupId: "21601298")
+      binding = modifier.isManagePresented
+      rendered.manageGroupId = "21601298"
+    }
+    #expect(!binding.wrappedValue, "presenting now would hand StoreKit the previous parameter")
+
+    viewModel.renderedStoreKitSheetParameters = rendered
+    #expect(binding.wrappedValue)
+  }
+
+  /// With no group to hand over there's nothing to wait for: StoreKit already has the empty group.
+  @available(iOS 15.0, *)
+  @Test("a manage sheet without a subscription group presents at once")
+  func manageSheetWithoutAGroupPresentsAtOnce() {
     let viewModel = makeViewModel()
     let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
 
-    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-    #expect(!modifier.refundBinding.wrappedValue, "presenting now would ask StoreKit about the previous transaction")
+    viewModel.sheet = .manageSubscriptions(groupId: nil)
 
-    viewModel.renderedRefundTransactionId = 7
-    #expect(modifier.refundBinding.wrappedValue)
+    #expect(modifier.isManagePresented.wrappedValue)
   }
 
-  /// The test above proves the gate; this proves the real modifier opens it, by reporting the
-  /// transaction once it has rendered it.
+  /// The tests above prove the gate; this proves the real modifier opens it, by recording what it
+  /// has rendered into StoreKit's sheets.
   @available(iOS 15.0, *)
-  @Test("the sheet modifier reports a refund's transaction once it has rendered it")
-  func sheetModifierReportsTheRenderedRefundTransaction() {
+  @Test("the sheet modifier records what it has rendered into StoreKit's sheets")
+  func sheetModifierRecordsTheRenderedParameters() {
     let viewModel = makeViewModel()
-    // Another surface is on top, so this one never presents: the report is under test here, not
-    // StoreKit's sheet.
+    // Another surface is on top, so this one never presents: the record is under test here, not
+    // StoreKit's sheets.
     viewModel.pushDepth = 1
     let host = UIHostingController(rootView: Color.clear.customerCenterSheets(viewModel: viewModel))
     let window = makeWindow(rootViewController: host)
@@ -209,9 +235,12 @@ struct CustomerCenterSheetOwnershipTests {
     spinRunLoop(timeout: 1) { host.viewIfLoaded?.window != nil }
 
     viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-    spinRunLoop(timeout: 2) { viewModel.renderedRefundTransactionId == 7 }
+    spinRunLoop(timeout: 2) { viewModel.renderedStoreKitSheetParameters.refundTransactionId == 7 }
+    #expect(viewModel.renderedStoreKitSheetParameters == StoreKitSheetParameters(refundTransactionId: 7))
 
-    #expect(viewModel.renderedRefundTransactionId == 7)
+    viewModel.sheet = .manageSubscriptions(groupId: "21601298")
+    spinRunLoop(timeout: 2) { viewModel.renderedStoreKitSheetParameters.manageGroupId == "21601298" }
+    #expect(viewModel.renderedStoreKitSheetParameters == StoreKitSheetParameters(manageGroupId: "21601298"))
   }
 
   // MARK: - Driving the real navigator

@@ -50,6 +50,19 @@ enum CustomerCenterSheetOwnership {
   }
 }
 
+/// What StoreKit's sheets are handed: the manage sheet's subscription group and the refund sheet's
+/// transaction, as the sheet modifiers pass them.
+///
+/// StoreKit reads each from the render *before* the one that presents its sheet. Both come from
+/// `sheet`, the same state that presents them, so presenting in the render they change in hands
+/// StoreKit the previous value: no group, and the manage sheet opens with no subscriptions on it,
+/// or transaction 0, and the refund request fails. So each sheet waits until the modifier has
+/// rendered its parameter, which ``CustomerCenterViewModel/renderedStoreKitSheetParameters`` records.
+struct StoreKitSheetParameters: Equatable {
+  var manageGroupId = ""
+  var refundTransactionId: UInt64 = 0
+}
+
 /// Internal rather than private so a test can drive the sheet bindings directly. The gate they
 /// apply has been wrong twice — once inert, once over-eager — and both times the bug was in the
 /// binding rather than in the rule it calls, which a test of the rule alone cannot catch.
@@ -79,7 +92,9 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   var isManagePresented: Binding<Bool> {
     .init(
       get: {
-        guard isTopmost, case .manageSubscriptions = viewModel.sheet else { return false }
+        guard isTopmost, case .manageSubscriptions = viewModel.sheet, hasRenderedStoreKitSheetParameters else {
+          return false
+        }
         return true
       },
       set: { [viewModel] isPresented in
@@ -99,15 +114,7 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   var refundBinding: Binding<Bool> {
     .init(
       get: {
-        // Held back until StoreKit has been handed the transaction — see
-        // `renderedRefundTransactionId`.
-        guard
-          isTopmost,
-          case .refund(let transactionId, _) = viewModel.sheet,
-          transactionId == viewModel.renderedRefundTransactionId
-        else {
-          return false
-        }
+        guard isTopmost, case .refund = viewModel.sheet, hasRenderedStoreKitSheetParameters else { return false }
         return true
       },
       set: { [viewModel] isPresented in
@@ -152,6 +159,15 @@ struct CustomerCenterSheetsModifier: ViewModifier {
     if case .refund(let id, _) = viewModel.sheet { return id }
     return 0
   }
+  /// What this render hands StoreKit's sheets.
+  private var storeKitSheetParameters: StoreKitSheetParameters {
+    StoreKitSheetParameters(manageGroupId: manageGroupId ?? "", refundTransactionId: refundTransactionId)
+  }
+  /// Whether StoreKit's sheets have already been rendered with what this render hands them, so one
+  /// may present. See `StoreKitSheetParameters`.
+  private var hasRenderedStoreKitSheetParameters: Bool {
+    storeKitSheetParameters == viewModel.renderedStoreKitSheetParameters
+  }
   private var onItemSheetDismiss: () -> Void {
     {
       if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
@@ -172,12 +188,12 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         }
         Task { await viewModel.refundRequestDidFinish(status: status) }
       }
-      // Reports the transaction once the refund sheet above has rendered with it. A task rather
-      // than `onChange`, so the report — and the presentation it lets through — arrives in an
-      // update of its own instead of the one StoreKit is still reading.
-      .task(id: refundTransactionId) { @MainActor [viewModel, refundTransactionId] in
-        guard viewModel.renderedRefundTransactionId != refundTransactionId else { return }
-        viewModel.renderedRefundTransactionId = refundTransactionId
+      // Records what the StoreKit sheets above have just been rendered with. A task rather than
+      // `onChange`, so the record, and the presentation it lets through, arrives in an update of its
+      // own instead of the one StoreKit reads from.
+      .task(id: storeKitSheetParameters) { @MainActor [viewModel, storeKitSheetParameters] in
+        guard viewModel.renderedStoreKitSheetParameters != storeKitSheetParameters else { return }
+        viewModel.renderedStoreKitSheetParameters = storeKitSheetParameters
       }
       .sheet(item: itemSheet, onDismiss: onItemSheetDismiss) { sheet in
         switch sheet {
@@ -203,10 +219,10 @@ private struct ManageSubscriptionsSheet: ViewModifier {
   let isPresented: Binding<Bool>
   let groupId: String?
   func body(content: Content) -> some View {
-    // The branch must not depend on `groupId`. It is derived from `viewModel.sheet`, so it becomes
-    // non-nil in the very same update that flips `isPresented` to true — and swapping which
-    // modifier is applied during that update tears down the one that was about to present, so the
-    // sheet never appears. `#available` is constant for the process, so branching on it is safe.
+    // The branch must not depend on `groupId`. It is derived from `viewModel.sheet` and changes as
+    // the sheet is about to present, and swapping which modifier is applied then tears down the one
+    // that was about to present, so the sheet never appears. `#available` is constant for the
+    // process, so branching on it is safe.
     if #available(iOS 17.0, *) {
       content.manageSubscriptionsSheet(
         isPresented: isPresented,

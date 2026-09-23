@@ -30,12 +30,9 @@ final class CustomerCenterViewModel: ObservableObject {
   /// host's `UINavigationController` or by a `NavigationLink`. Only the surface at this depth
   /// presents sheets.
   @Published var pushDepth = 0
-  /// The refund transaction the sheet modifiers have rendered into StoreKit's refund sheet, one
-  /// update behind ``sheet``. StoreKit reads the transaction from the render *before* the one that
-  /// presents its sheet, and ``sheet`` supplies both, so the sheet only presents once this has
-  /// caught up. Presenting sooner asks StoreKit about the previous transaction — transaction 0 — and
-  /// the refund request always fails.
-  @Published var renderedRefundTransactionId: UInt64 = 0
+  /// What the sheet modifiers have rendered into StoreKit's sheets, one update behind ``sheet``. A
+  /// StoreKit sheet only presents once this has caught up; see `StoreKitSheetParameters` for why.
+  @Published var renderedStoreKitSheetParameters = StoreKitSheetParameters()
 
   let configuration: CustomerCenterConfiguration
   let strings: CustomerCenterStrings
