@@ -118,7 +118,8 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
   ///
   /// In a grace period that's the end of the grace period; otherwise it's the next
   /// renewal date, which covers a renewal Apple has taken but `Transaction.all`
-  /// hasn't caught up on.
+  /// hasn't caught up on. The renewal date only exists in the iOS 17 SDK, so
+  /// older toolchains fall back to the grace period alone.
   func getActiveUntil(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date? {
     guard case let .verified(info) = status?.renewalInfo else {
       return nil
@@ -126,7 +127,11 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
     if let gracePeriodExpirationDate = info.gracePeriodExpirationDate {
       return gracePeriodExpirationDate
     }
+    #if compiler(>=5.9)
     return info.renewalDate
+    #else
+    return nil
+    #endif
   }
 
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool {
@@ -239,6 +244,9 @@ enum EntitlementProcessor {
 
     /// The newest transaction in this source, refunded or not.
     let lastKnownRepresentative: any EntitlementTransaction
+
+    /// Every product bought in this source, refunded or not.
+    let productIds: Set<String>
     let isLifetime: Bool
     var isActive: Bool
     var expiresAt: Date?
@@ -335,6 +343,7 @@ enum EntitlementProcessor {
       var source = GrantSource(
         unrevokedRepresentative: unrevoked.max(by: { $0.purchaseDate < $1.purchaseDate }),
         lastKnownRepresentative: lastKnownRepresentative,
+        productIds: Set(bucket.map(\.productId)),
         isLifetime: isLifetime,
         // A lifetime purchase never expires. Everything else grants access for
         // as long as an unrevoked transaction still has time left on it.
@@ -492,10 +501,12 @@ enum EntitlementProcessor {
     subscriptionStatusProvider: SubscriptionStatusProvider,
     enableExperimentalDeviceVariables: Bool = false,
     onLatestSubscriptionUpdate: ((LatestSubscription.State?, Bool?, LatestSubscription.OfferType?) -> Void)? = nil,
-    onGrantingProductIds: ((Set<String>) -> Void)? = nil
+    onGrantingProductIds: ((Set<String>) -> Void)? = nil,
+    onLapsedProductIds: ((Set<String>) -> Void)? = nil
   ) async -> [String: Set<Entitlement>] {
     var sourcesByEntitlement: [String: [GrantSource]] = [:]
     var grantingProductIds: Set<String> = []
+    var lapsedProductIds: Set<String> = []
     var updatedSubscriptions = subscriptions
     var latestSubscription: GrantSource?
 
@@ -585,6 +596,14 @@ enum EntitlementProcessor {
         grantingProductIds.insert(source.latestProductId)
       }
 
+      // A source that grants nothing has been refunded or has run out, even when
+      // one of its transactions still has a future expiry and no revocation
+      // date. Its products stop counting as active, whatever another source is
+      // doing for the same entitlement.
+      for source in sources where !source.isActive {
+        lapsedProductIds.formUnion(source.productIds)
+      }
+
       // These variables describe the latest subscription on the device, so the
       // winner is the most recently bought one across every entitlement. Picking
       // it up here and reporting it once keeps it out of the hands of dictionary
@@ -596,6 +615,9 @@ enum EntitlementProcessor {
     }
 
     onGrantingProductIds?(grantingProductIds)
+    // A product still granting through one entitlement is paid for, so it never
+    // counts as lapsed because a narrower entitlement saw fewer of its renewals.
+    onLapsedProductIds?(lapsedProductIds.subtracting(grantingProductIds))
 
     if let latestSubscription = latestSubscription {
       onLatestSubscriptionUpdate?(

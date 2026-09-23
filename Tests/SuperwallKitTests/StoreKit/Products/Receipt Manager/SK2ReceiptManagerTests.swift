@@ -56,7 +56,8 @@ struct SK2ReceiptManagerTests {
     let corrected = SK2ReceiptManager.correctPurchases(
       [purchase],
       using: ["monthly": [entitlement]],
-      grantingProductIds: []
+      grantingProductIds: [],
+      lapsedProductIds: []
     )
 
     #expect(corrected.first?.isActive == false)
@@ -75,15 +76,18 @@ struct SK2ReceiptManagerTests {
     let corrected = SK2ReceiptManager.correctPurchases(
       [purchase],
       using: ["monthly": [entitlement]],
-      grantingProductIds: ["monthly"]
+      grantingProductIds: ["monthly"],
+      lapsedProductIds: []
     )
 
     #expect(corrected.first?.isActive == true)
   }
 
-  @Test("Another group's active subscription never reactivates a refunded purchase")
-  func otherGroupDoesNotReactivateARefundedPurchase() {
-    let refunded = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+  @Test("A refunded group's purchase is inactive even while another group grants the entitlement")
+  func refundedGroupPurchaseIsInactiveAlongsideAnActiveGroup() {
+    // Refunded, but its transaction still shows no revocation date and a future
+    // expiry, so the raw read says active.
+    let refunded = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
     let paying = Purchase(id: "yearly", isActive: true, purchaseDate: Date())
     // One entitlement, unlocked by both products, currently granted by the yearly.
     let entitlement = makeEntitlement(
@@ -95,8 +99,9 @@ struct SK2ReceiptManagerTests {
     let corrected = SK2ReceiptManager.correctPurchases(
       [refunded, paying],
       using: ["monthly": [entitlement], "yearly": [entitlement]],
-      // The refunded monthly's group grants nothing, so it isn't named here.
-      grantingProductIds: ["yearly"]
+      // The refunded monthly's group grants nothing, so it's lapsed.
+      grantingProductIds: ["yearly"],
+      lapsedProductIds: ["monthly"]
     )
 
     #expect(corrected.first { $0.id == "monthly" }?.isActive == false)
@@ -120,7 +125,8 @@ struct SK2ReceiptManagerTests {
     let corrected = SK2ReceiptManager.correctPurchases(
       [inGrace, longer],
       using: ["monthly": [entitlement], "yearly": [entitlement]],
-      grantingProductIds: ["monthly", "yearly"]
+      grantingProductIds: ["monthly", "yearly"],
+      lapsedProductIds: []
     )
 
     #expect(corrected.first { $0.id == "monthly" }?.isActive == true)
@@ -134,7 +140,8 @@ struct SK2ReceiptManagerTests {
     let corrected = SK2ReceiptManager.correctPurchases(
       [purchase],
       using: [:],
-      grantingProductIds: []
+      grantingProductIds: [],
+      lapsedProductIds: []
     )
 
     #expect(corrected.first?.isActive == true)

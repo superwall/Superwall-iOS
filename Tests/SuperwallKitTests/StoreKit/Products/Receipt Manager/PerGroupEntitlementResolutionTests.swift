@@ -1105,6 +1105,53 @@ struct PerGroupEntitlementResolutionTests {
     #expect(grantingProductIds == ["monthly", "yearly"])
   }
 
+  @Test("A refunded group's products lapse even while another group grants the entitlement")
+  func refundedGroupLapsesAlongsideAnActiveGroup() async {
+    let baseDate = Date()
+    let paying = makeTransaction(
+      productId: "monthly",
+      transactionId: "txn_monthly",
+      subscriptionGroupId: "group_1",
+      purchaseDate: baseDate.addingTimeInterval(-86_400),
+      expirationDate: baseDate.addingTimeInterval(2_592_000)
+    )
+    // Refunded, but `Transaction.all` still shows no revocation date and a
+    // future expiry. Only the group status knows.
+    let refunded = makeTransaction(
+      productId: "yearly",
+      transactionId: "txn_yearly",
+      subscriptionGroupId: "group_2",
+      purchaseDate: baseDate.addingTimeInterval(-172_800),
+      expirationDate: baseDate.addingTimeInterval(31_536_000)
+    )
+
+    let (raw, productIds) = fixtures(for: ["monthly", "yearly"])
+    var (_, subscriptions) = EntitlementProcessor.processTransactions(from: [paying, refunded])
+
+    let provider = MockSubscriptionStatusProvider(
+      statusesByGroupId: [
+        "group_1": ResolvedSubscriptionStatus(state: .subscribed, willRenew: true, offerType: nil),
+        "group_2": ResolvedSubscriptionStatus(state: .revoked, willRenew: false, offerType: nil)
+      ]
+    )
+
+    var grantingProductIds: Set<String> = []
+    var lapsedProductIds: Set<String> = []
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [paying, refunded]],
+      rawEntitlementsByProductId: raw,
+      productIdsByEntitlementId: productIds,
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: provider,
+      onGrantingProductIds: { grantingProductIds = $0 },
+      onLapsedProductIds: { lapsedProductIds = $0 }
+    )
+
+    #expect(result["monthly"]?.first?.isActive == true)
+    #expect(grantingProductIds == ["monthly"])
+    #expect(lapsedProductIds == ["yearly"])
+  }
+
   @Test("A refund describes a lapsed group even when an older purchase survives")
   func refundDescribesALapsedGroup() async {
     let baseDate = Date()

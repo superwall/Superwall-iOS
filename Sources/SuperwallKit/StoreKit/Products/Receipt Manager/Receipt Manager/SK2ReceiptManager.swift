@@ -72,17 +72,19 @@ actor SK2ReceiptManager: ReceiptManagerType {
   /// period. The entitlements have already been resolved against the live
   /// subscription status, so they settle both directions:
   ///
-  /// - Every entitlement the product unlocks is inactive: the purchase is
-  ///   inactive, whatever its own dates say.
+  /// - Every entitlement the product unlocks is inactive, or the product belongs
+  ///   to a subscription group that grants nothing: the purchase is inactive,
+  ///   whatever its own dates say. A refunded group never grants, so it can't
+  ///   look active just because another group unlocks the same entitlement.
   /// - The product names a subscription group that is still granting access:
   ///   the purchase is active. That covers a group in its billing grace period
   ///   even when a different group has more time left and so describes the
-  ///   entitlement. A refunded group never grants, so it can't look active just
-  ///   because another group unlocks the same entitlement.
+  ///   entitlement.
   static func correctPurchases(
     _ purchases: Set<Purchase>,
     using entitlementsByProductId: [String: Set<Entitlement>],
-    grantingProductIds: Set<String>
+    grantingProductIds: Set<String>,
+    lapsedProductIds: Set<String>
   ) -> Set<Purchase> {
     var correctedPurchases: Set<Purchase> = []
 
@@ -94,7 +96,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
       let isGranting = grantingProductIds.contains(purchase.id)
 
       let correctedIsActive: Bool
-      if allRevokedOrExpired {
+      if allRevokedOrExpired || lapsedProductIds.contains(purchase.id) {
         correctedIsActive = false
       } else if isGranting {
         correctedIsActive = true
@@ -216,6 +218,7 @@ actor SK2ReceiptManager: ReceiptManagerType {
     var capturedOfferType: LatestSubscription.OfferType?
 
     var grantingProductIds: Set<String> = []
+    var lapsedProductIds: Set<String> = []
     entitlementsByProductId = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
       from: txnsPerEntitlement,
       rawEntitlementsByProductId: entitlementsByProductId,
@@ -228,13 +231,15 @@ actor SK2ReceiptManager: ReceiptManagerType {
         capturedWillRenew = willRenew
         capturedOfferType = offerType
       },
-      onGrantingProductIds: { grantingProductIds = $0 }
+      onGrantingProductIds: { grantingProductIds = $0 },
+      onLapsedProductIds: { lapsedProductIds = $0 }
     )
 
     purchases = SK2ReceiptManager.correctPurchases(
       purchases,
       using: entitlementsByProductId,
-      grantingProductIds: grantingProductIds
+      grantingProductIds: grantingProductIds,
+      lapsedProductIds: lapsedProductIds
     )
 
     // Update actor-isolated properties after the async call
