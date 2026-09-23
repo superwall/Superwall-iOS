@@ -6,7 +6,7 @@ import Foundation
 struct CustomerCenterEventsTests {
   @Test("descriptions and objc mirrors")
   func descriptions() {
-    #expect(SuperwallEvent.customerCenterOpen(screen: "management").description == "customerCenter_open")
+    #expect(SuperwallEvent.customerCenterOpen(screen: .management, presentation: .sheet).description == "customerCenter_open")
     #expect(SuperwallEvent.customerCenterClose.description == "customerCenter_close")
     #expect(SuperwallEvent.customerCenterAction(action: .restore, pathId: "p", productId: nil).description == "customerCenter_action")
     #expect(SuperwallEvent.customerCenterSurveyResponse(surveyId: "s", optionId: "o", action: .manageSubscription, pathId: "p", productId: "x").description == "customerCenter_surveyResponse")
@@ -16,12 +16,12 @@ struct CustomerCenterEventsTests {
 
   @Test("open event carries the screen and how the Customer Center was presented")
   func openParameters() async {
-    let sheet = InternalSuperwallEvent.CustomerCenterOpen(screen: "management", presentation: "sheet")
+    let sheet = InternalSuperwallEvent.CustomerCenterOpen(screen: .management, presentation: .sheet)
     let sheetParams = await sheet.getSuperwallParameters()
     #expect(sheetParams["screen"] as? String == "management")
     #expect(sheetParams["presentation"] as? String == "sheet")
 
-    let embedded = InternalSuperwallEvent.CustomerCenterOpen(screen: "no_purchases", presentation: "embedded")
+    let embedded = InternalSuperwallEvent.CustomerCenterOpen(screen: .noPurchases, presentation: .embedded)
     let embeddedParams = await embedded.getSuperwallParameters()
     #expect(embeddedParams["screen"] as? String == "no_purchases")
     #expect(embeddedParams["presentation"] as? String == "embedded")
@@ -35,6 +35,14 @@ struct CustomerCenterEventsTests {
     #expect(params["custom_identifier"] as? String == "del")
     #expect(params["path_id"] as? String == "p1")
     #expect(params["product_id"] as? String == "prod")
+
+    let urlAction = InternalSuperwallEvent.CustomerCenterAction(
+      action: .url(URL(string: "https://app.com/account?token=secret#top")!),
+      pathId: "account",
+      productId: nil
+    )
+    let urlParams = await urlAction.getSuperwallParameters()
+    #expect(urlParams["url"] as? String == "https://app.com/account", "the query and fragment stay out of analytics")
 
     let survey = InternalSuperwallEvent.CustomerCenterSurveyResponse(surveyId: "s", optionId: "o", action: .manageSubscription, pathId: "p", productId: nil)
     let sp = await survey.getSuperwallParameters()

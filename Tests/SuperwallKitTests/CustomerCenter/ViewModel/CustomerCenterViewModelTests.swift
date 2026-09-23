@@ -43,8 +43,9 @@ struct CustomerCenterViewModelTests {
     #expect(productsMock.requested == ["monthly"])
     #expect(vm.state == .management)
     #expect(vm.purchases.map(\.id) == ["monthly"])
-    if case .customerCenterOpen(let screen) = tracker.events.first {
-      #expect(screen == "management")
+    if case .customerCenterOpen(let screen, let presentation) = tracker.events.first {
+      #expect(screen == .management)
+      #expect(presentation == .sheet)
     } else {
       Issue.record("expected a customerCenterOpen event")
     }
@@ -87,7 +88,7 @@ struct CustomerCenterViewModelTests {
     #expect(vm.showsUpdateBanner)
     vm.continueAfterUpdateWarning()
     #expect(!vm.showsUpdateBanner)
-    config.support.shouldWarnToUpdate = false
+    config.support.warnsAboutUpdates = false
     let (vm2, _, _) = make(info: info([sub()]), config: config, env: EnvironmentMock(appVersion: "1.0.0"))
     await vm2.load()
     #expect(!vm2.showsUpdateBanner)
@@ -108,12 +109,22 @@ struct CustomerCenterViewModelTests {
     let purchase = vm.purchases[0]
     let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
     var selected: [CustomerCenterAction] = []
-    vm.callbacks.didSelectAction = { action, _ in selected.append(action) }
+    vm.callbacks.didSelectAction = { action, _, _ in selected.append(action) }
     var survey: (String, String, CustomerCenterAction)?
-    vm.callbacks.didCompleteSurvey = { survey = ($0, $1, $2) }
+    var surveyPathId: String?
+    vm.callbacks.didCompleteSurvey = { survey = ($0, $1, $2); surveyPathId = $3 }
+    var selectedPath: (pathId: String, purchase: CustomerCenterPurchase?)?
+    let recordAction = vm.callbacks.didSelectAction
+    vm.callbacks.didSelectAction = { action, pathId, purchase in
+      recordAction?(action, pathId, purchase)
+      selectedPath = (pathId, purchase)
+    }
 
     await vm.select(manage, purchase: purchase)
     #expect(selected == [.manageSubscription])
+    #expect(selectedPath?.pathId == "manage_subscription")
+    #expect(selectedPath?.purchase?.productId == "monthly")
+    #expect(selectedPath?.purchase?.subscription?.productId == "monthly")
     #expect(vm.sheet == .survey(pathId: "manage_subscription"))
     let hasActionEvent = tracker.events.contains { event in
       if case .customerCenterAction(let action, let pathId, let productId) = event {
@@ -125,6 +136,7 @@ struct CustomerCenterViewModelTests {
 
     await vm.answerSurvey(optionId: "too_expensive")
     #expect(survey?.0 == "cancel_survey" && survey?.1 == "too_expensive" && survey?.2 == .manageSubscription)
+    #expect(surveyPathId == "manage_subscription")
     let hasSurveyEvent = tracker.events.contains { event in
       if case .customerCenterSurveyResponse(let surveyId, let optionId, let action, let pathId, let productId) = event {
         return surveyId == "cancel_survey" && optionId == "too_expensive" && action == .manageSubscription
@@ -294,11 +306,11 @@ struct CustomerCenterViewModelTests {
     await loading.value
     products.release(call: 2)
 
-    let screen: String? = tracker.events.lazy.compactMap { event -> String? in
-      if case .customerCenterOpen(let screen) = event { return screen }
+    let screen: CustomerCenterScreenType? = tracker.events.lazy.compactMap { event -> CustomerCenterScreenType? in
+      if case .customerCenterOpen(let screen, _) = event { return screen }
       return nil
     }.first
-    #expect(screen == "management")
+    #expect(screen == .management)
   }
 
   @Test("url external → opener; url inApp → safari sheet; custom → callback only; contactSupport → mailto")
@@ -308,14 +320,14 @@ struct CustomerCenterViewModelTests {
     config.support.email = "help@app.com"
     let ext = URL(string: "https://a.b/ext")!, inApp = URL(string: "https://a.b/in")!
     config.managementScreen.paths += [
-      .init(id: "ext", type: .url(ext, title: "External", openMethod: .external)),
-      .init(id: "in", type: .url(inApp, title: "In app", openMethod: .inApp)),
+      .init(id: "ext", type: .url(ext, openMethod: .external)),
+      .init(id: "in", type: .url(inApp, openMethod: .inApp)),
       .init(id: "c", type: .custom(identifier: "delete"))
     ]
     let (vm, _, _) = make(info: info([sub()]), config: config, opener: opener)
     await vm.load()
     var selected: [CustomerCenterAction] = []
-    vm.callbacks.didSelectAction = { action, _ in selected.append(action) }
+    vm.callbacks.didSelectAction = { action, _, _ in selected.append(action) }
     let paths = vm.paths(for: nil)
     await vm.select(paths.first { $0.id == "ext" }!, purchase: nil)
     #expect(opener.opened == [ext])

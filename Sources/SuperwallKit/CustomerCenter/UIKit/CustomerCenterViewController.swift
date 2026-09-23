@@ -8,24 +8,23 @@
 import SwiftUI
 import UIKit
 
-/// How a ``CustomerCenterViewController`` is put on screen.
+/// How the Customer Center is put on screen, for ``CustomerCenterViewController`` and
+/// ``CustomerCenterView`` alike. Also reported on ``SuperwallEvent/customerCenterOpen(screen:presentation:)``.
 @objc(SWKCustomerCenterPresentationStyle)
-public enum CustomerCenterPresentationStyle: Int {
-  /// Presented modally, with `present(_:animated:)`. Shows a close button that dismisses it.
-  case modal
+public enum CustomerCenterPresentationStyle: Int, Sendable {
+  /// Presented as a sheet. The Customer Center brings its own navigation and a close button.
+  case sheet
 
-  /// Pushed onto a `UINavigationController` you own. Renders into your navigation bar and leaves
-  /// it entirely alone — your title, your back button, your appearance. Its own drill-downs are
-  /// pushed onto your stack as further view controllers.
-  case pushed
-}
+  /// Inside navigation you own: a ``CustomerCenterViewController`` pushed onto your
+  /// `UINavigationController`, or a ``CustomerCenterView`` placed in your SwiftUI navigation.
+  /// Renders into your navigation bar and leaves it entirely alone — your title, your back button,
+  /// your appearance — and pushes its own screens onto your stack.
+  case embedded
 
-extension CustomerCenterPresentationStyle {
-  /// The `presentation` parameter reported on Customer Center events.
-  var analyticsValue: String {
+  var analyticsName: String {
     switch self {
-    case .modal: return "sheet"
-    case .pushed: return "pushed"
+    case .sheet: return "sheet"
+    case .embedded: return "embedded"
     }
   }
 }
@@ -33,7 +32,7 @@ extension CustomerCenterPresentationStyle {
 /// A UIKit container for ``CustomerCenterView``.
 ///
 /// Present it modally, or push it onto a navigation controller of your own with
-/// ``CustomerCenterPresentationStyle/pushed``.
+/// ``CustomerCenterPresentationStyle/embedded``.
 @available(iOS 15.0, *)
 @objc(SWKCustomerCenterViewController)
 public final class CustomerCenterViewController: UIHostingController<CustomerCenterView> {
@@ -41,7 +40,7 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   let presentationStyle: CustomerCenterPresentationStyle
   var onDismiss: (() -> Void)?
 
-  /// Retains the navigator that pushes this controller's own drill-downs, in `.pushed` style.
+  /// Retains the navigator that pushes this controller's own drill-downs, in `.embedded` style.
   private var pushNavigator: CustomerCenterPushNavigator?
 
   /// Whether this controller was on screen as part of a modal presentation, recorded while it
@@ -59,14 +58,14 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   /// - Parameters:
   ///   - configuration: Overrides ``SuperwallOptions/customerCenter``; `nil` uses the options value.
   ///   - presentationStyle: Whether you present this controller modally or push it onto a
-  ///     navigation controller of your own. Defaults to ``CustomerCenterPresentationStyle/modal``.
+  ///     navigation controller of your own. Defaults to ``CustomerCenterPresentationStyle/sheet``.
   ///   - delegate: Receives Customer Center events. The view controller does not retain its
   ///     delegate. Keep a strong reference to it for the duration of the presentation — or present
   ///     via `Superwall.shared.presentCustomerCenter(delegate:)`, which retains the delegate while
   ///     the Customer Center is presented.
   public convenience init(
     configuration: CustomerCenterConfiguration? = nil,
-    presentationStyle: CustomerCenterPresentationStyle = .modal,
+    presentationStyle: CustomerCenterPresentationStyle = .sheet,
     delegate: CustomerCenterDelegate? = nil
   ) {
     self.init(
@@ -107,16 +106,13 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
     self.viewModel = viewModel
     self.presentationStyle = presentationStyle
     viewModel.callbacks = adapter.makeCallbacks()
-    viewModel.presentationMode = presentationStyle.analyticsValue
+    viewModel.presentationMode = presentationStyle
 
     // Presented modally we supply the navigation; pushed, the host already has it and we add
     // nothing — no wrapping `NavigationView`, no close button, and nothing done to their bar.
     // The drill-downs that `NavigationLink` can't serve in that case are pushed through
     // `CustomerCenterNavigating` instead.
-    var options = CustomerCenterNavigationOptions(
-      usesExistingNavigation: presentationStyle == .pushed,
-      showsCloseButton: presentationStyle == .modal
-    )
+    var options = CustomerCenterNavigationOptions(style: presentationStyle)
     super.init(rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: options))
 
     // The button actions need `self`, which isn't available until `super.init` has run. Assigning
@@ -127,7 +123,7 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
     // Pushed, the host owns the navigation, so `NavigationLink` has no SwiftUI ancestor to work
     // with and the drill-downs go through the navigator instead.
     var navigator: CustomerCenterPushNavigator?
-    if presentationStyle == .pushed {
+    if presentationStyle == .embedded {
       navigator = CustomerCenterPushNavigator(viewModel: viewModel)
       navigator?.presenter = self
       pushNavigator = navigator
@@ -138,7 +134,7 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
       navigator: navigator
     )
 
-    if presentationStyle == .modal {
+    if presentationStyle == .sheet {
       modalPresentationStyle = .pageSheet
     }
   }

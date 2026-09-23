@@ -10,7 +10,7 @@ import UIKit
 
 /// Pushes the Customer Center's drill-downs onto the host's own navigation controller.
 ///
-/// Used only by ``CustomerCenterPresentationStyle/pushed``, where there's no SwiftUI navigation
+/// Used only by ``CustomerCenterPresentationStyle/embedded``, where there's no SwiftUI navigation
 /// ancestor for `NavigationLink` to use. Each destination becomes its own hosting controller, so
 /// the host's navigation bar drives it — their back button, their title treatment, their
 /// appearance — and nothing of theirs is modified.

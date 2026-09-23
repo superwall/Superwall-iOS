@@ -33,10 +33,11 @@ enum CustomerCenterSheet: Identifiable, Equatable {
   }
 }
 
+/// Every callback is main-actor isolated: they reach host code, which may well present UI.
 struct CustomerCenterCallbacks {
-  var shouldRestore: (() async -> Bool)?
-  var didSelectAction: ((CustomerCenterAction, SubscriptionTransaction?) -> Void)?
-  var didCompleteSurvey: ((_ surveyId: String, _ optionId: String, _ action: CustomerCenterAction) -> Void)?
-  var didCompleteRefund: ((_ productId: String, _ status: CustomerCenterRefundStatus) -> Void)?
-  var didDismiss: (() -> Void)?
+  var shouldRestore: (@MainActor () async -> Bool)?
+  var didSelectAction: (@MainActor (CustomerCenterAction, _ pathId: String, CustomerCenterPurchase?) -> Void)?
+  var didCompleteSurvey: (@MainActor (_ surveyId: String, _ optionId: String, CustomerCenterAction, String) -> Void)?
+  var didCompleteRefund: (@MainActor (_ productId: String, _ status: CustomerCenterRefundStatus) -> Void)?
+  var didDismiss: (@MainActor () -> Void)?
 }

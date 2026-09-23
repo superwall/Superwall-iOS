@@ -18,12 +18,12 @@ final class CustomerCenterExampleDelegate: CustomerCenterDelegate {
     return true
   }
 
-  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
-    print("[Customer Center] didSelect action: \(action), purchase: \(String(describing: purchase))")
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, pathId: String, purchase: CustomerCenterPurchase?) {
+    print("[Customer Center] didSelect action: \(action), path: \(pathId), product: \(purchase?.productId ?? "none")")
   }
 
-  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
-    print("[Customer Center] didCompleteSurvey: \(surveyId), optionId: \(optionId), action: \(action)")
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction, pathId: String) {
+    print("[Customer Center] didCompleteSurvey: \(surveyId), optionId: \(optionId), action: \(action), path: \(pathId)")
   }
 
   func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {

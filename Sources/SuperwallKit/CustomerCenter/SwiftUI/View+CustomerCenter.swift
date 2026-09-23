@@ -52,34 +52,35 @@ public extension View {
 
   /// Gate restores (e.g. require authentication). Return `false` to cancel.
   func onCustomerCenterShouldRestore(
-    _ handler: @escaping () async -> Bool
+    _ handler: @escaping @MainActor () async -> Bool
   ) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.shouldRestore = handler })
   }
 
-  /// Called when the user selects an action in the Customer Center, with the purchase it applies to, if any.
+  /// Called when the user selects an action in the Customer Center, with the tapped path's id and
+  /// the purchase it applies to, if any.
   func onCustomerCenterAction(
-    _ handler: @escaping (CustomerCenterAction, SubscriptionTransaction?) -> Void
+    _ handler: @escaping @MainActor (_ action: CustomerCenterAction, _ pathId: String, _ purchase: CustomerCenterPurchase?) -> Void
   ) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.didSelectAction = handler })
   }
 
   /// Called when the user answers a feedback survey, before the associated action is performed.
   func onCustomerCenterSurveyResponse(
-    _ handler: @escaping (_ surveyId: String, _ optionId: String, _ action: CustomerCenterAction) -> Void
+    _ handler: @escaping @MainActor (_ surveyId: String, _ optionId: String, _ action: CustomerCenterAction, _ pathId: String) -> Void
   ) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.didCompleteSurvey = handler })
   }
 
   /// Called when a refund request finishes, with its outcome.
   func onCustomerCenterRefundRequest(
-    _ handler: @escaping (_ productId: String, _ status: CustomerCenterRefundStatus) -> Void
+    _ handler: @escaping @MainActor (_ productId: String, _ status: CustomerCenterRefundStatus) -> Void
   ) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.didCompleteRefund = handler })
   }
 
   /// Called when the Customer Center is dismissed.
-  func onCustomerCenterDismiss(_ handler: @escaping () -> Void) -> some View {
+  func onCustomerCenterDismiss(_ handler: @escaping @MainActor () -> Void) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.didDismiss = handler })
   }
 }

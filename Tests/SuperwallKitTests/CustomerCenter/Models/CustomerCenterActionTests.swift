@@ -12,7 +12,7 @@ struct CustomerCenterActionTests {
     #expect(CustomerCenterAction(pathType: .refund(window: 1)) == .refund)
     #expect(CustomerCenterAction(pathType: .changePlan(productIds: nil)) == .changePlan)
     #expect(CustomerCenterAction(pathType: .contactSupport) == .contactSupport)
-    #expect(CustomerCenterAction(pathType: .url(url, title: "Help", openMethod: .external)) == .url(url))
+    #expect(CustomerCenterAction(pathType: .url(url, openMethod: .external)) == .url(url))
     #expect(CustomerCenterAction(pathType: .custom(identifier: "x")) == .custom(identifier: "x"))
   }
 
@@ -30,7 +30,7 @@ struct CustomerCenterActionTests {
   @Test("ObjC path factories round-trip")
   func objcFactories() {
     let path = CustomerCenterConfiguration.Path.url(URL(string: "https://a.b")!, title: "FAQ", id: "faq")
-    #expect(path.pathType == .url)
+    #expect(path.actionType == .url)
     #expect(path.url?.absoluteString == "https://a.b")
     #expect(path.openMethodObjc == .inApp)
     let custom = CustomerCenterConfiguration.Path.custom(identifier: "delete", id: "c")

@@ -31,13 +31,13 @@ Center is a row in your own settings screen:
 
 ```swift
 let customerCenter = CustomerCenterViewController(
-  presentationStyle: .pushed,
+  presentationStyle: .embedded,
   delegate: myDelegate
 )
 navigationController?.pushViewController(customerCenter, animated: true)
 ```
 
-A pushed Customer Center renders into your navigation bar and leaves it alone — your title, your
+An embedded Customer Center renders into your navigation bar and leaves it alone — your title, your
 back button, your appearance, your swipe-to-go-back. It adds no close button, since your stack
 already provides the way back. Its own screen — the detail for a subscription — is pushed onto
 your stack as a further view controller, so it behaves like any other screen you pushed yourself.
@@ -69,7 +69,7 @@ struct SettingsView: View {
 Or embed ``CustomerCenterView`` directly in your own navigation stack:
 
 ```swift
-CustomerCenterView(navigationOptions: .init(usesExistingNavigation: true))
+CustomerCenterView(navigationOptions: .init(style: .embedded))
 ```
 
 ### Presenting from Objective-C
@@ -97,9 +97,9 @@ let cancelSurvey = CustomerCenterConfiguration.FeedbackSurvey(
   id: "cancel_survey",
   title: "Why are you cancelling?",
   options: [
-    .init(id: "too_expensive", title: "Too expensive"),
+    .tooExpensive,
     .init(id: "dont_use", title: "Don't use it enough"),
-    .init(id: "bought_by_mistake", title: "Bought by mistake")
+    .boughtByMistake
   ]
 )
 
@@ -125,18 +125,23 @@ Superwall.configure(apiKey: "MY_API_KEY", options: options)
 
 Every path is optional and reorderable. Built-in path types (``CustomerCenterConfiguration/PathType``)
 cover restoring purchases, managing or cancelling a subscription, requesting a refund, changing
-plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:title:openMethod:)``
+plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:openMethod:)``
 opens a URL either in-app or externally, and ``CustomerCenterConfiguration/PathType/custom(identifier:)``
 lets you handle an action entirely yourself via the delegate.
 
 Every path type but `url` names its own row, so `title` on ``CustomerCenterConfiguration/Path`` is
-optional and overrides that default. `url` takes a title of its own because there is no sensible
-default: a URL could be anything, and its host is the same across all of your own links, so
-deriving one would render your FAQ, terms and privacy rows identically.
+optional and overrides that default. A `url` row needs a title, and `.url(_:title:)` asks for one:
+a URL could be anything, and its host is the same across all of your own links, so deriving one
+would render your FAQ, terms and privacy rows identically.
+
+For the survey, `.cancellation` is the built-in one the default configuration uses:
+`.manageSubscription(survey: .cancellation)`. A survey's options can mix the localized built-ins
+(`.tooExpensive`, `.dontUse`, `.boughtByMistake`) with your own. A survey without a `title` asks
+"Why are you cancelling?" on a manage-subscription path, so give it a title anywhere else.
 
 Each path also has an `id`, reported as `path_id` on Customer Center events. You don't need to set
 it: a built-in path uses its type (`restore`, `refund`, `manage_subscription` and so on), a `url`
-path uses its URL and a `custom` path uses its identifier. Pass your own `id` only when two paths
+path uses its host and path (`mycompany.com/faq`) and a `custom` path uses its identifier. Pass your own `id` only when two paths
 on the same screen would otherwise share one, such as two `refund` paths with different windows.
 
 ### Warning customers about old versions
@@ -147,7 +152,7 @@ published version itself, by looking your app up on the App Store:
 ```swift
 options.customerCenter.support = .init(
   email: "support@mycompany.com",
-  shouldWarnToUpdate: true          // on by default
+  warnsAboutUpdates: true          // on by default
 )
 ```
 
@@ -187,11 +192,11 @@ final class MyCustomerCenterDelegate: CustomerCenterDelegate {
     true
   }
 
-  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
-    print("Customer Center action selected: \(action)")
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, pathId: String, purchase: CustomerCenterPurchase?) {
+    print("Customer Center path \(pathId) selected: \(action)")
   }
 
-  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction, pathId: String) {
     print("Survey \(surveyId) answered with \(optionId)")
   }
 
@@ -214,8 +219,8 @@ In SwiftUI, use the equivalent modifiers instead of a delegate:
 ```swift
 CustomerCenterView()
   .onCustomerCenterShouldRestore { true }
-  .onCustomerCenterAction { action, purchase in print(action) }
-  .onCustomerCenterSurveyResponse { surveyId, optionId, action in print(surveyId, optionId) }
+  .onCustomerCenterAction { action, pathId, purchase in print(action, pathId) }
+  .onCustomerCenterSurveyResponse { surveyId, optionId, action, pathId in print(surveyId, optionId) }
   .onCustomerCenterRefundRequest { productId, status in print(productId, status) }
   .onCustomerCenterDismiss { print("dismissed") }
 ```

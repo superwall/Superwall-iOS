@@ -15,13 +15,22 @@ struct CustomerCenterDelegateAdapterTests {
   final class SwiftDelegate: CustomerCenterDelegate {
     var restoreGateProceeds = true
     var selected: [CustomerCenterAction] = []
+    var pathIds: [String] = []
     var surveys: [(String, String, CustomerCenterAction)] = []
     var refunds: [(String, CustomerCenterRefundStatus)] = []
     var dismissed = 0
-    func customerCenterShouldRestorePurchases() async -> Bool { restoreGateProceeds }
-    func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) { selected.append(action) }
-    func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
+    var restoreCheckRanOnMainThread: Bool?
+    func customerCenterShouldRestorePurchases() async -> Bool {
+      restoreCheckRanOnMainThread = Thread.isMainThread
+      return restoreGateProceeds
+    }
+    func customerCenterDidSelectAction(_ action: CustomerCenterAction, pathId: String, purchase: CustomerCenterPurchase?) {
+      selected.append(action)
+      pathIds.append(pathId)
+    }
+    func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction, pathId: String) {
       surveys.append((surveyId, optionId, action))
+      pathIds.append(pathId)
     }
     func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {
       refunds.append((productId, status))
@@ -35,11 +44,13 @@ struct CustomerCenterDelegateAdapterTests {
     let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil).makeCallbacks()
     let proceeded = await callbacks.shouldRestore?()
     #expect(proceeded == true)
-    callbacks.didSelectAction?(.refund, nil)
-    callbacks.didCompleteSurvey?("s", "o", .manageSubscription)
+    #expect(delegate.restoreCheckRanOnMainThread == true, "a host may present sign-in UI from here")
+    callbacks.didSelectAction?(.refund, "refund", nil)
+    callbacks.didCompleteSurvey?("s", "o", .manageSubscription, "manage_subscription")
     callbacks.didCompleteRefund?("p", .success)
     callbacks.didDismiss?()
     #expect(delegate.selected == [.refund])
+    #expect(delegate.pathIds == ["refund", "manage_subscription"])
     #expect(delegate.surveys.first?.1 == "o")
     #expect(delegate.refunds.first?.1 == .success)
     #expect(delegate.dismissed == 1)

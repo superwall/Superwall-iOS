@@ -1,5 +1,6 @@
 import Testing
 import Foundation
+import SwiftUI
 @testable import SuperwallKit
 
 @Suite("CustomerCenterConfiguration")
@@ -14,7 +15,7 @@ struct CustomerCenterConfigurationTests {
     #expect(manage.survey?.id == "cancel_survey")
     #expect(manage.survey?.options.map(\.id) == ["too_expensive", "dont_use", "bought_by_mistake"])
     #expect(config.support.email == nil)
-    #expect(config.support.shouldWarnToUpdate == true)
+    #expect(config.support.warnsAboutUpdates == true)
     #expect(config.showsAccountDetails && config.warnsAboutDuplicateSubscriptions)
   }
 
@@ -32,7 +33,7 @@ struct CustomerCenterConfigurationTests {
     config.support.latestAppVersion = "2.1.0"
     config.support.webManagementURL = URL(string: "https://app.superwall.app/manage")
     config.appearance.accent = .init(light: "#112233", dark: "#AABBCC")
-    config.managementScreen.paths.append(.init(id: "faq", type: .url(URL(string: "https://app.com/faq")!, title: "FAQ", openMethod: .inApp)))
+    config.managementScreen.paths.append(.init(id: "faq", type: .url(URL(string: "https://app.com/faq")!, openMethod: .inApp)))
     config.managementScreen.paths.append(.init(id: "del", type: .custom(identifier: "delete_account")))
     config.managementScreen.paths.append(.init(id: "ref", type: .refund(window: 3600)))
     config.managementScreen.paths.append(.init(id: "chg", type: .changePlan(productIds: ["a", "b"])))
@@ -78,7 +79,9 @@ struct CustomerCenterConfigurationTests {
     #expect(Path(type: .changePlan(productIds: ["a"])).id == "change_plan")
     #expect(Path(type: .contactSupport).id == "contact_support")
     let faq = URL(string: "https://app.com/faq")!
-    #expect(Path(type: .url(faq, title: "FAQ", openMethod: .inApp)).id == "https://app.com/faq")
+    #expect(Path(type: .url(faq, openMethod: .inApp)).id == "app.com/faq")
+    let tokenURL = URL(string: "https://app.com/account?token=secret#top")!
+    #expect(Path(type: .url(tokenURL)).id == "app.com/account", "a query can carry a token, so it stays out of the id")
     #expect(Path(type: .custom(identifier: "delete_account")).id == "delete_account")
     #expect(Path(id: "refund_30_days", type: .refund(window: 2_592_000)).id == "refund_30_days")
     #expect(Path.refund.id == "refund")
@@ -106,6 +109,16 @@ struct CustomerCenterConfigurationTests {
     #expect(config.duplicatePathIds.isEmpty)
   }
 
+  @Test("URL paths without a title are reported")
+  func untitledURLPaths() {
+    let config = CustomerCenterConfiguration.default
+    let faq = URL(string: "https://app.com/faq")!
+    config.managementScreen.paths.append(.url(faq, title: "FAQ", id: "faq"))
+    #expect(config.untitledURLPathIds.isEmpty)
+    config.managementScreen.paths.append(.init(id: "terms", type: .url(faq)))
+    #expect(config.untitledURLPathIds == ["terms"])
+  }
+
   @Test("path shorthands build the same paths as Path(type:)")
   func pathShorthands() {
     typealias Path = CustomerCenterConfiguration.Path
@@ -125,15 +138,55 @@ struct CustomerCenterConfigurationTests {
       Path(type: .changePlan(productIds: ["a", "b"])),
       Path(type: .refund(window: 3600)),
       Path(type: .manageSubscription, survey: survey),
-      Path(type: .url(faq, title: "FAQ", openMethod: .inApp), title: "FAQ"),
+      Path(type: .url(faq, openMethod: .inApp), title: "FAQ"),
       Path(type: .custom(identifier: "delete_account"), title: "Delete account"),
       Path(type: .contactSupport)
     ])
     #expect(Path.refund == Path(type: .refund()))
     #expect(Path.changePlan == Path(type: .changePlan()))
     #expect(Path.manageSubscription == Path(type: .manageSubscription))
-    #expect(Path.url(faq, title: "FAQ", openMethod: .external).type == .url(faq, title: "FAQ", openMethod: .external))
+    #expect(Path.url(faq, title: "FAQ", openMethod: .external).type == .url(faq, openMethod: .external))
     #expect(Path.refund(window: 60, id: "refund_short").id == "refund_short")
+  }
+
+  @Test("the cancellation survey is the default configuration's survey, built from named options")
+  func cancellationSurvey() {
+    let manage = CustomerCenterConfiguration.default.managementScreen.paths.first { $0.id == "manage_subscription" }
+    #expect(manage?.survey == .cancellation)
+    #expect(CustomerCenterConfiguration.FeedbackSurvey.cancellation.options.map(\.id) == ["too_expensive", "dont_use", "bought_by_mistake"])
+    #expect(CustomerCenterConfiguration.FeedbackSurvey.cancellation.title == nil)
+    #expect(CustomerCenterConfiguration.FeedbackSurvey.Option.tooExpensive.title == nil)
+  }
+
+  @Test("an untitled survey is reported unless it's on the manage-subscription path")
+  func untitledSurveys() {
+    let config = CustomerCenterConfiguration.default
+    #expect(config.untitledSurveyPathIds.isEmpty, "the default question fits the cancel path")
+    config.managementScreen.paths.append(.refund(window: 60, id: "refund_short", survey: .cancellation))
+    #expect(config.untitledSurveyPathIds == ["refund_short"])
+  }
+
+  @Test("colour pairs accept SwiftUI colours and malformed hex is reported")
+  func accentColours() {
+    let pair = CustomerCenterConfiguration.Appearance.ColorPair(
+      light: Color(red: 1, green: 0, blue: 0),
+      dark: Color(red: 0, green: 0, blue: 1)
+    )
+    #expect(pair.light == "#FF0000FF")
+    #expect(pair.dark == "#0000FFFF")
+
+    let config = CustomerCenterConfiguration.default
+    config.appearance.accent = .init(light: "#112233", dark: "not a colour")
+    #expect(config.invalidAccentHexes == ["not a colour"])
+  }
+
+  @Test("navigation options show a close button only for a sheet, unless told otherwise")
+  @available(iOS 15.0, *)
+  func navigationOptionDefaults() {
+    #expect(CustomerCenterNavigationOptions().showsCloseButton)
+    #expect(!CustomerCenterNavigationOptions(style: .embedded).showsCloseButton)
+    #expect(CustomerCenterNavigationOptions(style: .embedded, showsCloseButton: true).showsCloseButton)
+    #expect(CustomerCenterNavigationOptions(style: .embedded).usesExistingNavigation)
   }
 }
 

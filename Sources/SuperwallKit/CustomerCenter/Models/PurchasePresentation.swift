@@ -45,6 +45,25 @@ struct PurchasePresentation: Identifiable, Equatable {
   var isActive: Bool
   var expirationDate: Date?
   var purchaseDate: Date?
+  /// The entitlements the purchase unlocks.
+  var entitlements: Set<Entitlement> = []
+
+  /// What the delegate and SwiftUI callbacks are told about this purchase.
+  var publicPurchase: CustomerCenterPurchase {
+    switch kind {
+    case .subscription(let sub):
+      return CustomerCenterPurchase(productId: productId, store: store, entitlements: entitlements, subscription: sub)
+    case .nonSubscription(let purchase):
+      return CustomerCenterPurchase(
+        productId: productId,
+        store: store,
+        entitlements: entitlements,
+        nonSubscription: purchase
+      )
+    case .entitlementOnly:
+      return CustomerCenterPurchase(productId: productId, store: store, entitlements: entitlements)
+    }
+  }
 
   var subscription: SubscriptionTransaction? {
     if case .subscription(let sub) = kind { return sub }
@@ -61,5 +80,36 @@ struct PurchasePresentation: Identifiable, Equatable {
   var opensDetail: Bool {
     if case .nonSubscription = kind { return false }
     return true
+  }
+}
+
+/// The purchase a Customer Center action applies to.
+@objc(SWKCustomerCenterPurchase)
+@objcMembers
+public final class CustomerCenterPurchase: NSObject {
+  /// The product purchased. `nil` for an entitlement with no product behind it, such as a
+  /// manually granted one.
+  public let productId: String?
+  /// Where the purchase was made.
+  public let store: ProductStore
+  /// The entitlements the purchase unlocks.
+  public let entitlements: Set<Entitlement>
+  /// The subscription, when the purchase is one.
+  public let subscription: SubscriptionTransaction?
+  /// The one-time purchase, when the purchase is one.
+  public let nonSubscription: NonSubscriptionTransaction?
+
+  init(
+    productId: String?,
+    store: ProductStore,
+    entitlements: Set<Entitlement>,
+    subscription: SubscriptionTransaction? = nil,
+    nonSubscription: NonSubscriptionTransaction? = nil
+  ) {
+    self.productId = productId
+    self.store = store
+    self.entitlements = entitlements
+    self.subscription = subscription
+    self.nonSubscription = nonSubscription
   }
 }

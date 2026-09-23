@@ -31,7 +31,7 @@ struct FeedbackSurveyView: View {
         }
       }
       .listStyle(.insetGrouped)
-      .navigationTitle(viewModel.pendingSurvey?.survey.title ?? strings.string("customer_center_survey_cancel_title"))
+      .navigationTitle(surveyTitle)
       .navigationBarTitleDisplayMode(.inline)
       .toolbar {
         ToolbarItem(placement: .navigationBarTrailing) {
@@ -42,6 +42,19 @@ struct FeedbackSurveyView: View {
     }
     .navigationViewStyle(.stack)
     .interactiveDismissDisabled(answering != nil)
+  }
+
+  /// The survey's own title, else the cancellation question on the path that cancels. Any other
+  /// path gets no title rather than asking the customer why they're cancelling.
+  private var surveyTitle: String {
+    guard let pending = viewModel.pendingSurvey else { return "" }
+    if let title = pending.survey.title {
+      return title
+    }
+    if case .manageSubscription = pending.path.type {
+      return strings.string("customer_center_survey_cancel_title")
+    }
+    return ""
   }
 
   private func optionTitle(_ option: CustomerCenterConfiguration.FeedbackSurvey.Option) -> String {

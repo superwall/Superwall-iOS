@@ -488,7 +488,7 @@ struct DesignReviewSnapshots {
 
     // 16. The "update your app" banner.
     let updateConfiguration = defaultConfiguration()
-    updateConfiguration.support.shouldWarnToUpdate = true
+    updateConfiguration.support.warnsAboutUpdates = true
     updateConfiguration.support.latestAppVersion = "2.0.0"
     capture(
       "16-update-banner",

@@ -122,7 +122,7 @@ enum CustomerCenterPathResolver {
     case .contactSupport:
       return context.supportEmailAvailable && context.canOpenURLs ? .contactSupport : nil
 
-    case let .url(url, _, method):
+    case let .url(url, method):
       guard context.canOpenURLs else { return nil }
       let isWeb = ["http", "https"].contains(url.scheme?.lowercased() ?? "")
       return .url(url, inApp: method == .inApp && isWeb)

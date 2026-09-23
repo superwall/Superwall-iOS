@@ -10,25 +10,28 @@ import SwiftUI
 /// Navigation behaviour of ``CustomerCenterView``.
 @available(iOS 15.0, *)
 public struct CustomerCenterNavigationOptions {
-  /// `true` when you push the view inside your own navigation stack (no wrapping `NavigationView`).
-  public var usesExistingNavigation: Bool
+  /// `.sheet` wraps the view in its own navigation; `.embedded` uses the navigation you place it in.
+  public var style: CustomerCenterPresentationStyle
   /// Shows a close button in the trailing toolbar position.
   public var showsCloseButton: Bool
   /// Called when the close button is tapped. `nil` uses the environment dismiss action.
   public var onClose: (() -> Void)?
 
+  var usesExistingNavigation: Bool { style == .embedded }
+
   /// Creates navigation options for ``CustomerCenterView``.
   /// - Parameters:
-  ///   - usesExistingNavigation: `true` when you push the view inside your own navigation stack.
-  ///   - showsCloseButton: Shows a close button in the trailing toolbar position.
+  ///   - style: `.embedded` when you place the view inside your own navigation stack.
+  ///   - showsCloseButton: Shows a close button in the trailing toolbar position. Defaults to
+  ///     `true` for `.sheet` and `false` for `.embedded`.
   ///   - onClose: Called when the close button is tapped. `nil` uses the environment dismiss action.
   public init(
-    usesExistingNavigation: Bool = false,
-    showsCloseButton: Bool = true,
+    style: CustomerCenterPresentationStyle = .sheet,
+    showsCloseButton: Bool? = nil,
     onClose: (() -> Void)? = nil
   ) {
-    self.usesExistingNavigation = usesExistingNavigation
-    self.showsCloseButton = showsCloseButton
+    self.style = style
+    self.showsCloseButton = showsCloseButton ?? (style == .sheet)
     self.onClose = onClose
   }
 
@@ -63,7 +66,7 @@ public struct CustomerCenterView: View {
     _viewModel = StateObject(
       wrappedValue: Self.makeConfiguredViewModel(
         configuration: configuration,
-        usesExistingNavigation: navigationOptions.usesExistingNavigation
+        style: navigationOptions.style
       )
     )
     self.navigationOptions = navigationOptions
@@ -72,10 +75,10 @@ public struct CustomerCenterView: View {
 
   private static func makeConfiguredViewModel(
     configuration: CustomerCenterConfiguration?,
-    usesExistingNavigation: Bool
+    style: CustomerCenterPresentationStyle
   ) -> CustomerCenterViewModel {
     let model = CustomerCenterManager.makeViewModel(configuration: configuration)
-    model.presentationMode = usesExistingNavigation ? "embedded" : "sheet"
+    model.presentationMode = style
     return model
   }
 

@@ -414,6 +414,7 @@
 		A44BAE75AAE4713FAE38F992 /* ProductsFetcherSK1.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD6BA222CB2EAA4B65F362C5 /* ProductsFetcherSK1.swift */; };
 		A50C9EFDE9ED8778BB4C44D3 /* NoPurchasesScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B95FB737271FE6289A0A4BD1 /* NoPurchasesScreenView.swift */; };
 		A51060CF6339BF9383F94B51 /* MockSubscriptionPeriod.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C4AD6349F2D432132F36D5 /* MockSubscriptionPeriod.swift */; };
+		A531E1B471602B469BF5E865 /* CustomerCenterConfiguration+Surveys.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F63E6440964772B5B44AAF8 /* CustomerCenterConfiguration+Surveys.swift */; };
 		A59E22688D68CBE09FF78D57 /* IntroOfferEligibilityRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08AEAA8E3B5F51848523AE61 /* IntroOfferEligibilityRequest.swift */; };
 		A646BB605400E4BDD321F389 /* SurveyShowCondition.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */; };
 		A6917A68A4342B1BC41B8DE9 /* UIWindow+SwizzleSendEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D275ED98D2EE298F06708AF /* UIWindow+SwizzleSendEvent.swift */; };
@@ -894,6 +895,7 @@
 		4E9B7111D8087FC1DF3E6B80 /* DevServerPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerPreview.swift; sourceTree = "<group>"; };
 		4EB1F47410CBC84D9ABD2F14 /* AutomaticPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseController.swift; sourceTree = "<group>"; };
 		4EC3DA8E774FBFE31F811FAF /* ConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManager.swift; sourceTree = "<group>"; };
+		4F63E6440964772B5B44AAF8 /* CustomerCenterConfiguration+Surveys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterConfiguration+Surveys.swift"; sourceTree = "<group>"; };
 		501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportEmailComposerTests.swift; sourceTree = "<group>"; };
 		50458143450675EF205CE2C3 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
 		51407421A3CBF7AF0FC76E60 /* Bundle+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Helpers.swift"; sourceTree = "<group>"; };
@@ -2950,6 +2952,7 @@
 				1F86C1F3253E4C8FFBCB30AC /* CustomerCenterConfiguration+Appearance.swift */,
 				710DB325AE1CA4988E2FB9CA /* CustomerCenterConfiguration+ObjC.swift */,
 				F48B2AB6C4AFDD95BCDECD57 /* CustomerCenterConfiguration+Paths.swift */,
+				4F63E6440964772B5B44AAF8 /* CustomerCenterConfiguration+Surveys.swift */,
 				51B5BF7B93E59438467DB6C7 /* CustomerCenterScreenState.swift */,
 				51636FFB03A6F879BFB140FC /* PurchasePresentation.swift */,
 			);
@@ -3976,6 +3979,7 @@
 				5578870EF7D736E46CC8E828 /* CustomerCenterConfiguration+Appearance.swift in Sources */,
 				BAD2C927523B12E973186C6B /* CustomerCenterConfiguration+ObjC.swift in Sources */,
 				9274292A323C7690F7C4C580 /* CustomerCenterConfiguration+Paths.swift in Sources */,
+				A531E1B471602B469BF5E865 /* CustomerCenterConfiguration+Surveys.swift in Sources */,
 				57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */,
 				481903391564D2B19A9BD285 /* CustomerCenterDelegate.swift in Sources */,
 				781A9E4339F865190C8A5D6A /* CustomerCenterDelegateAdapter.swift in Sources */,

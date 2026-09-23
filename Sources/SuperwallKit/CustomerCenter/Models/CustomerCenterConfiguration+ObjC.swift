@@ -7,20 +7,14 @@
 
 import Foundation
 
-/// Objective-C mirror of ``CustomerCenterConfiguration/PathType``.
-@objc(SWKCustomerCenterPathType)
-public enum CustomerCenterPathTypeObjc: Int {
-  case restore, manageSubscription, refund, changePlan, contactSupport, url, custom
-}
-
 @objc(SWKCustomerCenterOpenMethod)
 public enum CustomerCenterOpenMethodObjc: Int {
   case inApp, external
 }
 
 extension CustomerCenterConfiguration.Path {
-  /// The path's type, for Objective-C.
-  @objc public var pathType: CustomerCenterPathTypeObjc {
+  /// What the path does, for Objective-C: the same values its taps report as.
+  @objc public var actionType: CustomerCenterActionTypeObjc {
     switch type {
     case .restore: return .restore
     case .manageSubscription: return .manageSubscription
@@ -32,11 +26,11 @@ extension CustomerCenterConfiguration.Path {
     }
   }
   @objc public var url: URL? {
-    if case .url(let url, _, _) = type { return url }
+    if case .url(let url, _) = type { return url }
     return nil
   }
   @objc public var openMethodObjc: CustomerCenterOpenMethodObjc {
-    if case .url(_, _, let method) = type, method == .external { return .external }
+    if case .url(_, let method) = type, method == .external { return .external }
     return .inApp
   }
   @objc public var customIdentifier: String? {
@@ -78,14 +72,13 @@ extension CustomerCenterConfiguration.Path {
     .init(id: id, type: .contactSupport, title: title)
   }
   /// `title` is non-optional here, unlike the other path factories: a URL row has no default
-  /// name to fall back on. It is set on the path as well as in the case, because `type` is
-  /// `@nonobjc` — without this, an Objective-C caller could hand a title in and never read it back.
+  /// name to fall back on.
   @available(swift, obsoleted: 1.0)
   @objc(urlWithId:url:openMethod:title:)
   public static func urlObjc(id: String?, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String) -> CustomerCenterConfiguration.Path {
     .init(
       id: id,
-      type: .url(url, title: title, openMethod: openMethod == .external ? .external : .inApp),
+      type: .url(url, openMethod: openMethod == .external ? .external : .inApp),
       title: title
     )
   }

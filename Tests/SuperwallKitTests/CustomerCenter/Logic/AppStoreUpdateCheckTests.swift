@@ -33,7 +33,7 @@ struct AppStoreUpdateCheckTests {
     let configuration = CustomerCenterConfiguration.default
     configuration.support.latestAppVersion = configuredLatest
     configuration.support.checksAppStoreForUpdates = checksAppStore
-    configuration.support.shouldWarnToUpdate = shouldWarn
+    configuration.support.warnsAboutUpdates = shouldWarn
     let viewModel = CustomerCenterViewModel(
       configuration: configuration,
       dependencies: deps,
@@ -127,7 +127,7 @@ struct AppStoreUpdateCheckTests {
   }
 
   @available(iOS 15.0, *)
-  @Test("shouldWarnToUpdate off skips the lookup entirely")
+  @Test("warnsAboutUpdates off skips the lookup entirely")
   func warningOffSkipsLookup() async {
     let (viewModel, provider) = makeViewModel(
       installed: "1.4.0",
@@ -353,7 +353,7 @@ struct AppStoreUpdateCheckTests {
 
   @Test("configuration written before the flag existed still decodes")
   func decodesLegacyConfiguration() throws {
-    let json = #"{"email":"help@acme.com","shouldWarnToUpdate":true}"#
+    let json = #"{"email":"help@acme.com","warnsAboutUpdates":true}"#
     let support = try JSONDecoder().decode(
       CustomerCenterConfiguration.Support.self,
       from: Data(json.utf8)

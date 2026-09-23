@@ -48,15 +48,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   /// (with a cancellation survey) and contact support on the management screen; restore on the
   /// no-purchases screen.
   public static var `default`: CustomerCenterConfiguration {
-    let cancelSurvey = FeedbackSurvey(
-      id: "cancel_survey",
-      title: nil,
-      options: [
-        .init(id: "too_expensive", title: nil),
-        .init(id: "dont_use", title: nil),
-        .init(id: "bought_by_mistake", title: nil)
-      ]
-    )
+    let cancelSurvey = FeedbackSurvey.cancellation
     return CustomerCenterConfiguration(
       managementScreen: Screen(
         title: nil,
@@ -193,11 +185,11 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     /// `productIds`: optional subset of the subscription group to offer. `nil` offers the whole group.
     case changePlan(productIds: [String]? = nil)
     case contactSupport
-    /// `title`: what the row says. Required, because it is the one path type the SDK cannot name
-    /// for you — every other type has a fixed meaning and a localized default, while a URL could
-    /// be anything. Deriving a label from the URL doesn't work: the host is identical across an
-    /// app's own links, so FAQ, terms and privacy would all render as one repeated row.
-    case url(URL, title: String, openMethod: OpenMethod)
+    /// Opens a URL. Unlike the other types, a URL has no name the SDK can give it, so set the
+    /// row's title on ``Path/title`` — the ``Path/url(_:title:openMethod:id:survey:)`` shorthand
+    /// requires one. Without a title the row shows the URL's host, which is the same for every
+    /// link to one site, so FAQ, terms and privacy would read identically.
+    case url(URL, openMethod: OpenMethod = .inApp)
     case custom(identifier: String)
   }
 
@@ -214,11 +206,12 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   @objcMembers
   public final class FeedbackSurvey: NSObject, Codable {
     public var id: String
-    /// Question text. `nil` uses the localized default ("Why are you cancelling?").
+    /// Question text. `nil` uses the localized "Why are you cancelling?" on a manage-subscription
+    /// path, and no title on any other path.
     public var title: String?
     public var options: [Option]
 
-    public init(id: String, title: String?, options: [Option]) {
+    public init(id: String, title: String? = nil, options: [Option]) {
       self.id = id
       self.title = title
       self.options = options
@@ -241,10 +234,11 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     @objcMembers
     public final class Option: NSObject, Codable {
       public var id: String
-      /// Option text. `nil` uses the localized default when `id` is one of the built-in ids.
+      /// Option text. `nil` uses the localized default for the built-in options
+      /// (``tooExpensive``, ``dontUse`` and ``boughtByMistake``).
       public var title: String?
 
-      public init(id: String, title: String?) {
+      public init(id: String, title: String? = nil) {
         self.id = id
         self.title = title
       }
@@ -273,7 +267,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     /// Latest published app version. When set and newer than the installed version, an update banner shows.
     public var latestAppVersion: String?
     /// Whether to show the update banner. Defaults to `true`.
-    public var shouldWarnToUpdate: Bool
+    public var warnsAboutUpdates: Bool
     /// Whether to look the latest published version up from the App Store when
     /// ``latestAppVersion`` isn't set. Defaults to `true`.
     ///
@@ -287,19 +281,19 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     public init(
       email: String? = nil,
       latestAppVersion: String? = nil,
-      shouldWarnToUpdate: Bool = true,
+      warnsAboutUpdates: Bool = true,
       checksAppStoreForUpdates: Bool = true,
       webManagementURL: URL? = nil
     ) {
       self.email = email
       self.latestAppVersion = latestAppVersion
-      self.shouldWarnToUpdate = shouldWarnToUpdate
+      self.warnsAboutUpdates = warnsAboutUpdates
       self.checksAppStoreForUpdates = checksAppStoreForUpdates
       self.webManagementURL = webManagementURL
     }
 
     private enum CodingKeys: String, CodingKey {
-      case email, latestAppVersion, shouldWarnToUpdate, checksAppStoreForUpdates, webManagementURL
+      case email, latestAppVersion, warnsAboutUpdates, checksAppStoreForUpdates, webManagementURL
     }
 
     /// Hand-written so that `checksAppStoreForUpdates` can default when absent. Everything the
@@ -309,7 +303,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       email = try container.decodeIfPresent(String.self, forKey: .email)
       latestAppVersion = try container.decodeIfPresent(String.self, forKey: .latestAppVersion)
-      shouldWarnToUpdate = try container.decodeIfPresent(Bool.self, forKey: .shouldWarnToUpdate) ?? true
+      warnsAboutUpdates = try container.decodeIfPresent(Bool.self, forKey: .warnsAboutUpdates) ?? true
       checksAppStoreForUpdates = try container.decodeIfPresent(Bool.self, forKey: .checksAppStoreForUpdates) ?? true
       webManagementURL = try container.decodeIfPresent(URL.self, forKey: .webManagementURL)
       super.init()
@@ -319,7 +313,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       guard let other = object as? Support else { return false }
       return email == other.email
         && latestAppVersion == other.latestAppVersion
-        && shouldWarnToUpdate == other.shouldWarnToUpdate
+        && warnsAboutUpdates == other.warnsAboutUpdates
         && checksAppStoreForUpdates == other.checksAppStoreForUpdates
         && webManagementURL == other.webManagementURL
     }
@@ -328,7 +322,7 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
       var hasher = Hasher()
       hasher.combine(email)
       hasher.combine(latestAppVersion)
-      hasher.combine(shouldWarnToUpdate)
+      hasher.combine(warnsAboutUpdates)
       hasher.combine(checksAppStoreForUpdates)
       hasher.combine(webManagementURL)
       return hasher.finalize()

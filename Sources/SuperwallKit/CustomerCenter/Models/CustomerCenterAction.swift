@@ -24,7 +24,7 @@ public enum CustomerCenterAction: Equatable, Sendable {
     case .refund: self = .refund
     case .changePlan: self = .changePlan
     case .contactSupport: self = .contactSupport
-    case .url(let url, _, _): self = .url(url)
+    case .url(let url, _): self = .url(url)
     case .custom(let identifier): self = .custom(identifier: identifier)
     }
   }
@@ -87,6 +87,21 @@ public enum CustomerCenterRefundStatus: Int, Sendable {
     case .success: return "success"
     case .userCancelled: return "user_cancelled"
     case .error: return "error"
+    }
+  }
+}
+
+/// Which Customer Center screen was shown, reported on ``SuperwallEvent/customerCenterOpen(screen:presentation:)``.
+public enum CustomerCenterScreenType: Sendable {
+  /// The user has, or had, at least one purchase.
+  case management
+  /// The user has no purchases.
+  case noPurchases
+
+  var analyticsName: String {
+    switch self {
+    case .management: return "management"
+    case .noPurchases: return "no_purchases"
     }
   }
 }

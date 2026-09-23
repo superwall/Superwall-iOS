@@ -102,7 +102,7 @@ struct CustomerCenterManagerTests {
     var didDismissCount = 0
     var delegate: ProbeDelegate? = ProbeDelegate { didDismissCount += 1 }
     let adapter = CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil)
-    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter, presentationStyle: .modal)
+    let controller = CustomerCenterViewController(viewModel: viewModel, adapter: adapter, presentationStyle: .sheet)
     // The manager's `onDismiss` releases its retained delegate — the only strong reference here.
     // The view model's dismissal (default 0.6s debounce) must not be what delivers `didDismiss`,
     // or it would reach a released delegate.

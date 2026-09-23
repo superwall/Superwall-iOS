@@ -23,13 +23,14 @@ struct CustomerCenterDelegateAdapter {
   /// `shouldRestore` is left `nil` unless a Swift delegate is set or the ObjC delegate implements
   /// the optional method, so the view model's default (proceed) behavior applies when there's
   /// nothing to gate on.
+  @MainActor
   func makeCallbacks() -> CustomerCenterCallbacks {
     var callbacks = CustomerCenterCallbacks()
     let objcImplementsShouldRestore = (objcDelegate as? NSObjectProtocol)?.responds(
       to: #selector(CustomerCenterDelegateObjc.customerCenterShouldRestorePurchases(completion:))
     ) ?? false
     if swiftDelegate != nil || objcImplementsShouldRestore {
-      callbacks.shouldRestore = { [weak swiftDelegate, weak objcDelegate] in
+      callbacks.shouldRestore = { @MainActor [weak swiftDelegate, weak objcDelegate] in
         if let swiftDelegate {
           return await swiftDelegate.customerCenterShouldRestorePurchases()
         }
@@ -42,23 +43,24 @@ struct CustomerCenterDelegateAdapter {
         }
       }
     }
-    callbacks.didSelectAction = { [weak swiftDelegate, weak objcDelegate] action, purchase in
-      swiftDelegate?.customerCenterDidSelectAction(action, for: purchase)
-      objcDelegate?.customerCenterDidSelectAction?(CustomerCenterActionObjc(action), for: purchase)
+    callbacks.didSelectAction = { @MainActor [weak swiftDelegate, weak objcDelegate] action, pathId, purchase in
+      swiftDelegate?.customerCenterDidSelectAction(action, pathId: pathId, purchase: purchase)
+      objcDelegate?.customerCenterDidSelectAction?(CustomerCenterActionObjc(action), pathId: pathId, purchase: purchase)
     }
-    callbacks.didCompleteSurvey = { [weak swiftDelegate, weak objcDelegate] surveyId, optionId, action in
-      swiftDelegate?.customerCenterDidCompleteSurvey(surveyId: surveyId, optionId: optionId, action: action)
+    callbacks.didCompleteSurvey = { @MainActor [weak swiftDelegate, weak objcDelegate] survey, option, action, path in
+      swiftDelegate?.customerCenterDidCompleteSurvey(surveyId: survey, optionId: option, action: action, pathId: path)
       objcDelegate?.customerCenterDidCompleteSurvey?(
-        surveyId: surveyId,
-        optionId: optionId,
-        action: CustomerCenterActionObjc(action)
+        surveyId: survey,
+        optionId: option,
+        action: CustomerCenterActionObjc(action),
+        pathId: path
       )
     }
-    callbacks.didCompleteRefund = { [weak swiftDelegate, weak objcDelegate] productId, status in
+    callbacks.didCompleteRefund = { @MainActor [weak swiftDelegate, weak objcDelegate] productId, status in
       swiftDelegate?.customerCenterDidCompleteRefundRequest(productId: productId, status: status)
       objcDelegate?.customerCenterDidCompleteRefundRequest?(productId: productId, status: status)
     }
-    callbacks.didDismiss = { [weak swiftDelegate, weak objcDelegate] in
+    callbacks.didDismiss = { @MainActor [weak swiftDelegate, weak objcDelegate] in
       swiftDelegate?.customerCenterDidDismiss()
       objcDelegate?.customerCenterDidDismiss?()
     }

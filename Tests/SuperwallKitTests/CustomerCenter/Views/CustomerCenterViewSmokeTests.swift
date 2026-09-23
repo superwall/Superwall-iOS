@@ -135,14 +135,14 @@ struct CustomerCenterViewSmokeTests {
 
     final class ReceivedBox: @unchecked Sendable {
       var action: CustomerCenterAction?
-      var transaction: SubscriptionTransaction?
+      var purchase: CustomerCenterPurchase?
     }
     let received = ReceivedBox()
 
     let view = CustomerCenterView(viewModel: vm, navigationOptions: .default)
-      .onCustomerCenterAction { action, transaction in
+      .onCustomerCenterAction { action, _, purchase in
         received.action = action
-        received.transaction = transaction
+        received.purchase = purchase
       }
     let host = UIHostingController(rootView: view)
     host.view.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
@@ -163,7 +163,7 @@ struct CustomerCenterViewSmokeTests {
     await vm.select(manage, purchase: purchase)
 
     #expect(received.action == .manageSubscription)
-    #expect(received.transaction?.transactionId == "t")
+    #expect(received.purchase?.subscription?.transactionId == "t")
     window.isHidden = true
   }
 
@@ -181,7 +181,7 @@ struct CustomerCenterViewSmokeTests {
 
     var environment = CustomerCenterCallbacks()
     var envSelectCalled = false
-    environment.didSelectAction = { _, _ in envSelectCalled = true }
+    environment.didSelectAction = { _, _, _ in envSelectCalled = true }
 
     let result = CustomerCenterView.merged(existing, environment)
 
@@ -190,7 +190,7 @@ struct CustomerCenterViewSmokeTests {
     #expect(existingDismissCalled)
 
     // Field only set on `environment` is present in the result.
-    result.didSelectAction?(.restore, nil)
+    result.didSelectAction?(.restore, "restore", nil)
     #expect(envSelectCalled)
 
     // Field set on `existing` but not `environment` still comes from `existing`.

@@ -65,7 +65,7 @@ struct PathsListView: View {
     case .refund: return strings.string("customer_center_path_refund")
     case .changePlan: return strings.string("customer_center_path_change_plan")
     case .contactSupport: return strings.string("customer_center_path_contact_support")
-    case .url(_, let title, _): return title
+    case let .url(url, _): return url.host ?? url.absoluteString
     case .custom(let identifier): return identifier
     }
   }

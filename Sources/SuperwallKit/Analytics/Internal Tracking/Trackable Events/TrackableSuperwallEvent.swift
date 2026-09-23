@@ -1224,13 +1224,12 @@ enum InternalSuperwallEvent {
   }
 
   struct CustomerCenterOpen: TrackableSuperwallEvent {
-    let screen: String
-    /// How the Customer Center was presented: `"sheet"` or `"embedded"`.
-    let presentation: String
-    var superwallEvent: SuperwallEvent { .customerCenterOpen(screen: screen) }
+    let screen: CustomerCenterScreenType
+    let presentation: CustomerCenterPresentationStyle
+    var superwallEvent: SuperwallEvent { .customerCenterOpen(screen: screen, presentation: presentation) }
     var audienceFilterParams: [String: Any] = [:]
     func getSuperwallParameters() async -> [String: Any] {
-      ["screen": screen, "presentation": presentation]
+      ["screen": screen.analyticsName, "presentation": presentation.analyticsName]
     }
   }
 
@@ -1249,7 +1248,7 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] {
       var params: [String: Any] = ["action": action.analyticsName, "path_id": pathId]
       if let productId { params["product_id"] = productId }
-      if case .url(let url) = action { params["url"] = url.absoluteString }
+      if case .url(let url) = action { params["url"] = url.withoutQueryOrFragment.absoluteString }
       if case .custom(let identifier) = action { params["custom_identifier"] = identifier }
       return params
     }

@@ -19,7 +19,7 @@ extension CustomerCenterViewModel {
 
   func recomputeUpdateBanner() {
     showsUpdateBanner = !updateWarningDismissed
-      && configuration.support.shouldWarnToUpdate
+      && configuration.support.warnsAboutUpdates
       && AppVersionComparator.isInstalledVersion(
         dependencies.environment.appVersion,
         olderThan: latestKnownAppVersion
@@ -33,7 +33,7 @@ extension CustomerCenterViewModel {
   /// older build. Also skipped when the host set `latestAppVersion`, which is authoritative.
   func refreshAppStoreVersion() async {
     guard
-      configuration.support.shouldWarnToUpdate,
+      configuration.support.warnsAboutUpdates,
       configuration.support.checksAppStoreForUpdates,
       configuration.support.latestAppVersion == nil,
       !dependencies.environment.isSandbox,

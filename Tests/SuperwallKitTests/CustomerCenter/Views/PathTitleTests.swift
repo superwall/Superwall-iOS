@@ -24,20 +24,28 @@ struct PathTitleTests {
     )
   }
 
-  /// The bug this rule exists to prevent. The title used to be derived from the URL's host, which
-  /// is identical across an app's own links — so three distinct destinations rendered as three
-  /// identical rows and the customer had no way to tell them apart.
+  /// The bug the required URL title exists to prevent: the host is identical across an app's own
+  /// links, so three distinct destinations would render as three identical rows.
   @available(iOS 15.0, *)
   @Test("URL rows on one host still read differently")
   func urlRowsOnTheSameHostAreDistinct() {
-    let rows = [
-      title(.url(URL(string: "https://acme.com/faq")!, title: "FAQ", openMethod: .inApp)),
-      title(.url(URL(string: "https://acme.com/terms")!, title: "Terms of Service", openMethod: .inApp)),
-      title(.url(URL(string: "https://acme.com/privacy")!, title: "Privacy Policy", openMethod: .external))
+    let paths: [CustomerCenterConfiguration.Path] = [
+      .url(URL(string: "https://acme.com/faq")!, title: "FAQ"),
+      .url(URL(string: "https://acme.com/terms")!, title: "Terms of Service"),
+      .url(URL(string: "https://acme.com/privacy")!, title: "Privacy Policy", openMethod: .external)
     ]
+    let rows = paths.map { path in
+      PathsListView.title(for: ResolvedPath(path: path, destination: .custom("")), strings: .english)
+    }
 
     #expect(rows == ["FAQ", "Terms of Service", "Privacy Policy"])
     #expect(Set(rows).count == 3, "a shared host must not collapse three rows into one label")
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a URL row without a title falls back to its host")
+  func untitledURLRowShowsHost() {
+    #expect(title(.url(URL(string: "https://acme.com/faq")!)) == "acme.com")
   }
 
   /// Every other type names itself, so a title is optional there and overrides the default.
@@ -53,7 +61,7 @@ struct PathTitleTests {
   @Test("an explicit title wins over every default", arguments: [
     CustomerCenterConfiguration.PathType.restore,
     .contactSupport,
-    .url(URL(string: "https://acme.com/faq")!, title: "FAQ", openMethod: .inApp)
+    .url(URL(string: "https://acme.com/faq")!, openMethod: .inApp)
   ])
   func explicitTitleWins(type: CustomerCenterConfiguration.PathType) {
     #expect(title(type, pathTitle: "Help me") == "Help me")

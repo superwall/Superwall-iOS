@@ -132,7 +132,8 @@ struct PurchasePresentationBuilder {
         storeLabelKey: storeLabelKey(purchase.store),
         isActive: !purchase.isRevoked,
         expirationDate: nil,
-        purchaseDate: purchase.purchaseDate
+        purchaseDate: purchase.purchaseDate,
+        entitlements: entitlementsByProductId[purchase.productId] ?? []
       )
     }
   }
@@ -184,7 +185,8 @@ struct PurchasePresentationBuilder {
       storeLabelKey: storeLabelKey(sub.store),
       isActive: sub.isActive,
       expirationDate: sub.expirationDate,
-      purchaseDate: sub.purchaseDate
+      purchaseDate: sub.purchaseDate,
+      entitlements: entitlements
     )
   }
 
@@ -211,7 +213,8 @@ struct PurchasePresentationBuilder {
       storeLabelKey: storeLabelKey(entitlement.store ?? .superwall),
       isActive: entitlement.isActive,
       expirationDate: entitlement.expiresAt,
-      purchaseDate: entitlement.startsAt
+      purchaseDate: entitlement.startsAt,
+      entitlements: [entitlement]
     )
   }
 

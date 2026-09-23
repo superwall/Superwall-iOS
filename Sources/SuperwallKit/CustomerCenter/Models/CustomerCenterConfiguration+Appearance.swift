@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import UIKit
 
 extension CustomerCenterConfiguration {
@@ -52,6 +53,14 @@ extension CustomerCenterConfiguration {
 
       @nonobjc public convenience init(light: UIColor, dark: UIColor) {
         self.init(light: light.hexString, dark: dark.hexString)
+      }
+
+      /// Disfavored so that `.init(light: .red, dark: .blue)` keeps meaning `UIColor`, which also
+      /// has a `.red`, rather than becoming ambiguous.
+      @_disfavoredOverload
+      @available(iOS 14.0, *)
+      @nonobjc public convenience init(light: Color, dark: Color) {
+        self.init(light: UIColor(light), dark: UIColor(dark))
       }
 
       override public func isEqual(_ object: Any?) -> Bool {

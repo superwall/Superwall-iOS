@@ -33,7 +33,7 @@ final class CustomerCenterViewModel: ObservableObject {
   let configuration: CustomerCenterConfiguration
   let strings: CustomerCenterStrings
   var callbacks = CustomerCenterCallbacks()
-  var presentationMode = "sheet"
+  var presentationMode: CustomerCenterPresentationStyle = .sheet
   private(set) var pendingSurvey: PendingSurvey?
 
   /// Locale for date formatting, matching the locale the localized strings resolve against:
@@ -95,7 +95,7 @@ final class CustomerCenterViewModel: ObservableObject {
     self.dependencies = dependencies
     self.strings = strings
     self.dismissDebounceInterval = dismissDebounceInterval
-    configuration.warnAboutDuplicatePathIds()
+    configuration.warnAboutConfigurationProblems()
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
     } else if #available(iOS 17.0, *) {
@@ -122,7 +122,7 @@ final class CustomerCenterViewModel: ObservableObject {
       hasTrackedOpen = true
       await dependencies.tracker.track(
         InternalSuperwallEvent.CustomerCenterOpen(
-          screen: hasAnyPurchases(info) ? "management" : "no_purchases",
+          screen: hasAnyPurchases(info) ? .management : .noPurchases,
           presentation: presentationMode
         )
       )
@@ -198,7 +198,7 @@ final class CustomerCenterViewModel: ObservableObject {
 
   func select(_ resolved: ResolvedPath, purchase: PurchasePresentation?) async {
     let action = CustomerCenterAction(pathType: resolved.path.type)
-    callbacks.didSelectAction?(action, purchase?.subscription)
+    callbacks.didSelectAction?(action, resolved.path.id, purchase?.publicPurchase)
     await dependencies.tracker.track(
       InternalSuperwallEvent.CustomerCenterAction(action: action, pathId: resolved.path.id, productId: purchase?.productId)
     )
@@ -214,7 +214,7 @@ final class CustomerCenterViewModel: ObservableObject {
   func answerSurvey(optionId: String) async {
     guard let pendingSurvey, let pendingAction else { return }
     let action = CustomerCenterAction(pathType: pendingAction.resolved.path.type)
-    callbacks.didCompleteSurvey?(pendingSurvey.survey.id, optionId, action)
+    callbacks.didCompleteSurvey?(pendingSurvey.survey.id, optionId, action, pendingAction.resolved.path.id)
     await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterSurveyResponse(
       surveyId: pendingSurvey.survey.id,
       optionId: optionId,

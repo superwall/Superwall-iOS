@@ -71,7 +71,7 @@ struct CustomerCenterViewControllerTests {
   @Test("pushed: being covered on the host's stack does not fire the dismissal")
   func pushedCoveredDoesNotDismiss() {
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .pushed, delegate: delegate)
+    let controller = makeController(style: .embedded, delegate: delegate)
     var onDismissCount = 0
     controller.onDismiss = { onDismissCount += 1 }
 
@@ -102,7 +102,7 @@ struct CustomerCenterViewControllerTests {
   func pushedCoverDoesNotFireLateDismissal() async {
     let debounce: TimeInterval = 0.2
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .pushed, delegate: delegate, dismissDebounceInterval: debounce)
+    let controller = makeController(style: .embedded, delegate: delegate, dismissDebounceInterval: debounce)
 
     let navigation = UINavigationController(rootViewController: UIViewController())
     let window = makeWindow(rootViewController: navigation)
@@ -142,7 +142,7 @@ struct CustomerCenterViewControllerTests {
   func pushedCoverSurvivesALateDisappearance() async {
     let debounce: TimeInterval = 0.2
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .pushed, delegate: delegate, dismissDebounceInterval: debounce)
+    let controller = makeController(style: .embedded, delegate: delegate, dismissDebounceInterval: debounce)
 
     let navigation = UINavigationController(rootViewController: UIViewController())
     let window = makeWindow(rootViewController: navigation)
@@ -172,7 +172,7 @@ struct CustomerCenterViewControllerTests {
   @Test("pushed: being popped off the host's stack fires the dismissal exactly once")
   func pushedPopFiresDismissal() {
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .pushed, delegate: delegate)
+    let controller = makeController(style: .embedded, delegate: delegate)
     var onDismissCount = 0
     controller.onDismiss = { onDismissCount += 1 }
 
@@ -195,7 +195,7 @@ struct CustomerCenterViewControllerTests {
   @Test("modal: dismissing fires the dismissal exactly once")
   func modalDismissFiresDismissal() {
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .modal, delegate: delegate)
+    let controller = makeController(style: .sheet, delegate: delegate)
     var onDismissCount = 0
     controller.onDismiss = { onDismissCount += 1 }
 
@@ -219,7 +219,7 @@ struct CustomerCenterViewControllerTests {
   @Test("a controller that was never presented does not report a dismissal")
   func neverPresentedDoesNotDismiss() {
     let delegate = ProbeDelegate()
-    let controller = makeController(style: .modal, delegate: delegate)
+    let controller = makeController(style: .sheet, delegate: delegate)
     var onDismissCount = 0
     controller.onDismiss = { onDismissCount += 1 }
 
@@ -231,11 +231,11 @@ struct CustomerCenterViewControllerTests {
 
   // MARK: - Chrome
 
-  /// The Customer Center used to hide a host's navigation bar in `.pushed` and hand it back on
+  /// The Customer Center used to hide a host's navigation bar in `.embedded` and hand it back on
   /// the way out. It no longer touches the bar in any style — the host's chrome is theirs.
   @available(iOS 15.0, *)
   @Test("neither style modifies the host's navigation bar", arguments: [
-    CustomerCenterPresentationStyle.pushed, .modal
+    CustomerCenterPresentationStyle.embedded, .sheet
   ])
   func neitherStyleTouchesTheHostBar(style: CustomerCenterPresentationStyle) {
     let controller = makeController(style: style, delegate: nil)
@@ -264,7 +264,7 @@ struct CustomerCenterViewControllerTests {
   @available(iOS 15.0, *)
   @Test("presentation style is reported on Customer Center events")
   func reportsPresentationMode() {
-    #expect(makeController(style: .modal, delegate: nil).viewModel.presentationMode == "sheet")
-    #expect(makeController(style: .pushed, delegate: nil).viewModel.presentationMode == "pushed")
+    #expect(makeController(style: .sheet, delegate: nil).viewModel.presentationMode == .sheet)
+    #expect(makeController(style: .embedded, delegate: nil).viewModel.presentationMode == .embedded)
   }
 }
