@@ -43,9 +43,6 @@ final class CustomerCenterViewModel: ObservableObject {
   /// presented it again once the pop finished: two refund requests for one tap. `nil` once that
   /// screen has left the stack, so no other screen picks up a sheet that went with it.
   private(set) var sheetOwnerDepth: Int?
-  /// What the sheet modifiers have rendered into StoreKit's sheets, one update behind ``sheet``. A
-  /// StoreKit sheet only presents once this has caught up; see `StoreKitSheetParameters` for why.
-  @Published var renderedStoreKitSheetParameters = StoreKitSheetParameters()
 
   let configuration: CustomerCenterConfiguration
   let strings: CustomerCenterStrings

@@ -184,21 +184,28 @@ struct CustomerCenterSheetOwnershipTests {
     viewModel.claimPushedSurface(detailClaim, depth: 1)
 
     viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-    viewModel.renderedStoreKitSheetParameters = StoreKitSheetParameters(refundTransactionId: 7)
-    #expect(detail.refundBinding.wrappedValue)
-    #expect(!root.refundBinding.wrappedValue)
+    #expect(presentsRefund(detail, rendered: 7))
+    #expect(!presentsRefund(root, rendered: 7))
 
     viewModel.releasePushedSurface(detailClaim)
     #expect(viewModel.pushDepth == 0)
-    #expect(!root.refundBinding.wrappedValue, "the root presented a refund the detail had already asked for")
+    #expect(!presentsRefund(root, rendered: 7), "the root presented a refund the detail had already asked for")
 
     // Nor does the next screen pushed at the same depth pick it up.
     viewModel.claimPushedSurface(UUID(), depth: 1)
-    #expect(!detail.refundBinding.wrappedValue)
+    #expect(!presentsRefund(detail, rendered: 7))
 
     // A fresh request goes to whichever screen is on top by then.
     viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-    #expect(detail.refundBinding.wrappedValue)
+    #expect(presentsRefund(detail, rendered: 7))
+  }
+
+  /// Whether `modifier` would present the refund sheet, once StoreKit has been rendered with
+  /// `transactionId`.
+  @available(iOS 15.0, *)
+  private func presentsRefund(_ modifier: CustomerCenterSheetsModifier, rendered transactionId: UInt64) -> Bool {
+    let rendered = StoreKitSheetParameters(refundTransactionId: transactionId)
+    return modifier.storeKitSheetBinding(.refund, rendered: rendered).wrappedValue
   }
 
   @available(iOS 15.0, *)
@@ -220,10 +227,10 @@ struct CustomerCenterSheetOwnershipTests {
   }
 
   /// The asymmetry that made this rule necessary: SwiftUI writes `false` to a boolean sheet
-  /// binding whenever its getter goes false, which happens to every surface the moment something
-  /// is pushed over it — not only when that surface's own sheet is dismissed. An unconditional
-  /// clear therefore let a covered screen tear down the sheet the visible one had just opened,
-  /// and run `sheetDidDismiss()` against it.
+  /// binding whenever its getter goes false, not only when that binding's own sheet is dismissed.
+  /// When ownership followed the depth, that happened to every surface something was pushed
+  /// over, and an unconditional clear let a covered screen tear down the sheet the visible one had
+  /// just opened, and run `sheetDidDismiss()` against it.
   @Test("only the sheet that is actually up may clear itself", arguments: [
     (CustomerCenterSheet.manageSubscriptions(groupId: nil), true, false),
     (CustomerCenterSheet.refund(transactionId: 1, productId: "monthly_pro"), false, true),
@@ -332,25 +339,43 @@ struct CustomerCenterSheetOwnershipTests {
   func storeKitSheetWaitsForItsParameter(kind: CustomerCenterSheetOwnership.SheetKind) {
     let viewModel = makeViewModel()
     let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
-    let binding: Binding<Bool>
     var rendered = StoreKitSheetParameters()
     switch kind {
     case .refund:
       viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-      binding = modifier.refundBinding
       rendered.refundTransactionId = 7
     case .manageSubscriptions:
       viewModel.sheet = .manageSubscriptions(groupId: "21601298")
-      binding = modifier.isManagePresented
       rendered.manageGroupId = "21601298"
     }
-    #expect(!binding.wrappedValue, "presenting now would hand StoreKit the previous parameter")
 
-    viewModel.renderedStoreKitSheetParameters = rendered
-    #expect(binding.wrappedValue)
+    #expect(
+      !modifier.storeKitSheetBinding(kind, rendered: StoreKitSheetParameters()).wrappedValue,
+      "presenting now would hand StoreKit the previous parameter"
+    )
+    #expect(modifier.storeKitSheetBinding(kind, rendered: rendered).wrappedValue)
   }
 
-  /// With no group to hand over there's nothing to wait for: StoreKit already has the empty group.
+  /// Each StoreKit sheet is gated on its own kind of request as well as on what has rendered. With
+  /// the gate open for one, the other must still stay down.
+  @available(iOS 15.0, *)
+  @Test("a StoreKit sheet presents only its own kind of request")
+  func storeKitSheetsPresentOnlyTheirOwnKind() {
+    let viewModel = makeViewModel()
+    let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+
+    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+    let refundRendered = StoreKitSheetParameters(refundTransactionId: 7)
+    #expect(modifier.storeKitSheetBinding(.refund, rendered: refundRendered).wrappedValue)
+    #expect(!modifier.storeKitSheetBinding(.manageSubscriptions, rendered: refundRendered).wrappedValue)
+
+    viewModel.sheet = .manageSubscriptions(groupId: "21601298")
+    let manageRendered = StoreKitSheetParameters(manageGroupId: "21601298")
+    #expect(modifier.storeKitSheetBinding(.manageSubscriptions, rendered: manageRendered).wrappedValue)
+    #expect(!modifier.storeKitSheetBinding(.refund, rendered: manageRendered).wrappedValue)
+  }
+
+  /// With no group to hand over there's nothing to wait for.
   @available(iOS 15.0, *)
   @Test("a manage sheet without a subscription group presents at once")
   func manageSheetWithoutAGroupPresentsAtOnce() {
@@ -359,31 +384,67 @@ struct CustomerCenterSheetOwnershipTests {
 
     viewModel.sheet = .manageSubscriptions(groupId: nil)
 
-    #expect(modifier.isManagePresented.wrappedValue)
+    #expect(modifier.storeKitSheetBinding(.manageSubscriptions, rendered: StoreKitSheetParameters()).wrappedValue)
+  }
+
+  /// From iOS 17, StoreKit's manage sheet for a subscription group, handed an empty group, says the
+  /// customer has no subscriptions. A request that has no group goes to the plain manage sheet.
+  @available(iOS 15.0, *)
+  @Test("a manage request without a subscription group opens the plain manage sheet")
+  func manageRequestWithoutAGroupUsesThePlainSheet() {
+    var isPresented = true
+    let binding = Binding(get: { isPresented }, set: { isPresented = $0 })
+
+    let noGroup = ManageSubscriptionsSheet(isPresented: binding, groupId: "")
+    #expect(noGroup.plainSheetIsPresented.wrappedValue)
+    #expect(!noGroup.groupSheetIsPresented.wrappedValue)
+
+    let grouped = ManageSubscriptionsSheet(isPresented: binding, groupId: "21601298")
+    #expect(!grouped.plainSheetIsPresented.wrappedValue)
+    #expect(grouped.groupSheetIsPresented.wrappedValue)
+
+    // The sheet not in use can't dismiss the one that is.
+    grouped.plainSheetIsPresented.wrappedValue = false
+    #expect(isPresented)
+    grouped.groupSheetIsPresented.wrappedValue = false
+    #expect(!isPresented)
   }
 
   /// The tests above prove the gate; this proves the real modifier opens it, by recording what it
   /// has rendered into StoreKit's sheets.
+  ///
+  /// Waits by suspending: below iOS 26.4, SwiftUI queues a `.task` on the main actor rather than
+  /// starting it immediately, and a test that only spins the run loop never lets it run.
   @available(iOS 15.0, *)
   @Test("the sheet modifier records what it has rendered into StoreKit's sheets")
-  func sheetModifierRecordsTheRenderedParameters() {
+  func sheetModifierRecordsTheRenderedParameters() async {
     let viewModel = makeViewModel()
     // Another surface is on top, so this one never presents: the record is under test here, not
     // StoreKit's sheets.
     viewModel.claimPushedSurface(UUID(), depth: 1)
-    let host = UIHostingController(rootView: Color.clear.customerCenterSheets(viewModel: viewModel))
+    let record = StoreKitSheetRenderRecord()
+    let host = UIHostingController(
+      rootView: Color.clear.modifier(
+        CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0, rendered: record)
+      )
+    )
     let window = makeWindow(rootViewController: host)
     window.makeKeyAndVisible()
     defer { window.isHidden = true }
-    spinRunLoop(timeout: 1) { host.viewIfLoaded?.window != nil }
 
     viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
-    spinRunLoop(timeout: 2) { viewModel.renderedStoreKitSheetParameters.refundTransactionId == 7 }
-    #expect(viewModel.renderedStoreKitSheetParameters == StoreKitSheetParameters(refundTransactionId: 7))
+    await waitUntil {
+      host.view.layoutIfNeeded()
+      return record.parameters.refundTransactionId == 7
+    }
+    #expect(record.parameters == StoreKitSheetParameters(refundTransactionId: 7))
 
     viewModel.sheet = .manageSubscriptions(groupId: "21601298")
-    spinRunLoop(timeout: 2) { viewModel.renderedStoreKitSheetParameters.manageGroupId == "21601298" }
-    #expect(viewModel.renderedStoreKitSheetParameters == StoreKitSheetParameters(manageGroupId: "21601298"))
+    await waitUntil {
+      host.view.layoutIfNeeded()
+      return record.parameters.manageGroupId == "21601298"
+    }
+    #expect(record.parameters == StoreKitSheetParameters(manageGroupId: "21601298"))
   }
 
   // MARK: - Covered or removed
