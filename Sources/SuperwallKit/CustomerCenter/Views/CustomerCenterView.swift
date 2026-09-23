@@ -213,7 +213,9 @@ public struct CustomerCenterView: View {
       Button {
         if let onClose = navigationOptions.onClose { onClose() } else { dismiss() }
       } label: {
-        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+        Image(systemName: "xmark")
+          .font(.subheadline.weight(.semibold))
+          .foregroundStyle(.secondary)
       }
       .accessibilityLabel(viewModel.strings.string("customer_center_close"))
       .accessibilityIdentifier("customer_center.close")

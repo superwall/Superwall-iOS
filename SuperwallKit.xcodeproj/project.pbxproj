@@ -455,6 +455,7 @@
 		B146C134ABE092C3C9ACADEC /* PurchaseResult+Internal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A524F7AAE90E48C3B8D7E99A /* PurchaseResult+Internal.swift */; };
 		B15607185B9E4229C6C4F240 /* SK2StoreTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3B96E2A1A289D96267EC0BC /* SK2StoreTransaction.swift */; };
 		B162BE92B3568078BC0ADD1B /* StoreProductBillingPlanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F98E1C9554F6AFAECF9B3430 /* StoreProductBillingPlanTests.swift */; };
+		B1EBC36F22B906226E09303F /* ShimmerModifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FE1E4AF1C1A0063AB01631C /* ShimmerModifier.swift */; };
 		B294572426111EC04F225289 /* MockExternalPurchaseControllerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB9C9132109020FA03D1D5C7 /* MockExternalPurchaseControllerFactory.swift */; };
 		B29A93B51FE9421DD5E271C2 /* DevServerCandidates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A970BB7B4C3063A22F0B252 /* DevServerCandidates.swift */; };
 		B2AB1E9283FDE2D544C8BCA8 /* MockReceiptData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39B81D88316F06C0C2757F10 /* MockReceiptData.swift */; };
@@ -1084,6 +1085,7 @@
 		8F0D2AB91DA66490A73D1CB5 /* PostbackAssignmentWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PostbackAssignmentWrapper.swift; sourceTree = "<group>"; };
 		8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddleProduct.swift; sourceTree = "<group>"; };
 		8FC7F8602B38644BCCDAD159 /* ConfirmPaywallAssignmentOperatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmPaywallAssignmentOperatorTests.swift; sourceTree = "<group>"; };
+		8FE1E4AF1C1A0063AB01631C /* ShimmerModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShimmerModifier.swift; sourceTree = "<group>"; };
 		90A67AE3E66A70518CCB3B4F /* AppStoreUpdateCheckTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreUpdateCheckTests.swift; sourceTree = "<group>"; };
 		910786130E2D7EDE2ED5452D /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		911CD5859EC1BE7E428F06C4 /* EvaluationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvaluationResult.swift; sourceTree = "<group>"; };
@@ -1594,6 +1596,7 @@
 				9842687E40C9BBAE8EE5A126 /* PathsListView.swift */,
 				A3E4A9BDC6252EE01D88197D /* PurchaseCardView.swift */,
 				9C515E4FDA405CBFADFA9FAB /* RestoreOverlay.swift */,
+				8FE1E4AF1C1A0063AB01631C /* ShimmerModifier.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -4283,6 +4286,7 @@
 				1753820CBFBDD8FF70455D71 /* ScaleAnimation.swift in Sources */,
 				223E12D4EDBF41D8F5515E53 /* SerialTaskCoordinator.swift in Sources */,
 				AD5EBB6DBA919E3CBC5B85B7 /* SessionEventsRequest.swift in Sources */,
+				B1EBC36F22B906226E09303F /* ShimmerModifier.swift in Sources */,
 				5A6D06700C4E4E2C6C9BC1B2 /* ShimmerView.swift in Sources */,
 				18B147198F2E19C69013BA4B /* Sk1StoreProduct.swift in Sources */,
 				7E355FE2557391CE4593B9B0 /* SpringAnimation.swift in Sources */,

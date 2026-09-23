@@ -56,6 +56,7 @@ struct PurchaseCardView: View {
     Text(sample)
       .font(font)
       .redacted(reason: .placeholder)
+      .shimmering()
       .accessibilityHidden(true)
   }
 }
