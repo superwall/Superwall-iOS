@@ -58,7 +58,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Minimum Toolchain and Platforms
 
-- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, tvOS 15, watchOS 8. CI builds iOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
 - Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
 - Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
 - The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
