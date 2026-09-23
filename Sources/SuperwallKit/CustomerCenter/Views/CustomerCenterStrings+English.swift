@@ -38,7 +38,7 @@ let englishStrings: [String: String] = [
   // Customer Center – screens
   "customer_center_management_title": "Manage your subscription",
   "customer_center_no_purchases_title": "No subscriptions found",
-  "customer_center_no_purchases_subtitle": "We can check for previous purchases.",
+  "customer_center_no_purchases_subtitle": "Bought before? Restore your purchases to get them back.",
   "customer_center_close": "Close",
   "customer_center_done": "Done",
   "customer_center_cancel": "Cancel",

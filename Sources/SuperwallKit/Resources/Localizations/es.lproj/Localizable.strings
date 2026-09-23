@@ -40,7 +40,7 @@
 /* Customer Center – screens */
 "customer_center_management_title" = "Gestione su suscripción";
 "customer_center_no_purchases_title" = "No se encontraron suscripciones";
-"customer_center_no_purchases_subtitle" = "Podemos comprobar si hay compras anteriores.";
+"customer_center_no_purchases_subtitle" = "¿Ha comprado antes? Restaure sus compras para recuperarlas.";
 "customer_center_close" = "Cerrar";
 "customer_center_done" = "Listo";
 "customer_center_cancel" = "Cancelar";

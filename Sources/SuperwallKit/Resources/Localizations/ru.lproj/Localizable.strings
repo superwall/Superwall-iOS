@@ -40,7 +40,7 @@
 /* Customer Center – screens */
 "customer_center_management_title" = "Управление подпиской";
 "customer_center_no_purchases_title" = "Подписки не найдены";
-"customer_center_no_purchases_subtitle" = "Мы можем проверить наличие предыдущих покупок.";
+"customer_center_no_purchases_subtitle" = "Уже совершали покупки? Восстановите покупки, чтобы вернуть их.";
 "customer_center_close" = "Закрыть";
 "customer_center_done" = "Готово";
 "customer_center_cancel" = "Отмена";

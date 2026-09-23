@@ -40,7 +40,7 @@
 /* Customer Center – screens */
 "customer_center_management_title" = "Urus langganan anda";
 "customer_center_no_purchases_title" = "Tiada langganan ditemui";
-"customer_center_no_purchases_subtitle" = "Kami boleh menyemak pembelian terdahulu.";
+"customer_center_no_purchases_subtitle" = "Pernah membeli sebelum ini? Pulihkan pembelian anda untuk mendapatkannya semula.";
 "customer_center_close" = "Tutup";
 "customer_center_done" = "Selesai";
 "customer_center_cancel" = "Batal";

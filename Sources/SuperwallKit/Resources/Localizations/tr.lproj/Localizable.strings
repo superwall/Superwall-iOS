@@ -40,7 +40,7 @@
 /* Customer Center – screens */
 "customer_center_management_title" = "Aboneliğinizi yönetin";
 "customer_center_no_purchases_title" = "Abonelik bulunamadı";
-"customer_center_no_purchases_subtitle" = "Önceki satın alımlarınızı kontrol edebiliriz.";
+"customer_center_no_purchases_subtitle" = "Daha önce satın aldınız mı? Geri almak için satın alımlarınızı geri yükleyin.";
 "customer_center_close" = "Kapat";
 "customer_center_done" = "Bitti";
 "customer_center_cancel" = "İptal";

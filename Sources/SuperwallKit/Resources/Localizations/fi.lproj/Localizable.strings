@@ -40,7 +40,7 @@
 /* Customer Center – screens */
 "customer_center_management_title" = "Hallinnoi tilaustasi";
 "customer_center_no_purchases_title" = "Tilauksia ei löytynyt";
-"customer_center_no_purchases_subtitle" = "Voimme tarkistaa aiemmat ostokset.";
+"customer_center_no_purchases_subtitle" = "Oletko ostanut aiemmin? Palauta ostoksesi saadaksesi ne takaisin.";
 "customer_center_close" = "Sulje";
 "customer_center_done" = "Valmis";
 "customer_center_cancel" = "Peruuta";
