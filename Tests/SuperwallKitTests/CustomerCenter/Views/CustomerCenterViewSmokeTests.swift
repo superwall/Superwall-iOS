@@ -169,11 +169,14 @@ struct CustomerCenterViewSmokeTests {
 
   @Test("merged prefers the environment's non-nil closures and keeps un-overridden ones")
   @available(iOS 15.0, *)
-  func mergedHelperSemantics() {
+  func mergedHelperSemantics() async {
     var existing = CustomerCenterCallbacks()
     var existingRestoreCalled = false
     var existingDismissCalled = false
-    existing.shouldRestore = { _ in existingRestoreCalled = true }
+    existing.shouldRestore = {
+      existingRestoreCalled = true
+      return true
+    }
     existing.didDismiss = { existingDismissCalled = true }
 
     var environment = CustomerCenterCallbacks()
@@ -191,7 +194,7 @@ struct CustomerCenterViewSmokeTests {
     #expect(envSelectCalled)
 
     // Field set on `existing` but not `environment` still comes from `existing`.
-    result.shouldRestore?({ _ in })
+    _ = await result.shouldRestore?()
     #expect(existingRestoreCalled)
 
     // Field unset on both stays nil.

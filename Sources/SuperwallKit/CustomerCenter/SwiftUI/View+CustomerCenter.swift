@@ -50,9 +50,9 @@ public extension View {
     }
   }
 
-  /// Gate restores (e.g. require authentication). Call `resume(true)` to continue, `resume(false)` to cancel.
+  /// Gate restores (e.g. require authentication). Return `false` to cancel.
   func onCustomerCenterShouldRestore(
-    _ handler: @escaping (_ resume: @escaping (Bool) -> Void) -> Void
+    _ handler: @escaping () async -> Bool
   ) -> some View {
     modifier(CustomerCenterCallbackModifier { $0.shouldRestore = handler })
   }

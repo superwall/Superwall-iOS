@@ -95,6 +95,7 @@ final class CustomerCenterViewModel: ObservableObject {
     self.dependencies = dependencies
     self.strings = strings
     self.dismissDebounceInterval = dismissDebounceInterval
+    configuration.warnAboutDuplicatePathIds()
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
     } else if #available(iOS 17.0, *) {
@@ -277,7 +278,7 @@ final class CustomerCenterViewModel: ObservableObject {
 
   func performRestore() async {
     if let gate = callbacks.shouldRestore {
-      let proceed = await withCheckedContinuation { continuation in gate { continuation.resume(returning: $0) } }
+      let proceed = await gate()
       guard proceed else { return }
     }
     restoreState = .restoring

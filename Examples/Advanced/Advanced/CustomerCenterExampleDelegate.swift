@@ -13,20 +13,20 @@ import SuperwallKit
 /// `Superwall.shared.presentCustomerCenter(delegate:)` retains this for the duration of the
 /// presentation, so it's safe to create a fresh instance each time you present.
 final class CustomerCenterExampleDelegate: CustomerCenterDelegate {
-  func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void) {
+  func customerCenterShouldRestorePurchases() async -> Bool {
     print("[Customer Center] shouldRestorePurchases")
-    resume(true)
+    return true
   }
 
-  func customerCenter(didSelect action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
     print("[Customer Center] didSelect action: \(action), purchase: \(String(describing: purchase))")
   }
 
-  func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterAction) {
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
     print("[Customer Center] didCompleteSurvey: \(surveyId), optionId: \(optionId), action: \(action)")
   }
 
-  func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus) {
+  func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {
     print("[Customer Center] didCompleteRefundRequestFor: \(productId), status: \(status)")
   }
 

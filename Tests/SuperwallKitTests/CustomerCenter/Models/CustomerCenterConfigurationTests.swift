@@ -68,4 +68,72 @@ struct CustomerCenterConfigurationTests {
     options.customerCenter.support.email = "a@b.c"
     #expect(options.customerCenter.support.email == "a@b.c")
   }
+
+  @Test("a path without an id takes one from its type, URL or custom identifier")
+  func pathIdDefaults() {
+    typealias Path = CustomerCenterConfiguration.Path
+    #expect(Path(type: .restore).id == "restore")
+    #expect(Path(type: .manageSubscription).id == "manage_subscription")
+    #expect(Path(type: .refund(window: 3600)).id == "refund")
+    #expect(Path(type: .changePlan(productIds: ["a"])).id == "change_plan")
+    #expect(Path(type: .contactSupport).id == "contact_support")
+    let faq = URL(string: "https://app.com/faq")!
+    #expect(Path(type: .url(faq, title: "FAQ", openMethod: .inApp)).id == "https://app.com/faq")
+    #expect(Path(type: .custom(identifier: "delete_account")).id == "delete_account")
+    #expect(Path(id: "refund_30_days", type: .refund(window: 2_592_000)).id == "refund_30_days")
+    #expect(Path.refund.id == "refund")
+  }
+
+  @Test("a path decoded without an id takes the default one")
+  func decodedPathIdDefaults() throws {
+    let encoded = try JSONEncoder().encode(CustomerCenterConfiguration.Path(id: "ignored", type: .restore))
+    var json = try #require(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+    json.removeValue(forKey: "id")
+    let data = try JSONSerialization.data(withJSONObject: json)
+    let decoded = try JSONDecoder().decode(CustomerCenterConfiguration.Path.self, from: data)
+    #expect(decoded.id == "restore")
+    #expect(decoded.type == .restore)
+  }
+
+  @Test("repeated path ids are found per screen, not across screens")
+  func duplicatePathIds() {
+    let config = CustomerCenterConfiguration.default
+    #expect(config.duplicatePathIds.isEmpty, "restore on both screens is fine")
+    config.managementScreen.paths.append(.init(type: .refund(window: 60)))
+    #expect(config.duplicatePathIds == ["refund"])
+    config.managementScreen.paths.removeLast()
+    config.managementScreen.paths.append(.init(id: "refund_short", type: .refund(window: 60)))
+    #expect(config.duplicatePathIds.isEmpty)
+  }
+
+  @Test("path shorthands build the same paths as Path(type:)")
+  func pathShorthands() {
+    typealias Path = CustomerCenterConfiguration.Path
+    let faq = URL(string: "https://app.com/faq")!
+    let survey = CustomerCenterConfiguration.FeedbackSurvey(id: "s", title: nil, options: [.init(id: "a", title: nil)])
+    let screen = CustomerCenterConfiguration.Screen(paths: [
+      .restore,
+      .changePlan(productIds: ["a", "b"]),
+      .refund(window: 3600),
+      .manageSubscription(survey: survey),
+      .url(faq, title: "FAQ"),
+      .custom(identifier: "delete_account", title: "Delete account"),
+      .contactSupport
+    ])
+    #expect(screen.paths == [
+      Path(type: .restore),
+      Path(type: .changePlan(productIds: ["a", "b"])),
+      Path(type: .refund(window: 3600)),
+      Path(type: .manageSubscription, survey: survey),
+      Path(type: .url(faq, title: "FAQ", openMethod: .inApp), title: "FAQ"),
+      Path(type: .custom(identifier: "delete_account"), title: "Delete account"),
+      Path(type: .contactSupport)
+    ])
+    #expect(Path.refund == Path(type: .refund()))
+    #expect(Path.changePlan == Path(type: .changePlan()))
+    #expect(Path.manageSubscription == Path(type: .manageSubscription))
+    #expect(Path.url(faq, title: "FAQ", openMethod: .external).type == .url(faq, title: "FAQ", openMethod: .external))
+    #expect(Path.refund(window: 60, id: "refund_short").id == "refund_short")
+  }
 }
+

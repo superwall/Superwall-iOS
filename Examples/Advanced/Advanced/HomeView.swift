@@ -36,16 +36,16 @@ struct HomeView: View {
     let configuration = CustomerCenterConfiguration(
       managementScreen: .init(
         paths: [
-          .init(id: "restore", type: .restore),
-          .init(id: "change_plan", type: .changePlan()),
-          .init(id: "refund", type: .refund()),
-          .init(id: "manage_subscription", type: .manageSubscription),
-          .init(id: "faq", type: .url(URL(string: "https://superwall.com/faq")!, title: "FAQ", openMethod: .inApp)),
-          .init(id: "contact_support", type: .contactSupport)
+          .restore,
+          .changePlan,
+          .refund,
+          .manageSubscription,
+          .url(URL(string: "https://superwall.com/faq")!, title: "FAQ"),
+          .contactSupport
         ]
       ),
       noPurchasesScreen: .init(
-        paths: [.init(id: "restore", type: .restore)]
+        paths: [.restore]
       ),
       support: .init(email: "support@superwall.com")
     )

@@ -106,16 +106,16 @@ let cancelSurvey = CustomerCenterConfiguration.FeedbackSurvey(
 options.customerCenter = CustomerCenterConfiguration(
   managementScreen: .init(
     paths: [
-      .init(id: "restore", type: .restore),
-      .init(id: "change_plan", type: .changePlan()),
-      .init(id: "refund", type: .refund()),
-      .init(id: "manage_subscription", type: .manageSubscription, survey: cancelSurvey),
-      .init(id: "faq", type: .url(URL(string: "https://mycompany.com/faq")!, title: "FAQ", openMethod: .inApp)),
-      .init(id: "contact_support", type: .contactSupport)
+      .restore,
+      .changePlan,
+      .refund,
+      .manageSubscription(survey: cancelSurvey),
+      .url(URL(string: "https://mycompany.com/faq")!, title: "FAQ"),
+      .contactSupport
     ]
   ),
   noPurchasesScreen: .init(
-    paths: [.init(id: "restore", type: .restore)]
+    paths: [.restore]
   ),
   support: .init(email: "support@mycompany.com")
 )
@@ -133,6 +133,11 @@ Every path type but `url` names its own row, so `title` on ``CustomerCenterConfi
 optional and overrides that default. `url` takes a title of its own because there is no sensible
 default: a URL could be anything, and its host is the same across all of your own links, so
 deriving one would render your FAQ, terms and privacy rows identically.
+
+Each path also has an `id`, reported as `path_id` on Customer Center events. You don't need to set
+it: a built-in path uses its type (`restore`, `refund`, `manage_subscription` and so on), a `url`
+path uses its URL and a `custom` path uses its identifier. Pass your own `id` only when two paths
+on the same screen would otherwise share one, such as two `refund` paths with different windows.
 
 ### Warning customers about old versions
 
@@ -178,19 +183,19 @@ observe and, where relevant, gate what happens in the Customer Center:
 
 ```swift
 final class MyCustomerCenterDelegate: CustomerCenterDelegate {
-  func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void) {
-    resume(true)
+  func customerCenterShouldRestorePurchases() async -> Bool {
+    true
   }
 
-  func customerCenter(didSelect action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {
     print("Customer Center action selected: \(action)")
   }
 
-  func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterAction) {
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
     print("Survey \(surveyId) answered with \(optionId)")
   }
 
-  func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus) {
+  func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {
     print("Refund request for \(productId) finished with status \(status)")
   }
 
@@ -208,7 +213,7 @@ In SwiftUI, use the equivalent modifiers instead of a delegate:
 
 ```swift
 CustomerCenterView()
-  .onCustomerCenterShouldRestore { resume in resume(true) }
+  .onCustomerCenterShouldRestore { true }
   .onCustomerCenterAction { action, purchase in print(action) }
   .onCustomerCenterSurveyResponse { surveyId, optionId, action in print(surveyId, optionId) }
   .onCustomerCenterRefundRequest { productId, status in print(productId, status) }

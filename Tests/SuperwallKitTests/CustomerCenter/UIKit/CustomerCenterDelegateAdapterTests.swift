@@ -18,12 +18,12 @@ struct CustomerCenterDelegateAdapterTests {
     var surveys: [(String, String, CustomerCenterAction)] = []
     var refunds: [(String, CustomerCenterRefundStatus)] = []
     var dismissed = 0
-    func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void) { resume(restoreGateProceeds) }
-    func customerCenter(didSelect action: CustomerCenterAction, for purchase: SubscriptionTransaction?) { selected.append(action) }
-    func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterAction) {
+    func customerCenterShouldRestorePurchases() async -> Bool { restoreGateProceeds }
+    func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) { selected.append(action) }
+    func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {
       surveys.append((surveyId, optionId, action))
     }
-    func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus) {
+    func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {
       refunds.append((productId, status))
     }
     func customerCenterDidDismiss() { dismissed += 1 }
@@ -33,8 +33,7 @@ struct CustomerCenterDelegateAdapterTests {
   func forwardsSwift() async {
     let delegate = SwiftDelegate()
     let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil).makeCallbacks()
-    var proceeded: Bool?
-    callbacks.shouldRestore?({ proceeded = $0 })
+    let proceeded = await callbacks.shouldRestore?()
     #expect(proceeded == true)
     callbacks.didSelectAction?(.refund, nil)
     callbacks.didCompleteSurvey?("s", "o", .manageSubscription)
@@ -51,4 +50,42 @@ struct CustomerCenterDelegateAdapterTests {
     let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: nil).makeCallbacks()
     #expect(callbacks.shouldRestore == nil)
   }
+
+  final class ObjcDelegate: NSObject, CustomerCenterDelegateObjc {
+    var answer: (@escaping (Bool) -> Void) -> Void = { $0(true) }
+    func customerCenterShouldRestorePurchases(completion: @escaping (Bool) -> Void) { answer(completion) }
+  }
+
+  final class SilentObjcDelegate: NSObject, CustomerCenterDelegateObjc {}
+
+  @Test("Objective-C: the first completion call wins and a second one is ignored")
+  func objcCompletionCalledTwice() async {
+    let delegate = ObjcDelegate()
+    delegate.answer = { completion in
+      completion(false)
+      completion(true)
+    }
+    let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: delegate).makeCallbacks()
+    let proceeded = await callbacks.shouldRestore?()
+    #expect(proceeded == false)
+  }
+
+  @Test("Objective-C: the restore waits for a completion called later, from another thread")
+  func objcCompletionCalledLater() async {
+    let delegate = ObjcDelegate()
+    delegate.answer = { completion in
+      DispatchQueue.global().asyncAfter(deadline: .now() + 0.05) { completion(false) }
+    }
+    let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: delegate).makeCallbacks()
+    let proceeded = await callbacks.shouldRestore?()
+    #expect(proceeded == false)
+  }
+
+  @Test("Objective-C: a delegate that doesn't implement the check leaves restores ungated")
+  func objcWithoutRestoreCheck() {
+    let delegate = SilentObjcDelegate()
+    let callbacks = CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: delegate).makeCallbacks()
+    #expect(callbacks.shouldRestore == nil)
+  }
 }
+

@@ -163,7 +163,7 @@ struct CustomerCenterViewModelTests {
     let restorer = RestorerMock()
     let (vm, _, _) = make(info: info([]), restorer: restorer)
     await vm.load()
-    vm.callbacks.shouldRestore = { resume in resume(false) }
+    vm.callbacks.shouldRestore = { false }
     await vm.performRestore()
     #expect(restorer.calls == 0)
     #expect(vm.restoreState == .idle)

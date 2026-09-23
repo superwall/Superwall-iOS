@@ -34,7 +34,7 @@ enum CustomerCenterSheet: Identifiable, Equatable {
 }
 
 struct CustomerCenterCallbacks {
-  var shouldRestore: ((@escaping (Bool) -> Void) -> Void)?
+  var shouldRestore: (() async -> Bool)?
   var didSelectAction: ((CustomerCenterAction, SubscriptionTransaction?) -> Void)?
   var didCompleteSurvey: ((_ surveyId: String, _ optionId: String, _ action: CustomerCenterAction) -> Void)?
   var didCompleteRefund: ((_ productId: String, _ status: CustomerCenterRefundStatus) -> Void)?

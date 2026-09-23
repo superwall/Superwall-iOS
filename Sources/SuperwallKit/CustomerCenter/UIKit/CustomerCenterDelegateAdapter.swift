@@ -26,39 +26,62 @@ struct CustomerCenterDelegateAdapter {
   func makeCallbacks() -> CustomerCenterCallbacks {
     var callbacks = CustomerCenterCallbacks()
     let objcImplementsShouldRestore = (objcDelegate as? NSObjectProtocol)?.responds(
-      to: #selector(CustomerCenterDelegateObjc.customerCenter(shouldRestorePurchases:))
+      to: #selector(CustomerCenterDelegateObjc.customerCenterShouldRestorePurchases(completion:))
     ) ?? false
     if swiftDelegate != nil || objcImplementsShouldRestore {
-      callbacks.shouldRestore = { [weak swiftDelegate, weak objcDelegate] resume in
+      callbacks.shouldRestore = { [weak swiftDelegate, weak objcDelegate] in
         if let swiftDelegate {
-          swiftDelegate.customerCenter(shouldRestorePurchases: resume)
-        } else if let objcDelegate {
-          objcDelegate.customerCenter?(shouldRestorePurchases: resume)
-        } else {
-          resume(true)
+          return await swiftDelegate.customerCenterShouldRestorePurchases()
+        }
+        guard let objcDelegate else { return true }
+        return await withCheckedContinuation { continuation in
+          let answer = FirstRestoreAnswer(continuation)
+          if objcDelegate.customerCenterShouldRestorePurchases?(completion: answer.resume) == nil {
+            answer.resume(true)
+          }
         }
       }
     }
     callbacks.didSelectAction = { [weak swiftDelegate, weak objcDelegate] action, purchase in
-      swiftDelegate?.customerCenter(didSelect: action, for: purchase)
-      objcDelegate?.customerCenter?(didSelect: CustomerCenterActionObjc(action), for: purchase)
+      swiftDelegate?.customerCenterDidSelectAction(action, for: purchase)
+      objcDelegate?.customerCenterDidSelectAction?(CustomerCenterActionObjc(action), for: purchase)
     }
     callbacks.didCompleteSurvey = { [weak swiftDelegate, weak objcDelegate] surveyId, optionId, action in
-      swiftDelegate?.customerCenter(didCompleteSurvey: surveyId, optionId: optionId, for: action)
-      objcDelegate?.customerCenter?(
-        didCompleteSurvey: surveyId,
+      swiftDelegate?.customerCenterDidCompleteSurvey(surveyId: surveyId, optionId: optionId, action: action)
+      objcDelegate?.customerCenterDidCompleteSurvey?(
+        surveyId: surveyId,
         optionId: optionId,
-        for: CustomerCenterActionObjc(action)
+        action: CustomerCenterActionObjc(action)
       )
     }
     callbacks.didCompleteRefund = { [weak swiftDelegate, weak objcDelegate] productId, status in
-      swiftDelegate?.customerCenter(didCompleteRefundRequestFor: productId, status: status)
-      objcDelegate?.customerCenter?(didCompleteRefundRequestFor: productId, status: status)
+      swiftDelegate?.customerCenterDidCompleteRefundRequest(productId: productId, status: status)
+      objcDelegate?.customerCenterDidCompleteRefundRequest?(productId: productId, status: status)
     }
     callbacks.didDismiss = { [weak swiftDelegate, weak objcDelegate] in
       swiftDelegate?.customerCenterDidDismiss()
       objcDelegate?.customerCenterDidDismiss?()
     }
     return callbacks
+  }
+}
+
+/// Passes the first answer from an Objective-C restore completion to the waiting restore and
+/// drops any later one. Resuming a continuation twice is a crash, and a host calling its
+/// completion from two places shouldn't be able to take the app down.
+final class FirstRestoreAnswer: @unchecked Sendable {
+  private let lock = NSLock()
+  private var continuation: CheckedContinuation<Bool, Never>?
+
+  init(_ continuation: CheckedContinuation<Bool, Never>) {
+    self.continuation = continuation
+  }
+
+  func resume(_ proceed: Bool) {
+    lock.lock()
+    let continuation = self.continuation
+    self.continuation = nil
+    lock.unlock()
+    continuation?.resume(returning: proceed)
   }
 }

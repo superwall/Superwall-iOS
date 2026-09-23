@@ -14,24 +14,25 @@ import Foundation
 /// which retains the delegate while the Customer Center is presented.
 @available(iOS 15.0, *)
 public protocol CustomerCenterDelegate: AnyObject {
-  /// Called before purchases are restored. Call `resume(true)` to continue or `resume(false)` to cancel.
-  func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void)
+  /// Called before purchases are restored. Return `false` to cancel, for example after the user
+  /// declines to sign in.
+  func customerCenterShouldRestorePurchases() async -> Bool
   /// Called whenever the user taps a path, including custom and URL paths, before the action runs.
-  func customerCenter(didSelect action: CustomerCenterAction, for purchase: SubscriptionTransaction?)
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?)
   /// Called when the user answers a survey attached to a path.
-  func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterAction)
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction)
   /// Called when a refund request sheet finishes.
-  func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus)
+  func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus)
   /// Called when the Customer Center is dismissed.
   func customerCenterDidDismiss()
 }
 
 @available(iOS 15.0, *)
 public extension CustomerCenterDelegate {
-  func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void) { resume(true) }
-  func customerCenter(didSelect action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {}
-  func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterAction) {}
-  func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus) {}
+  func customerCenterShouldRestorePurchases() async -> Bool { true }
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, for purchase: SubscriptionTransaction?) {}
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction) {}
+  func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {}
   func customerCenterDidDismiss() {}
 }
 
@@ -43,9 +44,12 @@ public extension CustomerCenterDelegate {
 @available(iOS 15.0, *)
 @objc(SWKCustomerCenterDelegate)
 public protocol CustomerCenterDelegateObjc: AnyObject {
-  @objc optional func customerCenter(shouldRestorePurchases resume: @escaping (Bool) -> Void)
-  @objc optional func customerCenter(didSelect action: CustomerCenterActionObjc, for purchase: SubscriptionTransaction?)
-  @objc optional func customerCenter(didCompleteSurvey surveyId: String, optionId: String, for action: CustomerCenterActionObjc)
-  @objc optional func customerCenter(didCompleteRefundRequestFor productId: String, status: CustomerCenterRefundStatus)
+  /// Called before purchases are restored. Call `completion(true)` to continue or
+  /// `completion(false)` to cancel. Call it exactly once: the restore waits until you do, and any
+  /// call after the first is ignored.
+  @objc optional func customerCenterShouldRestorePurchases(completion: @escaping (Bool) -> Void)
+  @objc optional func customerCenterDidSelectAction(_ action: CustomerCenterActionObjc, for purchase: SubscriptionTransaction?)
+  @objc optional func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterActionObjc)
+  @objc optional func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus)
   @objc optional func customerCenterDidDismiss()
 }

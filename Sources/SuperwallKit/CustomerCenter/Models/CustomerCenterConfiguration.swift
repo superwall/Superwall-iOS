@@ -62,17 +62,17 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
         title: nil,
         subtitle: nil,
         paths: [
-          Path(id: "restore", type: .restore),
-          Path(id: "change_plan", type: .changePlan()),
-          Path(id: "refund", type: .refund()),
-          Path(id: "manage_subscription", type: .manageSubscription, survey: cancelSurvey),
-          Path(id: "contact_support", type: .contactSupport)
+          .restore,
+          .changePlan,
+          .refund,
+          .manageSubscription(survey: cancelSurvey),
+          .contactSupport
         ]
       ),
       noPurchasesScreen: Screen(
         title: nil,
         subtitle: nil,
-        paths: [Path(id: "restore", type: .restore)]
+        paths: [.restore]
       )
     )
   }
@@ -137,7 +137,8 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
   @objc(SWKCustomerCenterPath)
   @objcMembers
   public final class Path: NSObject, Codable, Identifiable {
-    /// Stable identifier, reported in events and delegate callbacks.
+    /// Stable identifier, reported as `path_id` on Customer Center events. Defaults to
+    /// ``PathType/defaultId``.
     public var id: String
     /// What the path does.
     @nonobjc public var type: PathType
@@ -146,11 +147,26 @@ public final class CustomerCenterConfiguration: NSObject, Codable {
     /// Optional survey shown before the action runs.
     public var survey: FeedbackSurvey?
 
-    @nonobjc public init(id: String, type: PathType, title: String? = nil, survey: FeedbackSurvey? = nil) {
-      self.id = id
+    /// - Parameter id: Overrides ``PathType/defaultId``. Only needed to tell apart two paths that
+    ///   would otherwise share one, such as two paths of the same built-in type.
+    @nonobjc public init(id: String? = nil, type: PathType, title: String? = nil, survey: FeedbackSurvey? = nil) {
+      self.id = id ?? type.defaultId
       self.type = type
       self.title = title
       self.survey = survey
+    }
+
+    private enum CodingKeys: String, CodingKey {
+      case id, type, title, survey
+    }
+
+    public init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      type = try container.decode(PathType.self, forKey: .type)
+      id = try container.decodeIfPresent(String.self, forKey: .id) ?? type.defaultId
+      title = try container.decodeIfPresent(String.self, forKey: .title)
+      survey = try container.decodeIfPresent(FeedbackSurvey.self, forKey: .survey)
+      super.init()
     }
 
     override public func isEqual(_ object: Any?) -> Bool {

@@ -29,13 +29,13 @@ struct CustomerCenterActionTests {
 
   @Test("ObjC path factories round-trip")
   func objcFactories() {
-    let path = CustomerCenterConfiguration.Path.url(id: "faq", url: URL(string: "https://a.b")!, openMethod: .inApp, title: "FAQ")
+    let path = CustomerCenterConfiguration.Path.url(URL(string: "https://a.b")!, title: "FAQ", id: "faq")
     #expect(path.pathType == .url)
     #expect(path.url?.absoluteString == "https://a.b")
     #expect(path.openMethodObjc == .inApp)
-    let custom = CustomerCenterConfiguration.Path.custom(id: "c", identifier: "delete", title: nil)
+    let custom = CustomerCenterConfiguration.Path.custom(identifier: "delete", id: "c")
     #expect(custom.customIdentifier == "delete")
-    let refund = CustomerCenterConfiguration.Path.refund(id: "r", window: 60, title: nil)
+    let refund = CustomerCenterConfiguration.Path.refund(window: 60, id: "r")
     #expect(refund.refundWindow?.doubleValue == 60)
   }
 }

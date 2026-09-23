@@ -52,32 +52,46 @@ extension CustomerCenterConfiguration.Path {
     return nil
   }
 
-  @objc public static func restore(id: String, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(restoreWithId:title:)
+  public static func restoreObjc(id: String?, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .restore, title: title)
   }
-  @objc public static func manageSubscription(id: String, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(manageSubscriptionWithId:title:)
+  public static func manageSubscriptionObjc(id: String?, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .manageSubscription, title: title)
   }
-  @objc public static func refund(id: String, window: NSNumber?, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(refundWithId:window:title:)
+  public static func refundObjc(id: String?, window: NSNumber?, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .refund(window: window?.doubleValue), title: title)
   }
-  @objc public static func changePlan(id: String, productIds: [String]?, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(changePlanWithId:productIds:title:)
+  public static func changePlanObjc(id: String?, productIds: [String]?, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .changePlan(productIds: productIds), title: title)
   }
-  @objc public static func contactSupport(id: String, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(contactSupportWithId:title:)
+  public static func contactSupportObjc(id: String?, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .contactSupport, title: title)
   }
   /// `title` is non-optional here, unlike the other path factories: a URL row has no default
   /// name to fall back on. It is set on the path as well as in the case, because `type` is
   /// `@nonobjc` — without this, an Objective-C caller could hand a title in and never read it back.
-  @objc public static func url(id: String, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(urlWithId:url:openMethod:title:)
+  public static func urlObjc(id: String?, url: URL, openMethod: CustomerCenterOpenMethodObjc, title: String) -> CustomerCenterConfiguration.Path {
     .init(
       id: id,
       type: .url(url, title: title, openMethod: openMethod == .external ? .external : .inApp),
       title: title
     )
   }
-  @objc public static func custom(id: String, identifier: String, title: String?) -> CustomerCenterConfiguration.Path {
+  @available(swift, obsoleted: 1.0)
+  @objc(customWithId:identifier:title:)
+  public static func customObjc(id: String?, identifier: String, title: String?) -> CustomerCenterConfiguration.Path {
     .init(id: id, type: .custom(identifier: identifier), title: title)
   }
 }
