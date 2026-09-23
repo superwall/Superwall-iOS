@@ -49,6 +49,10 @@ final class CustomerCenterViewModel: ObservableObject {
   private let isChangePlanSheetAvailable: Bool
   private var products: [String: ProductDisplayInfo] = [:]
   private var familyShared: Set<String> = []
+  /// Lets an `apply` that a newer one has overtaken drop its older snapshot.
+  private var applyGeneration = 0
+  // Not `private`: read by `CustomerCenterViewModel+Refund.swift`.
+  var pendingRefundProductId: String?
   private var pendingAction: PendingAction?
   /// An action deferred from `answerSurvey` until the survey sheet has finished dismissing.
   /// Performing it immediately would present a new sheet while the old one is still animating
@@ -133,14 +137,18 @@ final class CustomerCenterViewModel: ObservableObject {
   }
 
   private func apply(customerInfo: CustomerInfo, refetchProducts: Bool) async {
+    applyGeneration += 1
+    let generation = applyGeneration
     let ids = Set(customerInfo.subscriptions.map(\.productId) + customerInfo.nonSubscriptions.map(\.productId))
     if refetchProducts {
-      products = await dependencies.products.products(for: ids)
+      let fetchedProducts = await dependencies.products.products(for: ids)
       var shared: Set<String> = []
       for id in customerInfo.subscriptions.filter({ $0.store == .appStore }).map(\.productId)
       where await dependencies.transactionLookup.isFamilyShared(productId: id) {
         shared.insert(id)
       }
+      guard generation == applyGeneration else { return }
+      products = fetchedProducts
       familyShared = shared
     }
     let builder = PurchasePresentationBuilder(strings: strings, locale: dependencies.environment.locale)
@@ -241,6 +249,7 @@ final class CustomerCenterViewModel: ObservableObject {
       sheet = .webManageUnavailable
     case .refund(let productId):
       if let transactionId = await dependencies.transactionLookup.latestTransactionID(for: productId) {
+        pendingRefundProductId = productId
         sheet = .refund(transactionId: transactionId, productId: productId)
       } else {
         await refundSheetDidFinish(productId: productId, status: .error)

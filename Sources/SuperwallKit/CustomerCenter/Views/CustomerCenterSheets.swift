@@ -123,10 +123,6 @@ struct CustomerCenterSheetsModifier: ViewModifier {
     if case .refund(let id, _) = viewModel.sheet { return id }
     return 0
   }
-  private var refundProductId: String {
-    if case .refund(_, let pid) = viewModel.sheet { return pid }
-    return ""
-  }
   private var onItemSheetDismiss: () -> Void {
     {
       if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
@@ -145,8 +141,7 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         case .success: status = .error
         case .failure: status = .error
         }
-        let productId = refundProductId
-        Task { await viewModel.refundSheetDidFinish(productId: productId, status: status) }
+        Task { await viewModel.refundRequestDidFinish(status: status) }
       }
       .sheet(item: itemSheet, onDismiss: onItemSheetDismiss) { sheet in
         switch sheet {

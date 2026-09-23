@@ -25,6 +25,26 @@ final class ProductsProviderMock: CustomerCenterProductsProviding {
   var requested: Set<String> = []
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] { requested = ids; return products.filter { ids.contains($0.key) } }
 }
+/// Holds its first call open until `release()`, so a test can overlap two loads.
+final class GatedProductsProviderMock: CustomerCenterProductsProviding {
+  private(set) var calls = 0
+  private(set) var isHoldingFirstCall = false
+  private var gate: CheckedContinuation<Void, Never>?
+  func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
+    calls += 1
+    if calls == 1 {
+      await withCheckedContinuation { continuation in
+        gate = continuation
+        isHoldingFirstCall = true
+      }
+    }
+    return [:]
+  }
+  func release() {
+    gate?.resume()
+    gate = nil
+  }
+}
 final class RestorerMock: CustomerCenterRestoring {
   var result: RestorationResult = .restored
   var calls = 0

@@ -217,6 +217,61 @@ struct CustomerCenterViewModelTests {
     #expect(hasRefundEvent)
   }
 
+  @Test("refund: the result keeps its product when the sheet binding clears the sheet first")
+  func refundResultSurvivesBindingClear() async {
+    let lookup = StoreKitTransactionLookupMock(); lookup.transactionIDs["monthly"] = 42
+    let tracker = EventTrackerMock()
+    let (vm, _, _) = make(info: info([sub()]), tracker: tracker, lookup: lookup)
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let refund = vm.paths(for: purchase).first { $0.path.id == "refund" }!
+    await vm.select(refund, purchase: purchase)
+    var completedProductId: String?
+    vm.callbacks.didCompleteRefund = { productId, _ in completedProductId = productId }
+
+    // Apple's sheet closing writes `false` to the binding before the completion runs.
+    CustomerCenterSheetsModifier(viewModel: vm, surfaceDepth: 0).refundBinding.wrappedValue = false
+    #expect(vm.sheet == nil)
+    await vm.refundRequestDidFinish(status: .success)
+
+    #expect(completedProductId == "monthly")
+    #expect(vm.refundResult?.productId == "monthly")
+    let hasRefundEvent = tracker.events.contains { event in
+      if case .customerCenterRefundRequest(let productId, .success) = event {
+        return productId == "monthly"
+      }
+      return false
+    }
+    #expect(hasRefundEvent)
+  }
+
+  @Test("apply: an older load finishing late doesn't overwrite newer customer info")
+  func staleApplyIsDropped() async {
+    let infoMock = CustomerInfoProviderMock(info([sub()]))
+    let products = GatedProductsProviderMock()
+    let deps = CustomerCenterDependencies(
+      customerInfo: infoMock,
+      products: products,
+      restore: RestorerMock(),
+      urlOpener: URLOpenerMock(),
+      tracker: EventTrackerMock(),
+      environment: EnvironmentMock(),
+      transactionLookup: StoreKitTransactionLookupMock(),
+      appStoreVersion: AppStoreVersionProviderMock()
+    )
+    let vm = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+
+    let loading = Task { await vm.load() }
+    await waitUntil { products.isHoldingFirstCall }
+    infoMock.subject.send(info([]))
+    await waitUntil { vm.state == .noPurchases }
+    products.release()
+    await loading.value
+
+    #expect(vm.state == .noPurchases)
+    #expect(vm.purchases.isEmpty)
+  }
+
   @Test("url external → opener; url inApp → safari sheet; custom → callback only; contactSupport → mailto")
   func urlCustomSupport() async {
     let opener = URLOpenerMock()
