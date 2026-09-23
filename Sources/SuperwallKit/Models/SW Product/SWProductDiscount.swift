@@ -60,7 +60,6 @@ struct SWProductDiscount: Codable {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   init(
     offer: StoreKit.Product.SubscriptionOffer,
     fromProduct product: SK2Product

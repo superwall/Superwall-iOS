@@ -28,9 +28,6 @@ struct SK2ReceiptManagerTests {
 
   @Test("isEligibleForIntroOffer re-queries StoreKit on every call and is never cached")
   func eligibilityIsNotCached() async {
-    guard #available(iOS 15.0, *) else {
-      return
-    }
     // Returns `true` on the first call and `false` afterwards, simulating Apple's
     // eligibility flipping once the user has consumed their intro offer. A cache
     // would freeze the first `true` and return it forever.
@@ -53,9 +50,6 @@ struct SK2ReceiptManagerTests {
 
   @Test("loadIntroOfferEligibility is a no-op and does not freeze a value for later reads")
   func loadDoesNotFreezeEligibility() async {
-    guard #available(iOS 15.0, *) else {
-      return
-    }
     // Eligibility starts `true`, then becomes `false` (e.g. after the user starts a
     // trial). The old implementation called `isEligibleForIntroOffer` inside
     // `loadIntroOfferEligibility` and cached the result, so the later read returned a
@@ -84,9 +78,6 @@ struct SK2ReceiptManagerTests {
 
   @Test("the default resolver runs the live StoreKit path end-to-end")
   func defaultResolverIsWired() async {
-    guard #available(iOS 15.0, *) else {
-      return
-    }
     // No custom resolver, so the production default `liveIntroOfferEligibility(for:)`
     // runs. A StoreKit 1-backed product isn't an `SK2StoreProduct`, so the live path
     // short-circuits to `false` without touching StoreKit. This proves the default

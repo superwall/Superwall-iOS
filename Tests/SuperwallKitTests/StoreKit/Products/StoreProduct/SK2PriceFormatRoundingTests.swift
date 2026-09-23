@@ -23,9 +23,6 @@ struct SK2PriceFormatRoundingTests {
     // The Decimal.FormatStyle APIs below are iOS 15+. SuperwallKit ships with
     // an iOS 13 minimum so we guard at runtime rather than on the method signature
     // (the @Test macro is incompatible with @available attributes).
-    guard #available(iOS 15.0, tvOS 15.0, watchOS 8.0, *) else {
-      return
-    }
     let gbp = Locale(identifier: "en_GB")
     let value: Decimal = 4.99
 

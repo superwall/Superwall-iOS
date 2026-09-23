@@ -79,8 +79,7 @@ class SWWebView: WKWebView {
 
     let preferences = WKPreferences()
 
-    if #available(iOS 15.0, *),
-      !isMac {
+    if !isMac {
       preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true

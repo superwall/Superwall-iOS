@@ -24,7 +24,9 @@ final class DebugPaywallPickerViewController: UIViewController {
     table.separatorColor = UIColor.white.withAlphaComponent(0.1)
     table.dataSource = self
     table.delegate = self
+    #if !os(visionOS)
     table.keyboardDismissMode = .onDrag
+    #endif
     table.translatesAutoresizingMaskIntoConstraints = false
     return table
   }()
@@ -141,16 +143,11 @@ extension DebugPaywallPickerViewController: UITableViewDataSource, UITableViewDe
     // A grouped header renders through its content configuration on iOS 14+,
     // which ignores `textLabel` — the default grey is unreadable on the
     // debugger's near-black sheet.
-    if #available(iOS 14.0, *) {
-      var configuration = header.defaultContentConfiguration()
-      configuration.text = sections[section].title
-      configuration.textProperties.color = UIColor.white.withAlphaComponent(0.5)
-      configuration.textProperties.font = .systemFont(ofSize: 13, weight: .semibold)
-      header.contentConfiguration = configuration
-    } else {
-      header.textLabel?.textColor = UIColor.white.withAlphaComponent(0.5)
-      header.textLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
-    }
+    var configuration = header.defaultContentConfiguration()
+    configuration.text = sections[section].title
+    configuration.textProperties.color = UIColor.white.withAlphaComponent(0.5)
+    configuration.textProperties.font = .systemFont(ofSize: 13, weight: .semibold)
+    header.contentConfiguration = configuration
   }
 
   func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

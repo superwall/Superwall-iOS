@@ -245,17 +245,15 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
             break
           }
 
-          if #available(iOS 14, *) {
-            switch error.code {
-            case .overlayTimeout:
-              await trackTimeout(paywallViewController: paywallViewController)
-              return await coordinator.completePurchase(
-                of: skTransaction,
-                result: .cancelled
-              )
-            default:
-              break
-            }
+          switch error.code {
+          case .overlayTimeout:
+            await trackTimeout(paywallViewController: paywallViewController)
+            return await coordinator.completePurchase(
+              of: skTransaction,
+              result: .cancelled
+            )
+          default:
+            break
           }
         }
         await coordinator.completePurchase(

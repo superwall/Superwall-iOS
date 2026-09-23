@@ -1319,14 +1319,12 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       }
 
       checkoutVC.modalPresentationStyle = .pageSheet
-      if #available(iOS 15.0, *) {
-        if let sheet = checkoutVC.sheetPresentationController {
-          sheet.detents = [.medium(), .large()]
-          sheet.prefersGrabberVisible = true
-          // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
-          sheet.prefersEdgeAttachedInCompactHeight = true
-          sheet.preferredCornerRadius = 62
-        }
+      if let sheet = checkoutVC.sheetPresentationController {
+        sheet.detents = [.medium(), .large()]
+        sheet.prefersGrabberVisible = true
+        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        sheet.prefersEdgeAttachedInCompactHeight = true
+        sheet.preferredCornerRadius = 62
       }
       self.isSafariVCPresented = true
       loadingState = .loadingPurchase
@@ -1449,10 +1447,8 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         if let scene = view.window?.windowScene {
           if #available(iOS 16.0, *) {
             AppStore.requestReview(in: scene)
-          } else if #available(iOS 14.0, *) {
-            SKStoreReviewController.requestReview(in: scene)
           } else {
-            SKStoreReviewController.requestReview()
+            SKStoreReviewController.requestReview(in: scene)
           }
         } else {
           SKStoreReviewController.requestReview()
@@ -1525,8 +1521,7 @@ extension PaywallViewController {
       return
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
+    if !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(false)
     }
 
@@ -1669,8 +1664,7 @@ extension PaywallViewController {
       await trackClose()
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
+    if !deviceHelper.isMac {
       webView.setAllMediaPlaybackSuspended(true)
     }
 

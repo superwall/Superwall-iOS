@@ -19,7 +19,6 @@ import StoreKit
 public typealias SK1ProductDiscount = SKProductDiscount
 
 /// TypeAlias to StoreKit 2's Discount type, called `StoreKit.Product.SubscriptionOffer`
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public typealias SK2ProductDiscount = StoreKit.Product.SubscriptionOffer
 
 /// Type that wraps `StoreKit.Product.SubscriptionOffer` and `SKProductDiscount`
@@ -194,7 +193,6 @@ extension StoreProductDiscount {
     self.init(discount)
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   convenience init?(sk2Discount: SK2ProductDiscount, currencyCode: String?) {
     guard
       let discount = SK2StoreProductDiscount(
@@ -226,7 +224,6 @@ extension StoreProductDiscount {
   }
 
   /// Returns the `SK2ProductDiscount` if this `StoreProductDiscount` represents a `Product.SubscriptionOffer`.
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   public var sk2Discount: SK2ProductDiscount? {
     return (self.discount as? SK2StoreProductDiscount)?.underlyingSK2Discount
   }
@@ -244,7 +241,6 @@ extension StoreProductDiscount.DiscountType {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   static func from(sk2Discount: SK2ProductDiscount) -> Self? {
     switch sk2Discount.type {
     case SK2ProductDiscount.OfferType.introductory:

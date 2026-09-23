@@ -33,7 +33,6 @@ final class MockSkProduct: SKProduct {
     return internalPrice ?? 0
   }
 
-  @available(iOS 12.0, *)
   override var subscriptionGroupIdentifier: String? {
     return internalSubscriptionGroupIdentifier ?? super.subscriptionGroupIdentifier
   }

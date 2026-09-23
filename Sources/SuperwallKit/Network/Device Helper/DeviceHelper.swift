@@ -52,13 +52,7 @@ class DeviceHelper {
     )
   }()
 
-  let isMac: Bool = {
-    var output = false
-    if #available(iOS 14.0, *) {
-      output = ProcessInfo.processInfo.isiOSAppOnMac
-    }
-    return output
-  }()
+  let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
     UIDevice.modelName
@@ -1070,8 +1064,7 @@ class DeviceHelper {
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
 
-    if #available(iOS 15.0, *),
-      let storefront = await Storefront.current {
+    if let storefront = await Storefront.current {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 

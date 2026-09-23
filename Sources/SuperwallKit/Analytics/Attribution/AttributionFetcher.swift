@@ -39,32 +39,31 @@ final class AttributionFetcher {
     // should match available platforms here:
     // https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier
     #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
-    if #available(macCatalyst 13.1, macOS 10.14, *) {
-      let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
-      guard let identifierManagerProxy = identifierManagerProxy else {
-        Logger.debug(
-          logLevel: .warn,
-          scope: .analytics,
-          message: "AdSupport framework not imported. Attribution data incomplete."
-        )
-        return nil
-      }
-
-      guard let identifierValue = identifierManagerProxy.adsIdentifier else {
-        return nil
-      }
-
-      // When ATT hasn't been authorized iOS returns the all-zeros UUID
-      // sentinel. Don't pass that through as an IDFA — it pollutes attribution
-      // payloads with junk that downstream MMPs treat as a real id.
-      if identifierValue == Self.zeroAdvertisingIdentifier {
-        return nil
-      }
-
-      return identifierValue.uuidString
+    let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
+    guard let identifierManagerProxy = identifierManagerProxy else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .analytics,
+        message: "AdSupport framework not imported. Attribution data incomplete."
+      )
+      return nil
     }
-    #endif
+
+    guard let identifierValue = identifierManagerProxy.adsIdentifier else {
+      return nil
+    }
+
+    // When ATT hasn't been authorized iOS returns the all-zeros UUID
+    // sentinel. Don't pass that through as an IDFA — it pollutes attribution
+    // payloads with junk that downstream MMPs treat as a real id.
+    if identifierValue == Self.zeroAdvertisingIdentifier {
+      return nil
+    }
+
+    return identifierValue.uuidString
+    #else
     return nil
+    #endif
   }
 
   // Non-optional construction via `init(uuid:)` — `init(uuidString:)` returns
@@ -89,8 +88,6 @@ final class AttributionFetcher {
     #endif
   }
 
-  // should match OS availability in https://developer.apple.com/documentation/ad_services
-  @available(iOS 14.3, tvOS 14.3, macOS 11.1, watchOS 6.2, macCatalyst 14.3, *)
   var adServicesToken: String? {
     get async throws {
       #if canImport(AdServices)
@@ -113,7 +110,6 @@ final class AttributionFetcher {
   }
 
   #if canImport(AdServices)
-  @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   private static var realAdServicesToken: String? {
     get throws {
       return try AAAttribution.attributionToken()
@@ -307,11 +303,10 @@ extension AttributionFetcher {
       return attStatusProvider()
     }
     #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
-    if #available(iOS 14, macCatalyst 14, tvOS 14, macOS 11, *) {
-      return TrackingManagerProxy().trackingAuthorizationStatus()
-    }
-    #endif
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
     return nil
+    #endif
   }
 
   private var currentDeviceIdentifiers: [String: String] {

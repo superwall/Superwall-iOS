@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager

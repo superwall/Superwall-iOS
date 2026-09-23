@@ -80,7 +80,6 @@ struct SWProductSubscriptionPeriod: Codable {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   init(period: StoreKit.Product.SubscriptionPeriod, numberOfPeriods: Int) {
     self.numberOfUnits = period.value * numberOfPeriods
     switch period.unit {

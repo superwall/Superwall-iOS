@@ -57,7 +57,6 @@ enum EntitlementTransactionType {
 }
 
 /// Protocol for providing subscription status information
-@available(iOS 15.0, *)
 protocol SubscriptionStatusProvider {
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status?
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool
@@ -67,7 +66,6 @@ protocol SubscriptionStatusProvider {
 }
 
 /// Default implementation using StoreKit directly
-@available(iOS 15.0, *)
 struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
     return await transaction.subscriptionStatus
@@ -300,7 +298,6 @@ enum EntitlementProcessor {
   }
 
   /// Build entitlements with live subscription data from StoreKit
-  @available(iOS 15.0, *)
   static func buildEntitlementsWithLiveSubscriptionData(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
     rawEntitlementsByProductId: [String: Set<Entitlement>],
@@ -435,7 +432,6 @@ enum EntitlementProcessor {
 }
 
 // MARK: - StoreKit Transaction Adapter
-@available(iOS 15.0, *)
 extension Transaction: EntitlementTransaction {
   var productId: String { productID }
   var transactionId: String { String(id) }

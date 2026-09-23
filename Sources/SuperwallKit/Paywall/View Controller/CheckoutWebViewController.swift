@@ -59,9 +59,7 @@ final class CheckoutWebViewController: UIViewController {
     webView.load(request)
 
     // Set self as presentation controller delegate to track detent changes
-    if #available(iOS 15.0, *) {
-      presentationController?.delegate = self
-    }
+    presentationController?.delegate = self
 
     // Add keyboard observers to detect when keyboard causes detent changes
     setupKeyboardObservers()
@@ -108,9 +106,7 @@ final class CheckoutWebViewController: UIViewController {
         guard let sheetController = self?.sheetPresentationController else { return }
         sheetController.invalidateDetents()
       }
-      if #available(iOS 15.0, *) {
-        self?.updateScrollingForDetent()
-      }
+      self?.updateScrollingForDetent()
     }
   }
 
@@ -119,7 +115,6 @@ final class CheckoutWebViewController: UIViewController {
     onDismiss?()
   }
 
-  @available(iOS 15.0, *)
   private func updateScrollingForDetent() {
     guard let sheetController = sheetPresentationController else {
       return
@@ -191,7 +186,6 @@ final class CheckoutWebViewController: UIViewController {
     webView.evaluateJavaScript(fieldFocusScript)
   }
 
-  @available(iOS 15.0, *)
   private func expandToLargeDetent() {
     guard let sheetController = sheetPresentationController else {
       return
@@ -237,9 +231,7 @@ extension CheckoutWebViewController: WKNavigationDelegate {
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     // Hide loading indicator if needed
     // Initial scroll state update after page loads
-    if #available(iOS 15.0, *) {
-      updateScrollingForDetent()
-    }
+    updateScrollingForDetent()
 
     // Inject JavaScript to detect field focus events
     injectFieldFocusDetection()
@@ -247,7 +239,6 @@ extension CheckoutWebViewController: WKNavigationDelegate {
 }
 
 // MARK: - UISheetPresentationControllerDelegate
-@available(iOS 15.0, *)
 extension CheckoutWebViewController: UISheetPresentationControllerDelegate {
   func sheetPresentationControllerDidChangeSelectedDetentIdentifier(
     _ sheetPresentationController: UISheetPresentationController
@@ -263,9 +254,7 @@ extension CheckoutWebViewController: WKScriptMessageHandler {
     didReceive message: WKScriptMessage
   ) {
     if message.name == "fieldFocus" {
-      if #available(iOS 15.0, *) {
-        expandToLargeDetent()
-      }
+      expandToLargeDetent()
     }
   }
 }

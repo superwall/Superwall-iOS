@@ -7,7 +7,6 @@
 
 import StoreKit
 
-@available(iOS 15.0, *)
 extension Transaction {
   /// Gets the latest transaction for a given `productId` since
   /// an hour up to a given `purchaseDate`.

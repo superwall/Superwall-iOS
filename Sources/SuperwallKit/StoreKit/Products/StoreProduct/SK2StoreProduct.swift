@@ -16,7 +16,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
   private let priceFormatterProvider = PriceFormatterProvider()
   let entitlements: Set<Entitlement>
@@ -750,7 +749,6 @@ struct SK2StoreProduct: StoreProductType {
 }
 
 // MARK: - Hashable
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension SK2StoreProduct: Hashable {
   static func == (lhs: SK2StoreProduct, rhs: SK2StoreProduct) -> Bool {
     return lhs.underlyingSK2Product == rhs.underlyingSK2Product
