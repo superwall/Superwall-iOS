@@ -93,13 +93,11 @@ final class ProductPurchaserSK2: Purchasing {
         options.insert(.appAccountToken(appAccountToken))
       }
 
-      #if compiler(>=6.1)
       // Add intro offer eligibility token if available for this product
       // This allows overriding Apple's automatic eligibility determination
       if let token = product.introOfferToken {
         options.insert(.introductoryOfferEligibility(compactJWS: token.token))
       }
-      #endif
 
       #if compiler(>=6.3.2)
       if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),

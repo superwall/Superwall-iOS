@@ -99,11 +99,9 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
 
   @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
   func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
-    #if compiler(>=6.0.0)
     if transaction.offer?.type == .winBack {
       return .winback
     }
-    #endif
     guard let offer = transaction.offer else {
       return nil
     }
@@ -476,11 +474,9 @@ extension Transaction: EntitlementTransaction {
 
   var offerType: LatestSubscription.OfferType? {
     if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-      #if compiler(>=6.0.0)
       if offer?.type == .winBack {
         return .winback
       }
-      #endif
       guard let offer = offer else {
         return nil
       }

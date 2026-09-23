@@ -81,11 +81,10 @@ class SWWebView: WKWebView {
 
     if #available(iOS 15.0, *),
       !isMac {
-      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true // ignore-xcode-12
+      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
-    #if compiler(>=5.9.0)
     if #available(iOS 17.0, *) {
       if featureFlags?.enableThrottleSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .throttle
@@ -93,7 +92,6 @@ class SWWebView: WKWebView {
         preferences.inactiveSchedulingPolicy = .none
       }
     }
-    #endif
 
     config.preferences = preferences
     wkConfig = config
@@ -140,7 +138,7 @@ class SWWebView: WKWebView {
     scrollView.maximumZoomScale = 1.0
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
-    #if compiler(>=5.8) && os(iOS)
+    #if os(iOS)
     if #available(iOS 16.4, *) {
       isInspectable = true
     }

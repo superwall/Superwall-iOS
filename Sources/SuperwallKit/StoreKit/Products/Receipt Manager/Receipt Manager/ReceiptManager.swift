@@ -91,7 +91,6 @@ actor ReceiptManager {
   }
 
   private func setAppTransactionId() async {
-    #if compiler(>=6.1)
     if #available(iOS 16.0, *),
       !shouldBypassAppTransactionCheck,
       !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
@@ -109,7 +108,6 @@ actor ReceiptManager {
         }
       }
     }
-    #endif
   }
 
   private func registerAppTransactionIdIfNeeded() {

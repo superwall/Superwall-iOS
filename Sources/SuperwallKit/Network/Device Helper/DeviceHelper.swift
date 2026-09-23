@@ -667,15 +667,6 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
-    #if compiler(>=5.9.2)
-    if #available(iOS 17.0, *) {
-      if UIDevice.current.userInterfaceIdiom == .vision {
-        return "vision"
-      }
-    }
-    #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions
-    // of xcode to build and they don't have vision support.
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -687,6 +678,8 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
+    case .vision:
+      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
@@ -1082,11 +1075,9 @@ class DeviceHelper {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      #if compiler(>=6.1)
       if #available(iOS 17.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
-      #endif
     }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {
