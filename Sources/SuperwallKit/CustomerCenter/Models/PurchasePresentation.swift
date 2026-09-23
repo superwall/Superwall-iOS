@@ -47,6 +47,8 @@ struct PurchasePresentation: Identifiable, Equatable {
   var purchaseDate: Date?
   /// The entitlements the purchase unlocks.
   var entitlements: Set<Entitlement> = []
+  /// Whether the product's name and price are still loading from the Superwall catalogue.
+  var isAwaitingCatalogue = false
 
   /// What the delegate and SwiftUI callbacks are told about this purchase.
   var publicPurchase: CustomerCenterPurchase {

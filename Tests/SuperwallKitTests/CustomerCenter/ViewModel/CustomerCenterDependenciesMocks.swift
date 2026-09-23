@@ -23,7 +23,27 @@ final class CustomerInfoProviderMock: CustomerCenterCustomerInfoProviding {
 final class ProductsProviderMock: CustomerCenterProductsProviding {
   var products: [String: ProductDisplayInfo] = [:]
   var requested: Set<String> = []
+  /// What the catalogue answers with. Held until `releaseCatalogue()` when `holdsCatalogue` is set.
+  var catalogue: [String: ProductDisplayInfo] = [:]
+  var catalogueRequested: Set<String>?
+  var holdsCatalogue = false
+  private(set) var isHoldingCatalogue = false
+  private var catalogueGate: CheckedContinuation<Void, Never>?
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] { requested = ids; return products.filter { ids.contains($0.key) } }
+  func catalogueProducts(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
+    catalogueRequested = ids
+    if holdsCatalogue {
+      await withCheckedContinuation { continuation in
+        catalogueGate = continuation
+        isHoldingCatalogue = true
+      }
+    }
+    return catalogue.filter { ids.contains($0.key) }
+  }
+  func releaseCatalogue() {
+    catalogueGate?.resume()
+    catalogueGate = nil
+  }
 }
 /// Holds the calls numbered in `gatedCalls` open until they're released, so a test can
 /// overlap loads.
@@ -44,6 +64,7 @@ final class GatedProductsProviderMock: CustomerCenterProductsProviding {
   func release(call: Int = 1) {
     gates.removeValue(forKey: call)?.resume()
   }
+  func catalogueProducts(for ids: Set<String>) async -> [String: ProductDisplayInfo] { [:] }
 }
 final class RestorerMock: CustomerCenterRestoring {
   var result: RestorationResult = .restored

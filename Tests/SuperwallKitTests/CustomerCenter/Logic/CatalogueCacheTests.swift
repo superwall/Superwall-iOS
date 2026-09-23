@@ -86,6 +86,20 @@ struct CatalogueCacheTests {
 
     #expect(await fetches.value == 1)
   }
+
+  @available(iOS 15.0, *)
+  @Test("a fresh catalogue can be read without fetching, and only while fresh")
+  func freshResponseReadsWithoutFetching() async throws {
+    var clock = Date(timeIntervalSince1970: 1_000_000)
+    let cache = CatalogueCache { clock }
+    #expect(await cache.freshResponse() == nil)
+
+    _ = try await cache.products { self.response() }
+    #expect(await cache.freshResponse() != nil)
+
+    clock = clock.addingTimeInterval(CatalogueCache.ttl + 1)
+    #expect(await cache.freshResponse() == nil)
+  }
 }
 
 private actor Counter {

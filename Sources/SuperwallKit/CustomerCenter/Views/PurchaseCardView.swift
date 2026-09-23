@@ -19,9 +19,21 @@ struct PurchaseCardView: View {
     // purchase is never hidden; only its title is allowed to be absent.
     HStack(alignment: .top) {
       VStack(alignment: .leading, spacing: 6) {
-        if let title = purchase.title { Text(title).font(.headline) }
-        if let price = purchase.priceLine { Text(price).font(.subheadline) }
-        Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
+        if purchase.isAwaitingCatalogue {
+          // Skeletons for what the catalogue supplies: the name, the price, and a status line
+          // that quotes the price. The sample text only sets each bar's length.
+          placeholder("Subscription name", font: .headline)
+          placeholder("$00.00 / month", font: .subheadline)
+          if purchase.badge == .active {
+            placeholder("Renews on 00 Month 0000 for $00.00", font: .subheadline)
+          } else {
+            Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
+          }
+        } else {
+          if let title = purchase.title { Text(title).font(.headline) }
+          if let price = purchase.priceLine { Text(price).font(.subheadline) }
+          Text(purchase.statusLine).font(.subheadline).foregroundStyle(.secondary)
+        }
         if let key = purchase.storeLabelKey {
           Text(strings.string(key)).font(.caption).foregroundStyle(.secondary)
         }
@@ -38,6 +50,13 @@ struct PurchaseCardView: View {
     .padding(.vertical, 4)
     .accessibilityElement(children: .combine)
     .accessibilityIdentifier("customer_center.purchase.\(purchase.productId ?? purchase.id)")
+  }
+
+  private func placeholder(_ sample: String, font: Font) -> some View {
+    Text(sample)
+      .font(font)
+      .redacted(reason: .placeholder)
+      .accessibilityHidden(true)
   }
 }
 

@@ -45,12 +45,16 @@ final class CustomerCenterViewModel: ObservableObject {
   // Not `private`: the support-email extension in `CustomerCenterViewModel+Support.swift`
   // reads these, and `private` is file-scoped.
   let dependencies: CustomerCenterDependencies
-  private let dismissDebounceInterval: TimeInterval
+  let dismissDebounceInterval: TimeInterval
   private let isChangePlanSheetAvailable: Bool
-  private var products: [String: ProductDisplayInfo] = [:]
+  // Not `private`: the catalogue fill in `CustomerCenterViewModel+Catalogue.swift` updates these.
+  var products: [String: ProductDisplayInfo] = [:]
   private var familyShared: Set<String> = []
   /// Lets an `apply` that a newer one has overtaken drop its older snapshot.
-  private var applyGeneration = 0
+  var applyGeneration = 0
+  /// Products whose display info is still coming from the Superwall catalogue.
+  var awaitingCatalogue: Set<String> = []
+  var catalogueTask: Task<Void, Never>?
   // Not `private`: read by `CustomerCenterViewModel+Refund.swift`.
   var pendingRefundProductId: String?
   private var pendingAction: PendingAction?
@@ -66,19 +70,22 @@ final class CustomerCenterViewModel: ObservableObject {
   var fetchedAppStoreVersion: String?
   var hasCheckedAppStoreVersion = false
   private var hasTrackedOpen = false
-  private var didDismiss = false
+  var didDismiss = false
   /// Active entitlement identifiers from the latest `CustomerInfo`, for support diagnostics.
   var activeEntitlementIds: [String] = []
   private var cancellables = Set<AnyCancellable>()
 
+  // Not `private`: the dismissal state below, `didDismiss` and `dismissDebounceInterval` are read
+  // by `CustomerCenterViewModel+Dismissal.swift`.
+
   /// Number of Customer Center surfaces (root + any pushed screens) currently on screen.
   /// Incremented/decremented by ``surfaceDidAppear()``/``surfaceDidDisappear()``. When this
   /// reaches zero and stays zero past the debounce, the Customer Center is genuinely gone.
-  private var visibleSurfaceCount = 0
-  private var dismissDebounceTask: Task<Void, Never>?
+  var visibleSurfaceCount = 0
+  var dismissDebounceTask: Task<Void, Never>?
   /// Set by a host that knows this disappearance is a cover rather than a teardown. Cleared the
   /// next time a surface appears. See ``suppressDismissalUntilNextAppearance()``.
-  private var isDismissalSuppressed = false
+  var isDismissalSuppressed = false
 
   init(
     configuration: CustomerCenterConfiguration,
@@ -151,9 +158,9 @@ final class CustomerCenterViewModel: ObservableObject {
       guard generation == applyGeneration else { return }
       products = fetchedProducts
       familyShared = shared
+      awaitingCatalogue = Self.catalogueProductIds(in: customerInfo).subtracting(fetchedProducts.keys)
     }
-    let builder = PurchasePresentationBuilder(strings: strings, locale: dependencies.environment.locale)
-    purchases = builder.build(customerInfo: customerInfo, products: products)
+    renderPurchases(customerInfo)
     activeEntitlementIds = customerInfo.entitlements.filter(\.isActive).map(\.id)
     state = hasAnyPurchases(customerInfo) ? .management : .noPurchases
     recomputeUpdateBanner()
@@ -161,6 +168,14 @@ final class CustomerCenterViewModel: ObservableObject {
     showsDuplicateBanner = configuration.warnsAboutDuplicateSubscriptions
       && activeStores.contains(.appStore)
       && !activeStores.isDisjoint(with: [.stripe, .paddle, .superwall])
+    if refetchProducts {
+      fillFromCatalogue(customerInfo, generation: generation)
+    }
+  }
+
+  func renderPurchases(_ customerInfo: CustomerInfo) {
+    let builder = PurchasePresentationBuilder(strings: strings, locale: dependencies.environment.locale)
+    purchases = builder.build(customerInfo: customerInfo, products: products, awaitingCatalogue: awaitingCatalogue)
   }
 
   /// Whether `info` represents any purchase the Customer Center should show as "management" —
@@ -327,72 +342,5 @@ final class CustomerCenterViewModel: ObservableObject {
       info = await dependencies.customerInfo.fetchCustomerInfo()
     }
     await apply(customerInfo: info, refetchProducts: true)
-  }
-}
-
-// MARK: - Visibility-driven dismissal
-
-@available(iOS 15.0, *)
-extension CustomerCenterViewModel {
-  /// Call from any Customer Center surface's `onAppear` — the root view, and any screen it pushes
-  /// itself. Pushing a screen removes the previous surface from the hierarchy without the Customer
-  /// Center closing, so a count of concurrently visible surfaces (rather than a boolean) is what
-  /// tracks nested pushes correctly. Also cancels any pending dismissal from a prior disappear.
-  func surfaceDidAppear() {
-    visibleSurfaceCount += 1
-    isDismissalSuppressed = false
-    dismissDebounceTask?.cancel()
-    dismissDebounceTask = nil
-  }
-
-  /// Call from the matching `onDisappear` of any surface that called ``surfaceDidAppear()``.
-  /// When the count drops to zero, waits out a debounce before dismissing: a push/pop transition can
-  /// briefly have both surfaces on screen or neither, so one runloop turn can't tell "navigating
-  /// within the Customer Center" from "the Customer Center was torn down". An appearance before the
-  /// debounce elapses cancels it.
-  func surfaceDidDisappear() {
-    visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
-    guard visibleSurfaceCount == 0, !isDismissalSuppressed else { return }
-    dismissDebounceTask?.cancel()
-    // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
-    // followed by `@StateObject` releasing the view model, and a weak capture would let it
-    // deallocate before the debounce elapses — silently dropping `didDismiss` and the
-    // `customerCenterClose` event. The task only outlives the view by the debounce interval.
-    dismissDebounceTask = Task { [dismissDebounceInterval] in
-      try? await Task.sleep(nanoseconds: UInt64(dismissDebounceInterval * 1_000_000_000))
-      guard !Task.isCancelled else { return }
-      guard visibleSurfaceCount == 0 else { return }
-      dismiss()
-    }
-  }
-
-  /// Drops a dismissal the visibility count scheduled but hasn't delivered. The count can't tell a
-  /// teardown from something being put on top, so it guesses; a host that knows better — a
-  /// `CustomerCenterViewController` being covered rather than removed — vetoes the guess here.
-  /// Left to fire, the premature ``dismiss()`` would latch and silence the genuine teardown.
-  func cancelPendingDismissal() {
-    dismissDebounceTask?.cancel()
-    dismissDebounceTask = nil
-  }
-
-  /// The same veto, proof against the ordering it can't control.
-  ///
-  /// ``cancelPendingDismissal()`` only drops an already-armed dismissal, assuming SwiftUI has
-  /// delivered `onDisappear` by the time `viewDidDisappear` runs — a moment Apple documents as
-  /// view-type-dependent. Arriving a runloop turn later, it found nothing to cancel and armed
-  /// unopposed. Suppressing until the next appearance covers both orderings; a genuine teardown
-  /// is unaffected, since the controllers deliver those through ``dismiss()`` directly.
-  func suppressDismissalUntilNextAppearance() {
-    isDismissalSuppressed = true
-    cancelPendingDismissal()
-  }
-
-  func dismiss() {
-    guard !didDismiss else { return }
-    didDismiss = true
-    dismissDebounceTask?.cancel()
-    dismissDebounceTask = nil
-    callbacks.didDismiss?()
-    Task { await dependencies.tracker.track(InternalSuperwallEvent.CustomerCenterClose()) }
   }
 }

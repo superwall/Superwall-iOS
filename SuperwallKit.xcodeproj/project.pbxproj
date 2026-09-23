@@ -324,6 +324,7 @@
 		7E77A6A71C19AC46AC4EBF5D /* IntegrationAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB868CF67AB2AE72895F864E /* IntegrationAttribute.swift */; };
 		7F01F765BE9EF495D1EF58A7 /* UIViewController+AsyncDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D2B0D671B1A1E665B7CCD8 /* UIViewController+AsyncDismiss.swift */; };
 		7F630637D79A1F24CC17A8A5 /* GetPaywallVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB9AEAF72391341B4BDF6CD /* GetPaywallVC.swift */; };
+		7F7547441E328E3A1C369BFE /* CustomerCenterViewModel+Catalogue.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDA4A3208522A84B3070BBA /* CustomerCenterViewModel+Catalogue.swift */; };
 		7FCDAF6C945FA04FC4C4E8E3 /* DeviceHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB242DC77FEC0BE10C0DDC9C /* DeviceHelper.swift */; };
 		803BFA630F96B638E3BDE715 /* GameControllerEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21C52F36F0BFF59363EBB4C7 /* GameControllerEvent.swift */; };
 		8088933E13346C69FEE58919 /* DebugPickerLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A97EAA0E1AE80E91ACDB9AEB /* DebugPickerLogicTests.swift */; };
@@ -377,6 +378,7 @@
 		96949F05ACC88C4475BB61EC /* GetPaywallComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EF6F057A58A42193F279BE6 /* GetPaywallComponents.swift */; };
 		96FDC10323489C2622EBD563 /* Entitlement.swift in Sources */ = {isa = PBXBuildFile; fileRef = 368EF475049935105AF8154C /* Entitlement.swift */; };
 		9735942D34369DA4412F8B63 /* PermissionHandler+Microphone.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7434029CB9E4680C85D3FB6 /* PermissionHandler+Microphone.swift */; };
+		97470BA178DC53673237C02F /* CustomerCenterViewModel+Dismissal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 208A9F89EFD8A82BDDBF01A7 /* CustomerCenterViewModel+Dismissal.swift */; };
 		98193046E2347D4D6D74F408 /* SystemInfo+NotificationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD23BBF9EA198ED8798A8F62 /* SystemInfo+NotificationName.swift */; };
 		98BFA6594FE9A9097AC5F88F /* ConfigState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A1C8B0D79B8AC70ECF0CBB /* ConfigState.swift */; };
 		995FD66283C7B03D3B33DF89 /* AppSessionLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 214622367ACC8F66EB392105 /* AppSessionLogic.swift */; };
@@ -779,6 +781,7 @@
 		2031E7FE7D2ECC7AFF8519AE /* CustomerInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerInfo.swift; sourceTree = "<group>"; };
 		20365697A9C396E8EC746B77 /* LoadingViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingViewController.swift; sourceTree = "<group>"; };
 		20419CBCAD8CE28ADDD55E57 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
+		208A9F89EFD8A82BDDBF01A7 /* CustomerCenterViewModel+Dismissal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterViewModel+Dismissal.swift"; sourceTree = "<group>"; };
 		20DA18E503D82C213BC5567B /* PermissionsHandler+Tracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionsHandler+Tracking.swift"; sourceTree = "<group>"; };
 		2123B84F5C786278E128152D /* OccurrenceLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OccurrenceLogicTests.swift; sourceTree = "<group>"; };
 		214622367ACC8F66EB392105 /* AppSessionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSessionLogic.swift; sourceTree = "<group>"; };
@@ -1174,6 +1177,7 @@
 		AC74F16DC5A17489E97061EA /* PushTransitionLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushTransitionLogic.swift; sourceTree = "<group>"; };
 		ACAF662B855E4A70DDEE66F6 /* DevServerManifest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerManifest.swift; sourceTree = "<group>"; };
 		AD23BBF9EA198ED8798A8F62 /* SystemInfo+NotificationName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SystemInfo+NotificationName.swift"; sourceTree = "<group>"; };
+		ADDA4A3208522A84B3070BBA /* CustomerCenterViewModel+Catalogue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterViewModel+Catalogue.swift"; sourceTree = "<group>"; };
 		AE32816F1CA1637897AC87A2 /* UNUserNotificationCenter+SuperwallNotifications.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UNUserNotificationCenter+SuperwallNotifications.swift"; sourceTree = "<group>"; };
 		AE406AAED11F2B63E4A5A1FD /* UserInitiatedEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInitiatedEvents.swift; sourceTree = "<group>"; };
 		AE7B78DEECD91AFD89B39F9D /* StoreTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreTransaction.swift; sourceTree = "<group>"; };
@@ -2443,6 +2447,8 @@
 			children = (
 				91BC4FDC29B7919F3C976C14 /* CustomerCenterDependencies.swift */,
 				16C0D857F4714F3B76D58D9F /* CustomerCenterViewModel.swift */,
+				ADDA4A3208522A84B3070BBA /* CustomerCenterViewModel+Catalogue.swift */,
+				208A9F89EFD8A82BDDBF01A7 /* CustomerCenterViewModel+Dismissal.swift */,
 				B167F35F1B87119D05686C7B /* CustomerCenterViewModel+PurchaseDetail.swift */,
 				12BC920C6393F67609CE54A0 /* CustomerCenterViewModel+Refund.swift */,
 				7D672DB1BB0AFC32C1DA3148 /* CustomerCenterViewModel+Support.swift */,
@@ -3998,6 +4004,8 @@
 				54BF320BC284406282CB49B6 /* CustomerCenterStrings+English.swift in Sources */,
 				FACCB02103E21B86A98E12BE /* CustomerCenterView.swift in Sources */,
 				8901727EE5E2048125791BAB /* CustomerCenterViewController.swift in Sources */,
+				7F7547441E328E3A1C369BFE /* CustomerCenterViewModel+Catalogue.swift in Sources */,
+				97470BA178DC53673237C02F /* CustomerCenterViewModel+Dismissal.swift in Sources */,
 				B02D152D88E005E08078DA51 /* CustomerCenterViewModel+PurchaseDetail.swift in Sources */,
 				DAA4F3E3A4E104BD658E9F93 /* CustomerCenterViewModel+Refund.swift in Sources */,
 				E38FE7475E82AC6EA10F2C65 /* CustomerCenterViewModel+Support.swift in Sources */,

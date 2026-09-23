@@ -562,4 +562,48 @@ struct CustomerCenterViewModelTests {
     await waitUntil { trackedClose() }
     #expect(trackedClose())
   }
+
+  // MARK: - Web product details
+
+  @Test("a web purchase shows placeholders until the catalogue answers, without holding the screen")
+  func webPurchaseShowsPlaceholdersUntilTheCatalogueAnswers() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .stripe)]))
+    productsMock.products = [:]
+    productsMock.catalogue = ["monthly": monthly]
+    productsMock.holdsCatalogue = true
+
+    await vm.load()
+    #expect(vm.state == .management, "the screen draws without waiting on the catalogue")
+    #expect(vm.purchases.first?.isAwaitingCatalogue == true)
+    #expect(vm.purchases.first?.priceLine == nil)
+    #expect(productsMock.catalogueRequested == ["monthly"])
+
+    await waitUntil { productsMock.isHoldingCatalogue }
+    productsMock.releaseCatalogue()
+    await waitUntil { vm.purchases.first?.isAwaitingCatalogue == false }
+    #expect(vm.purchases.first?.priceLine == "$9.99 / month")
+    #expect(vm.purchases.first?.title == "Monthly")
+  }
+
+  @Test("an App Store purchase never waits on the catalogue")
+  func appStorePurchaseSkipsTheCatalogue() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .appStore)]))
+    productsMock.products = [:]
+
+    await vm.load()
+    #expect(vm.purchases.first?.isAwaitingCatalogue == false)
+    #expect(productsMock.catalogueRequested == nil)
+  }
+
+  @Test("a catalogue that has nothing clears the placeholders")
+  func emptyCatalogueClearsPlaceholders() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .paddle)]))
+    productsMock.products = [:]
+
+    await vm.load()
+    await waitUntil { vm.purchases.first?.isAwaitingCatalogue == false }
+    #expect(vm.purchases.first?.isAwaitingCatalogue == false)
+    #expect(vm.purchases.first?.priceLine == nil)
+    #expect(vm.purchases.first?.statusLine.hasPrefix("Renews on") == true)
+  }
 }

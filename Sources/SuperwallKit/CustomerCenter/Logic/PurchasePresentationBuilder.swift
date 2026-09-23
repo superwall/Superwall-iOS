@@ -32,7 +32,13 @@ struct PurchasePresentationBuilder {
     }()
   }
 
-  func build(customerInfo: CustomerInfo, products: [String: ProductDisplayInfo]) -> [PurchasePresentation] {
+  /// - Parameter awaitingCatalogue: Products whose details are still loading, whose cards show
+  ///   placeholders for them meanwhile.
+  func build(
+    customerInfo: CustomerInfo,
+    products: [String: ProductDisplayInfo],
+    awaitingCatalogue: Set<String> = []
+  ) -> [PurchasePresentation] {
     let entitlementsByProductId = customerInfo.entitlementsByProductId
     let subs = subscriptionPresentations(
       customerInfo.subscriptions,
@@ -50,7 +56,11 @@ struct PurchasePresentationBuilder {
     let entitlementOnly = customerInfo.entitlements
       .filter { $0.isActive && $0.productIds.isDisjoint(with: knownProductIds) }
       .map(entitlementPresentation)
-    return subs + nonSubs + entitlementOnly
+    return (subs + nonSubs + entitlementOnly).map { purchase in
+      var purchase = purchase
+      purchase.isAwaitingCatalogue = purchase.productId.map(awaitingCatalogue.contains) ?? false
+      return purchase
+    }
   }
 
   /// The title a purchase falls back to when its product has no display name: the entitlement it

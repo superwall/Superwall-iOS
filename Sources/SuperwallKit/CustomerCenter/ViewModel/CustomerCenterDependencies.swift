@@ -18,7 +18,12 @@ protocol CustomerCenterCustomerInfoProviding: AnyObject {
   var customerInfoPublisher: AnyPublisher<CustomerInfo, Never> { get }
 }
 protocol CustomerCenterProductsProviding {
+  /// What can be had without waiting on the network: StoreKit, plus the Superwall catalogue if
+  /// it's already cached.
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo]
+  /// Fills products StoreKit can't resolve, such as web purchases, from the Superwall catalogue.
+  /// May make a network request.
+  func catalogueProducts(for ids: Set<String>) async -> [String: ProductDisplayInfo]
 }
 protocol CustomerCenterRestoring {
   func restorePurchases() async -> RestorationResult
@@ -121,23 +126,24 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
     guard !ids.isEmpty else { return [:] }
     let products = await Superwall.shared.products(for: ids)
-    var resolved = Dictionary(uniqueKeysWithValues: products.map { ($0.productIdentifier, ProductDisplayInfo($0)) })
+    let resolved = Dictionary(uniqueKeysWithValues: products.map { ($0.productIdentifier, ProductDisplayInfo($0)) })
+    // A catalogue fetched earlier in the visit fills web products straight away, so a second
+    // load doesn't flash placeholders for details it already has.
+    guard let cached = await CatalogueCache.shared.freshResponse() else { return resolved }
+    return Self.fillingGaps(in: resolved, requested: ids, from: cached.data)
+  }
 
-    // StoreKit only knows App Store products, so a subscription bought on the web resolves to
-    // nothing and its card falls back to showing a raw product identifier with no price. Those
-    // products are in the Superwall catalogue with their price, so fill the gaps from there.
-    let missing = ids.subtracting(resolved.keys)
-    guard !missing.isEmpty else { return resolved }
+  func catalogueProducts(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
+    guard !ids.isEmpty else { return [:] }
     do {
-      // Bounded deliberately. This sits on the path that leaves `.loading`, and the endpoint's
-      // defaults are six retries with exponential backoff and no timeout — a failing backend
-      // would otherwise hold the spinner for minutes on a screen whose prices are a nicety.
+      // Bounded deliberately: the endpoint's defaults are six retries with exponential backoff
+      // and no timeout, and the cards are showing placeholders until this answers.
       let response = try await CatalogueCache.shared.products {
         try await withCatalogueTimeout {
           try await container.network.getSuperwallProducts()
         }
       }
-      resolved = Self.fillingGaps(in: resolved, requested: ids, from: response.data)
+      return Self.fillingGaps(in: [:], requested: ids, from: response.data)
     } catch {
       // Advisory: the cards still render, just without a price.
       Logger.debug(
@@ -146,8 +152,8 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
         message: "Couldn't load Superwall products, so web purchases will show without a price.",
         error: error
       )
+      return [:]
     }
-    return resolved
   }
 
   /// Fills the products StoreKit couldn't resolve from the Superwall catalogue.
@@ -240,6 +246,12 @@ actor CatalogueCache {
     let response = try await task.value
     cached = (response, now())
     return response
+  }
+
+  /// The cached catalogue if it's still fresh, without fetching.
+  func freshResponse() -> SuperwallProductsResponse? {
+    guard let cached, isFresh(cached.at) else { return nil }
+    return cached.response
   }
 
   func isFresh(_ date: Date) -> Bool {
