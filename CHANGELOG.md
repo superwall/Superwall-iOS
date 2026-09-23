@@ -2,9 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.17.0
+## 4.18.0
+
+### Enhancements
 
 - Adds best-effort public IPv4 and observed IPv6 device attributes, with separate observation timestamps for downstream integrations.
+
+## 4.17.0
 
 ### Enhancements
 
