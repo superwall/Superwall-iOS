@@ -177,6 +177,43 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(offMainPublishes.count == 0, "the view model published from a background thread")
   }
 
+  /// StoreKit's `refundRequestSheet` reads the transaction from the render before the one that
+  /// presents it. Both come from `sheet`, so presenting in the same render asks StoreKit about the
+  /// previous transaction — 0, a refund request that can only fail.
+  @available(iOS 15.0, *)
+  @Test("the refund sheet waits until its transaction has been rendered")
+  func refundSheetWaitsForItsTransaction() {
+    let viewModel = makeViewModel()
+    let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+
+    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+    #expect(!modifier.refundBinding.wrappedValue, "presenting now would ask StoreKit about the previous transaction")
+
+    viewModel.renderedRefundTransactionId = 7
+    #expect(modifier.refundBinding.wrappedValue)
+  }
+
+  /// The test above proves the gate; this proves the real modifier opens it, by reporting the
+  /// transaction once it has rendered it.
+  @available(iOS 15.0, *)
+  @Test("the sheet modifier reports a refund's transaction once it has rendered it")
+  func sheetModifierReportsTheRenderedRefundTransaction() {
+    let viewModel = makeViewModel()
+    // Another surface is on top, so this one never presents: the report is under test here, not
+    // StoreKit's sheet.
+    viewModel.pushDepth = 1
+    let host = UIHostingController(rootView: Color.clear.customerCenterSheets(viewModel: viewModel))
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    spinRunLoop(timeout: 1) { host.viewIfLoaded?.window != nil }
+
+    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+    spinRunLoop(timeout: 2) { viewModel.renderedRefundTransactionId == 7 }
+
+    #expect(viewModel.renderedRefundTransactionId == 7)
+  }
+
   // MARK: - Driving the real navigator
 
   @available(iOS 15.0, *)

@@ -99,7 +99,15 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   var refundBinding: Binding<Bool> {
     .init(
       get: {
-        guard isTopmost, case .refund = viewModel.sheet else { return false }
+        // Held back until StoreKit has been handed the transaction — see
+        // `renderedRefundTransactionId`.
+        guard
+          isTopmost,
+          case .refund(let transactionId, _) = viewModel.sheet,
+          transactionId == viewModel.renderedRefundTransactionId
+        else {
+          return false
+        }
         return true
       },
       set: { [viewModel] isPresented in
@@ -163,6 +171,13 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         case .failure: status = .error
         }
         Task { await viewModel.refundRequestDidFinish(status: status) }
+      }
+      // Reports the transaction once the refund sheet above has rendered with it. A task rather
+      // than `onChange`, so the report — and the presentation it lets through — arrives in an
+      // update of its own instead of the one StoreKit is still reading.
+      .task(id: refundTransactionId) { @MainActor [viewModel, refundTransactionId] in
+        guard viewModel.renderedRefundTransactionId != refundTransactionId else { return }
+        viewModel.renderedRefundTransactionId = refundTransactionId
       }
       .sheet(item: itemSheet, onDismiss: onItemSheetDismiss) { sheet in
         switch sheet {
