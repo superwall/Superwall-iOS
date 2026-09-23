@@ -74,7 +74,7 @@ final class DependencyContainer {
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
-    cache: Cache = Cache()
+    cache: Cache = .makeDefault()
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self, cache: cache)

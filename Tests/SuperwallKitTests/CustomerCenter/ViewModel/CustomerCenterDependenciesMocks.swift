@@ -25,24 +25,24 @@ final class ProductsProviderMock: CustomerCenterProductsProviding {
   var requested: Set<String> = []
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] { requested = ids; return products.filter { ids.contains($0.key) } }
 }
-/// Holds its first call open until `release()`, so a test can overlap two loads.
+/// Holds the calls numbered in `gatedCalls` open until they're released, so a test can
+/// overlap loads.
 final class GatedProductsProviderMock: CustomerCenterProductsProviding {
+  let gatedCalls: Set<Int>
   private(set) var calls = 0
-  private(set) var isHoldingFirstCall = false
-  private var gate: CheckedContinuation<Void, Never>?
+  private var gates: [Int: CheckedContinuation<Void, Never>] = [:]
+  init(gatedCalls: Set<Int> = [1]) { self.gatedCalls = gatedCalls }
+  func isHolding(call: Int) -> Bool { gates[call] != nil }
   func products(for ids: Set<String>) async -> [String: ProductDisplayInfo] {
     calls += 1
-    if calls == 1 {
-      await withCheckedContinuation { continuation in
-        gate = continuation
-        isHoldingFirstCall = true
-      }
+    let call = calls
+    if gatedCalls.contains(call) {
+      await withCheckedContinuation { gates[call] = $0 }
     }
     return [:]
   }
-  func release() {
-    gate?.resume()
-    gate = nil
+  func release(call: Int = 1) {
+    gates.removeValue(forKey: call)?.resume()
   }
 }
 final class RestorerMock: CustomerCenterRestoring {

@@ -245,24 +245,32 @@ struct CustomerCenterViewModelTests {
     #expect(hasRefundEvent)
   }
 
-  @Test("apply: an older load finishing late doesn't overwrite newer customer info")
-  func staleApplyIsDropped() async {
-    let infoMock = CustomerInfoProviderMock(info([sub()]))
-    let products = GatedProductsProviderMock()
+  func makeGated(
+    info customerInfo: CustomerInfo,
+    products: GatedProductsProviderMock,
+    tracker: EventTrackerMock = EventTrackerMock()
+  ) -> (CustomerCenterViewModel, CustomerInfoProviderMock) {
+    let infoMock = CustomerInfoProviderMock(customerInfo)
     let deps = CustomerCenterDependencies(
       customerInfo: infoMock,
       products: products,
       restore: RestorerMock(),
       urlOpener: URLOpenerMock(),
-      tracker: EventTrackerMock(),
+      tracker: tracker,
       environment: EnvironmentMock(),
       transactionLookup: StoreKitTransactionLookupMock(),
       appStoreVersion: AppStoreVersionProviderMock()
     )
-    let vm = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    return (CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english), infoMock)
+  }
+
+  @Test("apply: an older load finishing late doesn't overwrite newer customer info")
+  func staleApplyIsDropped() async {
+    let products = GatedProductsProviderMock()
+    let (vm, infoMock) = makeGated(info: info([sub()]), products: products)
 
     let loading = Task { await vm.load() }
-    await waitUntil { products.isHoldingFirstCall }
+    await waitUntil { products.isHolding(call: 1) }
     infoMock.subject.send(info([]))
     await waitUntil { vm.state == .noPurchases }
     products.release()
@@ -270,6 +278,27 @@ struct CustomerCenterViewModelTests {
 
     #expect(vm.state == .noPurchases)
     #expect(vm.purchases.isEmpty)
+  }
+
+  @Test("load: the open event reads the info it loaded, even when a newer apply is still running")
+  func openEventIgnoresOvertakenApply() async {
+    let products = GatedProductsProviderMock(gatedCalls: [1, 2])
+    let tracker = EventTrackerMock()
+    let (vm, infoMock) = makeGated(info: info([sub()]), products: products, tracker: tracker)
+
+    let loading = Task { await vm.load() }
+    await waitUntil { products.isHolding(call: 1) }
+    infoMock.subject.send(info([sub()]))
+    await waitUntil { products.isHolding(call: 2) }
+    products.release(call: 1)
+    await loading.value
+    products.release(call: 2)
+
+    let screen: String? = tracker.events.lazy.compactMap { event -> String? in
+      if case .customerCenterOpen(let screen) = event { return screen }
+      return nil
+    }.first
+    #expect(screen == "management")
   }
 
   @Test("url external → opener; url inApp → safari sheet; custom → callback only; contactSupport → mailto")

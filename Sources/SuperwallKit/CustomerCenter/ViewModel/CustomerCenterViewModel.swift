@@ -121,7 +121,7 @@ final class CustomerCenterViewModel: ObservableObject {
       hasTrackedOpen = true
       await dependencies.tracker.track(
         InternalSuperwallEvent.CustomerCenterOpen(
-          screen: state == .management ? "management" : "no_purchases",
+          screen: hasAnyPurchases(info) ? "management" : "no_purchases",
           presentation: presentationMode
         )
       )
