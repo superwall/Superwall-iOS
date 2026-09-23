@@ -21,8 +21,9 @@ struct CustomerCenterLifecycleProbe: UIViewControllerRepresentable {
   var onCovered: () -> Void
   /// The screen disappeared because it left the stack.
   var onRemoved: () -> Void
-  /// SwiftUI took the screen down. This also happens to a screen that was covered first, which
-  /// doesn't disappear a second time on its way out. A cancelled swipe back takes nothing down.
+  /// SwiftUI took the screen down, reported once its update has finished. This also happens to a
+  /// screen that was covered first, which doesn't disappear a second time on its way out. A
+  /// cancelled swipe back takes nothing down.
   var onDismantled: () -> Void
 
   func makeUIViewController(context: Context) -> CustomerCenterLifecycleProbeController {
@@ -41,7 +42,10 @@ struct CustomerCenterLifecycleProbe: UIViewControllerRepresentable {
     _ controller: CustomerCenterLifecycleProbeController,
     coordinator: ()
   ) {
-    controller.onDismantled?()
+    // SwiftUI takes views down in the middle of an update, and changing state it observes there is
+    // undefined behaviour. What this reports can clear a sheet, so it waits for the update to end.
+    let onDismantled = controller.onDismantled
+    DispatchQueue.main.async { onDismantled?() }
   }
 }
 

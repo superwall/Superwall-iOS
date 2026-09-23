@@ -190,6 +190,7 @@ struct CustomerCenterSheetOwnershipTests {
     viewModel.releasePushedSurface(detailClaim)
     #expect(viewModel.pushDepth == 0)
     #expect(!presentsRefund(root, rendered: 7), "the root presented a refund the detail had already asked for")
+    #expect(viewModel.sheet == nil, "a request nothing can present any more mustn't linger")
 
     // Nor does the next screen pushed at the same depth pick it up.
     viewModel.claimPushedSurface(UUID(), depth: 1)
@@ -224,6 +225,60 @@ struct CustomerCenterSheetOwnershipTests {
 
     viewModel.releasePushedSurface(detail)
     #expect(viewModel.sheetOwnerDepth == nil)
+    #expect(viewModel.sheet == nil)
+  }
+
+  /// The other half of the race: the request that went with its screen doesn't linger in `sheet`,
+  /// where nothing could present it, and neither does the survey answer it was waiting for.
+  @available(iOS 15.0, *)
+  @Test("a request whose screen leaves is dropped along with its pending survey")
+  func abandonedSurveyRequestIsCleared() async throws {
+    let viewModel = await makeLoadedViewModel()
+    let purchase = try #require(viewModel.purchases.first)
+    let cancel = try #require(
+      viewModel.paths(for: purchase, isScreenLevel: false).first { $0.path.id == "manage_subscription" }
+    )
+    let detailClaim = UUID()
+    viewModel.claimPushedSurface(detailClaim, depth: 1)
+    await viewModel.select(cancel, purchase: purchase)
+    #expect(viewModel.sheet == .survey(pathId: cancel.path.id))
+    #expect(viewModel.pendingSurvey != nil)
+
+    viewModel.releasePushedSurface(detailClaim)
+
+    #expect(viewModel.sheet == nil)
+    #expect(viewModel.pendingSurvey == nil, "the survey's pending answer outlived its request")
+  }
+
+  /// A refund is the one request StoreKit may already be showing when its screen goes, and the
+  /// outcome of that sheet still has to reach the host.
+  @available(iOS 15.0, *)
+  @Test("a dropped refund request still reports the outcome StoreKit delivers")
+  func abandonedRefundStillReportsItsOutcome() async throws {
+    let lookup = StoreKitTransactionLookupMock()
+    lookup.transactionIDs["monthly_pro"] = 7
+    let viewModel = await makeLoadedViewModel(lookup: lookup)
+    var completedProductId: String?
+    var completedStatus: CustomerCenterRefundStatus?
+    viewModel.callbacks.didCompleteRefund = { productId, status in
+      completedProductId = productId
+      completedStatus = status
+    }
+    let purchase = try #require(viewModel.purchases.first)
+    let refund = try #require(
+      viewModel.paths(for: purchase, isScreenLevel: false).first { $0.path.id == "refund" }
+    )
+    let detailClaim = UUID()
+    viewModel.claimPushedSurface(detailClaim, depth: 1)
+    await viewModel.select(refund, purchase: purchase)
+    #expect(viewModel.sheet == .refund(transactionId: 7, productId: "monthly_pro"))
+
+    viewModel.releasePushedSurface(detailClaim)
+    #expect(viewModel.sheet == nil)
+
+    await viewModel.refundRequestDidFinish(status: .success)
+    #expect(completedProductId == "monthly_pro")
+    #expect(completedStatus == .success)
   }
 
   /// The asymmetry that made this rule necessary: SwiftUI writes `false` to a boolean sheet
@@ -275,17 +330,6 @@ struct CustomerCenterSheetOwnershipTests {
     // And the binding that does own the sheet still clears it.
     modifier.refundBinding.wrappedValue = false
     #expect(viewModel.sheet == nil)
-
-    // The screen that opened a sheet keeps that right after it stops owning it: popped with the
-    // sheet still up, say. That's why the setters are gated on identity rather than ownership —
-    // an earlier depth-gated setter is exactly what stranded a sheet here.
-    let detail = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 1)
-    let detailClaim = UUID()
-    viewModel.claimPushedSurface(detailClaim, depth: 1)
-    viewModel.sheet = .manageSubscriptions(groupId: nil)
-    viewModel.releasePushedSurface(detailClaim)
-    detail.isManagePresented.wrappedValue = false
-    #expect(viewModel.sheet == nil, "the screen that opened a sheet must always be able to clear it")
   }
 
   /// StoreKit writes `false` into its sheets' `isPresented` bindings from the background thread
@@ -737,7 +781,10 @@ struct CustomerCenterSheetOwnershipTests {
   private static let now = Date()
 
   @available(iOS 15.0, *)
-  private func makeLoadedViewModel(dismissDebounceInterval: TimeInterval = 0.6) async -> CustomerCenterViewModel {
+  private func makeLoadedViewModel(
+    dismissDebounceInterval: TimeInterval = 0.6,
+    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
+  ) async -> CustomerCenterViewModel {
     let subscription = SubscriptionTransaction(
       transactionId: "t1",
       productId: "monthly_pro",
@@ -753,7 +800,8 @@ struct CustomerCenterSheetOwnershipTests {
       store: .appStore
     )
     let (deps, _, _) = CustomerCenterDependencies.mock(
-      info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: [])
+      info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: []),
+      lookup: lookup
     )
     let viewModel = CustomerCenterViewModel(
       configuration: .default,

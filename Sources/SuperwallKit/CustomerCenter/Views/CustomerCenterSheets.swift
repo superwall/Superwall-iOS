@@ -121,10 +121,8 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   /// the modifier keeps the view tree stable — swapping modifiers mid-update is what stopped the
   /// manage sheet appearing once before.
   ///
-  /// Only the getters are gated on ownership. The setters are gated on the sheet's identity
-  /// instead, because the screen that presented a sheet must always be able to clear it, even
-  /// after it has stopped owning it — popped with the sheet still up, say. A vetoed dismissal
-  /// would leave `sheet` set and `sheetDidDismiss()` unrun.
+  /// Only the getters are gated on ownership. A setter only has to know that a write is about the
+  /// sheet that's actually up; see ``CustomerCenterSheetOwnership/dismissalClears(_:_:)``.
   private var ownsSheet: Bool {
     viewModel.sheetOwnerDepth == surfaceDepth
   }
@@ -249,9 +247,11 @@ struct ManageSubscriptionsSheet: ViewModifier {
   /// Empty when the request has no subscription group.
   let groupId: String
 
-  /// The manage sheet without a group. From iOS 17, StoreKit's group variant handed an empty group
-  /// opens on "You don't have any subscriptions" rather than on the customer's subscriptions, so a
-  /// request with no group comes here instead, as every request does before iOS 17.
+  /// The manage sheet without a group. StoreKit's group variant, available from iOS 17, opens on
+  /// "You don't have any subscriptions" when handed an empty group, rather than on the customer's
+  /// subscriptions. That's observed in the StoreKit test environment; Apple doesn't document what
+  /// either variant does with an empty group. So a request with no group comes here, as every
+  /// request does before iOS 17.
   var plainSheetIsPresented: Binding<Bool> { isPresented.only(when: groupId.isEmpty) }
   /// The manage sheet opened on `groupId`.
   var groupSheetIsPresented: Binding<Bool> { isPresented.only(when: !groupId.isEmpty) }

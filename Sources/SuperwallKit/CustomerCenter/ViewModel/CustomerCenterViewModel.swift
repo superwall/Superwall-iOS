@@ -40,8 +40,8 @@ final class CustomerCenterViewModel: ObservableObject {
   /// Fixed at the request rather than following ``pushDepth``. A request can land while the screen
   /// that made it is being popped, because its button stays live while the request awaits a
   /// transaction. Following the depth, the outgoing screen presented the sheet, then the root
-  /// presented it again once the pop finished: two refund requests for one tap. `nil` once that
-  /// screen has left the stack, so no other screen picks up a sheet that went with it.
+  /// presented it again once the pop finished: two refund requests for one tap. When that screen
+  /// leaves the stack, its request goes too rather than moving to whatever is now on top.
   private(set) var sheetOwnerDepth: Int?
 
   let configuration: CustomerCenterConfiguration
@@ -384,8 +384,22 @@ extension CustomerCenterViewModel {
     let remaining = Set(surfaces.claims.map(\.id))
     let departed = pushedSurfaces.claims.filter { !remaining.contains($0.id) }
     if let owner = sheetOwnerDepth, departed.contains(where: { $0.depth <= owner }) {
-      sheetOwnerDepth = nil
+      abandonSheet()
     }
     pushedSurfaces = surfaces
+  }
+
+  /// Drops a request whose screen has left the stack, along with what making it set up. The user
+  /// went back while it was still resolving, and nothing is left that could present it. Left in
+  /// place, it would sit in ``sheet`` indefinitely, with a survey's pending answer still waiting.
+  ///
+  /// The refund's product is kept: StoreKit may already be showing that sheet, and its completion
+  /// reports the outcome against it. The next refund request replaces it.
+  private func abandonSheet() {
+    if case .survey = sheet {
+      cancelSurvey()
+    } else {
+      sheet = nil
+    }
   }
 }
