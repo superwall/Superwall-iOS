@@ -230,6 +230,7 @@ struct AppStoreUpdateCheckTests {
     let lookup = AppStoreVersionLookup(
       bundleId: "com.acme.app",
       regionCode: "GB",
+      storefrontCountryCode: { nil },
       defaults: try makeDefaults(),
       session: makeStubbedSession()
     )
@@ -242,6 +243,45 @@ struct AppStoreUpdateCheckTests {
     #expect(items.contains(URLQueryItem(name: "country", value: "GB")))
   }
 
+  @Test("looks the app up in the App Store's country rather than the device region")
+  func lookupPrefersTheStorefront() async throws {
+    StubURLProtocol.reset()
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: "US",
+      storefrontCountryCode: { "GBR" },
+      defaults: try makeDefaults(),
+      session: makeStubbedSession()
+    )
+
+    _ = await lookup.latestAppStoreVersion()
+
+    let url = try #require(StubURLProtocol.requestedURLs.first)
+    let items = try #require(URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems)
+    #expect(items.contains(URLQueryItem(name: "country", value: "GB")), "the endpoint rejects GBR")
+  }
+
+  @Test("falls back to the device region when the App Store country is missing or unknown", arguments: [nil, "ZZZ"])
+  func lookupFallsBackToTheRegion(storefront: String?) async {
+    let lookup = AppStoreVersionLookup(
+      bundleId: "com.acme.app",
+      regionCode: "JP",
+      storefrontCountryCode: { storefront }
+    )
+    #expect(await lookup.lookupRegion() == "JP")
+  }
+
+  @Test("converts three-letter country codes to two")
+  func countryCodeConversion() {
+    #expect(CountryCode.alpha2(fromAlpha3: "GBR") == "GB")
+    #expect(CountryCode.alpha2(fromAlpha3: "usa") == "US")
+    #expect(CountryCode.alpha2(fromAlpha3: "CHE") == "CH")
+    #expect(CountryCode.alpha2(fromAlpha3: "KOR") == "KR")
+    #expect(CountryCode.alpha2(fromAlpha3: "ZZZ") == nil)
+    #expect(CountryCode.alpha2(fromAlpha3: "") == nil)
+    #expect(CountryCode.alpha2(fromAlpha3: "GB") == nil, "already two letters is not a three-letter code")
+  }
+
   /// A device with no region set must still get a lookup, rather than one scoped to an empty
   /// country the endpoint would reject.
   @Test("omits the region when there isn't one", arguments: [nil, ""])
@@ -250,6 +290,7 @@ struct AppStoreUpdateCheckTests {
     let lookup = AppStoreVersionLookup(
       bundleId: "com.acme.app",
       regionCode: region,
+      storefrontCountryCode: { nil },
       defaults: try makeDefaults(),
       session: makeStubbedSession()
     )
@@ -266,6 +307,7 @@ struct AppStoreUpdateCheckTests {
     StubURLProtocol.reset(status: status)
     let lookup = AppStoreVersionLookup(
       bundleId: "com.acme.app",
+      storefrontCountryCode: { nil },
       defaults: try makeDefaults(),
       session: makeStubbedSession()
     )
@@ -281,6 +323,7 @@ struct AppStoreUpdateCheckTests {
     var clock = Date(timeIntervalSince1970: 1_000_000)
     let lookup = AppStoreVersionLookup(
       bundleId: "com.acme.app",
+      storefrontCountryCode: { nil },
       defaults: defaults,
       session: session,
       now: { clock }
@@ -309,6 +352,7 @@ struct AppStoreUpdateCheckTests {
     let inGB = AppStoreVersionLookup(
       bundleId: "com.acme.app",
       regionCode: "GB",
+      storefrontCountryCode: { nil },
       defaults: defaults,
       session: session,
       now: { clock }
@@ -319,6 +363,7 @@ struct AppStoreUpdateCheckTests {
     let inJP = AppStoreVersionLookup(
       bundleId: "com.acme.app",
       regionCode: "JP",
+      storefrontCountryCode: { nil },
       defaults: defaults,
       session: session,
       now: { clock }
@@ -336,6 +381,7 @@ struct AppStoreUpdateCheckTests {
     var clock = Date(timeIntervalSince1970: 1_000_000)
     let lookup = AppStoreVersionLookup(
       bundleId: "com.acme.app",
+      storefrontCountryCode: { nil },
       defaults: defaults,
       session: session,
       now: { clock }
