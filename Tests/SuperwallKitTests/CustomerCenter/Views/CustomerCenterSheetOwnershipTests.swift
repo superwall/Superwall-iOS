@@ -12,13 +12,13 @@ import SwiftUI
 import UIKit
 @testable import SuperwallKit
 
-/// When the host owns the navigation, the Customer Center's screens are separate hosting
-/// controllers and every one of them applies the sheet modifiers. Only the screen the user is
-/// actually looking at may present, or two controllers race for the same sheet.
+/// Every Customer Center screen still in the stack applies the sheet modifiers, whether the host's
+/// `UINavigationController` pushed it or a `NavigationLink` did. Only the screen the user is
+/// actually looking at may present, or two screens race for the same sheet.
 ///
-/// These drive `CustomerCenterPushNavigator` and the controllers it pushes rather than restating
-/// their arithmetic — an earlier version of this file re-implemented the rules locally and passed
-/// while the real gate presented nothing at all.
+/// These drive `CustomerCenterPushNavigator`, the real drill-down rows and the screens they push
+/// rather than restating their arithmetic — an earlier version of this file re-implemented the
+/// rules locally and passed while the real gate presented nothing at all.
 @Suite("Customer Center sheet ownership", .serialized)
 @MainActor
 struct CustomerCenterSheetOwnershipTests {
@@ -159,22 +159,22 @@ struct CustomerCenterSheetOwnershipTests {
       binding = modifier.refundBinding
     }
 
-    let offMainPublishes = PublishLog()
-    let observation = viewModel.objectWillChange.sink { _ in
-      if !Thread.isMainThread { offMainPublishes.record() }
-    }
-    defer { observation.cancel() }
-
-    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      DispatchQueue.global(qos: .userInitiated).async {
-        binding.wrappedValue = false
-        continuation.resume()
+    await confirmation("the view model published from a background thread", expectedCount: 0) { offMainPublish in
+      let observation = viewModel.objectWillChange.sink { _ in
+        if !Thread.isMainThread { offMainPublish() }
       }
+      defer { observation.cancel() }
+
+      await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+        DispatchQueue.global(qos: .userInitiated).async {
+          binding.wrappedValue = false
+          continuation.resume()
+        }
+      }
+      spinRunLoop(timeout: 1) { viewModel.sheet == nil }
     }
-    spinRunLoop(timeout: 1) { viewModel.sheet == nil }
 
     #expect(viewModel.sheet == nil, "the closed sheet must still be cleared")
-    #expect(offMainPublishes.count == 0, "the view model published from a background thread")
   }
 
   /// StoreKit's sheets read their parameter from the render before the one that presents them.
@@ -370,6 +370,162 @@ struct CustomerCenterSheetOwnershipTests {
 
     window.isHidden = true
   }
+
+  // MARK: - Driving the real NavigationLink
+
+  // Sheets requested from a subscription's own screen, when SwiftUI's `NavigationLink` pushed it.
+  // These host the real `CustomerCenterView` and open the detail screen through the real row,
+  // because the bug they guard against lived in which screen carried the sheet modifiers, which no
+  // test of the view model alone can see.
+  //
+  // This test host has no window scene, and without one UIKit leaves a covered screen in the
+  // window. The root could therefore present here even though it can't on a device, which is why
+  // these assert which screen owns the sheets as well as that the sheet appeared.
+  //
+  // iOS 16 and later only: before that, SwiftUI's `List` is a `UITableView`, which
+  // `openFirstSubscription` doesn't drive, and there's no runtime that old to check a path that
+  // did.
+
+  private static let now = Date()
+
+  @available(iOS 15.0, *)
+  private func makeLoadedViewModel() async -> CustomerCenterViewModel {
+    let subscription = SubscriptionTransaction(
+      transactionId: "t1",
+      productId: "monthly_pro",
+      purchaseDate: Self.now.addingTimeInterval(-30 * 86_400),
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: Self.now.addingTimeInterval(12 * 86_400),
+      offerType: nil,
+      subscriptionGroupId: "group_pro",
+      store: .appStore
+    )
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: [])
+    )
+    let viewModel = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    await viewModel.load()
+    return viewModel
+  }
+
+  private func firstSubview<T: UIView>(of type: T.Type, in view: UIView) -> T? {
+    if let match = view as? T { return match }
+    for subview in view.subviews {
+      if let match = firstSubview(of: type, in: subview) { return match }
+    }
+    return nil
+  }
+
+  private func firstChild<T: UIViewController>(of type: T.Type, in controller: UIViewController) -> T? {
+    if let match = controller as? T { return match }
+    for child in controller.children {
+      if let match = firstChild(of: type, in: child) { return match }
+    }
+    return nil
+  }
+
+  /// Opens the first subscription's screen the way a tap on its row does: through the list's own
+  /// selection, which is what drives the row's `NavigationLink`.
+  private func openFirstSubscription(in host: UIViewController) throws -> UINavigationController {
+    var list: UICollectionView?
+    spinRunLoop(timeout: 2) {
+      list = firstSubview(of: UICollectionView.self, in: host.view)
+      return (list?.numberOfSections ?? 0) > 0
+    }
+    let collectionView = try #require(list, "the management screen's list never loaded")
+    let row = IndexPath(item: 0, section: 0)
+    collectionView.selectItem(at: row, animated: false, scrollPosition: [])
+    collectionView.delegate?.collectionView?(collectionView, didSelectItemAt: row)
+
+    var navigation: UINavigationController?
+    spinRunLoop(timeout: 3) {
+      navigation = firstChild(of: UINavigationController.self, in: host)
+      guard let navigation, navigation.viewControllers.count == 2 else { return false }
+      return navigation.topViewController?.viewIfLoaded?.window != nil
+        && navigation.transitionCoordinator == nil
+    }
+    let pushed = try #require(navigation, "no navigation controller hosts the Customer Center")
+    try #require(pushed.viewControllers.count == 2, "the subscription's screen never opened")
+    return pushed
+  }
+
+  /// Asks for the cancellation survey from the subscription's screen and reports whether anything
+  /// was presented over it.
+  @available(iOS 15.0, *)
+  private func requestSurvey(from viewModel: CustomerCenterViewModel, window: UIWindow) async throws -> Bool {
+    let purchase = try #require(viewModel.purchases.first)
+    let cancel = try #require(
+      viewModel.paths(for: purchase, isScreenLevel: false).first { $0.path.id == "manage_subscription" }
+    )
+    await viewModel.select(cancel, purchase: purchase)
+    #expect(viewModel.sheet == .survey(pathId: cancel.path.id))
+
+    spinRunLoop(timeout: 2) { window.rootViewController?.presentedViewController != nil }
+    return window.rootViewController?.presentedViewController != nil
+  }
+
+  @available(iOS 16.0, *)
+  @Test("the survey presents over a subscription's screen when the Customer Center brings its own navigation")
+  func surveyPresentsFromDetailInOwnNavigation() async throws {
+    let viewModel = await makeLoadedViewModel()
+    let host = UIHostingController(
+      rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: .default)
+    )
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    _ = try openFirstSubscription(in: host)
+    #expect(viewModel.pushDepth == 1, "the subscription's screen must own the sheets while it's on top")
+    let presented = try await requestSurvey(from: viewModel, window: window)
+
+    #expect(presented, "the survey waited for the covered root screen instead of presenting over the detail")
+    host.dismiss(animated: false, completion: nil)
+  }
+
+  @available(iOS 16.0, *)
+  @Test("the survey presents over a subscription's screen pushed onto the host's navigation")
+  func surveyPresentsFromDetailInHostNavigation() async throws {
+    let viewModel = await makeLoadedViewModel()
+    let host = UIHostingController(
+      rootView: NavigationStack {
+        CustomerCenterView(viewModel: viewModel, navigationOptions: .init(style: .embedded))
+      }
+    )
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    _ = try openFirstSubscription(in: host)
+    #expect(viewModel.pushDepth == 1, "the subscription's screen must own the sheets while it's on top")
+    let presented = try await requestSurvey(from: viewModel, window: window)
+
+    #expect(presented, "the survey waited for the covered root screen instead of presenting over the detail")
+    host.dismiss(animated: false, completion: nil)
+  }
+
+  @available(iOS 16.0, *)
+  @Test("going back from a subscription's screen hands sheets back to the root")
+  func poppingTheDetailRestoresRootOwnership() async throws {
+    let viewModel = await makeLoadedViewModel()
+    let host = UIHostingController(
+      rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: .default)
+    )
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    let navigation = try openFirstSubscription(in: host)
+    #expect(viewModel.pushDepth == 1)
+
+    navigation.popViewController(animated: false)
+    spinRunLoop(timeout: 2) { viewModel.pushDepth == 0 }
+    #expect(viewModel.pushDepth == 0, "the root must be able to present again once the detail is gone")
+  }
 }
 
 /// Stands in for a navigation controller the host has presented and is now dismissing.
@@ -377,22 +533,4 @@ struct CustomerCenterSheetOwnershipTests {
 /// completion, so the one fact UIKit would report is supplied directly.
 private final class DismissingNavigationController: UINavigationController {
   override var isBeingDismissed: Bool { true }
-}
-
-/// Counts publishes from whichever thread they arrive on.
-private final class PublishLog: @unchecked Sendable {
-  private let lock = NSLock()
-  private var value = 0
-
-  var count: Int {
-    lock.lock()
-    defer { lock.unlock() }
-    return value
-  }
-
-  func record() {
-    lock.lock()
-    value += 1
-    lock.unlock()
-  }
 }
