@@ -26,10 +26,22 @@ private struct CustomerCenterNavigatorKey: EnvironmentKey {
 }
 
 @available(iOS 15.0, *)
+private struct CustomerCenterSurfaceDepthKey: EnvironmentKey {
+  static let defaultValue = 0
+}
+
+@available(iOS 15.0, *)
 extension EnvironmentValues {
   var customerCenterNavigator: CustomerCenterNavigating? {
     get { self[CustomerCenterNavigatorKey.self] }
     set { self[CustomerCenterNavigatorKey.self] = newValue }
+  }
+
+  /// How deep the screen being built sits in the Customer Center's own `NavigationLink` stack;
+  /// `0` for the root. A drill-down reads it to know the depth of the screen it pushes.
+  var customerCenterSurfaceDepth: Int {
+    get { self[CustomerCenterSurfaceDepthKey.self] }
+    set { self[CustomerCenterSurfaceDepthKey.self] = newValue }
   }
 }
 
@@ -37,7 +49,9 @@ extension EnvironmentValues {
 /// navigation supports.
 @available(iOS 15.0, *)
 struct CustomerCenterDrillDown<Label: View, Destination: View>: View {
+  let viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterNavigator) private var navigator
+  @Environment(\.customerCenterSurfaceDepth) private var surfaceDepth
   @ViewBuilder let destination: () -> Destination
   @ViewBuilder let label: () -> Label
 
@@ -61,7 +75,39 @@ struct CustomerCenterDrillDown<Label: View, Destination: View>: View {
       }
       .buttonStyle(.plain)
     } else {
-      NavigationLink(destination: destination(), label: label)
+      NavigationLink(
+        destination: destination().modifier(
+          CustomerCenterLinkedScreen(viewModel: viewModel, surfaceDepth: surfaceDepth + 1)
+        ),
+        label: label
+      )
     }
+  }
+}
+
+/// A screen `NavigationLink` pushed, doing for itself what `CustomerCenterPushNavigator` does for a
+/// screen pushed through UIKit: it carries its own sheet modifiers and takes them over while it's
+/// on top.
+///
+/// A sheet presents from the screen whose modifier asked for it, and UIKit takes the screens under
+/// a pushed one out of the window. With only the root's modifiers, every sheet a pushed screen
+/// asked for — the cancellation survey, change plan, the web management page — waited, silently,
+/// for the user to go back to the root, and then appeared there with no animation.
+///
+/// The depth is claimed on appear and handed back on disappear. A sheet covering this screen
+/// fires neither, so the depth only moves when the screen is pushed or popped.
+@available(iOS 15.0, *)
+private struct CustomerCenterLinkedScreen: ViewModifier {
+  let viewModel: CustomerCenterViewModel
+  let surfaceDepth: Int
+
+  func body(content: Content) -> some View {
+    content
+      .customerCenterSheets(viewModel: viewModel, surfaceDepth: surfaceDepth)
+      .environment(\.customerCenterSurfaceDepth, surfaceDepth)
+      .onAppear { viewModel.pushDepth = surfaceDepth }
+      // `min` rather than assigning, as the UIKit navigator does: when several screens go at once,
+      // whichever reports last mustn't leave the depth above the screen the user is actually on.
+      .onDisappear { viewModel.pushDepth = min(viewModel.pushDepth, surfaceDepth - 1) }
   }
 }
