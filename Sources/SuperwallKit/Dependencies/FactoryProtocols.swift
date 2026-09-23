@@ -142,7 +142,6 @@ protocol ApiFactory: AnyObject {
 protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
 
   func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction

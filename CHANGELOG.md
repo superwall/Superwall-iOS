@@ -2,6 +2,13 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.18.0
+### Breaking Changes
+
+- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS, tvOS and watchOS to macOS 12, tvOS 15 and watchOS 8.
+- Requires Xcode 26 (Swift 6.2) or later to build the SDK. Apple has required the iOS 26 SDK for App Store Connect uploads since April 28, 2026. The SDK itself still compiles in the Swift 5 language mode.
+- This ships as a minor release because every App Store Connect upload already needs Xcode 26, so any app that can ship an update already meets the new Xcode requirement. If your app still supports iOS 13 or 14, Swift Package Manager will fail to resolve this version for it: pin SuperwallKit to `4.17.x` (`.upToNextMinor(from: "4.17.0")`, or `~> 4.17.0` in CocoaPods) until you raise your deployment target.
+
 ## 4.17.0
 ### Enhancements
 

@@ -527,7 +527,6 @@ extension DependencyContainer: StoreTransactionFactory {
     )
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
     return StoreTransaction(
       transaction: SK2StoreTransaction(transaction: transaction),

@@ -110,7 +110,6 @@ protocol StoreProductType: Sendable {
   ///
   /// #### Related Articles
   /// - https://support.apple.com/en-us/HT201079
-  @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 8.0, *)
   var isFamilyShareable: Bool { get }
 
   /// The period details for products that are subscriptions.

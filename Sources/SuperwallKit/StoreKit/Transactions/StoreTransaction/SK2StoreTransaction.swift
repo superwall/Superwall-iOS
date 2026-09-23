@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreTransaction: StoreTransactionType {
   let underlyingSK2Transaction: SK2Transaction
 

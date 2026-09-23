@@ -20,7 +20,6 @@ import StoreKit
 public typealias SK1Product = SKProduct
 
 /// TypeAlias to StoreKit 2's Product type, called `StoreKit.Product`
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public typealias SK2Product = StoreKit.Product
 
 /// A convenience wrapper around a StoreKit 1 or StoreKit 2 product.
@@ -104,7 +103,6 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   }
 
   /// Returns the `Product` if this `StoreProduct` represents a `StoreKit.Product`.
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   public var sk2Product: SK2Product? {
     return (product as? SK2StoreProduct)?.underlyingSK2Product
   }
@@ -356,7 +354,6 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   }
 
   /// A boolean that indicates whether the product is family shareable.
-  @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 8.0, *)
   public var isFamilyShareable: Bool {
     product.isFamilyShareable
   }
@@ -442,14 +439,12 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     self.init(SK1StoreProduct(sk1Product: sk1Product, entitlements: entitlements))
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   public convenience init(
     sk2Product: SK2Product
   ) {
     self.init(sk2Product: sk2Product, entitlements: [])
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   convenience init(
     sk2Product: SK2Product,
     entitlements: Set<Entitlement>
@@ -525,7 +520,6 @@ private struct BlankStoreProduct: StoreProductType {
   var introductoryDiscount: StoreProductDiscount? { nil }
   var discounts: [StoreProductDiscount] { [] }
 
-  @available(iOS 14.0, macOS 11.0, tvOS 14.0, watchOS 8.0, *)
   var isFamilyShareable: Bool { false }
 
   func trialPeriodPricePerUnit(_ unit: SubscriptionPeriod.Unit) -> String { "" }

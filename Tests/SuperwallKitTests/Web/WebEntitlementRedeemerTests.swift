@@ -35,9 +35,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("First redemption of code")
   func testRedeem_withCode_firstRedemption_savesCodeAndTracksEvents() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
     let delegateAdapter = SuperwallDelegateAdapter()
@@ -111,9 +108,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("didRedeemLink is called even when no paywall VC is presented")
   func testRedeem_noPaywallVC_callsDidRedeemLink() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     // Verify no paywall VC is presented
@@ -188,9 +182,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Redemption of existing code")
   func testRedeem_withCode_notFirstRedemption_savesCodeAndTracksEvents() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let existingCode = "TESTCODE"
@@ -274,9 +265,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Restores with paywall visible")
   func testRedeem_withCode_paywallVisible() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -543,9 +531,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Revoked SUPERWALL entitlement is correctly removed")
   func testPollWebEntitlements_revokedSuperwallEntitlement() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
@@ -652,9 +637,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Empty poll response does not clobber unexpired web entitlements")
   func testPollWebEntitlements_emptyResponse_keepsUnexpiredWebEntitlements() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
@@ -737,9 +719,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Empty poll response removes expired web entitlements")
   func testPollWebEntitlements_emptyResponse_removesExpiredWebEntitlements() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
@@ -804,9 +783,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("External purchase controller with mixed web + appStore entitlements - polling removes web entitlements")
   func testPollWebEntitlements_externalPurchaseController_mixedEntitlements_webRemoved() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     // Create a simple external purchase controller (doesn't conform to InternalPurchaseController, so isInternal = false)
     class ExternalPurchaseController: PurchaseController {
@@ -950,9 +926,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("External purchase controller with only web entitlements - polling removes all web entitlements")
   func testPollWebEntitlements_externalPurchaseController_onlyWebEntitlements_allRemoved() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     // Create a simple external purchase controller (doesn't conform to InternalPurchaseController, so isInternal = false)
     class ExternalPurchaseController: PurchaseController {
@@ -1077,9 +1050,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Concurrent redemptions blocked when paywall is open")
   func testRedeem_concurrent_paywallOpen_secondBlocked() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
@@ -1177,9 +1147,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Concurrent redemptions allowed when no paywall is open")
   func testRedeem_concurrent_noPaywall_bothAllowed() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
@@ -1236,9 +1203,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Schedules trial notification when redeemed product has free trial")
   func testRedeem_withFreeTrial_schedulesNotification() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -1423,9 +1387,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Does not schedule trial notification when trialPeriodDays is 0")
   func testRedeem_withNoFreeTrial_doesNotScheduleNotification() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -1605,9 +1566,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Does not schedule trial notification when isFreeTrialAvailable is false even with trialPeriodDays > 0")
   func testRedeem_withTrialDaysButNotEligible_doesNotScheduleNotification() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -1784,9 +1742,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Does not schedule trial notification when isFreeTrialAvailable is true but trialPeriodDays is 0")
   func testRedeem_withEligibleButNoTrialDays_doesNotScheduleNotification() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
@@ -1963,9 +1918,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("ExistingCodes redemptions not blocked when paywall is open")
   func testRedeem_existingCodes_paywallOpen_notBlocked() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
@@ -2054,9 +2006,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout submit persists pending context with default attempts")
   func testStripeCheckoutSubmit_persistsPendingState() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2085,9 +2034,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout submit replaces older pending context")
   func testStripeCheckoutSubmit_replacesPendingState() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2117,9 +2063,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Paywall-open Stripe recovery loading shows only for non-expired pending context")
   func testStripePaywallOpenLoading_guardedByTimeout() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2157,9 +2100,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete polls immediately, invokes will/did callbacks, and clears pending on success")
   func testStripeCheckoutComplete_success_immediatePoll() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
@@ -2227,9 +2167,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Legacy redeem keeps callback compatibility: willRedeemLink fires before /redeem request")
   func testLegacyRedeem_callbacksCompatibility() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
@@ -2290,9 +2227,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete retries no-redemption 5 times and keeps pending state")
   func testStripeCheckoutComplete_noRedemption_retriesAndKeepsPending() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2334,9 +2268,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Foreground polling consumes attempts and clears pending after 5 tries")
   func testStripeForegroundPolling_consumesAttempts() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2380,9 +2311,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Foreground Stripe recovery success uses fake callback timing and clears pending context")
   func testStripeForegroundPolling_success_fakeCallbacksAndClearsPending() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
@@ -2451,9 +2379,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Foreground Stripe recovery no-redemption retries and consumes one attempt")
   func testStripeForegroundPolling_noRedemption_retriesAndConsumesAttempt() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2496,9 +2421,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete failed status clears pending state")
   func testStripeCheckoutComplete_failedStatus_clearsPendingState() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
@@ -2533,9 +2455,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Foreground Stripe recovery failed status clears pending state")
   func testStripeForegroundPolling_failedStatus_clearsPendingState() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2564,9 +2483,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete status without codes clears pending state")
   func testStripeCheckoutComplete_completeStatusWithoutCodes_clearsPendingState() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2594,9 +2510,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout abandon tracks transaction_abandon and does not clear pending")
   func testStripeCheckoutAbandon_tracksAndKeepsPending() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockDelegate = MockSuperwallDelegate()
@@ -2632,9 +2545,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("pollOrWaitForActiveStripePoll returns false when no pending state")
   func testPollOrWait_noPendingState_returnsFalse() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2668,9 +2578,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("pollOrWaitForActiveStripePoll starts own poll when no active poll")
   func testPollOrWait_noActivePoll_startsOwnPoll() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2702,9 +2609,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("pollOrWaitForActiveStripePoll returns true when waiting on active poll that redeems")
   func testPollOrWait_waitsForActivePollAndReturnsRedeemed() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2769,9 +2673,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("pollOrWaitForActiveStripePoll ignores redeemed result from different context")
   func testPollOrWait_waitsForActivePollDifferentContext_returnsFalse() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2835,9 +2736,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete preserves existing foreground attempts for same context")
   func testStripeCheckoutComplete_preservesExistingAttempts() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2902,9 +2800,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Stripe checkout complete uses default attempts for new context")
   func testStripeCheckoutComplete_newContext_usesDefaultAttempts() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2945,9 +2840,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Init doesn't start the cold-launch Stripe poll")
   func testInit_doesNotStartColdLaunchPoll() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)
@@ -2984,9 +2876,6 @@ struct WebEntitlementRedeemerTests {
 
   @Test("Cold-launch kick-off polls a pending Stripe checkout")
   func testPollPendingStripeCheckoutOnColdLaunch_pollsPendingCheckout() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
 
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let mockStorage = StorageMock(internalRedeemResponse: nil)

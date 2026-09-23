@@ -76,9 +76,6 @@ struct AdServicesAttributionTests {
 
   @Test
   func getAdServicesToken_noOpsWhenAlreadyPosted() async {
-    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
-      return
-    }
     let dependencyContainer = DependencyContainer()
     let storage = dependencyContainer.storage!
     let poster = dependencyContainer.attributionPoster!
@@ -119,9 +116,6 @@ struct AdServicesAttributionTests {
 
   @Test
   func getAdServicesToken_bailsWhenMaxAttemptsReached() async {
-    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
-      return
-    }
     let dependencyContainer = DependencyContainer()
     let storage = dependencyContainer.storage!
     let poster = dependencyContainer.attributionPoster!
@@ -148,9 +142,6 @@ struct AdServicesAttributionTests {
 
   @Test
   func getAdServicesToken_bailsWhenRetryWindowExpired() async {
-    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
-      return
-    }
     let dependencyContainer = DependencyContainer()
     let storage = dependencyContainer.storage!
     let poster = dependencyContainer.attributionPoster!
@@ -211,9 +202,6 @@ struct AdServicesAttributionTests {
 
   @Test
   func getAdServicesToken_bailsWhenPermanentlyUnsupported() async {
-    guard #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) else {
-      return
-    }
     let dependencyContainer = DependencyContainer()
     let storage = dependencyContainer.storage!
     let poster = dependencyContainer.attributionPoster!
