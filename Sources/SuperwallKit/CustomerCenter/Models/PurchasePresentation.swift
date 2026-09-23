@@ -94,7 +94,9 @@ public final class CustomerCenterPurchase: NSObject {
   public let productId: String?
   /// Where the purchase was made.
   public let store: ProductStore
-  /// The entitlements the purchase unlocks.
+  /// The entitlements the purchase unlocks, including any it no longer grants: for a purchase
+  /// with a transaction behind it these are every entitlement the product has ever unlocked, so
+  /// check ``Entitlement/isActive`` before treating one as current.
   public let entitlements: Set<Entitlement>
   /// The subscription, when the purchase is one.
   public let subscription: SubscriptionTransaction?

@@ -44,14 +44,22 @@ struct FeedbackSurveyView: View {
     .interactiveDismissDisabled(answering != nil)
   }
 
-  /// The survey's own title, else the cancellation question on the path that cancels. Any other
-  /// path gets no title rather than asking the customer why they're cancelling.
   private var surveyTitle: String {
     guard let pending = viewModel.pendingSurvey else { return "" }
-    if let title = pending.survey.title {
+    return Self.title(for: pending.survey, on: pending.path, strings: strings)
+  }
+
+  /// The survey's own title, else the cancellation question on the path that cancels. Any other
+  /// path gets no title rather than asking the customer why they're cancelling.
+  static func title(
+    for survey: CustomerCenterConfiguration.FeedbackSurvey,
+    on path: CustomerCenterConfiguration.Path,
+    strings: CustomerCenterStrings
+  ) -> String {
+    if let title = survey.title {
       return title
     }
-    if case .manageSubscription = pending.path.type {
+    if case .manageSubscription = path.type {
       return strings.string("customer_center_survey_cancel_title")
     }
     return ""

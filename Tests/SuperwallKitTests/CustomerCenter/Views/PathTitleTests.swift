@@ -79,4 +79,19 @@ struct PathTitleTests {
     #expect(web == CustomerCenterStrings.english.string("customer_center_path_manage_subscription_web"))
     #expect(appStore != web)
   }
+
+  @available(iOS 15.0, *)
+  @Test("an untitled survey asks why you're cancelling only on the manage-subscription path")
+  func untitledSurveyTitle() {
+    let untitled = CustomerCenterConfiguration.FeedbackSurvey.cancellation
+    let cancelQuestion = CustomerCenterStrings.english.string("customer_center_survey_cancel_title")
+    #expect(FeedbackSurveyView.title(for: untitled, on: .manageSubscription, strings: .english) == cancelQuestion)
+    #expect(FeedbackSurveyView.title(for: untitled, on: .refund, strings: .english) == "")
+    #expect(FeedbackSurveyView.title(for: untitled, on: .restore, strings: .english) == "")
+
+    let titled = CustomerCenterConfiguration.FeedbackSurvey(id: "s", title: "Tell us more", options: [.tooExpensive])
+    #expect(FeedbackSurveyView.title(for: titled, on: .refund, strings: .english) == "Tell us more")
+    #expect(FeedbackSurveyView.title(for: titled, on: .manageSubscription, strings: .english) == "Tell us more")
+  }
 }
+
