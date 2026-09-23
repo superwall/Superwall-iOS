@@ -1,0 +1,609 @@
+//
+//  CustomerCenterViewModelTests.swift
+//
+//
+//  Created by Jordan Morgan on 20/08/2026.
+//
+
+import Testing
+import Foundation
+@testable import SuperwallKit
+
+@Suite("CustomerCenterViewModel")
+@MainActor
+struct CustomerCenterViewModelTests {
+  let now = Date(timeIntervalSince1970: 1_700_000_000)
+  let monthly = ProductDisplayInfo(productId: "monthly", title: "Monthly", localizedPrice: "$9.99", price: 9.99,
+                                   localizedPeriod: "month", subscriptionGroupId: "g1", isAutoRenewable: true)
+
+  func sub(store: ProductStore = .appStore, willRenew: Bool = true) -> SubscriptionTransaction {
+    SubscriptionTransaction(transactionId: "t", productId: "monthly", purchaseDate: now.addingTimeInterval(-86_400), willRenew: willRenew,
+      isRevoked: false, isInGracePeriod: false, isInBillingRetryPeriod: false, isActive: true,
+      expirationDate: now.addingTimeInterval(86_400), offerType: nil, subscriptionGroupId: "g1", store: store)
+  }
+
+  func info(_ subs: [SubscriptionTransaction]) -> CustomerInfo { CustomerInfo(subscriptions: subs, nonSubscriptions: [], entitlements: []) }
+
+  func make(info: CustomerInfo, config: CustomerCenterConfiguration = .default, env: EnvironmentMock = EnvironmentMock(),
+            restorer: RestorerMock = RestorerMock(), opener: URLOpenerMock = URLOpenerMock(), tracker: EventTrackerMock = EventTrackerMock(),
+            lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock())
+  -> (CustomerCenterViewModel, CustomerInfoProviderMock, ProductsProviderMock) {
+    let (deps, infoMock, productsMock) = CustomerCenterDependencies.mock(info: info, products: ["monthly": monthly], environment: env,
+                                                                        restorer: restorer, urlOpener: opener, tracker: tracker, lookup: lookup)
+    let vm = CustomerCenterViewModel(configuration: config, dependencies: deps, strings: .english, isChangePlanSheetAvailable: true)
+    return (vm, infoMock, productsMock)
+  }
+
+  @Test("load: fetches fresh info + products, picks management screen, tracks open")
+  func loadManagement() async {
+    let tracker = EventTrackerMock()
+    let (vm, infoMock, productsMock) = make(info: info([sub()]), tracker: tracker)
+    await vm.load()
+    #expect(infoMock.fetchCount == 1)
+    #expect(productsMock.requested == ["monthly"])
+    #expect(vm.state == .management)
+    #expect(vm.purchases.map(\.id) == ["monthly"])
+    if case .customerCenterOpen(let screen, let presentation) = tracker.events.first {
+      #expect(screen == .management)
+      #expect(presentation == .sheet)
+    } else {
+      Issue.record("expected a customerCenterOpen event")
+    }
+  }
+
+  @Test("load: no purchases → noPurchases")
+  func loadNoPurchases() async {
+    let (vm, _, _) = make(info: info([]))
+    await vm.load()
+    #expect(vm.state == .noPurchases)
+  }
+
+  @Test("support diagnostics list active entitlement ids, not product ids")
+  func supportDiagnosticsUseEntitlementIds() async throws {
+    let config = CustomerCenterConfiguration.default
+    config.support.email = "help@app.com"
+    let customerInfo = CustomerInfo(
+      subscriptions: [sub()],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "pro"), Entitlement(id: "lapsed", isActive: false)]
+    )
+    let (vm, _, _) = make(info: customerInfo, config: config)
+    await vm.load()
+
+    let url = try #require(vm.supportMailtoURL)
+    let body = try #require(
+      URLComponents(url: url, resolvingAgainstBaseURL: false)?
+        .queryItems?.first { $0.name == "body" }?.value
+    )
+    #expect(body.contains("- Entitlements: pro"))
+    #expect(!body.contains("monthly"))
+  }
+
+  @Test("update banner only when latestAppVersion is newer and warn enabled")
+  func updateBanner() async {
+    let config = CustomerCenterConfiguration.default
+    config.support.latestAppVersion = "2.0.0"
+    let (vm, _, _) = make(info: info([sub()]), config: config, env: EnvironmentMock(appVersion: "1.0.0"))
+    await vm.load()
+    #expect(vm.showsUpdateBanner)
+    vm.continueAfterUpdateWarning()
+    #expect(!vm.showsUpdateBanner)
+    config.support.warnsAboutUpdates = false
+    let (vm2, _, _) = make(info: info([sub()]), config: config, env: EnvironmentMock(appVersion: "1.0.0"))
+    await vm2.load()
+    #expect(!vm2.showsUpdateBanner)
+  }
+
+  @Test("duplicate banner when App Store + web subs both active")
+  func duplicateBanner() async {
+    let (vm, _, _) = make(info: info([sub(), sub(store: .stripe)]))
+    await vm.load()
+    #expect(vm.showsDuplicateBanner)
+  }
+
+  @Test("selecting a path with a survey: stores pending survey, presents sheet, no action yet")
+  func surveyFlow() async {
+    let tracker = EventTrackerMock()
+    let (vm, _, _) = make(info: info([sub()]), tracker: tracker)
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    var selected: [CustomerCenterAction] = []
+    vm.callbacks.didSelectAction = { action, _, _ in selected.append(action) }
+    var survey: (String, String, CustomerCenterAction)?
+    var surveyPathId: String?
+    vm.callbacks.didCompleteSurvey = { survey = ($0, $1, $2); surveyPathId = $3 }
+    var selectedPath: (pathId: String, purchase: CustomerCenterPurchase?)?
+    let recordAction = vm.callbacks.didSelectAction
+    vm.callbacks.didSelectAction = { action, pathId, purchase in
+      recordAction?(action, pathId, purchase)
+      selectedPath = (pathId, purchase)
+    }
+
+    await vm.select(manage, purchase: purchase)
+    #expect(selected == [.manageSubscription])
+    #expect(selectedPath?.pathId == "manage_subscription")
+    #expect(selectedPath?.purchase?.productId == "monthly")
+    #expect(selectedPath?.purchase?.subscription?.productId == "monthly")
+    #expect(vm.sheet == .survey(pathId: "manage_subscription"))
+    let hasActionEvent = tracker.events.contains { event in
+      if case .customerCenterAction(let action, let pathId, let productId) = event {
+        return action == .manageSubscription && pathId == "manage_subscription" && productId == "monthly"
+      }
+      return false
+    }
+    #expect(hasActionEvent)
+
+    await vm.answerSurvey(optionId: "too_expensive")
+    #expect(survey?.0 == "cancel_survey" && survey?.1 == "too_expensive" && survey?.2 == .manageSubscription)
+    #expect(surveyPathId == "manage_subscription")
+    let hasSurveyEvent = tracker.events.contains { event in
+      if case .customerCenterSurveyResponse(let surveyId, let optionId, let action, let pathId, let productId) = event {
+        return surveyId == "cancel_survey" && optionId == "too_expensive" && action == .manageSubscription
+          && pathId == "manage_subscription" && productId == "monthly"
+      }
+      return false
+    }
+    #expect(hasSurveyEvent)
+    // The follow-up action is deferred: presenting the next sheet while the survey sheet is
+    // still animating out is silently dropped on iOS 15/16.
+    #expect(vm.sheet == nil)
+
+    await vm.sheetDidDismiss()
+    #expect(vm.sheet == .manageSubscriptions(groupId: "g1"))
+  }
+
+  @Test("cancelling the survey drops the pending action so a later dismissal performs nothing")
+  func cancelSurveyDropsPendingAction() async {
+    let (vm, _, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    await vm.select(manage, purchase: purchase)
+    #expect(vm.sheet == .survey(pathId: "manage_subscription"))
+
+    vm.cancelSurvey()
+    #expect(vm.pendingSurvey == nil)
+    #expect(vm.sheet == nil)
+
+    await vm.sheetDidDismiss()
+    #expect(vm.sheet == nil)
+  }
+
+  @Test("restore: gate can cancel; success/notFound states; tracks via Superwall restore events (not duplicated here)")
+  func restoreFlow() async {
+    let restorer = RestorerMock()
+    let (vm, _, _) = make(info: info([]), restorer: restorer)
+    await vm.load()
+    vm.callbacks.shouldRestore = { false }
+    await vm.performRestore()
+    #expect(restorer.calls == 0)
+    #expect(vm.restoreState == .idle)
+
+    vm.callbacks.shouldRestore = nil
+    await vm.performRestore()
+    #expect(restorer.calls == 1)
+    #expect(vm.restoreState == .notFound)   // info still has no purchases
+
+    let (vm2, infoMock, _) = make(info: info([]), restorer: restorer)
+    await vm2.load()
+    infoMock.subject.value = info([sub()])
+    await vm2.performRestore()
+    #expect(vm2.restoreState == .restored)
+  }
+
+  @Test("restore: entitlement-only info (no local transactions) still counts as a purchase")
+  func restoreFlowEntitlementOnly() async {
+    let restorer = RestorerMock()
+    let (vm, infoMock, _) = make(info: info([]), restorer: restorer)
+    await vm.load()
+    #expect(vm.state == .noPurchases)
+    let entitlementOnlyInfo = CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [Entitlement(id: "premium")])
+    infoMock.subject.value = entitlementOnlyInfo
+    await vm.performRestore()
+    #expect(vm.restoreState == .restored)
+    #expect(vm.state == .management)
+  }
+
+  @Test("refund: select opens refund sheet with looked-up transaction id; finish records result + event + callback")
+  func refundFlow() async {
+    let lookup = StoreKitTransactionLookupMock(); lookup.transactionIDs["monthly"] = 42
+    let tracker = EventTrackerMock()
+    let (vm, _, _) = make(info: info([sub()]), tracker: tracker, lookup: lookup)
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let refund = vm.paths(for: purchase).first { $0.path.id == "refund" }!
+    await vm.select(refund, purchase: purchase)
+    #expect(vm.sheet == .refund(transactionId: 42, productId: "monthly"))
+    var completed: (String, CustomerCenterRefundStatus)?
+    vm.callbacks.didCompleteRefund = { completed = ($0, $1) }
+    await vm.refundSheetDidFinish(productId: "monthly", status: .success)
+    #expect(completed?.1 == .success)
+    #expect(vm.refundResult?.status == .success)
+    let hasRefundEvent = tracker.events.contains { event in
+      if case .customerCenterRefundRequest(let productId, let status) = event {
+        return productId == "monthly" && status == .success
+      }
+      return false
+    }
+    #expect(hasRefundEvent)
+  }
+
+  @Test("refund: the result keeps its product when the sheet binding clears the sheet first")
+  func refundResultSurvivesBindingClear() async {
+    let lookup = StoreKitTransactionLookupMock(); lookup.transactionIDs["monthly"] = 42
+    let tracker = EventTrackerMock()
+    let (vm, _, _) = make(info: info([sub()]), tracker: tracker, lookup: lookup)
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let refund = vm.paths(for: purchase).first { $0.path.id == "refund" }!
+    await vm.select(refund, purchase: purchase)
+    var completedProductId: String?
+    vm.callbacks.didCompleteRefund = { productId, _ in completedProductId = productId }
+
+    // Apple's sheet closing writes `false` to the binding before the completion runs.
+    CustomerCenterSheetsModifier(viewModel: vm, surfaceDepth: 0).refundBinding.wrappedValue = false
+    #expect(vm.sheet == nil)
+    await vm.refundRequestDidFinish(status: .success)
+
+    #expect(completedProductId == "monthly")
+    #expect(vm.refundResult?.productId == "monthly")
+    let hasRefundEvent = tracker.events.contains { event in
+      if case .customerCenterRefundRequest(let productId, .success) = event {
+        return productId == "monthly"
+      }
+      return false
+    }
+    #expect(hasRefundEvent)
+  }
+
+  func makeGated(
+    info customerInfo: CustomerInfo,
+    products: GatedProductsProviderMock,
+    tracker: EventTrackerMock = EventTrackerMock()
+  ) -> (CustomerCenterViewModel, CustomerInfoProviderMock) {
+    let infoMock = CustomerInfoProviderMock(customerInfo)
+    let deps = CustomerCenterDependencies(
+      customerInfo: infoMock,
+      products: products,
+      restore: RestorerMock(),
+      urlOpener: URLOpenerMock(),
+      tracker: tracker,
+      environment: EnvironmentMock(),
+      transactionLookup: StoreKitTransactionLookupMock(),
+      appStoreVersion: AppStoreVersionProviderMock()
+    )
+    return (CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english), infoMock)
+  }
+
+  @Test("apply: an older load finishing late doesn't overwrite newer customer info")
+  func staleApplyIsDropped() async {
+    let products = GatedProductsProviderMock()
+    let (vm, infoMock) = makeGated(info: info([sub()]), products: products)
+
+    let loading = Task { await vm.load() }
+    await waitUntil { products.isHolding(call: 1) }
+    infoMock.subject.send(info([]))
+    await waitUntil { vm.state == .noPurchases }
+    products.release()
+    await loading.value
+
+    #expect(vm.state == .noPurchases)
+    #expect(vm.purchases.isEmpty)
+  }
+
+  @Test("load: the open event reads the info it loaded, even when a newer apply is still running")
+  func openEventIgnoresOvertakenApply() async {
+    let products = GatedProductsProviderMock(gatedCalls: [1, 2])
+    let tracker = EventTrackerMock()
+    let (vm, infoMock) = makeGated(info: info([sub()]), products: products, tracker: tracker)
+
+    let loading = Task { await vm.load() }
+    await waitUntil { products.isHolding(call: 1) }
+    infoMock.subject.send(info([sub()]))
+    await waitUntil { products.isHolding(call: 2) }
+    products.release(call: 1)
+    await loading.value
+    products.release(call: 2)
+
+    let screen: CustomerCenterScreenType? = tracker.events.lazy.compactMap { event -> CustomerCenterScreenType? in
+      if case .customerCenterOpen(let screen, _) = event { return screen }
+      return nil
+    }.first
+    #expect(screen == .management)
+  }
+
+  @Test("url external → opener; url inApp → safari sheet; custom → callback only; contactSupport → mailto")
+  func urlCustomSupport() async {
+    let opener = URLOpenerMock()
+    let config = CustomerCenterConfiguration.default
+    config.support.email = "help@app.com"
+    let ext = URL(string: "https://a.b/ext")!, inApp = URL(string: "https://a.b/in")!
+    config.managementScreen.paths += [
+      .init(id: "ext", type: .url(ext, openMethod: .external)),
+      .init(id: "in", type: .url(inApp, openMethod: .inApp)),
+      .init(id: "c", type: .custom(identifier: "delete"))
+    ]
+    let (vm, _, _) = make(info: info([sub()]), config: config, opener: opener)
+    await vm.load()
+    var selected: [CustomerCenterAction] = []
+    vm.callbacks.didSelectAction = { action, _, _ in selected.append(action) }
+    let paths = vm.paths(for: nil)
+    await vm.select(paths.first { $0.id == "ext" }!, purchase: nil)
+    #expect(opener.opened == [ext])
+    await vm.select(paths.first { $0.id == "in" }!, purchase: nil)
+    #expect(vm.sheet == .safari(inApp))
+    await vm.select(paths.first { $0.id == "c" }!, purchase: nil)
+    #expect(selected.last == .custom(identifier: "delete"))
+    await vm.select(paths.first { $0.id == "contact_support" }!, purchase: nil)
+    #expect(opener.opened.last?.scheme == "mailto")
+  }
+
+  @Test("web sub manage → safari sheet with web management URL")
+  func webManage() async {
+    let url = URL(string: "https://x.superwall.app/manage")!
+    let (vm, _, _) = make(info: info([sub(store: .stripe)]), env: EnvironmentMock(webManagementURL: url))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    vm.callbacks.didSelectAction = nil
+    // The default manage path carries a survey, but web flows skip it: the action leaves the app,
+    // so the answer would be gathered for something whose outcome is never observed. The handoff
+    // therefore happens on the first tap, with no survey in between.
+    await vm.select(manage, purchase: purchase)
+    #expect(vm.pendingSurvey == nil)
+    #expect(vm.sheet == .safari(url))
+  }
+
+  // MARK: - Contact support visibility
+
+  @Test("contact support row shows even when canOpenURL is false; tap falls back to the address sheet")
+  func contactSupportVisibleWithoutCanOpen() async {
+    // On device `canOpenURL("mailto:")` is false unless the host app declares `mailto` in
+    // `LSApplicationQueriesSchemes`, so visibility must not depend on it.
+    let opener = URLOpenerMock()
+    opener.openable = false
+    let config = CustomerCenterConfiguration.default
+    config.support.email = "help@app.com"
+    let (vm, _, _) = make(info: info([sub()]), config: config, opener: opener)
+    await vm.load()
+
+    let contact = vm.paths(for: nil).first { $0.path.id == "contact_support" }
+    #expect(contact != nil)
+
+    await vm.select(contact!, purchase: nil)
+    #expect(opener.opened.isEmpty)
+    #expect(vm.sheet == .noMailApp(email: "help@app.com"))
+  }
+
+  @Test("contact support row is hidden when no support email is configured")
+  func contactSupportHiddenWithoutEmail() async {
+    let (vm, _, _) = make(info: info([sub()]))   // default config carries no support email
+    await vm.load()
+    #expect(!vm.paths(for: nil).contains { $0.path.id == "contact_support" })
+  }
+
+  // MARK: - Restore availability
+
+  @Test("management screen still offers restore alongside a single subscription; detail screen doesn't")
+  func managementPathsIncludeRestore() async {
+    let (vm, _, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    #expect(vm.paths(for: purchase).map(\.destination).contains(.restore))
+    #expect(!vm.paths(for: purchase, isScreenLevel: false).map(\.destination).contains(.restore))
+  }
+
+  // MARK: - Receipt refresh on store-sheet dismissal
+
+  @Test("change-plan sheet dismissal reloads from receipts rather than the cache")
+  func changePlanDismissalRefreshesReceipts() async {
+    let (vm, infoMock, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let change = vm.paths(for: purchase).first { $0.path.id == "change_plan" }!
+    await vm.select(change, purchase: purchase)
+    #expect(vm.sheet == .changePlan(groupId: "g1", productIds: nil))
+
+    await vm.sheetDidDismiss()
+    #expect(infoMock.didRefreshReceipts)
+  }
+
+  @Test("manage-subscriptions dismissal refreshes receipts; a plain sheet dismissal does not")
+  func manageSubscriptionsDismissalRefreshesReceipts() async {
+    let (vm, infoMock, _) = make(info: info([sub()]))
+    await vm.load()
+    let purchase = vm.purchases[0]
+    let manage = vm.paths(for: purchase).first { $0.path.id == "manage_subscription" }!
+    await vm.select(manage, purchase: purchase)
+    await vm.answerSurvey(optionId: "too_expensive")
+
+    // Dismissing the *survey* sheet performs the deferred action but needs no receipt reload.
+    await vm.sheetDidDismiss()
+    #expect(vm.sheet == .manageSubscriptions(groupId: "g1"))
+    #expect(!infoMock.didRefreshReceipts)
+
+    // Dismissing Apple's manage-subscriptions sheet does: cancelling auto-renew there emits no
+    // `Transaction.updates`, so a cached read would miss it.
+    await vm.sheetDidDismiss()
+    #expect(infoMock.didRefreshReceipts)
+  }
+
+  // MARK: - Embedded navigation (visibility count)
+
+  /// Tests below use a short debounce so they don't need real sleeps of `dismissDebounceInterval`
+  /// (the production default, 0.6s) to observe whether `dismiss()` fired.
+  func makeForVisibility(info customerInfo: CustomerInfo) -> CustomerCenterViewModel {
+    let (deps, _, _) = CustomerCenterDependencies.mock(info: customerInfo, products: ["monthly": monthly])
+    return CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english,
+      isChangePlanSheetAvailable: true,
+      dismissDebounceInterval: 0.02
+    )
+  }
+
+  /// Polls until `condition` holds or a generous timeout elapses. Under parallel test
+  /// execution the main actor can stall for tens of seconds (a 100ms sleep has been observed
+  /// taking 25s wall-clock), so tests wait on the outcome with a deadline that dwarfs the
+  /// congestion rather than sleeping a fixed wall-clock amount. Passing runs exit early.
+  func waitUntil(timeout: TimeInterval = 30, _ condition: () -> Bool) async {
+    let deadline = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
+  @Test("appear → disappear → after debounce, didDismiss fires exactly once")
+  func appearDisappearFiresOnce() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+  }
+
+  @Test("appear → push (second appear) → first disappear → not dismissed while still inside")
+  func pushWithinCustomerCenterIsNotDismissal() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissed = false
+    vm.callbacks.didDismiss = { dismissed = true }
+
+    // Root appears, then a pushed screen appears before the root disappears (embedded mode:
+    // both can be briefly on screen, or the push can register before the pop).
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(!dismissed)
+
+    // The second surface disappearing too means the Customer Center is genuinely gone.
+    vm.surfaceDidDisappear()
+    await waitUntil { dismissed }
+    #expect(dismissed)
+  }
+
+  @Test("two-deep push: three appears then three disappears fires exactly once")
+  func twoDeepPushFiresOnce() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    vm.surfaceDidDisappear()
+    vm.surfaceDidDisappear()
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+  }
+
+  @Test("debounced dismissal still fires after the owner releases the view model (sheet teardown)")
+  func debounceSurvivesOwnerRelease() async {
+    var vm: CustomerCenterViewModel? = makeForVisibility(info: info([sub()]))
+    await vm?.load()
+    var dismissCount = 0
+    vm?.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm?.surfaceDidAppear()
+    vm?.surfaceDidDisappear()
+    // SwiftUI releases the @StateObject right after the sheet's last onDisappear; the pending
+    // debounce must keep the model alive long enough to deliver didDismiss and track the close.
+    vm = nil
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+  }
+
+  @Test("dismiss() remains idempotent when reached via the debounce and called again directly")
+  func dismissRemainsIdempotent() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+
+    // A stray extra disappear (or a direct call) after the debounce already fired must not
+    // double-fire the callback or the close event.
+    vm.surfaceDidDisappear()
+    vm.dismiss()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 1)
+  }
+
+  @Test("dismiss tracks close and calls back; publisher updates re-render")
+  func dismissAndPublisher() async {
+    let tracker = EventTrackerMock()
+    let (vm, infoMock, _) = make(info: info([]), tracker: tracker)
+    await vm.load()
+    #expect(vm.state == .noPurchases)
+    infoMock.subject.value = info([sub()])
+    await waitUntil { vm.state == .management }
+    #expect(vm.state == .management)
+    var dismissed = false
+    vm.callbacks.didDismiss = { dismissed = true }
+    vm.dismiss()
+    #expect(dismissed)
+    func trackedClose() -> Bool {
+      if case .customerCenterClose = tracker.events.last { return true }
+      return false
+    }
+    await waitUntil { trackedClose() }
+    #expect(trackedClose())
+  }
+
+  // MARK: - Web product details
+
+  @Test("a web purchase shows placeholders until the catalogue answers, without holding the screen")
+  func webPurchaseShowsPlaceholdersUntilTheCatalogueAnswers() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .stripe)]))
+    productsMock.products = [:]
+    productsMock.catalogue = ["monthly": monthly]
+    productsMock.holdsCatalogue = true
+
+    await vm.load()
+    #expect(vm.state == .management, "the screen draws without waiting on the catalogue")
+    #expect(vm.purchases.first?.isAwaitingCatalogue == true)
+    #expect(vm.purchases.first?.priceLine == nil)
+    #expect(productsMock.catalogueRequested == ["monthly"])
+
+    await waitUntil { productsMock.isHoldingCatalogue }
+    productsMock.releaseCatalogue()
+    await waitUntil { vm.purchases.first?.isAwaitingCatalogue == false }
+    #expect(vm.purchases.first?.priceLine == "$9.99 / month")
+    #expect(vm.purchases.first?.title == "Monthly")
+  }
+
+  @Test("an App Store purchase never waits on the catalogue")
+  func appStorePurchaseSkipsTheCatalogue() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .appStore)]))
+    productsMock.products = [:]
+
+    await vm.load()
+    #expect(vm.purchases.first?.isAwaitingCatalogue == false)
+    #expect(productsMock.catalogueRequested == nil)
+  }
+
+  @Test("a catalogue that has nothing clears the placeholders")
+  func emptyCatalogueClearsPlaceholders() async {
+    let (vm, _, productsMock) = make(info: info([sub(store: .paddle)]))
+    productsMock.products = [:]
+
+    await vm.load()
+    await waitUntil { vm.purchases.first?.isAwaitingCatalogue == false }
+    #expect(vm.purchases.first?.isAwaitingCatalogue == false)
+    #expect(vm.purchases.first?.priceLine == nil)
+    #expect(vm.purchases.first?.statusLine.hasPrefix("Renews on") == true)
+  }
+}

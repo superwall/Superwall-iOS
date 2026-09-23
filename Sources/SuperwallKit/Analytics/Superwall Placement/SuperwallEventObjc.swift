@@ -4,7 +4,7 @@
 //
 //  Created by Yusuf Tör on 07/11/2022.
 //
-// swiftlint:disable file_length
+// swiftlint:disable file_length type_body_length
 
 import Foundation
 
@@ -263,6 +263,17 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When install attribution is resolved or fails to resolve.
   case attributionMatch
 
+  /// When the Customer Center is presented.
+  case customerCenterOpen
+  /// When the Customer Center is dismissed.
+  case customerCenterClose
+  /// When the user taps a path in the Customer Center.
+  case customerCenterAction
+  /// When the user answers a Customer Center survey.
+  case customerCenterSurveyResponse
+  /// When a refund request started from the Customer Center completes.
+  case customerCenterRefundRequest
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -427,6 +438,16 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "testModeModal_open"
     case .testModeModalClose:
       return "testModeModal_close"
+    case .customerCenterOpen:
+      return "customerCenter_open"
+    case .customerCenterClose:
+      return "customerCenter_close"
+    case .customerCenterAction:
+      return "customerCenter_action"
+    case .customerCenterSurveyResponse:
+      return "customerCenter_surveyResponse"
+    case .customerCenterRefundRequest:
+      return "customerCenter_refundRequest"
     case .paywallPageView:
       return "paywall_page_view"
     }

@@ -12,8 +12,21 @@ targets:
     scheme:
       testTargets:
         - name: SuperwallKitTests
+          # Serial on purpose. Under parallel testing the suite stalls partway through and never
+          # finishes — the generated scheme has carried `parallelizable = "NO"` since 7e87a07,
+          # and regenerating it from `parallelizable: true` silently reintroduced the hang. The
+          # source of truth now says what the scheme has to say.
+          parallelizable: false
       commandLineArguments:
         SUPERWALL_UNIT_TESTS: true
+      environmentVariables:
+        # Where `DesignReviewSnapshots` writes its PNGs. Off by default — the suite is dormant
+        # without it. Tick it in Xcode's scheme editor to render the design-review screens. It
+        # has to live on the scheme: a plain `CUSTOMER_CENTER_SNAPSHOT_DIR=... xcodebuild test`
+        # never reaches the test process running in the simulator.
+        - variable: CUSTOMER_CENTER_SNAPSHOT_DIR
+          value: /tmp/customer-center-screens
+          isEnabled: false
     settings:
       PRODUCT_BUNDLE_IDENTIFIER: "com.superwall.SuperwallKit"
     info:

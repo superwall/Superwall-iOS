@@ -1,0 +1,249 @@
+# Customer Center
+
+A native, self-service screen where users can view and manage their subscriptions and purchases.
+
+## Overview
+
+The Customer Center lets users restore purchases, manage or cancel a subscription, request a
+refund, change plans, contact support, answer exit surveys and open any subscription for its details — all
+without leaving your app. It ships with sensible defaults and is fully configurable, so you can
+tailor which paths appear, their titles, surveys and accent colour to match your app.
+
+The Customer Center requires **iOS 15.0+**.
+
+### Presenting from UIKit
+
+Present it over your current view controller with ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``:
+
+```swift
+Superwall.shared.presentCustomerCenter()
+```
+
+Or use ``CustomerCenterViewController`` yourself. Present it modally:
+
+```swift
+let customerCenter = CustomerCenterViewController(delegate: myDelegate)
+present(customerCenter, animated: true)
+```
+
+Or push it onto a navigation controller of your own, which is what you want when the Customer
+Center is a row in your own settings screen:
+
+```swift
+let customerCenter = CustomerCenterViewController(
+  presentationStyle: .embedded,
+  delegate: myDelegate
+)
+navigationController?.pushViewController(customerCenter, animated: true)
+```
+
+An embedded Customer Center renders into your navigation bar and leaves it alone — your title, your
+back button, your appearance, your swipe-to-go-back. It adds no close button, since your stack
+already provides the way back. Its own screen — the detail for a subscription — is pushed onto
+your stack as a further view controller, so it behaves like any other screen you pushed yourself.
+
+> Important: A `CustomerCenterViewController` you construct yourself is yours, and the SDK does not
+> track it. ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)`` will present
+> a second, independent Customer Center over the top of one you pushed, and
+> ``Superwall/dismissCustomerCenter(completion:)`` only dismisses the one the SDK presented — it
+> does nothing to yours. Pick one entry point per screen: let the SDK present it, or own the
+> lifecycle of the controller you construct.
+
+### Presenting from SwiftUI
+
+Use the ``SwiftUICore/View/presentSuperwallCustomerCenter(isPresented:configuration:onDismiss:)`` modifier to present it as a sheet:
+
+```swift
+struct SettingsView: View {
+  @State private var showsCustomerCenter = false
+
+  var body: some View {
+    Button("Manage Subscription") {
+      showsCustomerCenter = true
+    }
+    .presentSuperwallCustomerCenter(isPresented: $showsCustomerCenter)
+  }
+}
+```
+
+Or embed ``CustomerCenterView`` directly in your own navigation stack:
+
+```swift
+CustomerCenterView(navigationOptions: .init(style: .embedded))
+```
+
+### Presenting from Objective-C
+
+Use `presentCustomerCenterWithConfiguration:from:delegate:onDismiss:`:
+
+```objc
+[Superwall.sharedInstance presentCustomerCenterWithConfiguration:nil
+                                                              from:nil
+                                                          delegate:myDelegate
+                                                         onDismiss:nil];
+```
+
+## Configuring the Customer Center
+
+Set the default configuration via ``SuperwallOptions/customerCenter`` before calling
+`Superwall.configure(apiKey:purchaseController:options:completion:)`, or pass a
+``CustomerCenterConfiguration`` directly to a presentation call to override it for that
+presentation only.
+
+```swift
+let options = SuperwallOptions()
+
+let cancelSurvey = CustomerCenterConfiguration.FeedbackSurvey(
+  id: "cancel_survey",
+  title: "Why are you cancelling?",
+  options: [
+    .tooExpensive,
+    .init(id: "dont_use", title: "Don't use it enough"),
+    .boughtByMistake
+  ]
+)
+
+options.customerCenter = CustomerCenterConfiguration(
+  managementScreen: .init(
+    paths: [
+      .restore,
+      .changePlan,
+      .refund,
+      .manageSubscription(survey: cancelSurvey),
+      .url(URL(string: "https://mycompany.com/faq")!, title: "FAQ"),
+      .contactSupport
+    ]
+  ),
+  noPurchasesScreen: .init(
+    paths: [.restore]
+  ),
+  support: .init(email: "support@mycompany.com")
+)
+
+Superwall.configure(apiKey: "MY_API_KEY", options: options)
+```
+
+Every path is optional and reorderable. Built-in path types (``CustomerCenterConfiguration/PathType``)
+cover restoring purchases, managing or cancelling a subscription, requesting a refund, changing
+plans, and contacting support; ``CustomerCenterConfiguration/PathType/url(_:openMethod:)``
+opens a URL either in-app or externally, and ``CustomerCenterConfiguration/PathType/custom(identifier:)``
+lets you handle an action entirely yourself via the delegate.
+
+Every path type but `url` names its own row, so `title` on ``CustomerCenterConfiguration/Path`` is
+optional and overrides that default. A `url` row needs a title, and `.url(_:title:)` asks for one:
+a URL could be anything, and its host is the same across all of your own links, so deriving one
+would render your FAQ, terms and privacy rows identically.
+
+For the survey, `.cancellation` is the built-in one the default configuration uses:
+`.manageSubscription(survey: .cancellation)`. A survey's options can mix the localized built-ins
+(`.tooExpensive`, `.dontUse`, `.boughtByMistake`) with your own. A survey without a `title` asks
+"Why are you cancelling?" on a manage-subscription path, so give it a title anywhere else.
+
+Each path also has an `id`, reported as `path_id` on Customer Center events. You don't need to set
+it: a built-in path uses its type (`restore`, `refund`, `manage_subscription` and so on), a `url`
+path uses its host and path (`mycompany.com/faq`) and a `custom` path uses its identifier. Pass your own `id` only when two paths
+on the same screen would otherwise share one, such as two `refund` paths with different windows.
+
+### Warning customers about old versions
+
+The Customer Center can show a banner asking the customer to update. By default it finds the
+published version itself, by looking your app up on the App Store:
+
+```swift
+options.customerCenter.support = .init(
+  email: "support@mycompany.com",
+  warnsAboutUpdates: true          // on by default
+)
+```
+
+Set `latestAppVersion` to skip the lookup and warn against a version you control, which is what
+you want if you gate support on a specific build:
+
+```swift
+options.customerCenter.support = .init(
+  email: "support@mycompany.com",
+  latestAppVersion: "2.1.0"
+)
+```
+
+The banner appears only when the installed version is *older* than the published one — never when
+it merely differs. It is skipped entirely on TestFlight, sandbox and simulator builds, whose
+version is normally ahead of the App Store. Set `checksAppStoreForUpdates` to `false` to stop the
+lookup without turning the banner off. Any failure — offline, no listing found, an unparseable
+version — hides the banner and logs under the `customerCenter` scope.
+
+> Note: The lookup result is cached for 24 hours, and only the bundle identifier is sent. Because
+> it happens after the screen has loaded, the banner animates in a moment later rather than being
+> there on first paint.
+
+> Warning: Apple phases a release in over seven days, but the lookup sees the new version as soon
+> as it goes live. For the first few days of a release, some customers are told to update to a
+> build that hasn't reached them yet. If that matters for your app, set `latestAppVersion` and
+> raise it on your own schedule, or set `checksAppStoreForUpdates` to `false`.
+
+## The Delegate
+
+Implement ``CustomerCenterDelegate`` (or ``CustomerCenterDelegateObjc`` from Objective-C) to
+observe and, where relevant, gate what happens in the Customer Center:
+
+```swift
+final class MyCustomerCenterDelegate: CustomerCenterDelegate {
+  func customerCenterShouldRestorePurchases() async -> Bool {
+    true
+  }
+
+  func customerCenterDidSelectAction(_ action: CustomerCenterAction, pathId: String, purchase: CustomerCenterPurchase?) {
+    print("Customer Center path \(pathId) selected: \(action)")
+  }
+
+  func customerCenterDidCompleteSurvey(surveyId: String, optionId: String, action: CustomerCenterAction, pathId: String) {
+    print("Survey \(surveyId) answered with \(optionId)")
+  }
+
+  func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus) {
+    print("Refund request for \(productId) finished with status \(status)")
+  }
+
+  func customerCenterDidDismiss() {
+    print("Customer Center dismissed")
+  }
+}
+```
+
+The view controller does not retain its delegate — either keep a strong reference to it yourself,
+or pass it to `presentCustomerCenter(delegate:)`, which retains it for the duration of the
+presentation.
+
+In SwiftUI, use the equivalent modifiers instead of a delegate:
+
+```swift
+CustomerCenterView()
+  .onCustomerCenterShouldRestore { true }
+  .onCustomerCenterAction { action, pathId, purchase in print(action, pathId) }
+  .onCustomerCenterSurveyResponse { surveyId, optionId, action, pathId in print(surveyId, optionId) }
+  .onCustomerCenterRefundRequest { productId, status in print(productId, status) }
+  .onCustomerCenterDismiss { print("dismissed") }
+```
+
+## Events
+
+The Customer Center fires the following ``SuperwallEvent`` cases, which you can observe via
+``SuperwallDelegate/handleSuperwallEvent(withInfo:)`` alongside all other SDK events:
+
+- `customerCenterOpen`: the Customer Center is presented.
+- `customerCenterClose`: the Customer Center is dismissed.
+- `customerCenterAction`: the user taps a path.
+- `customerCenterSurveyResponse`: the user answers a survey attached to a path.
+- `customerCenterRefundRequest`: a refund request finishes.
+
+## Limitations
+
+- Requires iOS 15.0+. On earlier versions, presentation calls are unavailable at compile time.
+- A purchase whose product has no display name is headed by the entitlement it unlocks, or by
+  nothing — never by the product identifier. Today that is every web (Stripe, Paddle) purchase,
+  because the product catalogue doesn't return a name yet; the name is used as soon as it does.
+  An App Store product has one once it is localized in App Store Connect — before that, StoreKit
+  reports an empty display name, which is treated the same way.
+- Promotional offers are not yet supported as a Customer Center path.
+- Remote configuration of the Customer Center from the Superwall dashboard is coming; today it's
+  configured entirely in code via ``SuperwallOptions/customerCenter``.

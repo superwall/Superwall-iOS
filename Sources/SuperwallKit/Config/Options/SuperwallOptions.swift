@@ -22,6 +22,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
+  /// Configures the Customer Center presented via ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
+  public var customerCenter = CustomerCenterConfiguration.default
+
   /// A mapping of local resource IDs to ``AssetResource`` values.
   ///
   /// Use this to serve paywall assets (images, videos, Lottie animations) from the app

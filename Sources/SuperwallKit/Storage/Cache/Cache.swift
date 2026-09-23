@@ -28,24 +28,39 @@ class Cache {
   /// Size is allocated for disk cache, in byte. 0 mean no limit. Default is 0
   private var maxDiskCacheSize: UInt = 0
 
+  /// The cache used when none is injected. Every instance shares the same on-disk directories,
+  /// which makes concurrently running unit tests contaminate each other's storage — so under
+  /// the test runner each defaulted cache gets its own directories. Tests that exercise the
+  /// real directory layout construct `Cache` directly.
+  static func makeDefault() -> Cache {
+    if ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
+      return Cache(directoryNamespace: UUID().uuidString)
+    }
+    return Cache()
+  }
+
   /// Specify distinct name param, it represents folder name for disk cache
   init(
     fileManager: FileManager = FileManager(),
-    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix)
+    ioQueue: DispatchQueue = DispatchQueue(label: Cache.ioQueuePrefix),
+    directoryNamespace: String? = nil
   ) {
     self.fileManager = fileManager
+    func namespaced(_ prefix: String) -> String {
+      directoryNamespace.map { "\(prefix)-\($0)" } ?? prefix
+    }
     cacheUrl = fileManager
       .urls(for: .cachesDirectory, in: .userDomainMask)
       .first?
-      .appendingPathComponent(Cache.cacheDirectoryPrefix)
+      .appendingPathComponent(namespaced(Cache.cacheDirectoryPrefix))
     userSpecificDocumentUrl = fileManager
       .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
-      .appendingPathComponent(Cache.userSpecificDocumentDirectoryPrefix)
+      .appendingPathComponent(namespaced(Cache.userSpecificDocumentDirectoryPrefix))
     appSpecificDocumentUrl = fileManager
       .urls(for: .applicationSupportDirectory, in: .userDomainMask)
       .first?
-      .appendingPathComponent(Cache.appSpecificDocumentDirectoryPrefix)
+      .appendingPathComponent(namespaced(Cache.appSpecificDocumentDirectoryPrefix))
 
     self.ioQueue = ioQueue
 

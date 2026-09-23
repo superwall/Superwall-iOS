@@ -710,6 +710,9 @@ class DeviceHelper {
     return installDate
   }()
 
+  /// The device's app install date, exposed internally for consumers such as the Customer Center.
+  var appInstallDateValue: Date? { appInstallDate }
+
   private let sdkVersionPadded: String
   private let appVersionPadded: String
 

@@ -45,7 +45,7 @@ final class StorageMock: Storage {
     internalCachedConfig: Config? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: Set<Assignment>? = [],
-    cache: Cache = Cache()
+    cache: Cache = .makeDefault()
   ) {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
