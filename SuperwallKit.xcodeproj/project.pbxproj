@@ -191,6 +191,7 @@
 		4EF50815E31F85400513F053 /* PresentationItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23F2FE294EBC63F81786A85 /* PresentationItems.swift */; };
 		4EFA142D3D37B0564BDB52CB /* NetworkMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D5ABDB23D56393EFDCF73A /* NetworkMock.swift */; };
 		4FE19D26711ECB7B2EE8806D /* TriggerRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 481D47E5121C521DDA268609 /* TriggerRule.swift */; };
+		506EAD727C35C5A620D1B1BC /* DeviceIPCollectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8A8859BFC55BD33AF575BEE /* DeviceIPCollectorTests.swift */; };
 		507E017DBEC2663F1B4727E0 /* Dictionary+Merging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 335888285131F832E1C91A8F /* Dictionary+Merging.swift */; };
 		50E0E5F4B476F2F5B8DF299E /* DevMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9C76F083AB62E59C5DF7FEE /* DevMode.swift */; };
 		519196E0035C17C73C525526 /* V2Migrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A6728F289EC434B1C856BD2 /* V2Migrator.swift */; };
@@ -312,6 +313,7 @@
 		88D22C84ACDED44E3952C786 /* SK2ObserverModePurchaseDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC8705042D6AA74D40350A9 /* SK2ObserverModePurchaseDetector.swift */; };
 		899C32DE12E630CE296556FA /* SubscriptionStatusEmissionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6765992D172AD32F53E008BD /* SubscriptionStatusEmissionTests.swift */; };
 		89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002FEEF20120D3A6B2AE923 /* SurveyManagerTests.swift */; };
+		8A4B27BB3442FDE107187EDE /* DeviceIPCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E64F6845B4CB61F7C7A5657 /* DeviceIPCollector.swift */; };
 		8ACC4731031DA94C709915CF /* Transaction+LatestSince.swift in Sources */ = {isa = PBXBuildFile; fileRef = F36CB341B28F250F5252A8DF /* Transaction+LatestSince.swift */; };
 		8AEB577682D9AB9354CB8EE9 /* UIColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2888B05A273E9EB6E9382332 /* UIColor+Hex.swift */; };
 		8B200F99B71D706D45948339 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE0E783785F917188D12F4B4 /* Utils.swift */; };
@@ -1010,6 +1012,7 @@
 		9DC4D23D1EDDA249C928930D /* PaddingListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaddingListener.swift; sourceTree = "<group>"; };
 		9E1EFE389B54C304F2B01620 /* DeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceInfo.swift; sourceTree = "<group>"; };
 		9E3DAD767490972EA30257F9 /* EntitlementProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementProcessorTests.swift; sourceTree = "<group>"; };
+		9E64F6845B4CB61F7C7A5657 /* DeviceIPCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIPCollector.swift; sourceTree = "<group>"; };
 		9E80C81546752BCF32016A27 /* InAppReceipt+ASN1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "InAppReceipt+ASN1.swift"; sourceTree = "<group>"; };
 		9EF73F40EFFEC58FA0D30DC4 /* SuperwallPlacementInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallPlacementInfo.swift; sourceTree = "<group>"; };
 		9EF9D5F77A002F6F0C03C77F /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -1144,6 +1147,7 @@
 		C7FFF0EDFF6DA910E4B5CCB7 /* LocalizationOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationOption.swift; sourceTree = "<group>"; };
 		C825F0AD231C62462873E51A /* PresentationRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationRequest.swift; sourceTree = "<group>"; };
 		C855DE8F5341D67C614E3AF5 /* Array+SafeRemove.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+SafeRemove.swift"; sourceTree = "<group>"; };
+		C8A8859BFC55BD33AF575BEE /* DeviceIPCollectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIPCollectorTests.swift; sourceTree = "<group>"; };
 		C8EE9572F945C698DE4A2EAA /* InternallySetSubscriptionStatusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternallySetSubscriptionStatusTests.swift; sourceTree = "<group>"; };
 		C937320625239F3E10FE8D8E /* PermissionsHandler+Location.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionsHandler+Location.swift"; sourceTree = "<group>"; };
 		C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenListener.swift; sourceTree = "<group>"; };
@@ -1551,6 +1555,7 @@
 			children = (
 				BB242DC77FEC0BE10C0DDC9C /* DeviceHelper.swift */,
 				9E1EFE389B54C304F2B01620 /* DeviceInfo.swift */,
+				9E64F6845B4CB61F7C7A5657 /* DeviceIPCollector.swift */,
 				76D61D89D2905A8747E37458 /* InterfaceStyle.swift */,
 				61062B4B7A0AB23514A2F439 /* SwiftVersion.swift */,
 			);
@@ -2830,6 +2835,7 @@
 		C1B0B520B9B41EFC6141B0BF /* SuperwallKitTests */ = {
 			isa = PBXGroup;
 			children = (
+				C8A8859BFC55BD33AF575BEE /* DeviceIPCollectorTests.swift */,
 				C8EE9572F945C698DE4A2EAA /* InternallySetSubscriptionStatusTests.swift */,
 				FE0E783785F917188D12F4B4 /* Utils.swift */,
 				E338A5AE4BB82E592AE9B9BA /* Analytics */,
@@ -3438,6 +3444,7 @@
 				6C8D27EE5DAB83D7F21F45F0 /* DevServerSettingsTests.swift in Sources */,
 				0CA13E721ADB243882536D4A /* DeviceHelperMock.swift in Sources */,
 				9DBDDD10A1EFC7CD3575D9E5 /* DeviceHelperTests.swift in Sources */,
+				506EAD727C35C5A620D1B1BC /* DeviceIPCollectorTests.swift in Sources */,
 				2743143ED664F942D5D758B1 /* DevicePreloadScriptTests.swift in Sources */,
 				49A7156A67C8BAB23F97EC39 /* EmailTests.swift in Sources */,
 				A03AC977AD8110290DABECBD /* EntitlementPriorityTests.swift in Sources */,
@@ -3642,6 +3649,7 @@
 				CC82569EF062EE50C1B06373 /* DevServerSettings.swift in Sources */,
 				346A77D3F31E471EB7CC4D5C /* DevServerSurface.swift in Sources */,
 				7FCDAF6C945FA04FC4C4E8E3 /* DeviceHelper.swift in Sources */,
+				8A4B27BB3442FDE107187EDE /* DeviceIPCollector.swift in Sources */,
 				DB7506D37B2BE86074BFF901 /* DeviceIdentifiers.swift in Sources */,
 				191AA8FBBF617251EF6F8628 /* DeviceInfo.swift in Sources */,
 				6CF900F9770237D75585A681 /* DevicePreloadScript.swift in Sources */,

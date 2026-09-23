@@ -14,6 +14,7 @@ import CoreTelephony
 import StoreKit
 
 class DeviceHelper {
+  private let ipCollector = DeviceIPCollector()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -963,6 +964,7 @@ class DeviceHelper {
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {
+    await ipCollector.refreshIfNeeded()
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
     let request = EnrichmentRequest(
@@ -1076,6 +1078,11 @@ class DeviceHelper {
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
+    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
+    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt", "ipAddress", "ipAddressObservedAt"] {
+      deviceDictionary.removeValue(forKey: key)
+    }
+    deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
 
     if #available(iOS 15.0, *),
       let storefront = await Storefront.current {
