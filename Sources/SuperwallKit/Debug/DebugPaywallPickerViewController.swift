@@ -140,8 +140,8 @@ extension DebugPaywallPickerViewController: UITableViewDataSource, UITableViewDe
     guard let header = view as? UITableViewHeaderFooterView else {
       return
     }
-    // A grouped header renders through its content configuration on iOS 14+,
-    // which ignores `textLabel` — the default grey is unreadable on the
+    // A grouped header renders through its content configuration, which
+    // ignores `textLabel` — the default grey is unreadable on the
     // debugger's near-black sheet.
     var configuration = header.defaultContentConfiguration()
     configuration.text = sections[section].title

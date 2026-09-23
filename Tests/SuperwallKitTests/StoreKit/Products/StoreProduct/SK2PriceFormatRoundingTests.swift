@@ -20,9 +20,6 @@ struct SK2PriceFormatRoundingTests {
   /// by `SK2StoreProduct` for computed period prices preserves 4.99.
   @Test("priceFormatterForSK2 preserves fractional values that a rounded currency style would distort")
   func testNumberFormatterPreservesValueThatPriceFormatStyleWouldRound() throws {
-    // The Decimal.FormatStyle APIs below are iOS 15+. SuperwallKit ships with
-    // an iOS 13 minimum so we guard at runtime rather than on the method signature
-    // (the @Test macro is incompatible with @available attributes).
     let gbp = Locale(identifier: "en_GB")
     let value: Decimal = 4.99
 

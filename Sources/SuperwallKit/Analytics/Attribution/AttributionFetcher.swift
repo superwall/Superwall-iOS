@@ -321,8 +321,7 @@ extension AttributionFetcher {
       attributes["attStatus"] = String(attStatus)
     }
 
-    // Don't gate this on the ATT status. Before iOS 14.5 the IDFA is available
-    // while ATT still reads `notDetermined`, and `TrackingManagerProxy` returns
+    // Don't gate this on the ATT status. `TrackingManagerProxy` returns
     // `notDetermined` both for a genuine one and for a build where the class
     // can't be found, so the status can't tell those apart. The OS hands back
     // the all-zero id when it doesn't want to share one, and

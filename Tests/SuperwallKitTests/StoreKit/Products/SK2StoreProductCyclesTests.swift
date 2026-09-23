@@ -14,9 +14,6 @@ import Testing
 // swiftlint:disable all
 
 struct SK2StoreProductCyclesTests {
-  // `@available` can't go on the struct/tests (Swift Testing's `@Test` macro
-  // rejects availability-annotated functions), so it lives on this helper and
-  // each test guards with `#available` before calling it.
   private func cycles(
     _ billingUnit: StoreKit.Product.SubscriptionPeriod.Unit,
     _ billingValue: Int,

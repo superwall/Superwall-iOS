@@ -35,7 +35,7 @@ enum SystemInfo {
     if #available(watchOS 9, *) {
       return WKApplication.didBecomeActiveNotification
     } else {
-      // Work around for "Symbol not found" dyld crashes on watchOS 7.0..<9.0
+      // Work around for "Symbol not found" dyld crashes on watchOS 8.0..<9.0
       return Notification.Name("WKApplicationDidBecomeActiveNotification")
     }
     #endif

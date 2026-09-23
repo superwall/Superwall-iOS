@@ -66,7 +66,7 @@ actor PurchasingCoordinator {
     }
 
     func getLatestSK2Transaction() async -> StoreTransaction? {
-      // If on iOS 15+, try and get latest transaction using SK2.
+      // Try and get the latest transaction using SK2.
       if let verificationResult = await Transaction.latest(
         for: productId,
         since: purchaseDate
