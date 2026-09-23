@@ -26,6 +26,8 @@ final class TransactionManager {
     & HasExternalPurchaseControllerFactory
     & RestoreAccessFactory
     & TestModeManagerFactory
+    & ReceiptFactory
+    & ConfigManagerFactory
   enum State {
     case observing
     case purchasing(PurchaseSource)
@@ -736,7 +738,12 @@ final class TransactionManager {
       return await isCustomProductFreeTrialAvailable(for: product)
     }
 
-    return await receiptManager.isFreeTrialAvailable(for: product)
+    // Same wait as `DependencyContainer.isFreeTrialAvailable`: the buy button
+    // can be tapped while the first purchases load is still running.
+    return await receiptManager.isFreeTrialAvailable(
+      for: product,
+      waitingFor: factory.initialPurchasesLoad
+    )
   }
 
   /// Custom products don't have StoreKit intro-offer state, so use entitlement history
@@ -750,6 +757,19 @@ final class TransactionManager {
       return false
     }
 
+    // Same reason as the App Store branch above: config can be published before
+    // the purchases load finishes, and until it does `customerInfo` is the copy
+    // restored from disk. The `isPlaceholder` check below can't stand in for
+    // this — the early publish only happens when a non-blank copy is saved,
+    // which is exactly when `isPlaceholder` is false.
+    //
+    // Waiting on the same rule the paywall used, so the trial it advertised
+    // and the transaction it produces are decided from the same state.
+    let productEntitlementIds = Set(product.entitlements.map(\.id))
+    if factory.purchasesLoadCouldChange(entitlementIds: productEntitlementIds) {
+      await factory.initialPurchasesLoad?.value
+    }
+
     let customerInfo = await MainActor.run {
       Superwall.shared.customerInfo
     }
@@ -760,7 +780,6 @@ final class TransactionManager {
       return false
     }
 
-    let productEntitlementIds = Set(product.entitlements.map(\.id))
     let userEntitlementIds = Set(
       customerInfo.entitlements
         .filter { $0.latestProductId != nil || $0.store == .superwall || $0.isActive }
@@ -1114,13 +1133,22 @@ final class TransactionManager {
 
     let paywallInfo: PaywallInfo
     let eventSource: InternalSuperwallEvent.Transaction.Source
-    let trialEndDate = product.trialPeriodEndDate
+    // The product's intro offer is visible even when the user isn't eligible for it, so only
+    // report a trial (and its end date) to the paywall when this transaction started one.
+    let didStartFreeTrial = type == .freeTrialStart
+    let trialEndDate = didStartFreeTrial ? product.trialPeriodEndDate : nil
     switch source {
     case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
       await paywallViewController.webView.messageHandler
-        .handle(.transactionComplete(trialEndDate: trialEndDate, productIdentifier: product.productIdentifier))
+        .handle(
+          .transactionComplete(
+            trialEndDate: trialEndDate,
+            productIdentifier: product.productIdentifier,
+            didStartFreeTrial: didStartFreeTrial
+          )
+        )
     case .purchaseFunc,
       .observeFunc:
       paywallInfo = .empty()

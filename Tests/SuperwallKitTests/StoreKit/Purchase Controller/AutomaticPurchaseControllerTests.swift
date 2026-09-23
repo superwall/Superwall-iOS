@@ -368,6 +368,156 @@ struct AutomaticPurchaseControllerTests {
     )
   }
 
+  @Test("A live web entitlement cannot hold a refunded App Store entitlement in place")
+  func testRefundedAppStoreEntitlement_besideWebEntitlement_isDropped() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A Stripe subscriber who also bought "annual_product" on the App Store
+    // and then got it refunded. The device read has no authority over the
+    // web entitlement, so the status stays active, but it is authoritative
+    // about the App Store one: that must not survive alongside the web one.
+    let webEntitlement = Entitlement(
+      id: "web_pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: [],
+      latestProductId: nil,
+      store: .stripe,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(30 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    let refundedEntitlement = Entitlement(
+      id: "pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(300 * 86_400),
+      isLifetime: false,
+      willRenew: true,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, refundedEntitlement])
+    }
+
+    let controller = makeController()
+    let refundedPurchase = Purchase(
+      id: "annual_product",
+      isActive: false,
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400)
+    )
+    await controller.syncSubscriptionStatus(withPurchases: [refundedPurchase], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        !entitlements.contains { $0.id == refundedEntitlement.id },
+        "A refunded App Store entitlement must not keep granting access beside a web one"
+      )
+    } else {
+      Issue.record("A web entitlement must survive an App Store refund; got \(status)")
+    }
+  }
+
+  @Test("An empty device read keeps a lifetime App Store entitlement beside a held one")
+  func testEmptyDeviceRead_lifetimeBesideHeldEntitlement_keepsBoth() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // A lifetime unlock has no expiry, so it can't hold the status up on its
+    // own. But an empty read is a non-answer about it too, so while the web
+    // subscription holds, the lifetime entitlement must not be dropped and
+    // persisted as gone.
+    let webEntitlement = stripeEntitlement(expiresAt: Date().addingTimeInterval(30 * 86_400))
+    let lifetimeEntitlement = Entitlement(
+      id: "lifetime",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["lifetime_product"],
+      latestProductId: "lifetime_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-90 * 86_400),
+      renewedAt: nil,
+      expiresAt: nil,
+      isLifetime: true,
+      willRenew: nil,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, lifetimeEntitlement])
+    }
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        entitlements.contains(lifetimeEntitlement),
+        "An empty read has no authority over a lifetime unlock, so it must survive"
+      )
+    } else {
+      Issue.record("A held web entitlement must keep the status active; got \(status)")
+    }
+  }
+
+  @Test("An empty device read drops an App Store entitlement whose own expiry has passed")
+  func testEmptyDeviceRead_lapsedAppStoreBesideHeldEntitlement_dropsLapsed() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+
+    // The web subscription holds the status. The App Store subscription's
+    // cached expiry was yesterday: an empty read says nothing about it, but
+    // the clock does, so it must not keep granting access beside the web one.
+    let webEntitlement = stripeEntitlement(expiresAt: Date().addingTimeInterval(30 * 86_400))
+    let lapsedEntitlement = Entitlement(
+      id: "app_store_pro",
+      type: .serviceLevel,
+      isActive: true,
+      productIds: ["annual_product"],
+      latestProductId: "annual_product",
+      store: .appStore,
+      startsAt: Date().addingTimeInterval(-400 * 86_400),
+      renewedAt: nil,
+      expiresAt: Date().addingTimeInterval(-86_400),
+      isLifetime: false,
+      willRenew: false,
+      state: nil,
+      offerType: nil
+    )
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([webEntitlement, lapsedEntitlement])
+    }
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    if case .active(let entitlements) = status {
+      #expect(entitlements.contains(webEntitlement))
+      #expect(
+        !entitlements.contains { $0.id == lapsedEntitlement.id },
+        "A subscription past its own expiry must not survive on an empty read"
+      )
+    } else {
+      Issue.record("A held web entitlement must keep the status active; got \(status)")
+    }
+  }
+
   @Test("Inactive purchases cannot refute a nil-store entitlement")
   func testInactivePurchases_nilStoreStatus_staysActive() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)

@@ -128,6 +128,9 @@ public final class PaywallInfo: NSObject {
   /// Indicates whether scrolling of the webview is enabled.
   public let isScrollEnabled: Bool
 
+  /// Whether the paywall was served from a local `superwall dev` server.
+  public let isLocal: Bool
+
   /// The state of the paywall, updated on paywall did dismiss.
   public let state: [String: Any]
 
@@ -172,6 +175,7 @@ public final class PaywallInfo: NSObject {
     surveys: [Survey],
     presentation: PaywallPresentationInfo,
     isScrollEnabled: Bool,
+    isLocal: Bool = false,
     state: [String: Any],
     introOfferEligibility: IntroOfferEligibility
   ) {
@@ -241,6 +245,7 @@ public final class PaywallInfo: NSObject {
 
     self.closeReason = closeReason
     self.isScrollEnabled = isScrollEnabled
+    self.isLocal = isLocal
     self.state = state
     self.introOfferEligibility = introOfferEligibility
   }
@@ -325,6 +330,7 @@ public final class PaywallInfo: NSObject {
       "paywall_product_ids": productIds.joined(separator: ","),
       "is_free_trial_available": isFreeTrialAvailable as Any,
       "feature_gating": featureGatingBehavior.description as Any,
+      "is_local": isLocal,
       "presented_by": presentedBy as Any
     ]
 

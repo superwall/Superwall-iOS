@@ -66,14 +66,33 @@ final class AutomaticPurchaseController {
         // The check reads the assigned status (device + web), not the
         // published one: that also carries developer-granted entitlements,
         // which would hold a lapsed App Store entitlement in place.
+        //
+        // Two separate questions. Whether an entitlement holds the status up
+        // needs an expiry the read can be bounded by. Whether it stays in
+        // the status needs two things: the read had no authority over it or
+        // confirmed it, and its own expiry hasn't passed. A lifetime App
+        // Store unlock has no expiry, so it can't hold, but an empty read
+        // said nothing about it either, so it stays while another
+        // entitlement holds. A refunded subscription next to a live web one
+        // is dropped because the read refuted it, and an App Store
+        // subscription whose cached expiry is already behind us is dropped
+        // because the clock did — time passing needs no read to confirm it.
+        //
+        // The clock only settles App Store and nil-store records here. Web
+        // entitlements are merged back in from the redeem cache by
+        // `internallySetSubscriptionStatus`, which is authoritative for
+        // them, so a lapsed web record comes straight back until the web
+        // poll says otherwise.
         if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
-          let holdsStatus = currentEntitlements.contains { entitlement in
-            guard entitlement.isActive,
-              (entitlement.expiresAt ?? .distantPast) > Date() else {
+          func isLapsed(_ entitlement: Entitlement) -> Bool {
+            guard let expiresAt = entitlement.expiresAt else {
               return false
             }
+            return expiresAt <= Date()
+          }
+          func isRefuted(_ entitlement: Entitlement) -> Bool {
             if purchases.isEmpty || entitlement.store != .appStore {
-              return true
+              return false
             }
             // A still-active purchase that unlocks this entitlement means
             // the empty entitlement set is a mapping failure. With the
@@ -81,11 +100,24 @@ final class AutomaticPurchaseController {
             // `Purchase.isActive` is disabled too, so this is the raw
             // transaction-level value and can miss a revocation that sets
             // no `revocationDate`. The hold is still bounded by the expiry
-            // gate above, which beats locking out a paying subscriber over
+            // gate below, which beats locking out a paying subscriber over
             // a lost product mapping.
-            return entitlement.productIds.contains { activeProductIds.contains($0) }
+            return !entitlement.productIds.contains { activeProductIds.contains($0) }
+          }
+          let holdsStatus = currentEntitlements.contains { entitlement in
+            entitlement.isActive
+              && entitlement.expiresAt != nil
+              && !isLapsed(entitlement)
+              && !isRefuted(entitlement)
           }
           if holdsStatus {
+            let survivors = currentEntitlements.filter { !isRefuted($0) && !isLapsed($0) }
+            if survivors != currentEntitlements {
+              superwall.internallySetSubscriptionStatus(
+                to: .active(survivors),
+                superwall: superwall
+              )
+            }
             return
           }
         }

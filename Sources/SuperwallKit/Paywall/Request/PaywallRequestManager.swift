@@ -19,6 +19,7 @@ actor PaywallRequestManager {
   typealias Factory = DeviceHelperFactory
     & ConfigManagerFactory
     & ReceiptFactory
+    & OptionsFactory
 
   init(
     storeKitManager: StoreKitManager,
@@ -125,8 +126,16 @@ actor PaywallRequestManager {
     isDebuggerLaunched: Bool
   ) {
     activeTasks[requestHash] = nil
-    if !isDebuggerLaunched {
-      paywallsByHash[requestHash] = paywall
+    if isDebuggerLaunched {
+      return
     }
+    // The request hash carries no dev-server component, so memoising in dev
+    // mode would freeze whatever the dev server's state was at first fetch —
+    // a transient miss would pin the published paywall for the whole process.
+    // Preloading is off in dev mode, so this caching buys nothing there.
+    if DevMode.isActive(factory.makeSuperwallOptions()) {
+      return
+    }
+    paywallsByHash[requestHash] = paywall
   }
 }

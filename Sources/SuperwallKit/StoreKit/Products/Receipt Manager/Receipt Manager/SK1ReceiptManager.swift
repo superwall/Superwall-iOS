@@ -26,6 +26,10 @@ final class SK1ReceiptManager: ReceiptManagerType {
     self.receiptData = receiptData
   }
 
+  func seedPurchases(_ purchases: Set<Purchase>) async {
+    self.purchases = purchases
+  }
+
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
     var purchasedSubscriptionGroupIds: Set<String> = []
     for storeProduct in storeProducts {

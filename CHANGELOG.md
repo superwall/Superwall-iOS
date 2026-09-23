@@ -2,27 +2,34 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.17.0
+## 4.18.0
 
 ### Enhancements
 
+- Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
+- Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing works as before, but it can no longer be the target of `assign(to:)`.
+
+## 4.17.0
+### Enhancements
+
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
-- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
-- Adds the Customer Center: a native, self-service screen where users can view their subscriptions and purchases, restore purchases, manage or cancel a subscription, request a refund, change plans, contact support, answer exit surveys and open any subscription for its details. Present it with `Superwall.shared.presentCustomerCenter()`, embed `CustomerCenterView` in SwiftUI, or use `CustomerCenterViewController` in UIKit. Configure it via `SuperwallOptions.customerCenter` (`CustomerCenterConfiguration`), including an accent colour for light and dark. Requires iOS 15+.
-- Adds `CustomerCenterDelegate` callbacks and the `customerCenterOpen`, `customerCenterClose`, `customerCenterAction`, `customerCenterSurveyResponse` and `customerCenterRefundRequest` events.
-- The Customer Center's update banner now finds the published version itself, by looking the app up on the App Store, so `latestAppVersion` no longer has to be kept current by hand. Set `SuperwallOptions.customerCenter.support.checksAppStoreForUpdates = false` to opt out, or keep setting `latestAppVersion` — a configured version always wins and skips the lookup. The check is skipped on TestFlight, sandbox and simulator builds, whose version is normally ahead of the App Store. Note that Apple phases releases in over seven days while the lookup sees a new version immediately, so early in a release some customers may be prompted to update before the build reaches them.
-- The Customer Center now shows prices for subscriptions bought on the web (Stripe, Paddle). StoreKit can't resolve a web product, so those cards previously rendered with no price; the price is now read from the Superwall product catalogue when StoreKit returns nothing. A web purchase whose product has no display name in the catalogue is headed by the entitlement it unlocks instead — never by its raw identifier — and picks the name up as soon as the catalogue returns one.
-- Improved the Customer Center for subscriptions bought on the web (Stripe, Paddle). The management row is now labelled "Manage subscription" rather than "Cancel subscription", since a web management page does more than cancel; it stays visible when no management URL is configured, explaining that the link is in the customer's emailed receipt, instead of disappearing and leaving them with no action at all; and feedback surveys are skipped for web flows, which hand off to a browser rather than completing in the app.
-- `CustomerCenterViewController` can be pushed onto a navigation controller of your own as well as presented modally. Pass `presentationStyle: .pushed` to push it: it renders into your navigation bar without modifying it, and its own screens are pushed onto your stack as further view controllers.
+- Adds `userAttributes` to the `RedemptionInfo` you get from `didRedeemLink`, so you can read the answers someone gave on your web paywall funnel after they redeem in your app.
+- Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 
 ### Fixes
 
+- Fixes trial reminders being scheduled for users who bought without getting the intro offer.
+- Refreshes the IDFV, IDFA and tracking consent for integrations when the app becomes active or integration attributes are set again, and clears the IDFA when consent is revoked. These now also go into the user attributes `idfv`, `idfa` and `attStatus`, so server-side integrations such as AppsFlyer can read them. The SDK owns those three keys and will overwrite any value your app has set on them. `reset()` and identifying a different user now keep the integration attributes that describe the device, such as the AppsFlyer and Adjust IDs, and drop the ones that describe the person, such as the Amplitude and Customer.io user IDs.
 - Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
 - Fixes slow cold launches for subscribers on a weak network by no longer fetching their purchased products from StoreKit before the SDK is ready. Applies to StoreKit 2.
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
+- Fixes a crash when `register` is called from more than one thread at a time.
+- Fixes a hang when identifying a different user after an install attribution match had been found.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
+- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen.
 
 ## 4.16.3
 

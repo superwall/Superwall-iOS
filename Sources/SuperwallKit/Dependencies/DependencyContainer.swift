@@ -520,6 +520,23 @@ extension DependencyContainer: ConfigManagerFactory {
       deviceLocale: deviceInfo.locale
     )
   }
+
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool {
+    if entitlementIds.isEmpty {
+      return false
+    }
+    guard let config = configManager.config else {
+      // Without config we can't rule the load out, so say yes and let the
+      // caller wait.
+      return true
+    }
+    return config.products.contains { product in
+      guard case .appStore = product.type else {
+        return false
+      }
+      return product.entitlements.contains { entitlementIds.contains($0.id) }
+    }
+  }
 }
 
 // MARK: - StoreTransactionFactory
@@ -620,6 +637,26 @@ extension DependencyContainer: ReceiptFactory {
     await receiptManager.loadPurchasedProducts(config: config)
   }
 
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async {
+    await receiptManager.restorePurchases(
+      from: customerInfo,
+      grantedEntitlements: grantedEntitlements,
+      config: config
+    )
+  }
+
+  /// nil means the load already finished, or config was never published early.
+  /// It is also nil for the moment before `processConfig` stores the task; a
+  /// purchase started that early skips the wait, which only affects whether the
+  /// transaction is reported as a trial start.
+  var initialPurchasesLoad: Task<Void, Never>? {
+    configManager.initialPurchasesLoad
+  }
+
   func refreshSK1Receipt() async {
     return await receiptManager.refreshSK1Receipt()
   }
@@ -636,7 +673,13 @@ extension DependencyContainer: ReceiptFactory {
         return false
       }
     }
-    return await receiptManager.isFreeTrialAvailable(for: product)
+    // Config can be published before the first purchases load finishes (see
+    // `ConfigManager.fetchConfiguration`). Only the upgrade check inside reads
+    // what that load computes, so it waits there rather than here.
+    return await receiptManager.isFreeTrialAvailable(
+      for: product,
+      waitingFor: initialPurchasesLoad
+    )
   }
 
   var isTestMode: Bool {
