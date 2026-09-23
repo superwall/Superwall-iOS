@@ -9,17 +9,22 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
-- Changes `$subscriptionStatus` from a `@Published` publisher to an `AnyPublisher`. Subscribing to it works as before, but it can no longer be the target of `assign(to:)`.
+- Adds `userAttributes` to the `RedemptionInfo` you get from `didRedeemLink`, so you can read the answers someone gave on your web paywall funnel after they redeem in your app.
+- Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
 
 ### Fixes
 
+- Fixes trial reminders being scheduled for users who bought without getting the intro offer.
+- Refreshes the IDFV, IDFA and tracking consent for integrations when the app becomes active or integration attributes are set again, and clears the IDFA when consent is revoked. These now also go into the user attributes `idfv`, `idfa` and `attStatus`, so server-side integrations such as AppsFlyer can read them. The SDK owns those three keys and will overwrite any value your app has set on them. `reset()` and identifying a different user now keep the integration attributes that describe the device, such as the AppsFlyer and Adjust IDs, and drop the ones that describe the person, such as the Amplitude and Customer.io user IDs.
 - Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
 - Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
 - Fixes slow cold launches for subscribers on a weak network by no longer fetching their purchased products from StoreKit before the SDK is ready. Applies to StoreKit 2.
 - Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
 - Fixes a crash when `register` is called from more than one thread at a time.
+- Fixes a hang when identifying a different user after an install attribution match had been found.
 - Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
 - Fixes audiences matching users they shouldn't when you use a Purchase Controller.
+- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen.
 
 ## 4.16.3
 

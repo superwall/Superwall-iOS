@@ -67,6 +67,7 @@ final class PresentPaywallOperatorTests {
       do {
         _ = try await Superwall.shared.presentPaywallViewController(
           paywallVc,
+          paywall: .stub(),
           on: UIViewController(),
           unsavedOccurrence: nil,
           debugInfo: [:],
@@ -135,6 +136,7 @@ final class PresentPaywallOperatorTests {
       do {
         _ = try await Superwall.shared.presentPaywallViewController(
           paywallVc,
+          paywall: .stub(),
           on: UIViewController(),
           unsavedOccurrence: nil,
           debugInfo: [:],

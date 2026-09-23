@@ -15,49 +15,35 @@ struct PaywallManagerLogicTests {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub(),
       oldPaywall: .stub(),
-      isPreloading: false,
       isForPresentation: false
     )
     #expect(outcomes.isEmpty)
   }
 
-  @Test func handleCachedPaywall_samePaywallURLs_isPreloading() {
+  @Test func handleCachedPaywall_samePaywall_isForPresentation() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub(),
       oldPaywall: .stub(),
-      isPreloading: true,
+      isForPresentation: true
+    )
+    #expect(outcomes.isEmpty)
+  }
+
+  @Test func handleCachedPaywall_diffPaywall_isNotForPresentation() {
+    let outcomes = PaywallManagerLogic.handleCachedPaywall(
+      newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
+      oldPaywall: .stub()
+        .setting(\.cacheKey, to: "123"),
       isForPresentation: false
     )
     #expect(outcomes.isEmpty)
   }
 
-  @Test func handleCachedPaywall_samePaywallURLs_isNotPreloading() {
-    let outcomes = PaywallManagerLogic.handleCachedPaywall(
-      newPaywall: .stub(),
-      oldPaywall: .stub(),
-      isPreloading: false,
-      isForPresentation: true
-    )
-    #expect(outcomes == [.setDelegate, .updatePaywall])
-  }
-
-  @Test func handleCachedPaywall_diffPaywallURLs_isNotPreloading() {
+  @Test func handleCachedPaywall_diffPaywall_isForPresentation() {
     let outcomes = PaywallManagerLogic.handleCachedPaywall(
       newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
       oldPaywall: .stub()
         .setting(\.cacheKey, to: "123"),
-      isPreloading: false,
-      isForPresentation: true
-    )
-    #expect(outcomes == [.replacePaywall, .loadWebView, .setDelegate])
-  }
-
-  @Test func handleCachedPaywall_diffPaywallURLs_isPreloading() {
-    let outcomes = PaywallManagerLogic.handleCachedPaywall(
-      newPaywall: .stub().setting(\.url, to: URL(string: "https://twitter.com")!),
-      oldPaywall: .stub()
-        .setting(\.cacheKey, to: "123"),
-      isPreloading: true,
       isForPresentation: true
     )
     #expect(outcomes == [.replacePaywall, .loadWebView])

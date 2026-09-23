@@ -26,7 +26,8 @@ import Foundation
 /// Every writer — the public setter included, via ``PublishedSubscriptionStatus``
 /// — ends up in `publishSubscriptionStatus`, the one critical section under
 /// `subscriptionStatusLock`. The merged value is stored under the lock and
-/// emitted to subscribers after it's released.
+/// emitted to subscribers after it's released. Every read of either value
+/// takes the same lock, so readers never race a writer.
 extension Superwall {
   // MARK: - Granted entitlements
 
@@ -189,6 +190,10 @@ extension Superwall {
     if previouslyAssigned != assigned {
       dependencyContainer.storage.save(assigned, forType: SubscriptionStatusKey.self)
     }
+    // Hands the merged value to the entitlements queue while the lock is
+    // still held, so two publishes reach it in the order they were stored.
+    // It only enqueues, so nothing waits on it.
+    entitlements.subscriptionStatusDidSet(merged)
     subscriptionStatusLock.unlock()
 
     // Subscribers and customer info observers run outside the lock, so a
@@ -196,7 +201,6 @@ extension Superwall {
     if statusChanged {
       emitSubscriptionStatus()
     }
-    entitlements.subscriptionStatusDidSet(subscriptionStatus)
 
     // When using an external purchase controller, update CustomerInfo.entitlements
     // to reflect the entitlements from the purchase controller.
