@@ -41,20 +41,16 @@ final class CustomerCenterPushNavigator: CustomerCenterNavigating {
       .environment(\.customerCenterNavigator, self)
 
     let controller = CustomerCenterPushedHostingController(rootView: hosted)
+    // Released by identity, so screens popped together can report in any order. See
+    // `PushedSurfaces`.
+    let claim = UUID()
     controller.onRemovedFromParent = { [weak self] in
-      // Back to whatever is underneath. `min` rather than a plain assignment because popping
-      // several screens at once removes them all and UIKit doesn't document the order it calls
-      // `didMove(toParent:)` in: taking the lowest reported depth is the same answer whichever
-      // way round they arrive, where assigning leaves the depth stranded above the surface the
-      // user is actually on — and that surface then can't present anything for the rest of the
-      // presentation.
-      guard let self else { return }
-      self.viewModel.pushDepth = min(self.viewModel.pushDepth, depth - 1)
+      self?.viewModel.releasePushedSurface(claim)
     }
     controller.onCoveredWhileStillInStack = { [weak self] in
       self?.viewModel.suppressDismissalUntilNextAppearance()
     }
-    viewModel.pushDepth = depth
+    viewModel.claimPushedSurface(claim, depth: depth)
     navigationController.pushViewController(controller, animated: true)
   }
 }
@@ -79,7 +75,7 @@ private struct CustomerCenterThemedContainer<Content: View>: View {
   }
 }
 
-/// A hosting controller that reports being popped, so the navigator can restore the depth, and
+/// A hosting controller that reports being popped, so the navigator can release its claim, and
 /// vetoes the dismissal debounce when it is merely covered.
 @available(iOS 15.0, *)
 private final class CustomerCenterPushedHostingController<Content: View>: UIHostingController<Content> {

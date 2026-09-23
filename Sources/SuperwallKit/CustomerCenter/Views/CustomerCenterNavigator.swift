@@ -86,28 +86,77 @@ struct CustomerCenterDrillDown<Label: View, Destination: View>: View {
 }
 
 /// A screen `NavigationLink` pushed, doing for itself what `CustomerCenterPushNavigator` does for a
-/// screen pushed through UIKit: it carries its own sheet modifiers and takes them over while it's
-/// on top.
+/// screen pushed through UIKit: it carries its own sheet modifiers and claims them while it's on
+/// top.
 ///
 /// A sheet presents from the screen whose modifier asked for it, and UIKit takes the screens under
 /// a pushed one out of the window. With only the root's modifiers, every sheet a pushed screen
 /// asked for — the cancellation survey, change plan, the web management page — waited, silently,
 /// for the user to go back to the root, and then appeared there with no animation.
 ///
-/// The depth is claimed on appear and handed back on disappear. A sheet covering this screen
-/// fires neither, so the depth only moves when the screen is pushed or popped.
+/// The claim is made on appear and released only when the screen leaves the stack: UIKit reports it
+/// popped or dismissed, or SwiftUI takes it down. Being covered — by a deeper screen, a tab switch,
+/// anything the host presents — releases nothing, and neither does a swipe back the user cancels.
+/// `onDisappear` fires for a cover too, which is why it can't be the release.
 @available(iOS 15.0, *)
 private struct CustomerCenterLinkedScreen: ViewModifier {
   let viewModel: CustomerCenterViewModel
   let surfaceDepth: Int
+  /// This screen's claim, stable for its lifetime: claiming again on each appearance changes
+  /// nothing, and a release can only take back this screen's own claim.
+  @State private var claim = UUID()
 
   func body(content: Content) -> some View {
     content
       .customerCenterSheets(viewModel: viewModel, surfaceDepth: surfaceDepth)
       .environment(\.customerCenterSurfaceDepth, surfaceDepth)
-      .onAppear { viewModel.pushDepth = surfaceDepth }
-      // `min` rather than assigning, as the UIKit navigator does: when several screens go at once,
-      // whichever reports last mustn't leave the depth above the screen the user is actually on.
-      .onDisappear { viewModel.pushDepth = min(viewModel.pushDepth, surfaceDepth - 1) }
+      .onAppear { viewModel.claimPushedSurface(claim, depth: surfaceDepth) }
+      .background(
+        CustomerCenterLifecycleProbe(
+          // The same veto the UIKit navigator's screens apply: covered isn't closed.
+          onCovered: { [viewModel] in viewModel.suppressDismissalUntilNextAppearance() },
+          onRemoved: { [viewModel, claim] in
+            viewModel.releasePushedSurface(claim)
+            viewModel.surfaceWasRemoved()
+          },
+          // Also covers a screen popped while something covered it, which doesn't disappear a
+          // second time. `NavigationView` doesn't promise to take a popped screen down promptly,
+          // which is why this isn't the only release.
+          onDismantled: { [viewModel, claim] in viewModel.releasePushedSurface(claim) }
+        )
+      )
+  }
+}
+
+/// The Customer Center's own screens pushed above its root, each under a claim of its own.
+///
+/// Claims rather than a single depth, so the order screens report in can't matter. SwiftUI doesn't
+/// promise the incoming screen appears before the outgoing one goes, and UIKit doesn't say which
+/// of several screens popped together reports first. With one number, whichever came last won:
+/// a screen replaced by another at the same depth — the detail column of a split view — could hand
+/// the depth back to the root while the new screen was on top, and the root, out of the window,
+/// would then own every sheet.
+struct PushedSurfaces: Equatable {
+  struct Claim: Equatable {
+    let id: UUID
+    let depth: Int
+  }
+
+  /// Shallowest first. A claim replaces everything at its depth or deeper, so this stays in order.
+  private(set) var claims: [Claim] = []
+
+  /// The depth of the screen on top; `0` when it's the root.
+  var depth: Int { claims.last?.depth ?? 0 }
+
+  /// A screen at `depth` is on top, so any screen recorded at that depth or deeper has been
+  /// replaced, whether or not its own release has arrived yet.
+  mutating func claim(_ id: UUID, depth: Int) {
+    claims.removeAll { $0.id == id || $0.depth >= depth }
+    claims.append(Claim(id: id, depth: depth))
+  }
+
+  /// Removes `id`'s claim, if it still holds one. A claim a later screen replaced is already gone.
+  mutating func release(_ id: UUID) {
+    claims.removeAll { $0.id == id }
   }
 }

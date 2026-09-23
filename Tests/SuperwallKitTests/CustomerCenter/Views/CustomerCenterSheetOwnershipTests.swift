@@ -69,14 +69,154 @@ struct CustomerCenterSheetOwnershipTests {
     }
   }
 
-  /// The rule the sheet modifier applies, exercised directly.
-  @Test("the root owns sheets until something is pushed over it")
-  func ownershipFollowsDepth() {
-    #expect(CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 0, pushDepth: 0))
-    #expect(!CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 0, pushDepth: 1))
-    #expect(CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 1, pushDepth: 1))
-    // A surface deeper than the current depth is stale and must not present either.
-    #expect(!CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 2, pushDepth: 1))
+  /// Waits by suspending rather than spinning the run loop. SwiftUI delivers some updates through
+  /// the main queue, which a run loop spun inside a main-actor test never drains: a view taken down
+  /// by a state change, or a `.task`, only happens once the test gives the main actor back.
+  private func waitUntil(timeout: TimeInterval = 2, _ condition: () -> Bool) async {
+    let deadline = Date().addingTimeInterval(timeout)
+    while !condition() && Date() < deadline {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
+  // MARK: - Which screen is on top
+
+  @Test("a pushed screen is on top until it's released")
+  func claimsTrackTheScreenOnTop() {
+    var surfaces = PushedSurfaces()
+    let detail = UUID()
+    let nested = UUID()
+    #expect(surfaces.depth == 0)
+
+    surfaces.claim(detail, depth: 1)
+    surfaces.claim(nested, depth: 2)
+    #expect(surfaces.depth == 2)
+
+    surfaces.release(nested)
+    #expect(surfaces.depth == 1)
+    surfaces.release(detail)
+    #expect(surfaces.depth == 0)
+  }
+
+  /// A screen comes back into view when the one above it is popped, and the popped screen's
+  /// release can arrive after that.
+  @Test("a screen coming back into view is on top again, whenever the popped one reports")
+  func reappearingScreenIsOnTop() {
+    var surfaces = PushedSurfaces()
+    let detail = UUID()
+    let nested = UUID()
+    surfaces.claim(detail, depth: 1)
+    surfaces.claim(nested, depth: 2)
+
+    surfaces.claim(detail, depth: 1)
+    #expect(surfaces.depth == 1)
+    surfaces.release(nested)
+    #expect(surfaces.depth == 1, "a late release can't take the depth below the screen on top")
+
+    surfaces.claim(detail, depth: 1)
+    #expect(surfaces.claims.count == 1, "claiming again changes nothing")
+  }
+
+  /// A split view's detail column replaces one screen with another at the same depth, and SwiftUI
+  /// doesn't promise the new one appears after the old one goes.
+  @Test("a screen replaced at its depth can't take the replacement's depth with it", arguments: [true, false])
+  func replacementKeepsTheDepth(releaseArrivesLate: Bool) {
+    var surfaces = PushedSurfaces()
+    let first = UUID()
+    let second = UUID()
+    surfaces.claim(first, depth: 1)
+
+    if releaseArrivesLate {
+      surfaces.claim(second, depth: 1)
+      surfaces.release(first)
+    } else {
+      surfaces.release(first)
+      surfaces.claim(second, depth: 1)
+    }
+
+    #expect(surfaces.depth == 1)
+    #expect(surfaces.claims.map(\.id) == [second])
+  }
+
+  @Test("screens popped together can report in either order", arguments: [true, false])
+  func poppedTogetherInEitherOrder(deepestFirst: Bool) {
+    var surfaces = PushedSurfaces()
+    let detail = UUID()
+    let nested = UUID()
+    surfaces.claim(detail, depth: 1)
+    surfaces.claim(nested, depth: 2)
+
+    for id in deepestFirst ? [nested, detail] : [detail, nested] {
+      surfaces.release(id)
+    }
+
+    #expect(surfaces.depth == 0)
+  }
+
+  // MARK: - Which screen presents a sheet
+
+  @available(iOS 15.0, *)
+  @Test("a sheet is presented by the screen on top when it's requested")
+  func sheetGoesToTheScreenOnTop() {
+    let viewModel = makeViewModel()
+    viewModel.sheet = .survey(pathId: "cancel")
+    #expect(viewModel.sheetOwnerDepth == 0)
+
+    viewModel.sheet = nil
+    #expect(viewModel.sheetOwnerDepth == nil)
+
+    viewModel.claimPushedSurface(UUID(), depth: 1)
+    viewModel.sheet = .survey(pathId: "cancel")
+    #expect(viewModel.sheetOwnerDepth == 1)
+  }
+
+  /// The race: a refund is requested on the detail and the user goes back while the request awaits
+  /// its transaction. The request lands mid-pop, so the outgoing detail presents it. When the pop
+  /// finished, a sheet that followed the depth was presented again by the root: a second refund
+  /// request for one tap.
+  @available(iOS 15.0, *)
+  @Test("a sheet whose screen is popped isn't presented again by the root")
+  func poppedScreensSheetStaysWithIt() {
+    let viewModel = makeViewModel()
+    let root = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+    let detail = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 1)
+    let detailClaim = UUID()
+    viewModel.claimPushedSurface(detailClaim, depth: 1)
+
+    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+    viewModel.renderedStoreKitSheetParameters = StoreKitSheetParameters(refundTransactionId: 7)
+    #expect(detail.refundBinding.wrappedValue)
+    #expect(!root.refundBinding.wrappedValue)
+
+    viewModel.releasePushedSurface(detailClaim)
+    #expect(viewModel.pushDepth == 0)
+    #expect(!root.refundBinding.wrappedValue, "the root presented a refund the detail had already asked for")
+
+    // Nor does the next screen pushed at the same depth pick it up.
+    viewModel.claimPushedSurface(UUID(), depth: 1)
+    #expect(!detail.refundBinding.wrappedValue)
+
+    // A fresh request goes to whichever screen is on top by then.
+    viewModel.sheet = .refund(transactionId: 7, productId: "monthly_pro")
+    #expect(detail.refundBinding.wrappedValue)
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a sheet stays with its screen until that screen leaves")
+  func sheetOutlivesUnrelatedDepartures() {
+    let viewModel = makeViewModel()
+    let detail = UUID()
+    let nested = UUID()
+    viewModel.claimPushedSurface(detail, depth: 1)
+    viewModel.sheet = .survey(pathId: "cancel")
+
+    // Something deeper comes and goes: the detail's sheet is untouched.
+    viewModel.claimPushedSurface(nested, depth: 2)
+    viewModel.releasePushedSurface(nested)
+    #expect(viewModel.sheetOwnerDepth == 1)
+
+    viewModel.releasePushedSurface(detail)
+    #expect(viewModel.sheetOwnerDepth == nil)
   }
 
   /// The asymmetry that made this rule necessary: SwiftUI writes `false` to a boolean sheet
@@ -129,13 +269,16 @@ struct CustomerCenterSheetOwnershipTests {
     modifier.refundBinding.wrappedValue = false
     #expect(viewModel.sheet == nil)
 
-    // The owner keeps that right once it is no longer topmost. The depth drops on a pop with no
-    // regard for whether a sheet is up, which is why the setters are gated on identity rather
-    // than depth — an earlier depth-gated setter is exactly what stranded a sheet here.
-    viewModel.pushDepth = 1
+    // The screen that opened a sheet keeps that right after it stops owning it: popped with the
+    // sheet still up, say. That's why the setters are gated on identity rather than ownership —
+    // an earlier depth-gated setter is exactly what stranded a sheet here.
+    let detail = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 1)
+    let detailClaim = UUID()
+    viewModel.claimPushedSurface(detailClaim, depth: 1)
     viewModel.sheet = .manageSubscriptions(groupId: nil)
-    modifier.isManagePresented.wrappedValue = false
-    #expect(viewModel.sheet == nil, "the surface that opened a sheet must always be able to clear it")
+    viewModel.releasePushedSurface(detailClaim)
+    detail.isManagePresented.wrappedValue = false
+    #expect(viewModel.sheet == nil, "the screen that opened a sheet must always be able to clear it")
   }
 
   /// StoreKit writes `false` into its sheets' `isPresented` bindings from the background thread
@@ -227,7 +370,7 @@ struct CustomerCenterSheetOwnershipTests {
     let viewModel = makeViewModel()
     // Another surface is on top, so this one never presents: the record is under test here, not
     // StoreKit's sheets.
-    viewModel.pushDepth = 1
+    viewModel.claimPushedSurface(UUID(), depth: 1)
     let host = UIHostingController(rootView: Color.clear.customerCenterSheets(viewModel: viewModel))
     let window = makeWindow(rootViewController: host)
     window.makeKeyAndVisible()
@@ -241,6 +384,147 @@ struct CustomerCenterSheetOwnershipTests {
     viewModel.sheet = .manageSubscriptions(groupId: "21601298")
     spinRunLoop(timeout: 2) { viewModel.renderedStoreKitSheetParameters.manageGroupId == "21601298" }
     #expect(viewModel.renderedStoreKitSheetParameters == StoreKitSheetParameters(manageGroupId: "21601298"))
+  }
+
+  // MARK: - Covered or removed
+
+  @available(iOS 15.0, *)
+  private func makeProbe(log: ProbeLog) -> CustomerCenterLifecycleProbeController {
+    let probe = CustomerCenterLifecycleProbeController()
+    probe.onCovered = { log.events.append("covered") }
+    probe.onRemoved = { log.events.append("removed") }
+    probe.onDismantled = { log.events.append("dismantled") }
+    return probe
+  }
+
+  /// A screen with the probe inside it, the way SwiftUI places one.
+  private func makeScreen(containing probe: UIViewController) -> UIViewController {
+    let screen = UIViewController()
+    screen.addChild(probe)
+    screen.view.addSubview(probe.view)
+    probe.didMove(toParent: screen)
+    return screen
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a screen the host pushes over is covered")
+  func pushOverIsACover() {
+    let log = ProbeLog()
+    let screen = makeScreen(containing: makeProbe(log: log))
+    let navigation = UINavigationController(rootViewController: screen)
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    spinRunLoop(timeout: 1) { screen.viewIfLoaded?.window != nil }
+
+    navigation.pushViewController(UIViewController(), animated: false)
+    spinRunLoop(timeout: 1) { !log.events.isEmpty }
+
+    #expect(log.events == ["covered"])
+  }
+
+  /// A full-screen presentation takes the screen out of the window before it's told it
+  /// disappeared, so the window can't be read off the screen at that point.
+  @available(iOS 15.0, *)
+  @Test("the window's root is covered when something is presented over it")
+  func coveredWindowRootIsACover() {
+    let log = ProbeLog()
+    let probe = makeProbe(log: log)
+    let screen = makeScreen(containing: probe)
+    let window = makeWindow(rootViewController: screen)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    spinRunLoop(timeout: 1) { probe.viewIfLoaded?.window != nil }
+
+    screen.view.removeFromSuperview()
+    probe.viewDidDisappear(false)
+
+    #expect(log.events == ["covered"])
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a screen popped off a navigation controller is removed")
+  func popIsARemoval() {
+    let log = ProbeLog()
+    let screen = makeScreen(containing: makeProbe(log: log))
+    let navigation = UINavigationController(rootViewController: UIViewController())
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    navigation.pushViewController(screen, animated: false)
+    spinRunLoop(timeout: 1) { screen.viewIfLoaded?.window != nil }
+
+    navigation.popViewController(animated: false)
+    spinRunLoop(timeout: 1) { !log.events.isEmpty }
+
+    #expect(log.events == ["removed"])
+  }
+
+  /// SwiftUI's `NavigationStack` detaches a popped screen from its navigation controller before the
+  /// screen is told it disappeared, and marks nothing on the way.
+  @available(iOS 15.0, *)
+  @Test("a screen detached before it's told it disappeared is removed")
+  func detachedScreenIsARemoval() {
+    let log = ProbeLog()
+    let probe = makeProbe(log: log)
+    let screen = makeScreen(containing: probe)
+    let container = UIViewController()
+    container.addChild(screen)
+    container.view.addSubview(screen.view)
+    screen.didMove(toParent: container)
+    let window = makeWindow(rootViewController: container)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    spinRunLoop(timeout: 1) { probe.viewIfLoaded?.window != nil }
+
+    // Detached while its view is still up, the order `NavigationStack` does it in. Removing the
+    // view as well would have UIKit report the disappearance itself, from wherever the screen
+    // happened to be attached at that moment.
+    screen.willMove(toParent: nil)
+    screen.removeFromParent()
+    probe.viewDidDisappear(false)
+
+    #expect(log.events == ["removed"])
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a screen inside a container being dismissed is removed")
+  func dismissedContainerIsARemoval() {
+    let log = ProbeLog()
+    let probe = makeProbe(log: log)
+    let navigation = DismissingNavigationController(rootViewController: makeScreen(containing: probe))
+    let window = makeWindow(rootViewController: navigation)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    spinRunLoop(timeout: 1) { probe.viewIfLoaded?.window != nil }
+
+    probe.viewDidDisappear(false)
+
+    #expect(log.events == ["removed"])
+  }
+
+  @available(iOS 15.0, *)
+  @Test("SwiftUI taking a screen down is reported")
+  func dismantleIsReported() async {
+    let log = ProbeLog()
+    let visibility = ProbeVisibility()
+    let host = UIHostingController(rootView: ProbeHost(visibility: visibility, log: log))
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+    await waitUntil {
+      host.view.layoutIfNeeded()
+      return !host.children.isEmpty
+    }
+    #expect(log.events.isEmpty)
+
+    visibility.isShown = false
+    await waitUntil {
+      host.view.layoutIfNeeded()
+      return log.events.contains("dismantled")
+    }
+
+    #expect(log.events.contains("dismantled"))
   }
 
   // MARK: - Driving the real navigator
@@ -264,7 +548,9 @@ struct CustomerCenterSheetOwnershipTests {
     // controller that never lived.
     spinRunLoop(timeout: 2) { navigation.viewControllers.last?.viewIfLoaded?.window != nil }
     #expect(viewModel.pushDepth == 1)
-    #expect(!CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 0, pushDepth: viewModel.pushDepth))
+    viewModel.sheet = .survey(pathId: "cancel")
+    #expect(viewModel.sheetOwnerDepth == 1, "a sheet requested now belongs to the pushed screen")
+    viewModel.sheet = nil
 
     navigation.popViewController(animated: false)
     spinRunLoop(timeout: 1) { viewModel.pushDepth == 0 }
@@ -301,7 +587,8 @@ struct CustomerCenterSheetOwnershipTests {
     spinRunLoop(timeout: 1) { viewModel.pushDepth == 0 }
 
     #expect(viewModel.pushDepth == 0)
-    #expect(CustomerCenterSheetOwnership.isTopmost(surfaceDepth: 0, pushDepth: viewModel.pushDepth))
+    viewModel.sheet = .survey(pathId: "cancel")
+    #expect(viewModel.sheetOwnerDepth == 0, "the root must be able to present again")
 
     window.isHidden = true
   }
@@ -389,7 +676,7 @@ struct CustomerCenterSheetOwnershipTests {
   private static let now = Date()
 
   @available(iOS 15.0, *)
-  private func makeLoadedViewModel() async -> CustomerCenterViewModel {
+  private func makeLoadedViewModel(dismissDebounceInterval: TimeInterval = 0.6) async -> CustomerCenterViewModel {
     let subscription = SubscriptionTransaction(
       transactionId: "t1",
       productId: "monthly_pro",
@@ -407,7 +694,12 @@ struct CustomerCenterSheetOwnershipTests {
     let (deps, _, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: [])
     )
-    let viewModel = CustomerCenterViewModel(configuration: .default, dependencies: deps, strings: .english)
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english,
+      dismissDebounceInterval: dismissDebounceInterval
+    )
     await viewModel.load()
     return viewModel
   }
@@ -523,8 +815,100 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(viewModel.pushDepth == 1)
 
     navigation.popViewController(animated: false)
-    spinRunLoop(timeout: 2) { viewModel.pushDepth == 0 }
+    await waitUntil { viewModel.pushDepth == 0 }
     #expect(viewModel.pushDepth == 0, "the root must be able to present again once the detail is gone")
+  }
+
+  /// Something the host did covers the subscription's screen: here, a push of its own over the
+  /// whole Customer Center. The screen is still in its stack. Handing its claim back on
+  /// `onDisappear` gave the sheets to the root, out of the window, and dismissed any sheet the
+  /// screen had open.
+  @available(iOS 16.0, *)
+  @Test("covering a subscription's screen leaves it owning the sheets")
+  func coveredDetailKeepsItsClaim() async throws {
+    let debounce: TimeInterval = 0.2
+    let viewModel = await makeLoadedViewModel(dismissDebounceInterval: debounce)
+    var dismissals = 0
+    viewModel.callbacks.didDismiss = { dismissals += 1 }
+    let host = UIHostingController(
+      rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: .default)
+    )
+    let hostNavigation = UINavigationController(rootViewController: host)
+    let window = makeWindow(rootViewController: hostNavigation)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    _ = try openFirstSubscription(in: host)
+    #expect(viewModel.pushDepth == 1)
+
+    hostNavigation.pushViewController(UIViewController(), animated: false)
+    try await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(viewModel.pushDepth == 1, "a covered screen is still on top of its stack")
+    #expect(dismissals == 0, "a covered Customer Center hasn't been closed")
+
+    hostNavigation.popViewController(animated: false)
+    try await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(viewModel.pushDepth == 1)
+    #expect(dismissals == 0)
+  }
+
+  /// `NavigationStack { CustomerCenterView(.embedded) }`, with a screen of the host's own pushed
+  /// on top — the same as switching tabs away from it. Nothing told the visibility count this was
+  /// a cover, so it delivered `customerCenterDidDismiss()` for a Customer Center still in the
+  /// stack, and `dismiss()` latches, so the real close later went unreported.
+  @available(iOS 16.0, *)
+  @Test("an embedded Customer Center the host covers isn't dismissed")
+  func coveredEmbeddedCustomerCenterIsNotDismissed() async throws {
+    let debounce: TimeInterval = 0.2
+    let viewModel = await makeLoadedViewModel(dismissDebounceInterval: debounce)
+    var dismissals = 0
+    viewModel.callbacks.didDismiss = { dismissals += 1 }
+    let path = HostPath()
+    let host = UIHostingController(rootView: EmbeddingHost(path: path, viewModel: viewModel))
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    path.screens = [.customerCenter]
+    await waitUntil { viewModel.visibleSurfaceCount == 1 }
+    try #require(viewModel.visibleSurfaceCount == 1, "the Customer Center never appeared")
+
+    path.screens = [.customerCenter, .hostScreen]
+    try await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(dismissals == 0, "a covered Customer Center hasn't been closed")
+
+    path.screens = [.customerCenter]
+    await waitUntil { viewModel.visibleSurfaceCount == 1 }
+    try await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(dismissals == 0)
+  }
+
+  /// The cost of vetoing a cover: the Customer Center can then be removed from under it without
+  /// appearing again, and nothing but its removal is left to report the close.
+  @available(iOS 16.0, *)
+  @Test("an embedded Customer Center removed from under a cover still reports its close")
+  func removalFromUnderACoverIsADismissal() async throws {
+    let debounce: TimeInterval = 0.2
+    let viewModel = await makeLoadedViewModel(dismissDebounceInterval: debounce)
+    var dismissals = 0
+    viewModel.callbacks.didDismiss = { dismissals += 1 }
+    let path = HostPath()
+    let host = UIHostingController(rootView: EmbeddingHost(path: path, viewModel: viewModel))
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    path.screens = [.customerCenter]
+    await waitUntil { viewModel.visibleSurfaceCount == 1 }
+    try #require(viewModel.visibleSurfaceCount == 1, "the Customer Center never appeared")
+
+    path.screens = [.customerCenter, .hostScreen]
+    try await Task.sleep(nanoseconds: UInt64(debounce * 4 * 1_000_000_000))
+    #expect(dismissals == 0, "covered by the host's own screen isn't closed")
+
+    path.screens = []
+    await waitUntil { dismissals > 0 }
+    #expect(dismissals == 1)
   }
 }
 
@@ -533,4 +917,62 @@ struct CustomerCenterSheetOwnershipTests {
 /// completion, so the one fact UIKit would report is supplied directly.
 private final class DismissingNavigationController: UINavigationController {
   override var isBeingDismissed: Bool { true }
+}
+
+private enum HostScreen: Hashable {
+  case customerCenter
+  case hostScreen
+}
+
+private final class HostPath: ObservableObject {
+  @Published var screens: [HostScreen] = []
+}
+
+/// A host that places an embedded `CustomerCenterView` in its own `NavigationStack`, and can push
+/// a screen of its own over it.
+@available(iOS 16.0, *)
+private struct EmbeddingHost: View {
+  @ObservedObject var path: HostPath
+  let viewModel: CustomerCenterViewModel
+
+  var body: some View {
+    NavigationStack(path: $path.screens) {
+      Color.clear.navigationDestination(for: HostScreen.self) { screen in
+        switch screen {
+        case .customerCenter:
+          CustomerCenterView(viewModel: viewModel, navigationOptions: .init(style: .embedded))
+        case .hostScreen:
+          Text("host screen")
+        }
+      }
+    }
+  }
+}
+
+/// What a lifecycle probe reported, in order.
+private final class ProbeLog {
+  var events: [String] = []
+}
+
+private final class ProbeVisibility: ObservableObject {
+  @Published var isShown = true
+}
+
+/// A lifecycle probe SwiftUI can take down, by flipping `visibility`.
+@available(iOS 15.0, *)
+private struct ProbeHost: View {
+  @ObservedObject var visibility: ProbeVisibility
+  let log: ProbeLog
+
+  var body: some View {
+    if visibility.isShown {
+      Color.clear.background(
+        CustomerCenterLifecycleProbe(
+          onCovered: { [log] in log.events.append("covered") },
+          onRemoved: { [log] in log.events.append("removed") },
+          onDismantled: { [log] in log.events.append("dismantled") }
+        )
+      )
+    }
+  }
 }

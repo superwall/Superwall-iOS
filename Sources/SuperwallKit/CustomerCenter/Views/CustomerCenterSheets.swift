@@ -21,13 +21,9 @@ extension View {
   }
 }
 
-/// Which surface owns sheet presentation. A free function so the rule the modifier applies can be
-/// exercised directly rather than restated by a test.
+/// Rules the sheet bindings apply, as free functions so they can be exercised directly rather than
+/// restated by a test.
 enum CustomerCenterSheetOwnership {
-  static func isTopmost(surfaceDepth: Int, pushDepth: Int) -> Bool {
-    surfaceDepth == pushDepth
-  }
-
   /// The kind of sheet a boolean binding stands for. `CustomerCenterSheet`'s own cases carry
   /// associated values, and a dismissal only needs to know which case it belongs to.
   enum SheetKind {
@@ -73,26 +69,23 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   @Environment(\.customerCenterStrings) private var strings
 
   /// Every screen still in the stack applies this modifier, so without a check they'd all try to
-  /// present the same sheet. Gating the bindings rather than the modifier keeps the view tree
-  /// stable — swapping modifiers mid-update is what stopped the manage sheet appearing once
-  /// before.
+  /// present the same sheet. Only the screen that was on top when the sheet was requested
+  /// presents it; see ``CustomerCenterViewModel/sheetOwnerDepth``. Gating the bindings rather than
+  /// the modifier keeps the view tree stable — swapping modifiers mid-update is what stopped the
+  /// manage sheet appearing once before.
   ///
-  /// Only the getters are gated on depth. The setters are gated on the sheet's identity instead:
-  /// gating them on depth too would let a screen lose the right to clear a sheet it already has
-  /// open, since the depth drops when the screen is popped without regard for whether a sheet is
-  /// up — the dismissal would be vetoed, `sheetDidDismiss()` would never run, and the root would
-  /// re-present the stale sheet the moment it became topmost again.
-  private var isTopmost: Bool {
-    CustomerCenterSheetOwnership.isTopmost(
-      surfaceDepth: surfaceDepth,
-      pushDepth: viewModel.pushDepth
-    )
+  /// Only the getters are gated on ownership. The setters are gated on the sheet's identity
+  /// instead, because the screen that presented a sheet must always be able to clear it, even
+  /// after it has stopped owning it — popped with the sheet still up, say. A vetoed dismissal
+  /// would leave `sheet` set and `sheetDidDismiss()` unrun.
+  private var ownsSheet: Bool {
+    viewModel.sheetOwnerDepth == surfaceDepth
   }
 
   var isManagePresented: Binding<Bool> {
     .init(
       get: {
-        guard isTopmost, case .manageSubscriptions = viewModel.sheet, hasRenderedStoreKitSheetParameters else {
+        guard ownsSheet, case .manageSubscriptions = viewModel.sheet, hasRenderedStoreKitSheetParameters else {
           return false
         }
         return true
@@ -114,7 +107,7 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   var refundBinding: Binding<Bool> {
     .init(
       get: {
-        guard isTopmost, case .refund = viewModel.sheet, hasRenderedStoreKitSheetParameters else { return false }
+        guard ownsSheet, case .refund = viewModel.sheet, hasRenderedStoreKitSheetParameters else { return false }
         return true
       },
       set: { [viewModel] isPresented in
@@ -142,7 +135,7 @@ struct CustomerCenterSheetsModifier: ViewModifier {
   private var itemSheet: Binding<CustomerCenterSheet?> {
     .init(
       get: {
-        guard isTopmost else { return nil }
+        guard ownsSheet else { return nil }
         switch viewModel.sheet {
         case .survey, .changePlan, .safari, .noMailApp, .webManageUnavailable: return viewModel.sheet
         default: return nil
