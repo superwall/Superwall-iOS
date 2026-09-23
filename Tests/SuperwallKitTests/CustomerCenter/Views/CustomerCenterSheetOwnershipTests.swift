@@ -6,6 +6,7 @@
 //
 
 import Testing
+import Combine
 import Foundation
 import SwiftUI
 import UIKit
@@ -135,6 +136,45 @@ struct CustomerCenterSheetOwnershipTests {
     viewModel.sheet = .manageSubscriptions(groupId: nil)
     modifier.isManagePresented.wrappedValue = false
     #expect(viewModel.sheet == nil, "the surface that opened a sheet must always be able to clear it")
+  }
+
+  /// StoreKit writes `false` into its sheets' `isPresented` bindings from the background thread
+  /// their presentation finishes on. The view model is main-actor state SwiftUI observes, so the
+  /// write has to reach it on the main thread — and still clear the sheet when it gets there.
+  @available(iOS 15.0, *)
+  @Test("a dismissal StoreKit writes off the main thread updates the view model on it", arguments: [
+    CustomerCenterSheetOwnership.SheetKind.manageSubscriptions,
+    .refund
+  ])
+  func backgroundDismissalWriteLandsOnMainThread(kind: CustomerCenterSheetOwnership.SheetKind) async {
+    let viewModel = makeViewModel()
+    let modifier = CustomerCenterSheetsModifier(viewModel: viewModel, surfaceDepth: 0)
+    let binding: Binding<Bool>
+    switch kind {
+    case .manageSubscriptions:
+      viewModel.sheet = .manageSubscriptions(groupId: "group_pro")
+      binding = modifier.isManagePresented
+    case .refund:
+      viewModel.sheet = .refund(transactionId: 1, productId: "monthly_pro")
+      binding = modifier.refundBinding
+    }
+
+    let offMainPublishes = PublishLog()
+    let observation = viewModel.objectWillChange.sink { _ in
+      if !Thread.isMainThread { offMainPublishes.record() }
+    }
+    defer { observation.cancel() }
+
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      DispatchQueue.global(qos: .userInitiated).async {
+        binding.wrappedValue = false
+        continuation.resume()
+      }
+    }
+    spinRunLoop(timeout: 1) { viewModel.sheet == nil }
+
+    #expect(viewModel.sheet == nil, "the closed sheet must still be cleared")
+    #expect(offMainPublishes.count == 0, "the view model published from a background thread")
   }
 
   // MARK: - Driving the real navigator
@@ -271,4 +311,22 @@ struct CustomerCenterSheetOwnershipTests {
 /// completion, so the one fact UIKit would report is supplied directly.
 private final class DismissingNavigationController: UINavigationController {
   override var isBeingDismissed: Bool { true }
+}
+
+/// Counts publishes from whichever thread they arrive on.
+private final class PublishLog: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value = 0
+
+  var count: Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return value
+  }
+
+  func record() {
+    lock.lock()
+    value += 1
+    lock.unlock()
+  }
 }

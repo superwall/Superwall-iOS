@@ -82,12 +82,17 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         guard isTopmost, case .manageSubscriptions = viewModel.sheet else { return false }
         return true
       },
-      set: {
-        guard !$0, CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .manageSubscriptions) else {
-          return
+      set: { [viewModel] isPresented in
+        Self.onMainThread {
+          guard
+            !isPresented,
+            CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .manageSubscriptions)
+          else {
+            return
+          }
+          viewModel.sheet = nil
+          Task { await viewModel.sheetDidDismiss() }
         }
-        viewModel.sheet = nil
-        Task { await viewModel.sheetDidDismiss() }
       }
     )
   }
@@ -97,11 +102,27 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         guard isTopmost, case .refund = viewModel.sheet else { return false }
         return true
       },
-      set: {
-        guard !$0, CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .refund) else { return }
-        viewModel.sheet = nil
+      set: { [viewModel] isPresented in
+        Self.onMainThread {
+          guard !isPresented, CustomerCenterSheetOwnership.dismissalClears(viewModel.sheet, .refund) else { return }
+          viewModel.sheet = nil
+        }
       }
     )
+  }
+
+  /// StoreKit writes the `isPresented` bindings of its sheet modifiers from the background thread
+  /// its presentation finishes on. The view model is main-actor state that SwiftUI observes, and
+  /// publishing it from there is what Xcode reports as "Publishing changes from background threads
+  /// is not allowed". SwiftUI's own writes arrive on the main thread and are applied at once:
+  /// deferring those as well would leave the getter saying the sheet is up after SwiftUI has been
+  /// told it isn't.
+  nonisolated static func onMainThread(_ work: @escaping @MainActor () -> Void) {
+    guard Thread.isMainThread else {
+      Task { @MainActor in work() }
+      return
+    }
+    MainActor.assumeIsolated(work)
   }
   private var itemSheet: Binding<CustomerCenterSheet?> {
     .init(
