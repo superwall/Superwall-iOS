@@ -228,6 +228,24 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(viewModel.sheet == nil)
   }
 
+  /// Claims are compared by identity, so which screen claims matters: the owner claiming again as
+  /// it reappears keeps its sheet, while a different screen taking its depth has replaced it.
+  @available(iOS 15.0, *)
+  @Test("a sheet survives its screen claiming again, not another screen taking its place")
+  func reclaimKeepsTheSheetReplacementDropsIt() {
+    let viewModel = makeViewModel()
+    let detail = UUID()
+    viewModel.claimPushedSurface(detail, depth: 1)
+    viewModel.sheet = .survey(pathId: "cancel")
+
+    viewModel.claimPushedSurface(detail, depth: 1)
+    #expect(viewModel.sheet == .survey(pathId: "cancel"))
+    #expect(viewModel.sheetOwnerDepth == 1)
+
+    viewModel.claimPushedSurface(UUID(), depth: 1)
+    #expect(viewModel.sheet == nil, "the screen that asked for the sheet has been replaced")
+  }
+
   /// The other half of the race: the request that went with its screen doesn't linger in `sheet`,
   /// where nothing could present it, and neither does the survey answer it was waiting for.
   @available(iOS 15.0, *)
@@ -365,7 +383,9 @@ struct CustomerCenterSheetOwnershipTests {
           continuation.resume()
         }
       }
-      spinRunLoop(timeout: 1) { viewModel.sheet == nil }
+      // The write hops to the main actor as a task, so wait by suspending: nothing guarantees that
+      // task runs before this test resumes, and a spun run loop can't run it.
+      await waitUntil(timeout: 1) { viewModel.sheet == nil }
     }
 
     #expect(viewModel.sheet == nil, "the closed sheet must still be cleared")
@@ -781,26 +801,39 @@ struct CustomerCenterSheetOwnershipTests {
   private static let now = Date()
 
   @available(iOS 15.0, *)
-  private func makeLoadedViewModel(
-    dismissDebounceInterval: TimeInterval = 0.6,
-    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
-  ) async -> CustomerCenterViewModel {
-    let subscription = SubscriptionTransaction(
+  private static func subscription(willRenew: Bool = true) -> SubscriptionTransaction {
+    SubscriptionTransaction(
       transactionId: "t1",
       productId: "monthly_pro",
-      purchaseDate: Self.now.addingTimeInterval(-30 * 86_400),
-      willRenew: true,
+      purchaseDate: now.addingTimeInterval(-30 * 86_400),
+      willRenew: willRenew,
       isRevoked: false,
       isInGracePeriod: false,
       isInBillingRetryPeriod: false,
       isActive: true,
-      expirationDate: Self.now.addingTimeInterval(12 * 86_400),
+      expirationDate: now.addingTimeInterval(12 * 86_400),
       offerType: nil,
       subscriptionGroupId: "group_pro",
       store: .appStore
     )
-    let (deps, _, _) = CustomerCenterDependencies.mock(
-      info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: []),
+  }
+
+  @available(iOS 15.0, *)
+  private func makeLoadedViewModel(
+    dismissDebounceInterval: TimeInterval = 0.6,
+    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
+  ) async -> CustomerCenterViewModel {
+    await makeLoadedViewModelAndInfo(dismissDebounceInterval: dismissDebounceInterval, lookup: lookup).viewModel
+  }
+
+  /// Also hands back the customer info provider, so a test can publish an update.
+  @available(iOS 15.0, *)
+  private func makeLoadedViewModelAndInfo(
+    dismissDebounceInterval: TimeInterval = 0.6,
+    lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
+  ) async -> (viewModel: CustomerCenterViewModel, info: CustomerInfoProviderMock) {
+    let (deps, info, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [Self.subscription()], nonSubscriptions: [], entitlements: []),
       lookup: lookup
     )
     let viewModel = CustomerCenterViewModel(
@@ -810,7 +843,7 @@ struct CustomerCenterSheetOwnershipTests {
       dismissDebounceInterval: dismissDebounceInterval
     )
     await viewModel.load()
-    return viewModel
+    return (viewModel, info)
   }
 
   private func firstSubview<T: UIView>(of type: T.Type, in view: UIView) -> T? {
@@ -926,6 +959,45 @@ struct CustomerCenterSheetOwnershipTests {
     navigation.popViewController(animated: false)
     await waitUntil { viewModel.pushDepth == 0 }
     #expect(viewModel.pushDepth == 0, "the root must be able to present again once the detail is gone")
+  }
+
+  /// A customer-info update republishes the purchase the detail screen was opened for. The screen
+  /// has to come through that as itself, still holding its claim, or a sheet open on it would be
+  /// dropped as though the screen had gone.
+  @available(iOS 16.0, *)
+  @Test("a customer-info update doesn't cost a subscription's screen its open sheet")
+  func customerInfoUpdateKeepsTheDetailsSheet() async throws {
+    let (viewModel, info) = await makeLoadedViewModelAndInfo()
+    let host = UIHostingController(
+      rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: .default)
+    )
+    let window = makeWindow(rootViewController: host)
+    window.makeKeyAndVisible()
+    defer { window.isHidden = true }
+
+    _ = try openFirstSubscription(in: host)
+    let claims = viewModel.pushedSurfaces.claims
+    let presented = try await requestSurvey(from: viewModel, window: window)
+    try #require(presented, "the survey never presented")
+    let survey = viewModel.sheet
+    let statusBefore = viewModel.purchases.first?.statusLine
+
+    info.subject.value = CustomerInfo(
+      subscriptions: [Self.subscription(willRenew: false)],
+      nonSubscriptions: [],
+      entitlements: []
+    )
+    await waitUntil {
+      host.view.layoutIfNeeded()
+      return viewModel.purchases.first?.statusLine != statusBefore
+    }
+    try #require(viewModel.purchases.first?.statusLine != statusBefore, "the update never arrived")
+    // Give the republished purchase a chance to reach the pushed screen.
+    try await Task.sleep(nanoseconds: 300_000_000)
+    host.view.layoutIfNeeded()
+
+    #expect(viewModel.pushedSurfaces.claims == claims, "the subscription's screen came back as a different screen")
+    #expect(viewModel.sheet == survey)
   }
 
   /// Something the host did covers the subscription's screen: here, a push of its own over the
