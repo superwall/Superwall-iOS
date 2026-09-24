@@ -111,6 +111,19 @@ public struct CustomerCenterView: View {
     // closed — see `CustomerCenterViewModel.surfaceDidAppear()`.
     .onAppear { viewModel.surfaceDidAppear() }
     .onDisappear { viewModel.surfaceDidDisappear() }
+    // Says which kind of disappearance that was. Covered — the host switched tabs, pushed a screen
+    // of its own or presented over this one — dropped the count to zero all the same, and left
+    // alone the count delivered `customerCenterDidDismiss()` for a Customer Center still in the
+    // stack. `dismiss()` latches, so the real close later went unreported.
+    // `CustomerCenterViewController` makes the same call from UIKit; this covers a
+    // `CustomerCenterView` the host places itself.
+    .background(
+      CustomerCenterLifecycleProbe(
+        onCovered: { [viewModel] in viewModel.suppressDismissalUntilNextAppearance() },
+        onRemoved: { [viewModel] in viewModel.surfaceWasRemoved() },
+        onDismantled: { [viewModel] in viewModel.surfaceWasRemoved() }
+      )
+    )
   }
 
   /// Combines the view model's existing callbacks (e.g. set by the UIKit adapter) with those

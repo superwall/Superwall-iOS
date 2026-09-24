@@ -170,6 +170,7 @@
 		3F3774A066285BB0DFE61B61 /* JSONToDict.swift in Sources */ = {isa = PBXBuildFile; fileRef = E09C238ADC0B019047FAB1DF /* JSONToDict.swift */; };
 		3F4BE7ECC80EEA757454F9B6 /* DependencyContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 124F219E38F8398A65A7EB32 /* DependencyContainer.swift */; };
 		3F6DD6FB62BDF53536FC4EF7 /* V4Migrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D685A5912892EF9C2931B1 /* V4Migrator.swift */; };
+		3F7961E1B066CFAFA95D9C17 /* CustomerCenterViewModel+PushedSurfaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57D23F2D4271D374ECAAF4E3 /* CustomerCenterViewModel+PushedSurfaces.swift */; };
 		40314E44991DCB66B4572C25 /* LocationPermissionDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4623C4E5EDA10B38746C384 /* LocationPermissionDelegateTests.swift */; };
 		40E6B7996E9BA4B5D65F1432 /* RedemptionResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = B382F84E55D4D8C37A6021E3 /* RedemptionResult.swift */; };
 		412C74624BB8933162DAAC5F /* Experiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5836EFACFA00594CE8F9F377 /* Experiment.swift */; };
@@ -540,6 +541,7 @@
 		CE1E318E72F886BDFF9D9870 /* GetPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFA6E24E16D14D1A71DC568F /* GetPresenter.swift */; };
 		CE20B453845974EC28C9D39D /* RedemptionResultObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5CD130C74880AD07DCD2A7AA /* RedemptionResultObjc.swift */; };
 		CE411644469AB99AC9DBB492 /* SWWebViewLoadingHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D9545633A97A2E63FEDF78A /* SWWebViewLoadingHandler.swift */; };
+		CE41180E360250FFC845720B /* CustomerCenterLifecycleProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F45571132885930AFC67E2 /* CustomerCenterLifecycleProbe.swift */; };
 		CE43399599386456DCCD1FDC /* FakeLocationAuthorizationStatusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3529B422EB2D09B69265B591 /* FakeLocationAuthorizationStatusTests.swift */; };
 		CE5307A037FCFD8CB8380EB5 /* GetPaywallManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3781CF21200CD2333F6779A /* GetPaywallManager.swift */; };
 		CE821667CB6676EA02510FE9 /* TrackingManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = A78C5C57C3C92444EBAC2E38 /* TrackingManagerProxy.swift */; };
@@ -925,6 +927,7 @@
 		577D25646DA26238881BF6AB /* DevModeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevModeTests.swift; sourceTree = "<group>"; };
 		57AD390BC73341A49301B4AA /* ProductsFetcherSK2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsFetcherSK2.swift; sourceTree = "<group>"; };
 		57C7673988B39FB0BDEA8BE4 /* Date+IsoStringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoStringTests.swift"; sourceTree = "<group>"; };
+		57D23F2D4271D374ECAAF4E3 /* CustomerCenterViewModel+PushedSurfaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterViewModel+PushedSurfaces.swift"; sourceTree = "<group>"; };
 		5813618E0E26698492BC7485 /* SubscriptionStatusChange.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionStatusChange.swift; sourceTree = "<group>"; };
 		582CE0C5BA6EA57C7FE3EE43 /* CheckNoPaywallAlreadyPresented.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckNoPaywallAlreadyPresented.swift; sourceTree = "<group>"; };
 		5836EFACFA00594CE8F9F377 /* Experiment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Experiment.swift; sourceTree = "<group>"; };
@@ -1249,6 +1252,7 @@
 		C0ED0B91277B33BB56F9DFA6 /* DebugPickerLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugPickerLogic.swift; sourceTree = "<group>"; };
 		C10310294FD27EB6A0621341 /* StoreProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreProduct.swift; sourceTree = "<group>"; };
 		C1B0B4A4E57D6B7F63510D07 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C1F45571132885930AFC67E2 /* CustomerCenterLifecycleProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterLifecycleProbe.swift; sourceTree = "<group>"; };
 		C22CA9431D5F791BE7A9BE27 /* Documentation.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Documentation.docc; sourceTree = "<group>"; };
 		C2300AFFC31667E749E85EAC /* TrackingLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingLogicTests.swift; sourceTree = "<group>"; };
 		C2489DE003DCA646B562A200 /* APIStoreProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIStoreProduct.swift; sourceTree = "<group>"; };
@@ -1585,6 +1589,7 @@
 				6B36C6BD72D66F94DE620F16 /* AccountDetailsSection.swift */,
 				1D83A9FEE5901713FC693147 /* AppUpdateWarningView.swift */,
 				518841D661079BCD21DA7692 /* CustomerCenterEnvironment.swift */,
+				C1F45571132885930AFC67E2 /* CustomerCenterLifecycleProbe.swift */,
 				6B928799A028CB182E46CB4B /* CustomerCenterNavigator.swift */,
 				4E4904244CA123DEE51D7E71 /* CustomerCenterSheets.swift */,
 				9C3A5B3F5DCF95EE9649CDA8 /* CustomerCenterStrings+English.swift */,
@@ -2453,6 +2458,7 @@
 				ADDA4A3208522A84B3070BBA /* CustomerCenterViewModel+Catalogue.swift */,
 				208A9F89EFD8A82BDDBF01A7 /* CustomerCenterViewModel+Dismissal.swift */,
 				B167F35F1B87119D05686C7B /* CustomerCenterViewModel+PurchaseDetail.swift */,
+				57D23F2D4271D374ECAAF4E3 /* CustomerCenterViewModel+PushedSurfaces.swift */,
 				12BC920C6393F67609CE54A0 /* CustomerCenterViewModel+Refund.swift */,
 				7D672DB1BB0AFC32C1DA3148 /* CustomerCenterViewModel+Support.swift */,
 				96A6D71D51DB3F1BCE3E167B /* CustomerCenterViewModel+UpdateBanner.swift */,
@@ -3998,6 +4004,7 @@
 				781A9E4339F865190C8A5D6A /* CustomerCenterDelegateAdapter.swift in Sources */,
 				A3E29135312C5A933D6234C5 /* CustomerCenterDependencies.swift in Sources */,
 				D99C565B5803B6ECE29A3D8B /* CustomerCenterEnvironment.swift in Sources */,
+				CE41180E360250FFC845720B /* CustomerCenterLifecycleProbe.swift in Sources */,
 				295EF01B171923E20329DF91 /* CustomerCenterManager.swift in Sources */,
 				4616C021DCB8228B75D8B591 /* CustomerCenterNavigator.swift in Sources */,
 				346FAC08A7D3932CE3FAD129 /* CustomerCenterPathResolver.swift in Sources */,
@@ -4010,6 +4017,7 @@
 				7F7547441E328E3A1C369BFE /* CustomerCenterViewModel+Catalogue.swift in Sources */,
 				97470BA178DC53673237C02F /* CustomerCenterViewModel+Dismissal.swift in Sources */,
 				B02D152D88E005E08078DA51 /* CustomerCenterViewModel+PurchaseDetail.swift in Sources */,
+				3F7961E1B066CFAFA95D9C17 /* CustomerCenterViewModel+PushedSurfaces.swift in Sources */,
 				DAA4F3E3A4E104BD658E9F93 /* CustomerCenterViewModel+Refund.swift in Sources */,
 				E38FE7475E82AC6EA10F2C65 /* CustomerCenterViewModel+Support.swift in Sources */,
 				7C56FE8873F3E1E57905BC91 /* CustomerCenterViewModel+UpdateBanner.swift in Sources */,

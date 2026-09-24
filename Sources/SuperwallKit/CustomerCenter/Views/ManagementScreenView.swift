@@ -31,7 +31,7 @@ struct ManagementScreenView: View {
         // plan, refund, cancel, the web management page — lives where the row leads.
         Section(strings.string("customer_center_section_subscriptions")) {
           ForEach(subscriptions) { purchase in
-            CustomerCenterDrillDown {
+            CustomerCenterDrillDown(viewModel: viewModel) {
               PurchaseDetailScreenView(viewModel: viewModel, purchase: purchase)
             } label: {
               PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult)

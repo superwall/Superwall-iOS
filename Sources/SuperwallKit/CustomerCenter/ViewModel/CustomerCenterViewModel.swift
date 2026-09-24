@@ -18,7 +18,10 @@ final class CustomerCenterViewModel: ObservableObject {
   @Published private(set) var state: CustomerCenterScreenState = .loading
   @Published private(set) var purchases: [PurchasePresentation] = []
   @Published var sheet: CustomerCenterSheet? {
-    didSet { if let sheet { lastPresentedSheet = sheet } }
+    didSet {
+      if let sheet { lastPresentedSheet = sheet }
+      sheetOwnerDepth = sheet == nil ? nil : pushDepth
+    }
   }
   @Published var restoreState: CustomerCenterRestoreState = .idle
   @Published private(set) var refundResult: (productId: String, status: CustomerCenterRefundStatus)?
@@ -26,9 +29,22 @@ final class CustomerCenterViewModel: ObservableObject {
   // `CustomerCenterViewModel+UpdateBanner.swift`, and `private` is file-scoped.
   @Published var showsUpdateBanner = false
   @Published private(set) var showsDuplicateBanner = false
-  /// How many of the Customer Center's own screens the host has pushed above the root, when it
-  /// owns the navigation. Only the surface at this depth presents sheets.
-  @Published var pushDepth = 0
+  /// The Customer Center's own screens pushed above the root and still in the stack, whether
+  /// through the host's `UINavigationController` or by a `NavigationLink`.
+  // Not `private(set)`: claims are made and released in
+  // `CustomerCenterViewModel+PushedSurfaces.swift`, and `private` is file-scoped.
+  @Published var pushedSurfaces = PushedSurfaces()
+  /// How deep the screen on top sits; `0` for the root. A sheet is presented by the screen at this
+  /// depth when it's requested.
+  var pushDepth: Int { pushedSurfaces.depth }
+  /// The depth of the screen that presents ``sheet``: the one on top when it was requested.
+  ///
+  /// Fixed at the request rather than following ``pushDepth``. A request can land while the screen
+  /// that made it is being popped, because its button stays live while the request awaits a
+  /// transaction. Following the depth, the outgoing screen presented the sheet, then the root
+  /// presented it again once the pop finished: two refund requests for one tap. When that screen
+  /// leaves the stack, its request goes too rather than moving to whatever is now on top.
+  private(set) var sheetOwnerDepth: Int?
 
   let configuration: CustomerCenterConfiguration
   let strings: CustomerCenterStrings

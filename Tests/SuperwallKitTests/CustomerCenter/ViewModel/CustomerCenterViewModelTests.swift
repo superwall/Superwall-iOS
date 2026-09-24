@@ -542,6 +542,46 @@ struct CustomerCenterViewModelTests {
     #expect(dismissCount == 1)
   }
 
+  /// A cover's veto lasts until something appears, and a covered Customer Center can be removed
+  /// without appearing again: the host pushes over it, then pops back past both.
+  @Test("removal from under a cover still delivers the dismissal")
+  func removalLiftsTheCoverVeto() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissCount = 0
+    vm.callbacks.didDismiss = { dismissCount += 1 }
+
+    vm.surfaceDidAppear()
+    vm.suppressDismissalUntilNextAppearance()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(dismissCount == 0, "covered isn't closed")
+
+    vm.surfaceWasRemoved()
+    await waitUntil { dismissCount == 1 }
+    #expect(dismissCount == 1)
+  }
+
+  @Test("removal of one screen while another is showing dismisses nothing")
+  func removalWithAnotherSurfaceShowing() async {
+    let vm = makeForVisibility(info: info([sub()]))
+    await vm.load()
+    var dismissed = false
+    vm.callbacks.didDismiss = { dismissed = true }
+
+    // The root is covered by the Customer Center's own detail screen, which is then popped.
+    vm.surfaceDidAppear()
+    vm.surfaceDidAppear()
+    vm.suppressDismissalUntilNextAppearance()
+    vm.surfaceDidDisappear()
+    vm.surfaceWasRemoved()
+    vm.surfaceDidAppear()
+    vm.surfaceDidDisappear()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(!dismissed)
+  }
+
   @Test("dismiss tracks close and calls back; publisher updates re-render")
   func dismissAndPublisher() async {
     let tracker = EventTrackerMock()

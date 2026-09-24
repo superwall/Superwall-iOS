@@ -29,6 +29,27 @@ extension CustomerCenterViewModel {
   /// debounce elapses cancels it.
   func surfaceDidDisappear() {
     visibleSurfaceCount = max(0, visibleSurfaceCount - 1)
+    scheduleDismissalIfNothingIsVisible()
+  }
+
+  /// Call when a surface knows it has been taken out of the hierarchy, not just covered. Lifts a
+  /// veto from ``suppressDismissalUntilNextAppearance()`` that no appearance will now clear, and
+  /// lets the visibility count decide again.
+  ///
+  /// A veto lasts until a surface appears, and a covered screen can be removed without appearing
+  /// again. The host pushes a screen over the Customer Center, then pops back past both; or the
+  /// Customer Center pushes its own detail screen, which covers the root, and the whole thing is
+  /// dismissed from there. Left in place, the veto would keep the dismissal from ever being
+  /// delivered.
+  ///
+  /// The same debounce still applies, so a surface that's only being moved — rehosted in another
+  /// container, say — and reappears in time doesn't dismiss anything.
+  func surfaceWasRemoved() {
+    isDismissalSuppressed = false
+    scheduleDismissalIfNothingIsVisible()
+  }
+
+  private func scheduleDismissalIfNothingIsVisible() {
     guard visibleSurfaceCount == 0, !isDismissalSuppressed else { return }
     dismissDebounceTask?.cancel()
     // Captures self strongly: on the SwiftUI sheet path the last `onDisappear` is immediately
@@ -57,8 +78,9 @@ extension CustomerCenterViewModel {
   /// ``cancelPendingDismissal()`` only drops an already-armed dismissal, assuming SwiftUI has
   /// delivered `onDisappear` by the time `viewDidDisappear` runs — a moment Apple documents as
   /// view-type-dependent. Arriving a runloop turn later, it found nothing to cancel and armed
-  /// unopposed. Suppressing until the next appearance covers both orderings; a genuine teardown
-  /// is unaffected, since the controllers deliver those through ``dismiss()`` directly.
+  /// unopposed. Suppressing until the next appearance covers both orderings. A genuine teardown
+  /// is unaffected: the controllers deliver it through ``dismiss()`` directly, and SwiftUI screens
+  /// report it through ``surfaceWasRemoved()``.
   func suppressDismissalUntilNextAppearance() {
     isDismissalSuppressed = true
     cancelPendingDismissal()
