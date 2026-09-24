@@ -26,6 +26,127 @@ struct SK2ReceiptManagerTests {
     )
   }
 
+  // MARK: - Purchase correction
+
+  private func makeEntitlement(
+    id: String = "premium",
+    isActive: Bool,
+    latestProductId: String?,
+    productIds: Set<String>
+  ) -> Entitlement {
+    return Entitlement(
+      id: id,
+      type: .serviceLevel,
+      isActive: isActive,
+      productIds: productIds,
+      latestProductId: latestProductId,
+      store: .appStore
+    )
+  }
+
+  @Test("A purchase whose entitlements are all inactive is corrected to inactive")
+  func revokedEntitlementDeactivatesThePurchase() {
+    let purchase = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
+    let entitlement = makeEntitlement(
+      isActive: false,
+      latestProductId: "monthly",
+      productIds: ["monthly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: ["monthly": [entitlement]],
+      grantingProductIds: [],
+      lapsedProductIds: []
+    )
+
+    #expect(corrected.first?.isActive == false)
+  }
+
+  @Test("A purchase unlocking a grace-period entitlement is corrected to active")
+  func gracePeriodEntitlementReactivatesThePurchase() {
+    // The transaction's own expiry has passed, so the raw read says inactive.
+    let purchase = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "monthly",
+      productIds: ["monthly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: ["monthly": [entitlement]],
+      grantingProductIds: ["monthly"],
+      lapsedProductIds: []
+    )
+
+    #expect(corrected.first?.isActive == true)
+  }
+
+  @Test("A refunded group's purchase is inactive even while another group grants the entitlement")
+  func refundedGroupPurchaseIsInactiveAlongsideAnActiveGroup() {
+    // Refunded, but its transaction still shows no revocation date and a future
+    // expiry, so the raw read says active.
+    let refunded = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
+    let paying = Purchase(id: "yearly", isActive: true, purchaseDate: Date())
+    // One entitlement, unlocked by both products, currently granted by the yearly.
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "yearly",
+      productIds: ["monthly", "yearly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [refunded, paying],
+      using: ["monthly": [entitlement], "yearly": [entitlement]],
+      // The refunded monthly's group grants nothing, so it's lapsed.
+      grantingProductIds: ["yearly"],
+      lapsedProductIds: ["monthly"]
+    )
+
+    #expect(corrected.first { $0.id == "monthly" }?.isActive == false)
+    #expect(corrected.first { $0.id == "yearly" }?.isActive == true)
+  }
+
+  @Test("A grace-period group is active even when another group describes the entitlement")
+  func gracePeriodGroupIsActiveAlongsideALongerGroup() {
+    // Its own expiry has passed, so the raw read says inactive, but the group
+    // is in its billing grace period and still unlocking access.
+    let inGrace = Purchase(id: "monthly", isActive: false, purchaseDate: Date())
+    let longer = Purchase(id: "yearly", isActive: true, purchaseDate: Date())
+    // One entitlement, two groups. The yearly has more time left, so it is the
+    // one describing the entitlement.
+    let entitlement = makeEntitlement(
+      isActive: true,
+      latestProductId: "yearly",
+      productIds: ["monthly", "yearly"]
+    )
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [inGrace, longer],
+      using: ["monthly": [entitlement], "yearly": [entitlement]],
+      grantingProductIds: ["monthly", "yearly"],
+      lapsedProductIds: []
+    )
+
+    #expect(corrected.first { $0.id == "monthly" }?.isActive == true)
+    #expect(corrected.first { $0.id == "yearly" }?.isActive == true)
+  }
+
+  @Test("A purchase that maps to no entitlement keeps its own active flag")
+  func unmappedPurchaseIsLeftAlone() {
+    let purchase = Purchase(id: "monthly", isActive: true, purchaseDate: Date())
+
+    let corrected = SK2ReceiptManager.correctPurchases(
+      [purchase],
+      using: [:],
+      grantingProductIds: [],
+      lapsedProductIds: []
+    )
+
+    #expect(corrected.first?.isActive == true)
+  }
+
   @Test("isEligibleForIntroOffer re-queries StoreKit on every call and is never cached")
   func eligibilityIsNotCached() async {
     guard #available(iOS 15.0, *) else {
