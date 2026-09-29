@@ -766,7 +766,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
-  /// in user, placement, or device parameters used in audience filters.
+  /// in user, placement, or device parameters used in audience filters. Audience filters can
+  /// check the placement name, but not the custom params you pass when registering a placement.
   ///
   /// - Returns: An array of ``Assignment`` objects.
   public func confirmAllAssignments() async -> [Assignment] {
@@ -784,9 +785,15 @@ public final class Superwall: NSObject, ObservableObject {
     var assignments = dependencyContainer.storage.getAssignments()
 
     for trigger in triggers {
+      // The placement name is known, so filters on it can match. Custom
+      // placement params only exist when the app registers the placement.
+      let parameters = TrackingLogic.placementNameParams(
+        trigger.placementName,
+        isStandardEvent: TrackingLogic.isSuperwallEventName(trigger.placementName)
+      )
       let eventData = PlacementData(
         name: trigger.placementName,
-        parameters: [:],
+        parameters: JSON(parameters),
         createdAt: Date()
       )
 
@@ -809,7 +816,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// This tracks ``SuperwallEvent/confirmAllAssignments`` in the delegate.
   ///
   /// Note that the assignments may be different when a placement is registered due to changes
-  /// in user, placement, or device parameters used in audience filters.
+  /// in user, placement, or device parameters used in audience filters. Audience filters can
+  /// check the placement name, but not the custom params you pass when registering a placement.
   ///
   /// - Parameter completion: A completion block that accepts an array of ``Assignment`` objects.
   public func confirmAllAssignments(completion: (([Assignment]) -> Void)? = nil) {

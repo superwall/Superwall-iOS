@@ -85,6 +85,36 @@ struct CELEvaluatorTests {
     #expect(result == .match(audience: rule))
   }
 
+  @Test func evaluateExpression_placementNameParams_matchEventNameFilter() async {
+    let dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.reset()
+    let evaluator = CELEvaluator(
+      storage: dependencyContainer.storage,
+      factory: dependencyContainer
+    )
+    dependencyContainer.identityManager.mergeUserAttributes([:])
+    let rule: TriggerRule = .stub()
+      .setting(\.expression, to: "params.event_name == \"campaign_trigger\"")
+
+    let withName = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: PlacementData(
+        name: "campaign_trigger",
+        parameters: JSON(
+          TrackingLogic.placementNameParams("campaign_trigger", isStandardEvent: false)
+        ),
+        createdAt: Date()
+      )
+    )
+    #expect(withName == .match(audience: rule))
+
+    let withoutName = await evaluator.evaluateExpression(
+      fromAudienceFilter: rule,
+      placementData: PlacementData(name: "campaign_trigger", parameters: [:], createdAt: Date())
+    )
+    #expect(withoutName == .noMatch(source: .expression, experimentId: rule.experiment.id))
+  }
+
   @Test func evaluateExpression_expressionDeviceTrue() async {
     let dependencyContainer = DependencyContainer()
     dependencyContainer.storage.reset()
