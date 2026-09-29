@@ -16,7 +16,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
   private let priceFormatterProvider = PriceFormatterProvider()
   let entitlements: Set<Entitlement>
@@ -35,11 +34,7 @@ struct SK2StoreProduct: StoreProductType {
     entitlements: Set<Entitlement>,
     billingPlanType: AppStoreProduct.BillingPlanType? = nil
   ) {
-    #if swift(<5.7)
-    self._underlyingSK2Product = sk2Product
-    #else
     self.underlyingSK2Product = sk2Product
-    #endif
     self.entitlements = entitlements
     self.billingPlanType = billingPlanType
 
@@ -174,18 +169,7 @@ struct SK2StoreProduct: StoreProductType {
     )
   }
 
-  #if swift(<5.7)
-  // We can't directly store instances of StoreKit.Product, since that causes
-  // linking issues in iOS < 15, even with @available checks correctly in place.
-  // So instead, we store the underlying product as Any and wrap it with casting.
-  private let _underlyingSK2Product: Any
-  var underlyingSK2Product: SK2Product {
-    // swiftlint:disable:next force_cast
-    _underlyingSK2Product as! SK2Product
-  }
-  #else
   let underlyingSK2Product: SK2Product
-  #endif
 
   var productIdentifier: String {
     underlyingSK2Product.id
@@ -765,7 +749,6 @@ struct SK2StoreProduct: StoreProductType {
 }
 
 // MARK: - Hashable
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension SK2StoreProduct: Hashable {
   static func == (lhs: SK2StoreProduct, rhs: SK2StoreProduct) -> Bool {
     return lhs.underlyingSK2Product == rhs.underlyingSK2Product

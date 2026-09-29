@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Update banner
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// The version the banner compares against: whatever the host configured, otherwise whatever the
   /// App Store lookup returned. A configured value always wins and suppresses the lookup entirely.

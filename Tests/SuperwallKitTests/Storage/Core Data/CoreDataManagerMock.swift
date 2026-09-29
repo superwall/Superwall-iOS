@@ -8,7 +8,6 @@
 import CoreData
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 final class CoreDataManagerMock: CoreDataManager {
   let internalDataStack: CoreDataStack
 

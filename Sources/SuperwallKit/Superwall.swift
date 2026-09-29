@@ -328,7 +328,6 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
   /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
-  @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
       if !customerInfo.isPlaceholder {
@@ -1156,9 +1155,7 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)
-        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-        }
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
       #endif
     }
   }
@@ -1229,7 +1226,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
-  @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
     if options.shouldObservePurchases {
       Logger.debug(
@@ -1286,7 +1282,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
   /// to `true`.
-  @available(iOS 15.0, *)
   public func purchase(
     _ product: StoreKit.Product,
     completion: @escaping (PurchaseResult) -> Void

@@ -60,8 +60,7 @@ actor ReceiptManager {
 
     if let receiptManager = receiptManager {
       self.manager = receiptManager
-    } else if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
+    } else if storeKitVersion == .storeKit2 {
       self.manager = Self.versionedManager(storeKitVersion: storeKitVersion)
     } else {
       self.manager = SK1ReceiptManager()
@@ -78,8 +77,7 @@ actor ReceiptManager {
   static func versionedManager(
     storeKitVersion: SuperwallOptions.StoreKitVersion
   ) -> ReceiptManagerType {
-    if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
+    if storeKitVersion == .storeKit2 {
       return SK2ReceiptManager()
     } else {
       return SK1ReceiptManager()
@@ -91,7 +89,6 @@ actor ReceiptManager {
   }
 
   private func setAppTransactionId() async {
-    #if compiler(>=6.1)
     if #available(iOS 16.0, *),
       !shouldBypassAppTransactionCheck,
       !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UNIT_TESTS") {
@@ -109,7 +106,6 @@ actor ReceiptManager {
         }
       }
     }
-    #endif
   }
 
   private func registerAppTransactionIdIfNeeded() {

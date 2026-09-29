@@ -34,7 +34,6 @@ struct PurchaseSnapshot {
   let customerInfo: CustomerInfo
 }
 
-@available(iOS 15.0, *)
 actor SK2ReceiptManager: ReceiptManagerType {
   nonisolated let loadsSubscriptionGroupsFromProducts = false
   /// Resolves intro-offer eligibility live from StoreKit. Injectable so tests can

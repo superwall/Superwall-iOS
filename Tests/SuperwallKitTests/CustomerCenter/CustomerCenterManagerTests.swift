@@ -13,7 +13,6 @@ import UIKit
 @Suite("CustomerCenterManager", .serialized)
 @MainActor
 struct CustomerCenterManagerTests {
-  @available(iOS 15.0, *)
   @Test("resolveConfiguration: override > options > default")
   func resolution() {
     let container = DependencyContainer()
@@ -24,7 +23,6 @@ struct CustomerCenterManagerTests {
     #expect(manager.resolveConfiguration(custom) === custom)
   }
 
-  @available(iOS 15.0, *)
   @Test("second present while presented is ignored")
   func singleInstance() {
     let container = DependencyContainer()
@@ -42,7 +40,6 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
   @Test("retains the delegate while presented, releases it after dismiss")
   func retainsDelegateForPresentationDuration() {
     final class ProbeDelegate: CustomerCenterDelegate {}
@@ -87,7 +84,6 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
   @Test("viewDidDisappear fires didDismiss while the delegate is still retained")
   func viewDidDisappearFiresDelegateBeforeRelease() {
     final class ProbeDelegate: CustomerCenterDelegate {

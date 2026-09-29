@@ -39,11 +39,9 @@ enum TestModePurchaseDrawer {
     )
     modal.modalPresentationStyle = .pageSheet
     #if !os(visionOS)
-    if #available(iOS 15.0, *) {
-      if let sheet = modal.sheetPresentationController {
-        sheet.detents = [.medium()]
-        sheet.prefersGrabberVisible = false
-      }
+    if let sheet = modal.sheetPresentationController {
+      sheet.detents = [.medium()]
+      sheet.prefersGrabberVisible = false
     }
     #endif
     viewController.present(modal, animated: true)

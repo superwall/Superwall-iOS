@@ -40,7 +40,6 @@ struct PurchaseDetailActionsTests {
     )
   }
 
-  @available(iOS 15.0, *)
   private func makeViewModel(
     subscriptions: [SubscriptionTransaction] = [],
     entitlements: [Entitlement] = []
@@ -57,7 +56,6 @@ struct PurchaseDetailActionsTests {
     return viewModel
   }
 
-  @available(iOS 15.0, *)
   private func emptyState(_ viewModel: CustomerCenterViewModel) throws -> EmptyState? {
     let purchase = try #require(viewModel.purchases.first, "the row exists — nothing is hidden")
     return viewModel.detailEmptyState(for: purchase)
@@ -65,21 +63,18 @@ struct PurchaseDetailActionsTests {
 
   // MARK: Genuinely nothing to do
 
-  @available(iOS 15.0, *)
   @Test("a revoked App Store subscription: nothing to do")
   func revokedAppStore() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(isRevoked: true)])
     #expect(try emptyState(viewModel) == .nothingToDo)
   }
 
-  @available(iOS 15.0, *)
   @Test("a lapsed web subscription: nothing to do")
   func lapsedWeb() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(store: .stripe, isActive: false)])
     #expect(try emptyState(viewModel) == .nothingToDo)
   }
 
-  @available(iOS 15.0, *)
   @Test("a comped grant with no management page: nothing to do")
   func compedGrant() async throws {
     let viewModel = await makeViewModel(entitlements: [Entitlement(id: "pro", store: nil)])
@@ -89,7 +84,6 @@ struct PurchaseDetailActionsTests {
   /// A lifetime grant from a store this SDK can't drive is not "managed elsewhere": nothing
   /// renews, so there is nothing to manage anywhere, and the card's "Lifetime" badge would sit
   /// over a sentence about a subscription. Liveness alone isn't the test; renewal is.
-  @available(iOS 15.0, *)
   @Test("a lifetime Play Store grant: nothing to do, not a subscription to manage elsewhere")
   func lifetimePlayStoreGrant() async throws {
     let lifetime = Entitlement(id: "pro", isActive: true, store: .playStore, isLifetime: true)
@@ -104,14 +98,12 @@ struct PurchaseDetailActionsTests {
   /// The shape the last review caught: an active Play Store subscription on an iOS client. Its
   /// card reads "Active — renews on …", so "nothing to manage" would be a lie. The store has a
   /// name, and the sentence uses it.
-  @available(iOS 15.0, *)
   @Test("a live Play Store subscription is managed elsewhere, by name")
   func livePlayStore() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(store: .playStore)])
     #expect(try emptyState(viewModel) == .managedElsewhere(storeLabelKey: "customer_center_store_google_play"))
   }
 
-  @available(iOS 15.0, *)
   @Test("a live subscription from an unnamed store is managed elsewhere, generically")
   func liveOtherStore() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(store: .other)])
@@ -120,7 +112,6 @@ struct PurchaseDetailActionsTests {
 
   /// A lapsed Play Store subscription is not "managed elsewhere" — there is nothing left to
   /// manage anywhere. Liveness, not store, decides between the two sentences.
-  @available(iOS 15.0, *)
   @Test("a lapsed Play Store subscription: nothing to do")
   func lapsedPlayStore() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(store: .playStore, isActive: false)])
@@ -129,7 +120,6 @@ struct PurchaseDetailActionsTests {
 
   // MARK: Has actions, so no explanation at all
 
-  @available(iOS 15.0, *)
   @Test("an active App Store subscription has actions")
   func activeAppStore() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription()])
@@ -138,7 +128,6 @@ struct PurchaseDetailActionsTests {
 
   /// A live web subscription with no management URL still gets the row that explains where the
   /// link is — fixed once already, and this keeps it from being read as an empty state.
-  @available(iOS 15.0, *)
   @Test("an active web subscription has the management row even with no URL")
   func activeWeb() async throws {
     let viewModel = await makeViewModel(subscriptions: [subscription(store: .stripe)])

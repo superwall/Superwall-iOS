@@ -15,7 +15,6 @@ import UIKit
 /// so it keeps its claim on the sheets and mustn't deliver a dismissal. A screen that was popped
 /// or dismissed is gone. UIKit knows which happened and SwiftUI doesn't say, so a hidden child
 /// controller in the screen listens for it.
-@available(iOS 15.0, *)
 struct CustomerCenterLifecycleProbe: UIViewControllerRepresentable {
   /// The screen disappeared but is still in the stack.
   var onCovered: () -> Void
@@ -49,7 +48,6 @@ struct CustomerCenterLifecycleProbe: UIViewControllerRepresentable {
   }
 }
 
-@available(iOS 15.0, *)
 final class CustomerCenterLifecycleProbeController: UIViewController {
   var onCovered: (() -> Void)?
   var onRemoved: (() -> Void)?

@@ -42,10 +42,9 @@ fi
 # them all. An entry must never legitimately appear in the scanned sections, so a hit
 # is always a real leak.
 #
-# Deliberately absent: `LocationPermissionDelegate`'s callback selectors
-# (locationManagerDidChangeAuthorization:, locationManager:didChangeAuthorization:).
-# CLLocationManager dispatches those by selector at runtime, so their metadata has to
-# exist for the callbacks to arrive. See the note on that class.
+# Deliberately absent: `LocationPermissionDelegate`'s callback selector
+# (locationManagerDidChangeAuthorization:). CLLocationManager dispatches it by
+# selector at runtime, so its metadata has to exist for the callback to arrive. See the note on that class.
 #
 # Also absent: names from the camera, photos, and notification handlers. Those call
 # their frameworks directly rather than through mangled runtime lookups — e.g.

@@ -33,7 +33,6 @@ public enum CustomerCenterPresentationStyle: Int, Sendable {
 ///
 /// Present it modally, or push it onto a navigation controller of your own with
 /// ``CustomerCenterPresentationStyle/embedded``.
-@available(iOS 15.0, *)
 @objc(SWKCustomerCenterViewController)
 public final class CustomerCenterViewController: UIHostingController<CustomerCenterView> {
   let viewModel: CustomerCenterViewModel
@@ -209,7 +208,6 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   }
 }
 
-@available(iOS 15.0, *)
 extension UIViewController {
   /// Whether this controller, or any container it sits inside, is on its way out.
   ///

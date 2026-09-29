@@ -11,7 +11,6 @@
 import Testing
 @testable import SuperwallKit
 
-@available(iOS 14.0, *)
 class OccurrenceLogicTests {
   var coreDataManager: CoreDataManager!
   var coreDataStack: CoreDataStackMock!

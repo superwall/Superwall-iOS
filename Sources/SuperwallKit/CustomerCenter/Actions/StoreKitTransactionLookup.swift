@@ -13,7 +13,6 @@ protocol StoreKitTransactionLooking: Sendable {
   func isFamilyShared(productId: String) async -> Bool
 }
 
-@available(iOS 15.0, *)
 struct StoreKitTransactionLookup: StoreKitTransactionLooking {
   func latestTransactionID(for productId: String) async -> UInt64? {
     guard case .verified(let transaction)? = await Transaction.latest(for: productId) else {

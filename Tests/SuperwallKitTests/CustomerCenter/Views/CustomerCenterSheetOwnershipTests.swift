@@ -27,7 +27,6 @@ struct CustomerCenterSheetOwnershipTests {
     func customerCenterDidDismiss() { didDismissCount += 1 }
   }
 
-  @available(iOS 15.0, *)
   private func makeViewModel(
     delegate: CustomerCenterDelegate? = nil,
     dismissDebounceInterval: TimeInterval = 0.6
@@ -155,7 +154,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   // MARK: - Which screen presents a sheet
 
-  @available(iOS 15.0, *)
   @Test("a sheet is presented by the screen on top when it's requested")
   func sheetGoesToTheScreenOnTop() {
     let viewModel = makeViewModel()
@@ -174,7 +172,6 @@ struct CustomerCenterSheetOwnershipTests {
   /// its transaction. The request lands mid-pop, so the outgoing detail presents it. When the pop
   /// finished, a sheet that followed the depth was presented again by the root: a second refund
   /// request for one tap.
-  @available(iOS 15.0, *)
   @Test("a sheet whose screen is popped isn't presented again by the root")
   func poppedScreensSheetStaysWithIt() {
     let viewModel = makeViewModel()
@@ -203,13 +200,11 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// Whether `modifier` would present the refund sheet, once StoreKit has been rendered with
   /// `transactionId`.
-  @available(iOS 15.0, *)
   private func presentsRefund(_ modifier: CustomerCenterSheetsModifier, rendered transactionId: UInt64) -> Bool {
     let rendered = StoreKitSheetParameters(refundTransactionId: transactionId)
     return modifier.storeKitSheetBinding(.refund, rendered: rendered).wrappedValue
   }
 
-  @available(iOS 15.0, *)
   @Test("a sheet stays with its screen until that screen leaves")
   func sheetOutlivesUnrelatedDepartures() {
     let viewModel = makeViewModel()
@@ -230,7 +225,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// Claims are compared by identity, so which screen claims matters: the owner claiming again as
   /// it reappears keeps its sheet, while a different screen taking its depth has replaced it.
-  @available(iOS 15.0, *)
   @Test("a sheet survives its screen claiming again, not another screen taking its place")
   func reclaimKeepsTheSheetReplacementDropsIt() {
     let viewModel = makeViewModel()
@@ -248,7 +242,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// The other half of the race: the request that went with its screen doesn't linger in `sheet`,
   /// where nothing could present it, and neither does the survey answer it was waiting for.
-  @available(iOS 15.0, *)
   @Test("a request whose screen leaves is dropped along with its pending survey")
   func abandonedSurveyRequestIsCleared() async throws {
     let viewModel = await makeLoadedViewModel()
@@ -270,7 +263,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// A refund is the one request StoreKit may already be showing when its screen goes, and the
   /// outcome of that sheet still has to reach the host.
-  @available(iOS 15.0, *)
   @Test("a dropped refund request still reports the outcome StoreKit delivers")
   func abandonedRefundStillReportsItsOutcome() async throws {
     let lookup = StoreKitTransactionLookupMock()
@@ -327,7 +319,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// The two above prove the rule; this proves the binding applies it. Testing only the rule
   /// would pass just as happily against the unguarded setter that made it necessary.
-  @available(iOS 15.0, *)
   @Test("a stale dismissal write does not tear down another surface's sheet")
   func staleDismissalLeavesTheOpenSheetAlone() async {
     let viewModel = makeViewModel()
@@ -353,7 +344,6 @@ struct CustomerCenterSheetOwnershipTests {
   /// StoreKit writes `false` into its sheets' `isPresented` bindings from the background thread
   /// their presentation finishes on. The view model is main-actor state SwiftUI observes, so the
   /// write has to reach it on the main thread — and still clear the sheet when it gets there.
-  @available(iOS 15.0, *)
   @Test("a dismissal StoreKit writes off the main thread updates the view model on it", arguments: [
     CustomerCenterSheetOwnership.SheetKind.manageSubscriptions,
     .refund
@@ -395,7 +385,6 @@ struct CustomerCenterSheetOwnershipTests {
   /// Both parameters come from `sheet`, so presenting in the render they change in hands StoreKit
   /// the previous value: transaction 0, a refund request that can only fail, or no subscription
   /// group, a manage sheet with no subscriptions on it.
-  @available(iOS 15.0, *)
   @Test("a StoreKit sheet waits until its parameter has been rendered", arguments: [
     CustomerCenterSheetOwnership.SheetKind.refund,
     .manageSubscriptions
@@ -422,7 +411,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// Each StoreKit sheet is gated on its own kind of request as well as on what has rendered. With
   /// the gate open for one, the other must still stay down.
-  @available(iOS 15.0, *)
   @Test("a StoreKit sheet presents only its own kind of request")
   func storeKitSheetsPresentOnlyTheirOwnKind() {
     let viewModel = makeViewModel()
@@ -440,7 +428,6 @@ struct CustomerCenterSheetOwnershipTests {
   }
 
   /// With no group to hand over there's nothing to wait for.
-  @available(iOS 15.0, *)
   @Test("a manage sheet without a subscription group presents at once")
   func manageSheetWithoutAGroupPresentsAtOnce() {
     let viewModel = makeViewModel()
@@ -453,7 +440,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// From iOS 17, StoreKit's manage sheet for a subscription group, handed an empty group, says the
   /// customer has no subscriptions. A request that has no group goes to the plain manage sheet.
-  @available(iOS 15.0, *)
   @Test("a manage request without a subscription group opens the plain manage sheet")
   func manageRequestWithoutAGroupUsesThePlainSheet() {
     var isPresented = true
@@ -479,7 +465,6 @@ struct CustomerCenterSheetOwnershipTests {
   ///
   /// Waits by suspending: below iOS 26.4, SwiftUI queues a `.task` on the main actor rather than
   /// starting it immediately, and a test that only spins the run loop never lets it run.
-  @available(iOS 15.0, *)
   @Test("the sheet modifier records what it has rendered into StoreKit's sheets")
   func sheetModifierRecordsTheRenderedParameters() async {
     let viewModel = makeViewModel()
@@ -513,7 +498,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   // MARK: - Covered or removed
 
-  @available(iOS 15.0, *)
   private func makeProbe(log: ProbeLog) -> CustomerCenterLifecycleProbeController {
     let probe = CustomerCenterLifecycleProbeController()
     probe.onCovered = { log.events.append("covered") }
@@ -531,7 +515,6 @@ struct CustomerCenterSheetOwnershipTests {
     return screen
   }
 
-  @available(iOS 15.0, *)
   @Test("a screen the host pushes over is covered")
   func pushOverIsACover() {
     let log = ProbeLog()
@@ -550,7 +533,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// A full-screen presentation takes the screen out of the window before it's told it
   /// disappeared, so the window can't be read off the screen at that point.
-  @available(iOS 15.0, *)
   @Test("the window's root is covered when something is presented over it")
   func coveredWindowRootIsACover() {
     let log = ProbeLog()
@@ -567,7 +549,6 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(log.events == ["covered"])
   }
 
-  @available(iOS 15.0, *)
   @Test("a screen popped off a navigation controller is removed")
   func popIsARemoval() {
     let log = ProbeLog()
@@ -587,7 +568,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// SwiftUI's `NavigationStack` detaches a popped screen from its navigation controller before the
   /// screen is told it disappeared, and marks nothing on the way.
-  @available(iOS 15.0, *)
   @Test("a screen detached before it's told it disappeared is removed")
   func detachedScreenIsARemoval() {
     let log = ProbeLog()
@@ -612,7 +592,6 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(log.events == ["removed"])
   }
 
-  @available(iOS 15.0, *)
   @Test("a screen inside a container being dismissed is removed")
   func dismissedContainerIsARemoval() {
     let log = ProbeLog()
@@ -628,7 +607,6 @@ struct CustomerCenterSheetOwnershipTests {
     #expect(log.events == ["removed"])
   }
 
-  @available(iOS 15.0, *)
   @Test("SwiftUI taking a screen down is reported")
   func dismantleIsReported() async {
     let log = ProbeLog()
@@ -654,7 +632,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   // MARK: - Driving the real navigator
 
-  @available(iOS 15.0, *)
   @Test("pushing a drill-down takes ownership, popping it hands ownership back")
   func pushAndPopMoveOwnership() {
     let viewModel = makeViewModel()
@@ -686,7 +663,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// Two screens popped at once are both removed and UIKit doesn't promise which reports first.
   /// Driven through the real controllers rather than by restating the navigator's arithmetic.
-  @available(iOS 15.0, *)
   @Test("popping two drill-downs at once does not strand ownership")
   func poppingTwoAtOnceDoesNotStrand() {
     let viewModel = makeViewModel()
@@ -721,7 +697,6 @@ struct CustomerCenterSheetOwnershipTests {
   /// A pushed screen being covered is not a teardown, and the debounce must be vetoed there just
   /// as it is on the root controller — otherwise `didDismiss` latches and the real teardown is
   /// silent.
-  @available(iOS 15.0, *)
   @Test("covering a drill-down does not deliver a dismissal")
   func coveringADrillDownDoesNotDismiss() async {
     let debounce: TimeInterval = 0.2
@@ -755,7 +730,6 @@ struct CustomerCenterSheetOwnershipTests {
   /// user is on a drill-down, nothing on the drill-down itself is set — so a check of `self` alone
   /// reads a real teardown as a cover, vetoes the debounce, and delivers no dismissal at all. The
   /// root underneath is covered, so it never gets a `viewDidDisappear` of its own to correct it.
-  @available(iOS 15.0, *)
   @Test("dismissing a container the Customer Center sits inside is a teardown, not a cover")
   func dismissingTheContainingNavigationControllerDismisses() async {
     let debounce: TimeInterval = 0.2
@@ -800,7 +774,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   private static let now = Date()
 
-  @available(iOS 15.0, *)
   private static func subscription(willRenew: Bool = true) -> SubscriptionTransaction {
     SubscriptionTransaction(
       transactionId: "t1",
@@ -818,7 +791,6 @@ struct CustomerCenterSheetOwnershipTests {
     )
   }
 
-  @available(iOS 15.0, *)
   private func makeLoadedViewModel(
     dismissDebounceInterval: TimeInterval = 0.6,
     lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
@@ -827,7 +799,6 @@ struct CustomerCenterSheetOwnershipTests {
   }
 
   /// Also hands back the customer info provider, so a test can publish an update.
-  @available(iOS 15.0, *)
   private func makeLoadedViewModelAndInfo(
     dismissDebounceInterval: TimeInterval = 0.6,
     lookup: StoreKitTransactionLookupMock = StoreKitTransactionLookupMock()
@@ -889,7 +860,6 @@ struct CustomerCenterSheetOwnershipTests {
 
   /// Asks for the cancellation survey from the subscription's screen and reports whether anything
   /// was presented over it.
-  @available(iOS 15.0, *)
   private func requestSurvey(from viewModel: CustomerCenterViewModel, window: UIWindow) async throws -> Bool {
     let purchase = try #require(viewModel.purchases.first)
     let cancel = try #require(
@@ -1140,7 +1110,6 @@ private final class ProbeVisibility: ObservableObject {
 }
 
 /// A lifecycle probe SwiftUI can take down, by flipping `visibility`.
-@available(iOS 15.0, *)
 private struct ProbeHost: View {
   @ObservedObject var visibility: ProbeVisibility
   let log: ProbeLog

@@ -58,9 +58,7 @@ final class AttributionPoster {
     self.configManager = configManager
     self.attributionFetcher = attributionFetcher
 
-    if #available(iOS 14.3, *) {
-      listenToConfig()
-    }
+    listenToConfig()
 
     NotificationCenter.default.addObserver(
       self,
@@ -70,7 +68,6 @@ final class AttributionPoster {
     )
   }
 
-  @available(iOS 14.3, *)
   private func listenToConfig() {
     // Track the enabled flag across config refreshes. `removeDuplicates` has
     // to see the toggles to detect a transition, so we dedup on the bool
@@ -106,9 +103,7 @@ final class AttributionPoster {
     // deferred indefinitely under load, but the attribution token is only
     // useful within ~24h of install.
     Task(priority: .utility) {
-      if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-        await getAdServicesTokenIfNeeded()
-      }
+      await getAdServicesTokenIfNeeded()
     }
     #endif
   }
@@ -143,7 +138,6 @@ final class AttributionPoster {
   }
 
   // Should match OS availability in https://developer.apple.com/documentation/ad_services
-  @available(iOS 14.3, tvOS 14.3, watchOS 6.2, macOS 11.1, macCatalyst 14.3, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   func getAdServicesTokenIfNeeded() async {
@@ -234,7 +228,6 @@ final class AttributionPoster {
     return true
   }
 
-  @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   // swiftlint:disable:next function_body_length
   private func runAttempt(existingAttempts: AdServicesAttributionAttempts?) async {
     // Fire `.start` from inside the task body so the event isn't orphaned if
@@ -342,7 +335,6 @@ final class AttributionPoster {
   /// errors a few times in-session. `AAAttribution.attributionToken()` can
   /// throw `networkError` very early in the app's lifecycle even though the
   /// next call milliseconds later would succeed.
-  @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   private func fetchTokenWithBackoff() async throws -> String {
     var lastError: Error?
     for delay in [0.0] + Self.tokenFetchBackoff {

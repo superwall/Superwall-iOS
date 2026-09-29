@@ -57,7 +57,6 @@ enum EntitlementTransactionType {
 }
 
 /// Protocol for providing subscription status information
-@available(iOS 15.0, *)
 protocol SubscriptionStatusProvider {
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status?
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool
@@ -67,7 +66,6 @@ protocol SubscriptionStatusProvider {
 }
 
 /// Default implementation using StoreKit directly
-@available(iOS 15.0, *)
 struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
   func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
     return await transaction.subscriptionStatus
@@ -99,11 +97,9 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
 
   @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
   func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
-    #if compiler(>=6.0.0)
     if transaction.offer?.type == .winBack {
       return .winback
     }
-    #endif
     guard let offer = transaction.offer else {
       return nil
     }
@@ -302,7 +298,6 @@ enum EntitlementProcessor {
   }
 
   /// Build entitlements with live subscription data from StoreKit
-  @available(iOS 15.0, *)
   static func buildEntitlementsWithLiveSubscriptionData(
     from transactionsByEntitlement: [String: [any EntitlementTransaction]],
     rawEntitlementsByProductId: [String: Set<Entitlement>],
@@ -437,7 +432,6 @@ enum EntitlementProcessor {
 }
 
 // MARK: - StoreKit Transaction Adapter
-@available(iOS 15.0, *)
 extension Transaction: EntitlementTransaction {
   var productId: String { productID }
   var transactionId: String { String(id) }
@@ -476,11 +470,9 @@ extension Transaction: EntitlementTransaction {
 
   var offerType: LatestSubscription.OfferType? {
     if #available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *) {
-      #if compiler(>=6.0.0)
       if offer?.type == .winBack {
         return .winback
       }
-      #endif
       guard let offer = offer else {
         return nil
       }

@@ -8,7 +8,6 @@
 import SwiftUI
 
 /// Navigation behaviour of ``CustomerCenterView``.
-@available(iOS 15.0, *)
 public struct CustomerCenterNavigationOptions {
   /// `.sheet` wraps the view in its own navigation; `.embedded` uses the navigation you place it in.
   public var style: CustomerCenterPresentationStyle
@@ -40,7 +39,6 @@ public struct CustomerCenterNavigationOptions {
 }
 
 /// A self-service screen where users can view and manage their subscriptions and purchases.
-@available(iOS 15.0, *)
 public struct CustomerCenterView: View {
   @StateObject private var viewModel: CustomerCenterViewModel
   private let navigationOptions: CustomerCenterNavigationOptions

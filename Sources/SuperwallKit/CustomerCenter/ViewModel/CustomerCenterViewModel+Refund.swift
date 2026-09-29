@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Refund sheet
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// Called by the refund sheet's completion. The product comes from when the sheet was opened,
   /// not from `sheet`: the sheet's binding clears `sheet` as it closes, which can happen before
