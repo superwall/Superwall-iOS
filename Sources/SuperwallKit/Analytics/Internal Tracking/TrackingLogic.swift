@@ -16,6 +16,24 @@ enum TrackingLogic {
     case closePaywallThenTriggerPaywall
   }
 
+  /// The audience filter params that every placement gets, which say what the
+  /// placement is called and whether the SDK tracked it itself.
+  static func placementNameParams(
+    _ placementName: String,
+    isStandardEvent: Bool
+  ) -> [String: Any] {
+    return [
+      "$is_standard_event": isStandardEvent,
+      "$event_name": placementName,
+      "event_name": placementName
+    ]
+  }
+
+  /// Whether `placementName` is the name of a ``SuperwallEvent``.
+  static func isSuperwallEventName(_ placementName: String) -> Bool {
+    return SuperwallEventObjc.allCases.contains { $0.description == placementName }
+  }
+
   static func processParameters(
     fromTrackableEvent trackablePlacement: Trackable,
     appSessionId: String
@@ -37,11 +55,10 @@ enum TrackingLogic {
     // Add a special property if it's a superwall placement
     let isSuperwallEvent = trackablePlacement is TrackableSuperwallEvent
 
-    var audienceFilterParams: [String: Any] = [
-      "$is_standard_event": isSuperwallEvent,
-      "$event_name": placementName,
-      "event_name": placementName
-    ]
+    var audienceFilterParams = placementNameParams(
+      placementName,
+      isStandardEvent: isSuperwallEvent
+    )
     // Reserve extra capacity since this dictionary gets both original and $-prefixed keys
     audienceFilterParams.reserveCapacity(expectedSize * 2)
 

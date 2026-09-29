@@ -531,4 +531,18 @@ struct TrackingLogicTests {
     )
     #expect(result)
   }
+
+  @Test func placementNameParams() {
+    let params = TrackingLogic.placementNameParams("campaign_trigger", isStandardEvent: false)
+    #expect(params["$event_name"] as? String == "campaign_trigger")
+    #expect(params["event_name"] as? String == "campaign_trigger")
+    #expect(params["$is_standard_event"] as? Bool == false)
+    #expect(params.count == 3)
+  }
+
+  @Test func isSuperwallEventName() {
+    #expect(TrackingLogic.isSuperwallEventName("app_open"))
+    #expect(TrackingLogic.isSuperwallEventName("paywall_decline"))
+    #expect(!TrackingLogic.isSuperwallEventName("campaign_trigger"))
+  }
 }

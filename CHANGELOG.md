@@ -8,6 +8,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Adds the `experimentAssignments` event, which lists every experiment variant the user is assigned to, along with their app transaction ID, install date and first seen date.
+
+### Fixes
+
+- Fixes `confirmAllAssignments()` skipping experiments whose audience filter checks the placement name.
 
 ### Fixes
 

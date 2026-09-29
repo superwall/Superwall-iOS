@@ -811,6 +811,53 @@ enum InternalSuperwallEvent {
     func getSuperwallParameters() async -> [String: Any] { [:] }
   }
 
+  struct ExperimentAssignments: TrackableSuperwallEvent {
+    let superwallEvent: SuperwallEvent = .experimentAssignments
+    let assignments: Set<Assignment>
+    let appTransactionId: String?
+    let appInstallDate: Date?
+    let firstSeenDate: Date?
+    let audienceFilterParams: [String: Any] = [:]
+
+    private struct AssignmentSnapshot: Encodable {
+      let experimentId: String
+      let variantId: String
+      let variantType: Experiment.Variant.VariantType
+      let isSentToServer: Bool
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      let snapshots = assignments
+        .sorted { $0.experimentId < $1.experimentId }
+        .map {
+          AssignmentSnapshot(
+            experimentId: $0.experimentId,
+            variantId: $0.variant.id,
+            variantType: $0.variant.type,
+            isSentToServer: $0.isSentToServer
+          )
+        }
+
+      // Arrays are dropped from event params, so the list goes as a JSON string.
+      let encoder = JSONEncoder()
+      encoder.keyEncodingStrategy = .convertToSnakeCase
+      var assignmentsJson = "[]"
+      if let data = try? encoder.encode(snapshots),
+        let jsonString = String(data: data, encoding: .utf8) {
+        assignmentsJson = jsonString
+      }
+
+      var params: [String: Any] = [
+        "assignments": assignmentsJson,
+        "assignment_count": snapshots.count
+      ]
+      params["app_transaction_id"] = appTransactionId
+      params["app_install_date"] = appInstallDate?.isoString
+      params["first_seen_date"] = firstSeenDate?.isoString
+      return params
+    }
+  }
+
   struct FreeTrialStart: TrackableSuperwallEvent {
     var superwallEvent: SuperwallEvent {
       return .freeTrialStart(
