@@ -4,6 +4,7 @@
 //
 //  Created by Claude on 2026-02-05.
 //
+// swiftlint:disable file_length
 
 import UIKit
 
@@ -184,13 +185,25 @@ final class TestModeModalViewController: UIViewController {
     updateTableViewHeight()
   }
 
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    // The sheet can also close without OK, e.g. when the screen below it is
+    // dismissed. Report back then too, unless something just covers it.
+    if view.window == nil && navigationController?.presentedViewController == nil {
+      finish()
+    }
+  }
+
   @objc private func dismissModal() {
     saveSettings()
-    dismiss(animated: true) { [weak self] in
-      guard let self = self else { return }
-      let entitlements = self.buildEntitlements()
-      self.onDismiss?(entitlements, self.selectedFreeTrialOverride)
-    }
+    dismiss(animated: true) { [weak self] in self?.finish() }
+  }
+
+  /// Hands back the selections, at most once.
+  func finish() {
+    let onDismiss = self.onDismiss
+    self.onDismiss = nil
+    onDismiss?(buildEntitlements(), selectedFreeTrialOverride)
   }
 
   @objc private func resetToDefaults() {

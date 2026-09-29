@@ -67,4 +67,47 @@ struct TestModeModalTests {
     #expect(result.entitlements.isEmpty)
     #expect(result.freeTrialOverride == .forceAvailable)
   }
+
+  private func makeModal() -> TestModeModalViewController {
+    TestModeModalViewController(
+      reason: .testModeOption,
+      userId: "user",
+      isIdentified: false,
+      hasPurchaseController: false,
+      availableEntitlements: ["pro"],
+      initialFreeTrialOverride: .forceUnavailable,
+      apiKey: "pk_test",
+      networkEnvironment: .release
+    )
+  }
+
+  @Test
+  func modal_reportsBackOnce_whenItLeavesTheScreenWithoutOK() {
+    let modal = makeModal()
+    modal.selectedFreeTrialOverride = .forceUnavailable
+    var calls: [FreeTrialOverride] = []
+    modal.onDismiss = { _, freeTrialOverride in
+      calls.append(freeTrialOverride)
+    }
+
+    // Not in a window, as when the screen below it has been dismissed.
+    modal.viewDidDisappear(false)
+    modal.viewDidDisappear(false)
+
+    #expect(calls == [.forceUnavailable])
+  }
+
+  @Test
+  func modal_finish_reportsBackOnlyOnce() {
+    let modal = makeModal()
+    var callCount = 0
+    modal.onDismiss = { _, _ in
+      callCount += 1
+    }
+
+    modal.finish()
+    modal.finish()
+
+    #expect(callCount == 1)
+  }
 }
