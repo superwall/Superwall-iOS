@@ -14,7 +14,7 @@ import CoreTelephony
 import StoreKit
 
 class DeviceHelper {
-  private let ipCollector = DeviceIPCollector()
+  private let ipCollector: DeviceIPCollector
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -936,8 +936,10 @@ class DeviceHelper {
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
     factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
+    self.ipCollector = ipCollector ?? DeviceIPCollector(url: api.enrichment.ipV4Url)
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -1082,7 +1084,7 @@ class DeviceHelper {
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
     await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
-    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt", "ipAddress", "ipAddressObservedAt"] {
+    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
       deviceDictionary.removeValue(forKey: key)
     }
     deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }

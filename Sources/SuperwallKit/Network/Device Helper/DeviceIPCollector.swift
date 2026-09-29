@@ -1,27 +1,68 @@
+//
+//  DeviceIPCollector.swift
+//  SuperwallKit
+//
+//  Created by Brian Anglin on 15/09/2026.
+//
+
 import Foundation
 import Darwin
 
 /// Best-effort, session-local observations. Never waits on the network when reading attributes.
 actor DeviceIPCollector {
   typealias Fetch = () async throws -> [String: String]
-  private let fetch: Fetch
+  private let fetch: Fetch?
   private let now: () -> Date
   private var lastAttempt: Date?
   private var observations: [String: String] = [:]
   private let lifetime: TimeInterval = 15 * 60
 
-  init(fetch: @escaping Fetch = DeviceIPCollector.fetchIPv4, now: @escaping () -> Date = Date.init) {
-    self.fetch = fetch
+  /// - Parameters:
+  ///   - url: The IPv4-only endpoint to ask. When `nil`, nothing is fetched.
+  ///   - fetch: Overrides the request, for tests.
+  init(
+    url: URL?,
+    fetch: Fetch? = nil,
+    now: @escaping () -> Date = Date.init
+  ) {
+    if let fetch = fetch {
+      self.fetch = fetch
+    } else if let url = url {
+      self.fetch = { try await Self.fetchIPv4(from: url) }
+    } else {
+      self.fetch = nil
+    }
     self.now = now
   }
 
-  func refreshIfNeeded() {
+  /// Starts a fetch in the background unless one was tried recently. The
+  /// returned task is only there so tests can wait for it.
+  @discardableResult
+  func refreshIfNeeded() -> Task<Void, Never>? {
+    guard let fetch = fetch else {
+      return nil
+    }
     let date = now()
-    if let lastAttempt = lastAttempt, date.timeIntervalSince(lastAttempt) < lifetime { return }
+    if let lastAttempt = lastAttempt,
+      date.timeIntervalSince(lastAttempt) < lifetime {
+      return nil
+    }
     lastAttempt = date
-    Task {
-      guard let device = try? await fetch() else { return }
-      record(device)
+    return Task {
+      do {
+        record(try await fetch())
+      } catch {
+        // Let the next enrichment try again rather than waiting out the window.
+        if lastAttempt == date {
+          lastAttempt = nil
+        }
+        Logger.debug(
+          logLevel: .debug,
+          scope: .network,
+          message: "Couldn't fetch the device's IPv4 address",
+          error: error
+        )
+      }
     }
   }
 
@@ -30,11 +71,20 @@ actor DeviceIPCollector {
       let key = "ipV\(family)"
       let address = device[key] ?? device["ipAddress"]
       let timestamp = device["\(key)ObservedAt"] ?? device["ipAddressObservedAt"]
-      guard let address = address, let timestamp = timestamp,
-        Self.isValid(address, family: family), isFresh(timestamp) else { continue }
+      guard
+        let address = address,
+        let timestamp = timestamp,
+        let date = Self.date(from: timestamp),
+        Self.isValid(address, family: family),
+        isFresh(date)
+      else {
+        continue
+      }
       if let previous = observations["\(key)ObservedAt"],
-        let oldDate = ISO8601DateFormatter.ipObservation.date(from: previous),
-        let newDate = ISO8601DateFormatter.ipObservation.date(from: timestamp), oldDate > newDate { continue }
+        let previousDate = Self.date(from: previous),
+        previousDate > date {
+        continue
+      }
       observations[key] = address
       observations["\(key)ObservedAt"] = timestamp
     }
@@ -43,7 +93,9 @@ actor DeviceIPCollector {
   func attributes() -> [String: String] {
     var result: [String: String] = [:]
     for key in ["ipV4", "ipV6"] {
-      if let timestamp = observations["\(key)ObservedAt"], isFresh(timestamp) {
+      if let timestamp = observations["\(key)ObservedAt"],
+        let date = Self.date(from: timestamp),
+        isFresh(date) {
         result[key] = observations[key]
         result["\(key)ObservedAt"] = timestamp
       }
@@ -51,8 +103,7 @@ actor DeviceIPCollector {
     return result
   }
 
-  private func isFresh(_ timestamp: String) -> Bool {
-    guard let date = ISO8601DateFormatter.ipObservation.date(from: timestamp) else { return false }
+  private func isFresh(_ date: Date) -> Bool {
     let age = now().timeIntervalSince(date)
     return age >= -60 && age < lifetime
   }
@@ -66,8 +117,25 @@ actor DeviceIPCollector {
     return inet_pton(AF_INET6, address, &bytes) == 1 && !address.lowercased().hasPrefix("::ffff:")
   }
 
-  static func fetchIPv4() async throws -> [String: String] {
-    guard let url = URL(string: "https://v4.superwall-enrichment.com/api/v1/enrich") else { return [:] }
+  private static let fractionalFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+  }()
+
+  private static let wholeSecondFormatter: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime]
+    return formatter
+  }()
+
+  /// Parses ISO 8601 timestamps with or without milliseconds.
+  static func date(from timestamp: String) -> Date? {
+    return fractionalFormatter.date(from: timestamp)
+      ?? wholeSecondFormatter.date(from: timestamp)
+  }
+
+  static func fetchIPv4(from url: URL) async throws -> [String: String] {
     let config = URLSessionConfiguration.ephemeral
     config.timeoutIntervalForRequest = 3
     config.timeoutIntervalForResource = 3
@@ -75,24 +143,35 @@ actor DeviceIPCollector {
     defer { session.finishTasksAndInvalidate() }
     let data: Data = try await withCheckedThrowingContinuation { continuation in
       let task = session.dataTask(with: url) { data, response, error in
-        if let error = error { continuation.resume(throwing: error); return }
-        guard let response = response as? HTTPURLResponse, response.statusCode == 200,
-          let data = data, data.count < 16_384 else {
-          continuation.resume(throwing: URLError(.badServerResponse)); return
+        if let error = error {
+          continuation.resume(throwing: error)
+          return
+        }
+        guard
+          let response = response as? HTTPURLResponse,
+          response.statusCode == 200,
+          let data = data,
+          data.count < 16_384
+        else {
+          continuation.resume(throwing: URLError(.badServerResponse))
+          return
         }
         continuation.resume(returning: data)
       }
       task.resume()
     }
-    struct Response: Decodable { let device: [String: String] }
-    return try JSONDecoder().decode(Response.self, from: data).device
+    return try parseDevice(from: data)
   }
-}
 
-private extension ISO8601DateFormatter {
-  static var ipObservation: ISO8601DateFormatter {
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    return formatter
+  /// Reads the string values of the response's `device` object, skipping any
+  /// that aren't strings.
+  static func parseDevice(from data: Data) throws -> [String: String] {
+    guard
+      let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let device = json["device"] as? [String: Any]
+    else {
+      throw URLError(.cannotParseResponse)
+    }
+    return device.compactMapValues { $0 as? String }
   }
 }

@@ -119,7 +119,7 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 
 `DeviceIPCollector` owns session-local, timestamped IP observations. Keep collection
 independent of enrichment success and purchase/configuration latency, preserve each family
-separately, and filter stale cached enrichment IP fields before exposing device attributes.
+separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
 Do not add customer attributes or authentication headers to the public IPv4 collection request.
 
 ### Integration device identifiers

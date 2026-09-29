@@ -356,7 +356,8 @@ struct DeviceHelperTests {
   /// Builds a `DeviceHelper` with an injected gate. The container is returned
   /// alongside because the helper only holds its factory `unowned`.
   private func makeDeviceHelper(
-    gate: Gate
+    gate: Gate,
+    ipCollector: DeviceIPCollector? = nil
   ) -> (DeviceHelper, DependencyContainer) {
     let dependencyContainer = DependencyContainer()
     let deviceHelper = DeviceHelper(
@@ -366,9 +367,41 @@ struct DeviceHelperTests {
       entitlementsInfo: dependencyContainer.entitlementsInfo,
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
+      ipCollector: ipCollector,
       isUIKitReadSafe: { gate.isOpen }
     )
     return (deviceHelper, dependencyContainer)
+  }
+
+  /// Cached enrichment can carry IP observations that have since gone stale.
+  /// Only fresh ones may reach the device attributes, and `ipAddress` passes
+  /// through as the enrichment sent it.
+  @Test func templateDevice_dropsStaleIPObservations() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let collector = DeviceIPCollector(url: nil, now: { now })
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    _ = dependencyContainer
+    deviceHelper.enrichment = Enrichment(
+      user: JSON([:]),
+      device: JSON([
+        "ipV4": "1.1.1.1",
+        "ipV4ObservedAt": "2000-01-01T00:00:00Z",
+        "ipV6": "2001:db8::1",
+        "ipV6ObservedAt": "2026-09-15T20:40:00Z",
+        "ipAddress": "1.1.1.1"
+      ])
+    )
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV4ObservedAt"] == nil)
+    #expect(template["ipV6"] as? String == "2001:db8::1")
+    #expect(template["ipV6ObservedAt"] as? String == "2026-09-15T20:40:00Z")
+    #expect(template["ipAddress"] as? String == "1.1.1.1")
   }
 
   private func expectedLiveValues() async -> (
