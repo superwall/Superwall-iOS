@@ -126,8 +126,7 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// The StoreKit version that the SDK should use.
   ///
-  /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
-  /// will fallback to StoreKit 1.
+  /// Defaults to StoreKit 2.
   public var storeKitVersion: StoreKitVersion
 
   /// **WARNING**:  The different network environments that the SDK should use.

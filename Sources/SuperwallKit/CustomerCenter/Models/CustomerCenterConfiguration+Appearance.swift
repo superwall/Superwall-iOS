@@ -58,7 +58,6 @@ extension CustomerCenterConfiguration {
       /// Disfavored so that `.init(light: .red, dark: .blue)` keeps meaning `UIColor`, which also
       /// has a `.red`, rather than becoming ambiguous.
       @_disfavoredOverload
-      @available(iOS 14.0, *)
       @nonobjc public convenience init(light: Color, dark: Color) {
         self.init(light: UIColor(light), dark: UIColor(dark))
       }

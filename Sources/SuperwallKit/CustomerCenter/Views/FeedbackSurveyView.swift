@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct FeedbackSurveyView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterStrings) private var strings

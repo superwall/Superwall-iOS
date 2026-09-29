@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Web product details
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// Products the Superwall catalogue may know but StoreKit never will: those bought outside the
   /// App Store.

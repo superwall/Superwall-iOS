@@ -10,7 +10,6 @@ import SwiftUI
 /// Sweeps a highlight across a placeholder so it reads as loading rather than as a grey bar.
 ///
 /// The highlight is masked to the placeholder's own shape, and it stays put under Reduce Motion.
-@available(iOS 15.0, *)
 struct ShimmerModifier: ViewModifier {
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.colorScheme) private var colorScheme
@@ -48,7 +47,6 @@ struct ShimmerModifier: ViewModifier {
   }
 }
 
-@available(iOS 15.0, *)
 extension View {
   func shimmering() -> some View {
     modifier(ShimmerModifier())

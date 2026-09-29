@@ -9,7 +9,6 @@ import SafariServices
 import StoreKit
 import SwiftUI
 
-@available(iOS 15.0, *)
 extension View {
   /// - Parameter surfaceDepth: How deep this screen sits in the Customer Center's own pushed
   ///   stack; `0` for the root. Passed rather than read from the environment because a modifier
@@ -96,7 +95,6 @@ final class StoreKitSheetRenderRecord: ObservableObject {
 /// Internal rather than private so a test can drive the sheet bindings directly. The gate they
 /// apply has been wrong twice — once inert, once over-eager — and both times the bug was in the
 /// binding rather than in the rule it calls, which a test of the rule alone cannot catch.
-@available(iOS 15.0, *)
 struct CustomerCenterSheetsModifier: ViewModifier {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let surfaceDepth: Int
@@ -241,7 +239,6 @@ struct CustomerCenterSheetsModifier: ViewModifier {
 }
 
 /// Internal so a test can check which of StoreKit's manage sheets a request goes to.
-@available(iOS 15.0, *)
 struct ManageSubscriptionsSheet: ViewModifier {
   let isPresented: Binding<Bool>
   /// Empty when the request has no subscription group.
@@ -285,7 +282,6 @@ private extension Binding where Value == Bool {
   }
 }
 
-@available(iOS 15.0, *)
 private struct ChangePlanSheet: View {
   let groupId: String?
   let productIds: [String]?

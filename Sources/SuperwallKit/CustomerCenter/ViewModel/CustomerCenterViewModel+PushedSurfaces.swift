@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Pushed screens
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// Records a screen the Customer Center has pushed. Claiming again under the same `id` changes
   /// nothing, so a screen can claim each time it appears.

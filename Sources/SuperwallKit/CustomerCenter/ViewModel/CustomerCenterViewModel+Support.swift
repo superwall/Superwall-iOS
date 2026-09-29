@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Support email
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   var supportMailtoURL: URL? {
     SupportEmailComposer.mailtoURL(

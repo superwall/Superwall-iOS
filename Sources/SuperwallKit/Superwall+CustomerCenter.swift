@@ -22,7 +22,6 @@ extension Superwall {
   ///   - delegate: Receives Customer Center events. Strongly retained for the duration of the
   ///     presentation.
   ///   - onDismiss: Called after the Customer Center is dismissed.
-  @available(iOS 15.0, *)
   @MainActor
   public func presentCustomerCenter(
     configuration: CustomerCenterConfiguration? = nil,
@@ -50,7 +49,6 @@ extension Superwall {
   /// ``presentCustomerCenter(configuration:from:delegate:onDismiss:)``. A no-op if none is presented.
   ///
   /// Available to Objective-C as `dismissCustomerCenterWithCompletion:`.
-  @available(iOS 15.0, *)
   @MainActor
   @objc(dismissCustomerCenterWithCompletion:)
   public func dismissCustomerCenter(completion: (() -> Void)? = nil) {
@@ -67,7 +65,6 @@ extension Superwall {
 
   /// Objective-C: presents the Customer Center. See
   /// ``presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
-  @available(iOS 15.0, *)
   @available(swift, obsoleted: 1.0)
   @MainActor
   @objc(presentCustomerCenterWithConfiguration:from:delegate:onDismiss:)
