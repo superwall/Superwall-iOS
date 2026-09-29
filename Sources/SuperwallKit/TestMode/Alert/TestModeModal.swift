@@ -50,7 +50,7 @@ enum TestModeModal {
 
       let navController = TestModeNavigationController(rootViewController: modal)
       navController.onClose = { [weak modal] in
-        modal?.finish()
+        modal?.closeWithoutOK()
       }
       navController.navigationBar.isHidden = true
       navController.modalPresentationStyle = .pageSheet
@@ -98,5 +98,21 @@ final class TestModeNavigationController: UINavigationController {
       return
     }
     onClose?()
+  }
+}
+
+extension TestModeModalViewController {
+  /// Hands back the selections, at most once.
+  func finish() {
+    let onDismiss = self.onDismiss
+    self.onDismiss = nil
+    onDismiss?(buildEntitlements(), selectedFreeTrialOverride)
+  }
+
+  /// Saves and hands back the selections as OK would, for when the sheet
+  /// closes some other way.
+  func closeWithoutOK() {
+    saveSettings()
+    finish()
   }
 }

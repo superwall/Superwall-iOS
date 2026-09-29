@@ -111,7 +111,6 @@ final class TestModeModalViewController: UIViewController {
     return stack
   }()
 
-
   private lazy var resetButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -196,13 +195,6 @@ final class TestModeModalViewController: UIViewController {
   @objc private func dismissModal() {
     saveSettings()
     dismiss(animated: true) { [weak self] in self?.finish() }
-  }
-
-  /// Hands back the selections, at most once.
-  func finish() {
-    let onDismiss = self.onDismiss
-    self.onDismiss = nil
-    onDismiss?(buildEntitlements(), selectedFreeTrialOverride)
   }
 
   @objc private func resetToDefaults() {

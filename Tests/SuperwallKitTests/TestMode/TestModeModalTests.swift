@@ -154,4 +154,24 @@ struct TestModeModalTests {
 
     #expect(callCount == 1)
   }
+
+  @Test
+  func modal_closeWithoutOK_savesAndReportsBack() {
+    clearSavedSettings()
+    defer { clearSavedSettings() }
+    let modal = makeModal()
+    modal.selectedFreeTrialOverride = .forceAvailable
+    var reported: FreeTrialOverride?
+    modal.onDismiss = { _, freeTrialOverride in
+      reported = freeTrialOverride
+    }
+
+    modal.closeWithoutOK()
+
+    #expect(reported == .forceAvailable)
+    #expect(
+      UserDefaults.standard.string(forKey: Self.freeTrialOverrideKey)
+        == FreeTrialOverride.forceAvailable.rawValue
+    )
+  }
 }
