@@ -48,7 +48,10 @@ enum TestModeModal {
         ))
       }
 
-      let navController = UINavigationController(rootViewController: modal)
+      let navController = TestModeNavigationController(rootViewController: modal)
+      navController.onClose = { [weak modal] in
+        modal?.finish()
+      }
       navController.navigationBar.isHidden = true
       navController.modalPresentationStyle = .pageSheet
 
@@ -57,13 +60,14 @@ enum TestModeModal {
 
       // UIKit silently refuses when the presenter is already showing
       // something, which would leave this waiting forever. Fall back to the
-      // starting settings so config can still finish loading.
+      // tester's saved choices so config can still finish loading.
       if navController.presentingViewController == nil {
-        modal.onDismiss = nil
-        continuation.resume(returning: TestModeModalResult(
-          entitlements: [],
-          freeTrialOverride: initialFreeTrialOverride
-        ))
+        Logger.debug(
+          logLevel: .warn,
+          scope: .superwallCore,
+          message: "Couldn't show the test mode sheet, so using the saved test mode settings."
+        )
+        modal.finish()
       }
     }
   }
@@ -78,5 +82,21 @@ enum TestModeModal {
       presenter = presented
     }
     return presenter
+  }
+}
+
+/// Reports when the whole sheet closes, including when the screen below it is
+/// dismissed and takes the sheet with it without OK being tapped. Pushing a
+/// detail screen inside the sheet doesn't count.
+final class TestModeNavigationController: UINavigationController {
+  var onClose: (() -> Void)?
+
+  override func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    // Still around if it's only covered by something presented on top.
+    if view.window != nil || presentedViewController != nil {
+      return
+    }
+    onClose?()
   }
 }

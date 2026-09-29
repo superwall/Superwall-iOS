@@ -10,6 +10,7 @@
 import Testing
 import UIKit
 
+@Suite(.serialized)
 @MainActor
 struct TestModeModalTests {
   private final class StubViewController: UIViewController {
@@ -47,12 +48,17 @@ struct TestModeModalTests {
     #expect(TestModeModal.topPresenter(from: root) === root)
   }
 
-  @Test
-  func present_returnsStartingSettings_whenUIKitRefusesToPresent() async {
-    // Not in a window, so UIKit refuses the presentation.
-    let offscreen = UIViewController()
+  private static let settingsKey = "com.superwall.testmode.entitlementSettings"
+  private static let freeTrialOverrideKey = "com.superwall.testmode.freeTrialOverride"
 
-    let result = await TestModeModal.present(
+  private func clearSavedSettings() {
+    UserDefaults.standard.removeObject(forKey: Self.settingsKey)
+    UserDefaults.standard.removeObject(forKey: Self.freeTrialOverrideKey)
+  }
+
+  private func presentOffscreen() async -> TestModeModalResult {
+    // Not in a window, so UIKit refuses the presentation.
+    await TestModeModal.present(
       reason: .testModeOption,
       userId: "user",
       isIdentified: false,
@@ -61,11 +67,39 @@ struct TestModeModalTests {
       initialFreeTrialOverride: .forceAvailable,
       apiKey: "pk_test",
       networkEnvironment: .release,
-      from: offscreen
+      from: UIViewController()
     )
+  }
+
+  @Test
+  func present_returnsStartingSettings_whenUIKitRefusesAndNothingSaved() async {
+    clearSavedSettings()
+    defer { clearSavedSettings() }
+
+    let result = await presentOffscreen()
 
     #expect(result.entitlements.isEmpty)
     #expect(result.freeTrialOverride == .forceAvailable)
+  }
+
+  @Test
+  func present_returnsSavedSettings_whenUIKitRefuses() async {
+    clearSavedSettings()
+    defer { clearSavedSettings() }
+    UserDefaults.standard.set(
+      ["pro": ["state": LatestSubscription.State.subscribed.rawValue]],
+      forKey: Self.settingsKey
+    )
+    UserDefaults.standard.set(
+      FreeTrialOverride.forceUnavailable.rawValue,
+      forKey: Self.freeTrialOverrideKey
+    )
+
+    let result = await presentOffscreen()
+
+    #expect(result.entitlements.map(\.id) == ["pro"])
+    #expect(result.entitlements.first?.isActive == true)
+    #expect(result.freeTrialOverride == .forceUnavailable)
   }
 
   private func makeModal() -> TestModeModalViewController {
@@ -82,19 +116,29 @@ struct TestModeModalTests {
   }
 
   @Test
-  func modal_reportsBackOnce_whenItLeavesTheScreenWithoutOK() {
-    let modal = makeModal()
-    modal.selectedFreeTrialOverride = .forceUnavailable
-    var calls: [FreeTrialOverride] = []
-    modal.onDismiss = { _, freeTrialOverride in
-      calls.append(freeTrialOverride)
-    }
+  func navigationController_reportsClose_whenItLeavesTheScreen() {
+    let nav = TestModeNavigationController(rootViewController: makeModal())
+    var closeCount = 0
+    nav.onClose = { closeCount += 1 }
 
     // Not in a window, as when the screen below it has been dismissed.
-    modal.viewDidDisappear(false)
+    nav.viewDidDisappear(false)
+
+    #expect(closeCount == 1)
+  }
+
+  @Test
+  func modal_doesNotReportBack_whenOnlyItsOwnScreenDisappears() {
+    // As happens when a detail screen is pushed inside the sheet.
+    let modal = makeModal()
+    var callCount = 0
+    modal.onDismiss = { _, _ in
+      callCount += 1
+    }
+
     modal.viewDidDisappear(false)
 
-    #expect(calls == [.forceUnavailable])
+    #expect(callCount == 0)
   }
 
   @Test

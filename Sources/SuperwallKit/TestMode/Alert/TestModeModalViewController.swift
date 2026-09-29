@@ -4,7 +4,6 @@
 //
 //  Created by Claude on 2026-02-05.
 //
-// swiftlint:disable file_length
 
 import UIKit
 
@@ -165,6 +164,15 @@ final class TestModeModalViewController: UIViewController {
     }
 
     super.init(nibName: nil, bundle: nil)
+
+    // Loaded up front so the saved choices can be handed back even if the
+    // sheet never gets shown.
+    let savedSettings = loadSavedSettings()
+    for entitlementId in availableEntitlements {
+      if let selection = savedSettings[entitlementId], selection.state != nil {
+        selectedEntitlements[entitlementId] = selection
+      }
+    }
   }
 
   required init?(coder: NSCoder) {
@@ -183,15 +191,6 @@ final class TestModeModalViewController: UIViewController {
   override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     updateTableViewHeight()
-  }
-
-  override func viewDidDisappear(_ animated: Bool) {
-    super.viewDidDisappear(animated)
-    // The sheet can also close without OK, e.g. when the screen below it is
-    // dismissed. Report back then too, unless something just covers it.
-    if view.window == nil && navigationController?.presentedViewController == nil {
-      finish()
-    }
   }
 
   @objc private func dismissModal() {
@@ -396,11 +395,6 @@ extension TestModeModalViewController {
       }
       entitlementsStackView.addArrangedSubview(rowView)
       entitlementRowViews.append(rowView)
-
-      // If we have an initial selection, add it to selectedEntitlements
-      if let selection = initialSelection, selection.state != nil {
-        selectedEntitlements[entitlementId] = selection
-      }
     }
   }
 }
