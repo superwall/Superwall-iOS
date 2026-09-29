@@ -52,7 +52,31 @@ enum TestModeModal {
       navController.navigationBar.isHidden = true
       navController.modalPresentationStyle = .pageSheet
 
-      viewController.present(navController, animated: true)
+      let presenter = topPresenter(from: viewController)
+      presenter.present(navController, animated: true)
+
+      // UIKit silently refuses when the presenter is already showing
+      // something, which would leave this waiting forever. Fall back to the
+      // starting settings so config can still finish loading.
+      if navController.presentingViewController == nil {
+        modal.onDismiss = nil
+        continuation.resume(returning: TestModeModalResult(
+          entitlements: [],
+          freeTrialOverride: initialFreeTrialOverride
+        ))
+      }
     }
+  }
+
+  /// Walks up from `viewController` to the screen on top, skipping any that
+  /// are on their way out, so the modal can sit above sheets like the
+  /// Customer Center.
+  static func topPresenter(from viewController: UIViewController) -> UIViewController {
+    var presenter = viewController
+    while let presented = presenter.presentedViewController,
+      !presented.isBeingDismissed {
+      presenter = presented
+    }
+    return presenter
   }
 }
