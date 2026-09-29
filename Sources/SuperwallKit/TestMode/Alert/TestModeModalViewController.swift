@@ -111,7 +111,6 @@ final class TestModeModalViewController: UIViewController {
     return stack
   }()
 
-
   private lazy var resetButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -164,6 +163,15 @@ final class TestModeModalViewController: UIViewController {
     }
 
     super.init(nibName: nil, bundle: nil)
+
+    // Loaded up front so the saved choices can be handed back even if the
+    // sheet never gets shown.
+    let savedSettings = loadSavedSettings()
+    for entitlementId in availableEntitlements {
+      if let selection = savedSettings[entitlementId], selection.state != nil {
+        selectedEntitlements[entitlementId] = selection
+      }
+    }
   }
 
   required init?(coder: NSCoder) {
@@ -186,11 +194,7 @@ final class TestModeModalViewController: UIViewController {
 
   @objc private func dismissModal() {
     saveSettings()
-    dismiss(animated: true) { [weak self] in
-      guard let self = self else { return }
-      let entitlements = self.buildEntitlements()
-      self.onDismiss?(entitlements, self.selectedFreeTrialOverride)
-    }
+    dismiss(animated: true) { [weak self] in self?.finish() }
   }
 
   @objc private func resetToDefaults() {
@@ -383,11 +387,6 @@ extension TestModeModalViewController {
       }
       entitlementsStackView.addArrangedSubview(rowView)
       entitlementRowViews.append(rowView)
-
-      // If we have an initial selection, add it to selectedEntitlements
-      if let selection = initialSelection, selection.state != nil {
-        selectedEntitlements[entitlementId] = selection
-      }
     }
   }
 }
