@@ -180,4 +180,47 @@ struct DeepLinkRouterTests {
     let url = URL(string: "myapp://home")!
     #expect(url.redeemableCode == nil)
   }
+
+  // MARK: - Return Links
+
+  @Test(
+    "isSuperwallReturnLink matches the scheme and universal link forms",
+    arguments: [
+      "myapp://superwall/return",
+      "myapp://superwall/return?source=checkout",
+      "https://myapp.superwall.app/app-link/superwall/return",
+      "https://myapp.superwallapp.dev/app-link/superwall/return",
+    ]
+  )
+  func isSuperwallReturnLink_matches(link: String) {
+    #expect(URL(string: link)!.isSuperwallReturnLink == true)
+  }
+
+  @Test(
+    "isSuperwallReturnLink ignores other links",
+    arguments: [
+      "myapp://superwall/redeem?code=ABC123",
+      "myapp://superwall/checkout-return",
+      "myapp://superwall/return/extra",
+      "myapp://return",
+      "myapp://other/return",
+      "https://superwall/return",
+      "https://example.com/app-link/superwall/return",
+      "https://myapp.superwall.app/superwall/return",
+      "https://myapp.superwall.app/app-link/superwall/other",
+    ]
+  )
+  func isSuperwallReturnLink_ignores(link: String) {
+    #expect(URL(string: link)!.isSuperwallReturnLink == false)
+  }
+
+  @Test("Returns true for a return link so a cold start still claims it")
+  func storeDeepLink_returnLink() {
+    #expect(DeepLinkRouter.storeDeepLink(URL(string: "myapp://superwall/return")!) == true)
+    #expect(
+      DeepLinkRouter.storeDeepLink(
+        URL(string: "https://myapp.superwall.app/app-link/superwall/return")!
+      ) == true
+    )
+  }
 }

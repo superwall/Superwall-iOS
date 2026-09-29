@@ -29,6 +29,13 @@ final class DeepLinkRouter {
 
   @discardableResult
   func route(url: URL) -> Bool {
+    // A return link only brings the app back from a Superwall web flow. The
+    // flow's paywall finishes the job itself, so the link must not be tracked
+    // as a deep link: `deepLink_open` dismisses the presented paywall.
+    if url.isSuperwallReturnLink {
+      return true
+    }
+
     // Check if the URL matches the expected web2app format
     if let code = url.redeemableCode {
       Task {
@@ -134,6 +141,11 @@ final class DeepLinkRouter {
       return true
     }
 
+    // Return links from Superwall web flows
+    if url.isSuperwallReturnLink {
+      return true
+    }
+
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
       return true
@@ -162,6 +174,27 @@ final class DeepLinkRouter {
 }
 
 extension URL {
+  /// Whether this link brings the user back to the app from a Superwall web
+  /// flow, such as a paywall's checkout page. Matches
+  /// `scheme://superwall/return` and
+  /// `https://<subdomain>.superwall.app/app-link/superwall/return`.
+  var isSuperwallReturnLink: Bool {
+    if scheme != "http",
+      scheme != "https",
+      host == "superwall",
+      path == "/return" {
+      return true
+    }
+
+    if let host,
+      host.hasSuffix(".superwall.app") || host.hasSuffix(".superwallapp.dev"),
+      path == "/app-link/superwall/return" {
+      return true
+    }
+
+    return false
+  }
+
   /// The web checkout code to redeem given a Superwall deep link format.
   var redeemableCode: String? {
     let urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)

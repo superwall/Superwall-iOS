@@ -159,6 +159,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// The product bought from this presentation, App Store or web. A close that
+  /// follows a purchase, such as a `close` among the button's after-purchase
+  /// actions, finishes the presentation as purchased rather than declined.
+  private(set) var completedPurchaseProduct: StoreProduct?
+
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
 
@@ -863,6 +868,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       || isBeingPresented {
       return completion(false)
     }
+    completedPurchaseProduct = nil
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
 
     set(
@@ -1345,16 +1351,24 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   ) {
     didReceiveStripeCheckoutAbandonMessage = true
     loadingState = .manualLoading
     closeSafari()
 
+    // A paywall that says whether to dismiss wants the purchase finished
+    // like an App Store purchase; one that doesn't gets the legacy restore.
+    let completion: StripeCheckoutCompletion = shouldDismiss.map {
+      .purchase(productId: productId, shouldDismiss: $0)
+    } ?? .restore
+
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
         contextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        completion: completion
       )
     }
   }
@@ -1685,11 +1699,28 @@ extension PaywallViewController {
     presentationDidFinishPrepare = false
   }
 
+  /// Records a completed purchase before the paywall hears `transaction_complete`.
+  func markPurchaseCompleted(_ product: StoreProduct) {
+    completedPurchaseProduct = product
+  }
+
+  /// The result a dismissal reports: a decline after a completed purchase is a purchase.
+  func resolvedDismissal(
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  ) -> (result: PaywallResult, closeReason: PaywallCloseReason) {
+    if result == .declined, let product = completedPurchaseProduct {
+      return (.purchased(product), .systemLogic)
+    }
+    return (result, closeReason)
+  }
+
   func dismiss(
     result: PaywallResult,
     closeReason: PaywallCloseReason,
     completion: (() -> Void)? = nil
   ) {
+    let (result, closeReason) = resolvedDismissal(result: result, closeReason: closeReason)
     dismissCompletionBlock = completion
     paywallResult = result
     paywall.closeReason = closeReason

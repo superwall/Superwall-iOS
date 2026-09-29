@@ -9,6 +9,17 @@
 import Foundation
 import UIKit
 
+/// How a web checkout the paywall reported as complete finishes once its code is redeemed.
+enum StripeCheckoutCompletion: Equatable {
+  /// Legacy: the paywall hears `restore_complete`, and the paywall dismisses
+  /// as `.restored` once its entitlements are active.
+  case restore
+  /// Like an App Store purchase: the paywall hears `transaction_complete`, so
+  /// the button's after-purchase actions run, and it dismisses as
+  /// `.purchased` only when `shouldDismiss` is true.
+  case purchase(productId: String, shouldDismiss: Bool)
+}
+
 actor WebEntitlementRedeemer {
   private let network: Network
   private let storage: Storage
@@ -208,7 +219,8 @@ actor WebEntitlementRedeemer {
 
   func handleStripeCheckoutComplete(
     contextId: String,
-    productId: String
+    productId: String,
+    completion: StripeCheckoutCompletion = .restore
   ) async {
     awaitingCheckoutComplete = false
 
@@ -233,7 +245,8 @@ actor WebEntitlementRedeemer {
     let outcome = await pollStripeRedemptionResult(
       contextId: contextId,
       productId: productId,
-      trigger: .checkoutComplete
+      trigger: .checkoutComplete,
+      completion: completion
     )
 
     // Don't hide spinner if another poll is in-flight — it will handle the
@@ -428,7 +441,8 @@ actor WebEntitlementRedeemer {
     response: RedeemResponse,
     type: RedeemType,
     superwall: Superwall,
-    callbackMode: RedemptionCallbackMode
+    callbackMode: RedemptionCallbackMode,
+    completion: StripeCheckoutCompletion = .restore
   ) async {
     storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
@@ -462,7 +476,8 @@ actor WebEntitlementRedeemer {
         allEntitlementIds: Set(allEntitlements.map { $0.id }),
         paywallEntitlementIds: paywallEntitlementIds,
         superwall: superwall,
-        callbackMode: callbackMode
+        callbackMode: callbackMode,
+        completion: completion
       )
     }
   }
@@ -554,7 +569,8 @@ actor WebEntitlementRedeemer {
     allEntitlementIds: Set<String>,
     paywallEntitlementIds: Set<String>,
     superwall: Superwall,
-    callbackMode: RedemptionCallbackMode
+    callbackMode: RedemptionCallbackMode,
+    completion: StripeCheckoutCompletion
   ) async {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
 
@@ -596,11 +612,25 @@ actor WebEntitlementRedeemer {
         }
       }
 
-      if let paywallVc = superwall.paywallViewController,
-        !paywallEntitlementIds.isEmpty,
-        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
-        superwallOptions.paywalls.automaticallyDismiss {
-        await superwall.dismiss(paywallVc, result: .restored)
+      switch completion {
+      case .restore:
+        if let paywallVc = superwall.paywallViewController,
+          !paywallEntitlementIds.isEmpty,
+          paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
+          superwallOptions.paywalls.automaticallyDismiss {
+          await superwall.dismiss(paywallVc, result: .restored)
+        }
+      case let .purchase(productId, shouldDismiss):
+        if case .success(_, let redemptionInfo) = codeResult,
+          let paywallVc = superwall.paywallViewController {
+          await finishWebPurchase(
+            productId: productId,
+            trialPeriodDays: redemptionInfo.paywallInfo?.product?.trialPeriodDays ?? 0,
+            shouldDismiss: shouldDismiss && superwallOptions.paywalls.automaticallyDismiss,
+            paywallViewController: paywallVc,
+            superwall: superwall
+          )
+        }
       }
 
       await MainActor.run {
@@ -657,6 +687,36 @@ actor WebEntitlementRedeemer {
     } else {
       await afterRedeem()
       clearPendingStripeCheckoutState()
+    }
+  }
+
+  /// Finishes a redeemed web purchase the way `TransactionManager` finishes
+  /// an App Store purchase made from a paywall.
+  private func finishWebPurchase(
+    productId: String,
+    trialPeriodDays: Int,
+    shouldDismiss: Bool,
+    paywallViewController: PaywallViewController,
+    superwall: Superwall
+  ) async {
+    let product = StoreProduct.blank(productIdentifier: productId)
+    let paywallInfo = await paywallViewController.info
+    let didStartFreeTrial = trialPeriodDays > 0 && paywallInfo.isFreeTrialAvailable
+    let trialEndDate = didStartFreeTrial
+      ? Calendar.current.date(byAdding: .day, value: trialPeriodDays, to: Date())
+      : nil
+
+    await paywallViewController.markPurchaseCompleted(product)
+    await paywallViewController.webView.messageHandler.handle(
+      .transactionComplete(
+        trialEndDate: trialEndDate,
+        productIdentifier: productId,
+        didStartFreeTrial: didStartFreeTrial
+      )
+    )
+
+    if shouldDismiss {
+      await superwall.dismiss(paywallViewController, result: .purchased(product))
     }
   }
 
@@ -770,7 +830,8 @@ actor WebEntitlementRedeemer {
   private func pollStripeRedemptionResult(
     contextId: String,
     productId: String,
-    trigger: StripePollTrigger
+    trigger: StripePollTrigger,
+    completion: StripeCheckoutCompletion = .restore
   ) async -> StripePollOutcome {
     if hasActiveStripePoll {
       return .skippedInFlight
@@ -803,7 +864,8 @@ actor WebEntitlementRedeemer {
             response: response,
             type: .code(code),
             superwall: superwall,
-            callbackMode: .pollFakeCompatibility
+            callbackMode: .pollFakeCompatibility,
+            completion: completion
           )
           finalOutcome = .redeemed
           return finalOutcome

@@ -721,7 +721,36 @@ struct PaywallMessageHandlerTests {
 
     #expect(message == .stripeCheckoutComplete(
       checkoutContextId: "ctx_123",
-      productId: "prod_123"
+      productId: "prod_123",
+      shouldDismiss: nil
+    ))
+  }
+
+  @Test(arguments: [true, false])
+  func decodeStripeCheckoutComplete_withShouldDismiss(shouldDismiss: Bool) throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_complete",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123",
+            "should_dismiss": \(shouldDismiss)
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .stripeCheckoutComplete(
+      checkoutContextId: "ctx_123",
+      productId: "prod_123",
+      shouldDismiss: shouldDismiss
     ))
   }
 
@@ -821,12 +850,14 @@ struct PaywallMessageHandlerTests {
     messageHandler.handle(
       .stripeCheckoutComplete(
         checkoutContextId: "ctx_123",
-        productId: "prod_123"
+        productId: "prod_123",
+        shouldDismiss: false
       )
     )
 
     #expect(delegate.stripeCheckoutComplete?.checkoutContextId == "ctx_123")
     #expect(delegate.stripeCheckoutComplete?.productId == "prod_123")
+    #expect(delegate.stripeCheckoutCompleteShouldDismiss == false)
   }
 
   @Test

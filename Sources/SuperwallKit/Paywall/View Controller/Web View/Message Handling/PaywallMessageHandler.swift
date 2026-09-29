@@ -26,7 +26,8 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func revealWebViewBehindSpinner()
@@ -206,14 +207,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .start,
         productId: productId
       )
-    case let .stripeCheckoutComplete(checkoutContextId, productId):
+    case let .stripeCheckoutComplete(checkoutContextId, productId, shouldDismiss):
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
         checkoutContextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        shouldDismiss: shouldDismiss
       )
     case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(

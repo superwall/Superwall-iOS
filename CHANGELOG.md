@@ -8,10 +8,13 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.app/app-link/superwall/return`. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
+- A web purchase from a paywall's checkout page now finishes like an App Store purchase: once the code is redeemed, the paywall runs the purchase button's after-purchase actions, and it's dismissed (as `.purchased`) only when those actions close it. Redemption itself is unchanged, including `willRedeemLink`, `didRedeemLink` and the redemption events.
 
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+- Fixes a paywall reporting `.declined` instead of `.purchased` when it closed after a purchase through an after-purchase action list, such as one that sets state and then closes.
 
 ## 4.17.0
 ### Enhancements

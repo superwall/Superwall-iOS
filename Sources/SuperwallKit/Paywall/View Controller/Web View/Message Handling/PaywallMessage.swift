@@ -60,7 +60,8 @@ enum PaywallMessage: Decodable, Equatable {
   case stripeCheckoutStart(checkoutContextId: String, productId: String)
   case stripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
   case stripeCheckoutFail(checkoutContextId: String, productId: String)
@@ -235,9 +236,11 @@ enum PaywallMessage: Decodable, Equatable {
       case .stripeCheckoutComplete:
         if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
           let productId = try? values.decode(String.self, forKey: .productId) {
+          let shouldDismiss = (try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)) ?? nil
           self = .stripeCheckoutComplete(
             checkoutContextId: checkoutContextId,
-            productId: productId
+            productId: productId,
+            shouldDismiss: shouldDismiss
           )
           return
         }
