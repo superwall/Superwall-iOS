@@ -24,6 +24,7 @@
 		888F48DB27DBA8A9009C74A3 /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */; };
 		88A801D028EAE717004244CA /* SuperwallSubscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88A801CF28EAE717004244CA /* SuperwallSubscriptionView.swift */; };
 		88C49B712D9C2B2300DFE335 /* Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88C49B702D9C2B2300DFE335 /* Delegate.swift */; };
+		0397C21A03B38109D5BA5BEA /* CustomerCenterExampleDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D68675E18A19CC047DCB958 /* CustomerCenterExampleDelegate.swift */; };
 		88EE539627DF6D0A00F1FFFB /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */; };
 		88F9F1E327E21718004FCE83 /* InfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88F9F1E227E21718004FCE83 /* InfoView.swift */; };
 /* End PBXBuildFile section */
@@ -47,6 +48,7 @@
 		888F48DA27DBA8A9009C74A3 /* Rubik-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Rubik-Bold.ttf"; sourceTree = "<group>"; };
 		88A801CF28EAE717004244CA /* SuperwallSubscriptionView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SuperwallSubscriptionView.swift; sourceTree = "<group>"; };
 		88C49B702D9C2B2300DFE335 /* Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Delegate.swift; sourceTree = "<group>"; };
+		9D68675E18A19CC047DCB958 /* CustomerCenterExampleDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterExampleDelegate.swift; sourceTree = "<group>"; };
 		88EE539127DF64BB00F1FFFB /* Superwall_Advanced-Products.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Superwall_Advanced-Products.storekit"; sourceTree = "<group>"; };
 		88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
 		88F9F1E227E21718004FCE83 /* InfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InfoView.swift; sourceTree = "<group>"; };
@@ -104,6 +106,7 @@
 				888F488727DA6B0F009C74A3 /* SuperwallAdvancedApp.swift */,
 				88EE539527DF6D0A00F1FFFB /* WelcomeView.swift */,
 				888F48C227DB8584009C74A3 /* HomeView.swift */,
+				9D68675E18A19CC047DCB958 /* CustomerCenterExampleDelegate.swift */,
 			);
 			path = Advanced;
 			sourceTree = "<group>";
@@ -271,6 +274,7 @@
 				887A26712D118388002B8E9B /* RCPurchaseController.swift in Sources */,
 				887A266F2D11832A002B8E9B /* SWPurchaseController.swift in Sources */,
 				888F488827DA6B0F009C74A3 /* SuperwallAdvancedApp.swift in Sources */,
+				0397C21A03B38109D5BA5BEA /* CustomerCenterExampleDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

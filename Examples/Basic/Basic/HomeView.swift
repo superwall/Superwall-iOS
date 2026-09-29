@@ -76,6 +76,9 @@ struct HomeView: View {
             page = .gated
           }
         }
+        BrandedButton(title: "Customer Center") {
+          Superwall.shared.presentCustomerCenter()
+        }
       }
       .padding(.horizontal)
     }

@@ -461,6 +461,12 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
     self.init(testProduct)
   }
 
+  /// A product from the Superwall catalogue rather than a store. Used where StoreKit can't supply
+  /// one — a web (Stripe/Paddle) purchase, say, whose price only exists in the catalogue.
+  convenience init(catalogProduct: APIStoreProduct) {
+    self.init(catalogProduct)
+  }
+
   convenience init(customProduct: APIStoreProduct) {
     self.init(customProduct)
     self.isCustomProduct = true

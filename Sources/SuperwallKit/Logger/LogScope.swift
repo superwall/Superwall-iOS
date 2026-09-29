@@ -37,6 +37,7 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
   // Declared after `all` so existing implicit raw values stay stable — they
   // reach the backend via SuperwallOptions.toDictionary().
   case grantedEntitlements
+  case customerCenter
 
   public var description: String {
     switch self {
@@ -90,6 +91,8 @@ public enum LogScope: Int, Encodable, Sendable, CustomStringConvertible {
       return "grantedEntitlements"
     case .all:
       return "all"
+    case .customerCenter:
+      return "customerCenter"
     }
   }
 }

@@ -1,0 +1,262 @@
+//
+//  WebSubscriptionPathTests.swift
+//
+//
+//  Created by Jordan Morgan on 26/08/2026.
+//
+
+import Testing
+import Foundation
+@testable import SuperwallKit
+
+@Suite("Web subscription paths")
+@MainActor
+struct WebSubscriptionPathTests {
+  private let managementURL = URL(string: "https://superwall.app/manage")!
+
+  private func webSubscription(
+    store: ProductStore = .stripe,
+    isActive: Bool = true,
+    isRevoked: Bool = false
+  ) -> SubscriptionTransaction {
+    SubscriptionTransaction(
+      transactionId: "web_1",
+      productId: "web_pro_monthly",
+      purchaseDate: Date().addingTimeInterval(-30 * 86_400),
+      willRenew: true,
+      isRevoked: isRevoked,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: isActive,
+      expirationDate: Date().addingTimeInterval(12 * 86_400),
+      subscriptionGroupId: nil,
+      store: store
+    )
+  }
+
+  private func makeViewModel(
+    store: ProductStore = .stripe,
+    webManagementURL: URL?,
+    survey: CustomerCenterConfiguration.FeedbackSurvey? = nil,
+    subscriptions: [SubscriptionTransaction]? = nil
+  ) async -> CustomerCenterViewModel {
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(
+        subscriptions: subscriptions ?? [webSubscription(store: store)],
+        nonSubscriptions: [],
+        entitlements: []
+      ),
+      environment: EnvironmentMock(webManagementURL: webManagementURL)
+    )
+    let configuration = CustomerCenterConfiguration.default
+    configuration.support.webManagementURL = webManagementURL
+    if let survey {
+      for path in configuration.managementScreen.paths where path.type == .manageSubscription {
+        path.survey = survey
+      }
+    }
+    let viewModel = CustomerCenterViewModel(
+      configuration: configuration,
+      dependencies: deps,
+      strings: .english
+    )
+    await viewModel.load()
+    return viewModel
+  }
+
+  private func managePath(_ viewModel: CustomerCenterViewModel) -> ResolvedPath? {
+    let purchase = viewModel.purchases.first
+    return viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
+  }
+
+  // MARK: - Only one row, and it goes to the management page
+
+  @available(iOS 15.0, *)
+  @Test("a web subscriber gets the management row and nothing App Store-only")
+  func webSubscriberSeesOneManagementRow() async {
+    let viewModel = await makeViewModel(webManagementURL: managementURL)
+    let purchase = viewModel.purchases.first
+    let types = viewModel.paths(for: purchase).map(\.path.type)
+
+    #expect(types.contains(.manageSubscription))
+    #expect(!types.contains { if case .changePlan = $0 { return true } else { return false } })
+    #expect(!types.contains { if case .refund = $0 { return true } else { return false } })
+    #expect(managePath(viewModel)?.destination == .webManage(managementURL))
+  }
+
+  @available(iOS 15.0, *)
+  @Test("the management row survives a missing management URL", arguments: [
+    ProductStore.stripe, .paddle, .superwall
+  ])
+  func rowRemainsWithoutAManagementURL(store: ProductStore) async {
+    let viewModel = await makeViewModel(store: store, webManagementURL: nil)
+    // Without this the row vanishes and a paying customer has no way to manage their subscription.
+    #expect(managePath(viewModel)?.destination == .webManageUnavailable)
+  }
+
+  @available(iOS 15.0, *)
+  @Test("tapping the row without a URL explains where to find the link")
+  func unavailableRowShowsTheBlurb() async {
+    let viewModel = await makeViewModel(webManagementURL: nil)
+    let resolved = try? #require(managePath(viewModel))
+    guard let resolved else { return }
+
+    await viewModel.select(resolved, purchase: viewModel.purchases.first)
+    #expect(viewModel.sheet == .webManageUnavailable)
+  }
+
+  @available(iOS 15.0, *)
+  @Test("tapping the row with a URL opens the management page")
+  func availableRowOpensTheManagementPage() async {
+    let viewModel = await makeViewModel(webManagementURL: managementURL)
+    let resolved = try? #require(managePath(viewModel))
+    guard let resolved else { return }
+
+    await viewModel.select(resolved, purchase: viewModel.purchases.first)
+    #expect(viewModel.sheet == .safari(managementURL))
+  }
+
+  private func makeEntitlementOnlyViewModel(store: EntitlementStore?) async -> CustomerCenterViewModel {
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", store: store)]
+      ),
+      environment: EnvironmentMock(webManagementURL: nil)
+    )
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english
+    )
+    await viewModel.load()
+    return viewModel
+  }
+
+  /// An entitlement with no transaction *and* no store behind it — comped, or granted by hand —
+  /// is reported by the builder as `.superwall`, which reads as a web store. Sending that customer
+  /// to a management page, or telling them to find a link in a receipt they never got, is wrong.
+  ///
+  /// `Entitlement(id:)` is no help here: the public convenience initializer hardcodes
+  /// `store: .appStore`, so the purchase never reaches the web branch and the case passes on the
+  /// App Store branch's `guard let sub` instead — green with this rule deleted.
+  @available(iOS 15.0, *)
+  @Test("a comped entitlement isn't told to check a receipt it never had")
+  func compedEntitlementGetsNoReceiptBlurb() async {
+    let viewModel = await makeEntitlementOnlyViewModel(store: nil)
+
+    let purchase = viewModel.purchases.first
+    #expect(purchase?.store == .superwall, "otherwise this never reaches the branch under test")
+    let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
+    #expect(manage == nil, "nothing to manage, so no row at all")
+  }
+
+  /// The other half of that rule, and the reason it keys on the store rather than the kind: a web
+  /// purchase arrives as a bare entitlement whenever the backend sends no matching transaction.
+  /// Those customers are paying, and the row telling them where the link is has to survive.
+  @available(iOS 15.0, *)
+  @Test("a web purchase with no transaction behind it keeps its management row", arguments: [
+    EntitlementStore.stripe, .paddle
+  ])
+  func webEntitlementWithoutATransactionKeepsTheRow(store: EntitlementStore) async {
+    let viewModel = await makeEntitlementOnlyViewModel(store: store)
+
+    let purchase = viewModel.purchases.first
+    let manage = viewModel.paths(for: purchase).first { $0.path.type == .manageSubscription }
+    #expect(manage != nil, "a paying customer must still be told where to manage this")
+    #expect(manage?.destination == .webManageUnavailable)
+  }
+
+  /// The App Store branch gates on the subscription being live; the web branch gated on the store
+  /// alone, so anything that merely *came from* a web store was offered a management row — a
+  /// single Stripe charge with no subscription behind it, and a subscription that had already
+  /// lapsed or been revoked.
+  @available(iOS 15.0, *)
+  @Test("nothing left to manage means no management row")
+  func nothingToManageMeansNoRow() async {
+    let lapsed = webSubscription(isActive: false, isRevoked: false)
+    let revoked = webSubscription(isActive: true, isRevoked: true)
+
+    for subscription in [lapsed, revoked] {
+      let viewModel = await makeViewModel(
+        webManagementURL: managementURL,
+        subscriptions: [subscription]
+      )
+      let manage = viewModel.paths(for: viewModel.purchases.first)
+        .first { $0.path.type == .manageSubscription }
+      #expect(manage == nil, "a subscription that has ended has nothing to manage")
+    }
+  }
+
+  @available(iOS 15.0, *)
+  @Test("a one-off web purchase has no subscription to manage")
+  func oneOffWebPurchaseHasNoRow() async {
+    let purchase = NonSubscriptionTransaction(
+      transactionId: "web_1",
+      productId: "web_lifetime",
+      purchaseDate: Date().addingTimeInterval(-86_400),
+      isConsumable: false,
+      isRevoked: false,
+      store: .stripe
+    )
+    let (deps, _, _) = CustomerCenterDependencies.mock(
+      info: CustomerInfo(subscriptions: [], nonSubscriptions: [purchase], entitlements: []),
+      environment: EnvironmentMock(webManagementURL: managementURL)
+    )
+    let viewModel = CustomerCenterViewModel(
+      configuration: .default,
+      dependencies: deps,
+      strings: .english
+    )
+    await viewModel.load()
+
+    let manage = viewModel.paths(for: viewModel.purchases.first)
+      .first { $0.path.type == .manageSubscription }
+    #expect(manage == nil, "there is no subscription behind a one-time charge")
+  }
+
+  // MARK: - Surveys don't belong on a web flow
+
+  /// The survey gates an action. On a web flow that action leaves the app — or, with no URL, can't
+  /// happen at all — so asking the question here collects an answer for something we never see
+  /// the outcome of.
+  @available(iOS 15.0, *)
+  @Test("no survey is shown before handing off to the web", arguments: [true, false])
+  func webFlowsSkipTheSurvey(hasManagementURL: Bool) async {
+    let survey = CustomerCenterConfiguration.FeedbackSurvey(
+      id: "cancel_survey",
+      title: "Why are you cancelling?",
+      options: [.init(id: "too_expensive", title: "Too expensive")]
+    )
+    let viewModel = await makeViewModel(
+      webManagementURL: hasManagementURL ? managementURL : nil,
+      survey: survey
+    )
+    let resolved = try? #require(managePath(viewModel))
+    guard let resolved else { return }
+
+    await viewModel.select(resolved, purchase: viewModel.purchases.first)
+
+    #expect(viewModel.pendingSurvey == nil)
+    if case .survey = viewModel.sheet {
+      Issue.record("a web flow should not present the survey")
+    }
+  }
+
+  // MARK: - Labelling
+
+  @available(iOS 15.0, *)
+  @Test("web management destinations are labelled as managing, not cancelling")
+  func webDestinationsAreLabelledAsManagement() {
+    #expect(ResolvedPathDestination.webManage(managementURL).isWebManagement)
+    #expect(ResolvedPathDestination.webManageUnavailable.isWebManagement)
+    #expect(!ResolvedPathDestination.appleManageSheet(subscriptionGroupId: "g").isWebManagement)
+    #expect(!ResolvedPathDestination.restore.isWebManagement)
+
+    // The label the row actually renders differs between the two, which is the point.
+    let strings = CustomerCenterStrings.english
+    #expect(strings.string("customer_center_path_manage_subscription") == "Cancel subscription")
+    #expect(strings.string("customer_center_path_manage_subscription_web") == "Manage subscription")
+  }
+}
