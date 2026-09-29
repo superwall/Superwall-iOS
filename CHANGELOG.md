@@ -9,6 +9,15 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Requires Xcode 26 (Swift 6.2) or later to build the SDK. Apple has required the iOS 26 SDK for App Store Connect uploads since April 28, 2026. The SDK itself still compiles in the Swift 5 language mode.
 - This ships as a minor release because every App Store Connect upload already needs Xcode 26, so any app that can ship an update already meets the new Xcode requirement. If your app still supports iOS 13 or 14, Swift Package Manager will fail to resolve this version for it: pin SuperwallKit to `4.17.x` (`.upToNextMinor(from: "4.17.0")`, or `~> 4.17.0` in CocoaPods) until you raise your deployment target.
 
+### Enhancements
+
+- Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
+- Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+
+### Fixes
+
+- Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+
 ## 4.17.0
 ### Enhancements
 

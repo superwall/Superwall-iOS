@@ -862,8 +862,7 @@ struct WebEntitlementRedeemerTests {
 
     // Set up mock storage
     let mockStorage = StorageMock(
-      internalRedeemResponse: previousRedeemResponse,
-      cache: Cache()
+      internalRedeemResponse: previousRedeemResponse
     )
     mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
 
@@ -988,8 +987,7 @@ struct WebEntitlementRedeemerTests {
 
     // Set up mock storage
     let mockStorage = StorageMock(
-      internalRedeemResponse: previousRedeemResponse,
-      cache: Cache()
+      internalRedeemResponse: previousRedeemResponse
     )
     mockStorage.save(deviceCustomerInfo, forType: LatestDeviceCustomerInfo.self)
 
@@ -2079,7 +2077,10 @@ struct WebEntitlementRedeemerTests {
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
       stripePendingPollIntervalNs: 1_000_000,
-      stripePendingPollTimeoutNs: 5_000_000,
+      // Wide margins keep both legs deterministic under parallel test execution: the fresh
+      // state stays comfortably inside the timeout even if the check runs long after the
+      // register, and the expired state is far older than the timeout.
+      stripePendingPollTimeoutNs: 60_000_000_000,
       superwall: superwall
     )
 
@@ -2090,7 +2091,7 @@ struct WebEntitlementRedeemerTests {
       PendingStripeCheckoutPollState(
         checkoutContextId: "ctx_expired",
         productId: "prod_expired",
-        updatedAt: Date(timeIntervalSinceNow: -10)
+        updatedAt: Date(timeIntervalSinceNow: -120)
       ),
       forType: PendingStripeCheckoutPollStorage.self
     )
