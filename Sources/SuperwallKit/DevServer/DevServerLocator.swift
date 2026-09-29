@@ -186,7 +186,7 @@ actor DevServerLocator {
     }
   }
 
-  private static func loadWithURLSession(_ request: URLRequest) async throws -> (Data, URLResponse?) {
+  static func loadWithURLSession(_ request: URLRequest) async throws -> (Data, URLResponse?) {
     return try await withCheckedThrowingContinuation { continuation in
       let task = URLSession.shared.dataTask(with: request) { data, response, error in
         if let data = data {
