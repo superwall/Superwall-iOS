@@ -6,6 +6,7 @@
 //
 // swiftlint:disable all
 
+import Foundation
 import Testing
 @testable import SuperwallKit
 
@@ -43,6 +44,29 @@ struct StorageTests {
 
     let retrievedAssignments2 = storage.getAssignments()
     #expect(retrievedAssignments2.isEmpty)
+  }
+
+  @Test
+  func recordFirstSeenTracked_savesFirstSeenDate() async throws {
+    let storage = Storage(
+      factory: StorageMock.DeviceInfoFactoryMock(),
+      cache: CacheMock()
+    )
+    let before = Date().addingTimeInterval(-1)
+    storage.recordFirstSeenTracked()
+
+    var firstSeenDate: Date?
+    for _ in 0..<50 {
+      firstSeenDate = storage.get(FirstSeenDate.self)
+      if firstSeenDate != nil {
+        break
+      }
+      try await Task.sleep(nanoseconds: 20_000_000)
+    }
+
+    let savedDate = try #require(firstSeenDate)
+    #expect(savedDate >= before)
+    #expect(storage.get(DidTrackFirstSeen.self) == true)
   }
 }
 

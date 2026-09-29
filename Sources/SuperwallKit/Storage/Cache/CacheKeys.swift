@@ -97,6 +97,14 @@ enum DidTrackFirstSeen: Storable {
   typealias Value = Bool
 }
 
+enum FirstSeenDate: Storable {
+  static var key: String {
+    "store.firstSeenDate"
+  }
+  static var directory: SearchPathDirectory = .userSpecificDocuments
+  typealias Value = Date
+}
+
 enum DidCacheLegacyTransactions: Storable {
   static var key: String {
     "store.didCacheLegacyTransactions"

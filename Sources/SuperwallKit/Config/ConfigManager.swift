@@ -579,6 +579,16 @@ class ConfigManager {
     )
 
     storage.overwriteAssignments(assignments)
+
+    let experimentAssignments = InternalSuperwallEvent.ExperimentAssignments(
+      assignments: assignments,
+      appTransactionId: ReceiptManager.appTransactionId,
+      appInstallDate: deviceHelper.appInstallDateValue,
+      firstSeenDate: storage.get(FirstSeenDate.self)
+    )
+    Task {
+      await Superwall.shared.track(experimentAssignments)
+    }
   }
 
   /// Gets the assignments from the server and saves them to disk, overwriting any that already exist on disk/in memory.

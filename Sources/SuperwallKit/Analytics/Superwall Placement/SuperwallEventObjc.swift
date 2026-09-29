@@ -274,6 +274,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a refund request started from the Customer Center completes.
   case customerCenterRefundRequest
 
+  /// When the SDK picks a variant for every experiment in the configuration, which happens
+  /// each time the configuration loads and when the user resets.
+  case experimentAssignments
+
   public init(event: SuperwallEvent) {
     self = event.backingData.objcEvent
   }
@@ -450,6 +454,8 @@ public enum SuperwallEventObjc: Int, CaseIterable {
       return "customerCenter_refundRequest"
     case .paywallPageView:
       return "paywall_page_view"
+    case .experimentAssignments:
+      return "experiment_assignments"
     }
   }
 }

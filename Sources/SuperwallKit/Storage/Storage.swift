@@ -174,6 +174,7 @@ class Storage {
         await Superwall.shared.track(InternalSuperwallEvent.FirstSeen())
       }
       self.save(true, forType: DidTrackFirstSeen.self)
+      self.save(Date(), forType: FirstSeenDate.self)
       self._didTrackFirstSeen = true
     }
 	}

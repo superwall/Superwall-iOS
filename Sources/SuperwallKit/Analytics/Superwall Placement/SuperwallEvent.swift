@@ -279,6 +279,10 @@ public enum SuperwallEvent {
   /// When all the experiment assignments are confirmed by calling ``Superwall/confirmAllAssignments()``.
   case confirmAllAssignments
 
+  /// When the SDK picks a variant for every experiment in the configuration, which happens
+  /// each time the configuration loads and when the user resets.
+  case experimentAssignments
+
   /// When the Superwall configuration fails to be retrieved.
   case configFail
 
@@ -532,6 +536,8 @@ extension SuperwallEvent {
       return .init(objcEvent: .configAttributes)
     case .confirmAllAssignments:
       return .init(objcEvent: .confirmAllAssignments)
+    case .experimentAssignments:
+      return .init(objcEvent: .experimentAssignments)
     case .configFail:
       return .init(objcEvent: .configFail)
     case .adServicesTokenRequestStart:

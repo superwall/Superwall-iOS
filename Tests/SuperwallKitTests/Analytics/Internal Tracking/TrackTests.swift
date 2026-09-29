@@ -2820,4 +2820,67 @@ struct TrackingTests {
     #expect(
       result.parameters.audienceFilterParams["$paywall_count"] as! Int == paywallCount)
   }
+
+  @Test func experimentAssignments() async throws {
+    let installDate = Date(timeIntervalSince1970: 1_700_000_000)
+    let firstSeenDate = Date(timeIntervalSince1970: 1_700_000_500)
+    let assignments: Set<Assignment> = [
+      Assignment(
+        experimentId: "exp_b",
+        variant: .init(id: "var_b", type: .holdout, paywallId: nil),
+        isSentToServer: true
+      ),
+      Assignment(
+        experimentId: "exp_a",
+        variant: .init(id: "var_a", type: .treatment, paywallId: "pw"),
+        isSentToServer: false
+      )
+    ]
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.ExperimentAssignments(
+        assignments: assignments,
+        appTransactionId: "txn_123",
+        appInstallDate: installDate,
+        firstSeenDate: firstSeenDate
+      )
+    )
+    let params = result.parameters.audienceFilterParams
+    #expect(params["$is_standard_event"] as! Bool)
+    #expect(params["$event_name"] as! String == "experiment_assignments")
+    #expect(params["$assignment_count"] as! Int == 2)
+    #expect(params["$app_transaction_id"] as! String == "txn_123")
+    #expect(params["$app_install_date"] as! String == installDate.isoString)
+    #expect(params["$first_seen_date"] as! String == firstSeenDate.isoString)
+
+    let json = try #require((params["$assignments"] as? String)?.data(using: .utf8))
+    let decoded = try #require(
+      try JSONSerialization.jsonObject(with: json) as? [[String: Any]]
+    )
+    #expect(decoded.count == 2)
+    #expect(decoded[0]["experiment_id"] as? String == "exp_a")
+    #expect(decoded[0]["variant_id"] as? String == "var_a")
+    #expect(decoded[0]["variant_type"] as? String == "TREATMENT")
+    #expect(decoded[0]["is_sent_to_server"] as? Bool == false)
+    #expect(decoded[1]["experiment_id"] as? String == "exp_b")
+    #expect(decoded[1]["variant_id"] as? String == "var_b")
+    #expect(decoded[1]["variant_type"] as? String == "HOLDOUT")
+    #expect(decoded[1]["is_sent_to_server"] as? Bool == true)
+  }
+
+  @Test func experimentAssignments_missingValues() async {
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.ExperimentAssignments(
+        assignments: [],
+        appTransactionId: nil,
+        appInstallDate: nil,
+        firstSeenDate: nil
+      )
+    )
+    let params = result.parameters.audienceFilterParams
+    #expect(params["$assignments"] as! String == "[]")
+    #expect(params["$assignment_count"] as! Int == 0)
+    #expect(params["$app_transaction_id"] == nil)
+    #expect(params["$app_install_date"] == nil)
+    #expect(params["$first_seen_date"] == nil)
+  }
 }
