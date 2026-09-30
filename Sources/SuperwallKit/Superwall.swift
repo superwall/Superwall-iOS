@@ -553,8 +553,14 @@ public final class Superwall: NSObject, ObservableObject {
         // config says: it records that this install may be matched, which a
         // later launch relies on if this one ends before the match completes.
         // Only the request itself waits for config to enable the MMP.
-        let dependencyContainer = dependencyContainer
-        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
+        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
+          guard let dependencyContainer = dependencyContainer else {
+            return
+          }
+          // The app may have opted out while the match waited for config.
+          if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
+            return
+          }
           let advertiserTrackingEnabled =
             dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
