@@ -78,6 +78,10 @@ public final class Superwall: NSObject, ObservableObject {
     set {
       options.eventTrackingBehavior = newValue
 
+      if newValue != .none {
+        dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
+      }
+
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
       }
@@ -540,24 +544,22 @@ public final class Superwall: NSObject, ObservableObject {
 
       _ = await configureIdentity
 
-      // Skip install-attribution matching entirely when the developer has
-      // opted out of all event collection. The `/api/match` call and the
-      // `acquisition_*` attribute writes happen outside the event queue, so
-      // queue-level suppression wouldn't catch them.
-      if dependencyContainer.configManager.options.eventTrackingBehavior != .none,
-        dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-          hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-          appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-        ) {
-        // The eligibility check above has to run at launch whatever the
-        // config says: it records that this install may be matched, which a
-        // later launch relies on if this one ends before the match completes.
-        // Only the request itself waits for config to enable the MMP.
+      // The eligibility check has to run at launch whatever the config or
+      // tracking setting says: it records that this install may be matched,
+      // which a later launch relies on if this one ends before the match
+      // completes. Only the request itself waits for config to enable the MMP.
+      if dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      ) {
         dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
           guard let dependencyContainer = dependencyContainer else {
             return nil
           }
-          // The app may have opted out while the match waited for config.
+          // Skip matching when the app has opted out of all event collection.
+          // The `/api/match` call and the `acquisition_*` attribute writes
+          // happen outside the event queue, so queue-level suppression
+          // wouldn't catch them. It's tried again if the app opts back in.
           if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
             return nil
           }

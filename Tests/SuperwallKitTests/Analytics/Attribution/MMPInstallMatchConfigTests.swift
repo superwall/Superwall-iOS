@@ -37,7 +37,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
-      return nil
+      return Task {}
     }
     #expect(counter.count == 0)
 
@@ -52,7 +52,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
-      return nil
+      return Task {}
     }
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: nil)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
@@ -68,7 +68,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
-      return nil
+      return Task {}
     }
 
     #expect(counter.count == 1)
@@ -81,13 +81,56 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
-      return nil
+      return Task {}
     }
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
 
     #expect(counter.count == 1)
+  }
+
+  @Test
+  func startsASkippedMatchWhenTrackingIsTurnedBackOn() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let attempts = Counter()
+    let started = Counter()
+    var isOptedOut = true
+
+    manager.matchInstallOnceEnabled {
+      attempts.count += 1
+      if isOptedOut {
+        return nil
+      }
+      started.count += 1
+      return Task {}
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    #expect(attempts.count == 1)
+    #expect(started.count == 0)
+
+    isOptedOut = false
+    manager.startMatchIfEnabled()
+    manager.startMatchIfEnabled()
+    #expect(started.count == 1)
+    #expect(attempts.count == 2)
+  }
+
+  @Test
+  func doesNotStartOnOptInWhenTheMMPIsOff() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let attempts = Counter()
+
+    manager.matchInstallOnceEnabled {
+      attempts.count += 1
+      return Task {}
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
+    manager.startMatchIfEnabled()
+
+    #expect(attempts.count == 0)
   }
 
   // MARK: - Paywalls waiting for the match
