@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 /// Thrown by `Network.matchMMPInstall(...)` when the dependencies needed to
 /// build the request aren't available yet. Distinct from a transport failure
@@ -23,15 +24,124 @@ final class MMPAttributionManager {
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let identityManager: IdentityManager
+  private unowned let configManager: ConfigManager
+  private var pendingMatch: AnyCancellable?
+  private let lock = NSLock()
+  private var startMatch: (() -> Task<Void, Never>?)?
+  private var hasStartedMatch = false
+  /// `true` from when this launch's install match is set up until it finishes
+  /// or is skipped.
+  private let isMatchPending = CurrentValueSubject<Bool, Never>(false)
+
+  /// How long a paywall waits for an install match that's still running.
+  static let presentationWaitTimeout: TimeInterval = 2
 
   init(
     network: Network,
     storage: Storage,
-    identityManager: IdentityManager
+    identityManager: IdentityManager,
+    configManager: ConfigManager
   ) {
     self.network = network
     self.storage = storage
     self.identityManager = identityManager
+    self.configManager = configManager
+  }
+
+  /// Calls `startMatch` once config says the MMP is enabled for this app,
+  /// which may be straight away if config is already loaded. It's off by
+  /// default, so it never fires if the backend doesn't turn it on. Works the
+  /// same way `AttributionPoster` waits for Apple Search Ads to be enabled.
+  ///
+  /// `startMatch` returns the running match, or `nil` if it skipped it
+  /// because the app has opted out of tracking. A skipped match is tried
+  /// again when the app opts back in, via `startMatchIfEnabled()`.
+  func matchInstallOnceEnabled(_ startMatch: @escaping () -> Task<Void, Never>?) {
+    lock.lock()
+    self.startMatch = startMatch
+    lock.unlock()
+    isMatchPending.send(true)
+
+    pendingMatch = configManager.configState
+      .compactMap { $0.getConfig() }
+      .map { $0.attribution?.mmp?.enabled == true }
+      .removeDuplicates()
+      .filter { $0 }
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { [weak self] _ in
+          self?.startMatchIfEnabled()
+        }
+      )
+  }
+
+  /// Starts this launch's install match if config has the MMP on and it
+  /// hasn't started yet. Called when config arrives and when the app turns
+  /// tracking back on.
+  func startMatchIfEnabled() {
+    if configManager.config?.attribution?.mmp?.enabled != true {
+      return
+    }
+    lock.lock()
+    defer { lock.unlock() }
+    guard
+      !hasStartedMatch,
+      let startMatch = startMatch
+    else {
+      return
+    }
+    guard let match = startMatch() else {
+      // Skipped while opted out. Don't hold paywalls up in the meantime.
+      isMatchPending.send(false)
+      return
+    }
+    hasStartedMatch = true
+    isMatchPending.send(true)
+    Task { [weak self] in
+      await match.value
+      self?.isMatchPending.send(false)
+    }
+  }
+
+  /// On a first launch, a paywall can be requested while the install match is
+  /// still running. If the MMP is on and the placement's audiences use
+  /// `acquisition_*` attributes, this waits for the match, up to `timeout`, so
+  /// they're there when the audiences are checked. Returns straight away
+  /// otherwise.
+  func waitForPendingMatch(
+    ifUsedBy trigger: Trigger?,
+    timeout: TimeInterval = presentationWaitTimeout
+  ) async {
+    guard let trigger = trigger else {
+      return
+    }
+    if !isMatchPending.value {
+      return
+    }
+    if configManager.config?.attribution?.mmp?.enabled != true {
+      return
+    }
+    if !Self.usesAcquisitionAttributes(trigger) {
+      return
+    }
+
+    let isMatchPending = isMatchPending
+    await withTaskGroup(of: Void.self) { group in
+      group.addTask {
+        _ = try? await isMatchPending.first { !$0 }.throwableAsync()
+      }
+      group.addTask {
+        try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+      }
+      await group.next()
+      group.cancelAll()
+    }
+  }
+
+  static func usesAcquisitionAttributes(_ trigger: Trigger) -> Bool {
+    return trigger.audiences.contains { audience in
+      audience.expression?.contains("acquisition_") == true
+    }
   }
 
   /// Fires the install-attribution match and applies its result.
