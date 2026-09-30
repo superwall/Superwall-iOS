@@ -928,7 +928,7 @@ class DeviceHelper {
   private unowned let factory: IdentityFactory
     & LocaleIdentifierFactory
     & WebEntitlementFactory
-    & FeatureFlagsFactory
+    & ConfigStateFactory
 
   init(
     api: Api,
@@ -936,7 +936,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & FeatureFlagsFactory,
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & ConfigStateFactory,
     ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
@@ -1087,7 +1087,7 @@ class DeviceHelper {
       deviceDictionary.removeValue(forKey: key)
     }
     // IP collection is for the MMP, which is off unless the backend turns it on.
-    if factory.makeFeatureFlags()?.enableMMP == true {
+    if factory.makeConfigState().value.getConfig()?.attribution?.mmp?.enabled == true {
       await ipCollector.refreshIfNeeded()
       await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
       deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }

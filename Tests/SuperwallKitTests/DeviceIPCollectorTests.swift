@@ -97,10 +97,10 @@ struct DeviceIPCollectorTests {
 
   @Test func mmpFlagIsOffUnlessTheBackendTurnsItOn() throws {
     let decoder = JSONDecoder()
-    let off = try decoder.decode(FeatureFlags.self, from: Data(#"{"toggles":[]}"#.utf8))
-    let on = try decoder.decode(FeatureFlags.self, from: Data(#"{"toggles":[{"key":"enable_mmp","enabled":true}]}"#.utf8))
-    #expect(!off.enableMMP)
-    #expect(on.enableMMP)
+    let off = try decoder.decode(Attribution.self, from: Data(#"{"appleSearchAds":{"enabled":true}}"#.utf8))
+    let on = try decoder.decode(Attribution.self, from: Data(#"{"mmp":{"enabled":true}}"#.utf8))
+    #expect(off.mmp == nil)
+    #expect(on.mmp?.enabled == true)
   }
 
   @Test func onlyReleaseEnvironmentsHaveAnIPv4Endpoint() {

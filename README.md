@@ -98,8 +98,8 @@ Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
 
 ### Device IP observations
 
-IP collection is off by default. It only runs when the backend turns on the `enable_mmp`
-config toggle for the app. When it's off, no IPv4 request is made and no `ipV4`/`ipV6`
+IP collection is off by default. It only runs when the backend turns on
+`attributionOptions.mmp.enabled` in the app's config. When it's off, no IPv4 request is made and no `ipV4`/`ipV6`
 attributes are exposed.
 
 During enrichment, the SDK also starts a best-effort request to

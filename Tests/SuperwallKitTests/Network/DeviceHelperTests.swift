@@ -391,7 +391,10 @@ struct DeviceHelperTests {
 
   private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
     var config = Config.stub()
-    config.featureFlags.enableMMP = isEnabled
+    config.attribution = Attribution(
+      appleSearchAds: AppleSearchAds(enabled: true),
+      mmp: MMPAttribution(enabled: isEnabled)
+    )
     dependencyContainer.configManager.configState.send(.retrieved(config))
   }
 
