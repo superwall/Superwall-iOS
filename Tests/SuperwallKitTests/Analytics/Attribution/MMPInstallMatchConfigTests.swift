@@ -150,26 +150,25 @@ struct MMPInstallMatchConfigTests {
   func paywallWaitsForARunningMatch() async {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.mmpAttributionManager!
-    let gate = AsyncStream<Void>.makeStream()
     let finished = Counter()
 
+    // The match finishes a moment later, so the paywall only sees it finished
+    // if it actually waited.
     manager.matchInstallOnceEnabled {
       Task {
-        for await _ in gate.stream { break }
+        try? await Task.sleep(nanoseconds: 200_000_000)
         finished.count += 1
       }
     }
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
 
-    let waiter = Task {
-      await manager.waitForPendingMatch(
-        ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
-        timeout: 10
-      )
-      return finished.count
-    }
-    gate.continuation.yield()
-    #expect(await waiter.value == 1)
+    let start = Date()
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 10
+    )
+    #expect(finished.count == 1)
+    #expect(Date().timeIntervalSince(start) >= 0.2)
   }
 
   @Test
@@ -189,7 +188,9 @@ struct MMPInstallMatchConfigTests {
       ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
       timeout: 0.1
     )
-    #expect(Date().timeIntervalSince(start) < 5)
+    let elapsed = Date().timeIntervalSince(start)
+    #expect(elapsed >= 0.1)
+    #expect(elapsed < 5)
   }
 
   @Test
