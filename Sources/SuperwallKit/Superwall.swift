@@ -549,22 +549,29 @@ public final class Superwall: NSObject, ObservableObject {
           hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
           appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
         ) {
-        let advertiserTrackingEnabled =
-          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+        // The eligibility check above has to run at launch whatever the
+        // config says: it records that this install may be matched, which a
+        // later launch relies on if this one ends before the match completes.
+        // Only the request itself waits for config to enable the MMP.
+        let dependencyContainer = dependencyContainer
+        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
+          let advertiserTrackingEnabled =
+            dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        // We deliberately fire the match once and don't retry after ATT is
-        // granted: the backend matches on IP + device fingerprint + time decay,
-        // not IDFA, so a post-consent re-match wouldn't change the result. And
-        // because matches are time-decayed and reads are latest-wins, a later
-        // retry could only tie or worsen the earlier, better-timed match.
-        // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
-        // matching.)
-        dependencyContainer.storage.recordMMPInstallAttributionMatch {
-          await dependencyContainer.mmpAttributionManager.matchInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-            advertiserTrackingEnabled: advertiserTrackingEnabled,
-            applicationTrackingEnabled: true
-          )
+          // We deliberately fire the match once and don't retry after ATT is
+          // granted: the backend matches on IP + device fingerprint + time decay,
+          // not IDFA, so a post-consent re-match wouldn't change the result. And
+          // because matches are time-decayed and reads are latest-wins, a later
+          // retry could only tie or worsen the earlier, better-timed match.
+          // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
+          // matching.)
+          dependencyContainer.storage.recordMMPInstallAttributionMatch {
+            await dependencyContainer.mmpAttributionManager.matchInstall(
+              idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+              advertiserTrackingEnabled: advertiserTrackingEnabled,
+              applicationTrackingEnabled: true
+            )
+          }
         }
       }
 

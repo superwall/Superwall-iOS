@@ -4,6 +4,7 @@
 //
 
 import Foundation
+import Combine
 
 /// Thrown by `Network.matchMMPInstall(...)` when the dependencies needed to
 /// build the request aren't available yet. Distinct from a transport failure
@@ -23,15 +24,34 @@ final class MMPAttributionManager {
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let identityManager: IdentityManager
+  private unowned let configManager: ConfigManager
+  private var pendingMatch: AnyCancellable?
 
   init(
     network: Network,
     storage: Storage,
-    identityManager: IdentityManager
+    identityManager: IdentityManager,
+    configManager: ConfigManager
   ) {
     self.network = network
     self.storage = storage
     self.identityManager = identityManager
+    self.configManager = configManager
+  }
+
+  /// Calls `startMatch` once config says the MMP is enabled for this app,
+  /// which may be straight away if config is already loaded. It's off by
+  /// default, so it never fires if the backend doesn't turn it on. Works the
+  /// same way `AttributionPoster` waits for Apple Search Ads to be enabled.
+  func matchInstallOnceEnabled(_ startMatch: @escaping () -> Void) {
+    pendingMatch = configManager.configState
+      .compactMap { $0.getConfig() }
+      .map { $0.attribution?.mmp?.enabled == true }
+      .first { $0 }
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { _ in startMatch() }
+      )
   }
 
   /// Fires the install-attribution match and applies its result.
