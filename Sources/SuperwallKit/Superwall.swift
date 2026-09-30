@@ -555,11 +555,11 @@ public final class Superwall: NSObject, ObservableObject {
         // Only the request itself waits for config to enable the MMP.
         dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
           guard let dependencyContainer = dependencyContainer else {
-            return
+            return nil
           }
           // The app may have opted out while the match waited for config.
           if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
-            return
+            return nil
           }
           let advertiserTrackingEnabled =
             dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
@@ -571,7 +571,7 @@ public final class Superwall: NSObject, ObservableObject {
           // retry could only tie or worsen the earlier, better-timed match.
           // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
           // matching.)
-          dependencyContainer.storage.recordMMPInstallAttributionMatch {
+          return dependencyContainer.storage.recordMMPInstallAttributionMatch {
             await dependencyContainer.mmpAttributionManager.matchInstall(
               idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
               advertiserTrackingEnabled: advertiserTrackingEnabled,

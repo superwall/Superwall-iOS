@@ -15,6 +15,12 @@ struct MMPInstallMatchConfigTests {
     var count = 0
   }
 
+  private func makeTrigger(expression: String?) -> Trigger {
+    var audience = TriggerRule.stub()
+    audience.expression = expression
+    return Trigger(placementName: "app_open", audiences: [audience])
+  }
+
   private func makeConfig(mmpEnabled: Bool?) -> Config {
     var config = Config.stub()
     config.attribution = Attribution(
@@ -31,6 +37,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
+      return nil
     }
     #expect(counter.count == 0)
 
@@ -45,6 +52,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
+      return nil
     }
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: nil)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
@@ -60,6 +68,7 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
+      return nil
     }
 
     #expect(counter.count == 1)
@@ -72,11 +81,111 @@ struct MMPInstallMatchConfigTests {
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
+      return nil
     }
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
 
     #expect(counter.count == 1)
+  }
+
+  // MARK: - Paywalls waiting for the match
+
+  @Test
+  func detectsAudiencesThatUseAcquisitionAttributes() {
+    #expect(MMPAttributionManager.usesAcquisitionAttributes(
+      makeTrigger(expression: "user.acquisition_source == \"tiktok\"")
+    ))
+    #expect(!MMPAttributionManager.usesAcquisitionAttributes(
+      makeTrigger(expression: "user.plan == \"pro\"")
+    ))
+    #expect(!MMPAttributionManager.usesAcquisitionAttributes(makeTrigger(expression: nil)))
+  }
+
+  @Test
+  func paywallWaitsForARunningMatch() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let gate = AsyncStream<Void>.makeStream()
+    let finished = Counter()
+
+    manager.matchInstallOnceEnabled {
+      Task {
+        for await _ in gate.stream { break }
+        finished.count += 1
+      }
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    let waiter = Task {
+      await manager.waitForPendingMatch(
+        ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+        timeout: 10
+      )
+      return finished.count
+    }
+    gate.continuation.yield()
+    #expect(await waiter.value == 1)
+  }
+
+  @Test
+  func paywallStopsWaitingAfterTheTimeout() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+
+    manager.matchInstallOnceEnabled {
+      Task {
+        try? await Task.sleep(nanoseconds: 60_000_000_000)
+      }
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    let start = Date()
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 0.1
+    )
+    #expect(Date().timeIntervalSince(start) < 5)
+  }
+
+  @Test
+  func paywallDoesNotWaitWhenItsAudiencesDontNeedTheMatch() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+
+    manager.matchInstallOnceEnabled {
+      Task {
+        try? await Task.sleep(nanoseconds: 60_000_000_000)
+      }
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    let start = Date()
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.plan == \"pro\""),
+      timeout: 30
+    )
+    #expect(Date().timeIntervalSince(start) < 5)
+  }
+
+  @Test
+  func paywallDoesNotWaitWhenTheMMPIsOff() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+
+    manager.matchInstallOnceEnabled {
+      Task {
+        try? await Task.sleep(nanoseconds: 60_000_000_000)
+      }
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
+
+    let start = Date()
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 30
+    )
+    #expect(Date().timeIntervalSince(start) < 5)
   }
 }
