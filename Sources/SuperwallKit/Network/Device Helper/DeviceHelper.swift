@@ -928,6 +928,7 @@ class DeviceHelper {
   private unowned let factory: IdentityFactory
     & LocaleIdentifierFactory
     & WebEntitlementFactory
+    & FeatureFlagsFactory
 
   init(
     api: Api,
@@ -935,7 +936,7 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & FeatureFlagsFactory,
     ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
@@ -969,7 +970,6 @@ class DeviceHelper {
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {
-    await ipCollector.refreshIfNeeded()
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
     let request = EnrichmentRequest(
@@ -1083,11 +1083,15 @@ class DeviceHelper {
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
-    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
     for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
       deviceDictionary.removeValue(forKey: key)
     }
-    deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
+    // IP collection is for the MMP, which is off unless the backend turns it on.
+    if factory.makeFeatureFlags()?.enableMMP == true {
+      await ipCollector.refreshIfNeeded()
+      await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
+      deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
+    }
 
     if #available(iOS 15.0, *),
       let storefront = await Storefront.current {

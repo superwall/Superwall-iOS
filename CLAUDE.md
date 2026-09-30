@@ -117,7 +117,9 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 
 ### Device IP enrichment
 
-`DeviceIPCollector` owns session-local, timestamped IP observations. Keep collection
+`DeviceIPCollector` owns session-local, timestamped IP observations. Collection is for the
+MMP and stays off unless the backend's `enable_mmp` toggle is on; SuperwallKit's privacy
+manifest doesn't declare it, so apps that turn the MMP on declare it themselves. Keep collection
 independent of enrichment success and purchase/configuration latency, preserve each family
 separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
 Do not add customer attributes or authentication headers to the public IPv4 collection request.

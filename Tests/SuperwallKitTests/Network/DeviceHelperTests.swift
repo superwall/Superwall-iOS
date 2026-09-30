@@ -376,15 +376,8 @@ struct DeviceHelperTests {
   /// Cached enrichment can carry IP observations that have since gone stale.
   /// Only fresh ones may reach the device attributes, and `ipAddress` passes
   /// through as the enrichment sent it.
-  @Test func templateDevice_dropsStaleIPObservations() async {
-    let now = Date(timeIntervalSince1970: 1_789_505_000)
-    let collector = DeviceIPCollector(url: nil, now: { now })
-    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
-      gate: Gate(true),
-      ipCollector: collector
-    )
-    _ = dependencyContainer
-    deviceHelper.enrichment = Enrichment(
+  private func makeIPEnrichment() -> Enrichment {
+    return Enrichment(
       user: JSON([:]),
       device: JSON([
         "ipV4": "1.1.1.1",
@@ -394,6 +387,23 @@ struct DeviceHelperTests {
         "ipAddress": "1.1.1.1"
       ])
     )
+  }
+
+  private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
+    var config = Config.stub()
+    config.featureFlags.enableMMP = isEnabled
+    dependencyContainer.configManager.configState.send(.retrieved(config))
+  }
+
+  @Test func templateDevice_dropsStaleIPObservations() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let collector = DeviceIPCollector(url: nil, now: { now })
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(true, on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
 
     let template = await deviceHelper.getTemplateDevice()
 
@@ -402,6 +412,29 @@ struct DeviceHelperTests {
     #expect(template["ipV6"] as? String == "2001:db8::1")
     #expect(template["ipV6ObservedAt"] as? String == "2026-09-15T20:40:00Z")
     #expect(template["ipAddress"] as? String == "1.1.1.1")
+  }
+
+  /// IP collection is off unless the backend turns on the MMP flag: no lookup
+  /// is started and no `ipV4`/`ipV6` attributes are exposed.
+  @Test func templateDevice_withoutMMPFlag_skipsIPCollection() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let collector = DeviceIPCollector(url: nil, fetch: { [:] }, now: { now })
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+    #expect(template["ipAddress"] as? String == "1.1.1.1")
+    #expect(await collector.attributes().isEmpty)
+    // A lookup would have been started, so this one wouldn't be skipped.
+    #expect(await collector.refreshIfNeeded() != nil)
   }
 
   private func expectedLiveValues() async -> (

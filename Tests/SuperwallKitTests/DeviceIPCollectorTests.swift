@@ -95,6 +95,14 @@ struct DeviceIPCollectorTests {
     #expect(await collector.refreshIfNeeded() == nil)
   }
 
+  @Test func mmpFlagIsOffUnlessTheBackendTurnsItOn() throws {
+    let decoder = JSONDecoder()
+    let off = try decoder.decode(FeatureFlags.self, from: Data(#"{"toggles":[]}"#.utf8))
+    let on = try decoder.decode(FeatureFlags.self, from: Data(#"{"toggles":[{"key":"enable_mmp","enabled":true}]}"#.utf8))
+    #expect(!off.enableMMP)
+    #expect(on.enableMMP)
+  }
+
   @Test func onlyReleaseEnvironmentsHaveAnIPv4Endpoint() {
     #expect(Api(networkEnvironment: .release).enrichment.ipV4Url?.absoluteString == "https://v4.superwall-enrichment.com/api/v1/enrich")
     #expect(Api(networkEnvironment: .releaseCandidate).enrichment.ipV4Url != nil)

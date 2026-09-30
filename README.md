@@ -98,6 +98,10 @@ Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
 
 ### Device IP observations
 
+IP collection is off by default. It only runs when the backend turns on the `enable_mmp`
+config toggle for the app. When it's off, no IPv4 request is made and no `ipV4`/`ipV6`
+attributes are exposed.
+
 During enrichment, the SDK also starts a best-effort request to
 `https://v4.superwall-enrichment.com/api/v1/enrich`. It sends no user attributes or API key
 to this endpoint. The host is kept separate from the main enrichment API on purpose: it
