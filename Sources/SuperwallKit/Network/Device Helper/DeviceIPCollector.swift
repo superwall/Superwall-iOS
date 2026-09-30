@@ -75,8 +75,17 @@ actor DeviceIPCollector {
   func record(_ device: [String: String]) {
     for family in [4, 6] {
       let key = "ipV\(family)"
-      let address = device[key] ?? device["ipAddress"]
-      let timestamp = device["\(key)ObservedAt"] ?? device["ipAddressObservedAt"]
+      // Each address only counts with its own timestamp, so an `ipV6` with no
+      // time can't borrow the time of an IPv4 `ipAddress`.
+      let address: String?
+      let timestamp: String?
+      if let familyAddress = device[key] {
+        address = familyAddress
+        timestamp = device["\(key)ObservedAt"]
+      } else {
+        address = device["ipAddress"]
+        timestamp = device["ipAddressObservedAt"]
+      }
       guard
         let address = address,
         let timestamp = timestamp,

@@ -49,6 +49,18 @@ struct DeviceIPCollectorTests {
     #expect(attributes["ipV4ObservedAt"] == timestamp)
   }
 
+  @Test func doesNotPairAnAddressWithAnotherFamilysTimestamp() async {
+    let collector = DeviceIPCollector(url: nil, now: { date })
+    await collector.record([
+      "ipV6": "2001:db8::1",
+      "ipAddress": "8.8.8.8",
+      "ipAddressObservedAt": "2026-09-15T20:40:00Z"
+    ])
+    let attributes = await collector.attributes()
+    #expect(attributes["ipV4"] == "8.8.8.8")
+    #expect(attributes["ipV6"] == nil)
+  }
+
   @Test func keepsTheNewerObservation() async {
     let collector = DeviceIPCollector(url: nil, now: { date })
     await collector.record(["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:40:00Z"])
