@@ -1439,21 +1439,17 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func requestReview(type: ReviewType) {
     switch type {
     case .inApp:
-      #if os(visionOS)
-        if let scene = view.window?.windowScene {
+      if let scene = view.window?.windowScene ?? UIApplication.sharedApplication?.activeWindowScene {
+        #if os(visionOS)
           AppStore.requestReview(in: scene)
-        }
-      #else
-        if let scene = view.window?.windowScene {
+        #else
           if #available(iOS 16.0, *) {
             AppStore.requestReview(in: scene)
           } else {
             SKStoreReviewController.requestReview(in: scene)
           }
-        } else {
-          SKStoreReviewController.requestReview()
-        }
-      #endif
+        #endif
+      }
       trackReviewRequest(type: .inApp)
     case .external:
       let appId: String
