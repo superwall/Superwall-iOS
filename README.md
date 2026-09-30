@@ -116,8 +116,9 @@ attributes when available. They remain separate: an IPv4 response does not erase
 IPv6 is opportunistic; a dual-stack enrichment request can use IPv4 even on a device
 with IPv6. These are public network egress addresses, potentially shared through NAT or VPN.
 
-The extra request never blocks configuration or purchases. Attempts are coalesced and
-limited to one per 15 minutes when enrichment runs. The IPv4 collector is session-local; the existing enrichment cache may restore a still-fresh
+The extra request never blocks configuration or purchases. While the MMP is on, a lookup
+can start whenever device attributes are read, at most once every 15 minutes, or a minute
+after a failed one. The IPv4 collector is session-local; the existing enrichment cache may restore a still-fresh
 observation after relaunch. All observations are omitted from device attributes after 15
 minutes; network changes can make them stale sooner.
 Any `ipAddress` the enrichment API returns is passed through unchanged.

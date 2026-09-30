@@ -80,14 +80,32 @@ struct DeviceIPCollectorTests {
     #expect(await counter.count == 1)
   }
 
-  @Test func retriesAfterAFailedFetch() async {
+  private final class Clock: @unchecked Sendable {
+    var date: Date
+    init(_ date: Date) {
+      self.date = date
+    }
+  }
+
+  @Test func waitsAMinuteBeforeRetryingAFailedFetch() async {
     let counter = FetchCounter(shouldFail: true)
-    let collector = DeviceIPCollector(url: nil, fetch: { try await counter.fetch() }, now: { date })
+    let clock = Clock(date)
+    let collector = DeviceIPCollector(url: nil, fetch: { try await counter.fetch() }, now: { clock.date })
     await collector.refreshIfNeeded()?.value
+
+    clock.date = date.addingTimeInterval(30)
+    #expect(await collector.refreshIfNeeded() == nil)
+
     await counter.setShouldFail(false)
-    await collector.refreshIfNeeded()?.value
+    clock.date = date.addingTimeInterval(61)
     await collector.refreshIfNeeded()?.value
     #expect(await counter.count == 2)
+
+    // A success waits out the full 15 minutes.
+    clock.date = date.addingTimeInterval(61 + 14 * 60)
+    #expect(await collector.refreshIfNeeded() == nil)
+    clock.date = date.addingTimeInterval(61 + 15 * 60)
+    #expect(await collector.refreshIfNeeded() != nil)
   }
 
   @Test func doesNothingWithoutAnEndpoint() async {

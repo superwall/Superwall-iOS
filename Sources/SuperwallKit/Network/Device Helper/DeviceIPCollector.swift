@@ -14,8 +14,13 @@ actor DeviceIPCollector {
   private let fetch: Fetch?
   private let now: () -> Date
   private var lastAttempt: Date?
+  private var nextAttemptAt: Date?
   private var observations: [String: String] = [:]
   private let lifetime: TimeInterval = 15 * 60
+  /// How long to wait after a failed fetch. Shorter than `lifetime` so a
+  /// blip is retried soon, but long enough that an outage or offline device
+  /// doesn't send a request on every read of the device attributes.
+  private let retryDelay: TimeInterval = 60
 
   /// - Parameters:
   ///   - url: The IPv4-only endpoint to ask. When `nil`, nothing is fetched.
@@ -43,18 +48,19 @@ actor DeviceIPCollector {
       return nil
     }
     let date = now()
-    if let lastAttempt = lastAttempt,
-      date.timeIntervalSince(lastAttempt) < lifetime {
+    if let nextAttemptAt = nextAttemptAt,
+      date < nextAttemptAt {
       return nil
     }
     lastAttempt = date
+    nextAttemptAt = date.addingTimeInterval(lifetime)
     return Task {
       do {
         record(try await fetch())
       } catch {
-        // Let the next enrichment try again rather than waiting out the window.
+        // Try again sooner than a success would, unless a newer attempt started.
         if lastAttempt == date {
-          lastAttempt = nil
+          nextAttemptAt = date.addingTimeInterval(retryDelay)
         }
         Logger.debug(
           logLevel: .debug,
