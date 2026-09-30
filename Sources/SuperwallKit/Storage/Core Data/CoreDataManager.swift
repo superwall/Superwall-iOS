@@ -174,26 +174,18 @@ class CoreDataManager {
       lastEventDate = placement.name == request.placementName ? placement.createdAt : nil
     }
 
-    return await withCheckedContinuation { continuation in
-      coreDataStack.getLastSavedPlacement(
-        name: request.placementName,
-        before: lastEventDate
-      ) { placement in
-        guard let placement = placement else {
-          return continuation.resume(returning: nil)
-        }
-        let createdAt = placement.createdAt
-        let calendar = Calendar.current
-        let currentDate = Date()
-        let components = calendar.dateComponents(
-          [request.type.calendarComponent],
-          from: createdAt,
-          to: currentDate
-        )
-
-        continuation.resume(returning: request.type.dateComponent(from: components))
-      }
+    guard let createdAt = await coreDataStack.getLastSavedPlacementDate(
+      name: request.placementName,
+      before: lastEventDate
+    ) else {
+      return nil
     }
+    let components = Calendar.current.dateComponents(
+      [request.type.calendarComponent],
+      from: createdAt,
+      to: Date()
+    )
+    return request.type.dateComponent(from: components)
   }
 
   func countAudienceOccurrences(
@@ -223,18 +215,10 @@ class CoreDataManager {
         audienceOccurrence.key
       )
 
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
+      return await coreDataStack.count(for: fetchRequest)
     case .infinity:
       fetchRequest.predicate = NSPredicate(format: "occurrenceKey == %@", audienceOccurrence.key)
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
+      return await coreDataStack.count(for: fetchRequest)
     }
   }
 
@@ -265,18 +249,10 @@ class CoreDataManager {
         placementName
       )
 
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
+      return await coreDataStack.count(for: fetchRequest)
     case .infinity:
       fetchRequest.predicate = NSPredicate(format: "name == %@", placementName)
-      return await withCheckedContinuation { continuation in
-        coreDataStack.count(for: fetchRequest) { count in
-          continuation.resume(returning: count)
-        }
-      }
+      return await coreDataStack.count(for: fetchRequest)
     }
   }
 }
