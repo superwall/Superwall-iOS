@@ -95,3 +95,33 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 ## Contributing
 
 Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
+
+### Device IP observations
+
+IP collection is off by default. It only runs when the backend turns on
+`attributionOptions.mmp.enabled` in the app's config. When it's off, no IPv4 request is made and no `ipV4`/`ipV6`
+attributes are exposed.
+
+During enrichment, the SDK also starts a best-effort request to
+`https://v4.superwall-enrichment.com/api/v1/enrich`. It sends no user attributes or API key
+to this endpoint. The host is kept separate from the main enrichment API on purpose: it
+only has an IPv4 address (no AAAA record), so the request always goes out over IPv4. It has
+no development version, so the request is only made with the release network environments.
+Timestamps may be sent with or without milliseconds. The existing enrichment API continues to provide geo and demand scoring.
+It must also return the observed `ipV4` or `ipV6` and corresponding ISO 8601
+`ipV4ObservedAt` / `ipV6ObservedAt` timestamp to capture that connection's address.
+
+The SDK exposes `ipV4`, `ipV6`, `ipV4ObservedAt`, and `ipV6ObservedAt` as device
+attributes when available. They remain separate: an IPv4 response does not erase IPv6.
+IPv6 is opportunistic; a dual-stack enrichment request can use IPv4 even on a device
+with IPv6. These are public network egress addresses, potentially shared through NAT or VPN.
+
+The extra request never blocks configuration or purchases. While the MMP is on, a lookup
+can start whenever device attributes are read, at most once every 15 minutes, or a minute
+after a failed one. The IPv4 collector is session-local; the existing enrichment cache may restore a still-fresh
+observation after relaunch. All observations are omitted from device attributes after 15
+minutes; network changes can make them stale sooner.
+Any `ipAddress` the enrichment API returns is passed through unchanged.
+They are not proof of identity. Downstream consumers must preserve the timestamps and apply
+their own freshness policy. Wrapper SDKs receive this behavior when they adopt a native
+SDK release containing it.

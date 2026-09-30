@@ -273,6 +273,19 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// The host that only answers over IPv4, used to learn the device's public
+    /// IPv4 address. There's no non-production version, so it's `nil` outside
+    /// release builds.
+    var ipV4EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "v4.superwall-enrichment.com"
+      default:
+        return nil
+      }
+    }
+
     var adServicesHost: String {
       return "api-adservices.apple.com"
     }
