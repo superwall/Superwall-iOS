@@ -171,6 +171,35 @@ struct MMPInstallMatchConfigTests {
     #expect(Date().timeIntervalSince(start) >= 0.2)
   }
 
+  /// A paywall can be requested after the match is marked pending at launch
+  /// but before it's set up. It must still wait.
+  @Test
+  func paywallWaitsForAMatchMarkedPendingBeforeItsSetUp() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let finished = Counter()
+    manager.markMatchPending()
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    Task {
+      try? await Task.sleep(nanoseconds: 100_000_000)
+      manager.matchInstallOnceEnabled {
+        Task {
+          try? await Task.sleep(nanoseconds: 100_000_000)
+          finished.count += 1
+        }
+      }
+    }
+
+    let start = Date()
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 10
+    )
+    #expect(finished.count == 1)
+    #expect(Date().timeIntervalSince(start) >= 0.2)
+  }
+
   @Test
   func paywallStopsWaitingAfterTheTimeout() async {
     let dependencyContainer = DependencyContainer()

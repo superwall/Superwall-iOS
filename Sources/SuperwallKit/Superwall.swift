@@ -539,19 +539,26 @@ public final class Superwall: NSObject, ObservableObject {
       let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
+      // The eligibility check has to run at launch whatever the config or
+      // tracking setting says: it records that this install may be matched,
+      // which a later launch relies on if this one ends before the match
+      // completes. It runs before config is fetched so a paywall can't get
+      // ahead of the match being marked as pending. Only the request itself
+      // waits for config to enable the MMP.
+      let shouldMatchInstall = dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      )
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.markMatchPending()
+      }
+
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
       _ = await configureIdentity
 
-      // The eligibility check has to run at launch whatever the config or
-      // tracking setting says: it records that this install may be matched,
-      // which a later launch relies on if this one ends before the match
-      // completes. Only the request itself waits for config to enable the MMP.
-      if dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-      ) {
+      if shouldMatchInstall {
         dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
           guard let dependencyContainer = dependencyContainer else {
             return nil

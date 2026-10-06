@@ -48,6 +48,12 @@ final class MMPAttributionManager {
     self.configManager = configManager
   }
 
+  /// Marks this launch's install match as pending, so a paywall that's
+  /// requested before the match is set up still waits for it.
+  func markMatchPending() {
+    isMatchPending.send(true)
+  }
+
   /// Calls `startMatch` once config says the MMP is enabled for this app,
   /// which may be straight away if config is already loaded. It's off by
   /// default, so it never fires if the backend doesn't turn it on. Works the
