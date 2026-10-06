@@ -969,7 +969,7 @@ class DeviceHelper {
     }
   }
 
-  /// Starts the IPv4 lookup once config turns the MMP on. On a cold launch
+  /// Starts the IPv4 and IPv6 lookups once config turns the MMP on. On a cold launch
   /// the first device-attributes read happens before config arrives, so
   /// without this the lookup would wait for some later read.
   @discardableResult
