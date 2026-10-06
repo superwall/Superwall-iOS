@@ -115,6 +115,17 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
 
+### Device IP enrichment
+
+`DeviceIPCollector` owns session-local, timestamped IP observations. Collection is for the
+MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on; SuperwallKit's privacy
+manifest doesn't declare it, so apps that turn the MMP on declare it themselves. Keep collection
+independent of enrichment success and purchase/configuration latency, preserve each family
+separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
+Do not add customer attributes or authentication headers to the public IP lookup requests.
+The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
+version set): its host is reachable over both, so `URLSession` could quietly report IPv4.
+
 ### Integration device identifiers
 
 AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and

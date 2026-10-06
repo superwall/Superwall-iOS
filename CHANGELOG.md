@@ -8,12 +8,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
 
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
 
 ## 4.17.0
+
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.

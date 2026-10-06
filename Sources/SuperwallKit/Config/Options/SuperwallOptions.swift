@@ -273,6 +273,32 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// The host that only answers over IPv4, used to learn the device's public
+    /// IPv4 address. There's no non-production version, so it's `nil` outside
+    /// release builds.
+    var ipV4EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "v4.superwall-enrichment.com"
+      default:
+        return nil
+      }
+    }
+
+    /// The host asked over IPv6 to learn the device's public IPv6 address.
+    /// It's reachable over both, so the SDK requires IPv6 for the request.
+    /// There's no non-production version, so it's `nil` outside release builds.
+    var ipV6EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "beacon-v6.superwall.com"
+      default:
+        return nil
+      }
+    }
+
     var adServicesHost: String {
       return "api-adservices.apple.com"
     }
