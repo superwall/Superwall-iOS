@@ -940,7 +940,10 @@ class DeviceHelper {
     ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
-    self.ipCollector = ipCollector ?? DeviceIPCollector(url: api.enrichment.ipV4Url)
+    self.ipCollector = ipCollector ?? DeviceIPCollector(
+      ipV4Url: api.enrichment.ipV4Url,
+      ipV6Url: api.enrichment.ipV6Url
+    )
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -963,6 +966,19 @@ class DeviceHelper {
   deinit {
     for observer in traitObservers {
       NotificationCenter.default.removeObserver(observer)
+    }
+  }
+
+  /// Starts the IPv4 and IPv6 lookups once config turns the MMP on. On a cold launch
+  /// the first device-attributes read happens before config arrives, so
+  /// without this the lookup would wait for some later read.
+  @discardableResult
+  func startIPCollectionIfEnabled(for config: Config) -> Task<Void, Never>? {
+    if config.attribution?.mmp?.enabled != true {
+      return nil
+    }
+    return Task {
+      await ipCollector.refreshIfNeeded()?.value
     }
   }
 
@@ -1086,10 +1102,12 @@ class DeviceHelper {
     for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
       deviceDictionary.removeValue(forKey: key)
     }
+    // Kept in memory whatever the config says, since on a cold launch the
+    // first enrichment arrives before config does.
+    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
     // IP collection is for the MMP, which is off unless the backend turns it on.
     if factory.makeConfigState().value.getConfig()?.attribution?.mmp?.enabled == true {
       await ipCollector.refreshIfNeeded()
-      await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
       deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
     }
 

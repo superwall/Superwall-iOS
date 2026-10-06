@@ -122,7 +122,9 @@ MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on; S
 manifest doesn't declare it, so apps that turn the MMP on declare it themselves. Keep collection
 independent of enrichment success and purchase/configuration latency, preserve each family
 separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
-Do not add customer attributes or authentication headers to the public IPv4 collection request.
+Do not add customer attributes or authentication headers to the public IP lookup requests.
+The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
+version set): its host is reachable over both, so `URLSession` could quietly report IPv4.
 
 ### Integration device identifiers
 

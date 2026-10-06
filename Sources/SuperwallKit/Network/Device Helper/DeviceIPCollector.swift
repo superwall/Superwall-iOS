@@ -11,55 +11,102 @@ import Darwin
 /// Best-effort, session-local observations. Never waits on the network when reading attributes.
 actor DeviceIPCollector {
   typealias Fetch = () async throws -> [String: String]
-  private let fetch: Fetch?
+
+  /// One address lookup with its own schedule, so a failing IPv6 lookup
+  /// doesn't hold up or speed up the IPv4 one.
+  private struct Lookup {
+    let name: String
+    let fetch: Fetch
+    var lastAttempt: Date?
+    var nextAttemptAt: Date?
+
+    init(name: String, fetch: @escaping Fetch) {
+      self.name = name
+      self.fetch = fetch
+    }
+  }
+
+  private var lookups: [Lookup]
   private let now: () -> Date
-  private var lastAttempt: Date?
   private var observations: [String: String] = [:]
   private let lifetime: TimeInterval = 15 * 60
+  /// How long to wait after a failed fetch. Shorter than `lifetime` so a
+  /// blip is retried soon, but long enough that an outage or offline device
+  /// doesn't send a request on every read of the device attributes.
+  private let retryDelay: TimeInterval = 60
 
   /// - Parameters:
-  ///   - url: The IPv4-only endpoint to ask. When `nil`, nothing is fetched.
-  ///   - fetch: Overrides the request, for tests.
+  ///   - ipV4Url: An IPv4-only endpoint to ask. When `nil`, IPv4 isn't looked up.
+  ///   - ipV6Url: An endpoint to ask over IPv6 only. When `nil`, on watchOS, or
+  ///     on systems that can't require IPv6, IPv6 isn't looked up.
   init(
-    url: URL?,
-    fetch: Fetch? = nil,
+    ipV4Url: URL?,
+    ipV6Url: URL?,
     now: @escaping () -> Date = Date.init
   ) {
-    if let fetch = fetch {
-      self.fetch = fetch
-    } else if let url = url {
-      self.fetch = { try await Self.fetchIPv4(from: url) }
-    } else {
-      self.fetch = nil
+    var lookups: [Lookup] = []
+    if let ipV4Url = ipV4Url {
+      lookups.append(Lookup(name: "IPv4") { try await Self.fetchIPv4(from: ipV4Url) })
     }
+    // watchOS doesn't let apps open their own connections like this.
+    #if canImport(Network) && !os(watchOS)
+    if let ipV6Url = ipV6Url,
+      #available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *) {
+      lookups.append(Lookup(name: "IPv6") { try await Self.fetchOverIPv6(from: ipV6Url) })
+    }
+    #endif
+    self.lookups = lookups
     self.now = now
   }
 
-  /// Starts a fetch in the background unless one was tried recently. The
-  /// returned task is only there so tests can wait for it.
+  /// One lookup per closure, each with its own schedule. For tests.
+  init(
+    fetches: [Fetch],
+    now: @escaping () -> Date = Date.init
+  ) {
+    self.lookups = fetches.enumerated().map { Lookup(name: "test \($0.offset)", fetch: $0.element) }
+    self.now = now
+  }
+
+  /// Starts any lookups that are due, in the background. The returned task
+  /// finishes when they do and is only there so tests can wait for it.
   @discardableResult
   func refreshIfNeeded() -> Task<Void, Never>? {
-    guard let fetch = fetch else {
-      return nil
-    }
     let date = now()
-    if let lastAttempt = lastAttempt,
-      date.timeIntervalSince(lastAttempt) < lifetime {
+    var started: [Task<Void, Never>] = []
+    for index in lookups.indices {
+      if let nextAttemptAt = lookups[index].nextAttemptAt,
+        date < nextAttemptAt {
+        continue
+      }
+      lookups[index].lastAttempt = date
+      lookups[index].nextAttemptAt = date.addingTimeInterval(lifetime)
+      started.append(start(lookupAt: index, attemptedAt: date))
+    }
+    if started.isEmpty {
       return nil
     }
-    lastAttempt = date
+    return Task {
+      for task in started {
+        await task.value
+      }
+    }
+  }
+
+  private func start(lookupAt index: Int, attemptedAt date: Date) -> Task<Void, Never> {
+    let lookup = lookups[index]
     return Task {
       do {
-        record(try await fetch())
+        record(try await lookup.fetch())
       } catch {
-        // Let the next enrichment try again rather than waiting out the window.
-        if lastAttempt == date {
-          lastAttempt = nil
+        // Try again sooner than a success would, unless a newer attempt started.
+        if lookups[index].lastAttempt == date {
+          lookups[index].nextAttemptAt = date.addingTimeInterval(retryDelay)
         }
         Logger.debug(
           logLevel: .debug,
           scope: .network,
-          message: "Couldn't fetch the device's IPv4 address",
+          message: "Couldn't fetch the device's \(lookup.name) address",
           error: error
         )
       }
@@ -69,8 +116,17 @@ actor DeviceIPCollector {
   func record(_ device: [String: String]) {
     for family in [4, 6] {
       let key = "ipV\(family)"
-      let address = device[key] ?? device["ipAddress"]
-      let timestamp = device["\(key)ObservedAt"] ?? device["ipAddressObservedAt"]
+      // Each address only counts with its own timestamp, so an `ipV6` with no
+      // time can't borrow the time of an IPv4 `ipAddress`.
+      let address: String?
+      let timestamp: String?
+      if let familyAddress = device[key] {
+        address = familyAddress
+        timestamp = device["\(key)ObservedAt"]
+      } else {
+        address = device["ipAddress"]
+        timestamp = device["ipAddressObservedAt"]
+      }
       guard
         let address = address,
         let timestamp = timestamp,

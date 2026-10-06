@@ -389,18 +389,68 @@ struct DeviceHelperTests {
     )
   }
 
-  private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
+  private func makeConfig(mmpEnabled: Bool) -> Config {
     var config = Config.stub()
     config.attribution = Attribution(
       appleSearchAds: AppleSearchAds(enabled: true),
-      mmp: MMPAttribution(enabled: isEnabled)
+      mmp: MMPAttribution(enabled: mmpEnabled)
     )
+    return config
+  }
+
+  private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: isEnabled)))
+  }
+
+  /// On a cold launch the first enrichment is read before config arrives. Its
+  /// IPs must still count once config turns the MMP on, and config arriving
+  /// must start the IPv4 lookup without waiting for another read.
+  @Test func coldLaunch_keepsEnrichmentIPsAndStartsLookupWhenConfigArrives() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      fetches: [{
+        await fetches.increment()
+        return [:]
+      }],
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    let beforeConfig = await deviceHelper.getTemplateDevice()
+    #expect(beforeConfig["ipV6"] == nil)
+    #expect(await fetches.count == 0)
+
+    let config = makeConfig(mmpEnabled: true)
+    await deviceHelper.startIPCollectionIfEnabled(for: config)?.value
+    #expect(await fetches.count == 1)
+
     dependencyContainer.configManager.configState.send(.retrieved(config))
+    deviceHelper.enrichment = nil
+    let afterConfig = await deviceHelper.getTemplateDevice()
+    #expect(afterConfig["ipV6"] as? String == "2001:db8::1")
+  }
+
+  @Test func configWithMMPOff_doesNotStartLookup() {
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: Gate(true))
+    _ = dependencyContainer
+    #expect(deviceHelper.startIPCollectionIfEnabled(for: makeConfig(mmpEnabled: false)) == nil)
+  }
+
+  private actor FetchCount {
+    var count = 0
+    func increment() {
+      count += 1
+    }
   }
 
   @Test func templateDevice_dropsStaleIPObservations() async {
     let now = Date(timeIntervalSince1970: 1_789_505_000)
-    let collector = DeviceIPCollector(url: nil, now: { now })
+    let collector = DeviceIPCollector(fetches: [], now: { now })
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
       gate: Gate(true),
       ipCollector: collector
@@ -421,7 +471,7 @@ struct DeviceHelperTests {
   /// is started and no `ipV4`/`ipV6` attributes are exposed.
   @Test func templateDevice_withoutMMPFlag_skipsIPCollection() async {
     let now = Date(timeIntervalSince1970: 1_789_505_000)
-    let collector = DeviceIPCollector(url: nil, fetch: { [:] }, now: { now })
+    let collector = DeviceIPCollector(fetches: [{ [:] }], now: { now })
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
       gate: Gate(true),
       ipCollector: collector
@@ -435,7 +485,6 @@ struct DeviceHelperTests {
     #expect(template["ipV6"] == nil)
     #expect(template["ipV6ObservedAt"] == nil)
     #expect(template["ipAddress"] as? String == "1.1.1.1")
-    #expect(await collector.attributes().isEmpty)
     // A lookup would have been started, so this one wouldn't be skipped.
     #expect(await collector.refreshIfNeeded() != nil)
   }

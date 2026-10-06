@@ -27,7 +27,7 @@ struct DeviceIPCollectorTests {
   }
 
   @Test func keepsFamiliesSeparateAndRejectsStaleOrInvalidObservations() async {
-    let collector = DeviceIPCollector(url: nil, now: { date })
+    let collector = DeviceIPCollector(fetches: [], now: { date })
     let timestamp = ISO8601DateFormatter.string(from: date, timeZone: TimeZone(secondsFromGMT: 0)!, formatOptions: [.withInternetDateTime, .withFractionalSeconds])
     await collector.record(["ipAddress": "8.8.8.8", "ipAddressObservedAt": timestamp])
     await collector.record(["ipV6": "2001:db8::1", "ipV6ObservedAt": timestamp])
@@ -40,7 +40,7 @@ struct DeviceIPCollectorTests {
   }
 
   @Test func acceptsTimestampsWithoutMilliseconds() async {
-    let collector = DeviceIPCollector(url: nil, now: { date })
+    let collector = DeviceIPCollector(fetches: [], now: { date })
     let timestamp = ISO8601DateFormatter.string(from: date, timeZone: TimeZone(secondsFromGMT: 0)!, formatOptions: [.withInternetDateTime])
     #expect(!timestamp.contains("."))
     await collector.record(["ipV4": "8.8.8.8", "ipV4ObservedAt": timestamp])
@@ -49,8 +49,20 @@ struct DeviceIPCollectorTests {
     #expect(attributes["ipV4ObservedAt"] == timestamp)
   }
 
+  @Test func doesNotPairAnAddressWithAnotherFamilysTimestamp() async {
+    let collector = DeviceIPCollector(fetches: [], now: { date })
+    await collector.record([
+      "ipV6": "2001:db8::1",
+      "ipAddress": "8.8.8.8",
+      "ipAddressObservedAt": "2026-09-15T20:40:00Z"
+    ])
+    let attributes = await collector.attributes()
+    #expect(attributes["ipV4"] == "8.8.8.8")
+    #expect(attributes["ipV6"] == nil)
+  }
+
   @Test func keepsTheNewerObservation() async {
-    let collector = DeviceIPCollector(url: nil, now: { date })
+    let collector = DeviceIPCollector(fetches: [], now: { date })
     await collector.record(["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:40:00Z"])
     await collector.record(["ipV4": "1.1.1.1", "ipV4ObservedAt": "2026-09-15T20:39:00.500Z"])
     #expect(await collector.attributes()["ipV4"] == "8.8.8.8")
@@ -71,7 +83,7 @@ struct DeviceIPCollectorTests {
 
   @Test func coalescesRefreshesWithoutWaitingForNetwork() async {
     let counter = FetchCounter()
-    let collector = DeviceIPCollector(url: nil, fetch: { try await counter.fetch() }, now: { date })
+    let collector = DeviceIPCollector(fetches: [{ try await counter.fetch() }], now: { date })
     let first = await collector.refreshIfNeeded()
     let second = await collector.refreshIfNeeded()
     #expect(first != nil)
@@ -80,18 +92,36 @@ struct DeviceIPCollectorTests {
     #expect(await counter.count == 1)
   }
 
-  @Test func retriesAfterAFailedFetch() async {
+  private final class Clock: @unchecked Sendable {
+    var date: Date
+    init(_ date: Date) {
+      self.date = date
+    }
+  }
+
+  @Test func waitsAMinuteBeforeRetryingAFailedFetch() async {
     let counter = FetchCounter(shouldFail: true)
-    let collector = DeviceIPCollector(url: nil, fetch: { try await counter.fetch() }, now: { date })
+    let clock = Clock(date)
+    let collector = DeviceIPCollector(fetches: [{ try await counter.fetch() }], now: { clock.date })
     await collector.refreshIfNeeded()?.value
+
+    clock.date = date.addingTimeInterval(30)
+    #expect(await collector.refreshIfNeeded() == nil)
+
     await counter.setShouldFail(false)
-    await collector.refreshIfNeeded()?.value
+    clock.date = date.addingTimeInterval(61)
     await collector.refreshIfNeeded()?.value
     #expect(await counter.count == 2)
+
+    // A success waits out the full 15 minutes.
+    clock.date = date.addingTimeInterval(61 + 14 * 60)
+    #expect(await collector.refreshIfNeeded() == nil)
+    clock.date = date.addingTimeInterval(61 + 15 * 60)
+    #expect(await collector.refreshIfNeeded() != nil)
   }
 
   @Test func doesNothingWithoutAnEndpoint() async {
-    let collector = DeviceIPCollector(url: nil, now: { date })
+    let collector = DeviceIPCollector(fetches: [], now: { date })
     #expect(await collector.refreshIfNeeded() == nil)
   }
 
@@ -108,5 +138,70 @@ struct DeviceIPCollectorTests {
     #expect(Api(networkEnvironment: .releaseCandidate).enrichment.ipV4Url != nil)
     #expect(Api(networkEnvironment: .developer).enrichment.ipV4Url == nil)
     #expect(Api(networkEnvironment: .local).enrichment.ipV4Url == nil)
+    #expect(Api(networkEnvironment: .release).enrichment.ipV6Url?.absoluteString == "https://beacon-v6.superwall.com/api/v1/enrich")
+    #expect(Api(networkEnvironment: .releaseCandidate).enrichment.ipV6Url != nil)
+    #expect(Api(networkEnvironment: .developer).enrichment.ipV6Url == nil)
+    #expect(Api(networkEnvironment: .local).enrichment.ipV6Url == nil)
   }
+
+  @Test func filesAnIPv6IPAddressUnderIPv6() async {
+    let collector = DeviceIPCollector(fetches: [], now: { date })
+    await collector.record([
+      "ipAddress": "2001:db8::1",
+      "ipAddressObservedAt": "2026-09-15T20:40:00Z"
+    ])
+    let attributes = await collector.attributes()
+    #expect(attributes["ipV6"] == "2001:db8::1")
+    #expect(attributes["ipV4"] == nil)
+  }
+
+  /// A failing IPv6 lookup mustn't speed up or hold back the IPv4 one.
+  @Test func keepsASeparateScheduleForEachLookup() async {
+    let succeeding = FetchCounter()
+    let failing = FetchCounter(shouldFail: true)
+    let clock = Clock(date)
+    let collector = DeviceIPCollector(
+      fetches: [{ try await succeeding.fetch() }, { try await failing.fetch() }],
+      now: { clock.date }
+    )
+    await collector.refreshIfNeeded()?.value
+    #expect(await succeeding.count == 1)
+    #expect(await failing.count == 1)
+
+    // A minute later only the failed lookup is due again.
+    clock.date = date.addingTimeInterval(61)
+    await collector.refreshIfNeeded()?.value
+    #expect(await succeeding.count == 1)
+    #expect(await failing.count == 2)
+  }
+
+  #if canImport(Network)
+  @Test func readsTheBodyOfASuccessfulHTTPResponse() throws {
+    let response = Data("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"device\":{}}".utf8)
+    let body = try DeviceIPCollector.body(ofHTTPResponse: response)
+    #expect(String(data: body, encoding: .utf8) == "{\"device\":{}}")
+  }
+
+  @Test func knowsWhenAnHTTPResponseIsComplete() {
+    let body = "{\"device\":{}}"
+    let complete = Data("HTTP/1.1 200 OK\r\nContent-Length: \(body.utf8.count)\r\n\r\n\(body)".utf8)
+    let partial = Data("HTTP/1.1 200 OK\r\ncontent-length: 50\r\n\r\n\(body)".utf8)
+    let noLength = Data("HTTP/1.1 200 OK\r\n\r\n\(body)".utf8)
+    let headersOnly = Data("HTTP/1.1 200 OK\r\nContent-Length: 2".utf8)
+    #expect(DeviceIPCollector.isCompleteHTTPResponse(complete))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(partial))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(noLength))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(headersOnly))
+  }
+
+  @Test func rejectsAFailedOrMalformedHTTPResponse() {
+    let unavailable = Data("HTTP/1.1 422 Unprocessable Content\r\n\r\n{\"error\":\"ipv6_unavailable\"}".utf8)
+    #expect(throws: (any Error).self) {
+      try DeviceIPCollector.body(ofHTTPResponse: unavailable)
+    }
+    #expect(throws: (any Error).self) {
+      try DeviceIPCollector.body(ofHTTPResponse: Data("not http".utf8))
+    }
+  }
+  #endif
 }

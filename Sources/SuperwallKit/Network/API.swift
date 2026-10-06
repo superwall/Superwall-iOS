@@ -100,6 +100,12 @@ struct Api {
       }
       return URL(string: "https://\(host)\(path)enrich")
     }
+    var ipV6Url: URL? {
+      guard let host = networkEnvironment.ipV6EnrichmentHost else {
+        return nil
+      }
+      return URL(string: "https://\(host)\(path)enrich")
+    }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment
