@@ -267,6 +267,8 @@ extension DeviceIPCollector {
     // splits the body into chunks.
     let request = "GET \(url.path.isEmpty ? "/" : url.path) HTTP/1.0\r\n"
       + "Host: \(host)\r\n"
+      // Cloudflare's Browser Integrity Check challenges requests without one.
+      + "User-Agent: SuperwallKit/\(sdkVersion)\r\n"
       + "Accept: application/json\r\n"
       + "\r\n"
     let response = try await exchange(
