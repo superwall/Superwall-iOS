@@ -434,6 +434,7 @@
 		A9FC64A249BF2242BB526521 /* AppStoreProductTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4711FABAB250221629C47688 /* AppStoreProductTests.swift */; };
 		AA86FF87863EB7A7917969D3 /* PermissionHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D0B6F781D32B2DCDBE689C /* PermissionHandling.swift */; };
 		AACC7BEE37DDDD7068A1E48C /* TransactionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646E6799FE4934BF76A06F34 /* TransactionManager.swift */; };
+		AB2CE21F84FBC43FBD39C30C /* DeviceIPCollector+IPv6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE5D845E32F9EF657D8F25 /* DeviceIPCollector+IPv6.swift */; };
 		ABC17AE96AD396607E3CAB17 /* CoreDataStackMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E828EBAB18CCC0B236EF71D /* CoreDataStackMock.swift */; };
 		AC0AF760E7EA2FFF5621955D /* PurchaseControllerObjcAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB8F4169717A629E15CEB9C7 /* PurchaseControllerObjcAdapter.swift */; };
 		AC13B2D29FF61BDC995132DD /* AccountDetailsSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B36C6BD72D66F94DE620F16 /* AccountDetailsSection.swift */; };
@@ -1074,6 +1075,7 @@
 		887834329A06971D86D5282F /* NotificationProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationProtocols.swift; sourceTree = "<group>"; };
 		88EBF6FC3090E004EE1377B4 /* PaywallViewControllerDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerDelegate.swift; sourceTree = "<group>"; };
 		891BDDF19DEC970709DDF4BB /* V3Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V3Migrator.swift; sourceTree = "<group>"; };
+		89BE5D845E32F9EF657D8F25 /* DeviceIPCollector+IPv6.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "DeviceIPCollector+IPv6.swift"; sourceTree = "<group>"; };
 		8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogicTests.swift; sourceTree = "<group>"; };
 		8B66B5A624F8A2E225EACA69 /* SurveyPresentationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyPresentationResult.swift; sourceTree = "<group>"; };
 		8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerCache.swift; sourceTree = "<group>"; };
@@ -1747,6 +1749,7 @@
 				BB242DC77FEC0BE10C0DDC9C /* DeviceHelper.swift */,
 				9E1EFE389B54C304F2B01620 /* DeviceInfo.swift */,
 				9E64F6845B4CB61F7C7A5657 /* DeviceIPCollector.swift */,
+				89BE5D845E32F9EF657D8F25 /* DeviceIPCollector+IPv6.swift */,
 				76D61D89D2905A8747E37458 /* InterfaceStyle.swift */,
 				61062B4B7A0AB23514A2F439 /* SwiftVersion.swift */,
 			);
@@ -4055,6 +4058,7 @@
 				CC82569EF062EE50C1B06373 /* DevServerSettings.swift in Sources */,
 				346A77D3F31E471EB7CC4D5C /* DevServerSurface.swift in Sources */,
 				7FCDAF6C945FA04FC4C4E8E3 /* DeviceHelper.swift in Sources */,
+				AB2CE21F84FBC43FBD39C30C /* DeviceIPCollector+IPv6.swift in Sources */,
 				8A4B27BB3442FDE107187EDE /* DeviceIPCollector.swift in Sources */,
 				DB7506D37B2BE86074BFF901 /* DeviceIdentifiers.swift in Sources */,
 				191AA8FBBF617251EF6F8628 /* DeviceInfo.swift in Sources */,

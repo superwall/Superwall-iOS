@@ -182,6 +182,18 @@ struct DeviceIPCollectorTests {
     #expect(String(data: body, encoding: .utf8) == "{\"device\":{}}")
   }
 
+  @Test func knowsWhenAnHTTPResponseIsComplete() {
+    let body = "{\"device\":{}}"
+    let complete = Data("HTTP/1.1 200 OK\r\nContent-Length: \(body.utf8.count)\r\n\r\n\(body)".utf8)
+    let partial = Data("HTTP/1.1 200 OK\r\ncontent-length: 50\r\n\r\n\(body)".utf8)
+    let noLength = Data("HTTP/1.1 200 OK\r\n\r\n\(body)".utf8)
+    let headersOnly = Data("HTTP/1.1 200 OK\r\nContent-Length: 2".utf8)
+    #expect(DeviceIPCollector.isCompleteHTTPResponse(complete))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(partial))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(noLength))
+    #expect(!DeviceIPCollector.isCompleteHTTPResponse(headersOnly))
+  }
+
   @Test func rejectsAFailedOrMalformedHTTPResponse() {
     let unavailable = Data("HTTP/1.1 422 Unprocessable Content\r\n\r\n{\"error\":\"ipv6_unavailable\"}".utf8)
     #expect(throws: (any Error).self) {
