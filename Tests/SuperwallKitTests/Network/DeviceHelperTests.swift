@@ -409,11 +409,10 @@ struct DeviceHelperTests {
     let now = Date(timeIntervalSince1970: 1_789_505_000)
     let fetches = FetchCount()
     let collector = DeviceIPCollector(
-      url: nil,
-      fetch: {
+      fetches: [{
         await fetches.increment()
         return [:]
-      },
+      }],
       now: { now }
     )
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
@@ -451,7 +450,7 @@ struct DeviceHelperTests {
 
   @Test func templateDevice_dropsStaleIPObservations() async {
     let now = Date(timeIntervalSince1970: 1_789_505_000)
-    let collector = DeviceIPCollector(url: nil, now: { now })
+    let collector = DeviceIPCollector(fetches: [], now: { now })
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
       gate: Gate(true),
       ipCollector: collector
@@ -472,7 +471,7 @@ struct DeviceHelperTests {
   /// is started and no `ipV4`/`ipV6` attributes are exposed.
   @Test func templateDevice_withoutMMPFlag_skipsIPCollection() async {
     let now = Date(timeIntervalSince1970: 1_789_505_000)
-    let collector = DeviceIPCollector(url: nil, fetch: { [:] }, now: { now })
+    let collector = DeviceIPCollector(fetches: [{ [:] }], now: { now })
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
       gate: Gate(true),
       ipCollector: collector

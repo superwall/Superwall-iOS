@@ -99,7 +99,7 @@ Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
 ### Device IP observations
 
 IP collection is off by default. It only runs when the backend turns on
-`attributionOptions.mmp.enabled` in the app's config. When it's off, no IPv4 request is made and no `ipV4`/`ipV6`
+`attributionOptions.mmp.enabled` in the app's config. When it's off, no IP lookups are made and no `ipV4`/`ipV6`
 attributes are exposed.
 
 During enrichment, the SDK also starts a best-effort request to
@@ -107,18 +107,28 @@ During enrichment, the SDK also starts a best-effort request to
 to this endpoint. The host is kept separate from the main enrichment API on purpose: it
 only has an IPv4 address (no AAAA record), so the request always goes out over IPv4. It has
 no development version, so the request is only made with the release network environments.
-Timestamps may be sent with or without milliseconds. The existing enrichment API continues to provide geo and demand scoring.
+Timestamps may be sent with or without milliseconds.
+
+It also asks `https://beacon-v6.superwall.com/api/v1/enrich` for the IPv6 address. That
+host is reachable over both IPv4 and IPv6 (Cloudflare can't make a proxied host IPv6-only),
+so the SDK makes this request over a connection that may only use IPv6 (`NWConnection`
+with the IP version set to IPv6). On a network without IPv6 the request fails, and the
+device simply has no `ipV6`. The endpoint must answer `GET` with
+`{"device": {"ipAddress": <IPv6>, "ipAddressObservedAt": <ISO 8601>}}`, like the IPv4 one.
+This lookup isn't made on watchOS.
+
+The existing enrichment API continues to provide geo and demand scoring.
 It must also return the observed `ipV4` or `ipV6` and corresponding ISO 8601
 `ipV4ObservedAt` / `ipV6ObservedAt` timestamp to capture that connection's address.
 
 The SDK exposes `ipV4`, `ipV6`, `ipV4ObservedAt`, and `ipV6ObservedAt` as device
 attributes when available. They remain separate: an IPv4 response does not erase IPv6.
-IPv6 is opportunistic; a dual-stack enrichment request can use IPv4 even on a device
-with IPv6. These are public network egress addresses, potentially shared through NAT or VPN.
+The IPv6 address is often one of the device's temporary privacy addresses, so it changes
+more often than IPv4. These are public network egress addresses, potentially shared through NAT or VPN.
 
 The extra request never blocks configuration or purchases. While the MMP is on, a lookup
 can start whenever device attributes are read, at most once every 15 minutes, or a minute
-after a failed one. The IPv4 collector is session-local; the existing enrichment cache may restore a still-fresh
+after a failed one. The IPv4 and IPv6 lookups keep separate schedules. The IPv4 collector is session-local; the existing enrichment cache may restore a still-fresh
 observation after relaunch. All observations are omitted from device attributes after 15
 minutes; network changes can make them stale sooner.
 Any `ipAddress` the enrichment API returns is passed through unchanged.

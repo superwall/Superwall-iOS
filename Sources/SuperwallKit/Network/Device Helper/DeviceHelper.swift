@@ -940,7 +940,10 @@ class DeviceHelper {
     ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
-    self.ipCollector = ipCollector ?? DeviceIPCollector(url: api.enrichment.ipV4Url)
+    self.ipCollector = ipCollector ?? DeviceIPCollector(
+      ipV4Url: api.enrichment.ipV4Url,
+      ipV6Url: api.enrichment.ipV6Url
+    )
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo

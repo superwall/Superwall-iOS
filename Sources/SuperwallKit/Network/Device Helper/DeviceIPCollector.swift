@@ -7,14 +7,30 @@
 
 import Foundation
 import Darwin
+#if canImport(Network)
+import Network
+#endif
 
 /// Best-effort, session-local observations. Never waits on the network when reading attributes.
 actor DeviceIPCollector {
   typealias Fetch = () async throws -> [String: String]
-  private let fetch: Fetch?
+
+  /// One address lookup with its own schedule, so a failing IPv6 lookup
+  /// doesn't hold up or speed up the IPv4 one.
+  private struct Lookup {
+    let name: String
+    let fetch: Fetch
+    var lastAttempt: Date?
+    var nextAttemptAt: Date?
+
+    init(name: String, fetch: @escaping Fetch) {
+      self.name = name
+      self.fetch = fetch
+    }
+  }
+
+  private var lookups: [Lookup]
   private let now: () -> Date
-  private var lastAttempt: Date?
-  private var nextAttemptAt: Date?
   private var observations: [String: String] = [:]
   private let lifetime: TimeInterval = 15 * 60
   /// How long to wait after a failed fetch. Shorter than `lifetime` so a
@@ -23,49 +39,77 @@ actor DeviceIPCollector {
   private let retryDelay: TimeInterval = 60
 
   /// - Parameters:
-  ///   - url: The IPv4-only endpoint to ask. When `nil`, nothing is fetched.
-  ///   - fetch: Overrides the request, for tests.
+  ///   - ipV4Url: An IPv4-only endpoint to ask. When `nil`, IPv4 isn't looked up.
+  ///   - ipV6Url: An endpoint to ask over IPv6 only. When `nil`, on watchOS, or
+  ///     on systems that can't require IPv6, IPv6 isn't looked up.
   init(
-    url: URL?,
-    fetch: Fetch? = nil,
+    ipV4Url: URL?,
+    ipV6Url: URL?,
     now: @escaping () -> Date = Date.init
   ) {
-    if let fetch = fetch {
-      self.fetch = fetch
-    } else if let url = url {
-      self.fetch = { try await Self.fetchIPv4(from: url) }
-    } else {
-      self.fetch = nil
+    var lookups: [Lookup] = []
+    if let ipV4Url = ipV4Url {
+      lookups.append(Lookup(name: "IPv4") { try await Self.fetchIPv4(from: ipV4Url) })
     }
+    // watchOS doesn't let apps open their own connections like this.
+    #if canImport(Network) && !os(watchOS)
+    if let ipV6Url = ipV6Url,
+      #available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *) {
+      lookups.append(Lookup(name: "IPv6") { try await Self.fetchOverIPv6(from: ipV6Url) })
+    }
+    #endif
+    self.lookups = lookups
     self.now = now
   }
 
-  /// Starts a fetch in the background unless one was tried recently. The
-  /// returned task is only there so tests can wait for it.
+  /// One lookup per closure, each with its own schedule. For tests.
+  init(
+    fetches: [Fetch],
+    now: @escaping () -> Date = Date.init
+  ) {
+    self.lookups = fetches.enumerated().map { Lookup(name: "test \($0.offset)", fetch: $0.element) }
+    self.now = now
+  }
+
+  /// Starts any lookups that are due, in the background. The returned task
+  /// finishes when they do and is only there so tests can wait for it.
   @discardableResult
   func refreshIfNeeded() -> Task<Void, Never>? {
-    guard let fetch = fetch else {
-      return nil
-    }
     let date = now()
-    if let nextAttemptAt = nextAttemptAt,
-      date < nextAttemptAt {
+    var started: [Task<Void, Never>] = []
+    for index in lookups.indices {
+      if let nextAttemptAt = lookups[index].nextAttemptAt,
+        date < nextAttemptAt {
+        continue
+      }
+      lookups[index].lastAttempt = date
+      lookups[index].nextAttemptAt = date.addingTimeInterval(lifetime)
+      started.append(start(lookupAt: index, attemptedAt: date))
+    }
+    if started.isEmpty {
       return nil
     }
-    lastAttempt = date
-    nextAttemptAt = date.addingTimeInterval(lifetime)
+    return Task {
+      for task in started {
+        await task.value
+      }
+    }
+  }
+
+  private func start(lookupAt index: Int, attemptedAt date: Date) -> Task<Void, Never> {
+    let lookup = lookups[index]
     return Task {
       do {
-        record(try await fetch())
+        record(try await lookup.fetch())
       } catch {
         // Try again sooner than a success would, unless a newer attempt started.
-        if lastAttempt == date {
-          nextAttemptAt = date.addingTimeInterval(retryDelay)
+        if lookups[index].lastAttempt == date {
+          lookups[index].nextAttemptAt = date.addingTimeInterval(retryDelay)
         }
         Logger.debug(
           logLevel: .debug,
           scope: .network,
-          message: "Couldn't fetch the device's IPv4 address",
+          message: "Couldn't fetch the device's \(lookup.name) address",
           error: error
         )
       }
@@ -190,3 +234,151 @@ actor DeviceIPCollector {
     return device.compactMapValues { $0 as? String }
   }
 }
+
+// MARK: - IPv6 lookup
+#if canImport(Network)
+@available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *)
+extension DeviceIPCollector {
+  private static let maxResponseSize = 16_384
+
+  /// `URLSession` can't be told which IP version to use, so this makes the
+  /// request over a connection that may only use IPv6. On a network without
+  /// IPv6 it fails rather than falling back to IPv4.
+  static func fetchOverIPv6(
+    from url: URL,
+    timeout: TimeInterval = 3
+  ) async throws -> [String: String] {
+    guard
+      url.scheme == "https",
+      let host = url.host
+    else {
+      throw URLError(.badURL)
+    }
+    let parameters = NWParameters(tls: NWProtocolTLS.Options(), tcp: NWProtocolTCP.Options())
+    if let ipOptions = parameters.defaultProtocolStack.internetProtocol as? NWProtocolIP.Options {
+      ipOptions.version = .v6
+    }
+    let connection = NWConnection(
+      host: NWEndpoint.Host(host),
+      port: NWEndpoint.Port(integerLiteral: UInt16(url.port ?? 443)),
+      using: parameters
+    )
+    // HTTP/1.0 so the server closes the connection when it's done and never
+    // splits the body into chunks.
+    let request = "GET \(url.path.isEmpty ? "/" : url.path) HTTP/1.0\r\n"
+      + "Host: \(host)\r\n"
+      + "Accept: application/json\r\n"
+      + "\r\n"
+    let response = try await exchange(
+      Data(request.utf8),
+      over: connection,
+      timeout: timeout
+    )
+    return try parseDevice(from: body(ofHTTPResponse: response))
+  }
+
+  /// Returns the body of an HTTP response, or throws unless its status is 200.
+  static func body(ofHTTPResponse response: Data) throws -> Data {
+    let separator = Data("\r\n\r\n".utf8)
+    guard
+      let headerEnd = response.range(of: separator),
+      let statusLine = String(data: response[..<headerEnd.lowerBound], encoding: .utf8)?
+        .components(separatedBy: "\r\n")
+        .first
+    else {
+      throw URLError(.cannotParseResponse)
+    }
+    let parts = statusLine.split(separator: " ")
+    guard
+      parts.count >= 2,
+      parts[0].hasPrefix("HTTP/"),
+      parts[1] == "200"
+    else {
+      throw URLError(.badServerResponse)
+    }
+    return Data(response[headerEnd.upperBound...])
+  }
+
+  private static func exchange(
+    _ request: Data,
+    over connection: NWConnection,
+    timeout: TimeInterval
+  ) async throws -> Data {
+    let queue = DispatchQueue(label: "com.superwall.ipv6-lookup")
+    return try await withCheckedThrowingContinuation { continuation in
+      let state = ExchangeState(continuation: continuation)
+      let finish: (Result<Data, Error>) -> Void = { result in
+        if state.resume(with: result) {
+          connection.cancel()
+        }
+      }
+
+      func receive() {
+        connection.receive(minimumIncompleteLength: 1, maximumLength: maxResponseSize) { data, _, isComplete, error in
+          if let data = data {
+            state.received.append(data)
+          }
+          if state.received.count > maxResponseSize {
+            finish(.failure(URLError(.dataLengthExceedsMaximum)))
+          } else if let error = error {
+            finish(.failure(error))
+          } else if isComplete {
+            finish(.success(state.received))
+          } else {
+            receive()
+          }
+        }
+      }
+
+      connection.stateUpdateHandler = { connectionState in
+        switch connectionState {
+        case .ready:
+          connection.send(content: request, completion: .contentProcessed { error in
+            if let error = error {
+              finish(.failure(error))
+            } else {
+              receive()
+            }
+          })
+        case .waiting(let error),
+          .failed(let error):
+          // Waiting means there's no IPv6 route right now.
+          finish(.failure(error))
+        case .cancelled:
+          finish(.failure(CancellationError()))
+        default:
+          break
+        }
+      }
+      connection.start(queue: queue)
+      queue.asyncAfter(deadline: .now() + timeout) {
+        finish(.failure(URLError(.timedOut)))
+      }
+    }
+  }
+}
+
+/// Resumes the continuation once, whichever of the response, an error or the
+/// timeout comes first. Only touched on the lookup's serial queue, apart from
+/// the lock-guarded resume.
+private final class ExchangeState: @unchecked Sendable {
+  var received = Data()
+  private let lock = NSLock()
+  private var continuation: CheckedContinuation<Data, Error>?
+
+  init(continuation: CheckedContinuation<Data, Error>) {
+    self.continuation = continuation
+  }
+
+  func resume(with result: Result<Data, Error>) -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    guard let continuation = continuation else {
+      return false
+    }
+    self.continuation = nil
+    continuation.resume(with: result)
+    return true
+  }
+}
+#endif
