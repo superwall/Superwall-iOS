@@ -138,7 +138,6 @@ final class AttributionPoster {
   }
 
   // Should match OS availability in https://developer.apple.com/documentation/ad_services
-  @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   func getAdServicesTokenIfNeeded() async {
     // Single-flight: only one collection at a time. Synchronous check on the

@@ -1362,7 +1362,7 @@ struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
     return mockState
   }
 
-  @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
+  @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
   func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
     return mockOfferType
   }

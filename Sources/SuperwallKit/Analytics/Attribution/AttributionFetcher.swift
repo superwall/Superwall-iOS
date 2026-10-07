@@ -38,7 +38,7 @@ final class AttributionFetcher {
   var identifierForAdvertisers: String? {
     // should match available platforms here:
     // https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier
-    #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
+    #if os(iOS) || os(macOS) || os(visionOS)
     let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
     guard let identifierManagerProxy = identifierManagerProxy else {
       Logger.debug(
@@ -302,7 +302,7 @@ extension AttributionFetcher {
     if let attStatusProvider {
       return attStatusProvider()
     }
-    #if os(iOS) || targetEnvironment(macCatalyst) || os(tvOS) || os(macOS) || os(visionOS)
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
     return TrackingManagerProxy().trackingAuthorizationStatus()
     #else
     return nil

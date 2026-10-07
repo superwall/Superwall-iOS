@@ -99,7 +99,7 @@ final class ProductPurchaserSK2: Purchasing {
       }
 
       #if compiler(>=6.3.2)
-      if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
+      if #available(iOS 26.4, macOS 26.4, watchOS 26.4, visionOS 26.4, *),
         let plan = product.billingPlanType {
         let sk2Plan: StoreKit.Product.SubscriptionInfo.BillingPlanType
         switch plan {
