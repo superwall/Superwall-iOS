@@ -826,10 +826,7 @@ class ConfigManager {
 
   @MainActor
   private func presentTestModeModal(reason: TestModeReason, config: Config) async {
-    guard
-      let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-      let rootVC = windowScene.windows.first?.rootViewController
-    else {
+    guard let rootVC = UIApplication.sharedApplication?.activeWindow?.rootViewController else {
       return
     }
 

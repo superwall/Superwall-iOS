@@ -18,6 +18,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+- Fixes the test mode sheet not showing in apps with more than one scene or window.
 
 ## 4.17.0
 
