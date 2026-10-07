@@ -33,6 +33,7 @@ struct DeviceHelperTests {
     withExtendedLifetime(dependencyContainer) {
       #expect(["5.10", "6.2"].contains(deviceHelper.currentSwiftVersion()))
       let compilerVersion = deviceHelper.currentCompilerVersion()
+      #expect(compilerVersion != "Unknown")
       #expect(compilerVersion.compare("6.2", options: .numeric) != .orderedAscending)
     }
   }
