@@ -28,11 +28,9 @@ enum TestModeRestoreDrawer {
     )
     modal.modalPresentationStyle = .pageSheet
     #if !os(visionOS)
-    if #available(iOS 15.0, *) {
-      if let sheet = modal.sheetPresentationController {
-        sheet.detents = [.medium(), .large()]
-        sheet.prefersGrabberVisible = false
-      }
+    if let sheet = modal.sheetPresentationController {
+      sheet.detents = [.medium(), .large()]
+      sheet.prefersGrabberVisible = false
     }
     #endif
     viewController.present(modal, animated: true)

@@ -5,9 +5,8 @@
 //  Created by Pavel Tikhonenko on 19/01/17.
 //  Copyright © 2017-2021 Pavel Tikhonenko. All rights reserved.
 //
-// swiftlint:disable cyclomatic_complexity function_body_length
 
-#if os(iOS) || os(tvOS)
+#if os(iOS)
 import UIKit
 #elseif os(watchOS)
 import UIKit
@@ -194,40 +193,19 @@ extension InAppReceipt {
       throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
     }
 
-    var secTrustResult = SecTrustResultType.unspecified
-
-    if #available(OSX 10.14, tvOS 12.0, *) {
-      var error: CFError?
-      guard
-        let wwdcTrust = wwdcTrust,
-        SecTrustEvaluateWithError(wwdcTrust, &error)
-      else {
-        throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
-      }
-    } else {
-      guard
-        let wwdcTrust = wwdcTrust,
-        SecTrustEvaluate(wwdcTrust, &secTrustResult) == errSecSuccess
-      else {
-        throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
-      }
+    var error: CFError?
+    guard
+      let wwdcTrust = wwdcTrust,
+      SecTrustEvaluateWithError(wwdcTrust, &error)
+    else {
+      throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
     }
 
-    if #available(OSX 10.14, tvOS 12.0, *) {
-      var error: CFError?
-      guard
-        let iTunesTrust = iTunesTrust,
-        SecTrustEvaluateWithError(iTunesTrust, &error)
-      else {
-        throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
-      }
-    } else {
-      guard
-        let iTunesTrust = iTunesTrust,
-        SecTrustEvaluate(iTunesTrust, &secTrustResult) == errSecSuccess
-      else {
-        throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
-      }
+    guard
+      let iTunesTrust = iTunesTrust,
+      SecTrustEvaluateWithError(iTunesTrust, &error)
+    else {
+      throw IARError.validationFailed(reason: .signatureValidation(.invalidCertificateChainOfTrust))
     }
   }
 
@@ -275,7 +253,7 @@ private func guid() -> Data {
     return data
   }
   return Data()
-#elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(tvOS) || os(visionOS))
+#elseif !targetEnvironment(macCatalyst) && (os(iOS) || os(visionOS))
   if let identifierForVendor = UIDevice.current.identifierForVendor {
     var rawUUID = identifierForVendor.uuid
     let count = MemoryLayout.size(ofValue: rawUUID)
@@ -321,12 +299,7 @@ func getMacAddress() -> Data? {
 }
 
 func ioService(named name: String, wantBuiltIn: Bool) -> io_service_t? {
-  let mainPort: mach_port_t
-  if #available(macOS 12.0, macCatalyst 15.0, *) {
-    mainPort = kIOMainPortDefault
-  } else {
-    mainPort = 0 // the kIOMasterPortDefault symbol is unavailable on xcode 14 and later.
-  }
+  let mainPort = kIOMainPortDefault
   var iterator = io_iterator_t()
 
   defer {

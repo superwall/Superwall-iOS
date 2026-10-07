@@ -53,21 +53,17 @@ extension TestModeModalViewController {
     valueButton.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
     valueButton.contentHorizontalAlignment = .right
 
-    if #available(iOS 14.0, *) {
-      let actions = FreeTrialOverride.allCases.map { [weak self] option in
-        UIAction(
-          title: option.displayName,
-          state: self?.selectedFreeTrialOverride == option ? .on : .off
-        ) { [weak self] _ in
-          self?.selectedFreeTrialOverride = option
-          self?.reloadFreeTrialSection()
-        }
+    let actions = FreeTrialOverride.allCases.map { [weak self] option in
+      UIAction(
+        title: option.displayName,
+        state: self?.selectedFreeTrialOverride == option ? .on : .off
+      ) { [weak self] _ in
+        self?.selectedFreeTrialOverride = option
+        self?.reloadFreeTrialSection()
       }
-      valueButton.menu = UIMenu(children: actions)
-      valueButton.showsMenuAsPrimaryAction = true
-    } else {
-      valueButton.addTarget(self, action: #selector(showFreeTrialActionSheet), for: .touchUpInside)
     }
+    valueButton.menu = UIMenu(children: actions)
+    valueButton.showsMenuAsPrimaryAction = true
 
     let textStack = UIStackView(arrangedSubviews: [titleLabel, detailLabel])
     textStack.axis = .vertical
@@ -86,25 +82,6 @@ extension TestModeModalViewController {
       valueButton.trailingAnchor.constraint(equalTo: cell.contentView.trailingAnchor, constant: -16),
       valueButton.centerYAnchor.constraint(equalTo: cell.contentView.centerYAnchor)
     ])
-  }
-
-  @objc func showFreeTrialActionSheet() {
-    let alertController = UIAlertController(
-      title: "Free Trial Override",
-      message: nil,
-      preferredStyle: .actionSheet
-    )
-
-    for option in FreeTrialOverride.allCases {
-      let action = UIAlertAction(title: option.displayName, style: .default) { [weak self] _ in
-        self?.selectedFreeTrialOverride = option
-        self?.reloadFreeTrialSection()
-      }
-      alertController.addAction(action)
-    }
-
-    alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    present(alertController, animated: true)
   }
 }
 

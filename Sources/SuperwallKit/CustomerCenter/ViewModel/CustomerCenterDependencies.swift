@@ -84,7 +84,7 @@ extension ProductDisplayInfo {
   ///   product StoreKit can't resolve. Ignored when `nil` or empty, leaving the usual fallbacks.
   init(_ product: StoreProduct, name: String? = nil) {
     var displayName: String?
-    if #available(iOS 15.0, *), let name = product.sk2Product?.displayName, !name.isEmpty {
+    if let name = product.sk2Product?.displayName, !name.isEmpty {
       displayName = name
     } else if let name = product.sk1Product?.localizedTitle, !name.isEmpty {
       displayName = name
@@ -93,7 +93,7 @@ extension ProductDisplayInfo {
       displayName = name
     }
     var isAutoRenewable: Bool?
-    if #available(iOS 15.0, *), let type = product.sk2Product?.type {
+    if let type = product.sk2Product?.type {
       isAutoRenewable = type == .autoRenewable
     }
     self.init(
@@ -110,7 +110,6 @@ extension ProductDisplayInfo {
 
 // MARK: - Live adapters
 
-@available(iOS 15.0, *)
 final class LiveCustomerInfoProvider: CustomerCenterCustomerInfoProviding {
   func fetchCustomerInfo() async -> CustomerInfo { await Superwall.shared.getCustomerInfo() }
   func refreshReceipts() async -> CustomerInfo {
@@ -119,7 +118,6 @@ final class LiveCustomerInfoProvider: CustomerCenterCustomerInfoProviding {
   }
   var customerInfoPublisher: AnyPublisher<CustomerInfo, Never> { Superwall.shared.$customerInfo.eraseToAnyPublisher() }
 }
-@available(iOS 15.0, *)
 struct LiveProductsProvider: CustomerCenterProductsProviding {
   let container: DependencyContainer
 
@@ -211,7 +209,6 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
 /// catalogue several times inside one visit, for a product list that changes on the dashboard's
 /// timescale rather than the customer's. The window is deliberately short: long enough to cover a
 /// single visit, short enough that a price edit shows up the next time anyone opens the screen.
-@available(iOS 15.0, *)
 actor CatalogueCache {
   static let shared = CatalogueCache()
   static let ttl: TimeInterval = 5 * 60
@@ -259,7 +256,6 @@ actor CatalogueCache {
   }
 }
 
-@available(iOS 15.0, *)
 struct LiveRestorer: CustomerCenterRestoring {
   func restorePurchases() async -> RestorationResult {
     await Superwall.shared.restorePurchases(presentsFailureAlert: false)
@@ -270,11 +266,9 @@ struct LiveURLOpener: CustomerCenterURLOpening {
   func canOpen(_ url: URL) -> Bool { UIApplication.sharedApplication?.canOpenURL(url) ?? false }
   func open(_ url: URL) { UIApplication.sharedApplication?.open(url) }
 }
-@available(iOS 15.0, *)
 struct LiveEventTracker: CustomerCenterEventTracking {
   func track(_ event: Trackable) async { _ = await Superwall.shared.track(event) }
 }
-@available(iOS 15.0, *)
 struct LiveEnvironment: CustomerCenterEnvironmentProviding {
   let container: DependencyContainer
   let webManagementOverride: URL?
@@ -306,7 +300,6 @@ struct LiveEnvironment: CustomerCenterEnvironmentProviding {
 }
 
 extension CustomerCenterDependencies {
-  @available(iOS 15.0, *)
   static func live(container: DependencyContainer, configuration: CustomerCenterConfiguration) -> CustomerCenterDependencies {
     CustomerCenterDependencies(
       customerInfo: LiveCustomerInfoProvider(),

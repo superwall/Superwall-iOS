@@ -19,7 +19,6 @@ struct CatalogueCacheTests {
 
   /// The reason this exists: `apply(customerInfo:refetchProducts:)` runs on load, on every restore
   /// and after every sheet dismissal, and all four call sites refetch.
-  @available(iOS 15.0, *)
   @Test("a second visit inside the window doesn't refetch")
   func cachesWithinTheWindow() async throws {
     var clock = Date(timeIntervalSince1970: 1_000_000)
@@ -33,7 +32,6 @@ struct CatalogueCacheTests {
     #expect(fetches == 1)
   }
 
-  @available(iOS 15.0, *)
   @Test("the cache expires, so a price edit shows up")
   func expiresAfterTheWindow() async throws {
     var clock = Date(timeIntervalSince1970: 1_000_000)
@@ -49,7 +47,6 @@ struct CatalogueCacheTests {
 
   /// A failed load must not be remembered: the cards render without prices and the next `apply`
   /// should try again, rather than serving the failure for five minutes.
-  @available(iOS 15.0, *)
   @Test("a failure isn't cached")
   func doesNotCacheFailures() async throws {
     struct Boom: Error {}
@@ -67,7 +64,6 @@ struct CatalogueCacheTests {
   /// An actor is reentrant across `await`. Without an in-flight handoff, two callers landing on a
   /// cold cache both pass the freshness check and both fetch — on the Customer Center that is
   /// `load()` and the customer-info publisher calling `apply` at nearly the same moment.
-  @available(iOS 15.0, *)
   @Test("callers overlapping on a cold cache share one fetch")
   func overlappingCallersShareOneFetch() async throws {
     let cache = CatalogueCache()
@@ -87,7 +83,6 @@ struct CatalogueCacheTests {
     #expect(await fetches.value == 1)
   }
 
-  @available(iOS 15.0, *)
   @Test("a fresh catalogue can be read without fetching, and only while fresh")
   func freshResponseReadsWithoutFetching() async throws {
     var clock = Date(timeIntervalSince1970: 1_000_000)

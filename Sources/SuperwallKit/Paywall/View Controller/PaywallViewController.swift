@@ -1319,14 +1319,12 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       }
 
       checkoutVC.modalPresentationStyle = .pageSheet
-      if #available(iOS 15.0, *) {
-        if let sheet = checkoutVC.sheetPresentationController {
-          sheet.detents = [.medium(), .large()]
-          sheet.prefersGrabberVisible = true
-          // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
-          sheet.prefersEdgeAttachedInCompactHeight = true
-          sheet.preferredCornerRadius = 62
-        }
+      if let sheet = checkoutVC.sheetPresentationController {
+        sheet.detents = [.medium(), .large()]
+        sheet.prefersGrabberVisible = true
+        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        sheet.prefersEdgeAttachedInCompactHeight = true
+        sheet.preferredCornerRadius = 62
       }
       self.isSafariVCPresented = true
       loadingState = .loadingPurchase
@@ -1441,23 +1439,17 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func requestReview(type: ReviewType) {
     switch type {
     case .inApp:
-      #if os(visionOS)
-        if let scene = view.window?.windowScene {
+      if let scene = view.window?.windowScene ?? UIApplication.sharedApplication?.activeWindowScene {
+        #if os(visionOS)
           AppStore.requestReview(in: scene)
-        }
-      #else
-        if let scene = view.window?.windowScene {
+        #else
           if #available(iOS 16.0, *) {
             AppStore.requestReview(in: scene)
-          } else if #available(iOS 14.0, *) {
-            SKStoreReviewController.requestReview(in: scene)
           } else {
-            SKStoreReviewController.requestReview()
+            SKStoreReviewController.requestReview(in: scene)
           }
-        } else {
-          SKStoreReviewController.requestReview()
-        }
-      #endif
+        #endif
+      }
       trackReviewRequest(type: .inApp)
     case .external:
       let appId: String
@@ -1525,9 +1517,8 @@ extension PaywallViewController {
       return
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
+    if !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(false)
     }
 
     if webView.loadingHandler.didFailToLoad,
@@ -1669,9 +1660,8 @@ extension PaywallViewController {
       await trackClose()
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(true)  // ignore-xcode-12
+    if !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(true)
     }
 
     resetPresentationPreparations()

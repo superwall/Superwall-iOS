@@ -19,7 +19,6 @@ enum ProductsFetcherSK2Error: LocalizedError {
   }
 }
 
-@available(iOS 15.0, *)
 final actor ProductsFetcherSK2: ProductFetchable {
   private unowned let entitlementsInfo: EntitlementsInfo
   private let numberOfRetries: Int

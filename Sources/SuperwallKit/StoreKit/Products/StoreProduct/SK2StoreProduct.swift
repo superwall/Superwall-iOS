@@ -16,7 +16,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProduct: StoreProductType {
   private let priceFormatterProvider = PriceFormatterProvider()
   let entitlements: Set<Entitlement>
@@ -35,16 +34,12 @@ struct SK2StoreProduct: StoreProductType {
     entitlements: Set<Entitlement>,
     billingPlanType: AppStoreProduct.BillingPlanType? = nil
   ) {
-    #if swift(<5.7)
-    self._underlyingSK2Product = sk2Product
-    #else
     self.underlyingSK2Product = sk2Product
-    #endif
     self.entitlements = entitlements
     self.billingPlanType = billingPlanType
 
     #if compiler(>=6.3.2)
-    if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
+    if #available(iOS 26.4, macOS 26.4, watchOS 26.4, visionOS 26.4, *),
       let term = Self.findPricingTerm(for: billingPlanType, in: sk2Product) {
       // Use the commitment *period* (= year for an annual MONTHLY product)
       // so the paywall reads as the underlying product (not its billing
@@ -174,18 +169,7 @@ struct SK2StoreProduct: StoreProductType {
     )
   }
 
-  #if swift(<5.7)
-  // We can't directly store instances of StoreKit.Product, since that causes
-  // linking issues in iOS < 15, even with @available checks correctly in place.
-  // So instead, we store the underlying product as Any and wrap it with casting.
-  private let _underlyingSK2Product: Any
-  var underlyingSK2Product: SK2Product {
-    // swiftlint:disable:next force_cast
-    _underlyingSK2Product as! SK2Product
-  }
-  #else
   let underlyingSK2Product: SK2Product
-  #endif
 
   var productIdentifier: String {
     underlyingSK2Product.id
@@ -241,7 +225,7 @@ struct SK2StoreProduct: StoreProductType {
   }
 
   #if compiler(>=6.3.2)
-  @available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *)
+  @available(iOS 26.4, macOS 26.4, watchOS 26.4, visionOS 26.4, *)
   private static func findPricingTerm(
     for billingPlanType: AppStoreProduct.BillingPlanType?,
     in sk2Product: SK2Product
@@ -765,7 +749,6 @@ struct SK2StoreProduct: StoreProductType {
 }
 
 // MARK: - Hashable
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension SK2StoreProduct: Hashable {
   static func == (lhs: SK2StoreProduct, rhs: SK2StoreProduct) -> Bool {
     return lhs.underlyingSK2Product == rhs.underlyingSK2Product

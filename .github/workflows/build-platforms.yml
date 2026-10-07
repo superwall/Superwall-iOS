@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/build-platforms.yml'
       - 'project.yml'
+      - 'Package.swift'
       - '**/*.swift'
       - '!Examples/**'
   workflow_dispatch:
@@ -29,3 +30,25 @@ jobs:
       - name: Build Mac Catalyst
         run: |
           xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKit -destination 'generic/platform=macOS,variant=Mac Catalyst' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+
+  build-visionos:
+    runs-on: macos-26
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v3
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Install visionOS platform
+        # Only downloads when the runner image doesn't already ship the SDK.
+        run: |
+          xcodebuild -showsdks | grep -q xrsimulator || xcodebuild -downloadPlatform visionOS
+      - name: Remove Xcodeproj
+        # The xcodegen project only targets iOS; build through Package.swift instead.
+        run: |
+          rm -r SuperwallKit.xcodeproj
+      - name: Build visionOS
+        run: |
+          xcodebuild -scheme SuperwallKit -destination 'generic/platform=visionOS Simulator' build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""

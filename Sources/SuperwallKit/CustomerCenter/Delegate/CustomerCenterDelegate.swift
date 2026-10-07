@@ -13,7 +13,6 @@ import Foundation
 /// The view controller does not retain its delegate. Keep a strong reference to it for the
 /// duration of the presentation — or present via `Superwall.shared.presentCustomerCenter(delegate:)`,
 /// which retains the delegate while the Customer Center is presented.
-@available(iOS 15.0, *)
 @MainActor
 public protocol CustomerCenterDelegate: AnyObject {
   /// Called before purchases are restored. Return `false` to cancel, for example after the user
@@ -31,7 +30,6 @@ public protocol CustomerCenterDelegate: AnyObject {
   func customerCenterDidDismiss()
 }
 
-@available(iOS 15.0, *)
 public extension CustomerCenterDelegate {
   func customerCenterShouldRestorePurchases() async -> Bool { true }
   func customerCenterDidSelectAction(_ action: CustomerCenterAction, pathId: String, purchase: CustomerCenterPurchase?) {}
@@ -45,7 +43,6 @@ public extension CustomerCenterDelegate {
 /// The view controller does not retain its delegate. Keep a strong reference to it for the
 /// duration of the presentation — or present via `Superwall.shared.presentCustomerCenter(delegate:)`,
 /// which retains the delegate while the Customer Center is presented.
-@available(iOS 15.0, *)
 @objc(SWKCustomerCenterDelegate)
 @MainActor
 public protocol CustomerCenterDelegateObjc: AnyObject {

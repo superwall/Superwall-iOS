@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct PurchaseCardView: View {
   let purchase: PurchasePresentation
   let refundResult: (productId: String, status: CustomerCenterRefundStatus)?
@@ -61,7 +60,6 @@ struct PurchaseCardView: View {
   }
 }
 
-@available(iOS 15.0, *)
 struct BadgeView: View {
   let badge: PurchaseBadge
   var rowId: String?

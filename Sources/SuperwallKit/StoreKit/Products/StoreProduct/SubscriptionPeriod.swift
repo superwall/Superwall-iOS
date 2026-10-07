@@ -82,7 +82,6 @@ public final class SubscriptionPeriod: NSObject, Sendable {
       .normalized()
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8, *)
   static func from(sk2SubscriptionPeriod: StoreKit.Product.SubscriptionPeriod) -> SubscriptionPeriod? {
     guard let unit = SubscriptionPeriod.Unit.from(sk2PeriodUnit: sk2SubscriptionPeriod.unit) else {
       return nil
@@ -220,7 +219,6 @@ private extension SubscriptionPeriod.Unit {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8, *)
   static func from(sk2PeriodUnit: StoreKit.Product.SubscriptionPeriod.Unit) -> Self? {
     switch sk2PeriodUnit {
     case .day: return .day

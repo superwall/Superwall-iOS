@@ -72,7 +72,6 @@ struct ConfigManagerTests {
   }
 
   @Test
-  @available(iOS 14.0, *)
   func configWithPrioritizedCampaignIdEncodedCorrectly() async {
     let dependencyContainer = DependencyContainer()
 

@@ -20,7 +20,6 @@ struct CustomerCenterViewControllerTests {
     func customerCenterDidDismiss() { didDismissCount += 1 }
   }
 
-  @available(iOS 15.0, *)
   private func makeController(
     style: CustomerCenterPresentationStyle,
     delegate: CustomerCenterDelegate?,
@@ -67,7 +66,6 @@ struct CustomerCenterViewControllerTests {
   /// `presentingViewController == nil` for its entire lifetime, so the previous teardown check
   /// treated every cover event — a push on top, a tab switch — as the Customer Center closing.
   /// `dismiss()` latches, so that also permanently silenced the real teardown.
-  @available(iOS 15.0, *)
   @Test("pushed: being covered on the host's stack does not fire the dismissal")
   func pushedCoveredDoesNotDismiss() {
     let delegate = ProbeDelegate()
@@ -97,7 +95,6 @@ struct CustomerCenterViewControllerTests {
   /// arms a debounced dismissal from SwiftUI's `onDisappear`, which a `UIHostingController`
   /// forwards on a cover just as it does on a teardown — so without a veto the dismissal simply
   /// arrives late, and the latch then silences the genuine pop. This waits past the debounce.
-  @available(iOS 15.0, *)
   @Test("pushed: a cover does not fire a late dismissal, and the real pop still does")
   func pushedCoverDoesNotFireLateDismissal() async {
     let debounce: TimeInterval = 0.2
@@ -137,7 +134,6 @@ struct CustomerCenterViewControllerTests {
   /// runloop turn after `viewDidDisappear` returns — arming the debounce with nothing left to
   /// cancel it. A veto that only drops an already-armed dismissal passes the test above and fires
   /// the premature `didDismiss` here, latching and silencing the genuine teardown afterwards.
-  @available(iOS 15.0, *)
   @Test("pushed: a cover survives SwiftUI reporting the disappearance late")
   func pushedCoverSurvivesALateDisappearance() async {
     let debounce: TimeInterval = 0.2
@@ -168,7 +164,6 @@ struct CustomerCenterViewControllerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
   @Test("pushed: being popped off the host's stack fires the dismissal exactly once")
   func pushedPopFiresDismissal() {
     let delegate = ProbeDelegate()
@@ -191,7 +186,6 @@ struct CustomerCenterViewControllerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
   @Test("modal: dismissing fires the dismissal exactly once")
   func modalDismissFiresDismissal() {
     let delegate = ProbeDelegate()
@@ -215,7 +209,6 @@ struct CustomerCenterViewControllerTests {
   /// A controller that was never presented and is not being removed is not a teardown. This is the
   /// case the old `presentingViewController == nil` check got wrong, since it is indistinguishable
   /// from a pushed controller sitting on a back stack.
-  @available(iOS 15.0, *)
   @Test("a controller that was never presented does not report a dismissal")
   func neverPresentedDoesNotDismiss() {
     let delegate = ProbeDelegate()
@@ -233,7 +226,6 @@ struct CustomerCenterViewControllerTests {
 
   /// The Customer Center used to hide a host's navigation bar in `.embedded` and hand it back on
   /// the way out. It no longer touches the bar in any style — the host's chrome is theirs.
-  @available(iOS 15.0, *)
   @Test("neither style modifies the host's navigation bar", arguments: [
     CustomerCenterPresentationStyle.embedded, .sheet
   ])
@@ -261,7 +253,6 @@ struct CustomerCenterViewControllerTests {
 
   // MARK: - Analytics
 
-  @available(iOS 15.0, *)
   @Test("presentation style is reported on Customer Center events")
   func reportsPresentationMode() {
     #expect(makeController(style: .sheet, delegate: nil).viewModel.presentationMode == .sheet)

@@ -181,7 +181,6 @@ struct CustomerCenterConfigurationTests {
   }
 
   @Test("navigation options show a close button only for a sheet, unless told otherwise")
-  @available(iOS 15.0, *)
   func navigationOptionDefaults() {
     #expect(CustomerCenterNavigationOptions().showsCloseButton)
     #expect(!CustomerCenterNavigationOptions(style: .embedded).showsCloseButton)

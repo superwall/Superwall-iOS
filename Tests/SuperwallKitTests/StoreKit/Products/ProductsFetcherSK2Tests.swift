@@ -34,9 +34,6 @@ struct ProductsFetcherSK2Tests {
   
   @Test("ProductsFetcherSK2 should be sendable and thread-safe")
   func testSendableConformance() async throws {
-    guard #available(iOS 15.0, *) else {
-      return // Skip test on older iOS versions
-    }
     let fetcher = ProductsFetcherSK2(entitlementsInfo: entitlementsInfo)
     
     // Test that we can call the actor from multiple concurrent contexts
@@ -56,9 +53,6 @@ struct ProductsFetcherSK2Tests {
   
   @Test("ProductsFetcherSK2 should throw error for non-existent products") 
   func testErrorThrowingForNonExistentProducts() async throws {
-    guard #available(iOS 15.0, *) else {
-      return // Skip test on older iOS versions
-    }
     
     // Use 1 retry instead of 10 to make test run quickly
     let fetcher = ProductsFetcherSK2(entitlementsInfo: entitlementsInfo, numberOfRetries: 1)
@@ -87,9 +81,6 @@ struct ProductsFetcherSK2Tests {
   
   @Test("ProductsFetcherSK2 should handle empty identifier set gracefully")
   func testEmptyIdentifiers() async throws {
-    guard #available(iOS 15.0, *) else {
-      return // Skip test on older iOS versions
-    }
     
     // Use 1 retry instead of 10 to make test run quickly  
     let fetcher = ProductsFetcherSK2(

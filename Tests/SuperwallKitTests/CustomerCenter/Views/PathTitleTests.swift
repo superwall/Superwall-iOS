@@ -11,7 +11,6 @@ import Foundation
 
 @Suite("Path row titles")
 struct PathTitleTests {
-  @available(iOS 15.0, *)
   private func title(
     _ type: CustomerCenterConfiguration.PathType,
     pathTitle: String? = nil,
@@ -26,7 +25,6 @@ struct PathTitleTests {
 
   /// The bug the required URL title exists to prevent: the host is identical across an app's own
   /// links, so three distinct destinations would render as three identical rows.
-  @available(iOS 15.0, *)
   @Test("URL rows on one host still read differently")
   func urlRowsOnTheSameHostAreDistinct() {
     let paths: [CustomerCenterConfiguration.Path] = [
@@ -42,14 +40,12 @@ struct PathTitleTests {
     #expect(Set(rows).count == 3, "a shared host must not collapse three rows into one label")
   }
 
-  @available(iOS 15.0, *)
   @Test("a URL row without a title falls back to its host")
   func untitledURLRowShowsHost() {
     #expect(title(.url(URL(string: "https://acme.com/faq")!)) == "acme.com")
   }
 
   /// Every other type names itself, so a title is optional there and overrides the default.
-  @available(iOS 15.0, *)
   @Test("built-in types fall back to their localized label")
   func builtInTypesNameThemselves() {
     #expect(title(.restore) == CustomerCenterStrings.english.string("customer_center_path_restore"))
@@ -57,7 +53,6 @@ struct PathTitleTests {
     #expect(title(.contactSupport) == CustomerCenterStrings.english.string("customer_center_path_contact_support"))
   }
 
-  @available(iOS 15.0, *)
   @Test("an explicit title wins over every default", arguments: [
     CustomerCenterConfiguration.PathType.restore,
     .contactSupport,
@@ -69,7 +64,6 @@ struct PathTitleTests {
 
   /// The manage row is the one built-in whose label depends on where it leads: a web management
   /// page does more than cancel, so calling it "Cancel subscription" there undersells it.
-  @available(iOS 15.0, *)
   @Test("the manage row is named for the store it leads to")
   func manageRowNamedForItsDestination() {
     let appStore = title(.manageSubscription, destination: .appleManageSheet(subscriptionGroupId: nil))
@@ -80,7 +74,6 @@ struct PathTitleTests {
     #expect(appStore != web)
   }
 
-  @available(iOS 15.0, *)
   @Test("an untitled survey asks why you're cancelling only on the manage-subscription path")
   func untitledSurveyTitle() {
     let untitled = CustomerCenterConfiguration.FeedbackSurvey.cancellation

@@ -26,6 +26,18 @@ struct DeviceHelperTests {
     )
   }
 
+  /// The SDK needs Swift 6.2 to build. In the Swift 5 language mode it builds in, a
+  /// Swift 6 compiler reports its language version as 5.10.
+  @Test func swiftAndCompilerVersions_matchTheToolchainFloor() {
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: Gate(false))
+    withExtendedLifetime(dependencyContainer) {
+      #expect(["5.10", "6.2"].contains(deviceHelper.currentSwiftVersion()))
+      let compilerVersion = deviceHelper.currentCompilerVersion()
+      #expect(compilerVersion != "Unknown")
+      #expect(compilerVersion.compare("6.2", options: .numeric) != .orderedAscending)
+    }
+  }
+
   @Test func makePaddedSdkVersion_withBeta() {
     let version = "3.0.0-beta.1"
     let paddedVersion = DeviceHelper.makePaddedVersion(using: version)

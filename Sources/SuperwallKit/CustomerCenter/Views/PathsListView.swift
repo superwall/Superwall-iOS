@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct PathsListView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let purchase: PurchasePresentation?

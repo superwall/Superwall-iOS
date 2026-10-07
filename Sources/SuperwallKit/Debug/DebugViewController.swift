@@ -500,11 +500,9 @@ final class DebugViewController: UIViewController {
     navigationController.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
     navigationController.modalPresentationStyle = .pageSheet
     #if !os(visionOS)
-    if #available(iOS 15.0, *) {
-      if let sheet = navigationController.sheetPresentationController {
-        sheet.detents = [.medium(), .large()]
-        sheet.prefersGrabberVisible = true
-      }
+    if let sheet = navigationController.sheetPresentationController {
+      sheet.detents = [.medium(), .large()]
+      sheet.prefersGrabberVisible = true
     }
     #endif
     present(navigationController, animated: true)

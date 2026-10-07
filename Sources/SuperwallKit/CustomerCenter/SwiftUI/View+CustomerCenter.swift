@@ -7,18 +7,15 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 private struct CustomerCenterCallbacksKey: EnvironmentKey {
   static let defaultValue = CustomerCenterCallbacksBox()
 }
 
 /// Reference box so modifiers can accumulate callbacks down the view tree.
-@available(iOS 15.0, *)
 final class CustomerCenterCallbacksBox {
   var callbacks = CustomerCenterCallbacks()
 }
 
-@available(iOS 15.0, *)
 extension EnvironmentValues {
   var customerCenterCallbacks: CustomerCenterCallbacksBox {
     get { self[CustomerCenterCallbacksKey.self] }
@@ -26,7 +23,6 @@ extension EnvironmentValues {
   }
 }
 
-@available(iOS 15.0, *)
 public extension View {
   /// Presents the Customer Center as a sheet.
   ///
@@ -85,7 +81,6 @@ public extension View {
   }
 }
 
-@available(iOS 15.0, *)
 private struct CustomerCenterCallbackModifier: ViewModifier {
   let update: (inout CustomerCenterCallbacks) -> Void
   @Environment(\.customerCenterCallbacks) private var box

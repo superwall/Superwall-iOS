@@ -13,7 +13,6 @@ import SwiftUI
 @MainActor
 struct CustomerCenterViewSmokeTests {
   @Test("hosts without crashing in management and no-active states and exposes accessibility ids")
-  @available(iOS 15.0, *)
   func hosts() async throws {
     let now = Date()
     let sub = SubscriptionTransaction(
@@ -52,7 +51,6 @@ struct CustomerCenterViewSmokeTests {
   }
 
   @Test("survey and history views host")
-  @available(iOS 15.0, *)
   func secondaryViews() async {
     let now = Date()
     let sub = SubscriptionTransaction(
@@ -91,7 +89,6 @@ struct CustomerCenterViewSmokeTests {
   }
 
   @Test("presentSuperwallCustomerCenter(isPresented:) compiles and hosts")
-  @available(iOS 15.0, *)
   func presentCustomerCenterHosts() {
     struct Host: View {
       @State var isPresented = true
@@ -110,7 +107,6 @@ struct CustomerCenterViewSmokeTests {
   }
 
   @Test("onCustomerCenterAction applied outside CustomerCenterView merges into the view model and fires on selection")
-  @available(iOS 15.0, *)
   func environmentCallbackMergesAndFires() async throws {
     let now = Date()
     let sub = SubscriptionTransaction(
@@ -168,7 +164,6 @@ struct CustomerCenterViewSmokeTests {
   }
 
   @Test("merged prefers the environment's non-nil closures and keeps un-overridden ones")
-  @available(iOS 15.0, *)
   func mergedHelperSemantics() async {
     var existing = CustomerCenterCallbacks()
     var existingRestoreCalled = false

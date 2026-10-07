@@ -9,7 +9,6 @@ import UIKit
 
 /// Builds the dependencies backing ``CustomerCenterView`` and owns the single Customer Center
 /// presentation for ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
-@available(iOS 15.0, *)
 @MainActor
 final class CustomerCenterManager {
   private unowned let container: DependencyContainer

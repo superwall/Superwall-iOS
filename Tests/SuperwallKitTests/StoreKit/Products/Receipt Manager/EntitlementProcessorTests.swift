@@ -978,7 +978,6 @@ struct EntitlementProcessorTests {
   // - testRevokedNonConsumableDoesNotGrantLifetime() which tests revoked non-consumables don't grant lifetime access
   // - Integration tests with real StoreKit transactions that verify the full flow
 
-  @available(iOS 15.0, *)
   @Test("Process and enhance entitlements with subscription in grace period")
   func testProcessAndEnhanceEntitlements_gracePeriod() async {
     let transaction = createMockTransaction(
@@ -1035,7 +1034,6 @@ struct EntitlementProcessorTests {
     #expect(subscriptions.first?.isInBillingRetryPeriod == false)
   }
 
-  @available(iOS 15.0, *)
   @Test("Process and enhance entitlements with subscription in billing retry")
   func testProcessAndEnhanceEntitlements_billingRetry() async {
     let transaction = createMockTransaction(
@@ -1092,7 +1090,6 @@ struct EntitlementProcessorTests {
     #expect(subscriptions.first?.isInBillingRetryPeriod == true)
   }
 
-  @available(iOS 15.0, *)
   @Test("Process and enhance entitlements with revoked subscription")
   func testProcessAndEnhanceEntitlements_revoked() async {
     let transaction = createMockTransaction(
@@ -1338,7 +1335,6 @@ struct EntitlementProcessorTests {
 
 // MARK: - Mock Subscription Status Provider
 
-@available(iOS 15.0, *)
 struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
   var mockWillAutoRenew: Bool
   var mockState: LatestSubscription.State?
@@ -1366,7 +1362,7 @@ struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
     return mockState
   }
 
-  @available(iOS 17.2, macOS 14.2, tvOS 17.2, watchOS 10.2, visionOS 1.1, *)
+  @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
   func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
     return mockOfferType
   }

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct ManagementScreenView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterStrings) private var strings
@@ -66,7 +65,6 @@ struct ManagementScreenView: View {
 
 /// Detail for one subscription, reached by tapping its row on the management screen. Carries the
 /// actions that only make sense against that subscription.
-@available(iOS 15.0, *)
 struct PurchaseDetailScreenView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
   let purchase: PurchasePresentation
