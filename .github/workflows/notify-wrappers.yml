@@ -7,6 +7,10 @@
 # `release: published` fires for them. `published` rather than `created`:
 # `created` also fires for drafts.
 #
+# tag-version.yml pushes to CocoaPods trunk at the same time as the Slack ping,
+# so a release can be published before the pod exists. Flutter and Expo install
+# iOS through CocoaPods, so we wait for the version to show up on trunk first.
+#
 # Requires the WRAPPER_DISPATCH_TOKEN secret: a fine-grained PAT (or GitHub App
 # token) with "Contents: read & write" on every repo in WRAPPER_REPOS — that is
 # the permission the repository_dispatch API checks. GITHUB_TOKEN cannot
@@ -35,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     # Wrappers only ship stable native versions.
     if: github.event_name != 'release' || !github.event.release.prerelease
+    timeout-minutes: 75
     steps:
       - name: Dispatch native-sdk-release
         env:
@@ -45,6 +50,16 @@ jobs:
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::notice::'$VERSION' is not a stable x.y.z version, not notifying wrappers."
             exit 0
+          fi
+          spec_url="https://trunk.cocoapods.org/api/v1/pods/SuperwallKit/specs/$VERSION"
+          for _ in $(seq 1 120); do
+            curl -sfo /dev/null "$spec_url" && break
+            echo "Waiting for SuperwallKit $VERSION on CocoaPods trunk..."
+            sleep 30
+          done
+          if ! curl -sfo /dev/null "$spec_url"; then
+            echo "::error::SuperwallKit $VERSION is not on CocoaPods trunk, not notifying wrappers. Re-run with workflow_dispatch once it is."
+            exit 1
           fi
           failed=0
           for repo in $WRAPPER_REPOS; do
