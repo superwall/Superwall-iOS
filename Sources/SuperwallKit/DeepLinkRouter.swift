@@ -43,35 +43,7 @@ final class DeepLinkRouter {
     // flow's paywall finishes the job itself, so the link must not be tracked
     // as a deep link: `deepLink_open` dismisses the presented paywall.
     if url.isSuperwallReturnLink {
-      // The paywall that opened the checkout takes its waiting screen out of sight at once.
-      let userInfo = url.superwallReturnReason.map { ["reason": $0] }
-      if Thread.isMainThread {
-        NotificationCenter.default.post(
-          name: .superwallReturnLinkOpened,
-          object: nil,
-          userInfo: userInfo
-        )
-      } else {
-        DispatchQueue.main.async {
-          NotificationCenter.default.post(
-            name: .superwallReturnLinkOpened,
-            object: nil,
-            userInfo: userInfo
-          )
-        }
-      }
-      // Tracked as `teleport_return` instead, with the presented paywall's info.
-      let trackEvent = self.trackEvent
-      let presentedPaywallInfo = self.presentedPaywallInfo
-      Task {
-        let paywallInfo = await presentedPaywallInfo()
-        await trackEvent(
-          InternalSuperwallEvent.TeleportReturn(
-            paywallInfo: paywallInfo,
-            reason: url.superwallReturnReason
-          )
-        )
-      }
+      handleReturnLink(url)
       return true
     }
 
@@ -125,6 +97,38 @@ final class DeepLinkRouter {
     }
 
     return false
+  }
+
+  private func handleReturnLink(_ url: URL) {
+    // The paywall that opened the checkout takes its waiting screen out of sight at once.
+    let userInfo = url.superwallReturnReason.map { ["reason": $0] }
+    if Thread.isMainThread {
+      NotificationCenter.default.post(
+        name: .superwallReturnLinkOpened,
+        object: nil,
+        userInfo: userInfo
+      )
+    } else {
+      DispatchQueue.main.async {
+        NotificationCenter.default.post(
+          name: .superwallReturnLinkOpened,
+          object: nil,
+          userInfo: userInfo
+        )
+      }
+    }
+    // Tracked as `teleport_return` instead, with the presented paywall's info.
+    let trackEvent = self.trackEvent
+    let presentedPaywallInfo = self.presentedPaywallInfo
+    Task {
+      let paywallInfo = await presentedPaywallInfo()
+      await trackEvent(
+        InternalSuperwallEvent.TeleportReturn(
+          paywallInfo: paywallInfo,
+          reason: url.superwallReturnReason
+        )
+      )
+    }
   }
 
   private func listenToConfig() {

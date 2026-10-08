@@ -2166,6 +2166,68 @@ struct WebEntitlementRedeemerTests {
     }
   }
 
+  @Test("A purchase the page reports twice is redeemed once")
+  func testStripeCheckoutComplete_reportedTwice_redeemsOnce() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockDelegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = mockDelegate
+    superwall.delegate = mockDelegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let entitlements: Set<Entitlement> = [.stub()]
+    let result = RedemptionResult.success(
+      code: "redemption_123",
+      redemptionInfo: .init(
+        ownership: .appUser(appUserId: "appUserId"),
+        purchaserInfo: .init(
+          appUserId: "appUserId",
+          email: nil,
+          storeIdentifiers: .stripe(customerId: "cus_123", subscriptionIds: ["sub_123"])
+        ),
+        entitlements: entitlements
+      )
+    )
+    mockNetwork.pollRedemptionResultResponses = [
+      .success(
+        RedeemResponse(
+          results: [result],
+          customerInfo: CustomerInfo(
+            subscriptions: [],
+            nonSubscriptions: [],
+            entitlements: Array(entitlements)
+          )
+        )
+      )
+    ]
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      superwall: superwall
+    )
+
+    await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+    await redeemer.handleStripeCheckoutComplete(contextId: "ctx_1", productId: "prod_1")
+
+    #expect(mockNetwork.pollRedemptionResultCallCount == 1)
+    #expect(mockDelegate.willRedeemCallCount == 1)
+  }
+
   @Test("Legacy redeem keeps callback compatibility: willRedeemLink fires before /redeem request")
   func testLegacyRedeem_callbacksCompatibility() async {
 
@@ -2927,7 +2989,8 @@ struct WebEntitlementRedeemerTests {
 
   private func makeWebPurchaseHarness(
     result: RedemptionResult? = nil,
-    automaticallyDismiss: Bool = true
+    automaticallyDismiss: Bool = true,
+    paywall: Paywall = .stub()
   ) async -> WebPurchaseHarness {
     let cache = dependencyContainer.paywallManager.cache
     let messageHandler = await PaywallMessageHandler(
@@ -2943,7 +3006,7 @@ struct WebEntitlementRedeemerTests {
       factory: dependencyContainer
     )
     let paywallVc = await PaywallViewControllerMock(
-      paywall: .stub(),
+      paywall: paywall,
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
@@ -3206,6 +3269,148 @@ struct WebEntitlementRedeemerTests {
 
     let restored = paywallVc.resolvedDismissal(result: .restored, closeReason: .systemLogic)
     #expect(restored.result == .restored)
+  }
+
+  @Test("A purchase does not outlive its presentation: a later close is a decline")
+  @MainActor
+  func testCompletedPurchase_clearedWhenViewDisappears() {
+    let paywallVc = PaywallViewController(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: SWWebView(
+        isMac: false,
+        messageHandler: PaywallMessageHandler(
+          receiptManager: dependencyContainer.receiptManager,
+          factory: dependencyContainer,
+          permissionHandler: FakePermissionHandler(),
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
+        ),
+        isOnDeviceCacheEnabled: true,
+        factory: dependencyContainer
+      ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: nil,
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+
+    paywallVc.markPurchaseCompleted(StoreProduct.blank(productIdentifier: "stripe|price_1"))
+    paywallVc.viewDidDisappear(false)
+
+    let later = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    #expect(later.result == .declined)
+    #expect(later.closeReason == .manualClose)
+    #expect(paywallVc.completedPurchaseProduct == nil)
+  }
+
+  /// A paywall offering two tiers with different entitlements. A web purchase of one tier
+  /// activates only that tier's entitlement.
+  private func makeTieredPaywall() -> Paywall {
+    var paywall = Paywall.stub()
+    paywall.productIds = ["stripe|price_1", "stripe|price_2"]
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["stripe|price_1"] = [.stub()]
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["stripe|price_2"] = [
+      Entitlement(id: "other_tier")
+    ]
+    return paywall
+  }
+
+  @Test("A web purchase of one tier is not judged as a restore of every tier")
+  func testStripeCheckoutComplete_purchase_skipsRestoreValidation() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let harness = await makeWebPurchaseHarness(paywall: makeTieredPaywall())
+
+    await harness.redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "stripe|price_1",
+      completion: .purchase(productId: "stripe|price_1", shouldDismiss: false)
+    )
+
+    #expect(await waitForEvent("transaction_complete", in: harness.webView))
+    let webEvents = await sentEventNames(harness.webView)
+    #expect(!webEvents.contains("restore_fail"))
+    #expect(!webEvents.contains("restore_complete"))
+    let events = harness.delegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.restoreFail))
+    #expect(!events.contains(SuperwallEventObjc.restoreComplete))
+    #expect(await harness.paywallVc.loadingState == .ready)
+  }
+
+  @Test("A legacy web checkout completion of one tier still reports the restore as failed")
+  func testStripeCheckoutComplete_restore_keepsRestoreValidation() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let harness = await makeWebPurchaseHarness(paywall: makeTieredPaywall())
+
+    await harness.redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "stripe|price_1"
+    )
+
+    let events = harness.delegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(events.contains(SuperwallEventObjc.restoreFail))
+    #expect(await waitForEvent("transaction_complete", in: harness.webView) == false)
+  }
+
+  @Test("A web purchase recovered on foreground after a failed poll still finishes as a purchase")
+  func testStripeForegroundRecovery_keepsPurchaseCompletion() async {
+    guard #available(iOS 14.0, *) else {
+      return
+    }
+    let harness = await makeWebPurchaseHarness()
+    harness.network.pollRedemptionResultResponses.insert(
+      .failure(NetworkError.notAuthenticated),
+      at: 0
+    )
+
+    await harness.redeemer.handleStripeCheckoutComplete(
+      contextId: "ctx_1",
+      productId: "stripe|price_1",
+      completion: .purchase(productId: "stripe|price_1", shouldDismiss: true)
+    )
+    #expect(harness.network.pollRedemptionResultCallCount == 1)
+    #expect(await waitForEvent("transaction_complete", in: harness.webView) == false)
+    #expect(await harness.paywallVc.loadingState == .ready)
+
+    await harness.redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+
+    #expect(harness.network.pollRedemptionResultCallCount == 2)
+    #expect(await waitForEvent("transaction_complete", in: harness.webView))
+    let results = await harness.finishes.waitForResults()
+    if case let .purchased(product) = results.first {
+      #expect(product.productIdentifier == "stripe|price_1")
+    } else {
+      Issue.record("Expected a purchased result, got \(String(describing: results.first))")
+    }
+  }
+
+  @Test("Pending checkout state keeps its completion, and state saved without one restores")
+  func testPendingStripeCheckoutPollState_completionRoundTrip() throws {
+    let purchase = PendingStripeCheckoutPollState(
+      checkoutContextId: "ctx_1",
+      productId: "stripe|price_1",
+      completion: .purchase(productId: "stripe|price_1", shouldDismiss: false)
+    )
+    let data = try JSONEncoder().encode(purchase)
+    let decoded = try JSONDecoder().decode(PendingStripeCheckoutPollState.self, from: data)
+    #expect(decoded == purchase)
+    #expect(decoded.consumingForegroundAttempt().completion == purchase.completion)
+
+    let legacyJson = """
+      {"checkoutContextId":"ctx_1","productId":"stripe|price_1","remainingForegroundAttempts":5,"updatedAt":0}
+      """
+    let legacy = try JSONDecoder().decode(
+      PendingStripeCheckoutPollState.self,
+      from: Data(legacyJson.utf8)
+    )
+    #expect(legacy.completion == .restore)
+    #expect(legacy.checkoutContextId == "ctx_1")
   }
 }
 

@@ -274,7 +274,7 @@ enum PaywallMessage: Decodable, Equatable {
       case .stripeCheckoutComplete:
         if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
           let productId = try? values.decode(String.self, forKey: .productId) {
-          let shouldDismiss = (try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)) ?? nil
+          let shouldDismiss = try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)
           self = .stripeCheckoutComplete(
             checkoutContextId: checkoutContextId,
             productId: productId,

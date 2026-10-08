@@ -10,7 +10,8 @@ import Foundation
 import UIKit
 
 /// How a web checkout the paywall reported as complete finishes once its code is redeemed.
-enum StripeCheckoutCompletion: Equatable {
+/// Stored with the pending checkout, so a poll that recovers it later finishes it the same way.
+enum StripeCheckoutCompletion: Equatable, Codable {
   /// Legacy: the paywall hears `restore_complete`, and the paywall dismisses
   /// as `.restored` once its entitlements are active.
   case restore
@@ -166,6 +167,11 @@ actor WebEntitlementRedeemer {
     return true
   }
 
+  private func isRedeemed(_ contextId: String) -> Bool {
+    lastCompletedStripePollResult?.contextId == contextId
+      && lastCompletedStripePollResult?.outcome == .redeemed
+  }
+
   private func waitForActiveStripePoll() async {
     let waitStart = DispatchTime.now().uptimeNanoseconds
     while hasActiveStripePoll, !Task.isCancelled {
@@ -221,7 +227,8 @@ actor WebEntitlementRedeemer {
     let outcome = await pollStripeRedemptionResult(
       contextId: pendingState.checkoutContextId,
       productId: pendingState.productId,
-      trigger: .paywallOpen
+      trigger: .paywallOpen,
+      completion: pendingState.completion
     )
 
     return outcome == .redeemed
@@ -234,12 +241,26 @@ actor WebEntitlementRedeemer {
   ) async {
     awaitingCheckoutComplete = false
 
+    // The page can report one purchase more than once (its status poll and the return check).
+    // Redeemed once is enough: a second redemption would put the spinner back up behind the
+    // success alert, with nothing left to take it down.
+    if isRedeemed(contextId) {
+      let superwall = self.superwall ?? Superwall.shared
+      await MainActor.run {
+        if superwall.paywallViewController?.presentedViewController == nil {
+          superwall.paywallViewController?.loadingState = .ready
+        }
+      }
+      return
+    }
+
     if let existingState = pendingStripeCheckoutState,
       existingState.checkoutContextId == contextId {
       savePendingStripeCheckoutState(
         .init(
           checkoutContextId: contextId,
           productId: productId,
+          completion: completion,
           remainingForegroundAttempts: existingState.remainingForegroundAttempts
         )
       )
@@ -247,7 +268,8 @@ actor WebEntitlementRedeemer {
       savePendingStripeCheckoutState(
         .init(
           checkoutContextId: contextId,
-          productId: productId
+          productId: productId,
+          completion: completion
         )
       )
     }
@@ -258,12 +280,16 @@ actor WebEntitlementRedeemer {
       trigger: .checkoutComplete,
       completion: completion
     )
-    
+
     // A poll already in flight is for another checkout (an older pending one, from the
     // foreground or paywall open), so it never redeems this one. Wait it out, then poll this
     // checkout: skipping left the spinner up with nothing left to take it down.
     while outcome == .skippedInFlight, !Task.isCancelled {
       await waitForActiveStripePoll()
+      if isRedeemed(contextId) {
+        outcome = .redeemed
+        break
+      }
       outcome = await pollStripeRedemptionResult(
         contextId: contextId,
         productId: productId,
@@ -313,7 +339,8 @@ actor WebEntitlementRedeemer {
     let outcome = await pollStripeRedemptionResult(
       contextId: pendingState.checkoutContextId,
       productId: pendingState.productId,
-      trigger: .foreground
+      trigger: .foreground,
+      completion: pendingState.completion
     )
 
     // Consume foreground attempts after each trigger completes, except when skipped
@@ -478,6 +505,7 @@ actor WebEntitlementRedeemer {
     let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
       response: response,
       type: type,
+      completion: completion,
       superwall: superwall
     )
 
@@ -506,6 +534,7 @@ actor WebEntitlementRedeemer {
   private func processEntitlements(
     response: RedeemResponse,
     type: RedeemType,
+    completion: StripeCheckoutCompletion,
     superwall: Superwall
   ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
     let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
@@ -516,7 +545,10 @@ actor WebEntitlementRedeemer {
 
     var paywallEntitlementIds: Set<String> = []
 
-    if case .code = type, let paywallVc = superwall.paywallViewController {
+    // A restore is only complete once every entitlement the paywall offers is active, and the
+    // paywall hears restore_complete or restore_fail. A purchase bought one product, so none of
+    // that applies: it hears transaction_complete instead.
+    if case .code = type, completion == .restore, let paywallVc = superwall.paywallViewController {
       for id in await paywallVc.info.productIds {
         let entitlements = superwall.entitlements.byProductId(id)
         paywallEntitlementIds.formUnion(entitlements.map { $0.id })

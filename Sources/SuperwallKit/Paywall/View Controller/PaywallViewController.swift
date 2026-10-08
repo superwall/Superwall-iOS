@@ -1691,10 +1691,14 @@ extension PaywallViewController {
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
     existingTeleportReturnCover?.reset()
-    guard isPresented else {
+    if isSafariVCPresented {
       return
     }
-    if isSafariVCPresented {
+    // A purchase belongs to the presentation it was made in. The view controller is reused
+    // for the next one, whether the SDK or the app presents it, and `dismiss` has already
+    // turned this presentation's close into its result.
+    completedPurchaseProduct = nil
+    guard isPresented else {
       return
     }
     Task {

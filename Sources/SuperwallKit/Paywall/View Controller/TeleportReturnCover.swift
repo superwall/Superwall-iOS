@@ -2,6 +2,7 @@
 //  TeleportReturnCover.swift
 //  SuperwallKit
 //
+// swiftlint:disable file_length type_body_length
 
 import UIKit
 import WebKit
@@ -260,8 +261,9 @@ final class TeleportReturnCover: NSObject {
       return
     }
     backgroundTask = application.beginBackgroundTask(withName: "Superwall checkout") { [weak self] in
-      // Out of time before the check finished: cover the screen while iOS still listens.
-      Task { @MainActor in
+      // Out of time before the check finished: cover the screen while iOS still listens. iOS
+      // calls this on the main thread and expects the task ended before it returns, so no hop.
+      MainActor.assumeIsolated {
         guard let self else {
           return
         }
@@ -364,10 +366,14 @@ final class TeleportReturnCover: NSObject {
 
   /// Has the page remove the waiting screen, then takes the cover off once that is painted.
   private func uncover() {
-    guard returnCover != nil, uncovering == nil else {
+    guard let returnCover, uncovering == nil else {
       return
     }
     revealing = nil
+    // A fade in progress (back by hand, then the return link) stops: the cover stays whole
+    // until the page has taken the waiting screen down.
+    returnCover.view.layer.removeAllAnimations()
+    returnCover.view.alpha = 1
     let id = UUID()
     uncovering = id
     if #available(iOS 14.0, *), let webView {
@@ -428,16 +434,18 @@ private extension TeleportReturnCover {
     revealing = id
     Task { @MainActor [weak self] in
       try? await Task.sleep(nanoseconds: Self.revealGrace)
+      guard let self, self.revealing == id else {
+        return
+      }
+      // Whatever happens next, the next activation may try again.
+      self.revealing = nil
       guard
-        let self,
-        self.revealing == id,
         let returnCover = self.returnCover,
         returnCover.reason == .suspending,
         UIApplication.sharedApplication?.applicationState == .active
       else {
         return
       }
-      self.revealing = nil
       // The cover is the paywall, so this reads as the waiting screen coming up over it.
       UIView.animate(
         withDuration: Self.revealDuration,
@@ -445,8 +453,14 @@ private extension TeleportReturnCover {
         options: [.curveEaseOut, .allowUserInteraction]
       ) {
         returnCover.view.alpha = 0
-      } completion: { [weak self] _ in
-        guard let self, self.returnCover?.view === returnCover.view else {
+      } completion: { [weak self] finished in
+        // A return link that arrived mid-fade took the cover over; it comes off with the page.
+        guard
+          let self,
+          finished,
+          self.uncovering == nil,
+          self.returnCover?.view === returnCover.view
+        else {
           return
         }
         self.removeCover()
