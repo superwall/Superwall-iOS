@@ -994,6 +994,46 @@ enum InternalSuperwallEvent {
     }
   }
 
+  struct TeleportOpen: TrackableSuperwallEvent {
+    let paywallInfo: PaywallInfo
+
+    var superwallEvent: SuperwallEvent {
+      return .teleportOpen(paywallInfo: paywallInfo)
+    }
+
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo.audienceFilterParams()
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      // No URL: a checkout page's path carries its sealed teleport.
+      return await paywallInfo.placementParams()
+    }
+  }
+
+  struct TeleportReturn: TrackableSuperwallEvent {
+    /// The presented paywall's, if one is presented when the return link opens the app.
+    let paywallInfo: PaywallInfo?
+    /// Why the checkout page sent the user back: `purchased` or `closed`.
+    var reason: String?
+
+    var superwallEvent: SuperwallEvent {
+      return .teleportReturn(paywallInfo: paywallInfo)
+    }
+
+    var audienceFilterParams: [String: Any] {
+      return paywallInfo?.audienceFilterParams() ?? [:]
+    }
+
+    func getSuperwallParameters() async -> [String: Any] {
+      var params = await paywallInfo?.placementParams() ?? [:]
+      if let reason {
+        params["reason"] = reason
+      }
+      return params
+    }
+  }
+
   enum ConfigCacheStatus: String {
     case cached = "CACHED"
     case notCached = "NOT_CACHED"

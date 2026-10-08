@@ -20,13 +20,16 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
   func openDeepLink(_ url: URL, shouldDismiss: Bool)
   func presentSafariInApp(_ url: URL)
-  func presentSafariExternal(_ url: URL)
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool)
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
+  func endTeleportWatch()
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func revealWebViewBehindSpinner()
@@ -43,9 +46,15 @@ final class PaywallMessageHandler: WebEventDelegate {
   struct EnqueuedMessage {
     let name: String
     let paywall: Paywall
+    var payload: [String: Any] = [:]
   }
   /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
   private var messageQueue: Queue<EnqueuedMessage> = Queue()
+
+  /// Tracks an event. Replaced in tests to observe what's tracked.
+  var trackEvent: (Trackable) async -> Void = { event in
+    _ = await Superwall.shared.track(event)
+  }
 
   init(
     receiptManager: ReceiptManager,
@@ -86,15 +95,17 @@ final class PaywallMessageHandler: WebEventDelegate {
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
       let paywallOpen = SuperwallEventObjc.paywallOpen.description
+      let payload = presentationPayload()
       if delegate?.paywall.paywalljsVersion == nil {
         let message = EnqueuedMessage(
           name: paywallOpen,
-          paywall: paywall
+          paywall: paywall,
+          payload: payload
         )
         messageQueue.enqueue(message)
       } else {
         Task {
-          await self.pass(placement: paywallOpen, from: paywall)
+          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
         }
       }
     case .paywallClose:
@@ -181,8 +192,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .openUrl(let url):
       openUrl(url)
-    case .openUrlInSafari(let url):
-      openUrlInSafari(url)
+    case let .openUrlInSafari(url, drawsWaitingScreen, isTeleport):
+      openUrlInSafari(
+        url,
+        drawsWaitingScreen: drawsWaitingScreen,
+        isTeleport: isTeleport
+      )
+    case .teleportWatchStart(let watch):
+      delegate?.startTeleportWatch(watch)
+    case .teleportWatchEnd:
+      delegate?.endTeleportWatch()
     case .openPaymentSheet(let url):
       openPaymentSheet(url)
     case .openDeepLink(let url):
@@ -206,14 +225,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .start,
         productId: productId
       )
-    case let .stripeCheckoutComplete(checkoutContextId, productId):
+    case let .stripeCheckoutComplete(checkoutContextId, productId, shouldDismiss):
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
         checkoutContextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        shouldDismiss: shouldDismiss
       )
     case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
@@ -273,6 +293,19 @@ final class PaywallMessageHandler: WebEventDelegate {
         await Superwall.shared.track(event)
       }
     }
+  }
+
+  /// How this presentation came about, so purchases the paywall starts are attributed to it.
+  private func presentationPayload() -> [String: Any] {
+    guard let info = delegate?.info else {
+      return [:]
+    }
+    var payload: [String: Any] = ["presented_by": info.presentedBy]
+    payload["presentation_id"] = info.presentationId
+    payload["presentation_source_type"] = info.presentationSourceType
+    payload["presented_by_event_id"] = info.presentedByPlacementWithId
+    payload["presented_by_event_name"] = info.presentedByPlacementWithName
+    return payload
   }
 
   nonisolated private func pass(
@@ -473,7 +506,8 @@ final class PaywallMessageHandler: WebEventDelegate {
           Task {
             await self.pass(
               placement: message.name,
-              from: message.paywall
+              from: message.paywall,
+              payload: message.payload
             )
           }
         }
@@ -495,14 +529,24 @@ final class PaywallMessageHandler: WebEventDelegate {
     #endif
   }
 
-  private func openUrlInSafari(_ url: URL) {
+  private func openUrlInSafari(
+    _ url: URL,
+    drawsWaitingScreen: Bool = false,
+    isTeleport: Bool = false
+  ) {
     detectHiddenPaywallEvent(
       "openUrlInSafari",
       userInfo: ["url": url]
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedUrlInSafari(url))
-    delegate?.presentSafariExternal(url)
+    if isTeleport {
+      trackTeleportOpen()
+    }
+    delegate?.presentSafariExternal(
+      url,
+      drawsWaitingScreen: drawsWaitingScreen
+    )
   }
 
   private func openPaymentSheet(_ url: URL) {
@@ -581,6 +625,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         placementData: placementData
       )
       await Superwall.shared.track(event)
+    }
+  }
+
+  private func trackTeleportOpen() {
+    guard let delegate = delegate else { return }
+    let event = InternalSuperwallEvent.TeleportOpen(paywallInfo: delegate.info)
+    let trackEvent = self.trackEvent
+    Task {
+      await trackEvent(event)
     }
   }
 

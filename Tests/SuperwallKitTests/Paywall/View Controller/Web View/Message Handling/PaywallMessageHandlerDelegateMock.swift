@@ -37,11 +37,14 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var didPresentSafariInApp = false
   var didOpenDeepLink = false
   var deepLinkShouldDismiss: Bool?
+  var teleportWatch: TeleportReturnCover.Watch?
+  var didDrawWaitingScreen = false
   var didPresentSafariExternal = false
   var didRequestReview = false
   var didOpenPaymentSheet = false
   var stripeCheckoutSubmit: (checkoutContextId: String, productId: String)?
   var stripeCheckoutComplete: (checkoutContextId: String, productId: String)?
+  var stripeCheckoutCompleteShouldDismiss: Bool?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
 
   var request: PresentationRequest?
@@ -77,8 +80,17 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     didPresentSafariInApp = true
   }
 
-  func presentSafariExternal(_ url: URL) {
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch) {
+    teleportWatch = watch
+  }
+
+  func endTeleportWatch() {
+    teleportWatch = nil
+  }
+
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool) {
     didPresentSafariExternal = true
+    didDrawWaitingScreen = drawsWaitingScreen
   }
 
   func requestReview(type: ReviewType) {
@@ -95,9 +107,11 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   ) {
     stripeCheckoutComplete = (checkoutContextId, productId)
+    stripeCheckoutCompleteShouldDismiss = shouldDismiss
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {

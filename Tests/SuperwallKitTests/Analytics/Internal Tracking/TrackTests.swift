@@ -2820,4 +2820,56 @@ struct TrackingTests {
     #expect(
       result.parameters.audienceFilterParams["$paywall_count"] as! Int == paywallCount)
   }
+
+  @Test func teleportEvents_namesAndObjcMirrors() {
+    let paywallInfo: PaywallInfo = .stub()
+    #expect(SuperwallEvent.teleportOpen(paywallInfo: paywallInfo).description == "teleport_open")
+    #expect(SuperwallEvent.teleportReturn(paywallInfo: nil).description == "teleport_return")
+    #expect(
+      SuperwallEventObjc(event: .teleportOpen(paywallInfo: paywallInfo))
+        == .teleportOpen)
+    #expect(SuperwallEventObjc(event: .teleportReturn(paywallInfo: paywallInfo)) == .teleportReturn)
+  }
+
+  @Test func teleportOpen() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.TeleportOpen(paywallInfo: paywallInfo))
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "teleport_open")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_identifier"] as! String ==
+      paywallInfo.identifier)
+    // The page's URL carries its sealed teleport, so it stays out of analytics.
+    #expect(result.parameters.audienceFilterParams["$url"] == nil)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+  }
+
+  @Test func teleportReturn_withPresentedPaywall() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.TeleportReturn(paywallInfo: paywallInfo))
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "teleport_return")
+    #expect(
+      result.parameters.audienceFilterParams["$paywall_id"] as! String == paywallInfo.databaseId)
+    #expect(
+      result.parameters.audienceFilterParams["paywall_id"] as! String == paywallInfo.databaseId)
+  }
+
+  @Test func teleportReturn_withoutPresentedPaywall() async {
+    let result = await Superwall.shared.track(
+      InternalSuperwallEvent.TeleportReturn(paywallInfo: nil))
+    #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
+    #expect(
+      result.parameters.audienceFilterParams["$event_name"] as! String == "teleport_return")
+    #expect(result.parameters.audienceFilterParams["$paywall_id"] == nil)
+  }
 }
