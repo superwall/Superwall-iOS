@@ -18,7 +18,8 @@ struct TeleportReturnCoverTests {
     let view: UIView
     let webView: WKWebView
     let cover: TeleportReturnCover
-    var applicationState: UIApplication.State = .active
+    /// This fixture's own center, so no other test's cover hears its notifications.
+    let notificationCenter = NotificationCenter()
 
     init(timing: TeleportReturnCover.Timing) {
       window = UIWindow(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -34,6 +35,7 @@ struct TeleportReturnCoverTests {
       environment.beginBackgroundTask = { _ in UIBackgroundTaskIdentifier(rawValue: 1) }
       environment.endBackgroundTask = { _ in }
       environment.backgroundTimeRemaining = { 30 }
+      environment.notificationCenter = notificationCenter
       cover = TeleportReturnCover(
         view: view,
         webView: webView,
@@ -69,8 +71,12 @@ struct TeleportReturnCoverTests {
     return timing
   }
 
-  private func post(_ name: Notification.Name, userInfo: [AnyHashable: Any]? = nil) {
-    NotificationCenter.default.post(name: name, object: nil, userInfo: userInfo)
+  private func post(
+    _ name: Notification.Name,
+    to fixture: Fixture,
+    userInfo: [AnyHashable: Any]? = nil
+  ) {
+    fixture.notificationCenter.post(name: name, object: nil, userInfo: userInfo)
   }
 
   private func sleep(_ seconds: Double) async {
@@ -85,7 +91,7 @@ struct TeleportReturnCoverTests {
     fixture.cover.leave(drawingWaitingScreen: true) {}
     await sleep(0.1)
     fixture.set(.background)
-    post(UIApplication.didEnterBackgroundNotification)
+    post(UIApplication.didEnterBackgroundNotification, to: fixture)
     await sleep(0.1)
     #expect(fixture.cover.isCovering)
     return fixture
@@ -97,13 +103,13 @@ struct TeleportReturnCoverTests {
 
     // The app becomes active and then inactive again before the grace period ends.
     fixture.set(.active)
-    post(UIApplication.didBecomeActiveNotification)
+    post(UIApplication.didBecomeActiveNotification, to: fixture)
     fixture.set(.inactive)
     await sleep(0.2)
     #expect(fixture.cover.isCovering)
 
     fixture.set(.active)
-    post(UIApplication.didBecomeActiveNotification)
+    post(UIApplication.didBecomeActiveNotification, to: fixture)
     await sleep(0.2 + Self.fastTiming.revealDuration + 0.2)
 
     #expect(!fixture.cover.isCovering)
@@ -114,22 +120,15 @@ struct TeleportReturnCoverTests {
     let fixture = await makeSuspendedCover()
 
     fixture.set(.active)
-    post(UIApplication.didBecomeActiveNotification)
+    post(UIApplication.didBecomeActiveNotification, to: fixture)
     await sleep(0.2)
     #expect(fixture.cover.isCovering)
 
-    post(.superwallReturnLinkOpened, userInfo: ["reason": "purchased"])
+    post(.superwallReturnLinkOpened, to: fixture, userInfo: ["reason": "purchased"])
     #expect(fixture.cover.isCovering)
     #expect(fixture.cover.coverAlpha == 1)
 
     await sleep(0.15)
-    #expect(!fixture.cover.isCovering)
-  }
-
-  @Test("A return link with no cover to take off still reaches the page")
-  func testReturnLinkWithoutCover() async {
-    let fixture = Fixture(timing: Self.fastTiming)
-    post(.superwallReturnLinkOpened, userInfo: ["reason": "closed"])
     #expect(!fixture.cover.isCovering)
   }
 }

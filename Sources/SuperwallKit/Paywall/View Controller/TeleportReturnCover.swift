@@ -89,6 +89,8 @@ final class TeleportReturnCover: NSObject {
     var backgroundTimeRemaining: () -> TimeInterval = {
       UIApplication.sharedApplication?.backgroundTimeRemaining ?? 0
     }
+    /// Where the app lifecycle and return link notifications arrive.
+    var notificationCenter: NotificationCenter = .default
   }
 
   private let timing: Timing
@@ -130,7 +132,7 @@ final class TeleportReturnCover: NSObject {
     self.timing = timing
     self.environment = environment
     super.init()
-    let center = NotificationCenter.default
+    let center = environment.notificationCenter
     // Called synchronously: iOS takes the snapshot as soon as these observers return.
     center.addObserver(
       self,
