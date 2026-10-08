@@ -21,6 +21,8 @@ class AppSessionManager {
   private unowned let delegate: DeviceHelperFactory & UserAttributesPlacementFactory
   /// Catches ATT changes made while the app was in the background, e.g. in Settings.
   private let republishIfAdConsentChanged: () async -> Void
+  /// Where app lifecycle notifications are observed. Tests pass their own.
+  private let notificationCenter: NotificationCenter
 
   init(
     configManager: ConfigManager,
@@ -29,9 +31,11 @@ class AppSessionManager {
     delegate: DeviceHelperFactory & UserAttributesPlacementFactory,
     republishIfAdConsentChanged: @escaping () async -> Void = {
       await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
-    }
+    },
+    notificationCenter: NotificationCenter = .default
   ) {
     self.republishIfAdConsentChanged = republishIfAdConsentChanged
+    self.notificationCenter = notificationCenter
     self.configManager = configManager
     self.storage = storage
     self.delegate = delegate
@@ -44,19 +48,19 @@ class AppSessionManager {
   // MARK: - Listeners
   @MainActor
   private func addActiveStateObservers() {
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillResignActive),
       name: UIApplication.willResignActiveNotification,
       object: nil
     )
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationDidBecomeActive),
       name: UIApplication.didBecomeActiveNotification,
       object: nil
     )
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillTerminate),
       name: UIApplication.willTerminateNotification,

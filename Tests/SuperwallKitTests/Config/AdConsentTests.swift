@@ -280,14 +280,17 @@ struct AdConsentTests {
       delegate: sessionDelegate,
       republishIfAdConsentChanged: {
         await superwall.republishDeviceAttributesIfAdConsentChanged()
-      }
+      },
+      // Not `.default`, so app-wide lifecycle notifications posted by other suites
+      // can't start handlers that outlive this test.
+      notificationCenter: NotificationCenter()
     )
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
 
     // Activation without an ATT change sends nothing. The handler is awaited
-    // directly: posting the app-wide notification would also wake managers from
-    // suites running in parallel, whose dependencies may already be gone.
+    // directly rather than posting the app-wide notification, which would also
+    // wake managers from suites running in parallel.
     await appSessionManager.didBecomeActive()
     #expect(recorder.sent.count == 1)
 
