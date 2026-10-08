@@ -47,8 +47,9 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   /// ``isLeavingHierarchy``.
   ///
   /// Internal rather than private only so tests can set it: a hostless test target never drives a
-  /// modal transition to completion, so UIKit never populates `presentingViewController` there and
-  /// this can't be reached through a real presentation.
+  /// modal transition to completion, so `viewDidAppear` never runs there and this can't be set
+  /// through a real presentation. UIKit does still set `presentingViewController` as soon as the
+  /// presentation starts.
   var wasPresentedModally = false
 
   /// Latches ``deliverDismissal()``; see its note on the overlapping call sites.
