@@ -20,6 +20,12 @@ struct AdConsentTests {
     #expect(options.adConsent.adPersonalization == .granted)
   }
 
+  @Test func init_defaultsUnspecifiedPurposesToGranted() {
+    let consent = AdConsent(adUserData: .denied)
+    #expect(consent.adUserData == .denied)
+    #expect(consent.adPersonalization == .granted)
+  }
+
   @Test func consentStatus_descriptionsMatchTheServerContract() {
     #expect(ConsentStatus.granted.description == "granted")
     #expect(ConsentStatus.denied.description == "denied")
