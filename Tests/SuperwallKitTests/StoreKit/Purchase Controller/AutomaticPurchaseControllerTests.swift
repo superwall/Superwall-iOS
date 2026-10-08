@@ -100,9 +100,6 @@ struct AutomaticPurchaseControllerTests {
 
   @Test("Full cold launch on weak internet keeps access for a Stripe subscriber")
   func testStripeSubscriberColdLaunchOnWeakInternet_keepsAccess() async {
-    guard #available(iOS 14.0, *) else {
-      return
-    }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
 
     // Step 1: a previous session persisted `.active` for the Stripe subscriber.

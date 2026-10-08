@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - Visibility-driven dismissal
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// Call from any Customer Center surface's `onAppear` — the root view, and any screen it pushes
   /// itself. Pushing a screen removes the previous surface from the hierarchy without the Customer

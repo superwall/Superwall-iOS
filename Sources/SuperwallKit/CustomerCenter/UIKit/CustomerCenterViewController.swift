@@ -33,7 +33,6 @@ public enum CustomerCenterPresentationStyle: Int, Sendable {
 ///
 /// Present it modally, or push it onto a navigation controller of your own with
 /// ``CustomerCenterPresentationStyle/embedded``.
-@available(iOS 15.0, *)
 @objc(SWKCustomerCenterViewController)
 public final class CustomerCenterViewController: UIHostingController<CustomerCenterView> {
   let viewModel: CustomerCenterViewModel
@@ -48,8 +47,9 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   /// ``isLeavingHierarchy``.
   ///
   /// Internal rather than private only so tests can set it: a hostless test target never drives a
-  /// modal transition to completion, so UIKit never populates `presentingViewController` there and
-  /// this can't be reached through a real presentation.
+  /// modal transition to completion, so `viewDidAppear` never runs there and this can't be set
+  /// through a real presentation. UIKit does still set `presentingViewController` as soon as the
+  /// presentation starts.
   var wasPresentedModally = false
 
   /// Latches ``deliverDismissal()``; see its note on the overlapping call sites.
@@ -209,7 +209,6 @@ public final class CustomerCenterViewController: UIHostingController<CustomerCen
   }
 }
 
-@available(iOS 15.0, *)
 extension UIViewController {
   /// Whether this controller, or any container it sits inside, is on its way out.
   ///

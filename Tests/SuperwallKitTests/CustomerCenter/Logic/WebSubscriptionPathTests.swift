@@ -71,7 +71,6 @@ struct WebSubscriptionPathTests {
 
   // MARK: - Only one row, and it goes to the management page
 
-  @available(iOS 15.0, *)
   @Test("a web subscriber gets the management row and nothing App Store-only")
   func webSubscriberSeesOneManagementRow() async {
     let viewModel = await makeViewModel(webManagementURL: managementURL)
@@ -84,7 +83,6 @@ struct WebSubscriptionPathTests {
     #expect(managePath(viewModel)?.destination == .webManage(managementURL))
   }
 
-  @available(iOS 15.0, *)
   @Test("the management row survives a missing management URL", arguments: [
     ProductStore.stripe, .paddle, .superwall
   ])
@@ -94,7 +92,6 @@ struct WebSubscriptionPathTests {
     #expect(managePath(viewModel)?.destination == .webManageUnavailable)
   }
 
-  @available(iOS 15.0, *)
   @Test("tapping the row without a URL explains where to find the link")
   func unavailableRowShowsTheBlurb() async {
     let viewModel = await makeViewModel(webManagementURL: nil)
@@ -105,7 +102,6 @@ struct WebSubscriptionPathTests {
     #expect(viewModel.sheet == .webManageUnavailable)
   }
 
-  @available(iOS 15.0, *)
   @Test("tapping the row with a URL opens the management page")
   func availableRowOpensTheManagementPage() async {
     let viewModel = await makeViewModel(webManagementURL: managementURL)
@@ -141,7 +137,6 @@ struct WebSubscriptionPathTests {
   /// `Entitlement(id:)` is no help here: the public convenience initializer hardcodes
   /// `store: .appStore`, so the purchase never reaches the web branch and the case passes on the
   /// App Store branch's `guard let sub` instead — green with this rule deleted.
-  @available(iOS 15.0, *)
   @Test("a comped entitlement isn't told to check a receipt it never had")
   func compedEntitlementGetsNoReceiptBlurb() async {
     let viewModel = await makeEntitlementOnlyViewModel(store: nil)
@@ -155,7 +150,6 @@ struct WebSubscriptionPathTests {
   /// The other half of that rule, and the reason it keys on the store rather than the kind: a web
   /// purchase arrives as a bare entitlement whenever the backend sends no matching transaction.
   /// Those customers are paying, and the row telling them where the link is has to survive.
-  @available(iOS 15.0, *)
   @Test("a web purchase with no transaction behind it keeps its management row", arguments: [
     EntitlementStore.stripe, .paddle
   ])
@@ -172,7 +166,6 @@ struct WebSubscriptionPathTests {
   /// alone, so anything that merely *came from* a web store was offered a management row — a
   /// single Stripe charge with no subscription behind it, and a subscription that had already
   /// lapsed or been revoked.
-  @available(iOS 15.0, *)
   @Test("nothing left to manage means no management row")
   func nothingToManageMeansNoRow() async {
     let lapsed = webSubscription(isActive: false, isRevoked: false)
@@ -189,7 +182,6 @@ struct WebSubscriptionPathTests {
     }
   }
 
-  @available(iOS 15.0, *)
   @Test("a one-off web purchase has no subscription to manage")
   func oneOffWebPurchaseHasNoRow() async {
     let purchase = NonSubscriptionTransaction(
@@ -221,7 +213,6 @@ struct WebSubscriptionPathTests {
   /// The survey gates an action. On a web flow that action leaves the app — or, with no URL, can't
   /// happen at all — so asking the question here collects an answer for something we never see
   /// the outcome of.
-  @available(iOS 15.0, *)
   @Test("no survey is shown before handing off to the web", arguments: [true, false])
   func webFlowsSkipTheSurvey(hasManagementURL: Bool) async {
     let survey = CustomerCenterConfiguration.FeedbackSurvey(
@@ -246,7 +237,6 @@ struct WebSubscriptionPathTests {
 
   // MARK: - Labelling
 
-  @available(iOS 15.0, *)
   @Test("web management destinations are labelled as managing, not cancelling")
   func webDestinationsAreLabelledAsManagement() {
     #expect(ResolvedPathDestination.webManage(managementURL).isWebManagement)

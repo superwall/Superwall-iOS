@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, *)
 actor SK2TransactionListener {
   private(set) var taskHandle: Task<Void, Never>?
   private let shouldFinishTransactions: Bool

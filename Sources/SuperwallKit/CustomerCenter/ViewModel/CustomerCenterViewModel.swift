@@ -9,7 +9,6 @@ import Combine
 import Foundation
 
 /// Drives the Customer Center UI: loads customer info and products, resolves paths, and performs actions.
-@available(iOS 15.0, *)
 @MainActor
 final class CustomerCenterViewModel: ObservableObject {
   typealias PendingSurvey = (path: CustomerCenterConfiguration.Path, survey: CustomerCenterConfiguration.FeedbackSurvey)

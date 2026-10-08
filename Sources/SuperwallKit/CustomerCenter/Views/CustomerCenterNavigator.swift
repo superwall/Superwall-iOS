@@ -14,23 +14,19 @@ import SwiftUI
 /// own stack there's no such ancestor, so the drill-downs have to be pushed through UIKit instead.
 /// Everywhere else — presented modally, or embedded in the host's own SwiftUI navigation — this is
 /// `nil` and `NavigationLink` does the work.
-@available(iOS 15.0, *)
 @MainActor
 protocol CustomerCenterNavigating: AnyObject {
   func push<Destination: View>(_ destination: Destination)
 }
 
-@available(iOS 15.0, *)
 private struct CustomerCenterNavigatorKey: EnvironmentKey {
   static let defaultValue: CustomerCenterNavigating? = nil
 }
 
-@available(iOS 15.0, *)
 private struct CustomerCenterSurfaceDepthKey: EnvironmentKey {
   static let defaultValue = 0
 }
 
-@available(iOS 15.0, *)
 extension EnvironmentValues {
   var customerCenterNavigator: CustomerCenterNavigating? {
     get { self[CustomerCenterNavigatorKey.self] }
@@ -47,7 +43,6 @@ extension EnvironmentValues {
 
 /// A row that drills into another Customer Center screen, by whichever mechanism the surrounding
 /// navigation supports.
-@available(iOS 15.0, *)
 struct CustomerCenterDrillDown<Label: View, Destination: View>: View {
   let viewModel: CustomerCenterViewModel
   @Environment(\.customerCenterNavigator) private var navigator
@@ -98,7 +93,6 @@ struct CustomerCenterDrillDown<Label: View, Destination: View>: View {
 /// popped or dismissed, or SwiftUI takes it down. Being covered — by a deeper screen, a tab switch,
 /// anything the host presents — releases nothing, and neither does a swipe back the user cancels.
 /// `onDisappear` fires for a cover too, which is why it can't be the release.
-@available(iOS 15.0, *)
 private struct CustomerCenterLinkedScreen: ViewModifier {
   let viewModel: CustomerCenterViewModel
   let surfaceDepth: Int

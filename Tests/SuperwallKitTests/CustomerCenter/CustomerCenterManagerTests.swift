@@ -13,7 +13,6 @@ import UIKit
 @Suite("CustomerCenterManager", .serialized)
 @MainActor
 struct CustomerCenterManagerTests {
-  @available(iOS 15.0, *)
   @Test("resolveConfiguration: override > options > default")
   func resolution() {
     let container = DependencyContainer()
@@ -24,7 +23,6 @@ struct CustomerCenterManagerTests {
     #expect(manager.resolveConfiguration(custom) === custom)
   }
 
-  @available(iOS 15.0, *)
   @Test("second present while presented is ignored")
   func singleInstance() {
     let container = DependencyContainer()
@@ -42,7 +40,6 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
   @Test("retains the delegate while presented, releases it after dismiss")
   func retainsDelegateForPresentationDuration() {
     final class ProbeDelegate: CustomerCenterDelegate {}
@@ -87,7 +84,48 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
-  @available(iOS 15.0, *)
+  @Test("a presentation UIKit refuses doesn't keep the delegate, and the next present works")
+  func refusedPresentationReleasesDelegate() {
+    final class ProbeDelegate: CustomerCenterDelegate {}
+
+    let container = DependencyContainer()
+    let manager = CustomerCenterManager(container: container)
+    manager.presentsAnimated = false
+    // Its view isn't in a window, so UIKit refuses to present from it.
+    let detachedPresenter = UIViewController()
+
+    var strongDelegate: ProbeDelegate? = ProbeDelegate()
+    weak var weakDelegate = strongDelegate
+    var dismissCount = 0
+
+    manager.present(
+      configuration: nil,
+      from: detachedPresenter,
+      delegate: strongDelegate,
+      onDismiss: { dismissCount += 1 }
+    )
+    strongDelegate = nil
+    spinRunLoop(timeout: 1) { weakDelegate == nil }
+
+    #expect(detachedPresenter.presentedViewController == nil)
+    #expect(!manager.isPresented)
+    #expect(manager.presentCount == 0)
+    #expect(weakDelegate == nil)
+    // Nothing was shown, so nothing was dismissed.
+    #expect(dismissCount == 0)
+
+    let presenter = UIViewController()
+    let window = makeTestWindow(rootViewController: presenter)
+    window.makeKeyAndVisible()
+    spinRunLoop(timeout: 1) { presenter.viewIfLoaded?.window != nil }
+
+    manager.present(configuration: nil, from: presenter, delegate: nil, onDismiss: nil)
+    #expect(manager.isPresented)
+    #expect(manager.presentCount == 1)
+
+    window.isHidden = true
+  }
+
   @Test("viewDidDisappear fires didDismiss while the delegate is still retained")
   func viewDidDisappearFiresDelegateBeforeRelease() {
     final class ProbeDelegate: CustomerCenterDelegate {

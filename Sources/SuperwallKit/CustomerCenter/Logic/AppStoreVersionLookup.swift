@@ -73,10 +73,7 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
   }
 
   static func currentStorefrontCountryCode() async -> String? {
-    if #available(iOS 15.0, *) {
-      return await Storefront.current?.countryCode
-    }
-    return nil
+    return await Storefront.current?.countryCode
   }
 
   /// The two-letter country to look the app up in: the App Store's, else the device region.

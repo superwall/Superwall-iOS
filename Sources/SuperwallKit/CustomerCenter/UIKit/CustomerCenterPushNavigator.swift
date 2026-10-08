@@ -14,7 +14,6 @@ import UIKit
 /// ancestor for `NavigationLink` to use. Each destination becomes its own hosting controller, so
 /// the host's navigation bar drives it — their back button, their title treatment, their
 /// appearance — and nothing of theirs is modified.
-@available(iOS 15.0, *)
 @MainActor
 final class CustomerCenterPushNavigator: CustomerCenterNavigating {
   weak var presenter: UIViewController?
@@ -58,7 +57,6 @@ final class CustomerCenterPushNavigator: CustomerCenterNavigating {
 /// Applies the Customer Center's theme to a pushed screen, recomputing it whenever the colour
 /// scheme changes. A pushed destination is its own SwiftUI root, so it inherits nothing from the
 /// screen that pushed it.
-@available(iOS 15.0, *)
 private struct CustomerCenterThemedContainer<Content: View>: View {
   let appearance: CustomerCenterConfiguration.Appearance
   let content: Content
@@ -77,7 +75,6 @@ private struct CustomerCenterThemedContainer<Content: View>: View {
 
 /// A hosting controller that reports being popped, so the navigator can release its claim, and
 /// vetoes the dismissal debounce when it is merely covered.
-@available(iOS 15.0, *)
 private final class CustomerCenterPushedHostingController<Content: View>: UIHostingController<Content> {
   var onRemovedFromParent: (() -> Void)?
   var onCoveredWhileStillInStack: (() -> Void)?

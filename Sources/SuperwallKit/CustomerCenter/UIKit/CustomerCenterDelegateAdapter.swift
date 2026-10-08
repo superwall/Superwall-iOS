@@ -8,7 +8,6 @@
 import Foundation
 
 /// An adapter between the internal SDK and the public swift/objective-c ``CustomerCenterDelegate``.
-@available(iOS 15.0, *)
 struct CustomerCenterDelegateAdapter {
   // Weak so the view controller never retains its delegate — a host that both presents the
   // Customer Center and is its own delegate would otherwise cycle with the VC/view model that

@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `superscript-ios-next` at exact version 1.0.14 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
+- Dependencies: `superscript-ios-next` at exact version 1.0.15 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
 
 ## Architecture Overview
 
@@ -55,6 +55,14 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 3. Paywall requests go through `PaywallRequestManager` -> `PaywallManager`
 4. Purchases are handled by `StoreKitManager` with automatic retry logic
 5. Events are tracked through the analytics system
+
+### Minimum Toolchain and Platforms
+
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
+- Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
+- The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
+- Keep `Package.swift`, `SuperwallKit.podspec` and `project.yml` deployment targets in sync.
 
 ### Code Conventions
 
@@ -114,6 +122,17 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
+
+### Device IP enrichment
+
+`DeviceIPCollector` owns session-local, timestamped IP observations. Collection is for the
+MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on; SuperwallKit's privacy
+manifest doesn't declare it, so apps that turn the MMP on declare it themselves. Keep collection
+independent of enrichment success and purchase/configuration latency, preserve each family
+separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
+Do not add customer attributes or authentication headers to the public IP lookup requests.
+The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
+version set): its host is reachable over both, so `URLSession` could quietly report IPv4.
 
 ### Integration device identifiers
 

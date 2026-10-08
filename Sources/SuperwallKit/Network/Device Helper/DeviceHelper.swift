@@ -14,6 +14,7 @@ import CoreTelephony
 import StoreKit
 
 class DeviceHelper {
+  private let ipCollector: DeviceIPCollector
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -52,13 +53,7 @@ class DeviceHelper {
     )
   }()
 
-  let isMac: Bool = {
-    var output = false
-    if #available(iOS 14.0, *) {
-      output = ProcessInfo.processInfo.isiOSAppOnMac
-    }
-    return output
-  }()
+  let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
     UIDevice.modelName
@@ -667,15 +662,6 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
-    #if compiler(>=5.9.2)
-    if #available(iOS 17.0, *) {
-      if UIDevice.current.userInterfaceIdiom == .vision {
-        return "vision"
-      }
-    }
-    #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions
-    // of xcode to build and they don't have vision support.
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -687,6 +673,8 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
+    case .vision:
+      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
@@ -927,6 +915,7 @@ class DeviceHelper {
   private unowned let factory: IdentityFactory
     & LocaleIdentifierFactory
     & WebEntitlementFactory
+    & ConfigStateFactory
 
   init(
     api: Api,
@@ -934,9 +923,14 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
+    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & ConfigStateFactory,
+    ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
+    self.ipCollector = ipCollector ?? DeviceIPCollector(
+      ipV4Url: api.enrichment.ipV4Url,
+      ipV6Url: api.enrichment.ipV6Url
+    )
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -959,6 +953,19 @@ class DeviceHelper {
   deinit {
     for observer in traitObservers {
       NotificationCenter.default.removeObserver(observer)
+    }
+  }
+
+  /// Starts the IPv4 and IPv6 lookups once config turns the MMP on. On a cold launch
+  /// the first device-attributes read happens before config arrives, so
+  /// without this the lookup would wait for some later read.
+  @discardableResult
+  func startIPCollectionIfEnabled(for config: Config) -> Task<Void, Never>? {
+    if config.attribution?.mmp?.enabled != true {
+      return nil
+    }
+    return Task {
+      await ipCollector.refreshIfNeeded()?.value
     }
   }
 
@@ -1079,17 +1086,25 @@ class DeviceHelper {
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
+    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
+      deviceDictionary.removeValue(forKey: key)
+    }
+    // Kept in memory whatever the config says, since on a cold launch the
+    // first enrichment arrives before config does.
+    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
+    // IP collection is for the MMP, which is off unless the backend turns it on.
+    if factory.makeConfigState().value.getConfig()?.attribution?.mmp?.enabled == true {
+      await ipCollector.refreshIfNeeded()
+      deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
+    }
 
-    if #available(iOS 15.0, *),
-      let storefront = await Storefront.current {
+    if let storefront = await Storefront.current {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      #if compiler(>=6.1)
       if #available(iOS 17.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
-      #endif
     }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {

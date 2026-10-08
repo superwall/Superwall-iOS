@@ -94,6 +94,18 @@ struct Api {
     var scheme: String { return networkEnvironment.scheme }
     var host: String { return networkEnvironment.enrichmentHost }
     var path: String { return "/api/v1/" }
+    var ipV4Url: URL? {
+      guard let host = networkEnvironment.ipV4EnrichmentHost else {
+        return nil
+      }
+      return URL(string: "https://\(host)\(path)enrich")
+    }
+    var ipV6Url: URL? {
+      guard let host = networkEnvironment.ipV6EnrichmentHost else {
+        return nil
+      }
+      return URL(string: "https://\(host)\(path)enrich")
+    }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment

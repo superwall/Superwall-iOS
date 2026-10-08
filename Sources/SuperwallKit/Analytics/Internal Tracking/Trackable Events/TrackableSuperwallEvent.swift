@@ -727,12 +727,9 @@ enum InternalSuperwallEvent {
     }
 
     func getSuperwallParameters() async -> [String: Any] {
-      var storefrontCountryCode = ""
-      var storefrontId = ""
-      if #available(iOS 15.0, *) {
-        storefrontCountryCode = await Storefront.current?.countryCode ?? ""
-        storefrontId = await Storefront.current?.id ?? ""
-      }
+      let storefront = await Storefront.current
+      let storefrontCountryCode = storefront?.countryCode ?? ""
+      let storefrontId = storefront?.id ?? ""
       var placementParams: [String: Any] = [
         "store": store.description,
         "source": source.rawValue

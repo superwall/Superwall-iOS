@@ -7,7 +7,7 @@
 // swiftlint:disable function_body_length
 
 import Foundation
-import Superscript
+internal import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage

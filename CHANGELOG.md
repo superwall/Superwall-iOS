@@ -3,11 +3,17 @@
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
 ## 4.18.0
+### Breaking Changes
+
+- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8.
+- Requires Xcode 26 (Swift 6.2) or later to build the SDK. Apple has required the iOS 26 SDK for App Store Connect uploads since April 28, 2026. The SDK itself still compiles in the Swift 5 language mode.
+- This ships as a minor release because every App Store Connect upload already needs Xcode 26, so any app that can ship an update already meets the new Xcode requirement. If your app still supports iOS 13 or 14, Swift Package Manager will fail to resolve this version for it: pin SuperwallKit to `4.17.x` (`.upToNextMinor(from: "4.17.0")`, or `~> 4.17.0` in CocoaPods) until you raise your deployment target.
 
 ### Enhancements
 
-- Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
+- Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
 - Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.link/app-link/superwall/return` (also accepted on `superwall.app`). To open your app from a checkout page without the Open in App alert, add `applinks:<subdomain>.superwall.link` to your app's associated domains. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
 - Adds the `teleportOpen` event (`teleport_open`), tracked with the paywall's info when a paywall teleports the user to the web, such as to its checkout page.
 - Adds the `teleportReturn` event (`teleport_return`), tracked instead of `deepLink_open` when a return link brings the user back to your app, with the presented paywall's info if there is one.
@@ -16,9 +22,14 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+- Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
+- Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
 - Fixes a paywall reporting `.declined` instead of `.purchased` when it closed after a purchase through an after-purchase action list, such as one that sets state and then closes.
+- Fixes the paywall's loading spinner staying up after a web checkout completed while an older pending checkout was still being polled.
+- Fixes a web purchase on a paywall whose products carry different entitlements showing the restore failed alert.
 
 ## 4.17.0
+
 ### Enhancements
 
 - Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.

@@ -126,8 +126,7 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// The StoreKit version that the SDK should use.
   ///
-  /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
-  /// will fallback to StoreKit 1.
+  /// Defaults to StoreKit 2.
   public var storeKitVersion: StoreKitVersion
 
   /// **WARNING**:  The different network environments that the SDK should use.
@@ -270,6 +269,32 @@ public final class SuperwallOptions: NSObject, Encodable {
         return "localhost:5999"
       default:
         return "enrichment-api.superwall.com"
+      }
+    }
+
+    /// The host that only answers over IPv4, used to learn the device's public
+    /// IPv4 address. There's no non-production version, so it's `nil` outside
+    /// release builds.
+    var ipV4EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "v4.superwall-enrichment.com"
+      default:
+        return nil
+      }
+    }
+
+    /// The host asked over IPv6 to learn the device's public IPv6 address.
+    /// It's reachable over both, so the SDK requires IPv6 for the request.
+    /// There's no non-production version, so it's `nil` outside release builds.
+    var ipV6EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "beacon-v6.superwall.com"
+      default:
+        return nil
       }
     }
 
@@ -523,11 +548,7 @@ public final class SuperwallOptions: NSObject, Encodable {
         self.storeKitVersion = .storeKit1
       }
     } else {
-      if #available(iOS 15.0, *) {
-        self.storeKitVersion = .storeKit2
-      } else {
-        self.storeKitVersion = .storeKit1
-      }
+      self.storeKitVersion = .storeKit2
     }
   }
 

@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct CustomerCenterTheme {
   var accent: Color?
 
@@ -35,15 +34,12 @@ extension UIColor {
   }
 }
 
-@available(iOS 15.0, *)
 private struct CustomerCenterStringsKey: EnvironmentKey {
   static let defaultValue = CustomerCenterStrings.english
 }
-@available(iOS 15.0, *)
 private struct CustomerCenterThemeKey: EnvironmentKey {
   static let defaultValue = CustomerCenterTheme(appearance: .init(), colorScheme: .light)
 }
-@available(iOS 15.0, *)
 extension EnvironmentValues {
   var customerCenterStrings: CustomerCenterStrings {
     get { self[CustomerCenterStringsKey.self] }

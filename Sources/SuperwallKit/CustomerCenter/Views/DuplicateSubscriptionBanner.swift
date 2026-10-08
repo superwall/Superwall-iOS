@@ -7,7 +7,6 @@
 
 import SwiftUI
 
-@available(iOS 15.0, *)
 struct DuplicateSubscriptionBanner: View {
   @Environment(\.customerCenterStrings) private var strings
   var body: some View {

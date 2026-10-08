@@ -328,7 +328,6 @@ struct DesignReviewSnapshots {
 
   // MARK: - The screens
 
-  @available(iOS 15.0, *)
   @Test("render every Customer Center state for design review")
   func renderAll() async throws {
     let directory = try #require(Self.outputDirectory)

@@ -9,7 +9,6 @@ import UIKit
 
 /// Builds the dependencies backing ``CustomerCenterView`` and owns the single Customer Center
 /// presentation for ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
-@available(iOS 15.0, *)
 @MainActor
 final class CustomerCenterManager {
   private unowned let container: DependencyContainer
@@ -138,10 +137,20 @@ final class CustomerCenterManager {
       self?.retainedDelegate = nil
       onDismiss?()
     }
+    presenting.present(controller, animated: presentsAnimated)
+    // UIKit refuses some presentations (the presenter isn't in a window, or is mid-transition)
+    // and only logs it, so check that it took the controller before holding on to anything.
+    if controller.presentingViewController == nil {
+      Logger.debug(
+        logLevel: .error,
+        scope: .customerCenter,
+        message: "The Customer Center couldn't be presented from \(type(of: presenting))."
+      )
+      return
+    }
     retainedDelegate = delegate
     presentedController = controller
     presentCount += 1
-    presenting.present(controller, animated: presentsAnimated)
   }
 
   /// Dismisses the presented Customer Center, if any.

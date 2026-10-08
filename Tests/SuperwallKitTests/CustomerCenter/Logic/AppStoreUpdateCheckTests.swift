@@ -44,7 +44,6 @@ struct AppStoreUpdateCheckTests {
 
   // MARK: - The lookup drives the banner
 
-  @available(iOS 15.0, *)
   @Test("shows the banner when the App Store is ahead of the installed build")
   func showsBannerWhenStoreIsAhead() async {
     let (viewModel, provider) = makeViewModel(installed: "1.4.0", appStoreVersion: "1.5.0")
@@ -53,7 +52,6 @@ struct AppStoreUpdateCheckTests {
     #expect(viewModel.showsUpdateBanner)
   }
 
-  @available(iOS 15.0, *)
   @Test("stays hidden when the installed build matches the App Store")
   func hiddenWhenUpToDate() async {
     let (viewModel, _) = makeViewModel(installed: "1.5.0", appStoreVersion: "1.5.0")
@@ -63,7 +61,6 @@ struct AppStoreUpdateCheckTests {
 
   /// The case that rules out an `installed != latest` comparison: a build ahead of the store is
   /// normal for testers, and telling them to "update" would send them backwards.
-  @available(iOS 15.0, *)
   @Test("stays hidden when the installed build is ahead of the App Store")
   func hiddenWhenAheadOfStore() async {
     let (viewModel, _) = makeViewModel(installed: "2.0.0", appStoreVersion: "1.9.3")
@@ -73,7 +70,6 @@ struct AppStoreUpdateCheckTests {
 
   /// Calendar versioning is still a monotonically increasing numeric tuple, so ordered comparison
   /// works on it exactly as it does on semantic versions.
-  @available(iOS 15.0, *)
   @Test("orders calendar versions correctly", arguments: [
     ("2026.2.9", "2026.3.1", true),
     ("2026.3.1", "2026.2.9", false),
@@ -87,7 +83,6 @@ struct AppStoreUpdateCheckTests {
 
   // MARK: - When the lookup must not run
 
-  @available(iOS 15.0, *)
   @Test("never looks the version up on TestFlight, sandbox or simulator builds")
   func skipsLookupInSandbox() async {
     let (viewModel, provider) = makeViewModel(
@@ -100,7 +95,6 @@ struct AppStoreUpdateCheckTests {
     #expect(!viewModel.showsUpdateBanner)
   }
 
-  @available(iOS 15.0, *)
   @Test("a configured version wins and suppresses the lookup")
   func configuredVersionWins() async {
     let (viewModel, provider) = makeViewModel(
@@ -113,7 +107,6 @@ struct AppStoreUpdateCheckTests {
     #expect(!viewModel.showsUpdateBanner, "the configured version says we're current")
   }
 
-  @available(iOS 15.0, *)
   @Test("opting out skips the lookup")
   func optOutSkipsLookup() async {
     let (viewModel, provider) = makeViewModel(
@@ -126,7 +119,6 @@ struct AppStoreUpdateCheckTests {
     #expect(!viewModel.showsUpdateBanner)
   }
 
-  @available(iOS 15.0, *)
   @Test("warnsAboutUpdates off skips the lookup entirely")
   func warningOffSkipsLookup() async {
     let (viewModel, provider) = makeViewModel(
@@ -139,7 +131,6 @@ struct AppStoreUpdateCheckTests {
     #expect(!viewModel.showsUpdateBanner)
   }
 
-  @available(iOS 15.0, *)
   @Test("a failed lookup hides the banner rather than guessing")
   func failedLookupHidesBanner() async {
     let (viewModel, provider) = makeViewModel(installed: "1.4.0", appStoreVersion: nil)
@@ -148,7 +139,6 @@ struct AppStoreUpdateCheckTests {
     #expect(!viewModel.showsUpdateBanner)
   }
 
-  @available(iOS 15.0, *)
   @Test("the lookup runs once per presentation, not once per reload")
   func lookupIsNotRepeated() async {
     let (viewModel, provider) = makeViewModel(installed: "1.4.0", appStoreVersion: "1.5.0")

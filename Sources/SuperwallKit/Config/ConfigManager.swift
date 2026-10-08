@@ -261,7 +261,7 @@ class ConfigManager {
     // StoreKit 2 only: its read is the slow one, and it is the only one that
     // saves the device rows the restore rebuilds from. A StoreKit 1 receipt is
     // parsed locally and saves no rows, so there would be nothing to restore.
-    guard #available(iOS 15.0, *), options.storeKitVersion == .storeKit2 else {
+    guard options.storeKitVersion == .storeKit2 else {
       return nil
     }
     guard let customerInfo = storage.get(LatestCustomerInfo.self) else {
@@ -447,6 +447,16 @@ class ConfigManager {
     )
   }
 
+  /// Saves `config` and applies the parts that don't depend on purchases.
+  private func storeAndApply(_ config: Config) {
+    storage.save(
+      config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
+    storage.save(config, forType: LatestConfig.self)
+    triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
+    choosePaywallVariants(from: config.triggers)
+    deviceHelper.startIPCollectionIfEnabled(for: config)
+  }
+
   /// Applies `config`, loads purchases from StoreKit, and sends `configState`.
   ///
   /// - Parameter savedCustomerInfo: When given, `configState` is sent before the
@@ -457,11 +467,7 @@ class ConfigManager {
     isFirstTime: Bool,
     publishingEarlyFrom savedCustomerInfo: CustomerInfo? = nil
   ) async {
-    storage.save(
-      config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
-    storage.save(config, forType: LatestConfig.self)
-    triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
-    choosePaywallVariants(from: config.triggers)
+    storeAndApply(config)
 
     // Evaluate test mode before loading products
     let testModeManager = factory.makeTestModeManager()

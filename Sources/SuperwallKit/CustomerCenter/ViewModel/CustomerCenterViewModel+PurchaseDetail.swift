@@ -9,7 +9,6 @@ import Foundation
 
 // MARK: - What the purchase detail screen shows below the card
 
-@available(iOS 15.0, *)
 extension CustomerCenterViewModel {
   /// Why a detail screen has no actions, when it has none. Every subscription row opens its
   /// detail screen — that is the rule, and it holds whether or not there is anything left to do —
