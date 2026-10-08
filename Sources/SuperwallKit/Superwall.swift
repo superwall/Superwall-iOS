@@ -85,10 +85,10 @@ public final class Superwall: NSObject, ObservableObject {
 
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
-        // Nothing was sent while opted out, so catch up on any ad consent change,
-        // such as an ATT answer, now that the queue accepts events again.
+        // Nothing was sent while opted out, such as an ad consent assignment or an
+        // ATT answer, so re-send the device attributes now the queue accepts them.
         if wasOptedOut && newValue != .none {
-          await republishDeviceAttributesIfAdConsentChanged()
+          await republishDeviceAttributes(onlyIfAdConsentChanged: false)
         }
       }
 
@@ -1038,13 +1038,22 @@ public final class Superwall: NSObject, ObservableObject {
   /// one. If an assignment is made while it waits, it defers to that.
   @discardableResult
   func republishDeviceAttributesIfAdConsentChanged() async -> Bool {
+    return await republishDeviceAttributes(onlyIfAdConsentChanged: true)
+  }
+
+  /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
+  /// With `onlyIfAdConsentChanged`, it does so only when the ad personalization
+  /// consent differs from what was last sent. Returns whether it sent them.
+  @discardableResult
+  func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
     let generation = adConsentUpdates.currentGeneration
     return await withCheckedContinuation { continuation in
       adConsentUpdates.enqueue { [weak self] in
         guard
           let self,
           self.adConsentUpdates.isCurrent(generation),
-          self.dependencyContainer.deviceHelper.adPersonalizationConsentNeedsRepublish()
+          !onlyIfAdConsentChanged
+            || self.dependencyContainer.deviceHelper.adPersonalizationConsentNeedsRepublish()
         else {
           continuation.resume(returning: false)
           return

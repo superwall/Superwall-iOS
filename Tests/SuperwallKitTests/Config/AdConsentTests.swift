@@ -8,7 +8,6 @@
 @testable import SuperwallKit
 import Testing
 import Foundation
-import UIKit
 
 struct AdConsentTests {
   @Test func defaults_areGranted() {
@@ -231,6 +230,33 @@ struct AdConsentTests {
     #expect(recorder.sent.count == sentBeforeOptIn + 1)
   }
 
+  @Test func adConsentSetWhileOptedOut_isSentOnceTrackingResumes() async {
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(
+      attStatus: ATTStatusBox(.authorized)
+    )
+
+    // Both granted are sent.
+    let initial = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "granted")
+
+    // Opted out, only ad user data is denied. That doesn't change personalization,
+    // and what the setter tracks is dropped.
+    superwall.eventTrackingBehavior = .none
+    let sentBeforeAssignment = recorder.sent.count
+    superwall.adConsent = AdConsent(adUserData: .denied)
+    await waitUntil { recorder.sent.count > sentBeforeAssignment }
+
+    // Opting back in always re-sends the device attributes, exactly once.
+    let sentBeforeOptIn = recorder.sent.count
+    superwall.eventTrackingBehavior = .all
+    await waitUntil { recorder.sent.count > sentBeforeOptIn }
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(recorder.sent.count == sentBeforeOptIn + 1)
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
+  }
+
   @Test func attChange_beforeAnyUpload_doesNotRepublish() async {
     let attStatus = ATTStatusBox(.notDetermined)
     let (superwall, _, recorder) = makeSuperwall(attStatus: attStatus)
@@ -256,26 +282,18 @@ struct AdConsentTests {
         await superwall.republishDeviceAttributesIfAdConsentChanged()
       }
     )
-    // Let the manager register its observers.
-    try? await Task.sleep(nanoseconds: 100_000_000)
-
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
 
-    // Activation without an ATT change sends nothing.
-    await NotificationCenter.default.post(
-      Notification(name: UIApplication.didBecomeActiveNotification)
-    )
-    try? await Task.sleep(nanoseconds: 300_000_000)
+    // Activation without an ATT change sends nothing. The handler is awaited
+    // directly: posting the app-wide notification would also wake managers from
+    // suites running in parallel, whose dependencies may already be gone.
+    await appSessionManager.didBecomeActive()
     #expect(recorder.sent.count == 1)
 
     // Activation after the user denied tracking sends exactly one update.
     attStatus.value = .denied
-    await NotificationCenter.default.post(
-      Notification(name: UIApplication.didBecomeActiveNotification)
-    )
-    await waitUntil { recorder.sent.count >= 2 }
-    try? await Task.sleep(nanoseconds: 300_000_000)
+    await appSessionManager.didBecomeActive()
     #expect(recorder.sent.count == 2)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
     withExtendedLifetime((appSessionManager, sessionDelegate, dependencyContainer)) {}

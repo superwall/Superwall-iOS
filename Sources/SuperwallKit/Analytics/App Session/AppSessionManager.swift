@@ -101,11 +101,17 @@ class AppSessionManager {
 
   @objc private func applicationDidBecomeActive() {
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
-      await sessionCouldRefresh()
-      // After the session check, which may already have sent fresh device attributes.
-      await republishIfAdConsentChanged()
+      await didBecomeActive()
     }
+  }
+
+  /// Handles the app becoming active. Internal so tests can await it rather than post
+  /// the app-wide notification, which every live manager would react to.
+  func didBecomeActive() async {
+    await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
+    await sessionCouldRefresh()
+    // After the session check, which may already have sent fresh device attributes.
+    await republishIfAdConsentChanged()
   }
 
   // MARK: - Logic
