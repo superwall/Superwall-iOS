@@ -19,13 +19,19 @@ class AppSessionManager {
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
   private unowned let delegate: DeviceHelperFactory & UserAttributesPlacementFactory
+  /// Catches ATT changes made while the app was in the background, e.g. in Settings.
+  private let republishIfAdConsentChanged: () async -> Void
 
   init(
     configManager: ConfigManager,
     identityManager: IdentityManager,
     storage: Storage,
-    delegate: DeviceHelperFactory & UserAttributesPlacementFactory
+    delegate: DeviceHelperFactory & UserAttributesPlacementFactory,
+    republishIfAdConsentChanged: @escaping () async -> Void = {
+      await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+    }
   ) {
+    self.republishIfAdConsentChanged = republishIfAdConsentChanged
     self.configManager = configManager
     self.storage = storage
     self.delegate = delegate
@@ -97,6 +103,8 @@ class AppSessionManager {
     Task {
       await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
       await sessionCouldRefresh()
+      // After the session check, which may already have sent fresh device attributes.
+      await republishIfAdConsentChanged()
     }
   }
 

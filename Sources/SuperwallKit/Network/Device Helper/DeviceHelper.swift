@@ -17,6 +17,10 @@ class DeviceHelper {
   private let ipCollector: DeviceIPCollector
   /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
   private let attStatusProvider: () -> Int?
+  /// The `adPersonalizationConsent` in the last device attributes sent, or `nil`
+  /// before the first send. Guarded by `adConsentLock`.
+  private var publishedAdPersonalizationConsent: String?
+  private let adConsentLock = NSLock()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -969,6 +973,44 @@ class DeviceHelper {
     #endif
   }
 
+  /// The ad consent device attributes would report right now.
+  var reportedAdConsent: AdConsent {
+    let options = factory.makeSuperwallOptions()
+    return options.adConsent.reported(
+      for: options.eventTrackingBehavior,
+      attStatus: attStatusProvider()
+    )
+  }
+
+  /// Notes the ad personalization consent in device attributes that were just sent.
+  func recordPublishedDeviceAttributes(_ attributes: [String: Any]) {
+    guard let consent = attributes["adPersonalizationConsent"] as? String else {
+      return
+    }
+    adConsentLock.lock()
+    publishedAdPersonalizationConsent = consent
+    adConsentLock.unlock()
+  }
+
+  /// Whether the ad personalization consent has changed since device attributes
+  /// were last sent, for example because the user answered the ATT prompt. When it
+  /// has, it's marked as sent so concurrent callers republish only once.
+  ///
+  /// Returns `false` before the first send, which reports the current value anyway.
+  func claimAdPersonalizationConsentRepublish() -> Bool {
+    let current = reportedAdConsent.adPersonalization.description
+    adConsentLock.lock()
+    defer { adConsentLock.unlock() }
+    guard
+      let published = publishedAdPersonalizationConsent,
+      published != current
+    else {
+      return false
+    }
+    publishedAdPersonalizationConsent = current
+    return true
+  }
+
   deinit {
     for observer in traitObservers {
       NotificationCenter.default.removeObserver(observer)
@@ -1028,11 +1070,7 @@ class DeviceHelper {
     // inline rather than going through ``interfaceStyle``, so the two resolve it
     // the same way by hand — keep them in step.
     let traits = currentUITraits
-    let options = factory.makeSuperwallOptions()
-    let adConsent = options.adConsent.reported(
-      for: options.eventTrackingBehavior,
-      attStatus: attStatusProvider()
-    )
+    let adConsent = reportedAdConsent
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,

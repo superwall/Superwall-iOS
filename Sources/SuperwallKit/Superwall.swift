@@ -1013,6 +1013,19 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Re-sends device attributes if the ad personalization consent they report has
+  /// changed since they were last sent, such as after the user answers the ATT
+  /// prompt mid-session. Never prompts. Returns whether it sent them.
+  @discardableResult
+  func republishDeviceAttributesIfAdConsentChanged() async -> Bool {
+    guard dependencyContainer.deviceHelper.claimAdPersonalizationConsentRepublish() else {
+      return false
+    }
+    let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
+    await track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+    return true
+  }
+
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
   /// back to using the system setting.
   public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {

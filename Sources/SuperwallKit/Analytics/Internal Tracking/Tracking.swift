@@ -64,6 +64,12 @@ extension Superwall {
     }
     dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
 
+    if let deviceAttributes = event as? InternalSuperwallEvent.DeviceAttributes {
+      dependencyContainer.deviceHelper.recordPublishedDeviceAttributes(
+        deviceAttributes.deviceAttributes
+      )
+    }
+
     if event.canImplicitlyTriggerPaywall {
       Task.detached { [weak self] in
         await self?.handleImplicitTrigger(

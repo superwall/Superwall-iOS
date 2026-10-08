@@ -677,6 +677,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       await Superwall.shared.track(requestedEvent)
 
       let status = await permissionHandler.requestPermission(permissionType)
+      if permissionType == .tracking {
+        await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+      }
 
       // Track permission result event
       let resultState: InternalSuperwallEvent.PermissionState =
