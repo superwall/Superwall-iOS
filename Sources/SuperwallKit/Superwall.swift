@@ -110,7 +110,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// passes on to ad networks such as Google Ads when it reports conversions.
   ///
   /// Both values default to ``ConsentStatus/granted``. If your app has users in the
-  /// EEA, the UK or Switzerland, set this from your consent flow.
+  /// EEA, the UK or Switzerland, set this from your consent flow. On iOS,
+  /// personalization is reported as denied when the user hasn't allowed tracking.
   ///
   /// You can also set the initial value via ``SuperwallOptions/adConsent``
   /// before calling `configure`.

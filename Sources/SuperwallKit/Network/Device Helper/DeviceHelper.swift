@@ -15,6 +15,8 @@ import StoreKit
 
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
+  /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
+  private let attStatusProvider: () -> Int?
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -930,8 +932,10 @@ class DeviceHelper {
       & ConfigStateFactory
       & OptionsFactory,
     ipCollector: DeviceIPCollector? = nil,
-    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
+    attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
+    self.attStatusProvider = attStatusProvider
     self.ipCollector = ipCollector ?? DeviceIPCollector(
       ipV4Url: api.enrichment.ipV4Url,
       ipV6Url: api.enrichment.ipV6Url
@@ -953,6 +957,16 @@ class DeviceHelper {
     self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
     observeUITraitChanges()
     registerForTraitChanges()
+  }
+
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  static var attStatus: Int? {
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
+    return nil
+    #endif
   }
 
   deinit {
@@ -1015,7 +1029,10 @@ class DeviceHelper {
     // the same way by hand — keep them in step.
     let traits = currentUITraits
     let options = factory.makeSuperwallOptions()
-    let adConsent = options.adConsent.reported(for: options.eventTrackingBehavior)
+    let adConsent = options.adConsent.reported(
+      for: options.eventTrackingBehavior,
+      attStatus: attStatusProvider()
+    )
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,

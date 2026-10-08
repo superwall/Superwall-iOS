@@ -369,7 +369,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   ///
   /// Both values default to ``ConsentStatus/granted``. If your app has users in the
   /// EEA, the UK or Switzerland, set this from your consent flow. Both are reported as
-  /// denied while ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``.
+  /// denied while ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``. On iOS,
+  /// personalization is reported as denied when the user hasn't allowed tracking.
   ///
   /// You can also change this at runtime via ``Superwall/adConsent``.
   public var adConsent = AdConsent()

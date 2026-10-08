@@ -52,12 +52,22 @@ public final class AdConsent: NSObject {
     self.init(adUserData: .granted, adPersonalization: .granted)
   }
 
-  /// The consent to report, which is denied for both purposes while
-  /// `eventTrackingBehavior` is ``EventTrackingBehavior/none``.
-  func reported(for eventTrackingBehavior: EventTrackingBehavior) -> AdConsent {
+  /// The consent to report. Both purposes are denied while `eventTrackingBehavior`
+  /// is ``EventTrackingBehavior/none``, and personalization is denied when the user
+  /// hasn't allowed tracking (`attStatus` is restricted or denied). An undetermined
+  /// or missing ATT status leaves the developer's choice in place.
+  func reported(
+    for eventTrackingBehavior: EventTrackingBehavior,
+    attStatus: Int?
+  ) -> AdConsent {
     if eventTrackingBehavior == .none {
       return AdConsent(adUserData: .denied, adPersonalization: .denied)
     }
-    return self
+    switch attStatus.flatMap(FakeTrackingAuthorizationStatus.init(rawValue:)) {
+    case .restricted, .denied:
+      return AdConsent(adUserData: adUserData, adPersonalization: .denied)
+    case .notDetermined, .authorized, nil:
+      return self
+    }
   }
 }
