@@ -394,4 +394,45 @@ struct TestModeManagerTests {
 
     #expect(manager.isPutInTestMode(by: config, options: SuperwallOptions()) == false)
   }
+
+  // MARK: - App Store builds
+
+  @Test
+  func testModeBehavior_automatic_ignoresBundleIdMismatchInAnAppStoreBuild() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    manager.isSandboxEnvironment = { false }
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    #expect(manager.isTestMode == false)
+    #expect(manager.testModeReason == nil)
+  }
+
+  @Test
+  func testModeBehavior_automatic_stillActivatesForATestUserInAnAppStoreBuild() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    manager.isSandboxEnvironment = { false }
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    #expect(manager.isTestMode == true)
+    if case .configMatch = manager.testModeReason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .configMatch reason, got \(String(describing: manager.testModeReason))")
+    }
+  }
 }

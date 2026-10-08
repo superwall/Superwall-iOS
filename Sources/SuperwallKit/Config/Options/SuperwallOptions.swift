@@ -85,7 +85,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   @objc(SWKTestModeBehavior)
   public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
     /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
-    /// mismatch is detected, but never during UI tests.
+    /// mismatch is detected, but never during UI tests. A bundle ID mismatch is ignored in
+    /// App Store builds, so a wrong bundle ID on the dashboard can't put customers in test mode.
     case automatic
 
     /// Activates test mode only when specifically enabled for a user via the dashboard.
@@ -409,7 +410,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
-  ///   a bundle ID mismatch is detected, but never during UI tests.
+  ///   a bundle ID mismatch is detected, but never during UI tests. A bundle ID mismatch is
+  ///   ignored in App Store builds.
   /// - `.whenEnabledForUser`: Activates test mode only when specifically enabled for a
   ///   user via the dashboard.
   /// - `.never`: Test mode is never activated, regardless of configuration.

@@ -36,7 +36,8 @@ enum TestModeReason: Sendable {
   /// Test mode is always enabled via SuperwallOptions.
   case testModeOption
 
-  /// The app's bundle ID doesn't match the config's `bundleIds.ios`.
+  /// The app's bundle ID doesn't match the config's `bundleIds.ios`, in a
+  /// build that isn't from the App Store.
   case bundleIdMismatch(expected: String, actual: String)
 
   /// Whether the config itself asked for test mode, as opposed to an option
@@ -104,6 +105,10 @@ final class TestModeManager {
     }
     return NSClassFromString("XCTestCase") != nil
   }()
+
+  /// Whether the app is running outside App Store production: simulator,
+  /// TestFlight or a development build. Replaced in tests.
+  var isSandboxEnvironment: () -> Bool = { DeviceHelper.isSandboxEnvironment }
 
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
@@ -195,6 +200,21 @@ final class TestModeManager {
       expectedBundleId != actualBundleId,
       !actualBundleId.hasPrefix(expectedBundleId + ".")
     else {
+      return nil
+    }
+    // A mismatch is how a developer's own build gets into test mode without
+    // any setup. An App Store install is a customer's, and the mismatch there
+    // means the bundle ID on the dashboard was edited, which must not replace
+    // their real purchases with simulated ones. Test users marked on the
+    // dashboard still get test mode in an App Store build.
+    guard isSandboxEnvironment() else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "The app's bundle ID is \(actualBundleId) but the Superwall dashboard expects "
+          + "\(expectedBundleId). Ignoring the mismatch because this is an App Store build, "
+          + "so test mode stays off. Correct the bundle ID in the dashboard's app settings."
+      )
       return nil
     }
     return .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
