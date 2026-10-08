@@ -209,6 +209,7 @@
 		4E078EFFD0C1992563021220 /* PurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D45DC0981EE9BBE3BF56C48 /* PurchaseController.swift */; };
 		4E5F1AB421E91E102B6D4800 /* OnDeviceCaching.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5283BA49E380740C34D78856 /* OnDeviceCaching.swift */; };
 		4E7761949715C8BF8DEEF35C /* ReceiptLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0A53CC571B7BC3F5AAD71BF /* ReceiptLogic.swift */; };
+		4ED5A9193F5672E254E8181F /* TeleportReturnCoverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 391C860C0057765BDC18BFC8 /* TeleportReturnCoverTests.swift */; };
 		4EF50815E31F85400513F053 /* PresentationItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = E23F2FE294EBC63F81786A85 /* PresentationItems.swift */; };
 		4EFA142D3D37B0564BDB52CB /* NetworkMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 10D5ABDB23D56393EFDCF73A /* NetworkMock.swift */; };
 		4FE19D26711ECB7B2EE8806D /* TriggerRule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 481D47E5121C521DDA268609 /* TriggerRule.swift */; };
@@ -868,6 +869,7 @@
 		35F538F901BAF97DDCA86F84 /* DeviceHelperMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceHelperMock.swift; sourceTree = "<group>"; };
 		368EF475049935105AF8154C /* Entitlement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Entitlement.swift; sourceTree = "<group>"; };
 		37B17A8801A2A9454E66D892 /* ASN1Decoder+Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+Utils.swift"; sourceTree = "<group>"; };
+		391C860C0057765BDC18BFC8 /* TeleportReturnCoverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeleportReturnCoverTests.swift; sourceTree = "<group>"; };
 		39B81D88316F06C0C2757F10 /* MockReceiptData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockReceiptData.swift; sourceTree = "<group>"; };
 		3A6728F289EC434B1C856BD2 /* V2Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V2Migrator.swift; sourceTree = "<group>"; };
 		3A7BF742EBC950966662849F /* vi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = vi; path = vi.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -2276,6 +2278,7 @@
 				A453816DBA43C08410D12DE6 /* PaywallViewControllerMock.swift */,
 				4BFFA527207A52EB7C70CAD4 /* PopupTransitionTests.swift */,
 				B002FEEF20120D3A6B2AE923 /* SurveyManagerTests.swift */,
+				391C860C0057765BDC18BFC8 /* TeleportReturnCoverTests.swift */,
 				3BE2C31A01D986D7FED5C4F4 /* Web View */,
 			);
 			path = "View Controller";
@@ -3932,6 +3935,7 @@
 				89CC491C60F7CD12D3E73284 /* SurveyManagerTests.swift in Sources */,
 				252D37DDAA2C97A6E2DDD6B7 /* SurveyTests.swift in Sources */,
 				18D39CB7BCF324B44197735D /* TaskRetryingTests.swift in Sources */,
+				4ED5A9193F5672E254E8181F /* TeleportReturnCoverTests.swift in Sources */,
 				14D8827BA663A0EFD64DEC2C /* TemplateLogicTests.swift in Sources */,
 				7D47BABD89CE33CDD78DFCC6 /* TestFileManager.swift in Sources */,
 				5338AD57C30507242FFC0A39 /* TestModeManagerTests.swift in Sources */,

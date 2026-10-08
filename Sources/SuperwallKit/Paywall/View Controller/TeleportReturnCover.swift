@@ -50,21 +50,49 @@ final class TeleportReturnCover: NSObject {
     case suspending
   }
 
-  /// How long leaving waits for the page to draw the waiting screen.
-  private static let drawWait: UInt64 = 500_000_000
-  /// How long the still stays up when the app does not leave (the browser did not open).
-  private static let stillTimeout: UInt64 = 2_000_000_000
-  /// The longest the checkout is checked in the background.
-  private static let backgroundCheckLimit: TimeInterval = 25
-  /// How much background time is kept to cover the screen and have iOS retake the snapshot.
-  private static let suspendLead: TimeInterval = 4
-  private static let backgroundCheckInterval: UInt64 = 1_000_000_000
-  /// How long the app keeps running once it asked iOS to retake the snapshot.
-  private static let snapshotLinger: UInt64 = 1_000_000_000
-  /// How long a return by hand waits for a return link before showing the screen again. Some
-  /// apps hand the link over only after the app is active.
-  private static let revealGrace: UInt64 = 350_000_000
-  private static let revealDuration: TimeInterval = 0.25
+  /// How long each step waits. Tests shorten these.
+  struct Timing {
+    /// How long leaving waits for the page to draw the waiting screen.
+    var drawWait: UInt64 = 500_000_000
+    /// How long the still stays up when the app does not leave (the browser did not open).
+    var stillTimeout: UInt64 = 2_000_000_000
+    /// The longest the checkout is checked in the background.
+    var backgroundCheckLimit: TimeInterval = 25
+    /// How much background time is kept to cover the screen and have iOS retake the snapshot.
+    var suspendLead: TimeInterval = 4
+    var backgroundCheckInterval: UInt64 = 1_000_000_000
+    /// How long the app keeps running once it asked iOS to retake the snapshot.
+    var snapshotLinger: UInt64 = 1_000_000_000
+    /// How long a return by hand waits for a return link before showing the screen again. Some
+    /// apps hand the link over only after the app is active.
+    var revealGrace: UInt64 = 350_000_000
+    var revealDuration: TimeInterval = 0.25
+  }
+
+  /// What the cover asks of iOS and the network. Tests stand these in.
+  struct Environment {
+    var applicationState: () -> UIApplication.State = {
+      UIApplication.sharedApplication?.applicationState ?? .active
+    }
+    var isSettled: (Watch) async -> Bool = CheckoutStatusCheck.isSettled
+    var makeStill: (UIView) -> UIView? = { $0.snapshotView(afterScreenUpdates: false) }
+    /// Nil when there is no application to ask for background time.
+    var beginBackgroundTask: (@escaping () -> Void) -> UIBackgroundTaskIdentifier? = { handler in
+      UIApplication.sharedApplication?.beginBackgroundTask(
+        withName: "Superwall checkout",
+        expirationHandler: handler
+      )
+    }
+    var endBackgroundTask: (UIBackgroundTaskIdentifier) -> Void = {
+      UIApplication.sharedApplication?.endBackgroundTask($0)
+    }
+    var backgroundTimeRemaining: () -> TimeInterval = {
+      UIApplication.sharedApplication?.backgroundTimeRemaining ?? 0
+    }
+  }
+
+  private let timing: Timing
+  private let environment: Environment
 
   private weak var view: UIView?
   private weak var webView: WKWebView?
@@ -81,9 +109,26 @@ final class TeleportReturnCover: NSObject {
   private var backgroundCheck: Task<Void, Never>?
   private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
 
-  init(view: UIView, webView: WKWebView) {
+  /// Whether a picture of the paywall is over the waiting screen.
+  var isCovering: Bool {
+    returnCover != nil
+  }
+
+  /// The cover's opacity, for tests of the fade.
+  var coverAlpha: CGFloat? {
+    returnCover?.view.alpha
+  }
+
+  init(
+    view: UIView,
+    webView: WKWebView,
+    timing: Timing = Timing(),
+    environment: Environment = Environment()
+  ) {
     self.view = view
     self.webView = webView
+    self.timing = timing
+    self.environment = environment
     super.init()
     let center = NotificationCenter.default
     // Called synchronously: iOS takes the snapshot as soon as these observers return.
@@ -120,7 +165,7 @@ final class TeleportReturnCover: NSObject {
       #available(iOS 14.0, *),
       let view,
       let webView,
-      let still = view.snapshotView(afterScreenUpdates: false)
+      let still = environment.makeStill(view)
     else {
       open()
       return
@@ -147,7 +192,7 @@ final class TeleportReturnCover: NSObject {
       }
     }
     Task { @MainActor [weak self] in
-      try? await Task.sleep(nanoseconds: Self.drawWait)
+      try? await Task.sleep(nanoseconds: timing.drawWait)
       self?.open(id)
     }
   }
@@ -177,8 +222,8 @@ final class TeleportReturnCover: NSObject {
     pendingOpen = nil
     pending.open()
     Task { @MainActor [weak self] in
-      try? await Task.sleep(nanoseconds: Self.stillTimeout)
-      guard let self, UIApplication.sharedApplication?.applicationState == .active else {
+      try? await Task.sleep(nanoseconds: timing.stillTimeout)
+      guard let self, environment.applicationState() == .active else {
         return
       }
       self.removeLeavingStill()
@@ -243,7 +288,7 @@ final class TeleportReturnCover: NSObject {
       tellPageOfReturn()
       return
     }
-    if UIApplication.sharedApplication?.applicationState == .active {
+    if environment.applicationState() == .active {
       uncover()
     }
   }
@@ -257,12 +302,9 @@ final class TeleportReturnCover: NSObject {
       scope: .paywallViewController,
       message: "Checkout: checking the checkout while the app is in the background"
     )
-    guard let application = UIApplication.sharedApplication else {
-      return
-    }
-    backgroundTask = application.beginBackgroundTask(withName: "Superwall checkout") { [weak self] in
-      // Out of time before the check finished: cover the screen while iOS still listens. iOS
-      // calls this on the main thread and expects the task ended before it returns, so no hop.
+    // Out of time before the check finished: cover the screen while iOS still listens. iOS
+    // calls this on the main thread and expects the task ended before it returns, so no hop.
+    guard let task = environment.beginBackgroundTask({ [weak self] in
       MainActor.assumeIsolated {
         guard let self else {
           return
@@ -270,17 +312,20 @@ final class TeleportReturnCover: NSObject {
         self.coverBeforeSuspending()
         self.stopBackgroundCheck()
       }
+    }) else {
+      return
     }
+    backgroundTask = task
     // Leaves enough of the background time to cover the screen and have the snapshot retaken.
-    let remaining = application.backgroundTimeRemaining
-    let checkFor = min(Self.backgroundCheckLimit, max(0, remaining - Self.suspendLead))
+    let remaining = environment.backgroundTimeRemaining()
+    let checkFor = min(timing.backgroundCheckLimit, max(0, remaining - timing.suspendLead))
     backgroundCheck = Task { @MainActor [weak self] in
       let deadline = Date().addingTimeInterval(checkFor)
       while !Task.isCancelled, Date() < deadline {
         guard let watch = self?.watch else {
           break
         }
-        if await CheckoutStatusCheck.isSettled(watch) {
+        if await self?.environment.isSettled(watch) ?? false {
           guard !Task.isCancelled else {
             break
           }
@@ -291,17 +336,17 @@ final class TeleportReturnCover: NSObject {
           )
           self?.cover(.settled)
           self?.refreshSnapshot()
-          try? await Task.sleep(nanoseconds: Self.snapshotLinger)
+          try? await Task.sleep(nanoseconds: timing.snapshotLinger)
           self?.endBackgroundTask()
           return
         }
-        try? await Task.sleep(nanoseconds: Self.backgroundCheckInterval)
+        try? await Task.sleep(nanoseconds: timing.backgroundCheckInterval)
       }
       guard !Task.isCancelled else {
         return
       }
       self?.coverBeforeSuspending()
-      try? await Task.sleep(nanoseconds: Self.snapshotLinger)
+      try? await Task.sleep(nanoseconds: timing.snapshotLinger)
       self?.endBackgroundTask()
     }
   }
@@ -331,7 +376,7 @@ final class TeleportReturnCover: NSObject {
     guard backgroundTask != .invalid else {
       return
     }
-    UIApplication.sharedApplication?.endBackgroundTask(backgroundTask)
+    environment.endBackgroundTask(backgroundTask)
     backgroundTask = .invalid
   }
 
@@ -389,7 +434,7 @@ final class TeleportReturnCover: NSObject {
       }
     }
     Task { @MainActor [weak self] in
-      try? await Task.sleep(nanoseconds: Self.drawWait)
+      try? await Task.sleep(nanoseconds: timing.drawWait)
       self?.finishUncovering(id)
     }
   }
@@ -433,7 +478,7 @@ private extension TeleportReturnCover {
     let id = UUID()
     revealing = id
     Task { @MainActor [weak self] in
-      try? await Task.sleep(nanoseconds: Self.revealGrace)
+      try? await Task.sleep(nanoseconds: timing.revealGrace)
       guard let self, self.revealing == id else {
         return
       }
@@ -442,13 +487,13 @@ private extension TeleportReturnCover {
       guard
         let returnCover = self.returnCover,
         returnCover.reason == .suspending,
-        UIApplication.sharedApplication?.applicationState == .active
+        environment.applicationState() == .active
       else {
         return
       }
       // The cover is the paywall, so this reads as the waiting screen coming up over it.
       UIView.animate(
-        withDuration: Self.revealDuration,
+        withDuration: timing.revealDuration,
         delay: 0,
         options: [.curveEaseOut, .allowUserInteraction]
       ) {
