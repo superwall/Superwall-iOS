@@ -993,22 +993,23 @@ class DeviceHelper {
   }
 
   /// Whether the ad personalization consent has changed since device attributes
-  /// were last sent, for example because the user answered the ATT prompt. When it
-  /// has, it's marked as sent so concurrent callers republish only once.
+  /// were last sent, for example because the user answered the ATT prompt.
   ///
-  /// Returns `false` before the first send, which reports the current value anyway.
-  func claimAdPersonalizationConsentRepublish() -> Bool {
+  /// Returns `false` before the first send, which reports the current value anyway,
+  /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
+  /// would be sent. Callers serialize through ``AdConsentUpdateQueue`` so the send
+  /// is recorded before the next check.
+  func adPersonalizationConsentNeedsRepublish() -> Bool {
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return false
+    }
     let current = reportedAdConsent.adPersonalization.description
     adConsentLock.lock()
     defer { adConsentLock.unlock() }
-    guard
-      let published = publishedAdPersonalizationConsent,
-      published != current
-    else {
+    guard let published = publishedAdPersonalizationConsent else {
       return false
     }
-    publishedAdPersonalizationConsent = current
-    return true
+    return published != current
   }
 
   deinit {

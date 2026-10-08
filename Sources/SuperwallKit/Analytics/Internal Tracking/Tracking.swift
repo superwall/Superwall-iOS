@@ -52,19 +52,24 @@ extension Superwall {
 
     let verbosePlacements = existingDisableVerboseEvents ?? previousDisableVerboseEvents
 
+    var isQueuedForSending = false
     if TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: verbosePlacements,
       isSandbox: dependencyContainer.makeIsSandbox()
     ) {
-      await dependencyContainer.placementsQueue.enqueue(
+      isQueuedForSending = await dependencyContainer.placementsQueue.enqueue(
         data: eventData.jsonData,
         from: event
       )
     }
     dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
 
-    if let deviceAttributes = event as? InternalSuperwallEvent.DeviceAttributes {
+    // Only what actually goes to the server counts as sent. The queue learns of a
+    // tracking-behavior change asynchronously, so check the options too.
+    if isQueuedForSending,
+      dependencyContainer.configManager.options.eventTrackingBehavior != .none,
+      let deviceAttributes = event as? InternalSuperwallEvent.DeviceAttributes {
       dependencyContainer.deviceHelper.recordPublishedDeviceAttributes(
         deviceAttributes.deviceAttributes
       )

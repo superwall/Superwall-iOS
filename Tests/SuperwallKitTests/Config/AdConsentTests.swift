@@ -199,6 +199,38 @@ struct AdConsentTests {
     #expect(recorder.sent.count == 2)
   }
 
+  @Test func attChangeWhileOptedOut_republishesOnceTrackingResumes() async {
+    let attStatus = ATTStatusBox(.notDetermined)
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(attStatus: attStatus)
+
+    // `.all` sends granted.
+    let initial = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
+
+    // Opted out, the user denies tracking. Activation mustn't treat that as sent.
+    superwall.eventTrackingBehavior = .none
+    attStatus.value = .denied
+    #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
+    // Even a device-attributes event tracked while opted out is dropped, not sent.
+    let droppedAttributes = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(
+      InternalSuperwallEvent.DeviceAttributes(deviceAttributes: droppedAttributes)
+    )
+
+    // Opting back in sends the denied value exactly once.
+    let sentBeforeOptIn = recorder.sent.count
+    superwall.eventTrackingBehavior = .all
+    await waitUntil { recorder.sent.count > sentBeforeOptIn }
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(recorder.sent.count == sentBeforeOptIn + 1)
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+
+    // Now it's sent, activation has nothing more to do.
+    #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
+    #expect(recorder.sent.count == sentBeforeOptIn + 1)
+  }
+
   @Test func attChange_beforeAnyUpload_doesNotRepublish() async {
     let attStatus = ATTStatusBox(.notDetermined)
     let (superwall, _, recorder) = makeSuperwall(attStatus: attStatus)
