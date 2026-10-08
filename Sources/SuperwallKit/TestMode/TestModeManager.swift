@@ -126,21 +126,37 @@ final class TestModeManager {
 
   /// Evaluates whether the current user should be in test mode based on the config
   /// and the `testModeBehavior` option. Called on every config refresh.
-  func evaluateTestMode(config: Config, options: SuperwallOptions) {
-    guard let reason = reasonForTestMode(config: config, options: options) else {
+  ///
+  /// - Returns: The reason test mode is now on, or `nil` if it's off.
+  @discardableResult
+  func evaluateTestMode(config: Config, options: SuperwallOptions) -> TestModeReason? {
+    guard let reason = reasonForTestMode(
+      config: config,
+      options: options,
+      warnAboutIgnoredMismatch: true
+    ) else {
       isTestMode = false
       testModeReason = nil
       clearTestModeState()
-      return
+      return nil
     }
     isTestMode = true
     testModeReason = reason
+    return reason
   }
 
   /// Why `config` and `options` would put the current user in test mode, or
   /// `nil` if they wouldn't. Changes nothing, so a config can be checked before
   /// it is used.
   func reasonForTestMode(config: Config, options: SuperwallOptions) -> TestModeReason? {
+    return reasonForTestMode(config: config, options: options, warnAboutIgnoredMismatch: false)
+  }
+
+  private func reasonForTestMode(
+    config: Config,
+    options: SuperwallOptions,
+    warnAboutIgnoredMismatch: Bool
+  ) -> TestModeReason? {
     if DevMode.isActive(options) {
       return .testModeOption
     }
@@ -158,7 +174,8 @@ final class TestModeManager {
         return nil
       }
       // Check user match, then bundle ID mismatch
-      return configMatchReason(config: config) ?? bundleIdMismatchReason(config: config)
+      return configMatchReason(config: config)
+        ?? bundleIdMismatchReason(config: config, warnIfIgnored: warnAboutIgnoredMismatch)
     }
   }
 
@@ -193,7 +210,11 @@ final class TestModeManager {
   /// The reason if the app's bundle ID differs from the config's expected bundle ID.
   /// App extensions are allowed because their bundle ID uses the main app's
   /// bundle ID as a prefix (e.g., `com.example.app.widget-extension`).
-  private func bundleIdMismatchReason(config: Config) -> TestModeReason? {
+  ///
+  /// - Parameter warnIfIgnored: Whether to log when an App Store build ignores
+  ///   the mismatch. Only set when the config is being applied, so the warning
+  ///   shows once per config rather than on every check.
+  private func bundleIdMismatchReason(config: Config, warnIfIgnored: Bool) -> TestModeReason? {
     guard
       let expectedBundleId = config.bundleIdConfig,
       let actualBundleId = Bundle.main.bundleIdentifier,
@@ -208,6 +229,9 @@ final class TestModeManager {
     // their real purchases with simulated ones. Test users marked on the
     // dashboard still get test mode in an App Store build.
     guard isSandboxEnvironment() else {
+      if !warnIfIgnored {
+        return nil
+      }
       Logger.debug(
         logLevel: .warn,
         scope: .superwallCore,

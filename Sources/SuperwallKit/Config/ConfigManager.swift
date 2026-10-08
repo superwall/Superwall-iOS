@@ -498,14 +498,14 @@ class ConfigManager {
     publishingEarlyFrom savedCustomerInfo: CustomerInfo? = nil
   ) async {
     let testModeManager = factory.makeTestModeManager()
-    storeAndApply(
-      config,
-      keepingForNextLaunch: !testModeManager.isPutInTestMode(by: config, options: options)
-    )
 
     // Evaluate test mode before loading products
     let wasTestMode = testModeManager.isTestMode
-    testModeManager.evaluateTestMode(config: config, options: options)
+    let testModeReason = testModeManager.evaluateTestMode(config: config, options: options)
+    storeAndApply(
+      config,
+      keepingForNextLaunch: testModeReason?.comesFromConfig != true
+    )
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
