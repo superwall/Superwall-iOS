@@ -185,7 +185,8 @@ final class DependencyContainer {
     mmpAttributionManager = MMPAttributionManager(
       network: network,
       storage: storage,
-      identityManager: identityManager
+      identityManager: identityManager,
+      configManager: configManager
     )
 
     testModeManager = TestModeManager(

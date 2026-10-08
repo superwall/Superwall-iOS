@@ -21,6 +21,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Test mode no longer turns on in App Store builds because the app's bundle ID differs from the one on the Superwall dashboard. A wrong bundle ID on the dashboard used to put every customer in test mode, replacing their real subscription with simulated purchases. Development, simulator and TestFlight builds still enter test mode on a mismatch, and test users marked on the dashboard still get it in any build.
 - Fixes the SDK waiting forever, with every `register` call held, when the test mode sheet was accepted for presentation but never reached the screen.
 - Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
+- Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
+- Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
 
 ## 4.17.0
 

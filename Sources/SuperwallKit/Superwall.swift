@@ -78,6 +78,10 @@ public final class Superwall: NSObject, ObservableObject {
     set {
       options.eventTrackingBehavior = newValue
 
+      if newValue != .none {
+        dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
+      }
+
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
       }
@@ -534,36 +538,54 @@ public final class Superwall: NSObject, ObservableObject {
       let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
+      // The eligibility check has to run at launch whatever the config or
+      // tracking setting says: it records that this install may be matched,
+      // which a later launch relies on if this one ends before the match
+      // completes. It runs before config is fetched so a paywall can't get
+      // ahead of the match being marked as pending. Only the request itself
+      // waits for config to enable the MMP.
+      let shouldMatchInstall = dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      )
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.markMatchPending()
+      }
+
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
       _ = await configureIdentity
 
-      // Skip install-attribution matching entirely when the developer has
-      // opted out of all event collection. The `/api/match` call and the
-      // `acquisition_*` attribute writes happen outside the event queue, so
-      // queue-level suppression wouldn't catch them.
-      if dependencyContainer.configManager.options.eventTrackingBehavior != .none,
-        dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-          hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-          appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-        ) {
-        let advertiserTrackingEnabled =
-          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
+          guard let dependencyContainer = dependencyContainer else {
+            return nil
+          }
+          // Skip matching when the app has opted out of all event collection.
+          // The `/api/match` call and the `acquisition_*` attribute writes
+          // happen outside the event queue, so queue-level suppression
+          // wouldn't catch them. It's tried again if the app opts back in.
+          if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
+            return nil
+          }
+          let advertiserTrackingEnabled =
+            dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        // We deliberately fire the match once and don't retry after ATT is
-        // granted: the backend matches on IP + device fingerprint + time decay,
-        // not IDFA, so a post-consent re-match wouldn't change the result. And
-        // because matches are time-decayed and reads are latest-wins, a later
-        // retry could only tie or worsen the earlier, better-timed match.
-        // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
-        // matching.)
-        dependencyContainer.storage.recordMMPInstallAttributionMatch {
-          await dependencyContainer.mmpAttributionManager.matchInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-            advertiserTrackingEnabled: advertiserTrackingEnabled,
-            applicationTrackingEnabled: true
-          )
+          // We deliberately fire the match once and don't retry after ATT is
+          // granted: the backend matches on IP + device fingerprint + time decay,
+          // not IDFA, so a post-consent re-match wouldn't change the result. And
+          // because matches are time-decayed and reads are latest-wins, a later
+          // retry could only tie or worsen the earlier, better-timed match.
+          // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
+          // matching.)
+          return dependencyContainer.storage.recordMMPInstallAttributionMatch {
+            await dependencyContainer.mmpAttributionManager.matchInstall(
+              idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+              advertiserTrackingEnabled: advertiserTrackingEnabled,
+              applicationTrackingEnabled: true
+            )
+          }
         }
       }
 

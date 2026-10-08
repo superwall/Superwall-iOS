@@ -564,6 +564,7 @@
 		D25B3A24CEE42FC90BFA31D2 /* SuperwallEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75E4096EBF0B8C9693322CD1 /* SuperwallEvent.swift */; };
 		D2E381B26362F434760F9AC0 /* GameControllerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577A16EE2161E2CDEDFA48C0 /* GameControllerManager.swift */; };
 		D330BD5F814AC52E6D04C7E7 /* InternalGetPaywall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C9F31221C5E26E20514E0C1 /* InternalGetPaywall.swift */; };
+		D40450C91B0EA225DC361C93 /* MMPInstallMatchConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C95686C305E939873FFFEC2 /* MMPInstallMatchConfigTests.swift */; };
 		D443CC56731E9A20E4F43F4C /* LoadingViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20365697A9C396E8EC746B77 /* LoadingViewController.swift */; };
 		D461F38D019122194A9CB38C /* PaywallRequestBody.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6F71D7A7DC8FFB72CA13296 /* PaywallRequestBody.swift */; };
 		D4B5A9708204AB6D58904733 /* GetPaywallVcOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943CA7F8AE219A07C1245232 /* GetPaywallVcOperatorTests.swift */; };
@@ -949,6 +950,7 @@
 		5C2E30544869C5469AA31832 /* FactoryProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FactoryProtocols.swift; sourceTree = "<group>"; };
 		5C3EFD2725CAE7F5046D386F /* AppStoreVersionLookup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStoreVersionLookup.swift; sourceTree = "<group>"; };
 		5C57C1CCAF97244AE0DC953F /* PaywallManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManagerMock.swift; sourceTree = "<group>"; };
+		5C95686C305E939873FFFEC2 /* MMPInstallMatchConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMPInstallMatchConfigTests.swift; sourceTree = "<group>"; };
 		5CD130C74880AD07DCD2A7AA /* RedemptionResultObjc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RedemptionResultObjc.swift; sourceTree = "<group>"; };
 		5D44CEC91693B4B900472C1C /* Survey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Survey.swift; sourceTree = "<group>"; };
 		5D8D539E4636D23E549B4520 /* TestModePurchaseDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModePurchaseDrawer.swift; sourceTree = "<group>"; };
@@ -3382,6 +3384,7 @@
 				A82783401B92298C47BF14F7 /* AdServicesAttributionTests.swift */,
 				43C6C8966D32B889BEA06F70 /* AttributionDeviceIdentifiersTests.swift */,
 				6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */,
+				5C95686C305E939873FFFEC2 /* MMPInstallMatchConfigTests.swift */,
 			);
 			path = Attribution;
 			sourceTree = "<group>";
@@ -3848,6 +3851,7 @@
 				40314E44991DCB66B4572C25 /* LocationPermissionDelegateTests.swift in Sources */,
 				4DE01655FC4CC148DD3D161C /* LoggerMock.swift in Sources */,
 				556DDBA011967A3F2411AAE7 /* MMPInstallAttributionTests.swift in Sources */,
+				D40450C91B0EA225DC361C93 /* MMPInstallMatchConfigTests.swift in Sources */,
 				6838BDF35DFEB69351777883 /* MMPMatchResponseTests.swift in Sources */,
 				A9B924A1211117378743A534 /* MicrophonePermissionTests.swift in Sources */,
 				B294572426111EC04F225289 /* MockExternalPurchaseControllerFactory.swift in Sources */,
