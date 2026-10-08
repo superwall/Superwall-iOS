@@ -55,6 +55,10 @@ final class NetworkMock: Network {
     }
   }
 
+  override func getSuperwallProducts() async throws -> SuperwallProductsResponse {
+    return SuperwallProductsResponse(data: [])
+  }
+
   override func confirmAssignment(_ assignment: Assignment) async -> Assignment {
     assignmentsConfirmed = true
     assignment.markAsSent()
