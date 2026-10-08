@@ -16,7 +16,9 @@ import StoreKit
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
   /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
-  private let attStatusProvider: () -> Int?
+  /// Settable so tests can fix the status on a container's own helper; replacing
+  /// the helper would leave other services' `unowned` references to it dangling.
+  var attStatusProvider: () -> Int?
   /// The `adPersonalizationConsent` in the last device attributes sent, or `nil`
   /// before the first send. Guarded by `adConsentLock`.
   private var publishedAdPersonalizationConsent: String?

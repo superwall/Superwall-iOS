@@ -1065,6 +1065,16 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Waits for every ad consent update queued so far to finish. For tests, so the
+  /// work a test starts can't outlive it.
+  func waitForPendingAdConsentUpdates() async {
+    await withCheckedContinuation { continuation in
+      adConsentUpdates.enqueue {
+        continuation.resume()
+      }
+    }
+  }
+
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
   /// back to using the system setting.
   public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {

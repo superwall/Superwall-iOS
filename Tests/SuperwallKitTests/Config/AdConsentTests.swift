@@ -59,6 +59,8 @@ struct AdConsentTests {
     let updated = await deviceHelper.getTemplateDevice()
     #expect(updated["adUserDataConsent"] as? String == "granted")
     #expect(updated["adPersonalizationConsent"] as? String == "denied")
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func eventTrackingBehaviorNone_reportsDenied() async {
@@ -75,6 +77,7 @@ struct AdConsentTests {
     // The developer's choice itself is left untouched.
     #expect(options.adConsent.adUserData == .granted)
     #expect(options.adConsent.adPersonalization == .granted)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test(arguments: [FakeTrackingAuthorizationStatus.denied, .restricted])
@@ -91,6 +94,7 @@ struct AdConsentTests {
     // The stored option, which `config_attributes` reports, is left untouched.
     #expect(options.adConsent.adPersonalization == .granted)
     #expect(options.toDictionary()["adPersonalizationConsent"] as? String == "granted")
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test(arguments: [FakeTrackingAuthorizationStatus.notDetermined, .authorized])
@@ -110,6 +114,7 @@ struct AdConsentTests {
     let denied = await deviceHelper.getTemplateDevice()
     #expect(denied["adUserDataConsent"] as? String == "granted")
     #expect(denied["adPersonalizationConsent"] as? String == "denied")
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func attDenied_withTrackingNone_deniesBoth() {
@@ -150,6 +155,7 @@ struct AdConsentTests {
     #expect(recorder.sent.count == 1)
     #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+    await drainAdConsentUpdates(superwall)
   }
 
   @Test func rapidAssignments_lastAssignmentWins() async {
@@ -168,6 +174,7 @@ struct AdConsentTests {
     #expect(
       recorder.sentConfigAttributes.last?["adUserDataConsent"] as? String == "denied"
     )
+    await drainAdConsentUpdates(superwall)
   }
 
   // MARK: - Republishing on ATT changes
@@ -196,6 +203,8 @@ struct AdConsentTests {
     // Already reflected: no second republish.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
     #expect(recorder.sent.count == 2)
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func attChangeWhileOptedOut_republishesOnceTrackingResumes() async {
@@ -228,6 +237,8 @@ struct AdConsentTests {
     // Now it's sent, activation has nothing more to do.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
     #expect(recorder.sent.count == sentBeforeOptIn + 1)
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func adConsentSetWhileOptedOut_isSentOnceTrackingResumes() async {
@@ -255,6 +266,8 @@ struct AdConsentTests {
     #expect(recorder.sent.count == sentBeforeOptIn + 1)
     #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func attChange_beforeAnyUpload_doesNotRepublish() async {
@@ -266,6 +279,7 @@ struct AdConsentTests {
     // The first upload reports the current value, so there's nothing stale yet.
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == false)
     #expect(recorder.sent.isEmpty)
+    await drainAdConsentUpdates(superwall)
   }
 
   @Test func appActivation_republishesOnlyWhenATTChanged() async {
@@ -300,6 +314,7 @@ struct AdConsentTests {
     #expect(recorder.sent.count == 2)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
     withExtendedLifetime((appSessionManager, sessionDelegate, dependencyContainer)) {}
+    await drainAdConsentUpdates(superwall)
   }
 
   @Test(arguments: [
@@ -353,6 +368,8 @@ struct AdConsentTests {
       recorder.sent.last?["adPersonalizationConsent"] as? String == expectedPersonalization
     )
     withExtendedLifetime(delegate) {}
+    await drainAdConsentUpdates(superwall)
+    withExtendedLifetime(dependencyContainer) {}
   }
 
   @Test func options_serializeAdConsentForConfigAttributes() {
@@ -365,22 +382,18 @@ struct AdConsentTests {
     #expect(dictionary["adPersonalizationConsent"] as? String == "granted")
   }
 
-  /// A helper whose ATT status is fixed, since the simulator's real status
-  /// can't be set from a test. The container is held by the caller because the
-  /// helper only keeps its factory `unowned`.
+  /// The container's own device helper with its ATT status fixed, since the
+  /// simulator's real status can't be set from a test. The helper is modified
+  /// rather than replaced: other services hold it `unowned`, so a replaced one
+  /// would be freed under them. The caller keeps the container alive, since the
+  /// helper only holds it `unowned`.
   private func makeDeviceHelper(
     _ dependencyContainer: DependencyContainer,
     attStatus: FakeTrackingAuthorizationStatus
   ) -> DeviceHelper {
-    return DeviceHelper(
-      api: dependencyContainer.api,
-      storage: dependencyContainer.storage,
-      network: dependencyContainer.network,
-      entitlementsInfo: dependencyContainer.entitlementsInfo,
-      receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
-      attStatusProvider: { attStatus.rawValue }
-    )
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    deviceHelper.attStatusProvider = { attStatus.rawValue }
+    return deviceHelper
   }
 
   /// A `Superwall` whose device helper reads `attStatus`, with a delegate that
@@ -389,19 +402,24 @@ struct AdConsentTests {
     attStatus: ATTStatusBox
   ) -> (Superwall, DependencyContainer, MockSuperwallDelegate) {
     let dependencyContainer = DependencyContainer(cache: CacheMock())
-    dependencyContainer.deviceHelper = DeviceHelper(
-      api: dependencyContainer.api,
-      storage: dependencyContainer.storage,
-      network: dependencyContainer.network,
-      entitlementsInfo: dependencyContainer.entitlementsInfo,
-      receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
-      attStatusProvider: { attStatus.value.rawValue }
-    )
+    dependencyContainer.deviceHelper.attStatusProvider = { attStatus.value.rawValue }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let recorder = MockSuperwallDelegate()
     dependencyContainer.delegateAdapter.swiftDelegate = recorder
     return (superwall, dependencyContainer, recorder)
+  }
+
+  /// Waits for the ad consent work the test started, so it finishes inside the
+  /// test. Bounded, so a StoreKit or Core Data call that stalls on a loaded
+  /// simulator fails the test's own expectations instead of hanging the run.
+  private func drainAdConsentUpdates(_ superwall: Superwall) async {
+    let drained = DrainedFlag()
+    Task {
+      await superwall.waitForPendingAdConsentUpdates()
+      drained.set()
+    }
+    await waitUntil(timeout: 5) { drained.isSet }
+    #expect(drained.isSet, "Ad consent updates didn't finish")
   }
 
   private func waitUntil(
@@ -412,6 +430,19 @@ struct AdConsentTests {
     while !condition() && Date().timeIntervalSince(start) < timeout {
       try? await Task.sleep(nanoseconds: 50_000_000)
     }
+  }
+}
+
+private final class DrainedFlag: @unchecked Sendable {
+  private let lock = NSLock()
+  private var _isSet = false
+
+  var isSet: Bool {
+    lock.withLock { _isSet }
+  }
+
+  func set() {
+    lock.withLock { _isSet = true }
   }
 }
 
