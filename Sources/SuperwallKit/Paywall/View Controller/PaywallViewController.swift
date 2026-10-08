@@ -159,6 +159,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// What the shopper sees of a checkout page's waiting screen while leaving and coming back.
+  private var existingTeleportReturnCover: TeleportReturnCover?
+
   /// The product bought from this presentation, App Store or web. A close that
   /// follows a purchase, such as a `close` among the button's after-purchase
   /// actions, finishes the presentation as purchased rather than declined.
@@ -1425,7 +1428,30 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     present(safariVC, animated: true)
   }
 
-  func presentSafariExternal(_ url: URL) {
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool) {
+    teleportReturnCover.leave(drawingWaitingScreen: drawsWaitingScreen) { [weak self] in
+      self?.openExternally(url)
+    }
+  }
+
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch) {
+    teleportReturnCover.startWatching(watch)
+  }
+
+  func endTeleportWatch() {
+    existingTeleportReturnCover?.stopWatching()
+  }
+
+  private var teleportReturnCover: TeleportReturnCover {
+    if let existingTeleportReturnCover {
+      return existingTeleportReturnCover
+    }
+    let cover = TeleportReturnCover(view: view, webView: webView)
+    existingTeleportReturnCover = cover
+    return cover
+  }
+
+  private func openExternally(_ url: URL) {
     guard let sharedApplication = UIApplication.sharedApplication else {
       return
     }
@@ -1673,6 +1699,7 @@ extension PaywallViewController {
 
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
+    existingTeleportReturnCover?.reset()
     guard isPresented else {
       return
     }

@@ -188,6 +188,7 @@ struct DeepLinkRouterTests {
     arguments: [
       "myapp://superwall/return",
       "myapp://superwall/return?source=checkout",
+      "https://myapp.superwall.link/app-link/superwall/return",
       "https://myapp.superwall.app/app-link/superwall/return",
       "https://myapp.superwallapp.dev/app-link/superwall/return",
     ]
@@ -222,5 +223,102 @@ struct DeepLinkRouterTests {
         URL(string: "https://myapp.superwall.app/app-link/superwall/return")!
       ) == true
     )
+  }
+
+  // MARK: - Return Link Tracking
+
+  private final class TrackedEvents: @unchecked Sendable {
+    private let lock = NSLock()
+    private var events: [Trackable] = []
+
+    func append(_ event: Trackable) {
+      lock.lock()
+      defer { lock.unlock() }
+      events.append(event)
+    }
+
+    var all: [Trackable] {
+      lock.lock()
+      defer { lock.unlock() }
+      return events
+    }
+  }
+
+  private func routeAndCollect(
+    _ url: URL,
+    presentedPaywallInfo: PaywallInfo?
+  ) async -> (handled: Bool, events: [Trackable]) {
+    let dependencyContainer = DependencyContainer()
+    let router = dependencyContainer.deepLinkRouter!
+    let tracked = TrackedEvents()
+    router.trackEvent = { tracked.append($0) }
+    router.presentedPaywallInfo = { presentedPaywallInfo }
+
+    let handled = router.route(url: url)
+
+    // Wait for the first event, then a little longer so a stray second one would show.
+    for _ in 0..<50 where tracked.all.isEmpty {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    return (handled, tracked.all)
+  }
+
+  @Test("A return link tracks teleport_return with the presented paywall's info, not deepLink_open")
+  func route_returnLink_tracksTeleportReturn() async {
+    let paywallInfo: PaywallInfo = .stub()
+    let result = await routeAndCollect(
+      URL(string: "myapp://superwall/return")!,
+      presentedPaywallInfo: paywallInfo
+    )
+
+    #expect(result.handled == true)
+    #expect(result.events.count == 1)
+    let event = result.events.first as? InternalSuperwallEvent.TeleportReturn
+    #expect(event?.superwallEvent.description == "teleport_return")
+    #expect(event?.paywallInfo?.databaseId == paywallInfo.databaseId)
+    #expect(!result.events.contains(where: { $0 is InternalSuperwallEvent.DeepLink }))
+  }
+
+  @Test("A return link carries the checkout page's reason on teleport_return")
+  func route_returnLink_tracksReason() async {
+    let purchased = await routeAndCollect(
+      URL(string: "myapp://superwall/return?reason=purchased")!,
+      presentedPaywallInfo: nil
+    )
+    let closed = await routeAndCollect(
+      URL(string: "https://myapp.superwall.link/app-link/superwall/return?reason=closed")!,
+      presentedPaywallInfo: nil
+    )
+
+    #expect((purchased.events.first as? InternalSuperwallEvent.TeleportReturn)?.reason == "purchased")
+    #expect((closed.events.first as? InternalSuperwallEvent.TeleportReturn)?.reason == "closed")
+    #expect(purchased.handled == true)
+    #expect(closed.handled == true)
+  }
+
+  @Test("A return link with no paywall presented tracks teleport_return without paywall info")
+  func route_returnLink_noPresentedPaywall() async {
+    let result = await routeAndCollect(
+      URL(string: "https://myapp.superwall.link/app-link/superwall/return")!,
+      presentedPaywallInfo: nil
+    )
+
+    #expect(result.handled == true)
+    #expect(result.events.count == 1)
+    let event = result.events.first as? InternalSuperwallEvent.TeleportReturn
+    #expect(event != nil)
+    #expect(event?.paywallInfo == nil)
+  }
+
+  @Test("Any other deep link still tracks deepLink_open and not teleport_return")
+  func route_otherLink_tracksDeepLinkOnly() async {
+    let result = await routeAndCollect(
+      URL(string: "myapp://home")!,
+      presentedPaywallInfo: .stub()
+    )
+
+    #expect(result.events.contains(where: { $0 is InternalSuperwallEvent.DeepLink }))
+    #expect(!result.events.contains(where: { $0 is InternalSuperwallEvent.TeleportReturn }))
   }
 }

@@ -52,7 +52,7 @@ class SWWebView: WKWebView {
     isMac: Bool,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
-    factory: FeatureFlagsFactory & DeviceHelperFactory
+    factory: FeatureFlagsFactory & DeviceHelperFactory & OptionsFactory
   ) {
     self.isMac = isMac
     self.messageHandler = messageHandler
@@ -126,6 +126,17 @@ class SWWebView: WKWebView {
       wkConfig.userContentController.addUserScript(
         WKUserScript(
           source: preloadSource,
+          injectionTime: .atDocumentStart,
+          forMainFrameOnly: true
+        )
+      )
+    }
+    if let environmentSource = SubscriptionsApiEnvironmentScript.source(
+      for: factory.makeSuperwallOptions().networkEnvironment
+    ) {
+      wkConfig.userContentController.addUserScript(
+        WKUserScript(
+          source: environmentSource,
           injectionTime: .atDocumentStart,
           forMainFrameOnly: true
         )

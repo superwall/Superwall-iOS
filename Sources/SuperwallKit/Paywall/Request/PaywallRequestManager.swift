@@ -111,6 +111,7 @@ actor PaywallRequestManager {
     for request: PaywallRequest
   ) async -> Paywall {
     var paywall = paywall
+    paywall.presentationId = UUID().uuidString
     paywall.experiment = request.responseIdentifiers.experiment
     paywall.presentationSourceType = request.presentationSourceType
     if let featureGating = request.overrides.featureGatingBehavior {

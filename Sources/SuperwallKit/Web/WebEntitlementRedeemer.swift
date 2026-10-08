@@ -166,6 +166,16 @@ actor WebEntitlementRedeemer {
     return true
   }
 
+  private func waitForActiveStripePoll() async {
+    let waitStart = DispatchTime.now().uptimeNanoseconds
+    while hasActiveStripePoll, !Task.isCancelled {
+      if DispatchTime.now().uptimeNanoseconds - waitStart >= stripePendingPollTimeoutNs {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
+  }
+
   /// Either starts a new poll or waits for an existing in-flight poll to
   /// finish. Returns `true` if the checkout was redeemed.
   func pollOrWaitForActiveStripePoll() async -> Bool {
@@ -242,16 +252,27 @@ actor WebEntitlementRedeemer {
       )
     }
 
-    let outcome = await pollStripeRedemptionResult(
+    var outcome = await pollStripeRedemptionResult(
       contextId: contextId,
       productId: productId,
       trigger: .checkoutComplete,
       completion: completion
     )
+    
+    // A poll already in flight is for another checkout (an older pending one, from the
+    // foreground or paywall open), so it never redeems this one. Wait it out, then poll this
+    // checkout: skipping left the spinner up with nothing left to take it down.
+    while outcome == .skippedInFlight, !Task.isCancelled {
+      await waitForActiveStripePoll()
+      outcome = await pollStripeRedemptionResult(
+        contextId: contextId,
+        productId: productId,
+        trigger: .checkoutComplete,
+        completion: completion
+      )
+    }
 
-    // Don't hide spinner if another poll is in-flight — it will handle the
-    // loading state when it finishes.
-    if outcome != .redeemed, outcome != .skippedInFlight {
+    if outcome != .redeemed {
       let superwall = self.superwall ?? Superwall.shared
       await MainActor.run {
         superwall.paywallViewController?.loadingState = .ready
@@ -852,6 +873,10 @@ actor WebEntitlementRedeemer {
         state.checkoutContextId == contextId,
         hasStripePendingTimedOut(state) {
         clearPendingStripeCheckoutState()
+        return .noRedemptionFound
+      }
+      // A newer checkout took over the pending state: this one stops so that one is polled.
+      if let state = pendingStripeCheckoutState, state.checkoutContextId != contextId {
         return .noRedemptionFound
       }
 

@@ -8,7 +8,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`. Requires iOS 15+.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
-- Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.app/app-link/superwall/return`. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
+- Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.link/app-link/superwall/return` (also accepted on `superwall.app`). To open your app from a checkout page without the Open in App alert, add `applinks:<subdomain>.superwall.link` to your app's associated domains. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
+- Adds the `teleportOpen` event (`teleport_open`), tracked with the paywall's info when a paywall teleports the user to the web, such as to its checkout page.
+- Adds the `teleportReturn` event (`teleport_return`), tracked instead of `deepLink_open` when a return link brings the user back to your app, with the presented paywall's info if there is one.
 - A web purchase from a paywall's checkout page now finishes like an App Store purchase: once the code is redeemed, the paywall runs the purchase button's after-purchase actions, and it's dismissed (as `.purchased`) only when those actions close it. Redemption itself is unchanged, including `willRedeemLink`, `didRedeemLink` and the redemption events.
 
 ### Fixes

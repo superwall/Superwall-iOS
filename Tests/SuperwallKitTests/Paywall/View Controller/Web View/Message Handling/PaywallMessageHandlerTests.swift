@@ -77,6 +77,21 @@ struct PaywallMessageHandlerTests {
     return (messageHandler, webView, delegate)
   }
 
+  // The paywall attributes purchases it starts (web checkouts, teleports) to how it was presented.
+  @Test
+  func paywallOpen_sendsThePresentation() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+    delegate.paywall.paywalljsVersion = "2"
+
+    messageHandler.handle(.paywallOpen)
+
+    let open = await waitForEvent(named: "paywall_open", in: webView)
+    #expect(open?["presented_by"] as? String == "programmatically")
+    #expect(open?["presentation_source_type"] as? String == "register")
+    #expect(open?["presentation_id"] == nil)
+    #expect(open?["presented_by_event_id"] == nil)
+  }
+
   // Regression: the paywall schedules its trial reminder off `freeTrial_start`, so a purchase
   // that didn't start a trial (e.g. the user already used it) must not send that message.
   @Test
@@ -258,6 +273,77 @@ struct PaywallMessageHandlerTests {
 
     #expect(delegate.eventDidOccur == .openedUrlInSafari(url))
     #expect(delegate.didPresentSafariExternal == true)
+  }
+
+  @Test
+  func openUrlInSafari_forcesSafariWhenAsked() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    let url = URL(string: "https://example.com/sw-teleport/abc")!
+    messageHandler.handle(.openUrlInSafari(url, drawsWaitingScreen: true))
+
+    #expect(delegate.didPresentSafariExternal == true)
+    #expect(delegate.didDrawWaitingScreen == true)
+  }
+
+  @Test(arguments: [true, false])
+  func openUrlInSafari_tracksTeleportOpenOnlyForTeleports(isTeleport: Bool) async {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    var tracked: [Trackable] = []
+    messageHandler.trackEvent = { tracked.append($0) }
+
+    let url = URL(string: "https://example.com/sw-teleport/abc?token=secret#ref=primary")!
+    messageHandler.handle(.openUrlInSafari(url, isTeleport: isTeleport))
+
+    for _ in 0..<15 where tracked.isEmpty {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+
+    #expect(delegate.didPresentSafariExternal == true)
+    guard isTeleport else {
+      #expect(tracked.isEmpty)
+      return
+    }
+    #expect(tracked.count == 1)
+    let event = tracked.first as? InternalSuperwallEvent.TeleportOpen
+    #expect(event?.superwallEvent.description == "teleport_open")
+    #expect(event?.paywallInfo.databaseId == delegate.info.databaseId)
+    let params = await event?.getSuperwallParameters()
+    #expect(params?["url"] == nil)
+    #expect(params?["paywall_id"] as? String == delegate.info.databaseId)
   }
 
   @Test
@@ -593,6 +679,103 @@ struct PaywallMessageHandlerTests {
       productId: "com.test.product",
       shouldDismiss: true
     ))
+  }
+
+  // MARK: - Open URL External Decoding Tests
+
+  @Test(arguments: [
+    (nil, false),
+    (false, false),
+    (true, true),
+  ] as [(Bool?, Bool)])
+  func decodeOpenUrlExternal_waitingScreen(waitingScreen: Bool?, draws: Bool) throws {
+    let field = waitingScreen.map { ", \"waiting_screen\": \($0)" } ?? ""
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "open_url_external",
+            "url": "https://example.com/sw-teleport/abc"\(field)
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(
+      URL(string: "https://example.com/sw-teleport/abc")!,
+      drawsWaitingScreen: draws
+    ))
+  }
+
+  @Test(arguments: [
+    (nil, false),
+    (false, false),
+    (true, true),
+  ] as [(Bool?, Bool)])
+  func decodeOpenUrlExternal_teleport(teleport: Bool?, isTeleport: Bool) throws {
+    let field = teleport.map { ", \"teleport\": \($0)" } ?? ""
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "open_url_external",
+            "url": "https://example.com/sw-teleport/abc",
+            "waiting_screen": true\(field)
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(
+      URL(string: "https://example.com/sw-teleport/abc")!,
+      drawsWaitingScreen: true,
+      isTeleport: isTeleport
+    ))
+  }
+
+  @Test
+  func decodeTeleportWatch() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "teleport_watch_start",
+            "teleport_id": "v1:teleport",
+            "teleport_status_url": "https://subs.example.com/teleport/status",
+            "checkout_status_url": "https://subs.example.com/checkout/status",
+            "public_api_key": "pk_test"
+          },
+          { "eventName": "teleport_watch_end" }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages == [
+      .teleportWatchStart(
+        TeleportReturnCover.Watch(
+          teleportId: "v1:teleport",
+          teleportStatusUrl: URL(string: "https://subs.example.com/teleport/status")!,
+          checkoutStatusUrl: URL(string: "https://subs.example.com/checkout/status")!,
+          publicApiKey: "pk_test"
+        )
+      ),
+      .teleportWatchEnd,
+    ])
   }
 
   // MARK: - Haptic Feedback Message Decoding Tests
