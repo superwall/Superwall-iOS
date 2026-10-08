@@ -249,6 +249,59 @@ struct AdConsentTests {
     withExtendedLifetime((appSessionManager, sessionDelegate, dependencyContainer)) {}
   }
 
+  @Test(arguments: [
+    (PermissionType.tracking, "denied", 2),
+    (PermissionType.notification, "granted", 1)
+  ])
+  @MainActor
+  func paywallPermissionRequest_republishesOnlyForTracking(
+    permissionType: PermissionType,
+    expectedPersonalization: String,
+    expectedSends: Int
+  ) async {
+    let attStatus = ATTStatusBox(.notDetermined)
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(attStatus: attStatus)
+    let initial = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    #expect(recorder.sent.count == 1)
+
+    // The user denies tracking while the request is in flight. For a
+    // non-tracking request, the hook mustn't run even though ATT changed.
+    let permissions = FakePermissionHandler()
+    permissions.permissionToReturn = .denied
+    permissions.onRequest = { _ in attStatus.value = .denied }
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: permissions,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry,
+      republishIfAdConsentChanged: {
+        await superwall.republishDeviceAttributesIfAdConsentChanged()
+      }
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(paywallInfo: .stub(), webView: webView)
+    messageHandler.delegate = delegate
+
+    messageHandler.handle(
+      .requestPermission(permissionType: permissionType, requestId: "request")
+    )
+
+    // `permission_result` goes back to the web view after the republish hook.
+    await waitUntil { webView.willHandleJs }
+    #expect(webView.willHandleJs)
+    #expect(recorder.sent.count == expectedSends)
+    #expect(
+      recorder.sent.last?["adPersonalizationConsent"] as? String == expectedPersonalization
+    )
+    withExtendedLifetime(delegate) {}
+  }
+
   @Test func options_serializeAdConsentForConfigAttributes() {
     let options = SuperwallOptions()
     options.adConsent = AdConsent(adUserData: .denied, adPersonalization: .granted)

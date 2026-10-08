@@ -39,6 +39,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   private let factory: VariablesFactory
   private let permissionHandler: PermissionHandling
   private let customCallbackRegistry: CustomCallbackRegistry
+  /// Re-sends device attributes if the ATT answer changed the ad consent they report.
+  private let republishIfAdConsentChanged: () async -> Void
 
   struct EnqueuedMessage {
     let name: String
@@ -51,8 +53,12 @@ final class PaywallMessageHandler: WebEventDelegate {
     receiptManager: ReceiptManager,
     factory: VariablesFactory,
     permissionHandler: PermissionHandling,
-    customCallbackRegistry: CustomCallbackRegistry
+    customCallbackRegistry: CustomCallbackRegistry,
+    republishIfAdConsentChanged: @escaping () async -> Void = {
+      await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+    }
   ) {
+    self.republishIfAdConsentChanged = republishIfAdConsentChanged
     self.receiptManager = receiptManager
     self.factory = factory
     self.permissionHandler = permissionHandler
@@ -678,7 +684,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
       let status = await permissionHandler.requestPermission(permissionType)
       if permissionType == .tracking {
-        await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+        await republishIfAdConsentChanged()
       }
 
       // Track permission result event
