@@ -69,6 +69,8 @@ struct DeviceTemplate: Codable {
   var compilerVersion: String
   var localResourceIds: String
   var deviceId: String
+  var adUserDataConsent: String
+  var adPersonalizationConsent: String
 
   func toDictionary(encoder: JSONEncoder = JSONEncoder()) -> [String: Any] {
     guard let data = try? encoder.encode(self) else {

@@ -106,6 +106,31 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on to ad networks such as Google Ads when it reports conversions.
+  ///
+  /// Both values default to ``ConsentStatus/granted``. If your app has users in the
+  /// EEA, the UK or Switzerland, set this from your consent flow. Assign a new
+  /// ``AdConsent`` to send the change to Superwall straight away.
+  ///
+  /// You can also set the initial value via ``SuperwallOptions/adConsent``
+  /// before calling `configure`.
+  public var adConsent: AdConsent {
+    get {
+      return options.adConsent
+    }
+    set {
+      options.adConsent = newValue
+
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      Task {
+        await track(configAttributes)
+        let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
+        await track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+      }
+    }
+  }
+
   /// Defines the products to override on any paywall by product name.
   ///
   /// You can override one or more products of your choosing. For example, this is how you would override the first and third product on a paywall:

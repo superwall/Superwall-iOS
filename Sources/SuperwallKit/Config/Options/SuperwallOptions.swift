@@ -364,6 +364,16 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// You can also change this at runtime via ``Superwall/eventTrackingBehavior``.
   public var eventTrackingBehavior: EventTrackingBehavior = .all
 
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on to ad networks such as Google Ads when it reports conversions.
+  ///
+  /// Both values default to ``ConsentStatus/granted``. If your app has users in the
+  /// EEA, the UK or Switzerland, set this from your consent flow. Both are reported as
+  /// denied while ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``.
+  ///
+  /// You can also change this at runtime via ``Superwall/adConsent``.
+  public var adConsent = AdConsent()
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
@@ -536,6 +546,8 @@ public final class SuperwallOptions: NSObject, Encodable {
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
     case testModeBehavior
+    case adUserDataConsent
+    case adPersonalizationConsent
   }
 
   public override init() {
@@ -571,6 +583,8 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
+    try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
+    try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
   }
 
   func toDictionary() -> [String: Any] {

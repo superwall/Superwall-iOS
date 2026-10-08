@@ -916,6 +916,7 @@ class DeviceHelper {
     & LocaleIdentifierFactory
     & WebEntitlementFactory
     & ConfigStateFactory
+    & OptionsFactory
 
   init(
     api: Api,
@@ -923,7 +924,11 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & ConfigStateFactory,
+    factory: IdentityFactory
+      & LocaleIdentifierFactory
+      & WebEntitlementFactory
+      & ConfigStateFactory
+      & OptionsFactory,
     ipCollector: DeviceIPCollector? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) {
@@ -1009,6 +1014,8 @@ class DeviceHelper {
     // inline rather than going through ``interfaceStyle``, so the two resolve it
     // the same way by hand — keep them in step.
     let traits = currentUITraits
+    let options = factory.makeSuperwallOptions()
+    let adConsent = options.adConsent.reported(for: options.eventTrackingBehavior)
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
@@ -1071,7 +1078,9 @@ class DeviceHelper {
       swiftVersion: currentSwiftVersion(),
       compilerVersion: currentCompilerVersion(),
       localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
-      deviceId: factory.makeDeviceId()
+      deviceId: factory.makeDeviceId(),
+      adUserDataConsent: adConsent.adUserData.description,
+      adPersonalizationConsent: adConsent.adPersonalization.description
     )
 
     var deviceDictionary = template.toDictionary(

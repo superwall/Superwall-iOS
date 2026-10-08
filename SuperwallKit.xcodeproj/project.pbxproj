@@ -84,6 +84,7 @@
 		20DD915D754F7819C44A677F /* PaywallInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 299441C3A6D3948BC5E0C741 /* PaywallInfo.swift */; };
 		210BEE229900A19606803EDC /* SurveyOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03347D6B3B672A878CA2A7CA /* SurveyOption.swift */; };
 		213E7FC262106BFBC44462AC /* SWLocalizationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBE7D1E1AF61D199E17B5C05 /* SWLocalizationViewController.swift */; };
+		2200A6F9DE53E95064A17A20 /* AdConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE25827D6C0FFD2E3AEB5E1A /* AdConsent.swift */; };
 		2205A0CC8F059B3D6231C603 /* PaywallLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7140A8B0B006F2080D8915 /* PaywallLogicTests.swift */; };
 		2231B31B4B9A25778069B20A /* PaddleProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F17CFCD6B3B96A609A5B870 /* PaddleProduct.swift */; };
 		223E12D4EDBF41D8F5515E53 /* SerialTaskCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = D555619C0738B6016C62DF0E /* SerialTaskCoordinator.swift */; };
@@ -149,6 +150,7 @@
 		36B598D26A38D50CC713FD73 /* ProductsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 641BC3C3F8AC2D6E1EF44D55 /* ProductsManager.swift */; };
 		37264FFAF68B8349BD6F9BE8 /* WebEntitlementRedeemerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D8F44D23EDD6316E1C4EE1 /* WebEntitlementRedeemerTests.swift */; };
 		37FDB46DD55E649FA10D753C /* CustomerInfoDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0B300DB3367C74A42536395 /* CustomerInfoDecodingTests.swift */; };
+		38120C3BF1C0826E5D221ED3 /* AdConsentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ABE060CEC937FA10038A356 /* AdConsentTests.swift */; };
 		3824D48F8E0AF35EEBED8FF4 /* PaywallViewControllerWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22D96B4C9B546F7B0EC73397 /* PaywallViewControllerWrapper.swift */; };
 		3860BFEF3E9A4F76A90480F1 /* TestModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */; };
 		38A74D299EDFCA3F0A5261B7 /* TransactionErrorLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A719AD2F4475F83DFC9575 /* TransactionErrorLogic.swift */; };
@@ -829,6 +831,7 @@
 		2A0325FB47A06456B909BCB5 /* TestModeRestoreDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeRestoreDrawer.swift; sourceTree = "<group>"; };
 		2A50766D6FBAFA61D1121B51 /* DevicePreloadScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevicePreloadScript.swift; sourceTree = "<group>"; };
 		2AA2DEE352680123DB866281 /* CustomerCenterSheetOwnershipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterSheetOwnershipTests.swift; sourceTree = "<group>"; };
+		2ABE060CEC937FA10038A356 /* AdConsentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConsentTests.swift; sourceTree = "<group>"; };
 		2ACDC7427B6340E9D86F9B0F /* SubscriptionTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionTransaction.swift; sourceTree = "<group>"; };
 		2B40F35B536F527B029D7BDE /* SWProductSubscriptionPeriod.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWProductSubscriptionPeriod.swift; sourceTree = "<group>"; };
 		2B42460730F1CDB856A35CFA /* Attribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attribution.swift; sourceTree = "<group>"; };
@@ -1351,6 +1354,7 @@
 		DAF94D451CB6346AE3C5863B /* ASN1Decoder+KeyedDecodingContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ASN1Decoder+KeyedDecodingContainer.swift"; sourceTree = "<group>"; };
 		DB518DC9EFF0FE0C3A022982 /* String+RFC339.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+RFC339.swift"; sourceTree = "<group>"; };
 		DD7F90791145963999DDA319 /* TaskCoalescer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskCoalescer.swift; sourceTree = "<group>"; };
+		DE25827D6C0FFD2E3AEB5E1A /* AdConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdConsent.swift; sourceTree = "<group>"; };
 		DEF0596D5BDDE0911046E60D /* IntroOfferToken.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IntroOfferToken.swift; sourceTree = "<group>"; };
 		DEFDA9310B29A0C918D7A292 /* EventsResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventsResponse.swift; sourceTree = "<group>"; };
 		DF4B8468A75C8948EEFC6D4E /* StoreKitTransactionLookupMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionLookupMock.swift; sourceTree = "<group>"; };
@@ -3349,6 +3353,7 @@
 		D554340BB6652F5FA1F21FF8 /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				2ABE060CEC937FA10038A356 /* AdConsentTests.swift */,
 				97D7F499B2CBFFF0A61F8D72 /* ConfigLogicTests.swift */,
 				779C974DE83DCC78D75A59DC /* ConfigManagerEarlyPublishTests.swift */,
 				DAAE50F011668C1D62B86751 /* ConfigManagerMock.swift */,
@@ -3470,6 +3475,7 @@
 		E7D208EAB24A633EB74B1E31 /* Options */ = {
 			isa = PBXGroup;
 			children = (
+				DE25827D6C0FFD2E3AEB5E1A /* AdConsent.swift */,
 				23307BBFD80385233DDD4C43 /* AssetResource.swift */,
 				93D8033AAF5549E30ACDA3EA /* EventTrackingBehavior.swift */,
 				B1A64CCBCB23CC1715DF79AC /* PaywallOptions.swift */,
@@ -3760,6 +3766,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				BC30A871540635D2D9AF8C5D /* AccentColorRoundTripTests.swift in Sources */,
+				38120C3BF1C0826E5D221ED3 /* AdConsentTests.swift in Sources */,
 				C2A9B3F073EA27F9CD6FCA02 /* AdServicesAttributionTests.swift in Sources */,
 				9B49485A1CFAC2621A89B150 /* AppSessionLogicTests.swift in Sources */,
 				1E81A71ADE8A5EAD9E609E1D /* AppSessionManagerMock.swift in Sources */,
@@ -3959,6 +3966,7 @@
 				2C7867867DDAD83E5856ECC9 /* ASN1Types.swift in Sources */,
 				AC13B2D29FF61BDC995132DD /* AccountDetailsSection.swift in Sources */,
 				5E05FDE4F45BD5B0DF6AFB9F /* ActivityIndicatorView.swift in Sources */,
+				2200A6F9DE53E95064A17A20 /* AdConsent.swift in Sources */,
 				AECD80682E1909735CCDAA78 /* AdServicesAttributionAttempts.swift in Sources */,
 				ED575DD46B84EE351972AC6B /* AdServicesResponse.swift in Sources */,
 				90EE0190126A3BBA4661122E /* AddPaywallProducts.swift in Sources */,
