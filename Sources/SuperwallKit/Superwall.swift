@@ -109,7 +109,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// The user's consent for how their data is used for advertising, which Superwall
   /// passes on to ad networks such as Google Ads when it reports conversions.
   ///
-  /// Both values default to ``ConsentStatus/granted``. If your app has users in the
+  /// Both values default to ``AdConsentStatus/granted``. If your app has users in the
   /// EEA, the UK or Switzerland, set this from your consent flow. On iOS,
   /// personalization is reported as denied when the user hasn't allowed tracking.
   ///
@@ -122,11 +122,19 @@ public final class Superwall: NSObject, ObservableObject {
     set {
       options.adConsent = newValue
 
+      let generation = adConsentUpdates.nextGeneration()
       let configAttributes = dependencyContainer.makeConfigAttributes()
-      Task {
-        await track(configAttributes)
-        let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-        await track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+      adConsentUpdates.enqueue { [weak self] in
+        guard let self, self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(configAttributes)
+        let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+        // A newer assignment, queued behind this one, sends its own snapshot.
+        guard self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
       }
     }
   }
@@ -449,6 +457,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Items involved in the presentation of paywalls.
   let presentationItems = PresentationItems()
+
+  /// Serializes the device attribute updates that report ad consent.
+  let adConsentUpdates = AdConsentUpdateQueue()
 
   /// Determines whether a paywall is being presented.
   public var isPaywallPresented: Bool {
@@ -1017,13 +1028,26 @@ public final class Superwall: NSObject, ObservableObject {
   /// changed since they were last sent, such as after the user answers the ATT
   /// prompt mid-session. Never prompts. Returns whether it sent them.
   @discardableResult
+  ///
+  /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
+  /// one. If an assignment is made while it waits, it defers to that.
   func republishDeviceAttributesIfAdConsentChanged() async -> Bool {
-    guard dependencyContainer.deviceHelper.claimAdPersonalizationConsentRepublish() else {
-      return false
+    let generation = adConsentUpdates.currentGeneration
+    return await withCheckedContinuation { continuation in
+      adConsentUpdates.enqueue { [weak self] in
+        guard
+          let self,
+          self.adConsentUpdates.isCurrent(generation),
+          self.dependencyContainer.deviceHelper.claimAdPersonalizationConsentRepublish()
+        else {
+          continuation.resume(returning: false)
+          return
+        }
+        let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+        await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+        continuation.resume(returning: true)
+      }
     }
-    let deviceAttributes = await dependencyContainer.makeSessionDeviceAttributes()
-    await track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
-    return true
   }
 
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert

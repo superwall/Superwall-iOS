@@ -367,7 +367,7 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// The user's consent for how their data is used for advertising, which Superwall
   /// passes on to ad networks such as Google Ads when it reports conversions.
   ///
-  /// Both values default to ``ConsentStatus/granted``. If your app has users in the
+  /// Both values default to ``AdConsentStatus/granted``. If your app has users in the
   /// EEA, the UK or Switzerland, set this from your consent flow. Both are reported as
   /// denied while ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``. On iOS,
   /// personalization is reported as denied when the user hasn't allowed tracking.

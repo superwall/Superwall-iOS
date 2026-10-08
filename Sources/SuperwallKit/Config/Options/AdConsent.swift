@@ -9,7 +9,7 @@ import Foundation
 
 /// Whether a user has granted or denied consent for an advertising purpose.
 @objc(SWKConsentStatus)
-public enum ConsentStatus: Int, CustomStringConvertible, Sendable {
+public enum AdConsentStatus: Int, CustomStringConvertible, Sendable {
   /// The user has granted consent. This is the default.
   case granted = 0
 
@@ -27,21 +27,21 @@ public enum ConsentStatus: Int, CustomStringConvertible, Sendable {
 /// A user's consent for how their data is used for advertising.
 ///
 /// Superwall passes this on to ad networks, such as Google Ads, when it reports
-/// conversions for your app. Both values default to ``ConsentStatus/granted``.
+/// conversions for your app. Both values default to ``AdConsentStatus/granted``.
 ///
 /// It's immutable: to change consent, assign a new `AdConsent`.
 @objc(SWKAdConsent)
 @objcMembers
 public final class AdConsent: NSObject {
   /// Consent to send the user's data to ad networks for advertising.
-  public let adUserData: ConsentStatus
+  public let adUserData: AdConsentStatus
 
   /// Consent to use the user's data for personalized advertising.
-  public let adPersonalization: ConsentStatus
+  public let adPersonalization: AdConsentStatus
 
   public init(
-    adUserData: ConsentStatus = .granted,
-    adPersonalization: ConsentStatus = .granted
+    adUserData: AdConsentStatus = .granted,
+    adPersonalization: AdConsentStatus = .granted
   ) {
     self.adUserData = adUserData
     self.adPersonalization = adPersonalization

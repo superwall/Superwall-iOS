@@ -28,8 +28,8 @@ struct AdConsentTests {
   }
 
   @Test func consentStatus_descriptionsMatchTheServerContract() {
-    #expect(ConsentStatus.granted.description == "granted")
-    #expect(ConsentStatus.denied.description == "denied")
+    #expect(AdConsentStatus.granted.description == "granted")
+    #expect(AdConsentStatus.denied.description == "denied")
   }
 
   @Test func templateDevice_reportsGrantedByDefault() async {
@@ -133,6 +133,42 @@ struct AdConsentTests {
 
     #expect(reported.adUserData == .denied)
     #expect(reported.adPersonalization == .granted)
+  }
+
+  // MARK: - Runtime updates
+
+  @Test func settingAdConsent_tracksConfigAndDeviceAttributes() async {
+    let (superwall, _, recorder) = makeSuperwall(attStatus: ATTStatusBox(.authorized))
+
+    superwall.adConsent = AdConsent(adUserData: .denied, adPersonalization: .denied)
+
+    await waitUntil { !recorder.sent.isEmpty }
+    #expect(recorder.sentConfigAttributes.count == 1)
+    #expect(recorder.sentConfigAttributes.last?["adUserDataConsent"] as? String == "denied")
+    #expect(
+      recorder.sentConfigAttributes.last?["adPersonalizationConsent"] as? String == "denied"
+    )
+    #expect(recorder.sent.count == 1)
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+  }
+
+  @Test func rapidAssignments_lastAssignmentWins() async {
+    let (superwall, _, recorder) = makeSuperwall(attStatus: ATTStatusBox(.authorized))
+
+    superwall.adConsent = AdConsent(adUserData: .granted, adPersonalization: .granted)
+    superwall.adConsent = AdConsent(adUserData: .denied, adPersonalization: .denied)
+
+    await waitUntil {
+      recorder.sent.last?["adUserDataConsent"] as? String == "denied"
+    }
+    // Give a stale snapshot the chance to land late, if it were going to.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+    #expect(
+      recorder.sentConfigAttributes.last?["adUserDataConsent"] as? String == "denied"
+    )
   }
 
   // MARK: - Republishing on ATT changes
@@ -245,7 +281,7 @@ struct AdConsentTests {
   /// records every device-attributes event it sends.
   private func makeSuperwall(
     attStatus: ATTStatusBox
-  ) -> (Superwall, DependencyContainer, DeviceAttributesRecorder) {
+  ) -> (Superwall, DependencyContainer, MockSuperwallDelegate) {
     let dependencyContainer = DependencyContainer(cache: CacheMock())
     dependencyContainer.deviceHelper = DeviceHelper(
       api: dependencyContainer.api,
@@ -257,7 +293,7 @@ struct AdConsentTests {
       attStatusProvider: { attStatus.value.rawValue }
     )
     let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let recorder = DeviceAttributesRecorder()
+    let recorder = MockSuperwallDelegate()
     dependencyContainer.delegateAdapter.swiftDelegate = recorder
     return (superwall, dependencyContainer, recorder)
   }
@@ -287,17 +323,24 @@ private final class ATTStatusBox: @unchecked Sendable {
   }
 }
 
-private final class DeviceAttributesRecorder: SuperwallDelegate, @unchecked Sendable {
-  private let lock = NSLock()
-  private var _sent: [[String: Any]] = []
-
+extension MockSuperwallDelegate {
+  /// The attributes of every `device_attributes` event, in the order they were tracked.
   var sent: [[String: Any]] {
-    lock.withLock { _sent }
+    eventsReceived.compactMap { event in
+      if case let .deviceAttributes(attributes) = event {
+        return attributes
+      }
+      return nil
+    }
   }
 
-  func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
-    if case let .deviceAttributes(attributes) = eventInfo.event {
-      lock.withLock { _sent.append(attributes) }
+  /// The parameters of every `config_attributes` event, in the order they were tracked.
+  var sentConfigAttributes: [[String: Any]] {
+    eventInfosReceived.compactMap { info in
+      if case .configAttributes = info.event {
+        return info.params
+      }
+      return nil
     }
   }
 }

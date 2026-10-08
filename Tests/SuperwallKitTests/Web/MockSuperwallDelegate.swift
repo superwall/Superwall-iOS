@@ -12,6 +12,7 @@ import Foundation
 final class MockSuperwallDelegate: SuperwallDelegate {
   var receivedResult: RedemptionResult?
   var eventsReceived: [SuperwallEvent] = []
+  var eventInfosReceived: [SuperwallEventInfo] = []
   var receivedUserAttributes: [String: Any]?
   var willRedeemCallCount = 0
   var willRedeemCalledAt: Date?
@@ -37,6 +38,7 @@ final class MockSuperwallDelegate: SuperwallDelegate {
 
   func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo) {
     eventsReceived.append(eventInfo.event)
+    eventInfosReceived.append(eventInfo)
   }
 
   func userAttributesDidChange(newAttributes: [String: Any]) {
