@@ -11,6 +11,8 @@ import Foundation
 final class FakePermissionHandler: PermissionHandling {
   var permissionToReturn: PermissionStatus = .granted
   var requestedPermissions: [PermissionType] = []
+  /// Runs while the request is in flight, e.g. to change what the user answered.
+  var onRequest: ((PermissionType) -> Void)?
 
   func hasPermission(_ permission: PermissionType) async -> PermissionStatus {
     return permissionToReturn
@@ -18,6 +20,7 @@ final class FakePermissionHandler: PermissionHandling {
 
   func requestPermission(_ permission: PermissionType) async -> PermissionStatus {
     requestedPermissions.append(permission)
+    onRequest?(permission)
     return permissionToReturn
   }
 }

@@ -73,14 +73,22 @@ actor PlacementsQueue {
       }
   }
 
+  /// Queues `data` for sending. Returns whether the tracking behavior allowed it.
+  @discardableResult
   func enqueue(
     data: JSON,
     from placement: Trackable
-  ) {
+  ) -> Bool {
     guard trackingAllowed(from: placement) else {
-      return
+      return false
     }
     elements.append(data)
+    return true
+  }
+
+  /// The names of the events waiting to be flushed. For tests.
+  var queuedEventNames: [String] {
+    elements.compactMap { $0["event_name"].string }
   }
 
   func setTrackingBehavior(_ behavior: EventTrackingBehavior) {

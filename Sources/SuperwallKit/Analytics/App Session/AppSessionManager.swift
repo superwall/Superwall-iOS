@@ -19,13 +19,23 @@ class AppSessionManager {
   private unowned let configManager: ConfigManager
   private unowned let storage: Storage
   private unowned let delegate: DeviceHelperFactory & UserAttributesPlacementFactory
+  /// Catches ATT changes made while the app was in the background, e.g. in Settings.
+  private let republishIfAdConsentChanged: () async -> Void
+  /// Where app lifecycle notifications are observed. Tests pass their own.
+  private let notificationCenter: NotificationCenter
 
   init(
     configManager: ConfigManager,
     identityManager: IdentityManager,
     storage: Storage,
-    delegate: DeviceHelperFactory & UserAttributesPlacementFactory
+    delegate: DeviceHelperFactory & UserAttributesPlacementFactory,
+    republishIfAdConsentChanged: @escaping () async -> Void = {
+      await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+    },
+    notificationCenter: NotificationCenter = .default
   ) {
+    self.republishIfAdConsentChanged = republishIfAdConsentChanged
+    self.notificationCenter = notificationCenter
     self.configManager = configManager
     self.storage = storage
     self.delegate = delegate
@@ -38,19 +48,19 @@ class AppSessionManager {
   // MARK: - Listeners
   @MainActor
   private func addActiveStateObservers() {
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillResignActive),
       name: UIApplication.willResignActiveNotification,
       object: nil
     )
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationDidBecomeActive),
       name: UIApplication.didBecomeActiveNotification,
       object: nil
     )
-    NotificationCenter.default.addObserver(
+    notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillTerminate),
       name: UIApplication.willTerminateNotification,
@@ -95,9 +105,17 @@ class AppSessionManager {
 
   @objc private func applicationDidBecomeActive() {
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
-      await sessionCouldRefresh()
+      await didBecomeActive()
     }
+  }
+
+  /// Handles the app becoming active. Internal so tests can await it rather than post
+  /// the app-wide notification, which every live manager would react to.
+  func didBecomeActive() async {
+    await Superwall.shared.track(InternalSuperwallEvent.AppOpen())
+    await sessionCouldRefresh()
+    // After the session check, which may already have sent fresh device attributes.
+    await republishIfAdConsentChanged()
   }
 
   // MARK: - Logic
