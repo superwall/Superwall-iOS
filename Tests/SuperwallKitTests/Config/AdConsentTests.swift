@@ -662,11 +662,8 @@ struct AdConsentTests {
     #expect(dictionary["adPersonalizationConsent"] as? String == "granted")
   }
 
-  /// The container's own device helper with its ATT status fixed, since the
-  /// simulator's real status can't be set from a test. The helper is modified
-  /// rather than replaced: other services hold it `unowned`, so a replaced one
-  /// would be freed under them. The caller keeps the container alive, since the
-  /// helper only holds it `unowned`.
+  /// The container's own device helper with its ATT status set for the test. The
+  /// caller keeps the container alive, since the helper holds it `unowned`.
   ///
   /// It reads banner consent from `banner`, or from an empty suite, so nothing in
   /// the test host's standard defaults can leak in.

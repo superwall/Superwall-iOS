@@ -1061,13 +1061,9 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Queues a republish-if-changed straight away, without waiting for it.
-  ///
-  /// Called after every device attributes send is recorded: a send builds its
-  /// attributes before it's tracked, so a consent change in between (an ATT or
-  /// banner answer) would otherwise only be checked against nothing, or against
-  /// the older send, and be lost. When nothing changed it does nothing, so the
-  /// republish it may track can't start a loop.
+  /// Queues a republish-if-changed without waiting for it. Called after every
+  /// device attributes send, so consent that changed while that send was being
+  /// built is sent too. Does nothing when the consent is unchanged.
   func reconcileAdConsentAfterPublish() {
     enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
   }

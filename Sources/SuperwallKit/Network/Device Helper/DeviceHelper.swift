@@ -16,8 +16,7 @@ import StoreKit
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
   /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
-  /// Settable so tests can fix the status on a container's own helper; replacing
-  /// the helper would leave other services' `unowned` references to it dangling.
+  /// Settable for tests.
   var attStatusProvider: () -> Int?
   /// Where a consent banner stores its answer. Settable so tests can use their own.
   var consentDefaults: UserDefaults = .standard
