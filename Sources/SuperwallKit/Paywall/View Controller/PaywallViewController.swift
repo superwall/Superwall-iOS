@@ -468,6 +468,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     loadingState = .loadingURL
+    webView.messageHandler.documentWillLoad()
 
     if let paywallArchiveManager = self.paywallArchiveManager,
       paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
@@ -537,6 +538,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   @objc private func reloadWebView() {
+    webView.messageHandler.documentWillLoad()
     webView.reload()
   }
 

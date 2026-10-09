@@ -48,6 +48,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   }
   /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
   private var messageQueue: Queue<EnqueuedMessage> = Queue()
+  private var isDocumentReady = false
+  private var isPaywallOpen = false
 
   init(
     receiptManager: ReceiptManager,
@@ -83,6 +85,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
+      isDocumentReady = true
       let loadedAt = Date()
       Task {
         await self.didLoadWebView(for: paywall, at: loadedAt)
@@ -91,8 +94,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
+      isPaywallOpen = true
       let paywallOpen = SuperwallEventObjc.paywallOpen.description
-      if delegate?.paywall.paywalljsVersion == nil {
+      if !isDocumentReady {
         let message = EnqueuedMessage(
           name: paywallOpen,
           paywall: paywall
@@ -104,8 +108,9 @@ final class PaywallMessageHandler: WebEventDelegate {
         }
       }
     case .paywallClose:
+      isPaywallOpen = false
       let paywallClose = SuperwallEventObjc.paywallClose.description
-      if delegate?.paywall.paywalljsVersion == nil {
+      if !isDocumentReady {
         let message = EnqueuedMessage(
           name: paywallClose,
           paywall: paywall
@@ -279,6 +284,23 @@ final class PaywallMessageHandler: WebEventDelegate {
         await Superwall.shared.track(event)
       }
     }
+  }
+
+  func documentWillLoad() {
+    isDocumentReady = false
+    messageQueue = Queue()
+    guard
+      isPaywallOpen,
+      let paywall = delegate?.paywall
+    else {
+      return
+    }
+    messageQueue.enqueue(
+      EnqueuedMessage(
+        name: SuperwallEventObjc.paywallOpen.description,
+        paywall: paywall
+      )
+    )
   }
 
   nonisolated private func pass(

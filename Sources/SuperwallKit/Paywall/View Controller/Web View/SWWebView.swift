@@ -271,6 +271,7 @@ extension SWWebView: WKNavigationDelegate {
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+    messageHandler.documentWillLoad()
     if delegate?.isActive == true,
       activeProcessTerminationRetryCount < maxActiveProcessTerminationRetries {
       activeProcessTerminationRetryCount += 1
