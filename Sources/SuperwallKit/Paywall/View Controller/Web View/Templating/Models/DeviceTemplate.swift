@@ -71,6 +71,7 @@ struct DeviceTemplate: Codable {
   var deviceId: String
   var adUserDataConsent: String
   var adPersonalizationConsent: String
+  var adConsentSource: String
 
   func toDictionary(encoder: JSONEncoder = JSONEncoder()) -> [String: Any] {
     guard let data = try? encoder.encode(self) else {

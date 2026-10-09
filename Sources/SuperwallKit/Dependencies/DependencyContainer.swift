@@ -22,6 +22,7 @@ final class DependencyContainer {
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
   var appSessionManager: AppSessionManager!
+  var tcfConsentObserver: TCFConsentObserver!
   var storage: Storage!
   var network: Network!
   var paywallManager: PaywallManager!
@@ -203,6 +204,8 @@ final class DependencyContainer {
       storage: storage,
       delegate: self
     )
+
+    tcfConsentObserver = TCFConsentObserver()
 
     debugManager = DebugManager(
       storage: storage,

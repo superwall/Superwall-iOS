@@ -19,9 +19,11 @@ class DeviceHelper {
   /// Settable so tests can fix the status on a container's own helper; replacing
   /// the helper would leave other services' `unowned` references to it dangling.
   var attStatusProvider: () -> Int?
-  /// The `adPersonalizationConsent` in the last device attributes sent, or `nil`
-  /// before the first send. Guarded by `adConsentLock`.
-  private var publishedAdPersonalizationConsent: String?
+  /// Where a consent banner stores its answer. Settable so tests can use their own.
+  var consentDefaults: UserDefaults = .standard
+  /// The ad consent attributes in the last device attributes sent, or `nil` before
+  /// the first send. Guarded by `adConsentLock`.
+  private var publishedAdConsent: ReportedAdConsent?
   private let adConsentLock = NSLock()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
@@ -976,39 +978,62 @@ class DeviceHelper {
   }
 
   /// The ad consent device attributes would report right now.
-  var reportedAdConsent: AdConsent {
+  ///
+  /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
+  /// consent banner's stored answer, then the granted default. The `.none` rule then
+  /// applies to all of them, and the ATT rule to all but the app's own setting,
+  /// which is always trusted.
+  var reportedAdConsent: ReportedAdConsent {
     let options = factory.makeSuperwallOptions()
-    return options.adConsent.reported(
+    let consent: AdConsent
+    let source: AdConsentSource
+    if options.isAdConsentSet {
+      consent = options.adConsent
+      source = .developer
+    } else if let bannerConsent = TCFConsent.consent(from: consentDefaults) {
+      consent = bannerConsent
+      source = .tcf
+    } else {
+      consent = AdConsent()
+      source = .default
+    }
+    let reported = consent.reported(
       for: options.eventTrackingBehavior,
-      attStatus: attStatusProvider()
+      attStatus: source == .developer ? nil : attStatusProvider()
+    )
+    return ReportedAdConsent(
+      adUserData: reported.adUserData.description,
+      adPersonalization: reported.adPersonalization.description,
+      source: source.rawValue
     )
   }
 
-  /// Notes the ad personalization consent in device attributes that were just sent.
+  /// Notes the ad consent in device attributes that were just sent.
   func recordPublishedDeviceAttributes(_ attributes: [String: Any]) {
-    guard let consent = attributes["adPersonalizationConsent"] as? String else {
+    guard let consent = ReportedAdConsent(attributes: attributes) else {
       return
     }
     adConsentLock.lock()
-    publishedAdPersonalizationConsent = consent
+    publishedAdConsent = consent
     adConsentLock.unlock()
   }
 
-  /// Whether the ad personalization consent has changed since device attributes
-  /// were last sent, for example because the user answered the ATT prompt.
+  /// Whether the ad consent or its source has changed since device attributes were
+  /// last sent, for example because the user answered the ATT prompt or a consent
+  /// banner.
   ///
   /// Returns `false` before the first send, which reports the current value anyway,
   /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
   /// would be sent. Callers serialize through ``AdConsentUpdateQueue`` so the send
   /// is recorded before the next check.
-  func adPersonalizationConsentNeedsRepublish() -> Bool {
+  func adConsentNeedsRepublish() -> Bool {
     if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
       return false
     }
-    let current = reportedAdConsent.adPersonalization.description
+    let current = reportedAdConsent
     adConsentLock.lock()
     defer { adConsentLock.unlock() }
-    guard let published = publishedAdPersonalizationConsent else {
+    guard let published = publishedAdConsent else {
       return false
     }
     return published != current
@@ -1137,8 +1162,9 @@ class DeviceHelper {
       compilerVersion: currentCompilerVersion(),
       localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
       deviceId: factory.makeDeviceId(),
-      adUserDataConsent: adConsent.adUserData.description,
-      adPersonalizationConsent: adConsent.adPersonalization.description
+      adUserDataConsent: adConsent.adUserData,
+      adPersonalizationConsent: adConsent.adPersonalization,
+      adConsentSource: adConsent.source
     )
 
     var deviceDictionary = template.toDictionary(

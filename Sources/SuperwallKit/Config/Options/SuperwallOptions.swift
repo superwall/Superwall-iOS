@@ -365,16 +365,28 @@ public final class SuperwallOptions: NSObject, Encodable {
   public var eventTrackingBehavior: EventTrackingBehavior = .all
 
   /// The user's consent for how their data is used for advertising, which Superwall
-  /// passes on with the conversions it uploads to Google Ads. Other ad networks
-  /// don't use it yet.
+  /// passes on with the conversions it uploads to Google Ads and Meta.
   ///
-  /// Both values default to ``AdConsentStatus/granted``. If your app has users in the
-  /// EEA, the UK or Switzerland, set this from your consent flow. Both are reported as
-  /// denied while ``eventTrackingBehavior`` is ``EventTrackingBehavior/none``. On iOS,
-  /// personalization is reported as denied when the user hasn't allowed tracking.
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// Both are reported as denied while ``eventTrackingBehavior`` is
+  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
+  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
   ///
   /// You can also change this at runtime via ``Superwall/adConsent``.
-  public var adConsent = AdConsent()
+  public var adConsent = AdConsent() {
+    didSet {
+      isAdConsentSet = true
+    }
+  }
+
+  /// Whether the app has assigned ``adConsent``, even to the default value. Until
+  /// then, a consent banner's stored answer takes its place.
+  var isAdConsentSet = false
 
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
@@ -550,6 +562,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case testModeBehavior
     case adUserDataConsent
     case adPersonalizationConsent
+    case isAdConsentSet
   }
 
   public override init() {
@@ -587,6 +600,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
     try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
     try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
+    try container.encode(isAdConsentSet, forKey: .isAdConsentSet)
   }
 
   func toDictionary() -> [String: Any] {

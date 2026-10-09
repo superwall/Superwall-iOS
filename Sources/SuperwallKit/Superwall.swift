@@ -116,12 +116,16 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The user's consent for how their data is used for advertising, which Superwall
-  /// passes on with the conversions it uploads to Google Ads. Other ad networks
-  /// don't use it yet.
+  /// passes on with the conversions it uploads to Google Ads and Meta.
   ///
-  /// Both values default to ``AdConsentStatus/granted``. If your app has users in the
-  /// EEA, the UK or Switzerland, set this from your consent flow. On iOS,
-  /// personalization is reported as denied when the user hasn't allowed tracking.
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// On iOS, personalization is reported as denied when the user hasn't allowed
+  /// tracking, unless you set `adConsent` yourself.
   ///
   /// You can also set the initial value via ``SuperwallOptions/adConsent``
   /// before calling `configure`.
@@ -1046,8 +1050,8 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
-  /// With `onlyIfAdConsentChanged`, it does so only when the ad personalization
-  /// consent differs from what was last sent. Returns whether it sent them.
+  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent or
+  /// its source differs from what was last sent. Returns whether it sent them.
   @discardableResult
   func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
     let generation = adConsentUpdates.currentGeneration
@@ -1057,7 +1061,7 @@ public final class Superwall: NSObject, ObservableObject {
           let self,
           self.adConsentUpdates.isCurrent(generation),
           !onlyIfAdConsentChanged
-            || self.dependencyContainer.deviceHelper.adPersonalizationConsentNeedsRepublish()
+            || self.dependencyContainer.deviceHelper.adConsentNeedsRepublish()
         else {
           continuation.resume(returning: false)
           return
