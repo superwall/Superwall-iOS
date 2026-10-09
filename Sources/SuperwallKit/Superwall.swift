@@ -1038,9 +1038,9 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  /// Re-sends device attributes if the ad personalization consent they report has
+  /// Re-sends device attributes if the ad consent they report, or its source, has
   /// changed since they were last sent, such as after the user answers the ATT
-  /// prompt mid-session. Never prompts. Returns whether it sent them.
+  /// prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
   ///
   /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
   /// one. If an assignment is made while it waits, it defers to that.
@@ -1054,22 +1054,42 @@ public final class Superwall: NSObject, ObservableObject {
   /// its source differs from what was last sent. Returns whether it sent them.
   @discardableResult
   func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
-    let generation = adConsentUpdates.currentGeneration
     return await withCheckedContinuation { continuation in
-      adConsentUpdates.enqueue { [weak self] in
-        guard
-          let self,
-          self.adConsentUpdates.isCurrent(generation),
-          !onlyIfAdConsentChanged
-            || self.dependencyContainer.deviceHelper.adConsentNeedsRepublish()
-        else {
-          continuation.resume(returning: false)
-          return
-        }
-        let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
-        await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
-        continuation.resume(returning: true)
+      enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: onlyIfAdConsentChanged) {
+        continuation.resume(returning: $0)
       }
+    }
+  }
+
+  /// Queues a republish-if-changed straight away, without waiting for it.
+  ///
+  /// Called after every device attributes send is recorded: a send builds its
+  /// attributes before it's tracked, so a consent change in between (an ATT or
+  /// banner answer) would otherwise only be checked against nothing, or against
+  /// the older send, and be lost. When nothing changed it does nothing, so the
+  /// republish it may track can't start a loop.
+  func reconcileAdConsentAfterPublish() {
+    enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
+  }
+
+  private func enqueueDeviceAttributesRepublish(
+    onlyIfAdConsentChanged: Bool,
+    completion: @escaping @Sendable (Bool) -> Void
+  ) {
+    let generation = adConsentUpdates.currentGeneration
+    adConsentUpdates.enqueue { [weak self] in
+      guard
+        let self,
+        self.adConsentUpdates.isCurrent(generation),
+        !onlyIfAdConsentChanged
+          || self.dependencyContainer.deviceHelper.adConsentNeedsRepublish()
+      else {
+        completion(false)
+        return
+      }
+      let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+      await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+      completion(true)
     }
   }
 

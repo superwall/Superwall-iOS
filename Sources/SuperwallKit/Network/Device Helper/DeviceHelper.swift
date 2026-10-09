@@ -21,6 +21,9 @@ class DeviceHelper {
   var attStatusProvider: () -> Int?
   /// Where a consent banner stores its answer. Settable so tests can use their own.
   var consentDefaults: UserDefaults = .standard
+  /// Runs while device attributes are being built, after their ad consent is read.
+  /// For tests, to change consent mid-build.
+  var afterAdConsentSnapshot: (() async -> Void)?
   /// The ad consent attributes in the last device attributes sent, or `nil` before
   /// the first send. Guarded by `adConsentLock`.
   private var publishedAdConsent: ReportedAdConsent?
@@ -1099,6 +1102,7 @@ class DeviceHelper {
     // the same way by hand — keep them in step.
     let traits = currentUITraits
     let adConsent = reportedAdConsent
+    await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,

@@ -73,6 +73,8 @@ extension Superwall {
       dependencyContainer.deviceHelper.recordPublishedDeviceAttributes(
         deviceAttributes.deviceAttributes
       )
+      // Catch a consent change that landed while these attributes were being built.
+      reconcileAdConsentAfterPublish()
     }
 
     if event.canImplicitlyTriggerPaywall {

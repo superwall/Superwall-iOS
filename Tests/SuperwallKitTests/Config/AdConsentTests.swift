@@ -304,6 +304,8 @@ struct AdConsentTests {
     )
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.last?["adConsentSource"] as? String == "default")
 
     // An unrelated defaults write sends nothing.
@@ -329,6 +331,54 @@ struct AdConsentTests {
     try? await Task.sleep(nanoseconds: 300_000_000)
     await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.count == 2)
+    withExtendedLifetime(observer) {}
+  }
+
+  @Test(arguments: [true, false])
+  func bannerChangeDuringTheFirstUpload_isSentOnceItFinishes(bannerChanges: Bool) async {
+    let banner = BannerDefaults()
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(
+      attStatus: ATTStatusBox(.authorized),
+      banner: banner
+    )
+    let notificationCenter = NotificationCenter()
+    let observer = TCFConsentObserver(
+      defaults: banner.defaults,
+      notificationCenter: notificationCenter,
+      onChange: { await superwall.republishDeviceAttributesIfAdConsentChanged() }
+    )
+    // Hold the first build after it has read the (default) consent.
+    let gate = SnapshotGate()
+    dependencyContainer.deviceHelper.afterAdConsentSnapshot = { await gate.pass() }
+
+    let firstUpload = Task {
+      let attributes = await dependencyContainer.makeSessionDeviceAttributes()
+      await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: attributes))
+    }
+    await gate.waitUntilEntered()
+
+    if bannerChanges {
+      // Nothing has been sent yet, so this alone can't republish anything.
+      banner.set(gdprApplies: 1, purposes: "0000000000")
+      notificationCenter.post(name: UserDefaults.didChangeNotification, object: banner.defaults)
+      try? await Task.sleep(nanoseconds: 200_000_000)
+      #expect(recorder.sent.isEmpty)
+    }
+
+    await gate.release()
+    await firstUpload.value
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    await drainAdConsentUpdates(superwall)
+
+    #expect(recorder.sent.first?["adConsentSource"] as? String == "default")
+    if bannerChanges {
+      #expect(recorder.sent.count == 2)
+      #expect(recorder.sent.last?["adUserDataConsent"] as? String == "denied")
+      #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+      #expect(recorder.sent.last?["adConsentSource"] as? String == "tcf")
+    } else {
+      #expect(recorder.sent.count == 1)
+    }
     withExtendedLifetime(observer) {}
   }
 
@@ -379,6 +429,8 @@ struct AdConsentTests {
     // The initial upload reports the option, since ATT hasn't been asked yet.
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.count == 1)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
 
@@ -407,6 +459,8 @@ struct AdConsentTests {
     // `.all` sends granted.
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "granted")
 
     // Opted out, the user denies tracking. Activation mustn't treat that as sent.
@@ -442,6 +496,8 @@ struct AdConsentTests {
     // Both granted are sent.
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.last?["adUserDataConsent"] as? String == "granted")
 
     // Opted out, only ad user data is denied. That doesn't change personalization,
@@ -471,6 +527,8 @@ struct AdConsentTests {
     // Granted is sent, then the ATT denial is queued and recorded as sent.
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     attStatus.value = .denied
     #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == true)
     #expect(await queue.queuedEventNames.contains("device_attributes"))
@@ -519,6 +577,8 @@ struct AdConsentTests {
     )
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
 
     // Activation without an ATT change sends nothing. The handler is awaited
     // directly rather than posting the app-wide notification, which would also
@@ -549,6 +609,8 @@ struct AdConsentTests {
     let (superwall, dependencyContainer, recorder) = makeSuperwall(attStatus: attStatus)
     let initial = await dependencyContainer.makeSessionDeviceAttributes()
     await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    // Let the reconcile that follows every send settle before the test changes anything.
+    await drainAdConsentUpdates(superwall)
     #expect(recorder.sent.count == 1)
 
     // The user denies tracking while the request is in flight. For a
@@ -685,6 +747,34 @@ final class BannerDefaults: @unchecked Sendable {
 
   deinit {
     defaults.removePersistentDomain(forName: suiteName)
+  }
+}
+
+/// Holds the first device attributes build until released; later builds pass.
+private actor SnapshotGate {
+  private var isEntered = false
+  private var isReleased = false
+  private var waiters: [CheckedContinuation<Void, Never>] = []
+
+  func pass() async {
+    if isReleased {
+      return
+    }
+    isEntered = true
+    await withCheckedContinuation { waiters.append($0) }
+  }
+
+  func waitUntilEntered() async {
+    let start = Date()
+    while !isEntered && Date().timeIntervalSince(start) < 5 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+  }
+
+  func release() {
+    isReleased = true
+    waiters.forEach { $0.resume() }
+    waiters.removeAll()
   }
 }
 
