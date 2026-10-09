@@ -36,8 +36,22 @@ enum TestModeReason: Sendable {
   /// Test mode is always enabled via SuperwallOptions.
   case testModeOption
 
-  /// The app's bundle ID doesn't match the config's `bundleIds.ios`.
+  /// The app's bundle ID doesn't match the config's `bundleIds.ios`, in a
+  /// build that isn't from the App Store.
   case bundleIdMismatch(expected: String, actual: String)
+
+  /// Whether the config itself asked for test mode, as opposed to an option
+  /// the app set. Only a config can change between launches, so only these
+  /// reasons can come from a config saved by an earlier launch.
+  var comesFromConfig: Bool {
+    switch self {
+    case .configMatch,
+      .bundleIdMismatch:
+      return true
+    case .testModeOption:
+      return false
+    }
+  }
 
   var description: String {
     switch self {
@@ -92,6 +106,10 @@ final class TestModeManager {
     return NSClassFromString("XCTestCase") != nil
   }()
 
+  /// Whether the app is running outside App Store production: simulator,
+  /// TestFlight or a development build. Replaced in tests.
+  var isSandboxEnvironment: () -> Bool = { DeviceHelper.isSandboxEnvironment }
+
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
@@ -108,53 +126,68 @@ final class TestModeManager {
 
   /// Evaluates whether the current user should be in test mode based on the config
   /// and the `testModeBehavior` option. Called on every config refresh.
-  func evaluateTestMode(config: Config, options: SuperwallOptions) {
+  ///
+  /// - Returns: The reason test mode is now on, or `nil` if it's off.
+  @discardableResult
+  func evaluateTestMode(config: Config, options: SuperwallOptions) -> TestModeReason? {
+    guard let reason = reasonForTestMode(
+      config: config,
+      options: options,
+      warnAboutIgnoredMismatch: true
+    ) else {
+      isTestMode = false
+      testModeReason = nil
+      clearTestModeState()
+      return nil
+    }
+    isTestMode = true
+    testModeReason = reason
+    return reason
+  }
+
+  /// Why `config` and `options` would put the current user in test mode, or
+  /// `nil` if they wouldn't. Changes nothing, so a config can be checked before
+  /// it is used.
+  func reasonForTestMode(config: Config, options: SuperwallOptions) -> TestModeReason? {
+    return reasonForTestMode(config: config, options: options, warnAboutIgnoredMismatch: false)
+  }
+
+  private func reasonForTestMode(
+    config: Config,
+    options: SuperwallOptions,
+    warnAboutIgnoredMismatch: Bool
+  ) -> TestModeReason? {
     if DevMode.isActive(options) {
-      isTestMode = true
-      testModeReason = .testModeOption
-      return
+      return .testModeOption
     }
     switch options.testModeBehavior {
     case .never:
-      isTestMode = false
-      testModeReason = nil
-      clearTestModeState()
-      return
-
+      return nil
     case .always:
-      isTestMode = true
-      testModeReason = .testModeOption
-      return
-
+      return .testModeOption
     case .whenEnabledForUser:
       // Only check user ID match, skip bundle ID check
-      if checkConfigMatch(config: config) { return }
-      isTestMode = false
-      testModeReason = nil
-      clearTestModeState()
-      return
-
+      return configMatchReason(config: config)
     case .automatic:
       // Skip entirely if in UI tests
       if Self.isTestEnvironment {
-        isTestMode = false
-        testModeReason = nil
-        clearTestModeState()
-        return
+        return nil
       }
       // Check user match, then bundle ID mismatch
-      if checkConfigMatch(config: config) { return }
-      if checkBundleIdMismatch(config: config) { return }
-      isTestMode = false
-      testModeReason = nil
-      clearTestModeState()
-      return
+      return configMatchReason(config: config)
+        ?? bundleIdMismatchReason(config: config, warnIfIgnored: warnAboutIgnoredMismatch)
     }
   }
 
-  /// Checks if the current user's ID or alias matches any test store user in the config.
-  /// Returns `true` and activates test mode if a match is found.
-  private func checkConfigMatch(config: Config) -> Bool {
+  /// Whether `config` itself would put the current user in test mode. Such a
+  /// config must never be the one a launch starts from: see
+  /// `ConfigManager.cachedConfigForLaunch()`.
+  func isPutInTestMode(by config: Config, options: SuperwallOptions) -> Bool {
+    return reasonForTestMode(config: config, options: options)?.comesFromConfig == true
+  }
+
+  /// The reason if the current user's ID or alias matches any test store user in the config.
+  private func configMatchReason(config: Config) -> TestModeReason? {
     let testModeUserIds = config.testModeUserIds ?? []
     let aliasId = identityManager.aliasId
     let appUserId = identityManager.appUserId
@@ -163,35 +196,52 @@ final class TestModeManager {
       switch testUser.type {
       case .userId:
         if let appUserId, appUserId == testUser.value {
-          isTestMode = true
-          testModeReason = .configMatch
-          return true
+          return .configMatch
         }
       case .aliasId:
         if aliasId == testUser.value {
-          isTestMode = true
-          testModeReason = .configMatch
-          return true
+          return .configMatch
         }
       }
     }
-    return false
+    return nil
   }
 
-  /// Checks if the app's bundle ID differs from the config's expected bundle ID.
-  /// Returns `true` and activates test mode if a mismatch is found.
+  /// The reason if the app's bundle ID differs from the config's expected bundle ID.
   /// App extensions are allowed because their bundle ID uses the main app's
   /// bundle ID as a prefix (e.g., `com.example.app.widget-extension`).
-  private func checkBundleIdMismatch(config: Config) -> Bool {
-    if let expectedBundleId = config.bundleIdConfig,
+  ///
+  /// - Parameter warnIfIgnored: Whether to log when an App Store build ignores
+  ///   the mismatch. Only set when the config is being applied, so the warning
+  ///   shows once per config rather than on every check.
+  private func bundleIdMismatchReason(config: Config, warnIfIgnored: Bool) -> TestModeReason? {
+    guard
+      let expectedBundleId = config.bundleIdConfig,
       let actualBundleId = Bundle.main.bundleIdentifier,
       expectedBundleId != actualBundleId,
-      !actualBundleId.hasPrefix(expectedBundleId + ".") {
-      isTestMode = true
-      testModeReason = .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
-      return true
+      !actualBundleId.hasPrefix(expectedBundleId + ".")
+    else {
+      return nil
     }
-    return false
+    // A mismatch is how a developer's own build gets into test mode without
+    // any setup. An App Store install is a customer's, and the mismatch there
+    // means the bundle ID on the dashboard was edited, which must not replace
+    // their real purchases with simulated ones. Test users marked on the
+    // dashboard still get test mode in an App Store build.
+    guard isSandboxEnvironment() else {
+      if !warnIfIgnored {
+        return nil
+      }
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "The app's bundle ID is \(actualBundleId) but the Superwall dashboard expects "
+          + "\(expectedBundleId). Ignoring the mismatch because this is an App Store build, "
+          + "so test mode stays off. Correct the bundle ID in the dashboard's app settings."
+      )
+      return nil
+    }
+    return .bundleIdMismatch(expected: expectedBundleId, actual: actualBundleId)
   }
 
   /// Clears all test mode state including entitlements, products,

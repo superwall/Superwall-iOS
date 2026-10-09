@@ -320,4 +320,119 @@ struct TestModeManagerTests {
       #expect(Bool(false), "Expected .bundleIdMismatch reason, got \(String(describing: manager.testModeReason))")
     }
   }
+
+  // MARK: - Checking a config without applying it
+
+  @Test
+  func reasonForTestMode_changesNothing() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    let reason = manager.reasonForTestMode(config: config, options: SuperwallOptions())
+
+    if case .bundleIdMismatch = reason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .bundleIdMismatch reason, got \(String(describing: reason))")
+    }
+    #expect(manager.isTestMode == false)
+    #expect(manager.testModeReason == nil)
+  }
+
+  @Test
+  func isPutInTestMode_byBundleIdMismatch() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    #expect(manager.isPutInTestMode(by: config, options: SuperwallOptions()) == true)
+  }
+
+  @Test
+  func isPutInTestMode_byTestUser() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+
+    #expect(manager.isPutInTestMode(by: config, options: SuperwallOptions()) == true)
+  }
+
+  @Test
+  func isPutInTestMode_isFalseWhenTheAppAskedForTestMode() {
+    // The option turns test mode on whatever the config says, so the config
+    // is safe to save and to start a launch from.
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    let options = SuperwallOptions()
+    options.testModeBehavior = .always
+
+    #expect(manager.reasonForTestMode(config: .stub(), options: options) != nil)
+    #expect(manager.isPutInTestMode(by: .stub(), options: options) == false)
+  }
+
+  @Test
+  func isPutInTestMode_isFalseForAnOrdinaryConfig() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: Bundle.main.bundleIdentifier)
+
+    #expect(manager.isPutInTestMode(by: config, options: SuperwallOptions()) == false)
+  }
+
+  // MARK: - App Store builds
+
+  @Test
+  func testModeBehavior_automatic_ignoresBundleIdMismatchInAnAppStoreBuild() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    manager.isSandboxEnvironment = { false }
+
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    #expect(manager.isTestMode == false)
+    #expect(manager.testModeReason == nil)
+  }
+
+  @Test
+  func testModeBehavior_automatic_stillActivatesForATestUserInAnAppStoreBuild() {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.testModeManager!
+    manager.isSandboxEnvironment = { false }
+
+    let aliasId = dependencyContainer.identityManager.aliasId
+    let config = Config.stub()
+      .setting(\.testModeUserIds, to: [
+        TestStoreUser(type: .aliasId, value: aliasId)
+      ])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+
+    manager.evaluateTestMode(config: config, options: SuperwallOptions())
+
+    #expect(manager.isTestMode == true)
+    if case .configMatch = manager.testModeReason {
+      // Expected
+    } else {
+      #expect(Bool(false), "Expected .configMatch reason, got \(String(describing: manager.testModeReason))")
+    }
+  }
 }

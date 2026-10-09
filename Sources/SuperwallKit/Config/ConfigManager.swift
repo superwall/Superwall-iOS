@@ -168,7 +168,7 @@ class ConfigManager {
       let startAt = Date()
 
       // Step 1: Determine fetch strategy based on subscription status and cached data
-      let cachedConfig = storage.get(LatestConfig.self)
+      let cachedConfig = cachedConfigForLaunch()
       let isSubscribed = hasActiveCachedSubscription()
 
       let shouldFetchAsync = cachedConfig != nil && isSubscribed
@@ -447,11 +447,41 @@ class ConfigManager {
     )
   }
 
-  /// Saves `config` and applies the parts that don't depend on purchases.
-  private func storeAndApply(_ config: Config) {
+  /// The config the previous launch saved, unless it would put this launch in
+  /// test mode.
+  ///
+  /// A subscriber launches from the saved config without waiting on the
+  /// network, and the refresh that replaces it is only scheduled once that
+  /// config has been processed. A saved config that turns test mode on would
+  /// therefore do so on every launch, even after the dashboard setting behind
+  /// it had been corrected. So test mode is only ever entered from a config
+  /// fetched during the current launch. Versions before 4.18.0 saved these
+  /// configs, which is why one can still be found here.
+  private func cachedConfigForLaunch() -> Config? {
+    guard let cachedConfig = storage.get(LatestConfig.self) else {
+      return nil
+    }
+    let testModeManager = factory.makeTestModeManager()
+    if testModeManager.isPutInTestMode(by: cachedConfig, options: options) {
+      storage.delete(LatestConfig.self)
+      return nil
+    }
+    return cachedConfig
+  }
+
+  /// Applies the parts of `config` that don't depend on purchases, and saves
+  /// it for the next launch to start from when `keepingForNextLaunch` is true.
+  private func storeAndApply(_ config: Config, keepingForNextLaunch: Bool) {
     storage.save(
       config.featureFlags.disableVerbosePlacements, forType: DisableVerbosePlacements.self)
-    storage.save(config, forType: LatestConfig.self)
+    if keepingForNextLaunch {
+      storage.save(config, forType: LatestConfig.self)
+    } else {
+      // Also drops the config saved before this one. Starting the next launch
+      // from that would show paywalls with real products for a moment, before
+      // the refresh turned test mode back on.
+      storage.delete(LatestConfig.self)
+    }
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
     deviceHelper.startIPCollectionIfEnabled(for: config)
@@ -467,12 +497,15 @@ class ConfigManager {
     isFirstTime: Bool,
     publishingEarlyFrom savedCustomerInfo: CustomerInfo? = nil
   ) async {
-    storeAndApply(config)
+    let testModeManager = factory.makeTestModeManager()
 
     // Evaluate test mode before loading products
-    let testModeManager = factory.makeTestModeManager()
     let wasTestMode = testModeManager.isTestMode
-    testModeManager.evaluateTestMode(config: config, options: options)
+    let testModeReason = testModeManager.evaluateTestMode(config: config, options: options)
+    storeAndApply(
+      config,
+      keepingForNextLaunch: testModeReason?.comesFromConfig != true
+    )
     let testModeJustActivated = !wasTestMode && testModeManager.isTestMode
     let testModeJustDeactivated = wasTestMode && !testModeManager.isTestMode
 
