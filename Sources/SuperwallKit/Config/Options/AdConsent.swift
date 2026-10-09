@@ -26,17 +26,17 @@ public enum AdConsentStatus: Int, CustomStringConvertible, Sendable {
 
 /// A user's consent for how their data is used for advertising.
 ///
-/// Superwall passes this on to ad networks, such as Google Ads, when it reports
-/// conversions for your app. Both values default to ``AdConsentStatus/granted``.
+/// Superwall passes this on with the conversions it uploads to Google Ads. Other ad
+/// networks don't use it yet. Both values default to ``AdConsentStatus/granted``.
 ///
 /// It's immutable: to change consent, assign a new `AdConsent`.
 @objc(SWKAdConsent)
 @objcMembers
 public final class AdConsent: NSObject {
-  /// Consent to send the user's data to ad networks for advertising.
+  /// Consent to send the user's data to Google for advertising.
   public let adUserData: AdConsentStatus
 
-  /// Consent to use the user's data for personalized advertising.
+  /// Consent for Google to use the user's data for personalized advertising.
   public let adPersonalization: AdConsentStatus
 
   public init(

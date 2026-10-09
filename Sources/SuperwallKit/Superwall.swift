@@ -76,7 +76,7 @@ public final class Superwall: NSObject, ObservableObject {
       return options.eventTrackingBehavior
     }
     set {
-      let wasOptedOut = options.eventTrackingBehavior == .none
+      let oldValue = options.eventTrackingBehavior
       options.eventTrackingBehavior = newValue
 
       if newValue != .none {
@@ -85,9 +85,12 @@ public final class Superwall: NSObject, ObservableObject {
 
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
-        // Nothing was sent while opted out, such as an ad consent assignment or an
-        // ATT answer, so re-send the device attributes now the queue accepts them.
-        if wasOptedOut && newValue != .none {
+        // Re-send the device attributes once the queue has the new behavior. Leaving
+        // `.none`, nothing was sent while opted out, such as an ad consent assignment
+        // or an ATT answer. Any behavior other than `.all` also discards the queued
+        // events (`PlacementsQueue.setTrackingBehavior`), which may include device
+        // attributes already recorded as sent.
+        if newValue != .none && (newValue != oldValue || newValue != .all) {
           await republishDeviceAttributes(onlyIfAdConsentChanged: false)
         }
       }
@@ -113,7 +116,8 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The user's consent for how their data is used for advertising, which Superwall
-  /// passes on to ad networks such as Google Ads when it reports conversions.
+  /// passes on with the conversions it uploads to Google Ads. Other ad networks
+  /// don't use it yet.
   ///
   /// Both values default to ``AdConsentStatus/granted``. If your app has users in the
   /// EEA, the UK or Switzerland, set this from your consent flow. On iOS,

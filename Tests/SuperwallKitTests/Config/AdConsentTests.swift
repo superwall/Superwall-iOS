@@ -270,6 +270,31 @@ struct AdConsentTests {
     withExtendedLifetime(dependencyContainer) {}
   }
 
+  @Test func switchingToSuperwallOnly_resendsDiscardedDeviceAttributes() async {
+    let attStatus = ATTStatusBox(.notDetermined)
+    let (superwall, dependencyContainer, recorder) = makeSuperwall(attStatus: attStatus)
+    let queue = dependencyContainer.placementsQueue!
+
+    // Granted is sent, then the ATT denial is queued and recorded as sent.
+    let initial = await dependencyContainer.makeSessionDeviceAttributes()
+    await superwall.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: initial))
+    attStatus.value = .denied
+    #expect(await superwall.republishDeviceAttributesIfAdConsentChanged() == true)
+    #expect(await queue.queuedEventNames.contains("device_attributes"))
+
+    // Before a flush, `.superwallOnly` discards everything queued, the denial too.
+    let sentBeforeSwitch = recorder.sent.count
+    superwall.eventTrackingBehavior = .superwallOnly
+    await waitUntil { recorder.sent.count > sentBeforeSwitch }
+    await drainAdConsentUpdates(superwall)
+
+    // A fresh copy went out after the switch, and the queue kept it.
+    #expect(recorder.sent.count == sentBeforeSwitch + 1)
+    #expect(recorder.sent.last?["adPersonalizationConsent"] as? String == "denied")
+    #expect(await queue.queuedEventNames.filter { $0 == "device_attributes" }.count == 1)
+    withExtendedLifetime(dependencyContainer) {}
+  }
+
   @Test func attChange_beforeAnyUpload_doesNotRepublish() async {
     let attStatus = ATTStatusBox(.notDetermined)
     let (superwall, _, recorder) = makeSuperwall(attStatus: attStatus)

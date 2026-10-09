@@ -86,6 +86,11 @@ actor PlacementsQueue {
     return true
   }
 
+  /// The names of the events waiting to be flushed. For tests.
+  var queuedEventNames: [String] {
+    elements.compactMap { $0["event_name"].string }
+  }
+
   func setTrackingBehavior(_ behavior: EventTrackingBehavior) {
     trackingBehavior = behavior
     if behavior != .all {
