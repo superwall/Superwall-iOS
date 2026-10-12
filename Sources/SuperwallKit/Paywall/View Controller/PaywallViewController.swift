@@ -482,7 +482,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       return
     }
 
-    if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest) {
+    if let webArchiveURL = paywallArchiveManager?.getCachedArchiveURL(manifest: paywall.manifest)
+      ?? paywallArchiveManager?.getBundledArchiveURL(for: paywall) {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
       Task {

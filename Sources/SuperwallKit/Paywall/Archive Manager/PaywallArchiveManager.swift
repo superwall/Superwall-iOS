@@ -9,8 +9,11 @@ import Foundation
 
 final class PaywallArchiveManager {
   private let webArchiveManager: WebArchiveManager?
+  private let cacheDirectory: URL?
+  private let bundledPaywalls: BundledPaywalls
 
-  init() {
+  init(bundledPaywalls: BundledPaywalls = .shared) {
+    self.bundledPaywalls = bundledPaywalls
     let cacheDirectory = try? FileManager.default.url(
       for: .cachesDirectory,
       in: .userDomainMask,
@@ -18,6 +21,7 @@ final class PaywallArchiveManager {
       create: true
     )
     .appendingPathComponent("paywalls")
+    self.cacheDirectory = cacheDirectory
 
     guard let cacheDirectory = cacheDirectory else {
       self.webArchiveManager = nil
@@ -66,6 +70,39 @@ final class PaywallArchiveManager {
       return nil
     }
     return webArchiveManager.getArchiveURLFromCache(forManifest: manifest)
+  }
+
+  /// Returns the URL of a web archive built from the paywall that `superwall bundle`
+  /// placed in the app, if the app bundles this exact version of the paywall.
+  func getBundledArchiveURL(for paywall: Paywall) -> URL? {
+    let urls = [paywall.url] + paywall.urlConfig.endpoints.map(\.url)
+    guard
+      let cacheDirectory = cacheDirectory,
+      let bundled = bundledPaywalls.paywall(matching: urls)
+    else {
+      return nil
+    }
+    let archiveURL = cacheDirectory
+      .appendingPathComponent("bundled")
+      .appendingPathComponent(URL(fileURLWithPath: bundled.document.file).lastPathComponent)
+      .deletingPathExtension()
+      .appendingPathExtension("webarchive")
+    let fileSystemManager = WebArchiveFileSytemManager(archiveURL: archiveURL)
+    if fileSystemManager.archiveExists {
+      return archiveURL
+    }
+    do {
+      try fileSystemManager.write(archive: bundledPaywalls.webArchive(for: bundled))
+      return archiveURL
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .cache,
+        message: "Could not read the bundled paywall \(bundled.identifier). Loading it from the network.",
+        error: error
+      )
+      return nil
+    }
   }
 
   /// Returns the URL of the archive.

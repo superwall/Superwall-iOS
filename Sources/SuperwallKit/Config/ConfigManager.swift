@@ -67,6 +67,7 @@ class ConfigManager {
   /// Runs preloads one at a time so concurrent callers can't race on the task
   /// reference. See ``preloadAllPaywalls()``.
   private let preloadingCoordinator = SerialTaskCoordinator()
+  private let bundledPaywalls: BundledPaywalls
 
   typealias Factory = RequestFactory
     & AudienceFilterAttributesFactory
@@ -85,9 +86,11 @@ class ConfigManager {
     deviceHelper: DeviceHelper,
     entitlementsInfo: EntitlementsInfo,
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    factory: Factory
+    factory: Factory,
+    bundledPaywalls: BundledPaywalls = .shared
   ) {
     self.options = options
+    self.bundledPaywalls = bundledPaywalls
     self.storeKitManager = storeKitManager
     self.storage = storage
     self.network = network
@@ -175,7 +178,7 @@ class ConfigManager {
 
       // Step 2: Fetch or use cached config
       let fetchResult = try await fetchConfig(
-        cachedConfig: cachedConfig,
+        cachedConfig: cachedConfig ?? bundledPaywalls.config,
         shouldFetchAsync: shouldFetchAsync,
         startAt: startAt
       )
@@ -307,7 +310,8 @@ class ConfigManager {
       )
     } else {
       // Fetch config synchronously
-      let enableConfigRefresh = cachedConfig?.featureFlags.enableConfigRefresh ?? false
+      let enableConfigRefresh = bundledPaywalls.config != nil
+        || cachedConfig?.featureFlags.enableConfigRefresh == true
 
       let isActiveSubscription = hasActiveCachedSubscription()
       let timeout: TimeInterval = isActiveSubscription ? 0.5 : 1
@@ -421,8 +425,9 @@ class ConfigManager {
         }
       }
       if isUsingCachedConfig {
+        let oldConfig = bundledPaywalls.config == nil ? nil : config
         Task {
-          await refreshConfiguration()
+          await refreshConfiguration(oldConfig: oldConfig)
         }
       }
     }

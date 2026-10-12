@@ -14,6 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
 - Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
+- Adds bundled paywalls. Run `superwall bundle --placement <name>` before a release build and add the `Superwall.bundle` it writes to your app target. On a launch with no cached config, the SDK waits up to a second for fresh config and otherwise starts from the bundled one, and it loads any bundled paywall whose exact version the config still points to from the app instead of the network. A first onboarding can then open offline, and opens without downloading its page when online. Fresh config always replaces the bundled one, and a paywall republished since the bundle was built loads from the network as before. When the app ships a `Superwall.bundle`, launches with a cached config also fall back to it after the same one-second wait, whether or not config refresh is enabled for the app.
 
 ### Fixes
 
