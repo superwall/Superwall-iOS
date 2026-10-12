@@ -616,9 +616,10 @@ struct CustomerCenterViewModelTests {
     #expect(vm.state == .management, "the screen draws without waiting on the catalogue")
     #expect(vm.purchases.first?.isAwaitingCatalogue == true)
     #expect(vm.purchases.first?.priceLine == nil)
-    #expect(productsMock.catalogueRequested == ["monthly"])
 
+    // The catalogue is asked for in the background, so wait for the request.
     await waitUntil { productsMock.isHoldingCatalogue }
+    #expect(productsMock.catalogueRequested == ["monthly"])
     productsMock.releaseCatalogue()
     await waitUntil { vm.purchases.first?.isAwaitingCatalogue == false }
     #expect(vm.purchases.first?.priceLine == "$9.99 / month")

@@ -200,12 +200,24 @@ struct PaywallMessageHandlerTests {
     return count()
   }
 
+  /// Waits until the page's setup has run, which is when it becomes ready.
+  private func waitForSetup(of webView: FakeWebView) async {
+    for _ in 0..<250 {
+      if webView.evaluatedScripts.contains(where: { $0.contains("user-scalable=no") }) {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
   @Test
   func paywallOpenIsPassedStraightThroughOnceThePageIsReady() async {
     let (messageHandler, webView, delegate) = makeHandler()
 
     messageHandler.documentWillLoad()
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+    #expect(!passedEvents(in: webView).contains { $0["event_name"] as? String == "paywall_open" })
     messageHandler.handle(.paywallOpen)
 
     #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
