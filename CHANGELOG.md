@@ -3,14 +3,10 @@
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
 ## 4.18.0
-### Breaking Changes
-
-- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8.
-- Requires Xcode 26 (Swift 6.2) or later to build the SDK. Apple has required the iOS 26 SDK for App Store Connect uploads since April 28, 2026. The SDK itself still compiles in the Swift 5 language mode.
-- This ships as a minor release because every App Store Connect upload already needs Xcode 26, so any app that can ship an update already meets the new Xcode requirement. If your app still supports iOS 13 or 14, Swift Package Manager will fail to resolve this version for it: pin SuperwallKit to `4.17.x` (`.upToNextMinor(from: "4.17.0")`, or `~> 4.17.0` in CocoaPods) until you raise your deployment target.
 
 ### Enhancements
 
+- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8. Requires Xcode 26 (Swift 6.2) or later to build the SDK.
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
 - Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
@@ -19,8 +15,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
-- Test mode no longer turns on in App Store builds because the app's bundle ID differs from the one on the Superwall dashboard. A wrong bundle ID on the dashboard used to put every customer in test mode, replacing their real subscription with simulated purchases. Development, simulator and TestFlight builds still enter test mode on a mismatch, and test users marked on the dashboard still get it in any build.
-- Fixes the SDK waiting forever, with every `register` call held, when the test mode sheet was accepted for presentation but never reached the screen.
 - Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
