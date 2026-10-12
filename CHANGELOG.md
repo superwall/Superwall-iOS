@@ -3,23 +3,22 @@
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
 ## 4.18.0
-### Breaking Changes
-
-- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8.
-- Requires Xcode 26 (Swift 6.2) or later to build the SDK. Apple has required the iOS 26 SDK for App Store Connect uploads since April 28, 2026. The SDK itself still compiles in the Swift 5 language mode.
-- This ships as a minor release because every App Store Connect upload already needs Xcode 26, so any app that can ship an update already meets the new Xcode requirement. If your app still supports iOS 13 or 14, Swift Package Manager will fail to resolve this version for it: pin SuperwallKit to `4.17.x` (`.upToNextMinor(from: "4.17.0")`, or `~> 4.17.0` in CocoaPods) until you raise your deployment target.
 
 ### Enhancements
 
+- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8. Requires Xcode 26 (Swift 6.2) or later to build the SDK.
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
 - Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
+- Adds `SuperwallOptions.adConsent` and `Superwall.shared.adConsent` to report a user's ad consent (`adUserData` and `adPersonalization`, each an `AdConsentStatus` of `.granted` or `.denied`), which Superwall passes on with the conversions it uploads to Google Ads and Meta. If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent banner when GDPR applies, and otherwise defaults to granted; apps with users in the EEA, UK or Switzerland that don't use a TCF banner should set it from their consent flow. Where the values came from is reported in the new `adConsentSource` device attribute (`developer`, `tcf` or `default`). The values are reported as the `adUserDataConsent` and `adPersonalizationConsent` device attributes, and both as denied while `eventTrackingBehavior` is `.none`. Personalization is also reported as denied when the user has denied App Tracking Transparency or it's restricted, unless you set `adConsent` yourself.
 
 ### Fixes
 
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+- Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
+- Fixes the test mode sheet not showing in apps with more than one scene or window.
 - Fixes a paywall staying blank after iOS terminated its web content process. Paywalls that gate their entrance on `paywall_open`, which includes every framework paywall, rendered nothing in two cases. When the process died under a presented paywall, the SDK reloaded the page but never sent `paywall_open` to the new page. When the process died under a preloaded paywall, the SDK reloaded it at presentation but sent `paywall_open` before the new page was ready, so the page never received it. The SDK now tracks readiness per page load: it holds `paywall_open` until the new page says it is ready, and sends it again to a page reloaded while the paywall is open. The analytics `paywall_open` event is not tracked a second time.
 - Fixes paywalls served by a `superwall dev` server never opening when they gate their entrance on `paywall_open`. The SDK sent `paywall_open` before the local page was ready, so the page never received it.
 

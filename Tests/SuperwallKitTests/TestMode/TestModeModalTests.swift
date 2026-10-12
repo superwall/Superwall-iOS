@@ -156,6 +156,37 @@ struct TestModeModalTests {
   }
 
   @Test
+  func giveUpIfNeverShown_reportsBackOnce_whenTheSheetNeverAppears() async throws {
+    let modal = makeModal()
+    let nav = TestModeNavigationController(rootViewController: modal)
+    var callCount = 0
+    modal.onDismiss = { _, _ in
+      callCount += 1
+    }
+
+    TestModeModal.giveUpIfNeverShown(nav, modal: modal, after: 0)
+    try await Task.sleep(nanoseconds: 200_000_000)
+
+    #expect(callCount == 1)
+  }
+
+  @Test
+  func giveUpIfNeverShown_keepsWaiting_whenTheSheetStartedAppearing() async throws {
+    let modal = makeModal()
+    let nav = TestModeNavigationController(rootViewController: modal)
+    var callCount = 0
+    modal.onDismiss = { _, _ in
+      callCount += 1
+    }
+
+    nav.viewWillAppear(false)
+    TestModeModal.giveUpIfNeverShown(nav, modal: modal, after: 0)
+    try await Task.sleep(nanoseconds: 200_000_000)
+
+    #expect(callCount == 0)
+  }
+
+  @Test
   func modal_closeWithoutOK_savesAndReportsBack() {
     clearSavedSettings()
     defer { clearSavedSettings() }
