@@ -99,6 +99,20 @@ final class StorageMock: Storage {
     internalConfirmedAssignments?.update(with: newAssignment)
   }
 
+  override func delete<Key>(_ keyType: Key.Type) where Key : Storable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = nil
+    }
+    super.delete(keyType)
+  }
+
+  override func delete<Key>(_ keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = nil
+    }
+    super.delete(keyType)
+  }
+
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
     if keyType == LatestConfig.self {
       internalCachedConfig = value as? Config
