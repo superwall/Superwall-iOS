@@ -24,6 +24,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
+- Fixes the test mode sheet not showing in apps with more than one scene or window.
 
 ## 4.17.0
 
