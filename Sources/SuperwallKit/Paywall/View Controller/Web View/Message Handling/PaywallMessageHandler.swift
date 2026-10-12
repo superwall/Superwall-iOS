@@ -42,14 +42,15 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Re-sends device attributes if the ATT answer changed the ad consent they report.
   private let republishIfAdConsentChanged: () async -> Void
 
-  struct EnqueuedMessage {
-    let name: String
-    let paywall: Paywall
-  }
-  /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
-  private var messageQueue: Queue<EnqueuedMessage> = Queue()
+  /// Whether the current page has had its templates and can take messages.
   private var isDocumentReady = false
+  /// Whether the paywall is on screen, so a page that becomes ready should be
+  /// told with `paywall_open`.
   private var isPaywallOpen = false
+  /// Goes up with every page that pings and every load the SDK starts, so the
+  /// setup for a page that has since been replaced doesn't mark the new one
+  /// ready.
+  private var documentId = 0
 
   init(
     receiptManager: ReceiptManager,
@@ -85,38 +86,32 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
-      isDocumentReady = true
+      // Not ready until its templates are in, even if a page that reloaded
+      // itself left this set.
+      isDocumentReady = false
+      documentId += 1
+      let documentId = documentId
       let loadedAt = Date()
       Task {
-        await self.didLoadWebView(for: paywall, at: loadedAt)
+        await self.didLoadWebView(for: paywall, at: loadedAt, documentId: documentId)
       }
     case .close:
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
       isPaywallOpen = true
-      let paywallOpen = SuperwallEventObjc.paywallOpen.description
-      if !isDocumentReady {
-        let message = EnqueuedMessage(
-          name: paywallOpen,
-          paywall: paywall
-        )
-        messageQueue.enqueue(message)
-      } else {
+      // A page that isn't ready yet is told once it is.
+      if isDocumentReady {
+        let paywallOpen = SuperwallEventObjc.paywallOpen.description
         Task {
           await self.pass(placement: paywallOpen, from: paywall)
         }
       }
     case .paywallClose:
       isPaywallOpen = false
-      let paywallClose = SuperwallEventObjc.paywallClose.description
-      if !isDocumentReady {
-        let message = EnqueuedMessage(
-          name: paywallClose,
-          paywall: paywall
-        )
-        messageQueue.enqueue(message)
-      } else {
+      // A page that isn't ready yet was never told it is open.
+      if isDocumentReady {
+        let paywallClose = SuperwallEventObjc.paywallClose.description
         Task {
           await self.pass(placement: paywallClose, from: paywall)
         }
@@ -286,21 +281,12 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
   }
 
+  /// Called before the SDK loads a new page into the web view. The page being
+  /// replaced can no longer take messages, and the new one is told the
+  /// paywall is open once it pings.
   func documentWillLoad() {
     isDocumentReady = false
-    messageQueue = Queue()
-    guard
-      isPaywallOpen,
-      let paywall = delegate?.paywall
-    else {
-      return
-    }
-    messageQueue.enqueue(
-      EnqueuedMessage(
-        name: SuperwallEventObjc.paywallOpen.description,
-        paywall: paywall
-      )
-    )
+    documentId += 1
   }
 
   nonisolated private func pass(
@@ -403,7 +389,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// feel native.
   nonisolated private func didLoadWebView(
     for paywall: Paywall,
-    at loadedAt: Date
+    at loadedAt: Date,
+    documentId: Int
   ) async {
     Task(priority: .utility) {
       guard let delegate = await self.delegate else {
@@ -496,14 +483,14 @@ final class PaywallMessageHandler: WebEventDelegate {
         + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
       self.delegate?.webView.evaluateJavaScript(preventZoom)
 
-      while !messageQueue.isEmpty {
-        if let message = messageQueue.dequeue() {
-          Task {
-            await self.pass(
-              placement: message.name,
-              from: message.paywall
-            )
-          }
+      if documentId != self.documentId {
+        return
+      }
+      isDocumentReady = true
+      if isPaywallOpen {
+        let paywallOpen = SuperwallEventObjc.paywallOpen.description
+        Task {
+          await self.pass(placement: paywallOpen, from: paywall)
         }
       }
     }

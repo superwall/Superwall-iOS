@@ -260,6 +260,7 @@ struct PaywallMessageHandlerTests {
     messageHandler.documentWillLoad()
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
     messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
     messageHandler.handle(.paywallClose)
     messageHandler.documentWillLoad()
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
@@ -274,6 +275,36 @@ struct PaywallMessageHandlerTests {
     messageHandler.documentWillLoad()
     messageHandler.handle(.paywallOpen)
     messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsResentToAPageThatReloadedItself() async {
+    // As with `location.reload()` or the dev server's live reload, where the
+    // SDK doesn't start the load.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 2)
+  }
+
+  @Test
+  func paywallOpenIsSentOnceWhenAPageIsReplacedDuringItsSetup() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    // The first page pings, then is replaced before its setup finishes.
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
     messageHandler.handle(.onReady(paywallJsVersion: "2"))
 
     #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
