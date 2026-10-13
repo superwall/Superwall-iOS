@@ -596,4 +596,141 @@ struct ConfigManagerTests {
     // Wait for background tasks to complete before test ends
     try? await Task.sleep(nanoseconds: UInt64(0.2 * 1_000_000_000))
   }
+
+  // MARK: - Configs that turn test mode on
+
+  /// A config the dashboard would send while the app's bundle ID is set wrongly.
+  private func testModeConfig(buildId: String) -> Config {
+    return Config.stub()
+      .setting(\.buildId, to: buildId)
+      .setting(\.featureFlags, to: .stub())
+      .setting(\.testModeUserIds, to: [])
+      .setting(\.bundleIdConfig, to: "com.some.other.bundle")
+  }
+
+  private func makeConfigManager(
+    dependencyContainer: DependencyContainer,
+    storage: StorageMock,
+    network: NetworkMock
+  ) -> (ConfigManager, DeviceHelperMock) {
+    let deviceHelper = DeviceHelperMock(
+      api: dependencyContainer.api,
+      storage: storage,
+      network: network,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer
+    )
+    let configManager = ConfigManager(
+      options: SuperwallOptions(),
+      storeKitManager: dependencyContainer.storeKitManager,
+      storage: storage,
+      network: network,
+      paywallManager: dependencyContainer.paywallManager,
+      deviceHelper: deviceHelper,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      factory: dependencyContainer
+    )
+    return (configManager, deviceHelper)
+  }
+
+  @Test
+  func fetchConfiguration_subscriberDoesNotLaunchFromASavedConfigThatTurnsTestModeOn() async throws {
+    // Given: a subscriber whose previous launch saved a config that turns
+    // test mode on, and a dashboard that has since been corrected.
+    let storage = StorageMock()
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    storage.save(testModeConfig(buildId: "cached_123"), forType: LatestConfig.self)
+    storage.save(SubscriptionStatus.active([.stub()]), forType: SubscriptionStatusKey.self)
+
+    let newConfig: Config = .stub()
+      .setting(\.buildId, to: "fresh_456")
+    network.configReturnValue = .success(newConfig)
+
+    let (configManager, deviceHelper) = makeConfigManager(
+      dependencyContainer: dependencyContainer,
+      storage: storage,
+      network: network
+    )
+
+    // When
+    await configManager.fetchConfiguration()
+
+    // Then: the saved config is thrown away and the launch waits for a fresh one.
+    #expect(network.getConfigCalled, "Should fetch a fresh config instead of using the saved one")
+    #expect(configManager.config?.buildId == "fresh_456")
+    #expect(storage.get(LatestConfig.self)?.buildId == "fresh_456")
+    #expect(dependencyContainer.testModeManager.isTestMode == false)
+
+    _ = deviceHelper
+    try await Task.sleep(nanoseconds: UInt64(0.3 * 1_000_000_000))
+  }
+
+  @Test
+  func fetchConfiguration_doesNotSaveAConfigThatTurnsTestModeOn() async throws {
+    // Given: an ordinary saved config, and a dashboard that now sends one
+    // that turns test mode on.
+    let storage = StorageMock()
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let cachedConfig: Config = .stub()
+      .setting(\.buildId, to: "cached_123")
+      .setting(\.featureFlags, to: .stub())
+    storage.save(cachedConfig, forType: LatestConfig.self)
+    storage.save(SubscriptionStatus.inactive, forType: SubscriptionStatusKey.self)
+    network.configReturnValue = .success(testModeConfig(buildId: "testmode_789"))
+
+    let (configManager, deviceHelper) = makeConfigManager(
+      dependencyContainer: dependencyContainer,
+      storage: storage,
+      network: network
+    )
+
+    // When
+    await configManager.fetchConfiguration()
+
+    // Then: test mode is on for this launch, and the next launch has no saved
+    // config to start from, so it fetches one.
+    #expect(dependencyContainer.testModeManager.isTestMode == true)
+    #expect(configManager.config?.buildId == "testmode_789")
+    #expect(storage.get(LatestConfig.self) == nil)
+
+    _ = deviceHelper
+    try await Task.sleep(nanoseconds: UInt64(0.3 * 1_000_000_000))
+  }
+
+  @Test
+  func fetchConfiguration_savesAnOrdinaryConfig() async throws {
+    let storage = StorageMock()
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    storage.save(SubscriptionStatus.inactive, forType: SubscriptionStatusKey.self)
+    let newConfig: Config = .stub()
+      .setting(\.buildId, to: "fresh_456")
+    network.configReturnValue = .success(newConfig)
+
+    let (configManager, deviceHelper) = makeConfigManager(
+      dependencyContainer: dependencyContainer,
+      storage: storage,
+      network: network
+    )
+
+    await configManager.fetchConfiguration()
+
+    #expect(storage.get(LatestConfig.self)?.buildId == "fresh_456")
+
+    _ = deviceHelper
+    try await Task.sleep(nanoseconds: UInt64(0.3 * 1_000_000_000))
+  }
 }

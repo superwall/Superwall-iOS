@@ -260,6 +260,12 @@ extension SWWebView: WKNavigationDelegate {
     decisionHandler(.cancel)
   }
 
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    // A new page has replaced the old one. A load that fails before this
+    // point leaves the old page, and whether it was ready, as it was.
+    messageHandler.documentWillLoad()
+  }
+
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     activeProcessTerminationRetryCount = 0
     completion?(nil)

@@ -42,14 +42,18 @@ final class PaywallMessageHandler: WebEventDelegate {
   private let factory: VariablesFactory
   private let permissionHandler: PermissionHandling
   private let customCallbackRegistry: CustomCallbackRegistry
+  /// Re-sends device attributes if the ATT answer changed the ad consent they report.
+  private let republishIfAdConsentChanged: () async -> Void
 
-  struct EnqueuedMessage {
-    let name: String
-    let paywall: Paywall
-    var payload: [String: Any] = [:]
-  }
-  /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
-  private var messageQueue: Queue<EnqueuedMessage> = Queue()
+  /// Whether the current page has had its templates and can take messages.
+  private var isDocumentReady = false
+  /// Whether the paywall is on screen, so a page that becomes ready should be
+  /// told with `paywall_open`.
+  private var isPaywallOpen = false
+  /// Goes up with every page that pings and every load the SDK starts, so the
+  /// setup for a page that has since been replaced doesn't mark the new one
+  /// ready.
+  private var documentId = 0
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
@@ -60,8 +64,12 @@ final class PaywallMessageHandler: WebEventDelegate {
     receiptManager: ReceiptManager,
     factory: VariablesFactory,
     permissionHandler: PermissionHandling,
-    customCallbackRegistry: CustomCallbackRegistry
+    customCallbackRegistry: CustomCallbackRegistry,
+    republishIfAdConsentChanged: @escaping () async -> Void = {
+      await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+    }
   ) {
+    self.republishIfAdConsentChanged = republishIfAdConsentChanged
     self.receiptManager = receiptManager
     self.factory = factory
     self.permissionHandler = permissionHandler
@@ -86,37 +94,33 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
+      // Not ready until its templates are in, even if a page that reloaded
+      // itself left this set.
+      isDocumentReady = false
+      documentId += 1
+      let documentId = documentId
       let loadedAt = Date()
       Task {
-        await self.didLoadWebView(for: paywall, at: loadedAt)
+        await self.didLoadWebView(for: paywall, at: loadedAt, documentId: documentId)
       }
     case .close:
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
-      let paywallOpen = SuperwallEventObjc.paywallOpen.description
-      let payload = presentationPayload()
-      if delegate?.paywall.paywalljsVersion == nil {
-        let message = EnqueuedMessage(
-          name: paywallOpen,
-          paywall: paywall,
-          payload: payload
-        )
-        messageQueue.enqueue(message)
-      } else {
+      isPaywallOpen = true
+      // A page that isn't ready yet is told once it is.
+      if isDocumentReady {
+        let paywallOpen = SuperwallEventObjc.paywallOpen.description
+        let payload = presentationPayload()
         Task {
           await self.pass(placement: paywallOpen, from: paywall, payload: payload)
         }
       }
     case .paywallClose:
-      let paywallClose = SuperwallEventObjc.paywallClose.description
-      if delegate?.paywall.paywalljsVersion == nil {
-        let message = EnqueuedMessage(
-          name: paywallClose,
-          paywall: paywall
-        )
-        messageQueue.enqueue(message)
-      } else {
+      isPaywallOpen = false
+      // A page that isn't ready yet was never told it is open.
+      if isDocumentReady {
+        let paywallClose = SuperwallEventObjc.paywallClose.description
         Task {
           await self.pass(placement: paywallClose, from: paywall)
         }
@@ -295,6 +299,17 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
   }
 
+  /// Called when a new page replaces the old one, and when the SDK starts
+  /// loading a page over one that is still on screen. The old page isn't
+  /// told about the paywall opening or closing, and the new one is told the
+  /// paywall is open once it pings. A checkout the old page was watching ends
+  /// with it, since the new page will never end it.
+  func documentWillLoad() {
+    isDocumentReady = false
+    documentId += 1
+    delegate?.endTeleportWatch()
+  }
+
   /// How this presentation came about, so purchases the paywall starts are attributed to it.
   private func presentationPayload() -> [String: Any] {
     guard let info = delegate?.info else {
@@ -408,7 +423,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// feel native.
   nonisolated private func didLoadWebView(
     for paywall: Paywall,
-    at loadedAt: Date
+    at loadedAt: Date,
+    documentId: Int
   ) async {
     Task(priority: .utility) {
       guard let delegate = await self.delegate else {
@@ -501,15 +517,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
       self.delegate?.webView.evaluateJavaScript(preventZoom)
 
-      while !messageQueue.isEmpty {
-        if let message = messageQueue.dequeue() {
-          Task {
-            await self.pass(
-              placement: message.name,
-              from: message.paywall,
-              payload: message.payload
-            )
-          }
+      if documentId != self.documentId {
+        return
+      }
+      isDocumentReady = true
+      if isPaywallOpen {
+        let paywallOpen = SuperwallEventObjc.paywallOpen.description
+        let payload = presentationPayload()
+        Task {
+          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
         }
       }
     }
@@ -730,6 +746,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       await Superwall.shared.track(requestedEvent)
 
       let status = await permissionHandler.requestPermission(permissionType)
+      if permissionType == .tracking {
+        await republishIfAdConsentChanged()
+      }
 
       // Track permission result event
       let resultState: InternalSuperwallEvent.PermissionState =

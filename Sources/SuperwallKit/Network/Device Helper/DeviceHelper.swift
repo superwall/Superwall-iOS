@@ -15,6 +15,18 @@ import StoreKit
 
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
+  /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
+  /// Settable for tests.
+  var attStatusProvider: () -> Int?
+  /// Where a consent banner stores its answer. Settable so tests can use their own.
+  var consentDefaults: UserDefaults = .standard
+  /// Runs while device attributes are being built, after their ad consent is read.
+  /// For tests, to change consent mid-build.
+  var afterAdConsentSnapshot: (() async -> Void)?
+  /// The ad consent attributes in the last device attributes sent, or `nil` before
+  /// the first send. Guarded by `adConsentLock`.
+  private var publishedAdConsent: ReportedAdConsent?
+  private let adConsentLock = NSLock()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -916,6 +928,7 @@ class DeviceHelper {
     & LocaleIdentifierFactory
     & WebEntitlementFactory
     & ConfigStateFactory
+    & OptionsFactory
 
   init(
     api: Api,
@@ -923,10 +936,16 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory & ConfigStateFactory,
+    factory: IdentityFactory
+      & LocaleIdentifierFactory
+      & WebEntitlementFactory
+      & ConfigStateFactory
+      & OptionsFactory,
     ipCollector: DeviceIPCollector? = nil,
-    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
+    attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
+    self.attStatusProvider = attStatusProvider
     self.ipCollector = ipCollector ?? DeviceIPCollector(
       ipV4Url: api.enrichment.ipV4Url,
       ipV6Url: api.enrichment.ipV6Url
@@ -948,6 +967,78 @@ class DeviceHelper {
     self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
     observeUITraitChanges()
     registerForTraitChanges()
+  }
+
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  static var attStatus: Int? {
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
+    return nil
+    #endif
+  }
+
+  /// The ad consent device attributes would report right now.
+  ///
+  /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
+  /// consent banner's stored answer, then the granted default. The `.none` rule then
+  /// applies to all of them, and the ATT rule to all but the app's own setting,
+  /// which is always trusted.
+  var reportedAdConsent: ReportedAdConsent {
+    let options = factory.makeSuperwallOptions()
+    let consent: AdConsent
+    let source: AdConsentSource
+    if options.isAdConsentSet {
+      consent = options.adConsent
+      source = .developer
+    } else if let bannerConsent = TCFConsent.consent(from: consentDefaults) {
+      consent = bannerConsent
+      source = .tcf
+    } else {
+      consent = AdConsent()
+      source = .default
+    }
+    let reported = consent.reported(
+      for: options.eventTrackingBehavior,
+      attStatus: source == .developer ? nil : attStatusProvider()
+    )
+    return ReportedAdConsent(
+      adUserData: reported.adUserData.description,
+      adPersonalization: reported.adPersonalization.description,
+      source: source.rawValue
+    )
+  }
+
+  /// Notes the ad consent in device attributes that were just sent.
+  func recordPublishedDeviceAttributes(_ attributes: [String: Any]) {
+    guard let consent = ReportedAdConsent(attributes: attributes) else {
+      return
+    }
+    adConsentLock.lock()
+    publishedAdConsent = consent
+    adConsentLock.unlock()
+  }
+
+  /// Whether the ad consent or its source has changed since device attributes were
+  /// last sent, for example because the user answered the ATT prompt or a consent
+  /// banner.
+  ///
+  /// Returns `false` before the first send, which reports the current value anyway,
+  /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
+  /// would be sent. Callers serialize through ``AdConsentUpdateQueue`` so the send
+  /// is recorded before the next check.
+  func adConsentNeedsRepublish() -> Bool {
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return false
+    }
+    let current = reportedAdConsent
+    adConsentLock.lock()
+    defer { adConsentLock.unlock() }
+    guard let published = publishedAdConsent else {
+      return false
+    }
+    return published != current
   }
 
   deinit {
@@ -1009,6 +1100,8 @@ class DeviceHelper {
     // inline rather than going through ``interfaceStyle``, so the two resolve it
     // the same way by hand — keep them in step.
     let traits = currentUITraits
+    let adConsent = reportedAdConsent
+    await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
@@ -1071,7 +1164,10 @@ class DeviceHelper {
       swiftVersion: currentSwiftVersion(),
       compilerVersion: currentCompilerVersion(),
       localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
-      deviceId: factory.makeDeviceId()
+      deviceId: factory.makeDeviceId(),
+      adUserDataConsent: adConsent.adUserData,
+      adPersonalizationConsent: adConsent.adPersonalization,
+      adConsentSource: adConsent.source
     )
 
     var deviceDictionary = template.toDictionary(

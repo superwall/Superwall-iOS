@@ -85,7 +85,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   @objc(SWKTestModeBehavior)
   public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
     /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
-    /// mismatch is detected, but never during UI tests.
+    /// mismatch is detected, but never during UI tests. A bundle ID mismatch is ignored in
+    /// App Store builds, so a wrong bundle ID on the dashboard can't put customers in test mode.
     case automatic
 
     /// Activates test mode only when specifically enabled for a user via the dashboard.
@@ -364,6 +365,30 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// You can also change this at runtime via ``Superwall/eventTrackingBehavior``.
   public var eventTrackingBehavior: EventTrackingBehavior = .all
 
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on with the conversions it uploads to Google Ads and Meta.
+  ///
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// Both are reported as denied while ``eventTrackingBehavior`` is
+  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
+  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
+  ///
+  /// You can also change this at runtime via ``Superwall/adConsent``.
+  public var adConsent = AdConsent() {
+    didSet {
+      isAdConsentSet = true
+    }
+  }
+
+  /// Whether the app has assigned ``adConsent``, even to the default value. Until
+  /// then, a consent banner's stored answer takes its place.
+  var isAdConsentSet = false
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
@@ -409,7 +434,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
-  ///   a bundle ID mismatch is detected, but never during UI tests.
+  ///   a bundle ID mismatch is detected, but never during UI tests. A bundle ID mismatch is
+  ///   ignored in App Store builds.
   /// - `.whenEnabledForUser`: Activates test mode only when specifically enabled for a
   ///   user via the dashboard.
   /// - `.never`: Test mode is never activated, regardless of configuration.
@@ -536,6 +562,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
     case testModeBehavior
+    case adUserDataConsent
+    case adPersonalizationConsent
+    case isAdConsentSet
   }
 
   public override init() {
@@ -571,6 +600,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
+    try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
+    try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
+    try container.encode(isAdConsentSet, forKey: .isAdConsentSet)
   }
 
   func toDictionary() -> [String: Any] {

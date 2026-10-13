@@ -68,7 +68,43 @@ enum TestModeModal {
           message: "Couldn't show the test mode sheet, so using the saved test mode settings."
         )
         modal.finish()
+      } else {
+        // That only catches a refusal UIKit makes on the spot. A sheet it
+        // accepted can still never reach the screen, and then nothing would
+        // ever close it, so stop waiting for that one too.
+        giveUpIfNeverShown(navController, modal: modal)
       }
+    }
+  }
+
+  /// How long an accepted sheet gets to start appearing. UIKit starts a
+  /// presentation on the next turn of the run loop, so this only passes for a
+  /// sheet that is never going to show.
+  static let noShowTimeout: TimeInterval = 3
+
+  /// Falls back to the saved settings if `navController` still hasn't started
+  /// appearing after `timeout`. Config waits on this sheet, so one that never
+  /// shows would otherwise leave every `register` call waiting for good.
+  static func giveUpIfNeverShown(
+    _ navController: TestModeNavigationController,
+    modal: TestModeModalViewController,
+    after timeout: TimeInterval = noShowTimeout
+  ) {
+    Task { @MainActor in
+      try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+      if navController.hasStartedAppearing {
+        return
+      }
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "The test mode sheet never appeared, so using the saved test mode settings."
+      )
+      // Take it back from UIKit so it can't turn up later with nothing listening.
+      if navController.presentingViewController != nil {
+        navController.dismiss(animated: false, completion: nil)
+      }
+      modal.finish()
     }
   }
 
@@ -90,6 +126,14 @@ enum TestModeModal {
 /// detail screen inside the sheet doesn't count.
 final class TestModeNavigationController: UINavigationController {
   var onClose: (() -> Void)?
+
+  /// Set once UIKit starts putting the sheet on screen.
+  private(set) var hasStartedAppearing = false
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    hasStartedAppearing = true
+  }
 
   override func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
