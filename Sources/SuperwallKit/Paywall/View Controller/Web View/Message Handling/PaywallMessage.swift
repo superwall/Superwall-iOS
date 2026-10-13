@@ -220,13 +220,12 @@ enum PaywallMessage: Decodable, Equatable {
       case .teleportWatchStart:
         if let teleportId = try? values.decode(String.self, forKey: .teleportId),
           let teleportStatusUrl = try? values.decode(URL.self, forKey: .teleportStatusUrl),
-          let checkoutStatusUrl = try? values.decode(URL.self, forKey: .checkoutStatusUrl),
           let publicApiKey = try? values.decode(String.self, forKey: .publicApiKey) {
           self = .teleportWatchStart(
             TeleportReturnCover.Watch(
               teleportId: teleportId,
               teleportStatusUrl: teleportStatusUrl,
-              checkoutStatusUrl: checkoutStatusUrl,
+              checkoutStatusUrl: try? values.decodeIfPresent(URL.self, forKey: .checkoutStatusUrl),
               publicApiKey: publicApiKey
             )
           )

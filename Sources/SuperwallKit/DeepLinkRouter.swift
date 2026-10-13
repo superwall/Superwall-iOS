@@ -100,7 +100,7 @@ final class DeepLinkRouter {
   }
 
   private func handleReturnLink(_ url: URL) {
-    // The paywall that opened the checkout takes its waiting screen out of sight at once.
+    // The paywall that teleported takes its waiting screen out of sight at once.
     let userInfo = url.superwallReturnReason.map { ["reason": $0] }
     if Thread.isMainThread {
       NotificationCenter.default.post(
@@ -218,10 +218,10 @@ final class DeepLinkRouter {
 }
 
 extension URL {
-  /// Whether this link brings the user back to the app from a Superwall web
-  /// flow, such as a paywall's checkout page. Matches
+  /// Whether this link brings the user back to the app from a teleported
+  /// Superwall web flow, such as a paywall's checkout page. Matches
   /// `scheme://superwall/return` and
-  /// `https://<subdomain>.superwall.app/app-link/superwall/return`.
+  /// `https://<subdomain>.superwall.link/app-link/superwall/return`.
   var isSuperwallReturnLink: Bool {
     if scheme != "http",
       scheme != "https",
@@ -231,9 +231,7 @@ extension URL {
     }
 
     if let host,
-      host.hasSuffix(".superwall.link")
-        || host.hasSuffix(".superwall.app")
-        || host.hasSuffix(".superwallapp.dev"),
+      host.hasSuffix(".superwall.link"),
       path == "/app-link/superwall/return" {
       return true
     }
@@ -241,8 +239,8 @@ extension URL {
     return false
   }
 
-  /// Why the web flow sent the user back, when it says: `purchased` after paying on the checkout
-  /// page, `closed` when they closed it instead.
+  /// Why the web flow sent the user back, when it says, such as `purchased` after paying on a
+  /// checkout page or `closed` when they closed it instead.
   var superwallReturnReason: String? {
     URLComponents(url: self, resolvingAgainstBaseURL: false)?
       .queryItems?

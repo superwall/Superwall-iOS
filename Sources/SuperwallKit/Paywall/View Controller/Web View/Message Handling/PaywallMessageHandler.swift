@@ -302,7 +302,7 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Called when a new page replaces the old one, and when the SDK starts
   /// loading a page over one that is still on screen. The old page isn't
   /// told about the paywall opening or closing, and the new one is told the
-  /// paywall is open once it pings. A checkout the old page was watching ends
+  /// paywall is open once it pings. A teleport the old page was watching ends
   /// with it, since the new page will never end it.
   func documentWillLoad() {
     isDocumentReady = false
@@ -547,8 +547,8 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func openUrlInSafari(
     _ url: URL,
-    drawsWaitingScreen: Bool = false,
-    isTeleport: Bool = false
+    drawsWaitingScreen: Bool,
+    isTeleport: Bool
   ) {
     detectHiddenPaywallEvent(
       "openUrlInSafari",

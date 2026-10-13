@@ -2853,7 +2853,7 @@ struct TrackingTests {
   @Test func teleportReturn_withPresentedPaywall() async {
     let paywallInfo: PaywallInfo = .stub()
     let result = await Superwall.shared.track(
-      InternalSuperwallEvent.TeleportReturn(paywallInfo: paywallInfo))
+      InternalSuperwallEvent.TeleportReturn(paywallInfo: paywallInfo, reason: nil))
     #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
     #expect(result.parameters.audienceFilterParams["$is_standard_event"] as! Bool)
     #expect(
@@ -2866,7 +2866,7 @@ struct TrackingTests {
 
   @Test func teleportReturn_withoutPresentedPaywall() async {
     let result = await Superwall.shared.track(
-      InternalSuperwallEvent.TeleportReturn(paywallInfo: nil))
+      InternalSuperwallEvent.TeleportReturn(paywallInfo: nil, reason: nil))
     #expect(result.parameters.audienceFilterParams["$app_session_id"] != nil)
     #expect(
       result.parameters.audienceFilterParams["$event_name"] as! String == "teleport_return")

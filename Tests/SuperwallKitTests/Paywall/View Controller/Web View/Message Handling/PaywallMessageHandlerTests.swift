@@ -967,6 +967,38 @@ struct PaywallMessageHandlerTests {
     ])
   }
 
+  @Test
+  func decodeTeleportWatch_withoutACheckout() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "teleport_watch_start",
+            "teleport_id": "v1:teleport",
+            "teleport_status_url": "https://subs.example.com/teleport/status",
+            "public_api_key": "pk_test"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages == [
+      .teleportWatchStart(
+        TeleportReturnCover.Watch(
+          teleportId: "v1:teleport",
+          teleportStatusUrl: URL(string: "https://subs.example.com/teleport/status")!,
+          checkoutStatusUrl: nil,
+          publicApiKey: "pk_test"
+        )
+      ),
+    ])
+  }
+
   // MARK: - Haptic Feedback Message Decoding Tests
 
   @Test

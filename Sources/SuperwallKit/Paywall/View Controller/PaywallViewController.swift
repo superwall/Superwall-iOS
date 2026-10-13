@@ -159,7 +159,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
-  /// What the shopper sees of a checkout page's waiting screen while leaving and coming back.
+  /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
 
   /// The product bought from this presentation, App Store or web. A close that

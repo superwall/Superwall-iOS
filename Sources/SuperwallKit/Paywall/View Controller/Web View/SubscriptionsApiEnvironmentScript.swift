@@ -10,7 +10,7 @@ import Foundation
 /// A native paywall is served from the same CDN host in every environment, so the
 /// page cannot infer the environment from its own URL the way a hosted web paywall
 /// can. Without this it falls back to production, which silently breaks a
-/// `.developer` or `.local` SDK testing a checkout page against that stack.
+/// `.developer` or `.local` SDK testing a teleport or web checkout against that stack.
 enum SubscriptionsApiEnvironmentScript {
   /// The script source, or `nil` when the environment is production or unknown and
   /// paywall.js should keep its own default.

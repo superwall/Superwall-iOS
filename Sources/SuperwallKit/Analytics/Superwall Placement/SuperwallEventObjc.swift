@@ -274,10 +274,10 @@ public enum SuperwallEventObjc: Int, CaseIterable {
   /// When a refund request started from the Customer Center completes.
   case customerCenterRefundRequest
 
-  /// When a paywall opens its checkout page in the browser.
+  /// When a paywall teleports the user to a web flow in the browser, such as its checkout page.
   case teleportOpen
 
-  /// When a return link brings the user back to the app from a checkout page.
+  /// When a return link brings the user back to the app from a teleported web flow.
   case teleportReturn
 
   public init(event: SuperwallEvent) {

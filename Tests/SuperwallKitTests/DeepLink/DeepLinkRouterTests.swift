@@ -189,8 +189,6 @@ struct DeepLinkRouterTests {
       "myapp://superwall/return",
       "myapp://superwall/return?source=checkout",
       "https://myapp.superwall.link/app-link/superwall/return",
-      "https://myapp.superwall.app/app-link/superwall/return",
-      "https://myapp.superwallapp.dev/app-link/superwall/return",
     ]
   )
   func isSuperwallReturnLink_matches(link: String) {
@@ -207,8 +205,10 @@ struct DeepLinkRouterTests {
       "myapp://other/return",
       "https://superwall/return",
       "https://example.com/app-link/superwall/return",
-      "https://myapp.superwall.app/superwall/return",
-      "https://myapp.superwall.app/app-link/superwall/other",
+      "https://myapp.superwall.link/superwall/return",
+      "https://myapp.superwall.link/app-link/superwall/other",
+      // The backend only sends return links on superwall.link.
+      "https://myapp.superwall.app/app-link/superwall/return",
     ]
   )
   func isSuperwallReturnLink_ignores(link: String) {
@@ -220,7 +220,7 @@ struct DeepLinkRouterTests {
     #expect(DeepLinkRouter.storeDeepLink(URL(string: "myapp://superwall/return")!) == true)
     #expect(
       DeepLinkRouter.storeDeepLink(
-        URL(string: "https://myapp.superwall.app/app-link/superwall/return")!
+        URL(string: "https://myapp.superwall.link/app-link/superwall/return")!
       ) == true
     )
   }

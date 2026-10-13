@@ -353,10 +353,10 @@ public enum SuperwallEvent {
   /// When a Stripe checkout session fails.
   case stripeCheckoutFail(paywallInfo: PaywallInfo)
 
-  /// When a paywall opens its checkout page in the browser.
+  /// When a paywall teleports the user to a web flow in the browser, such as its checkout page.
   case teleportOpen(paywallInfo: PaywallInfo)
 
-  /// When a return link brings the user back to the app from a checkout page.
+  /// When a return link brings the user back to the app from a teleported web flow.
   ///
   /// `paywallInfo` is the presented paywall's, if one is presented.
   case teleportReturn(paywallInfo: PaywallInfo?)

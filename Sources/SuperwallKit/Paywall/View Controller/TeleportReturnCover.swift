@@ -12,41 +12,44 @@ extension Notification.Name {
   static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
 }
 
-/// Decides what the shopper sees of a checkout page's waiting screen as they leave the app for
-/// the browser and come back.
+/// Decides what the user sees of a teleport's waiting screen as they leave the app for the
+/// browser and come back.
 ///
 /// The waiting screen has to be in place when they switch back by hand, so it must already be in
 /// the snapshot iOS takes when the app leaves. But iOS also shows that snapshot while the app comes
-/// back, however it comes back, and a shopper who returns through the return link, having paid or
-/// left the checkout, must never see the screen. A webview paints nothing in the background, so:
+/// back, however it comes back, and a user who returns through the return link, having finished or
+/// left the web flow, must never see the screen. A webview paints nothing in the background, so:
 /// - leaving, the page draws the screen under a still of the paywall, which comes off once the app
 ///   is in the background, so the app switcher shows the screen;
-/// - in the background, where the page cannot run, the checkout is checked here. Once it is paid
-///   or expired, a picture of the paywall without the screen covers it and iOS retakes the
-///   snapshot;
+/// - in the background, where the page cannot run, the teleport is checked here. Once it is
+///   settled, a picture of the paywall without the screen covers it and iOS retakes the snapshot;
 /// - just before iOS suspends the app, nothing settled yet, it covers the screen the same way. A
 ///   return link can arrive at any time after that, and iOS can no longer be asked to retake the
 ///   snapshot then. The app switcher shows the paywall from then on;
 /// - a return link covers it before the first frame, whatever else happened.
 /// Back in the app, through the return link or settled, the page removes the screen and the cover
-/// comes off. Back by hand with the checkout still open, the cover fades and shows the screen.
+/// comes off. Back by hand with the teleport still open, the cover fades and shows the screen.
+///
+/// The `showCheckoutWaitingScreen` and `hideCheckoutWaitingScreen` page functions keep the names
+/// paywall.js gave them; they serve any teleport.
 @MainActor
 final class TeleportReturnCover: NSObject {
-  /// What the page hands over to check its checkout, while the waiting screen is up.
-  struct Watch: Decodable, Equatable {
+  /// What the page hands over to check its teleport while the waiting screen is up.
+  struct Watch: Equatable {
     let teleportId: String
     let teleportStatusUrl: URL
-    let checkoutStatusUrl: URL
+    /// Where a checkout the teleport led to is read. Nil for a web flow without a checkout.
+    let checkoutStatusUrl: URL?
     let publicApiKey: String
   }
 
   /// Why the waiting screen is covered.
   private enum Reason {
-    /// The checkout was paid or expired while the app was in the background.
+    /// The teleport settled while the app was in the background.
     case settled
     /// The return link opened the app.
     case returnLink
-    /// The app was about to be suspended. The checkout may still be open.
+    /// The app was about to be suspended. The teleport may still be open.
     case suspending
   }
 
@@ -56,7 +59,7 @@ final class TeleportReturnCover: NSObject {
     var drawWait: UInt64 = 500_000_000
     /// How long the still stays up when the app does not leave (the browser did not open).
     var stillTimeout: UInt64 = 2_000_000_000
-    /// The longest the checkout is checked in the background.
+    /// The longest the teleport is checked in the background.
     var backgroundCheckLimit: TimeInterval = 25
     /// How much background time is kept to cover the screen and have iOS retake the snapshot.
     var suspendLead: TimeInterval = 4
@@ -74,12 +77,12 @@ final class TeleportReturnCover: NSObject {
     var applicationState: () -> UIApplication.State = {
       UIApplication.sharedApplication?.applicationState ?? .active
     }
-    var isSettled: (Watch) async -> Bool = CheckoutStatusCheck.isSettled
+    var isSettled: (Watch) async -> Bool = TeleportStatusCheck.isSettled
     var makeStill: (UIView) -> UIView? = { $0.snapshotView(afterScreenUpdates: false) }
     /// Nil when there is no application to ask for background time.
     var beginBackgroundTask: (@escaping () -> Void) -> UIBackgroundTaskIdentifier? = { handler in
       UIApplication.sharedApplication?.beginBackgroundTask(
-        withName: "Superwall checkout",
+        withName: "Superwall teleport",
         expirationHandler: handler
       )
     }
@@ -208,7 +211,7 @@ final class TeleportReturnCover: NSObject {
     stopBackgroundCheck()
   }
 
-  /// The paywall is gone: nothing of a checkout stays over it.
+  /// The paywall is gone: nothing of a teleport stays over it.
   func reset() {
     removeLeavingStill()
     removeCover()
@@ -270,15 +273,15 @@ final class TeleportReturnCover: NSObject {
   @objc private func returnLinkOpened(_ notification: Notification) {
     returnReason = notification.userInfo?["reason"] as? String
     guard watch != nil || returnCover != nil else {
-      // No waiting screen to cover, but the page still has to know the shopper is back: it
-      // checks the checkout for a while, then treats an unpaid one as abandoned.
+      // No waiting screen to cover, but the page still has to know the user is back: it
+      // checks the teleport for a while, then treats an unfinished one as abandoned.
       tellPageOfReturn()
       return
     }
     Logger.debug(
       logLevel: .debug,
       scope: .paywallViewController,
-      message: "Checkout: return link opened, covering the waiting screen"
+      message: "Teleport: return link opened, covering the waiting screen"
     )
     if let returnCover {
       self.returnCover = (returnCover.view, .returnLink)
@@ -302,7 +305,7 @@ final class TeleportReturnCover: NSObject {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallViewController,
-      message: "Checkout: checking the checkout while the app is in the background"
+      message: "Teleport: checking the teleport while the app is in the background"
     )
     // Out of time before the check finished: cover the screen while iOS still listens. iOS
     // calls this on the main thread and expects the task ended before it returns, so no hop.
@@ -334,7 +337,7 @@ final class TeleportReturnCover: NSObject {
           Logger.debug(
             logLevel: .debug,
             scope: .paywallViewController,
-            message: "Checkout: settled in the background, covering the waiting screen"
+            message: "Teleport: settled in the background, covering the waiting screen"
           )
           self?.cover(.settled)
           self?.refreshSnapshot()
@@ -362,7 +365,7 @@ final class TeleportReturnCover: NSObject {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallViewController,
-      message: "Checkout: suspending with the checkout open, covering the waiting screen"
+      message: "Teleport: suspending with the teleport open, covering the waiting screen"
     )
     cover(.suspending)
     refreshSnapshot()
@@ -449,7 +452,7 @@ final class TeleportReturnCover: NSObject {
     Logger.debug(
       logLevel: .debug,
       scope: .paywallViewController,
-      message: "Checkout: waiting screen removed, cover off"
+      message: "Teleport: waiting screen removed, cover off"
     )
   }
 }
@@ -471,7 +474,7 @@ private extension TeleportReturnCover {
     returnReason = nil
   }
 
-  /// Back by hand with the checkout still open: the waiting screen is still the right thing to
+  /// Back by hand with the teleport still open: the waiting screen is still the right thing to
   /// show, so the cover fades off it, unless a return link turns up first.
   func revealAfterGrace() {
     guard revealing == nil, uncovering == nil else {
@@ -516,10 +519,10 @@ private extension TeleportReturnCover {
   }
 }
 
-/// Reads a checkout's status from the background, where the paywall page cannot run.
-enum CheckoutStatusCheck {
-  /// Paid or expired: the waiting screen goes, and the shopper likely comes back through the
-  /// return link.
+/// Reads a teleport's status from the background, where the paywall page cannot run.
+enum TeleportStatusCheck {
+  /// Completed or expired, or the checkout it led to paid: the waiting screen goes, and the user
+  /// likely comes back through the return link.
   static func isSettled(_ watch: TeleportReturnCover.Watch) async -> Bool {
     guard let teleport = await post(
       watch.teleportStatusUrl,
@@ -536,9 +539,10 @@ enum CheckoutStatusCheck {
       break
     }
     guard
+      let checkoutStatusUrl = watch.checkoutStatusUrl,
       let checkoutId = teleport["checkoutContextId"] as? String,
       let checkout = await post(
-        watch.checkoutStatusUrl,
+        checkoutStatusUrl,
         body: ["checkoutId": checkoutId],
         publicApiKey: watch.publicApiKey
       )
