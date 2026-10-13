@@ -281,8 +281,9 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
   }
 
-  /// Called before the SDK loads a new page into the web view. The page being
-  /// replaced can no longer take messages, and the new one is told the
+  /// Called when a new page replaces the old one, and when the SDK starts
+  /// loading a page over one that is still on screen. The old page isn't
+  /// told about the paywall opening or closing, and the new one is told the
   /// paywall is open once it pings.
   func documentWillLoad() {
     isDocumentReady = false

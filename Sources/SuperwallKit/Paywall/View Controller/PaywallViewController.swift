@@ -538,7 +538,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   @objc private func reloadWebView() {
-    webView.messageHandler.documentWillLoad()
     webView.reload()
   }
 

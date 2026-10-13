@@ -323,6 +323,25 @@ struct PaywallMessageHandlerTests {
   }
 
   @Test
+  func paywallOpenWaitsForAPageThatReplacedTheOldOne() async {
+    // As with a reload after the web content process dies, or the refresh
+    // button.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    webView.webView(webView, didCommit: nil)
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 0)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  @Test
   func close() {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
