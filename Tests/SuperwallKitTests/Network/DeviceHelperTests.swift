@@ -543,6 +543,46 @@ struct DeviceHelperTests {
     #expect(template["ipV6ObservedAt"] == nil)
   }
 
+  /// Setting an AppsFlyer ID starts the IPv4 lookup straight away, rather than
+  /// waiting for the next time the device attributes are built.
+  @Test func settingAppsflyerId_startsIPv4Lookup() async {
+    let (lookups, lookupStarted) = AsyncStream<Void>.makeStream()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        lookupStarted.yield()
+        return [:]
+      },
+      ipV6Fetch: { [:] }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    dependencyContainer.storage.delete(IntegrationAttributes.self)
+    let fetcher = AttributionFetcher(
+      storage: dependencyContainer.storage,
+      deviceHelper: deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      vendorIdProvider: { "vendor-1" },
+      attStatusProvider: { 3 },
+      idfaProvider: { nil },
+      syncUserAttributes: { _ in }
+    )
+    defer { fetcher.cancelPendingOperations() }
+    await collector.record(["ipAddress": "2001:db8::1", "ipAddressObservedAt": Date().isoString])
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    // Ends the wait, failing the test, if the lookup never starts.
+    let timeout = Task {
+      try? await Task.sleep(nanoseconds: 5_000_000_000)
+      lookupStarted.finish()
+    }
+    defer { timeout.cancel() }
+
+    var iterator = lookups.makeAsyncIterator()
+    #expect(await iterator.next() != nil)
+  }
+
   /// With the MMP on, an AppsFlyer ID doesn't narrow collection: both lookups
   /// run and both addresses are exposed.
   @Test func templateDevice_withMMPAndAppsflyerId_collectsBothFamilies() async {
