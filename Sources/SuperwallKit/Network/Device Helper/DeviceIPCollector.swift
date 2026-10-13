@@ -16,12 +16,15 @@ actor DeviceIPCollector {
   /// doesn't hold up or speed up the IPv4 one.
   private struct Lookup {
     let name: String
+    /// 4 or 6, or `nil` for a test lookup that only runs when every lookup is asked for.
+    let family: Int?
     let fetch: Fetch
     var lastAttempt: Date?
     var nextAttemptAt: Date?
 
-    init(name: String, fetch: @escaping Fetch) {
+    init(name: String, family: Int?, fetch: @escaping Fetch) {
       self.name = name
+      self.family = family
       self.fetch = fetch
     }
   }
@@ -46,13 +49,13 @@ actor DeviceIPCollector {
   ) {
     var lookups: [Lookup] = []
     if let ipV4Url = ipV4Url {
-      lookups.append(Lookup(name: "IPv4") { try await Self.fetchIPv4(from: ipV4Url) })
+      lookups.append(Lookup(name: "IPv4", family: 4) { try await Self.fetchIPv4(from: ipV4Url) })
     }
     // watchOS doesn't let apps open their own connections like this.
     #if canImport(Network) && !os(watchOS)
     if let ipV6Url = ipV6Url,
       #available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *) {
-      lookups.append(Lookup(name: "IPv6") { try await Self.fetchOverIPv6(from: ipV6Url) })
+      lookups.append(Lookup(name: "IPv6", family: 6) { try await Self.fetchOverIPv6(from: ipV6Url) })
     }
     #endif
     self.lookups = lookups
@@ -64,17 +67,38 @@ actor DeviceIPCollector {
     fetches: [Fetch],
     now: @escaping () -> Date = Date.init
   ) {
-    self.lookups = fetches.enumerated().map { Lookup(name: "test \($0.offset)", fetch: $0.element) }
+    self.lookups = fetches.enumerated().map {
+      Lookup(name: "test \($0.offset)", family: nil, fetch: $0.element)
+    }
+    self.now = now
+  }
+
+  /// One lookup per address family. For tests.
+  init(
+    ipV4Fetch: @escaping Fetch,
+    ipV6Fetch: @escaping Fetch,
+    now: @escaping () -> Date = Date.init
+  ) {
+    self.lookups = [
+      Lookup(name: "IPv4", family: 4, fetch: ipV4Fetch),
+      Lookup(name: "IPv6", family: 6, fetch: ipV6Fetch)
+    ]
     self.now = now
   }
 
   /// Starts any lookups that are due, in the background. The returned task
   /// finishes when they do and is only there so tests can wait for it.
+  ///
+  /// - Parameter families: The address families to look up, or `nil` for all of them.
   @discardableResult
-  func refreshIfNeeded() -> Task<Void, Never>? {
+  func refreshIfNeeded(families: Set<Int>? = nil) -> Task<Void, Never>? {
     let date = now()
     var started: [Task<Void, Never>] = []
     for index in lookups.indices {
+      if let families = families,
+        !families.contains(lookups[index].family ?? 0) {
+        continue
+      }
       if let nextAttemptAt = lookups[index].nextAttemptAt,
         date < nextAttemptAt {
         continue
@@ -146,17 +170,35 @@ actor DeviceIPCollector {
     }
   }
 
-  func attributes() -> [String: String] {
+  /// Starts the IPv4 lookup only when the device is known to be on IPv6 and no
+  /// IPv4 address is known. On an IPv4 network the device's own requests already
+  /// show its IPv4 address, so there's nothing to look up.
+  @discardableResult
+  func refreshIPv4IfOnlyIPv6IsKnown() -> Task<Void, Never>? {
+    if !hasFreshObservation(family: 6) || hasFreshObservation(family: 4) {
+      return nil
+    }
+    return refreshIfNeeded(families: [4])
+  }
+
+  func attributes(families: Set<Int> = [4, 6]) -> [String: String] {
     var result: [String: String] = [:]
-    for key in ["ipV4", "ipV6"] {
-      if let timestamp = observations["\(key)ObservedAt"],
-        let date = Self.date(from: timestamp),
-        isFresh(date) {
-        result[key] = observations[key]
-        result["\(key)ObservedAt"] = timestamp
-      }
+    for family in families.sorted() where hasFreshObservation(family: family) {
+      let key = "ipV\(family)"
+      result[key] = observations[key]
+      result["\(key)ObservedAt"] = observations["\(key)ObservedAt"]
     }
     return result
+  }
+
+  private func hasFreshObservation(family: Int) -> Bool {
+    guard
+      let timestamp = observations["ipV\(family)ObservedAt"],
+      let date = Self.date(from: timestamp)
+    else {
+      return false
+    }
+    return isFresh(date)
   }
 
   private func isFresh(_ date: Date) -> Bool {

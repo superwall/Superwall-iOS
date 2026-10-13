@@ -120,6 +120,45 @@ struct DeviceIPCollectorTests {
     #expect(await collector.refreshIfNeeded() != nil)
   }
 
+  /// AppsFlyer only needs the IPv4 address, and an IPv4 network already shows
+  /// it, so the IPv4 lookup only runs when the device is known to be on IPv6.
+  @Test func looksUpIPv4OnlyWhenJustIPv6IsKnown() async {
+    let ipV4 = FetchCounter()
+    let ipV6 = FetchCounter()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: { try await ipV4.fetch() },
+      ipV6Fetch: { try await ipV6.fetch() },
+      now: { date }
+    )
+    #expect(await collector.refreshIPv4IfOnlyIPv6IsKnown() == nil)
+
+    await collector.record(["ipAddress": "2001:db8::1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"])
+    await collector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+    #expect(await ipV4.count == 1)
+    #expect(await ipV6.count == 0)
+  }
+
+  @Test func skipsTheIPv4LookupWhenIPv4IsKnown() async {
+    let ipV4 = FetchCounter()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: { try await ipV4.fetch() },
+      ipV6Fetch: { [:] },
+      now: { date }
+    )
+    await collector.record(["ipAddress": "8.8.8.8", "ipAddressObservedAt": "2026-09-15T20:40:00Z"])
+    await collector.record(["ipV6": "2001:db8::1", "ipV6ObservedAt": "2026-09-15T20:40:00Z"])
+    #expect(await collector.refreshIPv4IfOnlyIPv6IsKnown() == nil)
+    #expect(await ipV4.count == 0)
+  }
+
+  @Test func limitsAttributesToTheAskedFamilies() async {
+    let collector = DeviceIPCollector(fetches: [], now: { date })
+    await collector.record(["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:40:00Z"])
+    await collector.record(["ipV6": "2001:db8::1", "ipV6ObservedAt": "2026-09-15T20:40:00Z"])
+    let attributes = await collector.attributes(families: [4])
+    #expect(attributes == ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:40:00Z"])
+  }
+
   @Test func doesNothingWithoutAnEndpoint() async {
     let collector = DeviceIPCollector(fetches: [], now: { date })
     #expect(await collector.refreshIfNeeded() == nil)
