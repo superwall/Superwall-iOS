@@ -30,10 +30,20 @@ extension Notification.Name {
 /// Back in the app, through the return link or settled, the page removes the screen and the cover
 /// comes off. Back by hand with the teleport still open, the cover fades and shows the screen.
 ///
-/// The `showCheckoutWaitingScreen` and `hideCheckoutWaitingScreen` page functions keep the names
-/// paywall.js gave them; they serve any teleport.
+/// The page's `showTeleportWaitingScreen` and `handleTeleportReturn` were first named
+/// `showCheckoutWaitingScreen` and `hideCheckoutWaitingScreen`; pages built before the rename only
+/// have the old names, so each call falls back to them.
 @MainActor
 final class TeleportReturnCover: NSObject {
+  private static let showWaitingScreenScript = """
+    return await (window.app?.showTeleportWaitingScreen?.()
+      ?? window.app?.showCheckoutWaitingScreen?.()) ?? false
+    """
+  private static let returnScript = """
+    return await (window.app?.handleTeleportReturn?.({ reason })
+      ?? window.app?.hideCheckoutWaitingScreen?.({ reason })) ?? false
+    """
+
   /// What the page hands over to check its teleport while the waiting screen is up.
   struct Watch: Equatable {
     let teleportId: String
@@ -189,7 +199,7 @@ final class TeleportReturnCover: NSObject {
     let id = UUID()
     pendingOpen = (id, open)
     webView.callAsyncJavaScript(
-      "return await window.app?.showCheckoutWaitingScreen?.() ?? false",
+      Self.showWaitingScreenScript,
       arguments: [:],
       in: nil,
       in: .page
@@ -430,7 +440,7 @@ final class TeleportReturnCover: NSObject {
     uncovering = id
     if #available(iOS 14.0, *), let webView {
       webView.callAsyncJavaScript(
-        "return await window.app?.hideCheckoutWaitingScreen?.({ reason }) ?? false",
+        Self.returnScript,
         arguments: ["reason": returnReason ?? ""],
         in: nil,
         in: .page
@@ -467,7 +477,7 @@ private extension TeleportReturnCover {
       return
     }
     webView.callAsyncJavaScript(
-      "return await window.app?.hideCheckoutWaitingScreen?.({ reason }) ?? false",
+      Self.returnScript,
       arguments: ["reason": returnReason ?? ""],
       in: nil,
       in: .page,
