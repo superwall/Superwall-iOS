@@ -19,6 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
 - Fixes the test mode sheet not showing in apps with more than one scene or window.
+- Fixes a paywall staying blank after iOS terminated its web content process.
 
 ## 4.17.0
 

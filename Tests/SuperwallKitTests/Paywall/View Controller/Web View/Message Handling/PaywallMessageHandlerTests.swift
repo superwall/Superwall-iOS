@@ -181,6 +181,166 @@ struct PaywallMessageHandlerTests {
     #expect(didHandleJs == true)
   }
 
+  private func paywallOpenCount(
+    in webView: FakeWebView,
+    reaching expected: Int,
+    keeping delegate: PaywallMessageHandlerDelegateMock
+  ) async -> Int {
+    let count = {
+      self.passedEvents(in: webView).filter { $0["event_name"] as? String == "paywall_open" }.count
+    }
+    for _ in 0..<250 {
+      if count() >= expected {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    withExtendedLifetime(delegate) {}
+    return count()
+  }
+
+  /// Waits until the page's setup has run, which is when it becomes ready.
+  private func waitForSetup(of webView: FakeWebView) async {
+    for _ in 0..<250 {
+      if webView.evaluatedScripts.contains(where: { $0.contains("user-scalable=no") }) {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
+  @Test
+  func paywallOpenIsPassedStraightThroughOnceThePageIsReady() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+    #expect(!passedEvents(in: webView).contains { $0["event_name"] as? String == "paywall_open" })
+    messageHandler.handle(.paywallOpen)
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenWaitsForTheReadyMessage() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    #expect(passedEvents(in: webView).isEmpty)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsResentToADocumentReloadedWhileOpen() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.documentWillLoad()
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 2)
+  }
+
+  @Test
+  func paywallOpenIsNotSentToADocumentReloadedWhileHidden() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 0)
+  }
+
+  @Test
+  func paywallOpenIsNotResentAfterThePaywallCloses() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+    messageHandler.handle(.paywallClose)
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsSentOnceWhenTheDocumentDiesBeforeItIsReady() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsResentToAPageThatReloadedItself() async {
+    // As with `location.reload()` or the dev server's live reload, where the
+    // SDK doesn't start the load.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 2)
+  }
+
+  @Test
+  func paywallOpenIsSentOnceWhenAPageIsReplacedDuringItsSetup() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    // The first page pings, then is replaced before its setup finishes.
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenWaitsForAPageThatReplacedTheOldOne() async {
+    // As with a reload after the web content process dies, or the refresh
+    // button.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    webView.webView(webView, didCommit: nil)
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 0)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
   @Test
   func close() {
     let dependencyContainer = DependencyContainer()
