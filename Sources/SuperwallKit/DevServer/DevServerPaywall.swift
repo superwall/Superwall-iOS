@@ -8,7 +8,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Paywall {
   /// Builds the paywall a dev server surface presents.
@@ -90,9 +94,9 @@ extension Paywall {
       htmlSubstitutions: "",
       presentation: presentation,
       backgroundColorHex: backgroundColorHex ?? "#FFFFFF",
-      backgroundColor: backgroundColorHex.map { UIColor(hexString: $0) } ?? .white,
+      backgroundColor: backgroundColorHex.map { PlatformColor(hexString: $0) } ?? .white,
       darkBackgroundColorHex: darkBackgroundColorHex,
-      darkBackgroundColor: darkBackgroundColorHex.map { UIColor(hexString: $0) },
+      darkBackgroundColor: darkBackgroundColorHex.map { PlatformColor(hexString: $0) },
       productItems: products,
       productIds: products.map { $0.id },
       appStoreProductIds: products.map { $0.id },

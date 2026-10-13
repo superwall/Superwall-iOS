@@ -5,7 +5,11 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Superwall {
   /// Presents the Customer Center, a self-service screen where users can view and manage their
@@ -25,7 +29,7 @@ extension Superwall {
   @MainActor
   public func presentCustomerCenter(
     configuration: CustomerCenterConfiguration? = nil,
-    from presenter: UIViewController? = nil,
+    from presenter: PlatformViewController? = nil,
     delegate: CustomerCenterDelegate? = nil,
     onDismiss: (() -> Void)? = nil
   ) {
@@ -70,7 +74,7 @@ extension Superwall {
   @objc(presentCustomerCenterWithConfiguration:from:delegate:onDismiss:)
   public func presentCustomerCenterObjc(
     configuration: CustomerCenterConfiguration?,
-    from presenter: UIViewController?,
+    from presenter: PlatformViewController?,
     delegate: CustomerCenterDelegateObjc?,
     onDismiss: (() -> Void)?
   ) {

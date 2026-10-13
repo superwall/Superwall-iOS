@@ -32,9 +32,15 @@ let package = Package(
       exclude: ["Resources/BundleHelper.swift"],
       resources: [
         .process("Resources/Certificates"),
+        .process("Resources/Superwall_Assets.xcassets"),
         .process("Resources/Localizations"),
         .copy("Resources/PrivacyInfo.xcprivacy")
       ]
+    ),
+    .testTarget(
+      name: "SuperwallKitSharedTests",
+      dependencies: ["SuperwallKit"],
+      path: "Tests/Shared"
     ),
     .testTarget(
       name: "SuperwallKitTests",

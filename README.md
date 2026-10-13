@@ -135,3 +135,7 @@ Any `ipAddress` the enrichment API returns is passed through unchanged.
 They are not proof of identity. Downstream consumers must preserve the timestamps and apply
 their own freshness policy. Wrapper SDKs receive this behavior when they adopt a native
 SDK release containing it.
+
+### Native macOS
+
+SuperwallKit supports native AppKit and SwiftUI Mac apps on macOS 12+. See the [integration guide](Sources/SuperwallKit/Documentation.docc/macOS.md) and [Mac example](Examples/macOS).

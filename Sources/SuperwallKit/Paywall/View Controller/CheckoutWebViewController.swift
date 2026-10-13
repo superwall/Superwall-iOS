@@ -6,10 +6,98 @@
 //
 // swiftlint:disable implicitly_unwrapped_optional
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import WebKit
 
-#if !os(visionOS)
+#if os(macOS)
+/// The checkout page, shown as a sheet over the paywall.
+///
+/// It closes from its Close button or Escape, and reports that through
+/// `onDismiss` like the iOS sheet does.
+final class CheckoutWebViewController: NSViewController {
+  private let webView: WKWebView
+  private let url: URL
+  var onDismiss: (() -> Void)?
+  @DispatchQueueBacked
+  var hasHandledRedemption = false
+
+  /// Room for a checkout form without crowding a laptop screen.
+  static let preferredSize = CGSize(width: 520, height: 720)
+
+  init(url: URL) {
+    self.url = url
+    self.webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+    super.init(nibName: nil, bundle: nil)
+    preferredContentSize = Self.preferredSize
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func loadView() {
+    view = NSView(frame: NSRect(origin: .zero, size: Self.preferredSize))
+  }
+
+  override func viewDidLoad() {
+    super.viewDidLoad()
+
+    let closeButton = NSButton(
+      title: LocalizationLogic.localizedBundle().localizedString(
+        forKey: "alert_action_done",
+        value: "Done",
+        table: nil
+      ),
+      target: self,
+      action: #selector(closeCheckout)
+    )
+    closeButton.bezelStyle = .rounded
+    closeButton.keyEquivalent = "\u{1b}"
+    closeButton.translatesAutoresizingMaskIntoConstraints = false
+
+    webView.translatesAutoresizingMaskIntoConstraints = false
+    webView.navigationDelegate = self
+
+    view.addSubview(webView)
+    view.addSubview(closeButton)
+
+    NSLayoutConstraint.activate([
+      closeButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 10),
+      closeButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+      webView.topAnchor.constraint(equalTo: closeButton.bottomAnchor, constant: 10),
+      webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+    ])
+
+    webView.load(URLRequest(url: url))
+  }
+
+  override func viewDidDisappear() {
+    super.viewDidDisappear()
+    onDismiss?()
+  }
+
+  @objc private func closeCheckout() {
+    dismiss(nil)
+  }
+}
+
+// MARK: - WKNavigationDelegate
+extension CheckoutWebViewController: WKNavigationDelegate {
+  func webView(
+    _ webView: WKWebView,
+    decidePolicyFor navigationAction: WKNavigationAction,
+    decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+  ) {
+    decisionHandler(navigationPolicy(for: navigationAction))
+  }
+}
+#elseif !os(visionOS)
 final class CheckoutWebViewController: UIViewController {
   private let webView: WKWebView
   private let url: URL
@@ -102,7 +190,7 @@ final class CheckoutWebViewController: UIViewController {
     // When keyboard hides, sheet might collapse back to medium detent
     // Add a small delay to ensure sheet animation is complete
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-      if #available(iOS 16.0, *) {
+      if #available(iOS 16.0, macOS 13.0, *) {
         guard let sheetController = self?.sheetPresentationController else { return }
         sheetController.invalidateDetents()
       }
@@ -207,25 +295,7 @@ extension CheckoutWebViewController: WKNavigationDelegate {
     decidePolicyFor navigationAction: WKNavigationAction,
     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
   ) {
-    guard let url = navigationAction.request.url else {
-      decisionHandler(.allow)
-      return
-    }
-
-    // Block Superwall deep links from checkout to prevent duplicate redemptions
-    if url.isSuperwallDeepLink {
-      if $hasHandledRedemption.testAndSetTrue() {
-        decisionHandler(.cancel)
-        return
-      }
-
-      _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
-      decisionHandler(.cancel)
-      return
-    }
-
-    // Allow all other navigation types for payment flows and SSO authentication
-    decisionHandler(.allow)
+    decisionHandler(navigationPolicy(for: navigationAction))
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -256,6 +326,31 @@ extension CheckoutWebViewController: WKScriptMessageHandler {
     if message.name == "fieldFocus" {
       expandToLargeDetent()
     }
+  }
+}
+#endif
+
+#if !os(visionOS)
+extension CheckoutWebViewController {
+  /// Lets checkout navigate anywhere except to Superwall deep links, which it
+  /// routes itself, once, so a redemption can't run twice.
+  func navigationPolicy(for navigationAction: WKNavigationAction) -> WKNavigationActionPolicy {
+    guard let url = navigationAction.request.url else {
+      return .allow
+    }
+
+    // Block Superwall deep links from checkout to prevent duplicate redemptions
+    if url.isSuperwallDeepLink {
+      if $hasHandledRedemption.testAndSetTrue() {
+        return .cancel
+      }
+
+      _ = Superwall.shared.dependencyContainer.deepLinkRouter.route(url: url)
+      return .cancel
+    }
+
+    // Allow all other navigation types for payment flows and SSO authentication
+    return .allow
   }
 }
 #endif

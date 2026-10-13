@@ -7,7 +7,11 @@
 
 import Foundation
 import Combine
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Superwall {
   /// Gets the  ``PaywallViewController`` object for a placement, which you can present

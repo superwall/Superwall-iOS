@@ -48,6 +48,26 @@ class SWWebView: WKWebView {
   private var activeProcessTerminationRetryCount = 0
   private let maxActiveProcessTerminationRetries = 3
 
+  #if os(macOS)
+  /// Whether the page scrolls, set from the paywall's setting.
+  ///
+  /// AppKit's WKWebView has no scroll view to switch off, so this hides the
+  /// page's overflow instead, and applies it again after each load.
+  var isScrollEnabled = true {
+    didSet {
+      applyScrollEnabled()
+    }
+  }
+
+  private func applyScrollEnabled() {
+    let overflow = isScrollEnabled ? "" : "hidden"
+    evaluateJavaScript(
+      "document.documentElement.style.overflow = '\(overflow)';"
+        + "if (document.body) { document.body.style.overflow = '\(overflow)'; }"
+    )
+  }
+  #endif
+
   init(
     isMac: Bool,
     messageHandler: PaywallMessageHandler,
@@ -65,9 +85,11 @@ class SWWebView: WKWebView {
     )
 
     let config = WKWebViewConfiguration()
+    #if !os(macOS)
     config.allowsInlineMediaPlayback = true
-    config.allowsAirPlayForMediaPlayback = true
     config.allowsPictureInPictureMediaPlayback = true
+    #endif
+    config.allowsAirPlayForMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
     // Register custom URL scheme handler for local files (videos, images, etc.)
@@ -84,7 +106,7 @@ class SWWebView: WKWebView {
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
-    if #available(iOS 17.0, *) {
+    if #available(iOS 17.0, macOS 14.0, *) {
       if featureFlags?.enableThrottleSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .throttle
       } else if featureFlags?.enableNoneSchedulingPolicy == true {
@@ -99,6 +121,10 @@ class SWWebView: WKWebView {
 
     #if os(visionOS)
     size = .zero
+    #elseif os(macOS)
+    // Lay the page out at the size it's most often shown at, as iOS uses the
+    // screen size, so a preloaded paywall doesn't reflow when it appears.
+    size = PaywallSheetSize.preferred
     #else
     size = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     #endif
@@ -133,12 +159,22 @@ class SWWebView: WKWebView {
     translatesAutoresizingMaskIntoConstraints = false
     allowsBackForwardNavigationGestures = true
     allowsLinkPreview = false
+    #if os(macOS)
+    // AppKit's WKWebView has no background color or opacity to clear. This is
+    // the key it reads instead, so the paywall's own background shows through,
+    // as popups rely on.
+    setValue(false, forKey: "drawsBackground")
+    allowsMagnification = false
+    if #available(macOS 13.3, *) {
+      isInspectable = true
+    }
+    #else
     backgroundColor = .clear
     scrollView.maximumZoomScale = 1.0
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
     #if os(iOS)
-    if #available(iOS 16.4, *) {
+    if #available(iOS 16.4, macOS 13.3, *) {
       isInspectable = true
     }
     #endif
@@ -153,6 +189,7 @@ class SWWebView: WKWebView {
     scrollView.minimumZoomScale = 1.0
     scrollView.backgroundColor = .clear
     scrollView.isOpaque = false
+    #endif
   }
 
   required init?(coder: NSCoder) {
@@ -257,6 +294,11 @@ extension SWWebView: WKNavigationDelegate {
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     activeProcessTerminationRetryCount = 0
+    #if os(macOS)
+    if !isScrollEnabled {
+      applyScrollEnabled()
+    }
+    #endif
     completion?(nil)
   }
 

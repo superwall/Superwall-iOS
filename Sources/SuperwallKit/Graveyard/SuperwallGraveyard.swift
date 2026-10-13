@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 04/10/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Superwall {
   // MARK: - V2 to V4
@@ -16,7 +20,7 @@ extension Superwall {
   @objc public func trigger(
     event: String? = nil,
     params: [String: Any]? = nil,
-    on viewController: UIViewController? = nil,
+    on viewController: PlatformViewController? = nil,
     ignoreSubscriptionStatus: Bool = false,
     presentationStyleOverride: PaywallPresentationStyleObjc = .none,
     onSkip: ((NSError?) -> Void)? = nil,

@@ -3,6 +3,7 @@
 //  SuperwallKit
 //
 
+#if !os(macOS)
 import UIKit
 import AVFoundation
 
@@ -299,7 +300,7 @@ private final class LocalResourceCell: UICollectionViewCell {
       }
     }
     #else
-    if #available(iOS 16.0, *) {
+    if #available(iOS 16.0, macOS 13.0, *) {
       Task { [weak self] in
         guard let (cgImage, _) = try? await generator.image(at: time) else {
           await MainActor.run { self?.showErrorText("Video not found") }
@@ -332,3 +333,4 @@ private final class LocalResourceCell: UICollectionViewCell {
     errorLabel.text = text
   }
 }
+#endif

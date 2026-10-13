@@ -50,7 +50,9 @@ targets:
       - package: Superscript
   SuperwallKitTests:
     scheme: {}
-    sources: [Tests/]
+    sources:
+      - path: Tests/SuperwallKitTests
+      - path: Tests/Shared
     type: bundle.unit-test
     platform: iOS
     dependencies:
@@ -62,3 +64,33 @@ targets:
       path: SuperwallKit.xcodeproj/SuperwallTests_Info.plist
       properties:
         CFBundleDevelopmentRegion: en
+  SuperwallKitMac:
+    type: framework
+    platform: macOS
+    deploymentTarget: "12.0"
+    sources: [Sources/]
+    dependencies:
+      - package: Superscript
+    settings:
+      PRODUCT_NAME: SuperwallKit
+      PRODUCT_MODULE_NAME: SuperwallKit
+      PRODUCT_BUNDLE_IDENTIFIER: com.superwall.SuperwallKit
+      GENERATE_INFOPLIST_FILE: YES
+      SWIFT_VERSION: "5.0"
+    scheme:
+      testTargets:
+        - name: SuperwallKitMacTests
+          parallelizable: false
+  SuperwallKitMacTests:
+    type: bundle.unit-test
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - Tests/SuperwallKitMacTests
+      - Tests/Shared
+    dependencies:
+      - target: SuperwallKitMac
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+      PRODUCT_BUNDLE_IDENTIFIER: com.superwall.SuperwallKitMacTests
+      SWIFT_VERSION: "5.0"

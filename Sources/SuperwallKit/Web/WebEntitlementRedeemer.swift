@@ -7,7 +7,11 @@
 // swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 actor WebEntitlementRedeemer {
   private let network: Network
@@ -109,7 +113,7 @@ actor WebEntitlementRedeemer {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleAppForeground),
-      name: UIApplication.willEnterForegroundNotification,
+      name: SystemInfo.applicationWillEnterForegroundNotification,
       object: nil
     )
   }
@@ -667,10 +671,24 @@ actor WebEntitlementRedeemer {
     closeActionTitle: String,
     onClose: (() -> Void)?
   ) {
-    guard let topVc = UIViewController.topMostViewController else {
+    guard let topVc = PlatformViewController.topMostViewController else {
       onClose?()
       return
     }
+    #if os(macOS)
+    // A window shows one sheet at a time.
+    guard topVc.view.window?.attachedSheet == nil else {
+      onClose?()
+      return
+    }
+    AlertControllerFactory.present(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      onClose: onClose,
+      on: topVc
+    )
+    #else
     guard topVc.presentedViewController == nil else {
       onClose?()
       return
@@ -683,6 +701,7 @@ actor WebEntitlementRedeemer {
       sourceView: topVc.view
     )
     topVc.present(alertController, animated: true)
+    #endif
   }
 
   private func handleRedemptionFailure(

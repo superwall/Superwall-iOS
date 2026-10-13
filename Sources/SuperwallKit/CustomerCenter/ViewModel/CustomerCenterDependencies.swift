@@ -7,7 +7,11 @@
 
 import Combine
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 protocol CustomerCenterCustomerInfoProviding: AnyObject {
   func fetchCustomerInfo() async -> CustomerInfo
@@ -262,9 +266,9 @@ struct LiveRestorer: CustomerCenterRestoring {
   }
 }
 struct LiveURLOpener: CustomerCenterURLOpening {
-  var canOpenURLs: Bool { UIApplication.sharedApplication != nil }
-  func canOpen(_ url: URL) -> Bool { UIApplication.sharedApplication?.canOpenURL(url) ?? false }
-  func open(_ url: URL) { UIApplication.sharedApplication?.open(url) }
+  var canOpenURLs: Bool { PlatformApplication.sharedApplication != nil }
+  func canOpen(_ url: URL) -> Bool { PlatformApplication.sharedApplication?.canOpenURL(url) ?? false }
+  func open(_ url: URL) { PlatformApplication.sharedApplication?.open(url) }
 }
 struct LiveEventTracker: CustomerCenterEventTracking {
   func track(_ event: Trackable) async { _ = await Superwall.shared.track(event) }
@@ -273,12 +277,17 @@ struct LiveEnvironment: CustomerCenterEnvironmentProviding {
   let container: DependencyContainer
   let webManagementOverride: URL?
   var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "" }
+  #if os(macOS)
+  var osVersion: String { container.deviceHelper.osVersion }
+  var deviceModel: String { container.deviceHelper.model }
+  #else
   var osVersion: String { UIDevice.current.systemVersion }
   var deviceModel: String { UIDevice.current.model }
+  #endif
   var sdkVersion: String { SuperwallKit.sdkVersion }
   var userId: String { Superwall.shared.userId }
   /// Deliberately `DeviceHelper`'s detection rather than `ReceiptManager.isSandboxEnvironment`
-  /// directly: that static is only ever assigned inside an `#available(iOS 16.0, *)` branch, so on
+  /// directly: that static is only ever assigned inside an `#available(iOS 16.0, macOS 13.0, *)` branch, so on
   /// iOS 15 — the Customer Center's own floor — it stays nil and every sandbox check silently
   /// reads `false`. `DeviceHelper` falls back to the simulator flag and the receipt URL, and also
   /// accounts for test mode.

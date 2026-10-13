@@ -120,7 +120,7 @@ final class CustomerCenterViewModel: ObservableObject {
     configuration.warnAboutConfigurationProblems()
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
-    } else if #available(iOS 17.0, *) {
+    } else if #available(iOS 17.0, macOS 14.0, *) {
       self.isChangePlanSheetAvailable = true
     } else {
       self.isChangePlanSheetAvailable = false
@@ -273,9 +273,19 @@ final class CustomerCenterViewModel: ObservableObject {
     case .restore:
       await performRestore()
     case .appleManageSheet(let groupId):
+      #if os(macOS)
+      // StoreKit's manage sheet is iOS-only, so open the App Store's own page.
+      _ = groupId
+      dependencies.urlOpener.open(Self.appStoreSubscriptionsURL)
+      #else
       sheet = .manageSubscriptions(groupId: groupId)
+      #endif
     case .webManage(let url):
+      #if os(macOS)
+      dependencies.urlOpener.open(url)
+      #else
       sheet = .safari(url)
+      #endif
     case .webManageUnavailable:
       sheet = .webManageUnavailable
     case .refund(let productId):
@@ -298,7 +308,13 @@ final class CustomerCenterViewModel: ObservableObject {
         sheet = .noMailApp(email: configuration.support.email ?? "")
       }
     case let .url(url, inApp):
+      #if os(macOS)
+      // There's no in-app browser on macOS, so every link opens in the user's.
+      _ = inApp
+      dependencies.urlOpener.open(url)
+      #else
       if inApp { sheet = .safari(url) } else { dependencies.urlOpener.open(url) }
+      #endif
     case .custom:
       break
     }
@@ -323,7 +339,9 @@ final class CustomerCenterViewModel: ObservableObject {
     default: restoreState = .notFound
     }
   }
+}
 
+extension CustomerCenterViewModel {
   // MARK: - Sheet callbacks
 
   func refundSheetDidFinish(productId: String, status: CustomerCenterRefundStatus) async {
@@ -359,3 +377,12 @@ final class CustomerCenterViewModel: ObservableObject {
     await apply(customerInfo: info, refetchProducts: true)
   }
 }
+
+#if os(macOS)
+extension CustomerCenterViewModel {
+  /// The App Store's page for managing subscriptions, which opens in the App
+  /// Store app.
+  // swiftlint:disable:next force_unwrapping
+  static let appStoreSubscriptionsURL = URL(string: "https://apps.apple.com/account/subscriptions")!
+}
+#endif

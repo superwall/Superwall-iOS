@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 06/08/2025.
 //
 
+#if !os(macOS)
 import UIKit
 
 final class PopupTransitionDelegate: NSObject, UIViewControllerTransitioningDelegate {
@@ -22,3 +23,4 @@ final class PopupTransitionDelegate: NSObject, UIViewControllerTransitioningDele
     return PopupTransition(state: .dismissing)
   }
 }
+#endif

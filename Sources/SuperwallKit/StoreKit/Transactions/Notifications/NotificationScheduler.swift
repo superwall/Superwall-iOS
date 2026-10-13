@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 19/06/2023.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import UserNotifications
 
 protocol NotificationScheduling {
@@ -88,8 +92,8 @@ actor NotificationScheduler: NotificationScheduling {
               actionTitle: notificationPermissionsDenied.actionButtonTitle,
               closeActionTitle: notificationPermissionsDenied.closeButtonTitle,
               action: {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                  guard let sharedApplication = UIApplication.sharedApplication else {
+                if let url = SystemInfo.notificationSettingsURL {
+                  guard let sharedApplication = PlatformApplication.sharedApplication else {
                     return continuation.resume()
                   }
                   sharedApplication.open(url)
