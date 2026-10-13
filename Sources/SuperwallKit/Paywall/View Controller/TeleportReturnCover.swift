@@ -74,22 +74,24 @@ final class TeleportReturnCover: NSObject {
 
   /// What the cover asks of iOS and the network. Tests stand these in.
   struct Environment {
-    var applicationState: () -> UIApplication.State = {
+    var applicationState: @MainActor () -> UIApplication.State = {
       UIApplication.sharedApplication?.applicationState ?? .active
     }
     var isSettled: (Watch) async -> Bool = TeleportStatusCheck.isSettled
-    var makeStill: (UIView) -> UIView? = { $0.snapshotView(afterScreenUpdates: false) }
+    var makeStill: @MainActor (UIView) -> UIView? = { $0.snapshotView(afterScreenUpdates: false) }
     /// Nil when there is no application to ask for background time.
-    var beginBackgroundTask: (@escaping () -> Void) -> UIBackgroundTaskIdentifier? = { handler in
+    var beginBackgroundTask: @MainActor (
+      @escaping @Sendable () -> Void
+    ) -> UIBackgroundTaskIdentifier? = { handler in
       UIApplication.sharedApplication?.beginBackgroundTask(
         withName: "Superwall teleport",
         expirationHandler: handler
       )
     }
-    var endBackgroundTask: (UIBackgroundTaskIdentifier) -> Void = {
+    var endBackgroundTask: @MainActor (UIBackgroundTaskIdentifier) -> Void = {
       UIApplication.sharedApplication?.endBackgroundTask($0)
     }
-    var backgroundTimeRemaining: () -> TimeInterval = {
+    var backgroundTimeRemaining: @MainActor () -> TimeInterval = {
       UIApplication.sharedApplication?.backgroundTimeRemaining ?? 0
     }
     /// Where the app lifecycle and return link notifications arrive.
@@ -196,7 +198,7 @@ final class TeleportReturnCover: NSObject {
         self?.open(id)
       }
     }
-    Task { @MainActor [weak self] in
+    Task { @MainActor [weak self, timing] in
       try? await Task.sleep(nanoseconds: timing.drawWait)
       self?.open(id)
     }
@@ -226,7 +228,7 @@ final class TeleportReturnCover: NSObject {
     }
     pendingOpen = nil
     pending.open()
-    Task { @MainActor [weak self] in
+    Task { @MainActor [weak self, timing] in
       try? await Task.sleep(nanoseconds: timing.stillTimeout)
       guard let self, environment.applicationState() == .active else {
         return
@@ -324,7 +326,7 @@ final class TeleportReturnCover: NSObject {
     // Leaves enough of the background time to cover the screen and have the snapshot retaken.
     let remaining = environment.backgroundTimeRemaining()
     let checkFor = min(timing.backgroundCheckLimit, max(0, remaining - timing.suspendLead))
-    backgroundCheck = Task { @MainActor [weak self] in
+    backgroundCheck = Task { @MainActor [weak self, timing] in
       let deadline = Date().addingTimeInterval(checkFor)
       while !Task.isCancelled, Date() < deadline {
         guard let watch = self?.watch else {
@@ -438,7 +440,7 @@ final class TeleportReturnCover: NSObject {
         }
       }
     }
-    Task { @MainActor [weak self] in
+    Task { @MainActor [weak self, timing] in
       try? await Task.sleep(nanoseconds: timing.drawWait)
       self?.finishUncovering(id)
     }
@@ -482,7 +484,7 @@ private extension TeleportReturnCover {
     }
     let id = UUID()
     revealing = id
-    Task { @MainActor [weak self] in
+    Task { @MainActor [weak self, timing] in
       try? await Task.sleep(nanoseconds: timing.revealGrace)
       guard let self, self.revealing == id else {
         return

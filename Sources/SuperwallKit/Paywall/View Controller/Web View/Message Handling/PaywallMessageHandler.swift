@@ -533,7 +533,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func openUrl(_ url: URL) {
     #if os(visionOS)
-      openUrlInSafari(url)
+      openUrlInSafari(url, drawsWaitingScreen: false, isTeleport: false)
     #else
       detectHiddenPaywallEvent(
         "openUrl",
