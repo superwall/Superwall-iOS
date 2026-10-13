@@ -19,8 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
 - Fixes the test mode sheet not showing in apps with more than one scene or window.
-- Fixes a paywall staying blank after iOS terminated its web content process. Paywalls that gate their entrance on `paywall_open`, which includes every framework paywall, rendered nothing in two cases. When the process died under a presented paywall, the SDK reloaded the page but never sent `paywall_open` to the new page. When the process died under a preloaded paywall, the SDK reloaded it at presentation but sent `paywall_open` before the new page was ready, so the page never received it. The SDK now tracks readiness per page load: it holds `paywall_open` until the new page says it is ready, and sends it again to a page reloaded while the paywall is open. The analytics `paywall_open` event is not tracked a second time.
-- Fixes paywalls served by a `superwall dev` server never opening when they gate their entrance on `paywall_open`. The SDK sent `paywall_open` before the local page was ready, so the page never received it.
+- Fixes a paywall staying blank after iOS terminated its web content process.
 
 ## 4.17.0
 
