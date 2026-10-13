@@ -2372,6 +2372,46 @@ struct WebEntitlementRedeemerTests {
     await olderPoll.value
   }
 
+  @Test("An older checkout's poll finishing leaves a newer checkout's pending state")
+  func testOlderPoll_finishingKeepsNewerPendingState() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      stripePendingPollIntervalNs: 20_000_000,
+      stripePendingPollTimeoutNs: 5_000_000_000,
+      superwall: superwall
+    )
+
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    mockNetwork.pollRedemptionResultResponses =
+      Array(
+        repeating: .success(RedeemResponse(results: [], customerInfo: .blank(), status: .pending)),
+        count: 5
+      ) + [.success(RedeemResponse(results: [], customerInfo: .blank(), status: .failed))]
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_old", productId: "prod_old")
+    let olderPoll = Task {
+      await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    }
+    try? await Task.sleep(nanoseconds: 40_000_000)
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_new", productId: "prod_new")
+    await olderPoll.value
+
+    let state = mockStorage.get(PendingStripeCheckoutPollStorage.self)
+    #expect(state?.checkoutContextId == "ctx_new")
+  }
+
   @Test("Foreground polling consumes attempts and clears pending after 5 tries")
   func testStripeForegroundPolling_consumesAttempts() async {
 

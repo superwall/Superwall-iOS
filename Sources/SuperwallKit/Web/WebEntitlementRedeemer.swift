@@ -495,7 +495,8 @@ actor WebEntitlementRedeemer {
     type: RedeemType,
     superwall: Superwall,
     callbackMode: RedemptionCallbackMode,
-    completion: StripeCheckoutCompletion = .restore
+    completion: StripeCheckoutCompletion = .restore,
+    checkoutContextId: String? = nil
   ) async {
     storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
@@ -531,7 +532,8 @@ actor WebEntitlementRedeemer {
         paywallEntitlementIds: paywallEntitlementIds,
         superwall: superwall,
         callbackMode: callbackMode,
-        completion: completion
+        completion: completion,
+        checkoutContextId: checkoutContextId
       )
     }
   }
@@ -628,7 +630,8 @@ actor WebEntitlementRedeemer {
     paywallEntitlementIds: Set<String>,
     superwall: Superwall,
     callbackMode: RedemptionCallbackMode,
-    completion: StripeCheckoutCompletion
+    completion: StripeCheckoutCompletion,
+    checkoutContextId: String?
   ) async {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
 
@@ -725,7 +728,7 @@ actor WebEntitlementRedeemer {
           onClose: { [weak self] in
             Task {
               await afterRedeem()
-              await self?.clearPendingStripeCheckoutState()
+              await self?.clearPendingStripeCheckoutState(for: checkoutContextId)
             }
           }
         )
@@ -737,14 +740,14 @@ actor WebEntitlementRedeemer {
           onClose: { [weak self] in
             Task {
               await afterRedeem()
-              await self?.clearPendingStripeCheckoutState()
+              await self?.clearPendingStripeCheckoutState(for: checkoutContextId)
             }
           }
         )
       }
     } else {
       await afterRedeem()
-      clearPendingStripeCheckoutState()
+      clearPendingStripeCheckoutState(for: checkoutContextId)
     }
   }
 
@@ -875,6 +878,16 @@ actor WebEntitlementRedeemer {
     storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
+  /// Clears the pending checkout only if it's this checkout's, so a poll that finishes an older
+  /// checkout leaves a newer one to be recovered. Nil clears whatever is pending.
+  private func clearPendingStripeCheckoutState(for checkoutContextId: String?) {
+    if let checkoutContextId,
+      pendingStripeCheckoutState?.checkoutContextId != checkoutContextId {
+      return
+    }
+    clearPendingStripeCheckoutState()
+  }
+
   private func makePollRedemptionRequest(
     contextId: String
   ) -> PollRedemptionResultRequest {
@@ -928,7 +941,8 @@ actor WebEntitlementRedeemer {
             type: .code(code),
             superwall: superwall,
             callbackMode: .pollFakeCompatibility,
-            completion: completion
+            completion: completion,
+            checkoutContextId: contextId
           )
           finalOutcome = .redeemed
           return finalOutcome
@@ -936,7 +950,7 @@ actor WebEntitlementRedeemer {
 
         switch response.status {
         case .failed:
-          clearPendingStripeCheckoutState()
+          clearPendingStripeCheckoutState(for: contextId)
           finalOutcome = .checkoutFailed
           return finalOutcome
         case .pending:
@@ -948,7 +962,7 @@ actor WebEntitlementRedeemer {
           try? await Task.sleep(nanoseconds: stripePendingPollIntervalNs)
           continue
         case .complete:
-          clearPendingStripeCheckoutState()
+          clearPendingStripeCheckoutState(for: contextId)
           finalOutcome = .noRedemptionFound
           return finalOutcome
         case .none:
