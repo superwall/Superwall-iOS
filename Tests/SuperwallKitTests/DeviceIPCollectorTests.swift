@@ -138,6 +138,25 @@ struct DeviceIPCollectorTests {
     #expect(await ipV6.count == 0)
   }
 
+  /// Enrichment may run only once a session, so the IPv4 address must keep
+  /// being looked up after the IPv6 address it saw goes stale.
+  @Test func keepsLookingUpIPv4AfterTheIPv6AddressGoesStale() async {
+    let ipV4 = FetchCounter()
+    let clock = Clock(date)
+    let collector = DeviceIPCollector(
+      ipV4Fetch: { try await ipV4.fetch() },
+      ipV6Fetch: { [:] },
+      now: { clock.date }
+    )
+    await collector.record(["ipAddress": "2001:db8::1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"])
+    await collector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+    #expect(await ipV4.count == 1)
+
+    clock.date = date.addingTimeInterval(16 * 60)
+    await collector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+    #expect(await ipV4.count == 2)
+  }
+
   @Test func skipsTheIPv4LookupWhenIPv4IsKnown() async {
     let ipV4 = FetchCounter()
     let collector = DeviceIPCollector(

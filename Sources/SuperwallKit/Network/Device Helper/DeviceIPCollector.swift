@@ -32,6 +32,9 @@ actor DeviceIPCollector {
   private var lookups: [Lookup]
   private let now: () -> Date
   private var observations: [String: String] = [:]
+  /// Whether an IPv6 address has been seen this session. Kept after that
+  /// address goes stale, since enrichment may not run again this session.
+  private var hasSeenIPv6 = false
   private let lifetime: TimeInterval = 15 * 60
   /// How long to wait after a failed fetch. Shorter than `lifetime` so a
   /// blip is retried soon, but long enough that an outage or offline device
@@ -167,15 +170,18 @@ actor DeviceIPCollector {
       }
       observations[key] = address
       observations["\(key)ObservedAt"] = timestamp
+      if family == 6 {
+        hasSeenIPv6 = true
+      }
     }
   }
 
-  /// Starts the IPv4 lookup only when the device is known to be on IPv6 and no
-  /// IPv4 address is known. On an IPv4 network the device's own requests already
-  /// show its IPv4 address, so there's nothing to look up.
+  /// Starts the IPv4 lookup only when the device has been on IPv6 this session
+  /// and no fresh IPv4 address is known. On an IPv4 network the device's own
+  /// requests already show its IPv4 address, so there's nothing to look up.
   @discardableResult
   func refreshIPv4IfOnlyIPv6IsKnown() -> Task<Void, Never>? {
-    if !hasFreshObservation(family: 6) || hasFreshObservation(family: 4) {
+    if !hasSeenIPv6 || hasFreshObservation(family: 4) {
       return nil
     }
     return refreshIfNeeded(families: [4])
