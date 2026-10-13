@@ -21,7 +21,7 @@ struct TeleportReturnCoverTests {
     /// This fixture's own center, so no other test's cover hears its notifications.
     let notificationCenter = NotificationCenter()
 
-    init(timing: TeleportReturnCover.Timing) {
+    init(timing: TeleportReturnCover.Timing, isSettled: Bool = false) {
       window = UIWindow(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
       view = UIView(frame: window.bounds)
       webView = WKWebView(frame: window.bounds)
@@ -30,7 +30,7 @@ struct TeleportReturnCoverTests {
       var state: UIApplication.State = .active
       var environment = TeleportReturnCover.Environment()
       environment.applicationState = { state }
-      environment.isSettled = { _ in false }
+      environment.isSettled = { _ in isSettled }
       environment.makeStill = { _ in UIView() }
       environment.beginBackgroundTask = { _ in UIBackgroundTaskIdentifier(rawValue: 1) }
       environment.endBackgroundTask = { _ in }
@@ -170,6 +170,100 @@ struct TeleportReturnCoverTests {
     #expect(shown as? Bool == true)
     #expect(returned as? Bool == true)
     #expect(calls == ["show", "return:purchased"])
+  }
+
+  @Test("A page with both names only has the teleport-named function called")
+  func pageWithBothNames() async throws {
+    let webView = try await loadedWebView()
+    _ = try await webView.callAsyncJavaScript(
+      """
+      window.calls = [];
+      window.app = {
+        showTeleportWaitingScreen: () => { window.calls.push("show") },
+        showCheckoutWaitingScreen: () => { window.calls.push("showCheckout") },
+        handleTeleportReturn: () => { window.calls.push("return") },
+        hideCheckoutWaitingScreen: () => { window.calls.push("hideCheckout") },
+      };
+      """,
+      contentWorld: .page
+    )
+
+    _ = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.showWaitingScreenScript,
+      contentWorld: .page
+    )
+    _ = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.returnScript,
+      arguments: ["reason": ""],
+      contentWorld: .page
+    )
+    let calls = try await webView.callAsyncJavaScript(
+      "return window.calls",
+      contentWorld: .page
+    ) as? [String]
+
+    #expect(calls == ["show", "return"])
+  }
+
+  @Test("A still from an earlier leave timing out does not take down a later leave's still")
+  func testEarlierStillTimeoutKeepsLaterStill() async {
+    var timing = Self.fastTiming
+    timing.stillTimeout = 200_000_000
+    let fixture = Fixture(timing: timing)
+
+    fixture.cover.leave(drawingWaitingScreen: true) {}
+    await sleep(0.1)
+    fixture.cover.leave(drawingWaitingScreen: true) {}
+    // Past the first leave's timeout, before the second's.
+    await sleep(0.18)
+    #expect(fixture.view.subviews.count == 1)
+
+    await sleep(0.2)
+    #expect(fixture.view.subviews.isEmpty)
+  }
+
+  @Test("Back after settling, the page hears the reason of a return link that arrives late")
+  func testSettledCoverWaitsForLateReturnLink() async throws {
+    var timing = Self.fastTiming
+    timing.backgroundCheckLimit = 1
+    let fixture = Fixture(timing: timing, isSettled: true)
+    fixture.webView.loadHTMLString("<html><body id=\"loaded\"></body></html>", baseURL: nil)
+    while try await fixture.webView.evaluateJavaScript(
+      "document.getElementById('loaded') !== null"
+    ) as? Bool != true {
+      try await Task.sleep(nanoseconds: 10_000_000)
+    }
+    _ = try await fixture.webView.callAsyncJavaScript(
+      """
+      window.reasons = [];
+      window.app = {
+        handleTeleportReturn: async (options) => { window.reasons.push(options.reason); return true },
+      };
+      """,
+      contentWorld: .page
+    )
+
+    fixture.cover.startWatching(Self.watch)
+    fixture.cover.leave(drawingWaitingScreen: true) {}
+    await sleep(0.1)
+    fixture.set(.background)
+    post(UIApplication.didEnterBackgroundNotification, to: fixture)
+    await sleep(0.1)
+    #expect(fixture.cover.isCovering)
+
+    // The app is active before the link is handed over.
+    fixture.set(.active)
+    post(UIApplication.didBecomeActiveNotification, to: fixture)
+    await sleep(0.02)
+    post(.superwallReturnLinkOpened, to: fixture, userInfo: ["reason": "purchased"])
+    await sleep(0.3)
+
+    let reasons = try await fixture.webView.callAsyncJavaScript(
+      "return window.reasons",
+      contentWorld: .page
+    ) as? [String]
+    #expect(reasons == ["purchased"])
+    #expect(!fixture.cover.isCovering)
   }
 
   @Test("A page without the functions is answered with false")

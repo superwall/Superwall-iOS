@@ -36,6 +36,9 @@ actor WebEntitlementRedeemer {
   private var hasActiveStripePoll = false
   private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
+  /// The checkout the paywall last reported complete, while it's being finished. An older
+  /// checkout's poll stops for it, so it doesn't wait behind a poll that can't redeem it.
+  private var completingCheckoutContextId: String?
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
@@ -193,16 +196,9 @@ actor WebEntitlementRedeemer {
     // If there's already an active poll (e.g. from cold-launch init task),
     // wait for it to finish rather than skipping.
     if hasActiveStripePoll {
-      let waitStart = DispatchTime.now().uptimeNanoseconds
-      while hasActiveStripePoll {
-        if Task.isCancelled {
-          return false
-        }
-        let elapsed = DispatchTime.now().uptimeNanoseconds - waitStart
-        if elapsed >= stripePendingPollTimeoutNs {
-          return false
-        }
-        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+      await waitForActiveStripePoll()
+      if hasActiveStripePoll || Task.isCancelled {
+        return false
       }
       if let completed = lastCompletedStripePollResult,
         completed.contextId == waitingContextId {
@@ -247,11 +243,20 @@ actor WebEntitlementRedeemer {
     if isRedeemed(contextId) {
       let superwall = self.superwall ?? Superwall.shared
       await MainActor.run {
-        if superwall.paywallViewController?.presentedViewController == nil {
-          superwall.paywallViewController?.loadingState = .ready
+        // The success alert's close takes the spinner down once the purchase is finished.
+        let paywallViewController = superwall.paywallViewController
+        if !(paywallViewController?.presentedViewController is UIAlertController) {
+          paywallViewController?.loadingState = .ready
         }
       }
       return
+    }
+
+    completingCheckoutContextId = contextId
+    defer {
+      if completingCheckoutContextId == contextId {
+        completingCheckoutContextId = nil
+      }
     }
 
     if let existingState = pendingStripeCheckoutState,
@@ -907,8 +912,9 @@ actor WebEntitlementRedeemer {
         clearPendingStripeCheckoutState()
         return .noRedemptionFound
       }
-      // A newer checkout took over the pending state: this one stops so that one is polled.
-      if let state = pendingStripeCheckoutState, state.checkoutContextId != contextId {
+      // A newer checkout was reported complete: this one stops so that one is polled. One that
+      // was only started doesn't stop it, since this one may still be paid for.
+      if let completingCheckoutContextId, completingCheckoutContextId != contextId {
         return .noRedemptionFound
       }
 

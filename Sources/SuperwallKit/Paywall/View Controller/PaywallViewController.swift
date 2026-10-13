@@ -872,7 +872,6 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       || isBeingPresented {
       return completion(false)
     }
-    completedPurchaseProduct = nil
     Superwall.shared.presentationItems.window?.makeKeyAndVisible()
 
     set(
@@ -1622,6 +1621,9 @@ extension PaywallViewController {
 
     didCallDelegate = false
     paywall.closeReason = .none
+    // A purchase belongs to the presentation it was made in. It's cleared here rather than when
+    // the view disappears: a sheet swiped away disappears before its close is reported.
+    completedPurchaseProduct = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     webView.scrollView.contentOffset = CGPoint.zero
@@ -1695,10 +1697,6 @@ extension PaywallViewController {
     if isSafariVCPresented {
       return
     }
-    // A purchase belongs to the presentation it was made in. The view controller is reused
-    // for the next one, whether the SDK or the app presents it, and `dismiss` has already
-    // turned this presentation's close into its result.
-    completedPurchaseProduct = nil
     guard isPresented else {
       return
     }
@@ -1726,11 +1724,15 @@ extension PaywallViewController {
     completedPurchaseProduct = product
   }
 
-  /// The result a dismissal reports: a decline after a completed purchase is a purchase.
+  /// The result a dismissal reports: a decline after a completed purchase is a purchase. A close
+  /// to show the next paywall stays as it is, so that paywall keeps the presentation's state.
   func resolvedDismissal(
     result: PaywallResult,
     closeReason: PaywallCloseReason
   ) -> (result: PaywallResult, closeReason: PaywallCloseReason) {
+    if closeReason == .forNextPaywall {
+      return (result, closeReason)
+    }
     if result == .declined, let product = completedPurchaseProduct {
       return (.purchased(product), .systemLogic)
     }

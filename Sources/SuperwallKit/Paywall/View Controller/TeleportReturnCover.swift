@@ -35,13 +35,16 @@ extension Notification.Name {
 /// have the old names, so each call falls back to them.
 @MainActor
 final class TeleportReturnCover: NSObject {
+  // Picks the function before calling it, so a page with both names only has one called.
   static let showWaitingScreenScript = """
-    return await (window.app?.showTeleportWaitingScreen?.()
-      ?? window.app?.showCheckoutWaitingScreen?.()) ?? false
+    const app = window.app;
+    const show = app?.showTeleportWaitingScreen ?? app?.showCheckoutWaitingScreen;
+    return await show?.call(app) ?? false
     """
   static let returnScript = """
-    return await (window.app?.handleTeleportReturn?.({ reason })
-      ?? window.app?.hideCheckoutWaitingScreen?.({ reason })) ?? false
+    const app = window.app;
+    const handleReturn = app?.handleTeleportReturn ?? app?.hideCheckoutWaitingScreen;
+    return await handleReturn?.call(app, { reason }) ?? false
     """
 
   /// What the page hands over to check its teleport while the waiting screen is up.
@@ -179,7 +182,6 @@ final class TeleportReturnCover: NSObject {
   func leave(drawingWaitingScreen: Bool, open: @escaping () -> Void) {
     guard
       drawingWaitingScreen,
-      #available(iOS 14.0, *),
       let view,
       let webView,
       let still = environment.makeStill(view)
@@ -238,9 +240,15 @@ final class TeleportReturnCover: NSObject {
     }
     pendingOpen = nil
     pending.open()
+    let still = leavingStill
     Task { @MainActor [weak self, timing] in
       try? await Task.sleep(nanoseconds: timing.stillTimeout)
-      guard let self, environment.applicationState() == .active else {
+      // A later leave put up its own still, which its own timeout takes down.
+      guard
+        let self,
+        self.leavingStill === still,
+        environment.applicationState() == .active
+      else {
         return
       }
       self.removeLeavingStill()
@@ -274,9 +282,10 @@ final class TeleportReturnCover: NSObject {
       return
     }
     switch returnCover.reason {
-    case .settled,
-      .returnLink:
+    case .returnLink:
       uncover()
+    case .settled:
+      uncoverAfterGrace()
     case .suspending:
       revealAfterGrace()
     }
@@ -438,7 +447,7 @@ final class TeleportReturnCover: NSObject {
     returnCover.view.alpha = 1
     let id = UUID()
     uncovering = id
-    if #available(iOS 14.0, *), let webView {
+    if let webView {
       webView.callAsyncJavaScript(
         Self.returnScript,
         arguments: ["reason": returnReason ?? ""],
@@ -473,7 +482,7 @@ final class TeleportReturnCover: NSObject {
 
 private extension TeleportReturnCover {
   func tellPageOfReturn() {
-    guard #available(iOS 14.0, *), let webView else {
+    guard let webView else {
       return
     }
     webView.callAsyncJavaScript(
@@ -484,6 +493,27 @@ private extension TeleportReturnCover {
       completionHandler: nil
     )
     returnReason = nil
+  }
+
+  /// Settled in the background: the page is told the user is back once a return link has had the
+  /// chance to arrive, so it hears why they came back when they came back through the link.
+  func uncoverAfterGrace() {
+    guard revealing == nil, uncovering == nil else {
+      return
+    }
+    let id = UUID()
+    revealing = id
+    Task { @MainActor [weak self, timing] in
+      try? await Task.sleep(nanoseconds: timing.revealGrace)
+      guard let self, self.revealing == id else {
+        return
+      }
+      self.revealing = nil
+      guard environment.applicationState() == .active else {
+        return
+      }
+      self.uncover()
+    }
   }
 
   /// Back by hand with the teleport still open: the waiting screen is still the right thing to
@@ -574,19 +604,12 @@ enum TeleportStatusCheck {
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.setValue("Bearer \(publicApiKey)", forHTTPHeaderField: "Authorization")
     request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-    return await withCheckedContinuation { continuation in
-      URLSession.shared.dataTask(with: request) { data, response, _ in
-        guard
-          let data,
-          (response as? HTTPURLResponse)?.statusCode == 200,
-          let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else {
-          continuation.resume(returning: nil)
-          return
-        }
-        continuation.resume(returning: json)
-      }
-      .resume()
+    guard
+      let (data, response) = try? await URLSession.shared.data(for: request),
+      (response as? HTTPURLResponse)?.statusCode == 200
+    else {
+      return nil
     }
+    return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
   }
 }

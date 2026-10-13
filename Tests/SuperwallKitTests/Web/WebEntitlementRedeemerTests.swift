@@ -2329,6 +2329,49 @@ struct WebEntitlementRedeemerTests {
     #expect(state?.remainingForegroundAttempts == 5)
   }
 
+  @Test("An older checkout keeps polling when a newer one is only started")
+  func testOlderPoll_keepsPollingWhenNewerCheckoutOnlyStarts() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let mockStorage = StorageMock(internalRedeemResponse: nil)
+    let options = dependencyContainer.makeSuperwallOptions()
+    options.paywalls.shouldShowWebPurchaseConfirmationAlert = false
+    let mockNetwork = NetworkMock(options: options, factory: dependencyContainer)
+
+    let redeemer = WebEntitlementRedeemer(
+      network: mockNetwork,
+      storage: mockStorage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: MockPurchaseController(),
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      stripePendingPollIntervalNs: 20_000_000,
+      stripePendingPollTimeoutNs: 5_000_000_000,
+      superwall: superwall
+    )
+
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    mockNetwork.pollRedemptionResultCallCount = 0
+    mockNetwork.pollRedemptionResultResponses = Array(
+      repeating: .success(RedeemResponse(results: [], customerInfo: .blank(), status: .pending)),
+      count: 15
+    )
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_old", productId: "prod_old")
+    let olderPoll = Task {
+      await redeemer.pollPendingStripeCheckoutOnForegroundIfNeeded()
+    }
+    try? await Task.sleep(nanoseconds: 60_000_000)
+
+    await redeemer.registerStripeCheckoutSubmit(contextId: "ctx_new", productId: "prod_new")
+    let callsWhenNewerStarted = mockNetwork.pollRedemptionResultCallCount
+    try? await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(mockNetwork.pollRedemptionResultCallCount > callsWhenNewerStarted)
+    #expect(mockNetwork.pollRedemptionResultRequest?.checkoutContextId == "ctx_old")
+    await olderPoll.value
+  }
+
   @Test("Foreground polling consumes attempts and clears pending after 5 tries")
   func testStripeForegroundPolling_consumesAttempts() async {
 
@@ -3269,11 +3312,19 @@ struct WebEntitlementRedeemerTests {
 
     let restored = paywallVc.resolvedDismissal(result: .restored, closeReason: .systemLogic)
     #expect(restored.result == .restored)
+
+    // A close to show the next paywall keeps its reason, so that paywall keeps the state.
+    let forNextPaywall = paywallVc.resolvedDismissal(
+      result: .declined,
+      closeReason: .forNextPaywall
+    )
+    #expect(forNextPaywall.result == .declined)
+    #expect(forNextPaywall.closeReason == .forNextPaywall)
   }
 
   @Test("A purchase does not outlive its presentation: a later close is a decline")
   @MainActor
-  func testCompletedPurchase_clearedWhenViewDisappears() {
+  func testCompletedPurchase_clearedWhenNextPresentationBegins() {
     let paywallVc = PaywallViewController(
       paywall: .stub(),
       deviceHelper: dependencyContainer.deviceHelper,
@@ -3298,7 +3349,14 @@ struct WebEntitlementRedeemerTests {
     )
 
     paywallVc.markPurchaseCompleted(StoreProduct.blank(productIdentifier: "stripe|price_1"))
+
+    // A sheet swiped away disappears before its close is reported, so the purchase is still
+    // there for that close.
     paywallVc.viewDidDisappear(false)
+    let swiped = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
+    #expect(swiped.result != .declined)
+
+    paywallVc.viewWillAppear(false)
 
     let later = paywallVc.resolvedDismissal(result: .declined, closeReason: .manualClose)
     #expect(later.result == .declined)
