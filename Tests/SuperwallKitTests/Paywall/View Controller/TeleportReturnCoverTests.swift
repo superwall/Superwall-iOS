@@ -131,4 +131,75 @@ struct TeleportReturnCoverTests {
     await sleep(0.15)
     #expect(!fixture.cover.isCovering)
   }
+
+  @Test(
+    "The page functions are called by their teleport names, or their checkout names on older pages",
+    arguments: [
+      ("showTeleportWaitingScreen", "handleTeleportReturn"),
+      ("showCheckoutWaitingScreen", "hideCheckoutWaitingScreen"),
+    ]
+  )
+  func pageFunctions(show: String, handleReturn: String) async throws {
+    let webView = try await loadedWebView()
+    _ = try await webView.callAsyncJavaScript(
+      """
+      window.calls = [];
+      window.app = {
+        [show]: async () => { window.calls.push("show"); return true },
+        [handleReturn]: async (options) => { window.calls.push("return:" + options.reason); return true },
+      };
+      """,
+      arguments: ["show": show, "handleReturn": handleReturn],
+      contentWorld: .page
+    )
+
+    let shown = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.showWaitingScreenScript,
+      contentWorld: .page
+    )
+    let returned = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.returnScript,
+      arguments: ["reason": "purchased"],
+      contentWorld: .page
+    )
+    let calls = try await webView.callAsyncJavaScript(
+      "return window.calls",
+      contentWorld: .page
+    ) as? [String]
+
+    #expect(shown as? Bool == true)
+    #expect(returned as? Bool == true)
+    #expect(calls == ["show", "return:purchased"])
+  }
+
+  @Test("A page without the functions is answered with false")
+  func pageWithoutFunctions() async throws {
+    let webView = try await loadedWebView()
+
+    let shown = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.showWaitingScreenScript,
+      contentWorld: .page
+    )
+    let returned = try await webView.callAsyncJavaScript(
+      TeleportReturnCover.returnScript,
+      arguments: ["reason": ""],
+      contentWorld: .page
+    )
+
+    #expect(shown as? Bool == false)
+    #expect(returned as? Bool == false)
+  }
+
+  /// A web view whose page has loaded. The blank page before it already reads as complete, so the
+  /// wait is for an element only the loaded page has.
+  private func loadedWebView() async throws -> WKWebView {
+    let webView = WKWebView()
+    webView.loadHTMLString("<html><body id=\"loaded\"></body></html>", baseURL: nil)
+    while try await webView.evaluateJavaScript(
+      "document.getElementById('loaded') !== null"
+    ) as? Bool != true {
+      try await Task.sleep(nanoseconds: 10_000_000)
+    }
+    return webView
+  }
 }

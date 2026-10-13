@@ -35,11 +35,11 @@ extension Notification.Name {
 /// have the old names, so each call falls back to them.
 @MainActor
 final class TeleportReturnCover: NSObject {
-  private static let showWaitingScreenScript = """
+  static let showWaitingScreenScript = """
     return await (window.app?.showTeleportWaitingScreen?.()
       ?? window.app?.showCheckoutWaitingScreen?.()) ?? false
     """
-  private static let returnScript = """
+  static let returnScript = """
     return await (window.app?.handleTeleportReturn?.({ reason })
       ?? window.app?.hideCheckoutWaitingScreen?.({ reason })) ?? false
     """
