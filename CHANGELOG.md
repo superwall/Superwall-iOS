@@ -17,6 +17,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes native macOS Customer Center dismissal dropping delegate and `onDismiss` callbacks.
+
 - Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
 - Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.

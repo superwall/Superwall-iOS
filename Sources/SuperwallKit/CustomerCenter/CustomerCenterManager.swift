@@ -174,11 +174,14 @@ final class CustomerCenterManager {
       return
     }
     #if os(macOS)
-    // AppKit dismisses a sheet on the spot, with no completion handler.
+    // AppKit's disappearance check runs on the next turn of the run loop. Keep
+    // ownership until onDismiss delivers the delegate callback and clears it.
+    let onDismiss = controller.onDismiss
+    controller.onDismiss = {
+      onDismiss?()
+      completion?()
+    }
     controller.presentingViewController?.dismiss(controller)
-    presentedController = nil
-    retainedDelegate = nil
-    completion?()
     #else
     controller.dismiss(animated: presentsAnimated) { [weak self] in
       self?.presentedController = nil

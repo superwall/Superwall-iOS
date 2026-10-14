@@ -1123,6 +1123,7 @@
 		E9A3FF83B33FA92C9147C0CC /* PublicGetPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4F676D3A0F5B540052D36B1 /* PublicGetPresentationResult.swift */; };
 		E9BFF58D160A4B0E435875A8 /* UIWindow+Landscape.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA65A320EE640CDB878F43E9 /* UIWindow+Landscape.swift */; };
 		E9D95044254D79D2439D7B3E /* FakeTrackingAuthorizationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019FA4010BA11D24C68B8544 /* FakeTrackingAuthorizationStatus.swift */; };
+		E9DFA315184E2B88981A50C5 /* CustomerCenterDismissalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64CEBB4A6C8D08F1D9667A9 /* CustomerCenterDismissalTests.swift */; };
 		E9E0BD599F353CC471B7A546 /* PresentationInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00CE1D40C874F73A3BEC090 /* PresentationInfo.swift */; };
 		E9F80BA7BCAB71270E0E1CC1 /* AttributionFetcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64EAB177118BC78B02C3C00A /* AttributionFetcher.swift */; };
 		E9FCE64FAF11B5395B27DA83 /* Typealiases.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848592ACE8760E53F2163F01 /* Typealiases.swift */; };
@@ -1911,6 +1912,7 @@
 		D5C26E43A3187E410FA27315 /* DeviceHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceHelperTests.swift; sourceTree = "<group>"; };
 		D5DD13EA613D265678190675 /* WaitForEntitlementsAndConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitForEntitlementsAndConfigTests.swift; sourceTree = "<group>"; };
 		D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SurveyShowCondition.swift; sourceTree = "<group>"; };
+		D64CEBB4A6C8D08F1D9667A9 /* CustomerCenterDismissalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDismissalTests.swift; sourceTree = "<group>"; };
 		D69BCC259F5FBE15AB02D662 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 		D7434029CB9E4680C85D3FB6 /* PermissionHandler+Microphone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Microphone.swift"; sourceTree = "<group>"; };
 		D7781E6093CC05F1467B431D /* DevServerLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerLocator.swift; sourceTree = "<group>"; };
@@ -3092,6 +3094,7 @@
 		7268D503E61FFC9274B1D001 /* SuperwallKitMacTests */ = {
 			isa = PBXGroup;
 			children = (
+				D64CEBB4A6C8D08F1D9667A9 /* CustomerCenterDismissalTests.swift */,
 				31A0E45E8458B75ABDAB5CB6 /* MacDeviceInfoTests.swift */,
 				FAF5344F4E3EA46B5E041F7E /* PaywallWindowTests.swift */,
 				A01982A82367D0B7A1C692A2 /* TestModePresentationTests.swift */,
@@ -5167,6 +5170,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9DFA315184E2B88981A50C5 /* CustomerCenterDismissalTests.swift in Sources */,
 				AB785564D30352943FCF14C1 /* MacDeviceInfoTests.swift in Sources */,
 				773F13297221A2F52297654D /* PaywallWindowTests.swift in Sources */,
 				96282E182FBF8C1F1C0D1D71 /* TestModePresentationTests.swift in Sources */,

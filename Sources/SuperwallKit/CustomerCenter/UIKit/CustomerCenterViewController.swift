@@ -136,10 +136,9 @@ public final class CustomerCenterViewController: NSHostingController<CustomerCen
     // only once this returns. So settle whether the Customer Center left or was only hidden on the
     // next turn of the run loop. That's still ahead of the view model's dismissal debounce, which
     // the disappearance has just armed.
-    DispatchQueue.main.async { [weak self] in
-      guard let self = self else {
-        return
-      }
+    // AppKit may release its last reference as dismissal finishes. Retain this
+    // controller for the check so onDismiss can release the manager's delegate.
+    DispatchQueue.main.async {
       if self.isLeavingHierarchy {
         self.deliverDismissal()
       } else {

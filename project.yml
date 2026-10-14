@@ -78,6 +78,8 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
       SWIFT_VERSION: "5.0"
     scheme:
+      commandLineArguments:
+        SUPERWALL_UNIT_TESTS: true
       testTargets:
         - name: SuperwallKitMacTests
           parallelizable: false
