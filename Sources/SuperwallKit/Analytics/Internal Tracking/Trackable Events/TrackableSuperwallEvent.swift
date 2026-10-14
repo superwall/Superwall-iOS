@@ -1012,7 +1012,8 @@ enum InternalSuperwallEvent {
   }
 
   struct TeleportReturn: TrackableSuperwallEvent {
-    /// The presented paywall's, if one is presented when the return link opens the app.
+    /// The ``PaywallInfo`` of the presented paywall, if one is presented when the return link opens
+    /// the app.
     let paywallInfo: PaywallInfo?
     /// Why the web flow sent the user back, as it put it in the link, such as `purchased` or `closed`.
     let reason: String?

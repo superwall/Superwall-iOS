@@ -358,7 +358,7 @@ public enum SuperwallEvent {
 
   /// When a return link brings the user back to the app from a teleported web flow.
   ///
-  /// `paywallInfo` is the presented paywall's, if one is presented.
+  /// `paywallInfo` is the ``PaywallInfo`` of the presented paywall, if one is presented.
   case teleportReturn(paywallInfo: PaywallInfo?)
 
   /// When the test mode modal is opened.

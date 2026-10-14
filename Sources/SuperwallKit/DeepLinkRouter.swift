@@ -20,7 +20,7 @@ final class DeepLinkRouter {
     _ = await Superwall.shared.track(event)
   }
 
-  /// The presented paywall's info, if a paywall is presented. Replaced in tests.
+  /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
     await Superwall.shared.paywallViewController?.info
   }
@@ -117,7 +117,7 @@ final class DeepLinkRouter {
         )
       }
     }
-    // Tracked as `teleport_return` instead, with the presented paywall's info.
+    // Tracked as `teleport_return` instead, with the `PaywallInfo` of the presented paywall.
     let trackEvent = self.trackEvent
     let presentedPaywallInfo = self.presentedPaywallInfo
     Task {
