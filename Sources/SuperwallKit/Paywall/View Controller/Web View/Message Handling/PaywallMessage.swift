@@ -208,8 +208,8 @@ enum PaywallMessage: Decodable, Equatable {
       case .openUrlInSafari:
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
-          let waitingScreen = (try? values.decode(Bool.self, forKey: .waitingScreen)) ?? false
-          let teleport = (try? values.decode(Bool.self, forKey: .teleport)) ?? false
+          let waitingScreen = (try? values.decodeIfPresent(Bool.self, forKey: .waitingScreen)) ?? false
+          let teleport = (try? values.decodeIfPresent(Bool.self, forKey: .teleport)) ?? false
           self = .openUrlInSafari(
             url,
             drawsWaitingScreen: waitingScreen,
