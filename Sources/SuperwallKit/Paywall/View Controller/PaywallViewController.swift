@@ -1429,7 +1429,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
     // Only a teleport needs the cover. It's there even when no waiting screen is drawn, so the
     // page still hears the return link.
-    guard isTeleport || drawsWaitingScreen else {
+    guard isTeleport else {
       openExternally(url)
       return
     }
