@@ -33,7 +33,7 @@ Full screen means the window's content area, not macOS full-screen mode. Design 
 
 ## Purchases and Customer Center
 
-StoreKit, external purchase controllers, restoration, web checkout and redemption use the shared SDK pipeline. Embedded web checkout opens a native sheet. Other links open in the user's default browser.
+StoreKit, external purchase controllers, restoration, web checkout and redemption use the shared SDK pipeline. Embedded web checkout opens a native sheet. Other links open in the user's default browser. Teleport return links are forwarded to the paywall page; forward your app’s incoming URLs to `Superwall.handleDeepLink(_:)`.
 
 Present Customer Center with `Superwall.shared.presentCustomerCenter()`, embed `CustomerCenterView`, or use `CustomerCenterViewController`. Subscription management opens the App Store subscriptions page. Refund requests and the native change-plan view require macOS 14; those actions are hidden on older versions. Appearance configuration accepts `NSColor` on macOS.
 

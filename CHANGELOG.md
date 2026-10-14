@@ -13,6 +13,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
 - Adds best-effort public IPv4 and IPv6 device attributes, with separate observation timestamps, for apps using the Superwall MMP.
+- Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.link/app-link/superwall/return`. To open your app from a teleported web flow without the Open in App alert, add `applinks:<subdomain>.superwall.link` to your app's associated domains. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
+- Adds the `teleportOpen` event (`teleport_open`), tracked with the paywall's info when a paywall teleports the user to a web flow, such as its checkout page.
+- Adds the `teleportReturn` event (`teleport_return`), tracked instead of `deepLink_open` when a return link brings the user back to your app, with the presented paywall's info if there is one.
+- A web purchase from a paywall's checkout page now finishes like an App Store purchase: once the code is redeemed, the paywall runs the purchase button's after-purchase actions, and it's dismissed (as `.purchased`) only when those actions close it. Redemption itself is unchanged, including `willRedeemLink`, `didRedeemLink` and the redemption events.
 - Adds `SuperwallOptions.adConsent` and `Superwall.shared.adConsent` to report a user's ad consent (`adUserData` and `adPersonalization`, each an `AdConsentStatus` of `.granted` or `.denied`), which Superwall passes on with the conversions it uploads to Google Ads and Meta. If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent banner when GDPR applies, and otherwise defaults to granted; apps with users in the EEA, UK or Switzerland that don't use a TCF banner should set it from their consent flow. Where the values came from is reported in the new `adConsentSource` device attribute (`developer`, `tcf` or `default`). The values are reported as the `adUserDataConsent` and `adPersonalizationConsent` device attributes, and both as denied while `eventTrackingBehavior` is `.none`. Personalization is also reported as denied when the user has denied App Tracking Transparency or it's restricted, unless you set `adConsent` yourself.
 
 ### Fixes
@@ -23,6 +27,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
 - Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
 - Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
+- Fixes a paywall reporting `.declined` instead of `.purchased` when it closed after a purchase through an after-purchase action list, such as one that sets state and then closes.
+- Fixes the paywall's loading spinner staying up after a web checkout completed while an older pending checkout was still being polled.
+- Fixes a web purchase on a paywall whose products carry different entitlements showing the restore failed alert.
 - Fixes the test mode sheet not showing in apps with more than one scene or window.
 - Fixes a paywall staying blank after iOS terminated its web content process.
 

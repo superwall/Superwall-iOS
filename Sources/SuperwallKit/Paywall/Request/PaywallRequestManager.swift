@@ -101,16 +101,21 @@ actor PaywallRequestManager {
     activeTasks[requestHash] = task
 
     var paywall = try await task.value
-    paywall = await updatePaywall(paywall, for: request)
+    // The request that fetched the paywall keeps the id its response events were tracked with.
+    paywall = await updatePaywall(paywall, for: request, isNewPresentation: false)
 
     return paywall
   }
 
   private func updatePaywall(
     _ paywall: Paywall,
-    for request: PaywallRequest
+    for request: PaywallRequest,
+    isNewPresentation: Bool = true
   ) async -> Paywall {
     var paywall = paywall
+    if isNewPresentation {
+      paywall.presentationId = UUID().uuidString
+    }
     paywall.experiment = request.responseIdentifiers.experiment
     paywall.presentationSourceType = request.presentationSourceType
     if let featureGating = request.overrides.featureGatingBehavior {

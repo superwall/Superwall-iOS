@@ -24,13 +24,16 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
   func openDeepLink(_ url: URL, shouldDismiss: Bool)
   func presentSafariInApp(_ url: URL)
-  func presentSafariExternal(_ url: URL)
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
+  func endTeleportWatch()
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func revealWebViewBehindSpinner()
@@ -55,6 +58,11 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// setup for a page that has since been replaced doesn't mark the new one
   /// ready.
   private var documentId = 0
+
+  /// Tracks an event. Replaced in tests to observe what's tracked.
+  var trackEvent: (Trackable) async -> Void = { event in
+    _ = await Superwall.shared.track(event)
+  }
 
   init(
     receiptManager: ReceiptManager,
@@ -107,8 +115,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       // A page that isn't ready yet is told once it is.
       if isDocumentReady {
         let paywallOpen = SuperwallEventObjc.paywallOpen.description
+        let payload = presentationPayload()
         Task {
-          await self.pass(placement: paywallOpen, from: paywall)
+          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
         }
       }
     case .paywallClose:
@@ -191,8 +200,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .openUrl(let url):
       openUrl(url)
-    case .openUrlInSafari(let url):
-      openUrlInSafari(url)
+    case let .openUrlInSafari(url, drawsWaitingScreen, isTeleport):
+      openUrlInSafari(
+        url,
+        drawsWaitingScreen: drawsWaitingScreen,
+        isTeleport: isTeleport
+      )
+    case .teleportWatchStart(let watch):
+      delegate?.startTeleportWatch(watch)
+    case .teleportWatchEnd:
+      delegate?.endTeleportWatch()
     case .openPaymentSheet(let url):
       openPaymentSheet(url)
     case .openDeepLink(let url):
@@ -216,14 +233,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .start,
         productId: productId
       )
-    case let .stripeCheckoutComplete(checkoutContextId, productId):
+    case let .stripeCheckoutComplete(checkoutContextId, productId, shouldDismiss):
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
         checkoutContextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        shouldDismiss: shouldDismiss
       )
     case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
@@ -288,10 +306,25 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// Called when a new page replaces the old one, and when the SDK starts
   /// loading a page over one that is still on screen. The old page isn't
   /// told about the paywall opening or closing, and the new one is told the
-  /// paywall is open once it pings.
+  /// paywall is open once it pings. A teleport the old page was watching ends
+  /// with it, since the new page will never end it.
   func documentWillLoad() {
     isDocumentReady = false
     documentId += 1
+    delegate?.endTeleportWatch()
+  }
+
+  /// How this presentation came about, so purchases the paywall starts are attributed to it.
+  private func presentationPayload() -> [String: Any] {
+    guard let info = delegate?.info else {
+      return [:]
+    }
+    var payload: [String: Any] = ["presented_by": info.presentedBy]
+    payload["presentation_id"] = info.presentationId
+    payload["presentation_source_type"] = info.presentationSourceType
+    payload["presented_by_event_id"] = info.presentedByPlacementWithId
+    payload["presented_by_event_name"] = info.presentedByPlacementWithName
+    return payload
   }
 
   nonisolated private func pass(
@@ -494,8 +527,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       isDocumentReady = true
       if isPaywallOpen {
         let paywallOpen = SuperwallEventObjc.paywallOpen.description
+        let payload = presentationPayload()
         Task {
-          await self.pass(placement: paywallOpen, from: paywall)
+          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
         }
       }
     }
@@ -503,7 +537,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func openUrl(_ url: URL) {
     #if os(visionOS)
-      openUrlInSafari(url)
+      openUrlInSafari(url, drawsWaitingScreen: false, isTeleport: false)
     #else
       detectHiddenPaywallEvent(
         "openUrl",
@@ -515,14 +549,25 @@ final class PaywallMessageHandler: WebEventDelegate {
     #endif
   }
 
-  private func openUrlInSafari(_ url: URL) {
+  private func openUrlInSafari(
+    _ url: URL,
+    drawsWaitingScreen: Bool,
+    isTeleport: Bool
+  ) {
     detectHiddenPaywallEvent(
       "openUrlInSafari",
       userInfo: ["url": url]
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedUrlInSafari(url))
-    delegate?.presentSafariExternal(url)
+    if isTeleport {
+      trackTeleportOpen()
+    }
+    delegate?.presentSafariExternal(
+      url,
+      drawsWaitingScreen: drawsWaitingScreen,
+      isTeleport: isTeleport
+    )
   }
 
   private func openPaymentSheet(_ url: URL) {
@@ -601,6 +646,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         placementData: placementData
       )
       await Superwall.shared.track(event)
+    }
+  }
+
+  private func trackTeleportOpen() {
+    guard let delegate = delegate else { return }
+    let event = InternalSuperwallEvent.TeleportOpen(paywallInfo: delegate.info)
+    let trackEvent = self.trackEvent
+    Task {
+      await trackEvent(event)
     }
   }
 
