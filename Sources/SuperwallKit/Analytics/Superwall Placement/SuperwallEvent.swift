@@ -353,6 +353,14 @@ public enum SuperwallEvent {
   /// When a Stripe checkout session fails.
   case stripeCheckoutFail(paywallInfo: PaywallInfo)
 
+  /// When a paywall teleports the user to a web flow in the browser, such as its checkout page.
+  case teleportOpen(paywallInfo: PaywallInfo)
+
+  /// When a return link brings the user back to the app from a teleported web flow.
+  ///
+  /// `paywallInfo` is the ``PaywallInfo`` of the presented paywall, if one is presented.
+  case teleportReturn(paywallInfo: PaywallInfo?)
+
   /// When the test mode modal is opened.
   case testModeModalOpen
 
@@ -582,6 +590,10 @@ extension SuperwallEvent {
       return .init(objcEvent: .stripeCheckoutComplete)
     case .stripeCheckoutFail:
       return .init(objcEvent: .stripeCheckoutFail)
+    case .teleportOpen:
+      return .init(objcEvent: .teleportOpen)
+    case .teleportReturn:
+      return .init(objcEvent: .teleportReturn)
     case .testModeModalOpen:
       return .init(objcEvent: .testModeModalOpen)
     case .testModeModalClose:
