@@ -20,7 +20,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
   func openDeepLink(_ url: URL, shouldDismiss: Bool)
   func presentSafariInApp(_ url: URL)
-  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool)
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
   func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
   func endTeleportWatch()
   func requestReview(type: ReviewType)
@@ -561,7 +561,8 @@ final class PaywallMessageHandler: WebEventDelegate {
     }
     delegate?.presentSafariExternal(
       url,
-      drawsWaitingScreen: drawsWaitingScreen
+      drawsWaitingScreen: drawsWaitingScreen,
+      isTeleport: isTeleport
     )
   }
 

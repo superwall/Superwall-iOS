@@ -42,6 +42,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var deepLinkShouldDismiss: Bool?
   var teleportWatch: TeleportReturnCover.Watch?
   var didDrawWaitingScreen = false
+  var didOpenAsTeleport = false
   var didPresentSafariExternal = false
   var didRequestReview = false
   var didOpenPaymentSheet = false
@@ -91,9 +92,10 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     teleportWatch = nil
   }
 
-  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool) {
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
     didPresentSafariExternal = true
     didDrawWaitingScreen = drawsWaitingScreen
+    didOpenAsTeleport = isTeleport
   }
 
   func requestReview(type: ReviewType) {

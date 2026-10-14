@@ -522,6 +522,7 @@ struct PaywallMessageHandlerTests {
     }
 
     #expect(delegate.didPresentSafariExternal == true)
+    #expect(delegate.didOpenAsTeleport == isTeleport)
     guard isTeleport else {
       #expect(tracked.isEmpty)
       return

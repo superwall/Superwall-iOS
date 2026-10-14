@@ -1426,7 +1426,13 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     present(safariVC, animated: true)
   }
 
-  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool) {
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
+    // Only a teleport needs the cover. It's there even when no waiting screen is drawn, so the
+    // page still hears the return link.
+    guard isTeleport || drawsWaitingScreen else {
+      openExternally(url)
+      return
+    }
     teleportReturnCover.leave(drawingWaitingScreen: drawsWaitingScreen) { [weak self] in
       self?.openExternally(url)
     }
@@ -1694,10 +1700,10 @@ extension PaywallViewController {
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
     existingTeleportReturnCover?.reset()
-    if isSafariVCPresented {
+    guard isPresented else {
       return
     }
-    guard isPresented else {
+    if isSafariVCPresented {
       return
     }
     Task {
