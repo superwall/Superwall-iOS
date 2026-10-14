@@ -1141,6 +1141,7 @@ final class TransactionManager {
     case .internal(_, let paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
+      await paywallViewController.markPurchaseCompleted(product)
       await paywallViewController.webView.messageHandler
         .handle(
           .transactionComplete(
