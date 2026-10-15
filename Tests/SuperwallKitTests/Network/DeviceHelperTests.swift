@@ -501,6 +501,154 @@ struct DeviceHelperTests {
     #expect(await collector.refreshIfNeeded() != nil)
   }
 
+  private func setAppsflyerId(on dependencyContainer: DependencyContainer) {
+    dependencyContainer.storage.save(["appsflyerId": "af-1"], forType: IntegrationAttributes.self)
+  }
+
+  /// With an AppsFlyer ID set and the MMP off, a device on IPv6 looks up its
+  /// IPv4 address, and only the IPv4 address is exposed.
+  @Test func templateDevice_withAppsflyerIdOnIPv6_looksUpIPv4Only() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let ipV6Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await ipV6Fetches.increment()
+        return [:]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    let device = ["ipAddress": "2001:db8::1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"]
+    deviceHelper.enrichment = Enrichment(user: JSON([:]), device: JSON(device))
+    await collector.record(device)
+
+    await deviceHelper.startIPCollectionIfEnabled()?.value
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(await ipV4Fetches.count == 1)
+    #expect(await ipV6Fetches.count == 0)
+    #expect(template["ipV4"] as? String == "8.8.8.8")
+    #expect(template["ipV4ObservedAt"] as? String == "2026-09-15T20:43:00Z")
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+  }
+
+  /// Setting an AppsFlyer ID starts the IPv4 lookup straight away, rather than
+  /// waiting for the next time the device attributes are built.
+  @Test func settingAppsflyerId_startsIPv4Lookup() async {
+    let (lookups, lookupStarted) = AsyncStream<Void>.makeStream()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        lookupStarted.yield()
+        return [:]
+      },
+      ipV6Fetch: { [:] }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    dependencyContainer.storage.delete(IntegrationAttributes.self)
+    let fetcher = AttributionFetcher(
+      storage: dependencyContainer.storage,
+      deviceHelper: deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      vendorIdProvider: { "vendor-1" },
+      attStatusProvider: { 3 },
+      idfaProvider: { nil },
+      syncUserAttributes: { _ in }
+    )
+    defer { fetcher.cancelPendingOperations() }
+    await collector.record(["ipAddress": "2001:db8::1", "ipAddressObservedAt": Date().isoString])
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    // Ends the wait, failing the test, if the lookup never starts.
+    let timeout = Task {
+      try? await Task.sleep(nanoseconds: 5_000_000_000)
+      lookupStarted.finish()
+    }
+    defer { timeout.cancel() }
+
+    var iterator = lookups.makeAsyncIterator()
+    #expect(await iterator.next() != nil)
+  }
+
+  /// With the MMP on, an AppsFlyer ID doesn't narrow collection: both lookups
+  /// run and both addresses are exposed.
+  @Test func templateDevice_withMMPAndAppsflyerId_collectsBothFamilies() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let ipV6Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await ipV6Fetches.increment()
+        return ["ipV6": "2001:db8::1", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(true, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+
+    await deviceHelper.startIPCollectionIfEnabled()?.value
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(await ipV4Fetches.count == 1)
+    #expect(await ipV6Fetches.count == 1)
+    #expect(template["ipV4"] as? String == "8.8.8.8")
+    #expect(template["ipV6"] as? String == "2001:db8::1")
+  }
+
+  /// On an IPv4 network the enrichment already shows the IPv4 address, so an
+  /// AppsFlyer app doesn't look it up.
+  @Test func templateDevice_withAppsflyerIdOnIPv4_skipsLookup() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return [:]
+      },
+      ipV6Fetch: { [:] },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    deviceHelper.enrichment = Enrichment(
+      user: JSON([:]),
+      device: JSON(["ipAddress": "1.1.1.1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"])
+    )
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] as? String == "1.1.1.1")
+    #expect(template["ipV6"] == nil)
+    #expect(await ipV4Fetches.count == 0)
+    // A lookup would have been started, so this one wouldn't be skipped.
+    #expect(await collector.refreshIfNeeded(families: [4]) != nil)
+  }
+
   private func expectedLiveValues() async -> (
     width: Int, height: Int, scale: Double, style: String, category: String
   ) {
