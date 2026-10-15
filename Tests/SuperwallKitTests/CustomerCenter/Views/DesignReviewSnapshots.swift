@@ -351,12 +351,13 @@ struct DesignReviewSnapshots {
       viewModel: await makeViewModel(subscriptions: [subscription(willRenew: false, expiresIn: 9)])
     )
 
-    // 4. Payment failed and Apple is retrying. The state most worth designing for.
+    // 4. Payment failed and Apple is retrying. The state most worth designing for. As StoreKit
+    //    reports it: the expiration date has passed, so the transaction reads as inactive.
     capture(
       "04-billing-retry",
       directory: directory,
       viewModel: await makeViewModel(
-        subscriptions: [subscription(isInBillingRetryPeriod: true, expiresIn: 2)]
+        subscriptions: [subscription(isInBillingRetryPeriod: true, isActive: false, expiresIn: -2)]
       )
     )
 
@@ -365,7 +366,7 @@ struct DesignReviewSnapshots {
       "05-grace-period",
       directory: directory,
       viewModel: await makeViewModel(
-        subscriptions: [subscription(isInGracePeriod: true, expiresIn: 3)]
+        subscriptions: [subscription(isInGracePeriod: true, isActive: false, expiresIn: -1)]
       )
     )
 

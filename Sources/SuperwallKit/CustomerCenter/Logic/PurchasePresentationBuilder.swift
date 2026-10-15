@@ -93,7 +93,7 @@ struct PurchasePresentationBuilder {
       }
     }
     let sorted = latestPerProduct.values.sorted { lhs, rhs in
-      if lhs.isActive != rhs.isActive { return lhs.isActive }
+      if lhs.isCurrent != rhs.isCurrent { return lhs.isCurrent }
       switch (lhs.expirationDate, rhs.expirationDate) {
       case let (lhsDate?, rhsDate?): return lhsDate < rhsDate
       case (nil, _?): return false
@@ -107,10 +107,10 @@ struct PurchasePresentationBuilder {
   }
 
   /// Whether `lhs` better represents its product than `rhs` when both are transactions of the
-  /// same subscription: active wins, then the latest expiration date (nil dates last), then the
-  /// latest purchase date.
+  /// same subscription: a current one wins (see ``SubscriptionTransaction/isCurrent``), then the
+  /// latest expiration date (nil dates last), then the latest purchase date.
   private func isPreferred(_ lhs: SubscriptionTransaction, over rhs: SubscriptionTransaction) -> Bool {
-    if lhs.isActive != rhs.isActive { return lhs.isActive }
+    if lhs.isCurrent != rhs.isCurrent { return lhs.isCurrent }
     switch (lhs.expirationDate, rhs.expirationDate) {
     case let (lhsDate?, rhsDate?): return lhsDate > rhsDate
     case (_?, nil): return true
@@ -193,7 +193,7 @@ struct PurchasePresentationBuilder {
       badge: badge,
       store: sub.store,
       storeLabelKey: storeLabelKey(sub.store),
-      isActive: sub.isActive,
+      isActive: sub.isCurrent,
       expirationDate: sub.expirationDate,
       purchaseDate: sub.purchaseDate,
       entitlements: entitlements
@@ -230,8 +230,10 @@ struct PurchasePresentationBuilder {
 
   func badge(for sub: SubscriptionTransaction) -> PurchaseBadge {
     if sub.isRevoked { return .revoked }
+    // Checked before the expiry: once a renewal payment fails, the transaction's expiration date
+    // is already in the past, but Apple is still trying to charge and the customer can fix it.
+    if sub.hasBillingIssue { return .billingIssue }
     if !sub.isActive { return .expired }
-    if sub.isInGracePeriod || sub.isInBillingRetryPeriod { return .billingIssue }
     if !sub.willRenew { return .cancelled }
     if sub.offerType == .trial { return .freeTrial }
     return .active
@@ -245,5 +247,24 @@ struct PurchasePresentationBuilder {
     case .superwall: return "customer_center_store_superwall"
     case .other, .custom: return "customer_center_store_other"
     }
+  }
+}
+
+extension SubscriptionTransaction {
+  /// Whether a renewal payment failed and the store is still trying to collect it, either with
+  /// access kept (grace period) or without it (billing retry).
+  var hasBillingIssue: Bool {
+    isInGracePeriod || isInBillingRetryPeriod
+  }
+
+  /// Whether the Customer Center should treat the subscription as still going: active, or with a
+  /// payment problem the customer can still fix. A failed renewal leaves `isActive` false, because
+  /// the expiration date has passed, but the subscription hasn't ended and the customer needs to
+  /// reach its management page to update their payment method.
+  var isCurrent: Bool {
+    if isRevoked {
+      return false
+    }
+    return isActive || hasBillingIssue
   }
 }

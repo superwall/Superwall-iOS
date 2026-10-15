@@ -86,7 +86,7 @@ struct PurchasePresentationBuilderTests {
     #expect(rows[0].statusLine == "Renews on 2023-11-15 for $9.99")
   }
 
-  @Test("badge priority: lifetime > revoked > expired > billingIssue > cancelled > freeTrial > active")
+  @Test("badge priority: lifetime > revoked > billingIssue > expired > cancelled > freeTrial > active")
   func badgePriority() {
     let products = ["monthly": monthly]
     func badge(_ subscription: SubscriptionTransaction) -> PurchaseBadge {
@@ -101,6 +101,42 @@ struct PurchasePresentationBuilderTests {
     let lifetime = Entitlement(id: "pro", isActive: true, store: .appStore, isLifetime: true)
     let lifetimeRows = builder.build(customerInfo: info(entitlements: [lifetime]), products: [:])
     #expect(lifetimeRows[0].badge == .lifetime)
+  }
+
+  @Test(
+    "a failed renewal shows a billing issue, not Expired, though its expiration date has passed",
+    arguments: [(true, false), (false, true)]
+  )
+  func billingIssuePastExpiration(grace: Bool, retry: Bool) {
+    // StoreKit reports these as inactive: the expiration date is behind us while Apple retries.
+    let lapsed = sub("monthly", active: false, expires: -86_400, grace: grace, retry: retry)
+    let rows = builder.build(customerInfo: info(subs: [lapsed]), products: ["monthly": monthly])
+    #expect(rows.count == 1)
+    #expect(rows[0].badge == .billingIssue)
+    #expect(rows[0].statusLine == "Billing issue – update your payment method to keep access")
+    #expect(rows[0].isActive)
+  }
+
+  @Test("a revoked subscription stays revoked even with a billing issue")
+  func revokedBeatsBillingIssue() {
+    let revoked = sub("monthly", active: false, expires: -86_400, revoked: true, retry: true)
+    let rows = builder.build(customerInfo: info(subs: [revoked]), products: ["monthly": monthly])
+    #expect(rows[0].badge == .revoked)
+    #expect(!rows[0].isActive)
+  }
+
+  @Test("a failed renewal sorts with the active subscriptions and wins over its older renewals")
+  func billingIssueSortsWithActive() {
+    let subs = [
+      sub("dead", active: false, expires: -5),
+      sub("retrying", active: false, expires: -3_600, retry: true),
+      // An older renewal of the same product, which StoreKit marks with no billing state.
+      sub("retrying", active: false, expires: -2_000_000),
+      sub("live", expires: 100)
+    ]
+    let rows = builder.build(customerInfo: info(subs: subs), products: [:])
+    #expect(rows.map(\.id) == ["retrying", "live", "dead"])
+    #expect(rows[0].badge == .billingIssue)
   }
 
   @Test("status lines")

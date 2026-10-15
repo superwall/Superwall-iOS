@@ -179,7 +179,7 @@ final class CustomerCenterViewModel: ObservableObject {
     activeEntitlementIds = customerInfo.entitlements.filter(\.isActive).map(\.id)
     state = hasAnyPurchases(customerInfo) ? .management : .noPurchases
     recomputeUpdateBanner()
-    let activeStores = Set(customerInfo.subscriptions.filter(\.isActive).map(\.store))
+    let activeStores = Set(customerInfo.subscriptions.filter(\.isCurrent).map(\.store))
     showsDuplicateBanner = configuration.warnsAboutDuplicateSubscriptions
       && activeStores.contains(.appStore)
       && !activeStores.isDisjoint(with: [.stripe, .paddle, .superwall])
