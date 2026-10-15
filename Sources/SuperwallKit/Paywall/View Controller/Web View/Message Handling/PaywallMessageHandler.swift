@@ -54,6 +54,11 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// setup for a page that has since been replaced doesn't mark the new one
   /// ready.
   private var documentId = 0
+  /// The last of the messages that must reach the page in order: refreshed
+  /// templates, `paywall_open` and `paywall_close`. Each waits for the one
+  /// before, so a template refresh that's slow to build can't arrive after
+  /// `paywall_open` and make the page forget it's open.
+  private var lastOrderedMessage: Task<Void, Never>?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
   var trackEvent: (Trackable) async -> Void = { event in
@@ -89,7 +94,7 @@ final class PaywallMessageHandler: WebEventDelegate {
 
     switch message {
     case .templateParamsAndUserAttributes:
-      Task {
+      sendInOrder {
         await self.passTemplatesToWebView(from: paywall)
       }
     case .onReady(let paywalljsVersion):
@@ -110,18 +115,14 @@ final class PaywallMessageHandler: WebEventDelegate {
       isPaywallOpen = true
       // A page that isn't ready yet is told once it is.
       if isDocumentReady {
-        let paywallOpen = SuperwallEventObjc.paywallOpen.description
-        let payload = presentationPayload()
-        Task {
-          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
-        }
+        sendPaywallOpen(from: paywall, documentId: documentId)
       }
     case .paywallClose:
       isPaywallOpen = false
       // A page that isn't ready yet was never told it is open.
       if isDocumentReady {
         let paywallClose = SuperwallEventObjc.paywallClose.description
-        Task {
+        sendInOrder {
           await self.pass(placement: paywallClose, from: paywall)
         }
       }
@@ -308,6 +309,28 @@ final class PaywallMessageHandler: WebEventDelegate {
     isDocumentReady = false
     documentId += 1
     delegate?.endTeleportWatch()
+  }
+
+  /// Runs `send` after every message sent in order before it has gone.
+  private func sendInOrder(_ send: @escaping () async -> Void) {
+    lastOrderedMessage = Task { [lastOrderedMessage] in
+      await lastOrderedMessage?.value
+      await send()
+    }
+  }
+
+  /// Tells the page the paywall is open, after any template refresh sent
+  /// before it. Skipped if another page has replaced this one by then, since
+  /// that page is told once it's ready.
+  private func sendPaywallOpen(from paywall: Paywall, documentId: Int) {
+    let paywallOpen = SuperwallEventObjc.paywallOpen.description
+    let payload = presentationPayload()
+    sendInOrder {
+      if documentId != self.documentId {
+        return
+      }
+      await self.pass(placement: paywallOpen, from: paywall, payload: payload)
+    }
   }
 
   /// How this presentation came about, so purchases the paywall starts are attributed to it.
@@ -522,11 +545,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
       isDocumentReady = true
       if isPaywallOpen {
-        let paywallOpen = SuperwallEventObjc.paywallOpen.description
-        let payload = presentationPayload()
-        Task {
-          await self.pass(placement: paywallOpen, from: paywall, payload: payload)
-        }
+        sendPaywallOpen(from: paywall, documentId: documentId)
       }
     }
   }

@@ -55,11 +55,44 @@ struct PaywallMessageHandlerTests {
     return nil
   }
 
-  private func makeHandler() -> (PaywallMessageHandler, FakeWebView, PaywallMessageHandlerDelegateMock) {
+  /// Builds variables through the container, but holds them back while `isHeld`
+  /// is on, like a refresh waiting on subscription and device information.
+  private final class HeldVariablesFactory: VariablesFactory {
+    private let base: VariablesFactory
+    private let lock = NSLock()
+    private var _isHeld = false
+    var isHeld: Bool {
+      get { lock.withLock { _isHeld } }
+      set { lock.withLock { _isHeld = newValue } }
+    }
+
+    init(base: VariablesFactory) {
+      self.base = base
+    }
+
+    func makeJsonVariables(
+      products: [ProductVariable]?,
+      computedPropertyRequests: [ComputedPropertyRequest],
+      placement: PlacementData?
+    ) async -> JSON {
+      while isHeld {
+        try? await Task.sleep(nanoseconds: 10_000_000)
+      }
+      return await base.makeJsonVariables(
+        products: products,
+        computedPropertyRequests: computedPropertyRequests,
+        placement: placement
+      )
+    }
+  }
+
+  private func makeHandler(
+    variablesFactory: VariablesFactory? = nil
+  ) -> (PaywallMessageHandler, FakeWebView, PaywallMessageHandlerDelegateMock) {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
+      factory: variablesFactory ?? dependencyContainer,
       permissionHandler: FakePermissionHandler(),
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
@@ -244,6 +277,40 @@ struct PaywallMessageHandlerTests {
     messageHandler.handle(.paywallOpen)
 
     #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  /// A preloaded page is already ready when the paywall appears, so the
+  /// template refresh started on appearing could arrive after `paywall_open`
+  /// and make the page forget it's open, dropping later page views.
+  @Test
+  func paywallOpenWaitsForATemplateRefreshThatIsStillBeingBuilt() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+    let eventNames = {
+      self.passedEvents(in: webView).compactMap { $0["event_name"] as? String }
+    }
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(!eventNames().contains("paywall_open"))
+
+    variablesFactory.isHeld = false
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+    let names = eventNames()
+    let refreshedTemplates = names.indices.filter { names[$0] == "experiment" }.last
+    let paywallOpen = names.firstIndex(of: "paywall_open")
+    #expect(refreshedTemplates != nil && paywallOpen != nil)
+    if let refreshedTemplates, let paywallOpen {
+      #expect(names.filter { $0 == "experiment" }.count == 2)
+      #expect(refreshedTemplates < paywallOpen)
+    }
   }
 
   @Test
