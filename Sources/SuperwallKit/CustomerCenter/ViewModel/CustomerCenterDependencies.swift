@@ -137,7 +137,7 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
       // Bounded deliberately: the endpoint's defaults are six retries with exponential backoff
       // and no timeout, and the cards are showing placeholders until this answers.
       let response = try await CatalogueCache.shared.products {
-        try await withCatalogueTimeout {
+        try await Self.withCatalogueTimeout {
           try await container.network.getSuperwallProducts()
         }
       }
@@ -183,23 +183,24 @@ struct LiveProductsProvider: CustomerCenterProductsProviding {
   }
 
   /// How long the catalogue gets before the screen gives up on prices and renders without them.
-  private static let catalogueTimeout: TimeInterval = 5
+  static let catalogueTimeout: TimeInterval = 5
 
-  func withCatalogueTimeout(
+  /// Gives `work` up to `seconds`, then stops waiting and throws.
+  ///
+  /// Gives up without waiting for `work` to stop: the request retries in a task of its own that
+  /// cancellation doesn't reach, so waiting for it to wind down would keep the cards on
+  /// placeholders through the whole retry schedule. It finishes in the background and its answer
+  /// is dropped.
+  static func withCatalogueTimeout(
+    seconds: TimeInterval = catalogueTimeout,
     _ work: @escaping () async throws -> SuperwallProductsResponse
   ) async throws -> SuperwallProductsResponse {
-    try await withThrowingTaskGroup(of: SuperwallProductsResponse.self) { group in
-      group.addTask { try await work() }
-      group.addTask {
-        try await Task.sleep(nanoseconds: UInt64(Self.catalogueTimeout * 1_000_000_000))
-        throw CancellationError()
-      }
-      defer { group.cancelAll() }
-      guard let first = try await group.next() else {
-        throw CancellationError()
-      }
-      return first
+    let request = Task { try await work() }
+    guard let response = try await CustomerCenterDeadline.value(of: request, within: seconds) else {
+      request.cancel()
+      throw CancellationError()
     }
+    return response
   }
 }
 /// Holds the Superwall catalogue for a short while.
