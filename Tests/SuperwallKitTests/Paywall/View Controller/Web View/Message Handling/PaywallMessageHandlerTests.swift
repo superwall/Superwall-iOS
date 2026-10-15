@@ -44,9 +44,10 @@ struct PaywallMessageHandlerTests {
 
   private func waitForEvent(
     named name: String,
-    in webView: FakeWebView
+    in webView: FakeWebView,
+    polls: Int = 250
   ) async -> [String: Any]? {
-    for _ in 0..<250 {
+    for _ in 0..<polls {
       if let event = passedEvents(in: webView).first(where: { $0["event_name"] as? String == name }) {
         return event
       }
@@ -311,6 +312,61 @@ struct PaywallMessageHandlerTests {
       #expect(names.filter { $0 == "experiment" }.count == 2)
       #expect(refreshedTemplates < paywallOpen)
     }
+  }
+
+  /// `paywall_close` waits in the same queue, so it can't overtake an open
+  /// that's still waiting for a template refresh.
+  @Test
+  func paywallCloseIsSentAfterAWaitingOpen() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    messageHandler.handle(.paywallClose)
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(await waitForEvent(named: "paywall_close", in: webView, polls: 1) == nil)
+
+    variablesFactory.isHeld = false
+    #expect(await waitForEvent(named: "paywall_close", in: webView) != nil)
+    withExtendedLifetime(delegate) {}
+    let names = passedEvents(in: webView).compactMap { $0["event_name"] as? String }
+    let paywallOpen = names.firstIndex(of: "paywall_open")
+    let paywallClose = names.firstIndex(of: "paywall_close")
+    #expect(paywallOpen != nil && paywallClose != nil)
+    if let paywallOpen, let paywallClose {
+      #expect(paywallOpen < paywallClose)
+    }
+  }
+
+  /// An open waiting for a template refresh is dropped if a new page replaces
+  /// the old one meanwhile. The new page is told once it's ready, and only once.
+  @Test
+  func paywallOpenWaitingForARefreshIsNotSentToAReplacedPage() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    messageHandler.documentWillLoad()
+    variablesFactory.isHeld = false
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(await waitForEvent(named: "paywall_open", in: webView, polls: 1) == nil)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
   }
 
   @Test
