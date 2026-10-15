@@ -49,6 +49,8 @@ final class ProductsProviderMock: CustomerCenterProductsProviding {
 /// overlap loads.
 final class GatedProductsProviderMock: CustomerCenterProductsProviding {
   let gatedCalls: Set<Int>
+  /// What every call answers with, once it's let through.
+  var products: [String: ProductDisplayInfo] = [:]
   private(set) var calls = 0
   private var gates: [Int: CheckedContinuation<Void, Never>] = [:]
   init(gatedCalls: Set<Int> = [1]) { self.gatedCalls = gatedCalls }
@@ -59,7 +61,7 @@ final class GatedProductsProviderMock: CustomerCenterProductsProviding {
     if gatedCalls.contains(call) {
       await withCheckedContinuation { gates[call] = $0 }
     }
-    return [:]
+    return products.filter { ids.contains($0.key) }
   }
   func release(call: Int = 1) {
     gates.removeValue(forKey: call)?.resume()

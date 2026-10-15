@@ -12,7 +12,12 @@ import Foundation
 @MainActor
 final class CustomerCenterViewModel: ObservableObject {
   typealias PendingSurvey = (path: CustomerCenterConfiguration.Path, survey: CustomerCenterConfiguration.FeedbackSurvey)
-  typealias PendingAction = (resolved: ResolvedPath, purchase: PurchasePresentation?)
+  struct PendingAction {
+    let resolved: ResolvedPath
+    let purchase: PurchasePresentation?
+    /// The screen that asked for the action; see ``screenOnTop``.
+    let requester: UUID?
+  }
 
   @Published private(set) var state: CustomerCenterScreenState = .loading
   @Published private(set) var purchases: [PurchasePresentation] = []
@@ -61,10 +66,12 @@ final class CustomerCenterViewModel: ObservableObject {
   // reads these, and `private` is file-scoped.
   let dependencies: CustomerCenterDependencies
   let dismissDebounceInterval: TimeInterval
+  /// How long the screen waits on StoreKit for product details before drawing without them.
+  let storeKitProductsWait: TimeInterval
   private let isChangePlanSheetAvailable: Bool
-  // Not `private`: the catalogue fill in `CustomerCenterViewModel+Catalogue.swift` updates these.
+  // Not `private`: the product fetch in `CustomerCenterViewModel+Catalogue.swift` updates these.
   var products: [String: ProductDisplayInfo] = [:]
-  private var familyShared: Set<String> = []
+  var familyShared: Set<String> = []
   /// Lets an `apply` that a newer one has overtaken drop its older snapshot.
   var applyGeneration = 0
   /// Products whose display info is still coming from the Superwall catalogue.
@@ -111,12 +118,15 @@ final class CustomerCenterViewModel: ObservableObject {
     // outgoing screen's `onDisappear` can land before the root's `onAppear`, so the count dips to
     // zero mid-transition; the debounce has to outlast that or a dismissal fires while the user is
     // still inside. Only delays how soon `didDismiss` reaches the host, which nothing is gated on.
-    dismissDebounceInterval: TimeInterval = 0.6
+    dismissDebounceInterval: TimeInterval = 0.6,
+    // StoreKit normally answers well inside this; see `refreshProducts(for:generation:)`.
+    storeKitProductsWait: TimeInterval = 2
   ) {
     self.configuration = configuration
     self.dependencies = dependencies
     self.strings = strings
     self.dismissDebounceInterval = dismissDebounceInterval
+    self.storeKitProductsWait = storeKitProductsWait
     configuration.warnAboutConfigurationProblems()
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
@@ -162,18 +172,8 @@ final class CustomerCenterViewModel: ObservableObject {
   private func apply(customerInfo: CustomerInfo, refetchProducts: Bool) async {
     applyGeneration += 1
     let generation = applyGeneration
-    let ids = Set(customerInfo.subscriptions.map(\.productId) + customerInfo.nonSubscriptions.map(\.productId))
     if refetchProducts {
-      let fetchedProducts = await dependencies.products.products(for: ids)
-      var shared: Set<String> = []
-      for id in customerInfo.subscriptions.filter({ $0.store == .appStore }).map(\.productId)
-      where await dependencies.transactionLookup.isFamilyShared(productId: id) {
-        shared.insert(id)
-      }
-      guard generation == applyGeneration else { return }
-      products = fetchedProducts
-      familyShared = shared
-      awaitingCatalogue = Self.catalogueProductIds(in: customerInfo).subtracting(fetchedProducts.keys)
+      guard await refreshProducts(for: customerInfo, generation: generation) else { return }
     }
     renderPurchases(customerInfo)
     activeEntitlementIds = customerInfo.entitlements.filter(\.isActive).map(\.id)
@@ -227,18 +227,19 @@ final class CustomerCenterViewModel: ObservableObject {
   }
 
   func select(_ resolved: ResolvedPath, purchase: PurchasePresentation?) async {
+    let requester = screenOnTop
     let action = CustomerCenterAction(pathType: resolved.path.type)
     callbacks.didSelectAction?(action, resolved.path.id, purchase?.publicPurchase)
     await dependencies.tracker.track(
       InternalSuperwallEvent.CustomerCenterAction(action: action, pathId: resolved.path.id, productId: purchase?.productId)
     )
     if let survey = resolved.path.survey, !survey.options.isEmpty, !resolved.destination.isWebManagement {
+      guard presentSheet(.survey(pathId: resolved.path.id), for: requester) else { return }
       pendingSurvey = (resolved.path, survey)
-      pendingAction = (resolved, purchase)
-      sheet = .survey(pathId: resolved.path.id)
+      pendingAction = PendingAction(resolved: resolved, purchase: purchase, requester: requester)
       return
     }
-    await perform(resolved, purchase: purchase)
+    await perform(resolved, purchase: purchase, requester: requester)
   }
 
   func answerSurvey(optionId: String) async {
@@ -268,25 +269,26 @@ final class CustomerCenterViewModel: ObservableObject {
     if case .survey = sheet { sheet = nil }
   }
 
-  private func perform(_ resolved: ResolvedPath, purchase: PurchasePresentation?) async {
+  private func perform(_ resolved: ResolvedPath, purchase: PurchasePresentation?, requester: UUID?) async {
     switch resolved.destination {
     case .restore:
       await performRestore()
     case .appleManageSheet(let groupId):
-      sheet = .manageSubscriptions(groupId: groupId)
+      presentSheet(.manageSubscriptions(groupId: groupId), for: requester)
     case .webManage(let url):
-      sheet = .safari(url)
+      presentSheet(.safari(url), for: requester)
     case .webManageUnavailable:
-      sheet = .webManageUnavailable
+      presentSheet(.webManageUnavailable, for: requester)
     case .refund(let productId):
       if let transactionId = await dependencies.transactionLookup.latestTransactionID(for: productId) {
-        pendingRefundProductId = productId
-        sheet = .refund(transactionId: transactionId, productId: productId)
+        if presentSheet(.refund(transactionId: transactionId, productId: productId), for: requester) {
+          pendingRefundProductId = productId
+        }
       } else {
         await refundSheetDidFinish(productId: productId, status: .error)
       }
     case let .changePlan(groupId, productIds):
-      sheet = .changePlan(groupId: groupId, productIds: productIds)
+      presentSheet(.changePlan(groupId: groupId, productIds: productIds), for: requester)
     case .contactSupport:
       guard let url = supportMailtoURL else { return }
       // The path row itself is no longer gated on `canOpen` (see `supportEmailAvailable`), so
@@ -295,10 +297,10 @@ final class CustomerCenterViewModel: ObservableObject {
       if dependencies.urlOpener.canOpen(url) {
         dependencies.urlOpener.open(url)
       } else {
-        sheet = .noMailApp(email: configuration.support.email ?? "")
+        presentSheet(.noMailApp(email: configuration.support.email ?? ""), for: requester)
       }
     case let .url(url, inApp):
-      if inApp { sheet = .safari(url) } else { dependencies.urlOpener.open(url) }
+      if inApp { presentSheet(.safari(url), for: requester) } else { dependencies.urlOpener.open(url) }
     case .custom:
       break
     }
@@ -347,7 +349,7 @@ final class CustomerCenterViewModel: ObservableObject {
     // has finished dismissing and a new one can be presented reliably.
     if let pending = pendingActionAfterSheetDismiss {
       pendingActionAfterSheetDismiss = nil
-      await perform(pending.resolved, purchase: pending.purchase)
+      await perform(pending.resolved, purchase: pending.purchase, requester: pending.requester)
     }
     let info: CustomerInfo
     switch dismissed {

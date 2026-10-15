@@ -202,6 +202,7 @@
 		4AB907436D4A84932F09D8B3 /* String+MD5.swift in Sources */ = {isa = PBXBuildFile; fileRef = D449672964023589DA5535E3 /* String+MD5.swift */; };
 		4ABF9FB54105917343865145 /* DependencyContainerInitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 880CE7E95B65A756C372CE05 /* DependencyContainerInitTests.swift */; };
 		4ADD216B493FF99AE4404438 /* StoreKitTransactionLookup.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F5F084F94D853AA5B5CC79 /* StoreKitTransactionLookup.swift */; };
+		4B0A02462E9AFE7C0F620E4A /* CustomerCenterLateResultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */; };
 		4B0E203D477E48611797047C /* PaywallViewControllerCacheTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 672776875A4286319C2F2D61 /* PaywallViewControllerCacheTests.swift */; };
 		4B4BCB32699C3A1AF7E2BFE6 /* SK2StoreProductCyclesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00929DACD8621FC32F83927 /* SK2StoreProductCyclesTests.swift */; };
 		4B54BA9E52A97C486D808A05 /* IntroOfferToken.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF0596D5BDDE0911046E60D /* IntroOfferToken.swift */; };
@@ -321,6 +322,7 @@
 		79E35504745555BC5CA14360 /* SK1ReceiptManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C4966E857D1F9596B96910E /* SK1ReceiptManager.swift */; };
 		7A7D4424C0987AE40B61575E /* StoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDDA18AABDC7C71ECB7D0FA /* StoreProductDiscount.swift */; };
 		7A810CAE7DEB417315A9CE82 /* StripeProductType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE89E115B095A63FAC09719 /* StripeProductType.swift */; };
+		7A98B308595DB54201E6F6EF /* CatalogueTimeoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */; };
 		7AD6B818E94D31DD9E1F67BB /* InAppPurchase.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF0A461D50AF945239D3D048 /* InAppPurchase.swift */; };
 		7C56FE8873F3E1E57905BC91 /* CustomerCenterViewModel+UpdateBanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96A6D71D51DB3F1BCE3E167B /* CustomerCenterViewModel+UpdateBanner.swift */; };
 		7CB32020EFC0785659ADA76C /* ManagementScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0E0D63E991FE00B6C172F83 /* ManagementScreenView.swift */; };
@@ -329,6 +331,7 @@
 		7DA2CF4C6FF5C8A1C44282E6 /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94120D51C7B36AC9EA32B8B /* LoadingView.swift */; };
 		7DCBF8A78D0B6A7A2649553D /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498D6155C2B8B18E7F3D0E79 /* Validation.swift */; };
 		7E355FE2557391CE4593B9B0 /* SpringAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1A60826D12F97F96E671DF /* SpringAnimation.swift */; };
+		7E4F5F398C74FC6B56D004E6 /* CustomerCenterDeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */; };
 		7E77A6A71C19AC46AC4EBF5D /* IntegrationAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB868CF67AB2AE72895F864E /* IntegrationAttribute.swift */; };
 		7F01F765BE9EF495D1EF58A7 /* UIViewController+AsyncDismiss.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70D2B0D671B1A1E665B7CCD8 /* UIViewController+AsyncDismiss.swift */; };
 		7F630637D79A1F24CC17A8A5 /* GetPaywallVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB9AEAF72391341B4BDF6CD /* GetPaywallVC.swift */; };
@@ -816,6 +819,7 @@
 		2446E377C8C87A1C087B16B4 /* CELEvaluator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CELEvaluator.swift; sourceTree = "<group>"; };
 		24B8D7F537204EAB13BB7F10 /* FeatureGatingBehaviour.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureGatingBehaviour.swift; sourceTree = "<group>"; };
 		24EA03270476CD31B906CDC8 /* GetPaywallResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPaywallResult.swift; sourceTree = "<group>"; };
+		24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterLateResultsTests.swift; sourceTree = "<group>"; };
 		25515131DF0AE67E26BFF462 /* TriggerResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerResult.swift; sourceTree = "<group>"; };
 		255FA775B7C71582F2D4F6EA /* IdentifyUserSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentifyUserSwitchTests.swift; sourceTree = "<group>"; };
 		258D4AA92CC250CEA27E8A49 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1179,6 +1183,7 @@
 		A40D9BA2449503F4B7F5B7A6 /* Array+Guarded.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Guarded.swift"; sourceTree = "<group>"; };
 		A4493EE88B00CADF85EF1196 /* PublicIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicIdentity.swift; sourceTree = "<group>"; };
 		A453816DBA43C08410D12DE6 /* PaywallViewControllerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallViewControllerMock.swift; sourceTree = "<group>"; };
+		A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDeadline.swift; sourceTree = "<group>"; };
 		A4F1A615FE234CE077CD4F35 /* DevServerSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerSettings.swift; sourceTree = "<group>"; };
 		A4FD16729844D83A3EAA02FC /* DevServerPaywallTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerPaywallTests.swift; sourceTree = "<group>"; };
 		A5110E43405C69969E9DA67B /* PublicGetPaywall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicGetPaywall.swift; sourceTree = "<group>"; };
@@ -1407,6 +1412,7 @@
 		F115F0BE94943D7B60CDDD4A /* LogPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogPresentation.swift; sourceTree = "<group>"; };
 		F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionDelegate.swift; sourceTree = "<group>"; };
 		F16AFE9C93A441CFB6A95F10 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
+		F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogueTimeoutTests.swift; sourceTree = "<group>"; };
 		F2A2A54314BAEAF65B46D322 /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
 		F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseControllerTests.swift; sourceTree = "<group>"; };
 		F30029EE3419EE5BD4CD2948 /* CustomerCenterViewControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterViewControllerTests.swift; sourceTree = "<group>"; };
@@ -2178,6 +2184,7 @@
 				90A67AE3E66A70518CCB3B4F /* AppStoreUpdateCheckTests.swift */,
 				016DD542BBB840B80C9A9BF4 /* AppVersionComparatorTests.swift */,
 				C59DDA518AEFEE718D936B39 /* CatalogueCacheTests.swift */,
+				F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */,
 				45B62967CEF47D4315E4A3EF /* CustomerCenterPathResolverTests.swift */,
 				4032D6E844683EBEFB6FF619 /* PurchasePresentationBuilderTests.swift */,
 				501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */,
@@ -2357,6 +2364,7 @@
 				5C3EFD2725CAE7F5046D386F /* AppStoreVersionLookup.swift */,
 				120D7D604E496BA935989AEA /* AppVersionComparator.swift */,
 				8BE65655D445D8040B36A851 /* CountryCode.swift */,
+				A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */,
 				F5BEBF6DCB345383C9CE5A97 /* CustomerCenterPathResolver.swift */,
 				97DCDCDFEB2442B007C38E7F /* PurchasePresentationBuilder.swift */,
 				5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */,
@@ -3128,6 +3136,7 @@
 			children = (
 				B6F403BB2165F528F3C40339 /* CustomerCenterDependenciesMocks.swift */,
 				FAE22269D7130B4666F2A13F /* CustomerCenterDependenciesTests.swift */,
+				24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */,
 				59AADECFD10DA2D0BC3FFF1D /* CustomerCenterViewModelTests.swift */,
 				E2171E7A973928A9BA136558 /* PurchaseDetailActionsTests.swift */,
 			);
@@ -3798,6 +3807,7 @@
 				E984458E465D5A834CC52302 /* CacheMock.swift in Sources */,
 				CBFC0D2DCA996A5FF7E5174B /* CacheTests.swift in Sources */,
 				85F77E1A644AC7049D341D31 /* CatalogueCacheTests.swift in Sources */,
+				7A98B308595DB54201E6F6EF /* CatalogueTimeoutTests.swift in Sources */,
 				2A07A8F4A55E28D13777D03E /* CheckDebuggerPresentationOperatorTests.swift in Sources */,
 				A73497BB3DCD881318A5CD86 /* ConfigLogicTests.swift in Sources */,
 				8BD2DB441D3A8B954B1D13B9 /* ConfigManagerEarlyPublishTests.swift in Sources */,
@@ -3822,6 +3832,7 @@
 				C6CC0FF052FE616DB8908757 /* CustomerCenterDependenciesMocks.swift in Sources */,
 				5D1F0BE78AFD0801B6073B4A /* CustomerCenterDependenciesTests.swift in Sources */,
 				59C8960F002CD6B88A2E372E /* CustomerCenterEventsTests.swift in Sources */,
+				4B0A02462E9AFE7C0F620E4A /* CustomerCenterLateResultsTests.swift in Sources */,
 				26081D80FCF7BCD475103467 /* CustomerCenterManagerTests.swift in Sources */,
 				F478921BA3C4CD34C2459742 /* CustomerCenterPathResolverTests.swift in Sources */,
 				C4081D22F2E243A72190B820 /* CustomerCenterSheetOwnershipTests.swift in Sources */,
@@ -4052,6 +4063,7 @@
 				9274292A323C7690F7C4C580 /* CustomerCenterConfiguration+Paths.swift in Sources */,
 				A531E1B471602B469BF5E865 /* CustomerCenterConfiguration+Surveys.swift in Sources */,
 				57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */,
+				7E4F5F398C74FC6B56D004E6 /* CustomerCenterDeadline.swift in Sources */,
 				481903391564D2B19A9BD285 /* CustomerCenterDelegate.swift in Sources */,
 				781A9E4339F865190C8A5D6A /* CustomerCenterDelegateAdapter.swift in Sources */,
 				A3E29135312C5A933D6234C5 /* CustomerCenterDependencies.swift in Sources */,

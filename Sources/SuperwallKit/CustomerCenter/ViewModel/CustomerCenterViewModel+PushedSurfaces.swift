@@ -48,4 +48,24 @@ extension CustomerCenterViewModel {
       sheet = nil
     }
   }
+
+  /// The screen on top, so a request can tell later whether the screen that made it is still
+  /// there. `nil` for the root.
+  var screenOnTop: UUID? { pushedSurfaces.claims.last?.id }
+
+  /// Puts up `sheet` for the screen that asked for it, `requester`, unless that screen is no longer
+  /// the one on top. Returns whether the sheet went up.
+  ///
+  /// A request can wait — on tracking, or on a transaction lookup — before its sheet is ready, and
+  /// the user can go back in the meantime. Put up anyway, the sheet would belong to whatever screen
+  /// is on top by then: a refund asked for on a detail screen would open on the root after the
+  /// user had left the detail.
+  @discardableResult
+  func presentSheet(_ sheet: CustomerCenterSheet, for requester: UUID?) -> Bool {
+    if screenOnTop != requester {
+      return false
+    }
+    self.sheet = sheet
+    return true
+  }
 }
