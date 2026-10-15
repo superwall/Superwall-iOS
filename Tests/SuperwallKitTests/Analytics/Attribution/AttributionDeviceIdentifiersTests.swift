@@ -102,9 +102,8 @@ struct AttributionDeviceIdentifiersTests {
     )
     defer { fetcher.cancelPendingOperations() }
 
-    // Before iOS 14.5 the IDFA is readable while ATT still reads
-    // `notDetermined`, and a build that can't resolve `ATTrackingManager`
-    // reports the same status, so the status mustn't gate the IDFA.
+    // A build that can't resolve `ATTrackingManager` reports `notDetermined`
+    // while the IDFA is still readable, so the status mustn't gate the IDFA.
     fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
     #expect(fetcher.integrationAttributes["attStatus"] == "0")
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")

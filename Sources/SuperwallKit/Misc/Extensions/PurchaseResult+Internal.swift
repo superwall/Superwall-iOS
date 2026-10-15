@@ -7,7 +7,6 @@
 
 import StoreKit
 
-@available(iOS 15.0, *)
 extension StoreKit.Product.PurchaseResult {
   /// Converts a StoreKit 2 `PurchaseResult` to a Superwall `PurchaseResult`.
   func toInternalPurchaseResult(_ coordinator: PurchasingCoordinator) async -> PurchaseResult {

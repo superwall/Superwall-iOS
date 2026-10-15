@@ -14,6 +14,19 @@ import CoreTelephony
 import StoreKit
 
 class DeviceHelper {
+  private let ipCollector: DeviceIPCollector
+  /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
+  /// Settable for tests.
+  var attStatusProvider: () -> Int?
+  /// Where a consent banner stores its answer. Settable so tests can use their own.
+  var consentDefaults: UserDefaults = .standard
+  /// Runs while device attributes are being built, after their ad consent is read.
+  /// For tests, to change consent mid-build.
+  var afterAdConsentSnapshot: (() async -> Void)?
+  /// The ad consent attributes in the last device attributes sent, or `nil` before
+  /// the first send. Guarded by `adConsentLock`.
+  private var publishedAdConsent: ReportedAdConsent?
+  private let adConsentLock = NSLock()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -52,13 +65,7 @@ class DeviceHelper {
     )
   }()
 
-  let isMac: Bool = {
-    var output = false
-    if #available(iOS 14.0, *) {
-      output = ProcessInfo.processInfo.isiOSAppOnMac
-    }
-    return output
-  }()
+  let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
     UIDevice.modelName
@@ -667,15 +674,6 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
-    #if compiler(>=5.9.2)
-    if #available(iOS 17.0, *) {
-      if UIDevice.current.userInterfaceIdiom == .vision {
-        return "vision"
-      }
-    }
-    #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions
-    // of xcode to build and they don't have vision support.
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -687,6 +685,8 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
+    case .vision:
+      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
@@ -709,6 +709,9 @@ class DeviceHelper {
     }
     return installDate
   }()
+
+  /// The device's app install date, exposed internally for consumers such as the Customer Center.
+  var appInstallDateValue: Date? { appInstallDate }
 
   private let sdkVersionPadded: String
   private let appVersionPadded: String
@@ -924,6 +927,8 @@ class DeviceHelper {
   private unowned let factory: IdentityFactory
     & LocaleIdentifierFactory
     & WebEntitlementFactory
+    & ConfigStateFactory
+    & OptionsFactory
 
   init(
     api: Api,
@@ -931,9 +936,20 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory,
-    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+    factory: IdentityFactory
+      & LocaleIdentifierFactory
+      & WebEntitlementFactory
+      & ConfigStateFactory
+      & OptionsFactory,
+    ipCollector: DeviceIPCollector? = nil,
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
+    attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
+    self.attStatusProvider = attStatusProvider
+    self.ipCollector = ipCollector ?? DeviceIPCollector(
+      ipV4Url: api.enrichment.ipV4Url,
+      ipV6Url: api.enrichment.ipV6Url
+    )
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -953,10 +969,131 @@ class DeviceHelper {
     registerForTraitChanges()
   }
 
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  static var attStatus: Int? {
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
+    return nil
+    #endif
+  }
+
+  /// The ad consent device attributes would report right now.
+  ///
+  /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
+  /// consent banner's stored answer, then the granted default. The `.none` rule then
+  /// applies to all of them, and the ATT rule to all but the app's own setting,
+  /// which is always trusted.
+  var reportedAdConsent: ReportedAdConsent {
+    let options = factory.makeSuperwallOptions()
+    let consent: AdConsent
+    let source: AdConsentSource
+    if options.isAdConsentSet {
+      consent = options.adConsent
+      source = .developer
+    } else if let bannerConsent = TCFConsent.consent(from: consentDefaults) {
+      consent = bannerConsent
+      source = .tcf
+    } else {
+      consent = AdConsent()
+      source = .default
+    }
+    let reported = consent.reported(
+      for: options.eventTrackingBehavior,
+      attStatus: source == .developer ? nil : attStatusProvider()
+    )
+    return ReportedAdConsent(
+      adUserData: reported.adUserData.description,
+      adPersonalization: reported.adPersonalization.description,
+      source: source.rawValue
+    )
+  }
+
+  /// Notes the ad consent in device attributes that were just sent.
+  func recordPublishedDeviceAttributes(_ attributes: [String: Any]) {
+    guard let consent = ReportedAdConsent(attributes: attributes) else {
+      return
+    }
+    adConsentLock.lock()
+    publishedAdConsent = consent
+    adConsentLock.unlock()
+  }
+
+  /// Whether the ad consent or its source has changed since device attributes were
+  /// last sent, for example because the user answered the ATT prompt or a consent
+  /// banner.
+  ///
+  /// Returns `false` before the first send, which reports the current value anyway,
+  /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
+  /// would be sent. Callers serialize through ``AdConsentUpdateQueue`` so the send
+  /// is recorded before the next check.
+  func adConsentNeedsRepublish() -> Bool {
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return false
+    }
+    let current = reportedAdConsent
+    adConsentLock.lock()
+    defer { adConsentLock.unlock() }
+    guard let published = publishedAdConsent else {
+      return false
+    }
+    return published != current
+  }
+
   deinit {
     for observer in traitObservers {
       NotificationCenter.default.removeObserver(observer)
     }
+  }
+
+  /// Which IP addresses to collect. The MMP gets both. AppsFlyer only needs
+  /// the IPv4 address, which the device's own requests don't show when it's
+  /// on an IPv6 network.
+  private enum IPCollection {
+    case none
+    case ipV4ForAppsFlyer
+    case all
+  }
+
+  private func ipCollection(for config: Config?) -> IPCollection {
+    // The lookups only serve install attribution, which the opt-out skips.
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return .none
+    }
+    if config?.attribution?.mmp?.enabled == true {
+      return .all
+    }
+    let appsflyerId = storage.get(IntegrationAttributes.self)?[IntegrationAttribute.appsflyerId.description]
+    if appsflyerId?.isEmpty == false {
+      return .ipV4ForAppsFlyer
+    }
+    return .none
+  }
+
+  /// Starts the IP lookups once config turns the MMP on or an AppsFlyer ID is
+  /// set. On a cold launch the first device-attributes read happens before
+  /// config arrives, so without this the lookup would wait for some later read.
+  @discardableResult
+  func startIPCollectionIfEnabled(for config: Config?) -> Task<Void, Never>? {
+    switch ipCollection(for: config) {
+    case .none:
+      return nil
+    case .ipV4ForAppsFlyer:
+      return Task {
+        await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+      }
+    case .all:
+      return Task {
+        await ipCollector.refreshIfNeeded()?.value
+      }
+    }
+  }
+
+  /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
+  @discardableResult
+  func startIPCollectionIfEnabled() -> Task<Void, Never>? {
+    return startIPCollectionIfEnabled(for: factory.makeConfigState().value.getConfig())
   }
 
   func getEnrichment(
@@ -999,6 +1136,8 @@ class DeviceHelper {
     // inline rather than going through ``interfaceStyle``, so the two resolve it
     // the same way by hand — keep them in step.
     let traits = currentUITraits
+    let adConsent = reportedAdConsent
+    await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
@@ -1061,7 +1200,10 @@ class DeviceHelper {
       swiftVersion: currentSwiftVersion(),
       compilerVersion: currentCompilerVersion(),
       localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
-      deviceId: factory.makeDeviceId()
+      deviceId: factory.makeDeviceId(),
+      adUserDataConsent: adConsent.adUserData,
+      adPersonalizationConsent: adConsent.adPersonalization,
+      adConsentSource: adConsent.source
     )
 
     var deviceDictionary = template.toDictionary(
@@ -1076,17 +1218,32 @@ class DeviceHelper {
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
+    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
+      deviceDictionary.removeValue(forKey: key)
+    }
+    // Kept in memory whatever the config says, since on a cold launch the
+    // first enrichment arrives before config does.
+    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
+    // IP collection is for the MMP, which is off unless the backend turns it on,
+    // and for AppsFlyer, which only gets the IPv4 address.
+    switch ipCollection(for: factory.makeConfigState().value.getConfig()) {
+    case .none:
+      break
+    case .ipV4ForAppsFlyer:
+      await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()
+      deviceDictionary.merge(await ipCollector.attributes(families: [4])) { _, observed in observed }
+    case .all:
+      await ipCollector.refreshIfNeeded()
+      deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
+    }
 
-    if #available(iOS 15.0, *),
-      let storefront = await Storefront.current {
+    if let storefront = await Storefront.current {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      #if compiler(>=6.1)
       if #available(iOS 17.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
-      #endif
     }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {

@@ -52,7 +52,7 @@ class SWWebView: WKWebView {
     isMac: Bool,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
-    factory: FeatureFlagsFactory & DeviceHelperFactory
+    factory: FeatureFlagsFactory & DeviceHelperFactory & OptionsFactory
   ) {
     self.isMac = isMac
     self.messageHandler = messageHandler
@@ -79,13 +79,11 @@ class SWWebView: WKWebView {
 
     let preferences = WKPreferences()
 
-    if #available(iOS 15.0, *),
-      !isMac {
-      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true // ignore-xcode-12
+    if !isMac {
+      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
-    #if compiler(>=5.9.0)
     if #available(iOS 17.0, *) {
       if featureFlags?.enableThrottleSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .throttle
@@ -93,7 +91,6 @@ class SWWebView: WKWebView {
         preferences.inactiveSchedulingPolicy = .none
       }
     }
-    #endif
 
     config.preferences = preferences
     wkConfig = config
@@ -131,6 +128,17 @@ class SWWebView: WKWebView {
         )
       )
     }
+    if let environmentSource = SubscriptionsApiEnvironmentScript.source(
+      for: factory.makeSuperwallOptions().networkEnvironment
+    ) {
+      wkConfig.userContentController.addUserScript(
+        WKUserScript(
+          source: environmentSource,
+          injectionTime: .atDocumentStart,
+          forMainFrameOnly: true
+        )
+      )
+    }
     self.navigationDelegate = self
 
     translatesAutoresizingMaskIntoConstraints = false
@@ -140,7 +148,7 @@ class SWWebView: WKWebView {
     scrollView.maximumZoomScale = 1.0
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
-    #if compiler(>=5.8) && os(iOS)
+    #if os(iOS)
     if #available(iOS 16.4, *) {
       isInspectable = true
     }
@@ -250,6 +258,12 @@ extension SWWebView: WKNavigationDelegate {
       return
     }
     decisionHandler(.cancel)
+  }
+
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    // A new page has replaced the old one. A load that fails before this
+    // point leaves the old page, and whether it was ready, as it was.
+    messageHandler.documentWillLoad()
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {

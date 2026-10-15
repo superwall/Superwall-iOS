@@ -21,6 +21,14 @@ public struct SuperwallProduct: Decodable, Sendable {
   /// The product identifier (e.g., App Store product ID).
   public let identifier: String
 
+  /// The product's display name.
+  ///
+  /// `nil` today: `/v1/products` doesn't return a name yet, so anything showing a web product
+  /// falls back to its identifier. Populated automatically once the payload carries `name`.
+  /// A `var` rather than a `let` purely so the memberwise initializer defaults it to `nil`,
+  /// leaving existing construction sites untouched.
+  public var name: String?
+
   /// The platform this product is for.
   public let platform: SuperwallProductPlatform
 

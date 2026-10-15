@@ -37,9 +37,7 @@ struct SWProduct: Codable {
     #endif
     downloadContentVersion = product.downloadContentVersion
 
-    if #available(iOS 14.0, *) {
-      isFamilyShareable = product.isFamilyShareable
-    }
+    isFamilyShareable = product.isFamilyShareable
 
     discounts = product.discounts.map(SWProductDiscount.init)
 
@@ -56,7 +54,6 @@ struct SWProduct: Codable {
     }
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   init(product: SK2Product) {
     localizedDescription = product.description
     localizedTitle = product.displayName

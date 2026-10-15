@@ -11,6 +11,8 @@ import Foundation
 final class FakePermissionHandler: PermissionHandling {
   var permissionToReturn: PermissionStatus = .granted
   var requestedPermissions: [PermissionType] = []
+  /// Runs while the request is in flight, e.g. to change what the user answered.
+  var onRequest: ((PermissionType) -> Void)?
 
   func hasPermission(_ permission: PermissionType) async -> PermissionStatus {
     return permissionToReturn
@@ -18,6 +20,7 @@ final class FakePermissionHandler: PermissionHandling {
 
   func requestPermission(_ permission: PermissionType) async -> PermissionStatus {
     requestedPermissions.append(permission)
+    onRequest?(permission)
     return permissionToReturn
   }
 }
@@ -26,17 +29,10 @@ final class FakeWebView: SWWebView {
   var willHandleJs = false
   var evaluatedScripts: [String] = []
 
-  #if compiler(>=6.0)
   override func evaluateJavaScript(_ javaScriptString: String, completionHandler: (@MainActor (Any?, (any Error)?) -> Void)? = nil) {
     willHandleJs = true
     evaluatedScripts.append(javaScriptString)
   }
-  #else
-  override func evaluateJavaScript(_ javaScriptString: String, completionHandler: ((Any?, (any Error)?) -> Void)? = nil) {
-    willHandleJs = true
-    evaluatedScripts.append(javaScriptString)
-  }
-  #endif
 }
 
 final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
@@ -44,11 +40,15 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var didPresentSafariInApp = false
   var didOpenDeepLink = false
   var deepLinkShouldDismiss: Bool?
+  var teleportWatch: TeleportReturnCover.Watch?
+  var didDrawWaitingScreen = false
+  var didOpenAsTeleport = false
   var didPresentSafariExternal = false
   var didRequestReview = false
   var didOpenPaymentSheet = false
   var stripeCheckoutSubmit: (checkoutContextId: String, productId: String)?
   var stripeCheckoutComplete: (checkoutContextId: String, productId: String)?
+  var stripeCheckoutCompleteShouldDismiss: Bool?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
 
   var request: PresentationRequest?
@@ -84,8 +84,18 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
     didPresentSafariInApp = true
   }
 
-  func presentSafariExternal(_ url: URL) {
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch) {
+    teleportWatch = watch
+  }
+
+  func endTeleportWatch() {
+    teleportWatch = nil
+  }
+
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
     didPresentSafariExternal = true
+    didDrawWaitingScreen = drawsWaitingScreen
+    didOpenAsTeleport = isTeleport
   }
 
   func requestReview(type: ReviewType) {
@@ -102,9 +112,11 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   ) {
     stripeCheckoutComplete = (checkoutContextId, productId)
+    stripeCheckoutCompleteShouldDismiss = shouldDismiss
   }
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {

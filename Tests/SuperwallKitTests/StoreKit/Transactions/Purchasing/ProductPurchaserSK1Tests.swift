@@ -10,7 +10,6 @@ import XCTest
 @testable import SuperwallKit
 import StoreKit
 
-@available(iOS 14.0, *)
 final class ProductPurchaserSK1Tests: XCTestCase {
   // TODO: Can't use this because the recording is done on a background priority thread. Github computer keeps failing this, despite it actually passing on the computer.
   /*func test_recordTransaction() async {

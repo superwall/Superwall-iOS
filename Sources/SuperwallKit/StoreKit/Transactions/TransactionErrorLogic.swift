@@ -28,8 +28,7 @@ enum TransactionErrorLogic {
     triggers: Set<String>,
     shouldShowPurchaseFailureAlert: Bool
   ) -> ErrorOutcome? {
-    if #available(iOS 15.0, *),
-      let error = error as? StoreKitError {
+    if let error = error as? StoreKitError {
       switch error {
       case .userCancelled:
         return .cancelled
@@ -47,13 +46,11 @@ enum TransactionErrorLogic {
         break
       }
 
-      if #available(iOS 14, *) {
-        switch error.code {
-        case .overlayTimeout:
-          return .cancelled
-        default:
-          break
-        }
+      switch error.code {
+      case .overlayTimeout:
+        return .cancelled
+      default:
+        break
       }
     }
 

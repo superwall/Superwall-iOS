@@ -353,11 +353,41 @@ public enum SuperwallEvent {
   /// When a Stripe checkout session fails.
   case stripeCheckoutFail(paywallInfo: PaywallInfo)
 
+  /// When a paywall teleports the user to a web flow in the browser, such as its checkout page.
+  case teleportOpen(paywallInfo: PaywallInfo)
+
+  /// When a return link brings the user back to the app from a teleported web flow.
+  ///
+  /// `paywallInfo` is the ``PaywallInfo`` of the presented paywall, if one is presented.
+  case teleportReturn(paywallInfo: PaywallInfo?)
+
   /// When the test mode modal is opened.
   case testModeModalOpen
 
   /// When the test mode modal is closed.
   case testModeModalClose
+
+  /// When the Customer Center is presented.
+  case customerCenterOpen(screen: CustomerCenterScreenType, presentation: CustomerCenterPresentationStyle)
+
+  /// When the Customer Center is dismissed.
+  case customerCenterClose
+
+  /// When the user taps a path in the Customer Center.
+  case customerCenterAction(action: CustomerCenterAction, pathId: String, productId: String?)
+
+  /// When the user answers a Customer Center survey.
+  // swiftlint:disable:next enum_case_associated_values_count
+  case customerCenterSurveyResponse(
+    surveyId: String,
+    optionId: String,
+    action: CustomerCenterAction,
+    pathId: String,
+    productId: String?
+  )
+
+  /// When a refund request started from the Customer Center completes.
+  case customerCenterRefundRequest(productId: String, status: CustomerCenterRefundStatus)
 
   /// When a user navigates to a page in a multi-page paywall.
   case paywallPageView(
@@ -560,10 +590,24 @@ extension SuperwallEvent {
       return .init(objcEvent: .stripeCheckoutComplete)
     case .stripeCheckoutFail:
       return .init(objcEvent: .stripeCheckoutFail)
+    case .teleportOpen:
+      return .init(objcEvent: .teleportOpen)
+    case .teleportReturn:
+      return .init(objcEvent: .teleportReturn)
     case .testModeModalOpen:
       return .init(objcEvent: .testModeModalOpen)
     case .testModeModalClose:
       return .init(objcEvent: .testModeModalClose)
+    case .customerCenterOpen:
+      return .init(objcEvent: .customerCenterOpen)
+    case .customerCenterClose:
+      return .init(objcEvent: .customerCenterClose)
+    case .customerCenterAction:
+      return .init(objcEvent: .customerCenterAction)
+    case .customerCenterSurveyResponse:
+      return .init(objcEvent: .customerCenterSurveyResponse)
+    case .customerCenterRefundRequest:
+      return .init(objcEvent: .customerCenterRefundRequest)
     case .paywallPageView:
       return .init(objcEvent: .paywallPageView)
     }

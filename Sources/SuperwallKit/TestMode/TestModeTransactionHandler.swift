@@ -25,7 +25,7 @@ final class TestModeTransactionHandler {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
-    guard let viewController = topViewController() else {
+    guard let viewController = UIViewController.topMostViewController else {
       return .failed(PurchaseError.productUnavailable)
     }
 
@@ -109,7 +109,7 @@ final class TestModeTransactionHandler {
   /// or `.failed(nil)` when the user cancels.
   @MainActor
   func handleRestore() async -> RestorationResult {
-    guard let viewController = topViewController() else {
+    guard let viewController = UIViewController.topMostViewController else {
       return .failed(nil)
     }
 
@@ -176,17 +176,5 @@ final class TestModeTransactionHandler {
     case .cancelled:
       return .failed(nil)
     }
-  }
-
-  @MainActor
-  private func topViewController() -> UIViewController? {
-    guard let window = UIApplication.sharedApplication?.windows.first(where: { $0.isKeyWindow }),
-      var topVC = window.rootViewController else {
-      return nil
-    }
-    while let presented = topVC.presentedViewController {
-      topVC = presented
-    }
-    return topVC
   }
 }

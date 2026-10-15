@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager
@@ -93,16 +92,14 @@ final class ProductPurchaserSK2: Purchasing {
         options.insert(.appAccountToken(appAccountToken))
       }
 
-      #if compiler(>=6.1)
       // Add intro offer eligibility token if available for this product
       // This allows overriding Apple's automatic eligibility determination
       if let token = product.introOfferToken {
         options.insert(.introductoryOfferEligibility(compactJWS: token.token))
       }
-      #endif
 
       #if compiler(>=6.3.2)
-      if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
+      if #available(iOS 26.4, macOS 26.4, watchOS 26.4, visionOS 26.4, *),
         let plan = product.billingPlanType {
         let sk2Plan: StoreKit.Product.SubscriptionInfo.BillingPlanType
         switch plan {

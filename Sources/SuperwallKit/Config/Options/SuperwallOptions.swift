@@ -22,6 +22,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
+  /// Configures the Customer Center presented via ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
+  public var customerCenter = CustomerCenterConfiguration.default
+
   /// A mapping of local resource IDs to ``AssetResource`` values.
   ///
   /// Use this to serve paywall assets (images, videos, Lottie animations) from the app
@@ -82,7 +85,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   @objc(SWKTestModeBehavior)
   public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
     /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
-    /// mismatch is detected, but never during UI tests.
+    /// mismatch is detected, but never during UI tests. A bundle ID mismatch is ignored in
+    /// App Store builds, so a wrong bundle ID on the dashboard can't put customers in test mode.
     case automatic
 
     /// Activates test mode only when specifically enabled for a user via the dashboard.
@@ -123,8 +127,7 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// The StoreKit version that the SDK should use.
   ///
-  /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
-  /// will fallback to StoreKit 1.
+  /// Defaults to StoreKit 2.
   public var storeKitVersion: StoreKitVersion
 
   /// **WARNING**:  The different network environments that the SDK should use.
@@ -270,6 +273,32 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// The host that only answers over IPv4, used to learn the device's public
+    /// IPv4 address. There's no non-production version, so it's `nil` outside
+    /// release builds.
+    var ipV4EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "v4.superwall-enrichment.com"
+      default:
+        return nil
+      }
+    }
+
+    /// The host asked over IPv6 to learn the device's public IPv6 address.
+    /// It's reachable over both, so the SDK requires IPv6 for the request.
+    /// There's no non-production version, so it's `nil` outside release builds.
+    var ipV6EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "beacon-v6.superwall.com"
+      default:
+        return nil
+      }
+    }
+
     var adServicesHost: String {
       return "api-adservices.apple.com"
     }
@@ -336,6 +365,30 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// You can also change this at runtime via ``Superwall/eventTrackingBehavior``.
   public var eventTrackingBehavior: EventTrackingBehavior = .all
 
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on with the conversions it uploads to Google Ads and Meta.
+  ///
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// Both are reported as denied while ``eventTrackingBehavior`` is
+  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
+  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
+  ///
+  /// You can also change this at runtime via ``Superwall/adConsent``.
+  public var adConsent = AdConsent() {
+    didSet {
+      isAdConsentSet = true
+    }
+  }
+
+  /// Whether the app has assigned ``adConsent``, even to the default value. Until
+  /// then, a consent banner's stored answer takes its place.
+  var isAdConsentSet = false
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
@@ -381,7 +434,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
-  ///   a bundle ID mismatch is detected, but never during UI tests.
+  ///   a bundle ID mismatch is detected, but never during UI tests. A bundle ID mismatch is
+  ///   ignored in App Store builds.
   /// - `.whenEnabledForUser`: Activates test mode only when specifically enabled for a
   ///   user via the dashboard.
   /// - `.never`: Test mode is never activated, regardless of configuration.
@@ -508,6 +562,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
     case testModeBehavior
+    case adUserDataConsent
+    case adPersonalizationConsent
+    case isAdConsentSet
   }
 
   public override init() {
@@ -520,11 +577,7 @@ public final class SuperwallOptions: NSObject, Encodable {
         self.storeKitVersion = .storeKit1
       }
     } else {
-      if #available(iOS 15.0, *) {
-        self.storeKitVersion = .storeKit2
-      } else {
-        self.storeKitVersion = .storeKit1
-      }
+      self.storeKitVersion = .storeKit2
     }
   }
 
@@ -547,6 +600,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
+    try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
+    try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
+    try container.encode(isAdConsentSet, forKey: .isAdConsentSet)
   }
 
   func toDictionary() -> [String: Any] {

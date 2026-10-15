@@ -9,9 +9,6 @@ import Foundation
 
 extension PermissionHandler {
   func checkTrackingPermission() -> PermissionStatus {
-    guard #available(iOS 14, macCatalyst 14.0, macOS 11.0, tvOS 14.0, *) else {
-      return .unsupported
-    }
     let proxy = TrackingManagerProxy()
     let raw = proxy.trackingAuthorizationStatus()
     return raw.toTrackingPermissionStatus
@@ -19,10 +16,6 @@ extension PermissionHandler {
 
   @MainActor
   func requestTrackingPermission() async -> PermissionStatus {
-    guard #available(iOS 14, macCatalyst 14.0, macOS 11.0, tvOS 14.0, *) else {
-      return .unsupported
-    }
-
     guard hasPlistKey(PlistKey.tracking) else {
       await showMissingPlistKeyAlert(
         for: PlistKey.tracking,

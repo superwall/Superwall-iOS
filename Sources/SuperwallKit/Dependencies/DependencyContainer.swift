@@ -22,6 +22,7 @@ final class DependencyContainer {
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
   var appSessionManager: AppSessionManager!
+  var tcfConsentObserver: TCFConsentObserver!
   var storage: Storage!
   var network: Network!
   var paywallManager: PaywallManager!
@@ -48,11 +49,30 @@ final class DependencyContainer {
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
+  private var _customerCenterManager: CustomerCenterManager?
+
+  /// Builds the dependencies backing the Customer Center and owns its presentation state.
+  ///
+  /// Built lazily on first access rather than in `init`, since `DependencyContainer.init` is not
+  /// itself main-actor-isolated (many test suites, and potentially host apps, construct it off the
+  /// main thread), while `CustomerCenterManager` is `@MainActor`. All production call sites
+  /// (`Superwall.presentCustomerCenter`/`dismissCustomerCenter`/the Objective-C variant) are
+  /// themselves `@MainActor`, so this accessor is only ever reached from the main actor.
+  @MainActor
+  var customerCenterManager: CustomerCenterManager {
+    if let manager = _customerCenterManager {
+      return manager
+    }
+    let manager = CustomerCenterManager(container: self)
+    _customerCenterManager = manager
+    return manager
+  }
+
   init(
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
     options: SuperwallOptions? = nil,
-    cache: Cache = Cache()
+    cache: Cache = .makeDefault()
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
     storage = Storage(factory: self, cache: cache)
@@ -166,7 +186,8 @@ final class DependencyContainer {
     mmpAttributionManager = MMPAttributionManager(
       network: network,
       storage: storage,
-      identityManager: identityManager
+      identityManager: identityManager,
+      configManager: configManager
     )
 
     testModeManager = TestModeManager(
@@ -183,6 +204,8 @@ final class DependencyContainer {
       storage: storage,
       delegate: self
     )
+
+    tcfConsentObserver = TCFConsentObserver()
 
     debugManager = DebugManager(
       storage: storage,
@@ -527,7 +550,6 @@ extension DependencyContainer: StoreTransactionFactory {
     )
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
     return StoreTransaction(
       transaction: SK2StoreTransaction(transaction: transaction),

@@ -1,25 +1,24 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "RevenueCat",
-        "repositoryURL": "https://github.com/RevenueCat/purchases-ios.git",
-        "state": {
-          "branch": null,
-          "revision": "5d24ed423830598cf28e3f69d9392464c4c023c5",
-          "version": "5.83.2"
-        }
-      },
-      {
-        "package": "Superscript",
-        "repositoryURL": "https://github.com/superwall/superscript-ios-next",
-        "state": {
-          "branch": null,
-          "revision": "c3d1ee8d23ae6bf27e2d261c41a61001281166ec",
-          "version": "1.0.15"
-        }
+  "originHash" : "96aec4de5637e10e6ded2f3182f6c21b014b8764354142c6a013f4a67a719331",
+  "pins" : [
+    {
+      "identity" : "purchases-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/RevenueCat/purchases-ios.git",
+      "state" : {
+        "revision" : "1152c719f7b35f86d16a2d0053aba9d26972a962",
+        "version" : "5.94.0"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "superscript-ios-next",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/superwall/superscript-ios-next",
+      "state" : {
+        "revision" : "c3d1ee8d23ae6bf27e2d261c41a61001281166ec",
+        "version" : "1.0.15"
+      }
+    }
+  ],
+  "version" : 3
 }

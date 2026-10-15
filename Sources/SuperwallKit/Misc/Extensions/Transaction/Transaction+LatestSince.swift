@@ -7,7 +7,6 @@
 
 import StoreKit
 
-@available(iOS 15.0, *)
 extension Transaction {
   /// Gets the latest transaction for a given `productId` since
   /// an hour up to a given `purchaseDate`.
@@ -34,7 +33,6 @@ extension Transaction {
     for productId: String,
     since purchaseDate: Date
   ) async -> VerificationResult<Transaction>? {
-    #if compiler(>=6.1)
     if #available(iOS 18.4, visionOS 2.4, *) {
       var best: VerificationResult<Transaction>?
 
@@ -55,7 +53,6 @@ extension Transaction {
 
       return best
     }
-    #endif
 
     let verificationResult = await Transaction.currentEntitlement(for: productId)
 

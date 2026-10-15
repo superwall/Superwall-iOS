@@ -76,10 +76,23 @@ public final class Superwall: NSObject, ObservableObject {
       return options.eventTrackingBehavior
     }
     set {
+      let oldValue = options.eventTrackingBehavior
       options.eventTrackingBehavior = newValue
+
+      if newValue != .none {
+        dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
+      }
 
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
+        // Re-send the device attributes once the queue has the new behavior. Leaving
+        // `.none`, nothing was sent while opted out, such as an ad consent assignment
+        // or an ATT answer. Any behavior other than `.all` also discards the queued
+        // events (`PlacementsQueue.setTrackingBehavior`), which may include device
+        // attributes already recorded as sent.
+        if newValue != .none && (newValue != oldValue || newValue != .all) {
+          await republishDeviceAttributes(onlyIfAdConsentChanged: false)
+        }
       }
 
       let behavior = newValue
@@ -98,6 +111,44 @@ public final class Superwall: NSObject, ObservableObject {
       let configAttributes = dependencyContainer.makeConfigAttributes()
       Task {
         await track(configAttributes)
+      }
+    }
+  }
+
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on with the conversions it uploads to Google Ads and Meta.
+  ///
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// On iOS, personalization is reported as denied when the user hasn't allowed
+  /// tracking, unless you set `adConsent` yourself.
+  ///
+  /// You can also set the initial value via ``SuperwallOptions/adConsent``
+  /// before calling `configure`.
+  public var adConsent: AdConsent {
+    get {
+      return options.adConsent
+    }
+    set {
+      options.adConsent = newValue
+
+      let generation = adConsentUpdates.nextGeneration()
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      adConsentUpdates.enqueue { [weak self] in
+        guard let self, self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(configAttributes)
+        let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+        // A newer assignment, queued behind this one, sends its own snapshot.
+        guard self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
       }
     }
   }
@@ -328,7 +379,6 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
   /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
-  @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
       if !customerInfo.isPlaceholder {
@@ -421,6 +471,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Items involved in the presentation of paywalls.
   let presentationItems = PresentationItems()
+
+  /// Serializes the device attribute updates that report ad consent.
+  let adConsentUpdates = AdConsentUpdateQueue()
 
   /// Determines whether a paywall is being presented.
   public var isPaywallPresented: Bool {
@@ -535,36 +588,54 @@ public final class Superwall: NSObject, ObservableObject {
       let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
+      // The eligibility check has to run at launch whatever the config or
+      // tracking setting says: it records that this install may be matched,
+      // which a later launch relies on if this one ends before the match
+      // completes. It runs before config is fetched so a paywall can't get
+      // ahead of the match being marked as pending. Only the request itself
+      // waits for config to enable the MMP.
+      let shouldMatchInstall = dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      )
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.markMatchPending()
+      }
+
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
       _ = await configureIdentity
 
-      // Skip install-attribution matching entirely when the developer has
-      // opted out of all event collection. The `/api/match` call and the
-      // `acquisition_*` attribute writes happen outside the event queue, so
-      // queue-level suppression wouldn't catch them.
-      if dependencyContainer.configManager.options.eventTrackingBehavior != .none,
-        dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-          hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-          appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-        ) {
-        let advertiserTrackingEnabled =
-          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
+          guard let dependencyContainer = dependencyContainer else {
+            return nil
+          }
+          // Skip matching when the app has opted out of all event collection.
+          // The `/api/match` call and the `acquisition_*` attribute writes
+          // happen outside the event queue, so queue-level suppression
+          // wouldn't catch them. It's tried again if the app opts back in.
+          if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
+            return nil
+          }
+          let advertiserTrackingEnabled =
+            dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        // We deliberately fire the match once and don't retry after ATT is
-        // granted: the backend matches on IP + device fingerprint + time decay,
-        // not IDFA, so a post-consent re-match wouldn't change the result. And
-        // because matches are time-decayed and reads are latest-wins, a later
-        // retry could only tie or worsen the earlier, better-timed match.
-        // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
-        // matching.)
-        dependencyContainer.storage.recordMMPInstallAttributionMatch {
-          await dependencyContainer.mmpAttributionManager.matchInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-            advertiserTrackingEnabled: advertiserTrackingEnabled,
-            applicationTrackingEnabled: true
-          )
+          // We deliberately fire the match once and don't retry after ATT is
+          // granted: the backend matches on IP + device fingerprint + time decay,
+          // not IDFA, so a post-consent re-match wouldn't change the result. And
+          // because matches are time-decayed and reads are latest-wins, a later
+          // retry could only tie or worsen the earlier, better-timed match.
+          // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
+          // matching.)
+          return dependencyContainer.storage.recordMMPInstallAttributionMatch {
+            await dependencyContainer.mmpAttributionManager.matchInstall(
+              idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+              advertiserTrackingEnabled: advertiserTrackingEnabled,
+              applicationTrackingEnabled: true
+            )
+          }
         }
       }
 
@@ -967,6 +1038,67 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Re-sends device attributes if the ad consent they report, or its source, has
+  /// changed since they were last sent, such as after the user answers the ATT
+  /// prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
+  ///
+  /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
+  /// one. If an assignment is made while it waits, it defers to that.
+  @discardableResult
+  func republishDeviceAttributesIfAdConsentChanged() async -> Bool {
+    return await republishDeviceAttributes(onlyIfAdConsentChanged: true)
+  }
+
+  /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
+  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent or
+  /// its source differs from what was last sent. Returns whether it sent them.
+  @discardableResult
+  func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
+    return await withCheckedContinuation { continuation in
+      enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: onlyIfAdConsentChanged) {
+        continuation.resume(returning: $0)
+      }
+    }
+  }
+
+  /// Queues a republish-if-changed without waiting for it. Called after every
+  /// device attributes send, so consent that changed while that send was being
+  /// built is sent too. Does nothing when the consent is unchanged.
+  func reconcileAdConsentAfterPublish() {
+    enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
+  }
+
+  private func enqueueDeviceAttributesRepublish(
+    onlyIfAdConsentChanged: Bool,
+    completion: @escaping @Sendable (Bool) -> Void
+  ) {
+    let generation = adConsentUpdates.currentGeneration
+    adConsentUpdates.enqueue { [weak self] in
+      guard
+        let self,
+        self.adConsentUpdates.isCurrent(generation),
+        !onlyIfAdConsentChanged
+          || self.dependencyContainer.deviceHelper.adConsentNeedsRepublish()
+      else {
+        completion(false)
+        return
+      }
+      let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+      await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+      completion(true)
+    }
+  }
+
+  /// Waits for every ad consent update queued so far to finish. For tests, so the
+  /// work a test starts can't outlive it.
+  func waitForPendingAdConsentUpdates() async {
+    await withCheckedContinuation { continuation in
+      adConsentUpdates.enqueue {
+        continuation.resume()
+      }
+    }
+  }
+
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
   /// back to using the system setting.
   public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {
@@ -1156,9 +1288,7 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)
-        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-        }
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
       #endif
     }
   }
@@ -1229,7 +1359,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
-  @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
     if options.shouldObservePurchases {
       Logger.debug(
@@ -1286,7 +1415,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
   /// to `true`.
-  @available(iOS 15.0, *)
   public func purchase(
     _ product: StoreKit.Product,
     completion: @escaping (PurchaseResult) -> Void
@@ -1362,11 +1490,26 @@ public final class Superwall: NSObject, ObservableObject {
   /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
   /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
+    return await restorePurchases(presentsFailureAlert: true)
+  }
+
+  /// Restores purchases, optionally suppressing the SDK's own restore-failure alert.
+  ///
+  /// Used internally by callers — such as the Customer Center — that present their own
+  /// restore-outcome UI and don't want the SDK's alert doubling up with theirs.
+  ///
+  /// - Parameter presentsFailureAlert: When `false`, suppresses the SDK's built-in
+  ///   restore-failure alert on failure. Defaults to `true` for the public API.
+  /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
+  func restorePurchases(presentsFailureAlert: Bool) async -> RestorationResult {
     // Await config because we must have entitlements before restoring.
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    let result = await dependencyContainer.transactionManager.tryToRestore(.external)
+    let result = await dependencyContainer.transactionManager.tryToRestore(
+      .external,
+      presentsFailureAlert: presentsFailureAlert
+    )
     return result
   }
 

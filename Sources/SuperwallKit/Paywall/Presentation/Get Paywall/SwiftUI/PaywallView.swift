@@ -13,7 +13,6 @@ import SwiftUI
 ///
 /// - Warning: You're responsible for the deallocation of this view. If you have a `PaywallView` presented somewhere
 /// and you try to present the same `PaywallView` elsewhere, you will get a crash.
-@available(iOS 14.0, *)
 public struct PaywallView<
   OnErrorView: View,
   OnSkippedView: View
@@ -150,7 +149,6 @@ public struct PaywallView<
   }
 }
 
-@available(iOS 14.0, *)
 extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///
@@ -190,7 +188,6 @@ extension PaywallView where OnSkippedView == Never, OnErrorView == Never {
   }
 }
 
-@available(iOS 14.0, *)
 extension PaywallView where OnSkippedView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///
@@ -233,7 +230,6 @@ extension PaywallView where OnSkippedView == Never {
   }
 }
 
-@available(iOS 14.0, *)
 extension PaywallView where OnErrorView == Never {
   /// A SwiftUI paywall view that you can embed into your app.
   ///

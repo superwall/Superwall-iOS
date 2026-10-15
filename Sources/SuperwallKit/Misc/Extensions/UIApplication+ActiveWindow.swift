@@ -16,13 +16,13 @@ extension UIApplication {
     // First, try to find a key window in the foreground active scene
     if let windowScene = sharedApplication.connectedScenes
       .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene {
-      return windowScene.windows.first { $0.isKeyWindow } ?? windowScene.windows.first
+      return windowScene.keyWindow ?? windowScene.windows.first
     }
 
     // Then try to find a key window in the foreground inactive scene
     if let windowScene = sharedApplication.connectedScenes
       .first(where: { $0.activationState == .foregroundInactive }) as? UIWindowScene {
-      return windowScene.windows.first { $0.isKeyWindow } ?? windowScene.windows.first
+      return windowScene.keyWindow ?? windowScene.windows.first
     }
 
     // Fallback: search across all scenes for a key window

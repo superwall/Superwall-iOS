@@ -12,7 +12,6 @@ import StoreKit
 public typealias SK1Transaction = SKPaymentTransaction
 
 /// TypeAlias to StoreKit 2's Transaction type, called `StoreKit.Transaction`
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 public typealias SK2Transaction = StoreKit.Transaction
 
 /// A convenience wrapper around a StoreKit 1 or StoreKit 2 transaction.
@@ -47,7 +46,6 @@ public final class StoreTransaction: NSObject, StoreTransactionType, Encodable {
   }
 
   /// Returns the `StoreKit.Transaction` if this `StoreTransaction` represents a `StoreKit.Transaction`.
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   public var sk2Transaction: SK2Transaction? {
     return (self.transaction as? SK2StoreTransaction)?.underlyingSK2Transaction
   }

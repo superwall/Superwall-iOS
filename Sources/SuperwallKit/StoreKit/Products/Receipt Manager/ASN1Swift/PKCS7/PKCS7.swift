@@ -28,7 +28,6 @@ enum OID: String
 
 extension OID
 {
-	@available(iOS 10.0, *)
 	func encryptionAlgorithm() -> SecKeyAlgorithm
 	{
 		switch self

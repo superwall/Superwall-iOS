@@ -21,16 +21,14 @@ enum ProductPurchaserLogic {
 
     // Get latest transaction since the purchase date using sk2.
     // Check that it's verified.
-    if #available(iOS 15.0, *) {
-      if let verificationResult = await Transaction.latest(
-        for: productId,
-        since: purchaseDate
-      ) {
-        guard case .verified = verificationResult else {
-          throw PurchaseError.unverifiedTransaction
-        }
-        return
+    if let verificationResult = await Transaction.latest(
+      for: productId,
+      since: purchaseDate
+    ) {
+      guard case .verified = verificationResult else {
+        throw PurchaseError.unverifiedTransaction
       }
+      return
     }
 
     // Otherwise, check that the local receipt is valid.

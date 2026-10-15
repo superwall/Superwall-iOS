@@ -159,6 +159,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// What the user sees of a teleport's waiting screen while leaving and coming back.
+  private var existingTeleportReturnCover: TeleportReturnCover?
+
+  /// The product bought from this presentation, App Store or web. A close that
+  /// follows a purchase, such as a `close` among the button's after-purchase
+  /// actions, finishes the presentation as purchased rather than declined.
+  private(set) var completedPurchaseProduct: StoreProduct?
+
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
 
@@ -468,6 +476,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     loadingState = .loadingURL
+    webView.messageHandler.documentWillLoad()
 
     if let paywallArchiveManager = self.paywallArchiveManager,
       paywallArchiveManager.shouldAlwaysUseWebArchive(manifest: paywall.manifest) {
@@ -1319,14 +1328,12 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       }
 
       checkoutVC.modalPresentationStyle = .pageSheet
-      if #available(iOS 15.0, *) {
-        if let sheet = checkoutVC.sheetPresentationController {
-          sheet.detents = [.medium(), .large()]
-          sheet.prefersGrabberVisible = true
-          // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
-          sheet.prefersEdgeAttachedInCompactHeight = true
-          sheet.preferredCornerRadius = 62
-        }
+      if let sheet = checkoutVC.sheetPresentationController {
+        sheet.detents = [.medium(), .large()]
+        sheet.prefersGrabberVisible = true
+        // sheet.prefersScrollingExpandsWhenScrolledToEdge = true
+        sheet.prefersEdgeAttachedInCompactHeight = true
+        sheet.preferredCornerRadius = 62
       }
       self.isSafariVCPresented = true
       loadingState = .loadingPurchase
@@ -1345,16 +1352,24 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   ) {
     didReceiveStripeCheckoutAbandonMessage = true
     loadingState = .manualLoading
     closeSafari()
 
+    // A paywall that says whether to dismiss wants the purchase finished
+    // like an App Store purchase; one that doesn't gets the legacy restore.
+    let completion: StripeCheckoutCompletion = shouldDismiss.map {
+      .purchase(productId: productId, shouldDismiss: $0)
+    } ?? .restore
+
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutComplete(
         contextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        completion: completion
       )
     }
   }
@@ -1411,7 +1426,36 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     present(safariVC, animated: true)
   }
 
-  func presentSafariExternal(_ url: URL) {
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
+    // Only a teleport needs the cover. It's there even when no waiting screen is drawn, so the
+    // page still hears the return link.
+    guard isTeleport else {
+      openExternally(url)
+      return
+    }
+    teleportReturnCover.leave(drawingWaitingScreen: drawsWaitingScreen) { [weak self] in
+      self?.openExternally(url)
+    }
+  }
+
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch) {
+    teleportReturnCover.startWatching(watch)
+  }
+
+  func endTeleportWatch() {
+    existingTeleportReturnCover?.stopWatching()
+  }
+
+  private var teleportReturnCover: TeleportReturnCover {
+    if let existingTeleportReturnCover {
+      return existingTeleportReturnCover
+    }
+    let cover = TeleportReturnCover(view: view, webView: webView)
+    existingTeleportReturnCover = cover
+    return cover
+  }
+
+  private func openExternally(_ url: URL) {
     guard let sharedApplication = UIApplication.sharedApplication else {
       return
     }
@@ -1441,23 +1485,17 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func requestReview(type: ReviewType) {
     switch type {
     case .inApp:
-      #if os(visionOS)
-        if let scene = view.window?.windowScene {
+      if let scene = view.window?.windowScene ?? UIApplication.sharedApplication?.activeWindowScene {
+        #if os(visionOS)
           AppStore.requestReview(in: scene)
-        }
-      #else
-        if let scene = view.window?.windowScene {
+        #else
           if #available(iOS 16.0, *) {
             AppStore.requestReview(in: scene)
-          } else if #available(iOS 14.0, *) {
-            SKStoreReviewController.requestReview(in: scene)
           } else {
-            SKStoreReviewController.requestReview()
+            SKStoreReviewController.requestReview(in: scene)
           }
-        } else {
-          SKStoreReviewController.requestReview()
-        }
-      #endif
+        #endif
+      }
       trackReviewRequest(type: .inApp)
     case .external:
       let appId: String
@@ -1525,9 +1563,8 @@ extension PaywallViewController {
       return
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(false)  // ignore-xcode-12
+    if !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(false)
     }
 
     if webView.loadingHandler.didFailToLoad,
@@ -1590,6 +1627,9 @@ extension PaywallViewController {
 
     didCallDelegate = false
     paywall.closeReason = .none
+    // A purchase belongs to the presentation it was made in. It's cleared here rather than when
+    // the view disappears: a sheet swiped away disappears before its close is reported.
+    completedPurchaseProduct = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     webView.scrollView.contentOffset = CGPoint.zero
@@ -1659,6 +1699,7 @@ extension PaywallViewController {
 
   override public func viewDidDisappear(_ animated: Bool) {
     super.viewDidDisappear(animated)
+    existingTeleportReturnCover?.reset()
     guard isPresented else {
       return
     }
@@ -1669,9 +1710,8 @@ extension PaywallViewController {
       await trackClose()
     }
 
-    if #available(iOS 15.0, *),
-      !deviceHelper.isMac {
-      webView.setAllMediaPlaybackSuspended(true)  // ignore-xcode-12
+    if !deviceHelper.isMac {
+      webView.setAllMediaPlaybackSuspended(true)
     }
 
     resetPresentationPreparations()
@@ -1685,11 +1725,32 @@ extension PaywallViewController {
     presentationDidFinishPrepare = false
   }
 
+  /// Records a completed purchase before the paywall hears `transaction_complete`.
+  func markPurchaseCompleted(_ product: StoreProduct) {
+    completedPurchaseProduct = product
+  }
+
+  /// The result a dismissal reports: a decline after a completed purchase is a purchase. A close
+  /// to show the next paywall stays as it is, so that paywall keeps the presentation's state.
+  func resolvedDismissal(
+    result: PaywallResult,
+    closeReason: PaywallCloseReason
+  ) -> (result: PaywallResult, closeReason: PaywallCloseReason) {
+    if closeReason == .forNextPaywall {
+      return (result, closeReason)
+    }
+    if result == .declined, let product = completedPurchaseProduct {
+      return (.purchased(product), .systemLogic)
+    }
+    return (result, closeReason)
+  }
+
   func dismiss(
     result: PaywallResult,
     closeReason: PaywallCloseReason,
     completion: (() -> Void)? = nil
   ) {
+    let (result, closeReason) = resolvedDismissal(result: result, closeReason: closeReason)
     dismissCompletionBlock = completion
     paywallResult = result
     paywall.closeReason = closeReason

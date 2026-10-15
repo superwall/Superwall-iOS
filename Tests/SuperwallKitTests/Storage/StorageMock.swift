@@ -45,7 +45,7 @@ final class StorageMock: Storage {
     internalCachedConfig: Config? = nil,
     coreDataManager: CoreDataManagerFakeDataMock = CoreDataManagerFakeDataMock(),
     confirmedAssignments: Set<Assignment>? = [],
-    cache: Cache = Cache()
+    cache: Cache = .makeDefault()
   ) {
     self.internalCachedTransactions = internalCachedTransactions
     self.internalConfirmedAssignments = confirmedAssignments
@@ -97,6 +97,20 @@ final class StorageMock: Storage {
 
   override func updateAssignment(_ newAssignment: Assignment) {
     internalConfirmedAssignments?.update(with: newAssignment)
+  }
+
+  override func delete<Key>(_ keyType: Key.Type) where Key : Storable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = nil
+    }
+    super.delete(keyType)
+  }
+
+  override func delete<Key>(_ keyType: Key.Type) where Key : Storable, Key.Value : Encodable {
+    if keyType == LatestConfig.self {
+      internalCachedConfig = nil
+    }
+    super.delete(keyType)
   }
 
   override func save<Key>(_ value: Key.Value, forType keyType: Key.Type) where Key : Storable {
