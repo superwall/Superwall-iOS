@@ -129,7 +129,7 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on. The one exception is
 AppsFlyer: when an `appsflyerId` integration attribute is set, the IPv4 lookup alone runs, and only
 once the device has been seen on IPv6 this session and no fresh IPv4 address is known, and only
-`ipV4` is exposed. Remember the IPv6 sighting for the session: enrichment may not run again, and the
+`ipV4` is exposed. Nothing is looked up or exposed while `eventTrackingBehavior` is `.none`. Remember the IPv6 sighting for the session: enrichment may not run again, and the
 IPv4 address must keep being refreshed for late conversions.
 SuperwallKit's privacy manifest doesn't declare IP collection, so apps that turn on the MMP or set an
 AppsFlyer ID declare it themselves. Keep collection

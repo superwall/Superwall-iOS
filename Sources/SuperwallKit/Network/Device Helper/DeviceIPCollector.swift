@@ -43,8 +43,8 @@ actor DeviceIPCollector {
 
   /// - Parameters:
   ///   - ipV4Url: An IPv4-only endpoint to ask. When `nil`, IPv4 isn't looked up.
-  ///   - ipV6Url: An endpoint to ask over IPv6 only. When `nil`, on watchOS, or
-  ///     on systems that can't require IPv6, IPv6 isn't looked up.
+  ///   - ipV6Url: An endpoint to ask over IPv6 only. When `nil`, or on watchOS,
+  ///     IPv6 isn't looked up.
   init(
     ipV4Url: URL?,
     ipV6Url: URL?,
@@ -56,8 +56,7 @@ actor DeviceIPCollector {
     }
     // watchOS doesn't let apps open their own connections like this.
     #if canImport(Network) && !os(watchOS)
-    if let ipV6Url = ipV6Url,
-      #available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *) {
+    if let ipV6Url = ipV6Url {
       lookups.append(Lookup(name: "IPv6", family: 6) { try await Self.fetchOverIPv6(from: ipV6Url) })
     }
     #endif

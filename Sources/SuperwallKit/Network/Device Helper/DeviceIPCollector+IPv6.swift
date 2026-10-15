@@ -12,7 +12,6 @@ import Network
 
 // MARK: - IPv6 lookup
 #if canImport(Network)
-@available(iOS 12.0, macOS 10.14, tvOS 12.0, watchOS 6.0, *)
 extension DeviceIPCollector {
   private static let maxResponseSize = 16_384
 

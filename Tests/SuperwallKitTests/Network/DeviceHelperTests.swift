@@ -616,6 +616,41 @@ struct DeviceHelperTests {
     #expect(template["ipV6"] as? String == "2001:db8::1")
   }
 
+  /// The lookups only serve install attribution, which the `.none` opt-out
+  /// skips, so nothing is looked up or exposed even with the MMP on and an
+  /// AppsFlyer ID set.
+  @Test func templateDevice_withEventTrackingOff_skipsIPCollection() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await fetches.increment()
+        return ["ipV6": "2001:db8::2", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    setMMPFlag(true, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    #expect(deviceHelper.startIPCollectionIfEnabled() == nil)
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+    #expect(await fetches.count == 0)
+  }
+
   /// On an IPv4 network the enrichment already shows the IPv4 address, so an
   /// AppsFlyer app doesn't look it up.
   @Test func templateDevice_withAppsflyerIdOnIPv4_skipsLookup() async {

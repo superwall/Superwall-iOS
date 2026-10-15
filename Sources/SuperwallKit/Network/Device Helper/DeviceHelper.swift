@@ -1057,6 +1057,10 @@ class DeviceHelper {
   }
 
   private func ipCollection(for config: Config?) -> IPCollection {
+    // The lookups only serve install attribution, which the opt-out skips.
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return .none
+    }
     if config?.attribution?.mmp?.enabled == true {
       return .all
     }
