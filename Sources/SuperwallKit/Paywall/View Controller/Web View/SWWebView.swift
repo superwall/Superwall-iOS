@@ -41,7 +41,7 @@ class SWWebView: WKWebView {
     }
   }
   private let wkConfig: WKWebViewConfiguration
-  private let isMac: Bool
+  private let isiOSAppOnMac: Bool
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
   private let enableIframeNavigation: Bool
@@ -69,12 +69,12 @@ class SWWebView: WKWebView {
   #endif
 
   init(
-    isMac: Bool,
+    isiOSAppOnMac: Bool,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
     factory: FeatureFlagsFactory & DeviceHelperFactory & OptionsFactory
   ) {
-    self.isMac = isMac
+    self.isiOSAppOnMac = isiOSAppOnMac
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
@@ -101,7 +101,7 @@ class SWWebView: WKWebView {
 
     let preferences = WKPreferences()
 
-    if !isMac {
+    if !isiOSAppOnMac {
       preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true

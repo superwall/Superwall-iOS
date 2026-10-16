@@ -335,7 +335,7 @@ extension DependencyContainer: ViewControllerFactory {
       customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: deviceHelper.isMac,
+      isiOSAppOnMac: deviceHelper.isiOSAppOnMac,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self

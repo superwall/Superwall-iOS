@@ -69,16 +69,16 @@ class DeviceHelper {
     )
   }()
 
+  /// Whether this is an iPhone or iPad app running on a Mac. Unlike `isMac`,
+  /// it's `false` for native macOS apps.
+  let isiOSAppOnMac = ProcessInfo.processInfo.isiOSAppOnMac
+
   #if os(macOS)
   let isMac = true
 
   let model: String = MacDeviceInfo.model
   #else
-  #if targetEnvironment(macCatalyst)
-  let isMac = true
-  #else
   let isMac = ProcessInfo.processInfo.isiOSAppOnMac
-  #endif
 
   let model: String = {
     UIDevice.modelName

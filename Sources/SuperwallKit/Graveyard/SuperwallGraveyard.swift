@@ -99,7 +99,7 @@ extension Superwall {
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       webView: SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: .init(
           receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer,

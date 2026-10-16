@@ -41,6 +41,6 @@ Present Customer Center with `Superwall.shared.presentCustomerCenter()`, embed `
 
 Test Mode includes native starting-entitlement, simulated purchase and restore sheets. Dashboard debug links and `superwall dev` links open a Mac preview window with paywall selection, locale and free-trial overrides. Forward URLs to `Superwall.handleDeepLink(_:)`, for example with SwiftUI's `.onOpenURL`. The UIKit debugger's template console and local-resource inspector are not part of the native preview window.
 
-The SDK reports native Macs and Mac Catalyst as `isMac = true`. Native macOS uses an app-scoped UUID persisted in UserDefaults for SDK device identity. It is not Apple's IDFV and is not sent as an IDFV to attribution partners. MMP install matching is skipped on native macOS because its backend currently supports only iOS and Android. Screen dimensions are in points. Haptics use the trackpad when supported.
+The SDK reports native Macs as `isMac = true`. Mac Catalyst apps report it as before. Native macOS uses an app-scoped UUID persisted in UserDefaults for SDK device identity. It is not Apple's IDFV and is not sent as an IDFV to attribution partners. MMP install matching is skipped on native macOS because its backend currently supports only iOS and Android. Screen dimensions are in points. Haptics use the trackpad when supported.
 
 The example in `Examples/macOS` demonstrates a native SwiftUI app and Customer Center. The `SuperwallKitMac` scheme builds the framework and runs native presentation regression tests.

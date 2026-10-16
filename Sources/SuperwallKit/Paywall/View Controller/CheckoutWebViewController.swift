@@ -39,7 +39,12 @@ final class CheckoutWebViewController: NSViewController {
     fatalError("init(coder:) has not been implemented")
   }
 
+  /// Whether checkout went off screen with its window, which was minimised or
+  /// hidden with the app, and hasn't come back yet.
+  private var isHiddenWithWindow = false
+
   override func loadView() {
+    SystemWindowHiding.start()
     view = NSView(frame: NSRect(origin: .zero, size: Self.preferredSize))
   }
 
@@ -77,8 +82,37 @@ final class CheckoutWebViewController: NSViewController {
     webView.load(URLRequest(url: url))
   }
 
+  override func viewDidAppear() {
+    super.viewDidAppear()
+    isHiddenWithWindow = false
+  }
+
+  override func viewWillDisappear() {
+    super.viewWillDisappear()
+    isHiddenWithWindow = view.window?.isHiddenBySystem == true
+  }
+
   override func viewDidDisappear() {
     super.viewDidDisappear()
+    if isHiddenWithWindow {
+      return
+    }
+    finishDismissal()
+  }
+
+  /// Dismisses checkout from code. AppKit sends no appearance calls to a sheet
+  /// it took off screen with its window, so this reports the dismissal itself.
+  func dismissFromPaywall() {
+    presentingViewController?.dismiss(self)
+    if isHiddenWithWindow {
+      isHiddenWithWindow = false
+      finishDismissal()
+    }
+  }
+
+  private func finishDismissal() {
+    let onDismiss = self.onDismiss
+    self.onDismiss = nil
     onDismiss?()
   }
 

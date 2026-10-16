@@ -183,16 +183,6 @@ public final class CustomerCenterViewController: NSHostingController<CustomerCen
     return parent == nil
   }
 }
-
-extension NSWindow {
-  /// Whether a window that's no longer visible was closed, rather than minimised or hidden with
-  /// the app.
-  var isClosedRatherThanHidden: Bool {
-    return !isVisible
-      && !isMiniaturized
-      && NSApplication.sharedApplication?.isHidden != true
-  }
-}
 #else
 /// A UIKit container for ``CustomerCenterView``.
 ///

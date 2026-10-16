@@ -281,6 +281,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// UIKit reports through `isBeingPresented`, which AppKit doesn't have.
   private var isMacPresentationInFlight = false
 
+  /// Whether the paywall went off screen with its window, which was minimised
+  /// or hidden with the app, and hasn't come back yet.
+  private var isHiddenWithWindow = false
+
   /// Callers waiting in ``dismiss(animated:)`` for AppKit to finish.
   private var dismissalContinuations: [CheckedContinuation<Void, Never>] = []
 
@@ -555,10 +559,12 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     // Check if it's a Safari VC or Checkout Web VC
     #if os(macOS)
       // Links open in the user's browser, so checkout is all there is to close.
-      if let checkoutVC = presentedViewControllers?.first(where: { $0 is CheckoutWebViewController }) {
+      if let checkoutVC = presentedViewControllers?.lazy
+        .compactMap({ $0 as? CheckoutWebViewController })
+        .first {
         // Mark as programmatic dismissal to prevent tracking transaction abandon
         isCheckoutDismissedProgrammatically = true
-        dismiss(checkoutVC)
+        checkoutVC.dismissFromPaywall()
       }
       completion?()
     #elseif !os(visionOS)
@@ -1665,7 +1671,7 @@ extension PaywallViewController {
       return
     }
 
-    if !deviceHelper.isMac {
+    if !deviceHelper.isiOSAppOnMac {
       webView.setAllMediaPlaybackSuspended(false)
     }
 
@@ -1836,7 +1842,7 @@ extension PaywallViewController {
       await trackClose()
     }
 
-    if !deviceHelper.isMac {
+    if !deviceHelper.isiOSAppOnMac {
       webView.setAllMediaPlaybackSuspended(true)
     }
 
@@ -2041,27 +2047,48 @@ extension PaywallViewController {
   }
 
   override public func loadView() {
+    SystemWindowHiding.start()
     view = NSView(frame: NSRect(origin: .zero, size: PaywallSheetSize.preferred))
   }
 
+  // A minimised window or a hidden app takes the paywall off screen without
+  // closing it, and brings it back later. Neither is a dismissal or a new
+  // presentation.
+
   override public func viewWillAppear() {
     super.viewWillAppear()
+    if isHiddenWithWindow {
+      webView.setAllMediaPlaybackSuspended(false)
+      return
+    }
     handleViewWillAppear()
   }
 
   override public func viewDidAppear() {
     super.viewDidAppear()
+    if isHiddenWithWindow {
+      isHiddenWithWindow = false
+      return
+    }
     isMacPresentationInFlight = false
     presentationDidFinish()
   }
 
   override public func viewWillDisappear() {
     super.viewWillDisappear()
+    if view.window?.isHiddenBySystem == true {
+      isHiddenWithWindow = true
+      webView.setAllMediaPlaybackSuspended(true)
+      return
+    }
     handleViewWillDisappear()
   }
 
   override public func viewDidDisappear() {
     super.viewDidDisappear()
+    if isHiddenWithWindow {
+      return
+    }
     handleViewDidDisappear()
     resumeDismissalContinuations()
   }
@@ -2330,6 +2357,15 @@ extension PaywallViewController {
     await withCheckedContinuation { continuation in
       dismissalContinuations.append(continuation)
       presenter.dismiss(self)
+      // AppKit sends no appearance calls to a paywall it took off screen
+      // with its window, so finish the dismissal here.
+      if isHiddenWithWindow {
+        isHiddenWithWindow = false
+        handleViewWillDisappear()
+        handleViewDidDisappear()
+        resumeDismissalContinuations()
+        return
+      }
       DispatchQueue.main.asyncAfter(
         deadline: .now() + PaywallOverlayAnimator.duration + 1
       ) { [weak self] in

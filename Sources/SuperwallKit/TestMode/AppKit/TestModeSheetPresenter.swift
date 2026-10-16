@@ -25,6 +25,7 @@ enum TestModeSheetPresenter {
       action()
       return true
     }
+    SystemWindowHiding.start()
     let hostingController = TestModeHostingController(rootView: content(finish))
     hostingController.preferredContentSize = size
     hostingController.onCancel = {
@@ -61,6 +62,10 @@ private final class TestModeHostingController<Content: View>: NSHostingControlle
   override func viewDidDisappear() {
     super.viewDidDisappear()
     DispatchQueue.main.async { [self] in
+      // A minimised window or a hidden app brings the sheet back later.
+      if view.window?.isHiddenBySystem == true {
+        return
+      }
       guard presentingViewController == nil || view.window?.isVisible != true else { return }
       let callback = onCancel
       onCancel = nil

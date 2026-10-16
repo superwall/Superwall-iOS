@@ -273,7 +273,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -405,7 +405,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1057,7 +1057,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1209,7 +1209,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1393,7 +1393,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1572,7 +1572,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1748,7 +1748,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1925,7 +1925,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -3083,7 +3083,7 @@ struct WebEntitlementRedeemerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = await FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -3320,7 +3320,7 @@ struct WebEntitlementRedeemerTests {
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       webView: SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: PaywallMessageHandler(
           receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer,
@@ -3372,7 +3372,7 @@ struct WebEntitlementRedeemerTests {
       storage: dependencyContainer.storage,
       network: dependencyContainer.network,
       webView: SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: PaywallMessageHandler(
           receiptManager: dependencyContainer.receiptManager,
           factory: dependencyContainer,
