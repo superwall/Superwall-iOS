@@ -378,6 +378,7 @@
 		481903391564D2B19A9BD285 /* CustomerCenterDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7CF0668C27EEEF9505006818 /* CustomerCenterDelegate.swift */; };
 		48208B5E238D7B2E90E09FBE /* ProductVariable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC8730F0D05BFDFA12AA6309 /* ProductVariable.swift */; };
 		488ADD4040BB22DFB6C0FD2A /* UIApplication+ActiveWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74DFC04FC0F3498D1EBE4B6A /* UIApplication+ActiveWindow.swift */; };
+		48EF2EA28361C1542A37DD3C /* TestModeAppliedSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 913261D5A30F6BC7AFBF726D /* TestModeAppliedSettingsTests.swift */; };
 		491E4CFAAAB05D23A933B453 /* TestModeSettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DF73A1C2BD7E0DA00E3D7A4 /* TestModeSettingsStore.swift */; };
 		495BFF7CDE05F3412F225E8E /* LocationManagerProxy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80F46655FBF0A6425DA8EF4B /* LocationManagerProxy.swift */; };
 		49C68FD2E53B082A52F429F1 /* NSView+Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81C8433C72B83DC158E13729 /* NSView+Platform.swift */; };
@@ -1696,6 +1697,7 @@
 		90839170F942BAB77C473639 /* PaywallPresentationStyleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallPresentationStyleTests.swift; sourceTree = "<group>"; };
 		910786130E2D7EDE2ED5452D /* StoreKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		911CD5859EC1BE7E428F06C4 /* EvaluationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvaluationResult.swift; sourceTree = "<group>"; };
+		913261D5A30F6BC7AFBF726D /* TestModeAppliedSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeAppliedSettingsTests.swift; sourceTree = "<group>"; };
 		91B1FD7EAF0ACE1983E07F69 /* Superwall_Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Superwall_Assets.xcassets; sourceTree = "<group>"; };
 		91BC4FDC29B7919F3C976C14 /* CustomerCenterDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDependencies.swift; sourceTree = "<group>"; };
 		92001AC11F099F7B03AF338A /* SuperwallKitTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SuperwallKitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -3136,6 +3138,7 @@
 				FAF5344F4E3EA46B5E041F7E /* PaywallWindowTests.swift */,
 				3D5C571AC3A602E402CF67D2 /* SuperscriptMacTests.swift */,
 				DFD187AF612C4E33BFF191E2 /* SystemWindowHidingTests.swift */,
+				913261D5A30F6BC7AFBF726D /* TestModeAppliedSettingsTests.swift */,
 				A01982A82367D0B7A1C692A2 /* TestModePresentationTests.swift */,
 			);
 			name = SuperwallKitMacTests;
@@ -5226,6 +5229,7 @@
 				773F13297221A2F52297654D /* PaywallWindowTests.swift in Sources */,
 				41173AD080561308E8BC93E3 /* SuperscriptMacTests.swift in Sources */,
 				237E54FE1EB57DADA7FD907A /* SystemWindowHidingTests.swift in Sources */,
+				48EF2EA28361C1542A37DD3C /* TestModeAppliedSettingsTests.swift in Sources */,
 				96282E182FBF8C1F1C0D1D71 /* TestModePresentationTests.swift in Sources */,
 				E741A22748001BEE355A3FAE /* TestModeSettingsStoreTests.swift in Sources */,
 			);

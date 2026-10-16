@@ -34,16 +34,17 @@ enum TestModeModal {
     let freeTrialOverride = TestModeSettingsStore.loadFreeTrialOverride(
       fallback: initialFreeTrialOverride
     )
+    let appliedSettings = TestModeAppliedSettings(
+      selections: savedSelections,
+      freeTrialOverride: freeTrialOverride
+    )
 
     return await withCheckedContinuation { continuation in
       TestModeSheetPresenter.present(
         size: CGSize(width: 460, height: 560),
         on: viewController,
         onCancel: {
-          continuation.resume(returning: TestModeModalResult(
-            entitlements: TestModeSettingsStore.entitlements(from: savedSelections),
-            freeTrialOverride: freeTrialOverride
-          ))
+          continuation.resume(returning: appliedSettings.result)
         },
         content: { close in
           TestModeModalView(
@@ -54,7 +55,8 @@ enum TestModeModal {
             availableEntitlements: availableEntitlements,
             userLinkURL: userLinkURL,
             selections: savedSelections,
-            freeTrialOverride: freeTrialOverride
+            freeTrialOverride: freeTrialOverride,
+            onReset: appliedSettings.reset
           ) { selections, freeTrialOverride in
             guard close() else { return }
             TestModeSettingsStore.save(selections, freeTrialOverride: freeTrialOverride)
@@ -71,6 +73,38 @@ enum TestModeModal {
   }
 }
 
+/// The settings test mode starts with if the modal closes without OK: the saved
+/// ones, or the defaults once the tester has reset them.
+final class TestModeAppliedSettings {
+  private(set) var selections: [String: EntitlementSelection]
+  private(set) var freeTrialOverride: FreeTrialOverride
+  private let defaults: UserDefaults
+
+  init(
+    selections: [String: EntitlementSelection],
+    freeTrialOverride: FreeTrialOverride,
+    defaults: UserDefaults = .standard
+  ) {
+    self.selections = selections
+    self.freeTrialOverride = freeTrialOverride
+    self.defaults = defaults
+  }
+
+  var result: TestModeModalResult {
+    return TestModeModalResult(
+      entitlements: TestModeSettingsStore.entitlements(from: selections),
+      freeTrialOverride: freeTrialOverride
+    )
+  }
+
+  /// Goes back to the defaults and forgets the saved settings.
+  func reset() {
+    selections = [:]
+    freeTrialOverride = .useDefault
+    TestModeSettingsStore.clear(in: defaults)
+  }
+}
+
 private struct TestModeModalView: View {
   let reason: TestModeReason
   let userId: String
@@ -80,6 +114,7 @@ private struct TestModeModalView: View {
   let userLinkURL: URL?
   @State var selections: [String: EntitlementSelection]
   @State var freeTrialOverride: FreeTrialOverride
+  let onReset: () -> Void
   let onOK: ([String: EntitlementSelection], FreeTrialOverride) -> Void
 
   var body: some View {
@@ -149,7 +184,7 @@ private struct TestModeModalView: View {
         Button("Reset to Defaults") {
           selections = [:]
           freeTrialOverride = .useDefault
-          TestModeSettingsStore.clear()
+          onReset()
         }
         Spacer()
         Button("OK") {
