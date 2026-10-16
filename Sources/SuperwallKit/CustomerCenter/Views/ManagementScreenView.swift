@@ -67,13 +67,18 @@ struct ManagementScreenView: View {
 /// actions that only make sense against that subscription.
 struct PurchaseDetailScreenView: View {
   @ObservedObject var viewModel: CustomerCenterViewModel
+  /// The purchase as it was when the row was tapped. Each render looks it up again in the view
+  /// model, so the screen follows changes such as a cancellation; see
+  /// ``CustomerCenterViewModel/detailContent(for:)``.
   let purchase: PurchasePresentation
   @Environment(\.customerCenterStrings) private var strings
 
   var body: some View {
+    let content = viewModel.detailContent(for: purchase)
+    let purchase = content.purchase
     List {
       Section { PurchaseCardView(purchase: purchase, refundResult: viewModel.refundResult) }
-      if let empty = viewModel.detailEmptyState(for: purchase) {
+      if let empty = content.emptyState {
         // The row opened this screen regardless — see `detailEmptyState(for:)` — so say what
         // there is to say rather than head an empty list with "Actions". Which sentence depends
         // on the purchase: a subscription the customer is still paying for, from a store this

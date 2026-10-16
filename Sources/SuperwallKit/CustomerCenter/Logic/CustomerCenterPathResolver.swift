@@ -73,9 +73,14 @@ enum CustomerCenterPathResolver {
 
     if purchase.store == .appStore {
       guard
-        let sub, sub.isActive, sub.willRenew, !sub.isRevoked,
-        sub.expirationDate != nil, !context.isFamilyShared
+        let sub, !sub.isRevoked, sub.expirationDate != nil, !context.isFamilyShared
       else { return nil }
+      // A failed renewal keeps the row whatever the expiration date says: Apple's sheet is where
+      // the customer updates their payment method.
+      let isRenewing = sub.isActive && sub.willRenew
+      if !isRenewing && !sub.hasBillingIssue {
+        return nil
+      }
       return .appleManageSheet(subscriptionGroupId: sub.subscriptionGroupId ?? context.product?.subscriptionGroupId)
     }
 

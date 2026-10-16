@@ -183,7 +183,11 @@ final class CustomerCenterManager {
     }
     controller.presentingViewController?.dismiss(controller)
     #else
-    controller.dismiss(animated: presentsAnimated) { [weak self] in
+    // Dismiss from whatever presented the Customer Center. Asked directly, a controller that has
+    // one of its own sheets open (a survey, Safari, the change-plan sheet) only closes that sheet
+    // and stays on screen. Asking its presenter closes the sheet and the Customer Center together.
+    let dismisser = controller.presentingViewController ?? controller
+    dismisser.dismiss(animated: presentsAnimated) { [weak self] in
       self?.presentedController = nil
       self?.retainedDelegate = nil
       completion?()

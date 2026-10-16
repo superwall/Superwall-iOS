@@ -126,6 +126,43 @@ struct CustomerCenterManagerTests {
     window.isHidden = true
   }
 
+  @Test("dismiss asks the presenter, so a sheet open on the Customer Center closes with it")
+  func dismissGoesThroughThePresenter() {
+    // Asked directly, a controller with one of its own sheets open (a survey, Safari) closes only
+    // that sheet. Its presenter closes everything above it. A hostless test target can't put a
+    // sheet on the Customer Center (its view never reaches a window), so this checks who is asked.
+    // It also never finishes a dismissal, so the presenter runs the completion itself, the way
+    // UIKit would once everything above it had gone.
+    final class RecordingPresenter: UIViewController {
+      var dismissCalls = 0
+      override func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
+        dismissCalls += 1
+        completion?()
+      }
+    }
+
+    let container = DependencyContainer()
+    let manager = CustomerCenterManager(container: container)
+    manager.presentsAnimated = false
+    let presenter = RecordingPresenter()
+    let window = makeTestWindow(rootViewController: presenter)
+    window.makeKeyAndVisible()
+    spinRunLoop(timeout: 1) { presenter.viewIfLoaded?.window != nil }
+
+    manager.present(configuration: nil, from: presenter, delegate: nil, onDismiss: nil)
+    #expect(manager.presentedControllerForTesting?.presentingViewController === presenter)
+
+    var completed = false
+    manager.dismiss { completed = true }
+    spinRunLoop(timeout: 2) { completed }
+
+    #expect(presenter.dismissCalls == 1)
+    #expect(completed)
+    #expect(!manager.isPresented)
+
+    window.isHidden = true
+  }
+
   @Test("viewDidDisappear fires didDismiss while the delegate is still retained")
   func viewDidDisappearFiresDelegateBeforeRelease() {
     final class ProbeDelegate: CustomerCenterDelegate {

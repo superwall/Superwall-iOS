@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4B0A02462E9AFE7C0F620E4A /* CustomerCenterLateResultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */; };
+		7A98B308595DB54201E6F6EF /* CatalogueTimeoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */; };
+		7E4F5F398C74FC6B56D004E6 /* CustomerCenterDeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */; };
+		7E4F5F398C74FC6B56D004E7 /* CustomerCenterDeadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */; };
 		003FB76C1A6869D5E4FF5D9E /* SK2StoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C47C3978AA22485EC9F5D24 /* SK2StoreProductDiscount.swift */; };
 		00738984A1564BBE9DEF3F2C /* SubscriptionStatusLogicalEqualityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC94ED82761BF4EBB1233E6C /* SubscriptionStatusLogicalEqualityTests.swift */; };
 		00A15C51FC3B450A7B0F8806 /* PaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7569A0893012A88442B7ED36 /* PaywallViewController.swift */; };
@@ -1275,6 +1279,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterLateResultsTests.swift; sourceTree = "<group>"; };
+		F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogueTimeoutTests.swift; sourceTree = "<group>"; };
+		A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterDeadline.swift; sourceTree = "<group>"; };
 		00736909A4B4A1C2F2C356BC /* Sk1StoreProduct.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sk1StoreProduct.swift; sourceTree = "<group>"; };
 		010F0F8FCE0A86D8F2823A47 /* PublicGameController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicGameController.swift; sourceTree = "<group>"; };
 		019FA4010BA11D24C68B8544 /* FakeTrackingAuthorizationStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeTrackingAuthorizationStatus.swift; sourceTree = "<group>"; };
@@ -2159,6 +2166,7 @@
 				66270A5BECD02D0C3A878F01 /* AppStoreUpdateCheckTests.swift */,
 				A22B142480C7AD04454B10CF /* AppVersionComparatorTests.swift */,
 				C59467B1B2F8AD9A097732AC /* CatalogueCacheTests.swift */,
+				F1966A5B784C9AE0671DAFAD /* CatalogueTimeoutTests.swift */,
 				56E5AE65FA255A688F6076CB /* CustomerCenterPathResolverTests.swift */,
 				6ABB538ADBA14229AE14A213 /* PurchasePresentationBuilderTests.swift */,
 				55747A8F33554B2A163CFCAC /* SupportEmailComposerTests.swift */,
@@ -2906,6 +2914,7 @@
 				5C3EFD2725CAE7F5046D386F /* AppStoreVersionLookup.swift */,
 				120D7D604E496BA935989AEA /* AppVersionComparator.swift */,
 				8BE65655D445D8040B36A851 /* CountryCode.swift */,
+				A4CB6732FC1C37F1CCD49FE2 /* CustomerCenterDeadline.swift */,
 				F5BEBF6DCB345383C9CE5A97 /* CustomerCenterPathResolver.swift */,
 				97DCDCDFEB2442B007C38E7F /* PurchasePresentationBuilder.swift */,
 				5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */,
@@ -3061,6 +3070,7 @@
 			children = (
 				829E0F3170048583855173A7 /* CustomerCenterDependenciesMocks.swift */,
 				02EC4DAFE07858498FA09474 /* CustomerCenterDependenciesTests.swift */,
+				24F81DAE047D6D77A2979FBF /* CustomerCenterLateResultsTests.swift */,
 				DD64A76F1FEDD8F43E5570EF /* CustomerCenterViewModelTests.swift */,
 				26DC5F42E6DF697D74DF643E /* PurchaseDetailActionsTests.swift */,
 			);
@@ -4509,6 +4519,7 @@
 				47B82BC8C3EE229C5E122F80 /* CacheMock.swift in Sources */,
 				45D4F6151CE6C4EDFD63D168 /* CacheTests.swift in Sources */,
 				31DF95013CF06E4F722EB5D6 /* CatalogueCacheTests.swift in Sources */,
+				7A98B308595DB54201E6F6EF /* CatalogueTimeoutTests.swift in Sources */,
 				9B305FE3FC9A44D3EF8A6C59 /* CheckDebuggerPresentationOperatorTests.swift in Sources */,
 				791C1469422879DC92841152 /* ConfigLogicTests.swift in Sources */,
 				1E569BC52A04FC6D14AA55F0 /* ConfigManagerEarlyPublishTests.swift in Sources */,
@@ -4533,6 +4544,7 @@
 				838956B4D23D949097A9A375 /* CustomerCenterDependenciesMocks.swift in Sources */,
 				47DD5C95D95B8A69968E8A50 /* CustomerCenterDependenciesTests.swift in Sources */,
 				ECA3F960104E1E2771EAC213 /* CustomerCenterEventsTests.swift in Sources */,
+				4B0A02462E9AFE7C0F620E4A /* CustomerCenterLateResultsTests.swift in Sources */,
 				FDE9C1CF42ED3DFA9A212B9F /* CustomerCenterManagerTests.swift in Sources */,
 				80874DD507F10BC1A706C3D1 /* CustomerCenterPathResolverTests.swift in Sources */,
 				0452310946E325D8B753A41E /* CustomerCenterSheetOwnershipTests.swift in Sources */,
@@ -4764,6 +4776,7 @@
 				9274292A323C7690F7C4C580 /* CustomerCenterConfiguration+Paths.swift in Sources */,
 				A531E1B471602B469BF5E865 /* CustomerCenterConfiguration+Surveys.swift in Sources */,
 				57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */,
+				7E4F5F398C74FC6B56D004E6 /* CustomerCenterDeadline.swift in Sources */,
 				481903391564D2B19A9BD285 /* CustomerCenterDelegate.swift in Sources */,
 				781A9E4339F865190C8A5D6A /* CustomerCenterDelegateAdapter.swift in Sources */,
 				A3E29135312C5A933D6234C5 /* CustomerCenterDependencies.swift in Sources */,
@@ -5294,6 +5307,7 @@
 				73287EEED8024389ADA58BB6 /* CustomerCenterConfiguration+Paths.swift in Sources */,
 				71C9B2D049C7C6D07A9807F0 /* CustomerCenterConfiguration+Surveys.swift in Sources */,
 				941E8A9AB18C8EB33C2633D1 /* CustomerCenterConfiguration.swift in Sources */,
+				7E4F5F398C74FC6B56D004E7 /* CustomerCenterDeadline.swift in Sources */,
 				2231037B8C384A6432DA1941 /* CustomerCenterDelegate.swift in Sources */,
 				F7CAE957D50A2E1BDFE8119E /* CustomerCenterDelegateAdapter.swift in Sources */,
 				44281946835538E688F4C4B9 /* CustomerCenterDependencies.swift in Sources */,

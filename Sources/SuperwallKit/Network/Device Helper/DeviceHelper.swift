@@ -1122,17 +1122,53 @@ class DeviceHelper {
     }
   }
 
-  /// Starts the IPv4 and IPv6 lookups once config turns the MMP on. On a cold launch
-  /// the first device-attributes read happens before config arrives, so
-  /// without this the lookup would wait for some later read.
+  /// Which IP addresses to collect. The MMP gets both. AppsFlyer only needs
+  /// the IPv4 address, which the device's own requests don't show when it's
+  /// on an IPv6 network.
+  private enum IPCollection {
+    case none
+    case ipV4ForAppsFlyer
+    case all
+  }
+
+  private func ipCollection(for config: Config?) -> IPCollection {
+    // The lookups only serve install attribution, which the opt-out skips.
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return .none
+    }
+    if config?.attribution?.mmp?.enabled == true {
+      return .all
+    }
+    let appsflyerId = storage.get(IntegrationAttributes.self)?[IntegrationAttribute.appsflyerId.description]
+    if appsflyerId?.isEmpty == false {
+      return .ipV4ForAppsFlyer
+    }
+    return .none
+  }
+
+  /// Starts the IP lookups once config turns the MMP on or an AppsFlyer ID is
+  /// set. On a cold launch the first device-attributes read happens before
+  /// config arrives, so without this the lookup would wait for some later read.
   @discardableResult
-  func startIPCollectionIfEnabled(for config: Config) -> Task<Void, Never>? {
-    if config.attribution?.mmp?.enabled != true {
+  func startIPCollectionIfEnabled(for config: Config?) -> Task<Void, Never>? {
+    switch ipCollection(for: config) {
+    case .none:
       return nil
+    case .ipV4ForAppsFlyer:
+      return Task {
+        await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+      }
+    case .all:
+      return Task {
+        await ipCollector.refreshIfNeeded()?.value
+      }
     }
-    return Task {
-      await ipCollector.refreshIfNeeded()?.value
-    }
+  }
+
+  /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
+  @discardableResult
+  func startIPCollectionIfEnabled() -> Task<Void, Never>? {
+    return startIPCollectionIfEnabled(for: factory.makeConfigState().value.getConfig())
   }
 
   func getEnrichment(
@@ -1263,8 +1299,15 @@ class DeviceHelper {
     // Kept in memory whatever the config says, since on a cold launch the
     // first enrichment arrives before config does.
     await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
-    // IP collection is for the MMP, which is off unless the backend turns it on.
-    if factory.makeConfigState().value.getConfig()?.attribution?.mmp?.enabled == true {
+    // IP collection is for the MMP, which is off unless the backend turns it on,
+    // and for AppsFlyer, which only gets the IPv4 address.
+    switch ipCollection(for: factory.makeConfigState().value.getConfig()) {
+    case .none:
+      break
+    case .ipV4ForAppsFlyer:
+      await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()
+      deviceDictionary.merge(await ipCollector.attributes(families: [4])) { _, observed in observed }
+    case .all:
       await ipCollector.refreshIfNeeded()
       deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
     }
