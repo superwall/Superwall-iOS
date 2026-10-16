@@ -121,8 +121,10 @@ struct TestModeSheetNoShowTests {
     #expect(cancellations == 1)
 
     window.contentViewController?.dismiss(blocker)
-    try await Task.sleep(nanoseconds: 500_000_000)
+    try await Task.sleep(nanoseconds: 800_000_000)
     #expect(cancellations == 1)
+    // The cancelled sheet doesn't turn up once the window is free.
+    #expect(window.attachedSheet == nil)
   }
 
   @Test

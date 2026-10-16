@@ -75,7 +75,7 @@ enum TestModeSheetPresenter {
         scope: .superwallCore,
         message: "The test mode sheet never appeared, so closing it."
       )
-      hostingController.cancel()
+      hostingController.cancelBeforeShowing()
     }
   }
 }
@@ -84,10 +84,26 @@ enum TestModeSheetPresenter {
 private final class TestModeHostingController<Content: View>: NSHostingController<Content> {
   var onCancel: (() -> Void)?
   private(set) var hasStartedAppearing = false
+  private var wasCancelledBeforeShowing = false
 
   override func viewWillAppear() {
     super.viewWillAppear()
     hasStartedAppearing = true
+  }
+
+  override func viewDidAppear() {
+    super.viewDidAppear()
+    // Nothing would close a sheet that turns up after giving up on it.
+    if wasCancelledBeforeShowing {
+      presentingViewController?.dismiss(self)
+      view.window?.close()
+    }
+  }
+
+  /// Cancels a sheet that hasn't shown, and closes it if it shows later.
+  func cancelBeforeShowing() {
+    wasCancelledBeforeShowing = true
+    cancel()
   }
 
   /// Runs `onCancel` once.
