@@ -15,6 +15,10 @@ import SwiftUI
 
 /// Presents the test mode modal when a user is first detected as being in test mode.
 enum TestModeModal {
+  /// How long the sheet gets to start appearing before the saved settings are
+  /// used, as on iOS.
+  static let noShowTimeout: TimeInterval = 3
+
   @MainActor
   static func present(
     reason: TestModeReason,
@@ -43,6 +47,9 @@ enum TestModeModal {
       TestModeSheetPresenter.present(
         size: CGSize(width: 460, height: 560),
         on: viewController,
+        // Config waits on this sheet, so one that never shows would leave every
+        // `register` call waiting. Use the saved settings instead.
+        noShowTimeout: noShowTimeout,
         onCancel: {
           continuation.resume(returning: appliedSettings.result)
         },
@@ -70,38 +77,6 @@ enum TestModeModal {
         }
       )
     }
-  }
-}
-
-/// The settings test mode starts with if the modal closes without OK: the saved
-/// ones, or the defaults once the tester has reset them.
-final class TestModeAppliedSettings {
-  private(set) var selections: [String: EntitlementSelection]
-  private(set) var freeTrialOverride: FreeTrialOverride
-  private let defaults: UserDefaults
-
-  init(
-    selections: [String: EntitlementSelection],
-    freeTrialOverride: FreeTrialOverride,
-    defaults: UserDefaults = .standard
-  ) {
-    self.selections = selections
-    self.freeTrialOverride = freeTrialOverride
-    self.defaults = defaults
-  }
-
-  var result: TestModeModalResult {
-    return TestModeModalResult(
-      entitlements: TestModeSettingsStore.entitlements(from: selections),
-      freeTrialOverride: freeTrialOverride
-    )
-  }
-
-  /// Goes back to the defaults and forgets the saved settings.
-  func reset() {
-    selections = [:]
-    freeTrialOverride = .useDefault
-    TestModeSettingsStore.clear(in: defaults)
   }
 }
 

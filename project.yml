@@ -90,6 +90,8 @@ targets:
     sources:
       - Tests/SuperwallKitMacTests
       - Tests/Shared
+      - Tests/SuperwallKitTests/CustomerCenter/ViewModel/CustomerCenterDependenciesMocks.swift
+      - Tests/SuperwallKitTests/CustomerCenter/Actions/StoreKitTransactionLookupMock.swift
     dependencies:
       - target: SuperwallKitMac
     settings:
