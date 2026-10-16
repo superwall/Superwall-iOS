@@ -164,5 +164,31 @@ struct SystemWindowHidingTests {
     try await settle(1.5)
     #expect(!paywall.isHiddenWithWindow)
   }
+
+  @Test
+  func paywallShownInAnotherWindowAfterBeingTakenDownWhileHidden() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let other = makeParent()
+    defer { other.close() }
+    let paywall = makePaywallViewController()
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(paywall.isHiddenWithWindow)
+
+    // Taken down while hidden, then shown again elsewhere before the first
+    // window comes back.
+    paywall.presentingViewController?.dismiss(paywall)
+    other.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+    #expect(!paywall.isHiddenWithWindow)
+    #expect(paywall.view.window?.sheetParent === other)
+    other.contentViewController?.dismiss(paywall)
+    parent.deminiaturize(nil)
+    try await settle(1.5)
+  }
 }
 #endif

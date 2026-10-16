@@ -285,6 +285,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// or hidden with the app, and hasn't come back yet.
   private(set) var isHiddenWithWindow = false
 
+  /// The close of the paywall's last presentation, which it was taken down
+  /// from while hidden. Its next presentation waits for this.
+  private var dismissalBeforeAppearing: Task<Void, Never>?
+
   /// The window the paywall was in when it was hidden.
   private weak var windowHiddenWith: NSWindow?
 
@@ -1836,13 +1840,15 @@ extension PaywallViewController {
     willDismiss()
   }
 
-  private func handleViewDidDisappear() {
+  /// Returns the task finishing the dismissal, if it started one.
+  @discardableResult
+  private func handleViewDidDisappear() -> Task<Void, Never>? {
     existingTeleportReturnCover?.reset()
     guard isPresented else {
-      return
+      return nil
     }
     if isSafariVCPresented {
-      return
+      return nil
     }
     Task {
       await trackClose()
@@ -1853,7 +1859,7 @@ extension PaywallViewController {
     }
 
     resetPresentationPreparations()
-    Task {
+    return Task {
       await didDismiss()
     }
   }
@@ -2069,8 +2075,10 @@ extension PaywallViewController {
         return
       }
       // It's in a different window, so it was taken down while hidden and
-      // this is a new presentation.
-      finishDismissalWhileHidden()
+      // this is a new presentation. It starts once the old one has finished
+      // closing, which would otherwise reset the new one's state.
+      dismissalBeforeAppearing = finishDismissalWhileHidden()
+      return
     }
     handleViewWillAppear()
   }
@@ -2082,6 +2090,15 @@ extension PaywallViewController {
       return
     }
     isMacPresentationInFlight = false
+    if let dismissal = dismissalBeforeAppearing {
+      dismissalBeforeAppearing = nil
+      Task { [weak self] in
+        await dismissal.value
+        self?.handleViewWillAppear()
+        self?.presentationDidFinish()
+      }
+      return
+    }
     presentationDidFinish()
   }
 
@@ -2444,11 +2461,15 @@ extension PaywallViewController {
 
   /// AppKit sends no appearance calls to a paywall taken down while it's off
   /// screen with its window, so this runs the dismissal they'd have started.
-  private func finishDismissalWhileHidden() {
+  @discardableResult
+  private func finishDismissalWhileHidden() -> Task<Void, Never> {
     endHiding()
     handleViewWillDisappear()
-    handleViewDidDisappear()
+    let dismissal = handleViewDidDisappear()
     resumeDismissalContinuations()
+    return Task {
+      await dismissal?.value
+    }
   }
 }
 #endif
