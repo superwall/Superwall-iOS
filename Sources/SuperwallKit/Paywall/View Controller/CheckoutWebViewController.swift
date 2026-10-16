@@ -190,7 +190,7 @@ final class CheckoutWebViewController: UIViewController {
     // When keyboard hides, sheet might collapse back to medium detent
     // Add a small delay to ensure sheet animation is complete
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-      if #available(iOS 16.0, macOS 13.0, *) {
+      if #available(iOS 16.0, *) {
         guard let sheetController = self?.sheetPresentationController else { return }
         sheetController.invalidateDetents()
       }

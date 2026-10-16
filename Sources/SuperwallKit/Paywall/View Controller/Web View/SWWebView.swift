@@ -185,7 +185,7 @@ class SWWebView: WKWebView {
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
     #if os(iOS)
-    if #available(iOS 16.4, macOS 13.3, *) {
+    if #available(iOS 16.4, *) {
       isInspectable = true
     }
     #endif

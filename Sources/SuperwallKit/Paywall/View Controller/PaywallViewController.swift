@@ -983,7 +983,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     case let .drawer(height, cornerRadius):
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
-        if #available(iOS 16.0, macOS 13.0, *),
+        if #available(iOS 16.0, *),
           UIDevice.current.userInterfaceIdiom == .phone {
           let heightRatio = height / 100
           sheetPresentationController?.detents = [
@@ -1003,7 +1003,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   }
 
   #if !os(visionOS)
-    @available(iOS 16.0, macOS 13.0, *)
+    @available(iOS 16.0, *)
     private func updateDrawerCornerMaskIfNeeded() {
       guard
         UIDevice.current.userInterfaceIdiom == .phone,
@@ -1584,7 +1584,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         #if os(visionOS)
           AppStore.requestReview(in: scene)
         #else
-          if #available(iOS 16.0, macOS 13.0, *) {
+          if #available(iOS 16.0, *) {
             AppStore.requestReview(in: scene)
           } else {
             SKStoreReviewController.requestReview(in: scene)
@@ -1634,7 +1634,7 @@ extension PaywallViewController {
   override public func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     #if !os(visionOS)
-      if #available(iOS 16.0, macOS 13.0, *) {
+      if #available(iOS 16.0, *) {
         updateDrawerCornerMaskIfNeeded()
       }
     #endif
@@ -2214,13 +2214,6 @@ extension PaywallViewController {
       return
     }
     view.backgroundColor = .clear
-
-    // A view controller the SDK caches can show as a popup more than once.
-    if let containerView = popupContainerView {
-      containerView.alpha = 1
-      popupBackgroundView?.alpha = 1
-      return
-    }
 
     let backgroundView = NSView()
     backgroundView.backgroundColor = NSColor.black.withAlphaComponent(0.4)

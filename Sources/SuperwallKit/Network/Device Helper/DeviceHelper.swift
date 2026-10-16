@@ -473,7 +473,7 @@ class DeviceHelper {
   private func registerForTraitChanges() {
     #if !os(visionOS) && !os(macOS)
     Task { @MainActor [weak self] in
-      if #available(iOS 17.0, macOS 14.0, *) {
+      if #available(iOS 17.0, *) {
         self?.performTraitChangeRegistration()
       }
     }
@@ -481,7 +481,7 @@ class DeviceHelper {
   }
 
   #if !os(visionOS) && !os(macOS)
-  @available(iOS 17.0, macOS 14.0, *)
+  @available(iOS 17.0, *)
   @MainActor
   private func performTraitChangeRegistration() {
     guard let scene = PlatformApplication.sharedApplication?.activeWindowScene else {
