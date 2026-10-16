@@ -7,6 +7,9 @@
 
 import Combine
 import Foundation
+#if os(macOS)
+import AppKit
+#endif
 
 /// Drives the Customer Center UI: loads customer info and products, resolves paths, and performs actions.
 @MainActor
@@ -96,6 +99,11 @@ final class CustomerCenterViewModel: ObservableObject {
   /// Active entitlement identifiers from the latest `CustomerInfo`, for support diagnostics.
   var activeEntitlementIds: [String] = []
   private var cancellables = Set<AnyCancellable>()
+  #if os(macOS)
+  /// How to refresh once the user is back from managing a purchase in another app.
+  // Not `private`: set and read by `CustomerCenterViewModel+MacManagement.swift`.
+  var refreshOnReturn: RefreshOnReturn?
+  #endif
 
   // Not `private`: the dismissal state below, `didDismiss` and `dismissDebounceInterval` are read
   // by `CustomerCenterViewModel+Dismissal.swift`.
@@ -130,7 +138,7 @@ final class CustomerCenterViewModel: ObservableObject {
     configuration.warnAboutConfigurationProblems()
     if let isChangePlanSheetAvailable {
       self.isChangePlanSheetAvailable = isChangePlanSheetAvailable
-    } else if #available(iOS 17.0, *) {
+    } else if #available(iOS 17.0, macOS 14.0, *) {
       self.isChangePlanSheetAvailable = true
     } else {
       self.isChangePlanSheetAvailable = false
@@ -143,6 +151,14 @@ final class CustomerCenterViewModel: ObservableObject {
         Task { await self.apply(customerInfo: info, refetchProducts: true) }
       }
       .store(in: &cancellables)
+    #if os(macOS)
+    NotificationCenter.default
+      .publisher(for: NSApplication.didBecomeActiveNotification)
+      .sink { [weak self] _ in
+        Task { await self?.appDidBecomeActive() }
+      }
+      .store(in: &cancellables)
+    #endif
   }
 
   // MARK: - Loading
@@ -169,7 +185,8 @@ final class CustomerCenterViewModel: ObservableObject {
     await refreshAppStoreVersion()
   }
 
-  private func apply(customerInfo: CustomerInfo, refetchProducts: Bool) async {
+  // Not `private`: `CustomerCenterViewModel+MacManagement.swift` applies a refresh with it.
+  func apply(customerInfo: CustomerInfo, refetchProducts: Bool) async {
     applyGeneration += 1
     let generation = applyGeneration
     if refetchProducts {
@@ -274,9 +291,19 @@ final class CustomerCenterViewModel: ObservableObject {
     case .restore:
       await performRestore()
     case .appleManageSheet(let groupId):
+      #if os(macOS)
+      // StoreKit's manage sheet is iOS-only, so open the App Store's own page.
+      _ = groupId
+      openForManagement(Self.appStoreSubscriptionsURL, refresh: .receipts)
+      #else
       presentSheet(.manageSubscriptions(groupId: groupId), for: requester)
+      #endif
     case .webManage(let url):
+      #if os(macOS)
+      openForManagement(url, refresh: .customerInfo)
+      #else
       presentSheet(.safari(url), for: requester)
+      #endif
     case .webManageUnavailable:
       presentSheet(.webManageUnavailable, for: requester)
     case .refund(let productId):
@@ -300,7 +327,13 @@ final class CustomerCenterViewModel: ObservableObject {
         presentSheet(.noMailApp(email: configuration.support.email ?? ""), for: requester)
       }
     case let .url(url, inApp):
+      #if os(macOS)
+      // There's no in-app browser on macOS, so every link opens in the user's.
+      _ = inApp
+      dependencies.urlOpener.open(url)
+      #else
       if inApp { presentSheet(.safari(url), for: requester) } else { dependencies.urlOpener.open(url) }
+      #endif
     case .custom:
       break
     }
@@ -325,7 +358,9 @@ final class CustomerCenterViewModel: ObservableObject {
     default: restoreState = .notFound
     }
   }
+}
 
+extension CustomerCenterViewModel {
   // MARK: - Sheet callbacks
 
   func refundSheetDidFinish(productId: String, status: CustomerCenterRefundStatus) async {

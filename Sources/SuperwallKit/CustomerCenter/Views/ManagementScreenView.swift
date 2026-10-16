@@ -50,12 +50,12 @@ struct ManagementScreenView: View {
         AccountDetailsSection(viewModel: viewModel)
       }
     }
-    .listStyle(.insetGrouped)
+    .customerCenterListStyle()
     // The update banner can arrive a beat after the screen does — its version comes from an App
     // Store lookup — so animate the insertion rather than letting a row appear from nowhere.
     .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: viewModel.showsUpdateBanner)
     .navigationTitle(navigationTitle)
-    .navigationBarTitleDisplayMode(.inline)
+    .customerCenterInlineTitle()
   }
 
   private var navigationTitle: String {
@@ -96,9 +96,9 @@ struct PurchaseDetailScreenView: View {
         }
       }
     }
-    .listStyle(.insetGrouped)
+    .customerCenterListStyle()
     .navigationTitle(purchase.title ?? "")
-    .navigationBarTitleDisplayMode(.inline)
+    .customerCenterInlineTitle()
     .onAppear { viewModel.surfaceDidAppear() }
     .onDisappear { viewModel.surfaceDidDisappear() }
   }

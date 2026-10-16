@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length file_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
@@ -331,7 +335,7 @@ extension DependencyContainer: ViewControllerFactory {
       customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: deviceHelper.isMac,
+      isiOSAppOnMac: deviceHelper.isiOSAppOnMac,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
@@ -357,6 +361,7 @@ extension DependencyContainer: ViewControllerFactory {
     return paywallViewController
   }
 
+  #if !os(macOS)
   @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController {
     let viewController = DebugViewController(
@@ -371,6 +376,7 @@ extension DependencyContainer: ViewControllerFactory {
     viewController.modalPresentationStyle = .overFullScreen
     return viewController
   }
+  #endif
 }
 
 extension DependencyContainer: VariablesFactory {
@@ -415,7 +421,7 @@ extension DependencyContainer: RequestFactory {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
-    presenter: UIViewController? = nil,
+    presenter: PlatformViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType

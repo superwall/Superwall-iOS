@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 16/06/2025.
 //
 
+#if !os(macOS)
 import UIKit
 
 extension UIApplication {
@@ -15,3 +16,4 @@ extension UIApplication {
     return UIApplication.value(forKey: "sharedApplication") as? UIApplication
   }
 }
+#endif

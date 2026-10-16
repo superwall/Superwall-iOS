@@ -58,7 +58,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Minimum Toolchain and Platforms
 
-- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), native macOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
 - Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
 - Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
 - The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
@@ -150,3 +150,12 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### Native macOS
+
+- `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
+- `SuperwallKitMac` in `project.yml` builds the Mac framework and runs `Tests/SuperwallKitMacTests`. Use `xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKitMac -destination 'platform=macOS' test CODE_SIGNING_ALLOWED=NO` after `xcodegen`. The SDK minimum is macOS 12; the test runner requires macOS 14 with Xcode 26.
+- Paywall overlays use SDK-owned child windows, never add subviews directly to a customer's SwiftUI hosting view. Required host dimensions prevent cached `preferredContentSize` from resizing the window. Remove old web-view constraints when reusing a controller across styles.
+- Native Mac device identity is an app-scoped persistent UUID, not Apple's IDFV. Do not forward it as `idfv` to attribution partners. Native macOS skips MMP install matching until the backend accepts a Mac platform; never send it as an iOS install.
+- Native teleport returns forward the page waiting-screen and return functions directly. iOS snapshot/background-task handling stays in the UIKit implementation; Mac pages keep rendering when the browser opens. Keep the page-function names and legacy fallbacks shared.
+- See `Sources/SuperwallKit/Documentation.docc/macOS.md` and `Examples/macOS` for platform behavior and integration instructions.

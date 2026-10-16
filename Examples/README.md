@@ -6,6 +6,7 @@ Please select which app you'd like to use:
 
 - [Basic Example App](Basic)
 - [Advanced Example App](Advanced)
+- [Native macOS Example App](macOS)
 
 ## Support
 

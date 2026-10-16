@@ -7,13 +7,19 @@
 // swiftlint:disable file_length type_body_length function_body_length
 
 import Combine
+#if !os(macOS)
 import SafariServices
+#endif
 import StoreKit
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import WebKit
 
 @objc(SWKPaywallViewController)
-public class PaywallViewController: UIViewController, LoadingDelegate {
+public class PaywallViewController: PlatformViewController, LoadingDelegate {
   // MARK: - Public Properties
   /// A publisher that emits ``PaywallState`` objects, which tell you the state of the presented paywall.
   public var statePublisher: AnyPublisher<PaywallState, Never>? {
@@ -26,12 +32,14 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   // MARK: - Internal Properties
+  #if !os(macOS)
   override public var preferredStatusBarStyle: UIStatusBarStyle {
     if let isDark = view.backgroundColor?.isDarkColor, isDark {
       return .lightContent
     }
     return .darkContent
   }
+  #endif
   /// The paywall to feed into the view controller.
   var paywall: Paywall
 
@@ -184,14 +192,20 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Constraints for popup content sizing
   private var popupWidthConstraint: NSLayoutConstraint?
   private var popupHeightConstraint: NSLayoutConstraint?
-  var popupContainerView: UIView?
+  var popupContainerView: PlatformView?
 
   /// Internal property for transition logic testing
   var isCustomBackgroundDismissal = false
 
   /// The background color of the paywall, depending on whether the device is in dark mode.
-  private var backgroundColor: UIColor {
+  private var backgroundColor: PlatformColor {
     #if os(visionOS)
+      return paywall.backgroundColor
+    #elseif os(macOS)
+      let appearance = PlatformApplication.sharedApplication?.effectiveAppearance
+      if appearance?.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua {
+        return paywall.darkBackgroundColor ?? paywall.backgroundColor
+      }
       return paywall.backgroundColor
     #else
       let style = UIScreen.main.traitCollection.userInterfaceStyle
@@ -211,7 +225,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var shimmerView: ShimmerView?
 
   /// A button that refreshes the paywall presentation.
-  private lazy var refreshPaywallButton: UIButton = {
+  private lazy var refreshPaywallButton: PlatformButton = {
     ButtonFactory.make(
       imageNamed: "SuperwallKit_reload_paywall",
       target: self,
@@ -220,7 +234,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }()
 
   /// A button that exits the paywall.
-  private lazy var exitButton: UIButton = {
+  private lazy var exitButton: PlatformButton = {
     ButtonFactory.make(
       imageNamed: "SuperwallKit_exit_paywall",
       target: self,
@@ -228,10 +242,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }()
 
+  #if !os(macOS)
   /// The push presentation animation transition delegate.
   private let transitionDelegate = PushTransitionDelegate()
   /// The popup presentation animation transition delegate.
   private let popupTransitionDelegate = PopupTransitionDelegate()
+  #endif
 
   /// Defines whether the refresh alert view controller has been created.
   private var hasRefreshAlertController = false
@@ -246,8 +262,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// `true` if there's a survey to complete and the paywall is displayed in a modal style.
   private var didDisableSwipeForSurvey = false
 
+  #if !os(macOS)
   private var drawerDeviceCornerRadius: CGFloat?
   private var drawerCornerMaskLayer: CAShapeLayer?
+  #endif
 
   /// Whether the survey was shown, not shown, or in a holdout. Defaults to not shown.
   private var surveyPresentationResult: SurveyPresentationResult = .noShow
@@ -257,6 +275,32 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private var unsavedOccurrence: TriggerAudienceOccurrence?
 
   private var lastOpen: Date?
+
+  #if os(macOS)
+  /// From when the SDK starts presenting until the paywall appears: the span
+  /// UIKit reports through `isBeingPresented`, which AppKit doesn't have.
+  private var isMacPresentationInFlight = false
+
+  /// Whether the paywall went off screen with its window, which was minimised
+  /// or hidden with the app, and hasn't come back yet.
+  private(set) var isHiddenWithWindow = false
+
+  /// The close of the paywall's last presentation, which it was taken down
+  /// from while hidden. Its next presentation waits for this.
+  private var dismissalBeforeAppearing: Task<Void, Never>?
+
+  /// The window the paywall was in when it was hidden.
+  private weak var windowHiddenWith: NSWindow?
+
+  /// Watch for the hidden window coming back, while the paywall is hidden.
+  private var unhideObservers: [NSObjectProtocol] = []
+
+  /// Callers waiting in ``dismiss(animated:)`` for AppKit to finish.
+  private var dismissalContinuations: [CheckedContinuation<Void, Never>] = []
+
+  /// The dimmed backdrop behind a popup, which closes it when clicked.
+  private var popupBackgroundView: NSView?
+  #endif
 
   private struct PopupDimensions {
     let width: CGFloat
@@ -350,8 +394,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   private func configureUI() {
+    #if !os(macOS)
     modalPresentationCapturesStatusBarAppearance = true
-    #if !os(visionOS)
+    #endif
+    #if !os(visionOS) && !os(macOS)
       setNeedsStatusBarAppearanceUpdate()
     #endif
     // Don't set background color for popup - it will be transparent
@@ -372,22 +418,30 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
     let loadingColor = backgroundColor.readableOverlayColor
     view.addSubview(refreshPaywallButton)
-    refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
-
     view.addSubview(exitButton)
+    #if os(macOS)
+    refreshPaywallButton.contentTintColor = loadingColor.withAlphaComponent(0.5)
+    exitButton.contentTintColor = loadingColor.withAlphaComponent(0.5)
+    // An NSView has no layout margins. The safe area keeps the buttons clear of
+    // a window's title bar.
+    let marginsGuide = view.safeAreaLayoutGuide
+    #else
+    refreshPaywallButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
     exitButton.imageView?.tintColor = loadingColor.withAlphaComponent(0.5)
+    let marginsGuide = view.layoutMarginsGuide
+    #endif
 
     NSLayoutConstraint.activate([
       refreshPaywallButton.topAnchor.constraint(
-        equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+        equalTo: marginsGuide.topAnchor, constant: 17),
       refreshPaywallButton.trailingAnchor.constraint(
-        equalTo: view.layoutMarginsGuide.trailingAnchor, constant: 0),
+        equalTo: marginsGuide.trailingAnchor, constant: 0),
       refreshPaywallButton.widthAnchor.constraint(equalToConstant: 55),
       refreshPaywallButton.heightAnchor.constraint(equalToConstant: 55),
 
-      exitButton.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor, constant: 17),
+      exitButton.topAnchor.constraint(equalTo: marginsGuide.topAnchor, constant: 17),
       exitButton.leadingAnchor.constraint(
-        equalTo: view.layoutMarginsGuide.leadingAnchor, constant: 0),
+        equalTo: marginsGuide.leadingAnchor, constant: 0),
       exitButton.widthAnchor.constraint(equalToConstant: 55),
       exitButton.heightAnchor.constraint(equalToConstant: 55)
     ])
@@ -499,7 +553,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       }
     }
 
+    #if os(macOS)
+    webView.isScrollEnabled = paywall.isScrollEnabled
+    #else
     webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
+    #endif
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
@@ -509,7 +567,17 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     // Check if it's a Safari VC or Checkout Web VC
-    #if !os(visionOS)
+    #if os(macOS)
+      // Links open in the user's browser, so checkout is all there is to close.
+      if let checkoutVC = presentedViewControllers?.lazy
+        .compactMap({ $0 as? CheckoutWebViewController })
+        .first {
+        // Mark as programmatic dismissal to prevent tracking transaction abandon
+        isCheckoutDismissedProgrammatically = true
+        checkoutVC.dismissFromPaywall()
+      }
+      completion?()
+    #elseif !os(visionOS)
       if let safariVC = presentedViewController as? SFSafariViewController {
         safariVC.dismiss(
           animated: true,
@@ -558,13 +626,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   func revealWebViewBehindSpinner() {
     guard shimmerView != nil else { return }
     showRefreshButtonAfterTimeout(false)
-    UIView.animate(
+    PlatformView.animate(
       withDuration: 0.6,
       delay: 0.25,
       animations: {
         self.shimmerView?.alpha = 0.0
         self.webView.alpha = 1.0
+        #if !os(macOS)
         self.webView.transform = .identity
+        #endif
       },
       completion: { [weak self] _ in
         self?.shimmerView?.removeFromSuperview()
@@ -598,26 +668,33 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     case .loadingURL:
       addShimmerView()
       showRefreshButtonAfterTimeout(true)
-      UIView.springAnimate {
+      PlatformView.springAnimate {
         self.webView.alpha = 0.0
+        #if !os(macOS)
         self.webView.transform = CGAffineTransform.identity.translatedBy(x: 0, y: -10)
+        #endif
       }
     case .ready:
-      let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
       let spinnerDidShow = oldValue == .loadingPurchase || oldValue == .manualLoading
       let shimmerStillVisible = shimmerView != nil
+      #if !os(macOS)
+      // An NSView has no transform, so the web view fades in without the nudge.
+      let translation = CGAffineTransform.identity.translatedBy(x: 0, y: 10)
       webView.transform = spinnerDidShow && !shimmerStillVisible ? .identity : translation
+      #endif
       showRefreshButtonAfterTimeout(false)
       hideLoadingView()
 
       if !spinnerDidShow || shimmerStillVisible {
-        UIView.animate(
+        PlatformView.animate(
           withDuration: 0.6,
           delay: 0.25,
           animations: {
             self.shimmerView?.alpha = 0.0
             self.webView.alpha = 1.0
+            #if !os(macOS)
             self.webView.transform = .identity
+            #endif
           },
           completion: { [weak self] _ in
             guard let self = self else {
@@ -672,7 +749,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       isLightBackground: !backgroundColor.isDarkColor
     )
 
-    let shimmerSuperview: UIView
+    let shimmerSuperview: PlatformView
     switch presentationStyle {
     case .popup:
       // For popup style, use the popup container
@@ -680,8 +757,12 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
       // Apply the same corner radius as the popup to the shimmer view
       if let dimensions = getPopupDimensions() {
+        #if os(macOS)
+        shimmerView.layer?.cornerRadius = dimensions.cornerRadius
+        #else
         shimmerView.layer.cornerRadius = dimensions.cornerRadius
         shimmerView.layer.masksToBounds = true
+        #endif
       }
     default:
       shimmerSuperview = view
@@ -750,15 +831,19 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
           return
         }
 
+        #if !os(macOS)
+        // On macOS they're already in front: they're added after the web view,
+        // and the shimmer goes in below it.
         self.view.bringSubviewToFront(self.refreshPaywallButton)
         self.view.bringSubviewToFront(self.exitButton)
+        #endif
 
         self.refreshPaywallButton.isHidden = false
         self.refreshPaywallButton.alpha = 0.0
         self.exitButton.isHidden = false
         self.exitButton.alpha = 0.0
 
-        UIView.springAnimate(withDuration: 2) {
+        PlatformView.springAnimate(withDuration: 2) {
           self.refreshPaywallButton.alpha = 1.0
           self.exitButton.alpha = 1.0
         }
@@ -771,7 +856,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   private func hideRefreshButton() {
     showRefreshTimer?.invalidate()
     showRefreshTimer = nil
-    UIView.springAnimate(
+    PlatformView.springAnimate(
       animations: {
         self.refreshPaywallButton.alpha = 0.0
         self.exitButton.alpha = 0.0
@@ -858,6 +943,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     return true
   }
 
+  #if !os(macOS)
   func present(
     on presenter: UIViewController,
     request: PresentationRequest,
@@ -1031,6 +1117,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       }
     }
   #endif
+  #endif
 
   private func getPopupDimensions() -> PopupDimensions? {
     guard case .popup(let height, let width, let cornerRadius) = presentationStyle else {
@@ -1051,6 +1138,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     )
   }
 
+  #if !os(macOS)
   private func setupPopupBackground() {
     // Set transparent background for the main view
     view.backgroundColor = .clear
@@ -1074,7 +1162,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     backgroundView.addGestureRecognizer(tapGesture)
 
     // Animate background to visible
-    UIView.animate(withDuration: 0.3) {
+    PlatformView.animate(withDuration: 0.3) {
       backgroundView.alpha = 1.0
     }
 
@@ -1162,7 +1250,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     // Animate popup scale down and background fade out simultaneously
-    UIView.animate(
+    PlatformView.animate(
       withDuration: 0.25,
       delay: 0,
       options: [.curveEaseInOut, .beginFromCurrentState],
@@ -1214,6 +1302,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       self?.loadingState = .ready
     }
   }
+  #endif
 }
 
 // MARK: - SWWebViewDelegate
@@ -1234,6 +1323,7 @@ extension PaywallViewController: SWWebViewDelegate {
 }
 
 // MARK: - UIAdaptivePresentationControllerDelegate
+#if !os(macOS)
 extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
   public func presentationControllerDidAttemptToDismiss(
     _ presentationController: UIPresentationController
@@ -1257,7 +1347,10 @@ extension PaywallViewController: UIAdaptivePresentationControllerDelegate {
       closeReason: .manualClose
     )
   }
+}
+#endif
 
+extension PaywallViewController {
   /// Marks that a redeem succeeded while the checkout web view is open.
   /// Cancels any pending transaction abandon tracking.
   func markRedeemInitiated() {
@@ -1327,6 +1420,11 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         self.didReceiveStripeCheckoutAbandonMessage = false
       }
 
+      #if os(macOS)
+      self.isSafariVCPresented = true
+      loadingState = .loadingPurchase
+      presentAsSheet(checkoutVC)
+      #else
       checkoutVC.modalPresentationStyle = .pageSheet
       if let sheet = checkoutVC.sheetPresentationController {
         sheet.detents = [.medium(), .large()]
@@ -1338,6 +1436,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       self.isSafariVCPresented = true
       loadingState = .loadingPurchase
       present(checkoutVC, animated: true)
+      #endif
     #endif
   }
 
@@ -1407,7 +1506,11 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   func presentSafariInApp(_ url: URL) {
-    guard let sharedApplication = UIApplication.sharedApplication else {
+    #if os(macOS)
+    // There's no in-app browser on macOS, so the link opens in the user's.
+    presentSafariExternal(url, drawsWaitingScreen: false, isTeleport: false)
+    #else
+    guard let sharedApplication = PlatformApplication.sharedApplication else {
       return
     }
     guard sharedApplication.canOpenURL(url) else {
@@ -1424,6 +1527,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     #endif
     self.isSafariVCPresented = true
     present(safariVC, animated: true)
+    #endif
   }
 
   func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool) {
@@ -1456,7 +1560,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   }
 
   private func openExternally(_ url: URL) {
-    guard let sharedApplication = UIApplication.sharedApplication else {
+    guard let sharedApplication = PlatformApplication.sharedApplication else {
       return
     }
     sharedApplication.open(url)
@@ -1465,7 +1569,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func openDeepLink(_ url: URL, shouldDismiss: Bool) {
     let openUrl = { [weak self] in
       self?.eventDidOccur(.openedDeepLink(url: url))
-      guard let sharedApplication = UIApplication.sharedApplication else {
+      guard let sharedApplication = PlatformApplication.sharedApplication else {
         return
       }
       sharedApplication.open(url)
@@ -1485,7 +1589,14 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
   func requestReview(type: ReviewType) {
     switch type {
     case .inApp:
-      if let scene = view.window?.windowScene ?? UIApplication.sharedApplication?.activeWindowScene {
+      #if os(macOS)
+      if #available(macOS 13.0, *) {
+        AppStore.requestReview(in: self)
+      } else {
+        SKStoreReviewController.requestReview()
+      }
+      #else
+      if let scene = view.window?.windowScene ?? PlatformApplication.sharedApplication?.activeWindowScene {
         #if os(visionOS)
           AppStore.requestReview(in: scene)
         #else
@@ -1496,6 +1607,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
           }
         #endif
       }
+      #endif
       trackReviewRequest(type: .inApp)
     case .external:
       let appId: String
@@ -1514,7 +1626,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       }
 
       if let url = URL(string: "https://apps.apple.com/app/id\(appId)?action=write-review") {
-        UIApplication.shared.open(url)
+        PlatformApplication.sharedApplication?.open(url)
         trackReviewRequest(type: .external)
       }
     }
@@ -1534,6 +1646,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
 // MARK: - View Lifecycle
 extension PaywallViewController {
+  #if !os(macOS)
   override public func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
     #if !os(visionOS)
@@ -1545,6 +1658,11 @@ extension PaywallViewController {
 
   override public func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    handleViewWillAppear()
+  }
+  #endif
+
+  private func handleViewWillAppear() {
     // The app is showing a view controller it got from `getPaywall`, and
     // another request has claimed it since. Report the app's placement. Only
     // on an appearance that starts a presentation: `viewWillAppear` also fires
@@ -1563,7 +1681,7 @@ extension PaywallViewController {
       return
     }
 
-    if !deviceHelper.isMac {
+    if !deviceHelper.isiOSAppOnMac {
       webView.setAllMediaPlaybackSuspended(false)
     }
 
@@ -1575,6 +1693,7 @@ extension PaywallViewController {
     presentationWillBegin()
   }
 
+  #if !os(macOS)
   /// Determines whether a survey will show.
   private var willShowSurvey: Bool {
     if paywall.surveys.isEmpty {
@@ -1595,6 +1714,7 @@ extension PaywallViewController {
     }
     return true
   }
+  #endif
 
   /// Prepares the view controller for presentation. Only called once per presentation.
   private func presentationWillBegin() {
@@ -1605,6 +1725,9 @@ extension PaywallViewController {
     // Fetch intro offer eligibility tokens for SK2 purchases on iOS 18.2+
     fetchIntroOfferTokens()
 
+    #if !os(macOS)
+    // A Mac sheet has no swipe to block: Escape closes it through `dismiss`,
+    // which shows the survey.
     switch presentationStyle {
     case .modal, .drawer:
       let shouldShowSurvey = willShowSurvey
@@ -1620,10 +1743,13 @@ extension PaywallViewController {
         isModalInPresentation = true
       }
     }
+    #endif
     addShimmerView(onPresent: true)
 
     view.alpha = 1.0
+    #if !os(macOS)
     view.transform = .identity
+    #endif
 
     didCallDelegate = false
     paywall.closeReason = .none
@@ -1632,7 +1758,11 @@ extension PaywallViewController {
     completedPurchaseProduct = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
+    #if os(macOS)
+    webView.evaluateJavaScript("window.scrollTo(0, 0)")
+    #else
     webView.scrollView.contentOffset = CGPoint.zero
+    #endif
     if loadingState == .ready {
       webView.messageHandler.handle(.templateParamsAndUserAttributes)
     }
@@ -1654,10 +1784,12 @@ extension PaywallViewController {
     }
   }
 
+  #if !os(macOS)
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
     presentationDidFinish()
   }
+  #endif
 
   /// Lets the view controller know that presentation has finished. Only called once per presentation.
   private func presentationDidFinish() {
@@ -1685,8 +1817,19 @@ extension PaywallViewController {
     presentationDidFinishPrepare = true
   }
 
+  #if !os(macOS)
   override public func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
+    handleViewWillDisappear()
+  }
+
+  override public func viewDidDisappear(_ animated: Bool) {
+    super.viewDidDisappear(animated)
+    handleViewDidDisappear()
+  }
+  #endif
+
+  private func handleViewWillDisappear() {
     guard isPresented else {
       return
     }
@@ -1697,25 +1840,26 @@ extension PaywallViewController {
     willDismiss()
   }
 
-  override public func viewDidDisappear(_ animated: Bool) {
-    super.viewDidDisappear(animated)
+  /// Returns the task finishing the dismissal, if it started one.
+  @discardableResult
+  private func handleViewDidDisappear() -> Task<Void, Never>? {
     existingTeleportReturnCover?.reset()
     guard isPresented else {
-      return
+      return nil
     }
     if isSafariVCPresented {
-      return
+      return nil
     }
     Task {
       await trackClose()
     }
 
-    if !deviceHelper.isMac {
+    if !deviceHelper.isiOSAppOnMac {
       webView.setAllMediaPlaybackSuspended(true)
     }
 
     resetPresentationPreparations()
-    Task {
+    return Task {
       await didDismiss()
     }
   }
@@ -1840,11 +1984,13 @@ extension PaywallViewController {
     Superwall.shared.destroyPresentingWindow()
     GameControllerManager.shared.clearDelegate(self)
 
+    #if !os(macOS)
     if didDisableSwipeForSurvey {
       presentationController?.delegate = nil
       isModalInPresentation = false
       didDisableSwipeForSurvey = false
     }
+    #endif
 
     paywallResult = nil
     cache?.activePaywallVcKey = nil
@@ -1874,7 +2020,7 @@ extension PaywallViewController {
   }
 }
 
-#if !os(visionOS)
+#if !os(visionOS) && !os(macOS)
   // MARK: - SFSafariViewControllerDelegate
   extension PaywallViewController: SFSafariViewControllerDelegate {
     public func safariViewControllerDidFinish(_ controller: SFSafariViewController) {
@@ -1900,3 +2046,430 @@ extension PaywallViewController: GameControllerDelegate {
     )
   }
 }
+
+#if os(macOS)
+// MARK: - AppKit
+extension PaywallViewController {
+  /// How a paywall is put on screen on macOS.
+  private enum MacPresentation {
+    /// A sheet on the presenter's window, for the modal and drawer styles.
+    case sheet(CGSize)
+    /// Over the whole of the presenter's view.
+    case overlay(PaywallOverlayAnimator.Transition)
+  }
+
+  override public func loadView() {
+    SystemWindowHiding.start()
+    view = NSView(frame: NSRect(origin: .zero, size: PaywallSheetSize.preferred))
+  }
+
+  // A minimised window or a hidden app takes the paywall off screen without
+  // closing it, and brings it back later. Neither is a dismissal or a new
+  // presentation.
+
+  override public func viewWillAppear() {
+    super.viewWillAppear()
+    if isHiddenWithWindow {
+      if view.window === windowHiddenWith {
+        webView.setAllMediaPlaybackSuspended(false)
+        return
+      }
+      // It's in a different window, so it was taken down while hidden and
+      // this is a new presentation. It starts once the old one has finished
+      // closing, which would otherwise reset the new one's state.
+      dismissalBeforeAppearing = finishDismissalWhileHidden()
+      return
+    }
+    handleViewWillAppear()
+  }
+
+  override public func viewDidAppear() {
+    super.viewDidAppear()
+    if isHiddenWithWindow {
+      endHiding()
+      return
+    }
+    isMacPresentationInFlight = false
+    if let dismissal = dismissalBeforeAppearing {
+      dismissalBeforeAppearing = nil
+      Task { [weak self] in
+        await dismissal.value
+        self?.handleViewWillAppear()
+        self?.presentationDidFinish()
+      }
+      return
+    }
+    presentationDidFinish()
+  }
+
+  override public func viewWillDisappear() {
+    super.viewWillDisappear()
+    if let window = view.window,
+      window.isHiddenBySystem {
+      beginHiding(with: window)
+      return
+    }
+    handleViewWillDisappear()
+  }
+
+  override public func viewDidDisappear() {
+    super.viewDidDisappear()
+    if isHiddenWithWindow {
+      return
+    }
+    handleViewDidDisappear()
+    resumeDismissalContinuations()
+  }
+
+  /// Whether the SDK has started presenting the paywall and it hasn't appeared yet.
+  var isBeingPresented: Bool {
+    return isMacPresentationInFlight
+  }
+
+  /// Escape closes a paywall shown as a sheet, as swiping one down does on iOS.
+  ///
+  /// Like the swipe, it's a manual close, so a survey can show first. Other
+  /// styles close only from the paywall's own button, as on iOS.
+  override public func cancelOperation(_ sender: Any?) {
+    guard
+      isPresented,
+      view.window?.sheetParent != nil
+    else {
+      super.cancelOperation(sender)
+      return
+    }
+    dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+  }
+
+  func present(
+    on presenter: NSViewController,
+    request: PresentationRequest,
+    paywall: Paywall,
+    unsavedOccurrence: TriggerAudienceOccurrence?,
+    presentationStyleOverride: PaywallPresentationStyle?,
+    paywallStatePublisher: PassthroughSubject<PaywallState, Never>,
+    completion: @escaping (Bool) -> Void
+  ) {
+    if Superwall.shared.isPaywallPresented
+      || presenter is PaywallViewController
+      || isBeingPresented
+      || presentingViewController != nil {
+      return completion(false)
+    }
+
+    set(
+      request: request,
+      paywall: paywall,
+      paywallStatePublisher: paywallStatePublisher,
+      unsavedOccurrence: unsavedOccurrence
+    )
+
+    setPresentationStyle(withOverride: presentationStyleOverride)
+    isPresentedBySDK = true
+    isMacPresentationInFlight = true
+
+    switch macPresentation(on: presenter) {
+    case .sheet(let size):
+      preferredContentSize = size
+      presenter.presentAsSheet(self)
+    case .overlay(let transition):
+      overlayHost(over: presenter).present(
+        self,
+        animator: PaywallOverlayAnimator(transition: transition)
+      )
+    }
+    completion(true)
+  }
+
+  /// The view controller an overlay is presented on: the root of a window the
+  /// SDK owns, never one of the app's own.
+  ///
+  /// That's the window the SDK made because the app had none, or a new
+  /// ``PaywallOverlayWindow`` over the presenter's window. Either way it's kept
+  /// as the presenting window, which is closed once the paywall is dismissed.
+  private func overlayHost(over presenter: NSViewController) -> NSViewController {
+    let presentationItems = Superwall.shared.presentationItems
+    if let window = presenter.view.window as? PaywallHostWindow {
+      return window.host
+    }
+    guard let parentWindow = presenter.view.window else {
+      return presenter
+    }
+    let overlayWindow = PaywallOverlayWindow(over: parentWindow)
+    presentationItems.window = overlayWindow
+    return overlayWindow.host
+  }
+
+  private func macPresentation(on presenter: NSViewController) -> MacPresentation {
+    let window = presenter.view.window
+    // The SDK made a window just for this paywall, so the paywall fills it.
+    if window is PaywallHostWindow {
+      return .overlay(.none)
+    }
+
+    switch presentationStyle {
+    case .modal,
+      .none:
+      return .sheet(PaywallSheetSize.fitting(window))
+    case .drawer(let height, _):
+      var size = PaywallSheetSize.fitting(window)
+      size.height = max(320, size.height * CGFloat(height / 100))
+      return .sheet(size)
+    case .fullscreen:
+      return .overlay(presentationIsAnimated ? .slideUp : .none)
+    case .fullscreenNoAnimation:
+      return .overlay(.none)
+    case .push:
+      return .overlay(.slideFromTrailingEdge)
+    case .popup:
+      return .overlay(.fade)
+    }
+  }
+
+  private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
+    if let override = override,
+      override != .none {
+      presentationStyle = override
+    } else {
+      presentationStyle = paywall.presentation.style
+    }
+
+    // A cached controller can move between popup and full-window presentations.
+    // Remove it before reparenting so constraints to its old ancestor are removed.
+    _ = view
+    webView.removeFromSuperview()
+    shimmerView?.removeFromSuperview()
+    shimmerView = nil
+    popupContainerView?.removeFromSuperview()
+    popupBackgroundView?.removeFromSuperview()
+    popupContainerView = nil
+    popupBackgroundView = nil
+    webView.layer?.cornerRadius = 0
+    if case .popup = presentationStyle {
+      setupPopupBackground()
+    } else {
+      view.backgroundColor = backgroundColor
+      view.addSubview(webView, positioned: .below, relativeTo: refreshPaywallButton)
+      NSLayoutConstraint.activate([
+        webView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+        webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+        webView.topAnchor.constraint(equalTo: view.topAnchor),
+        webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+      ])
+    }
+  }
+
+  /// Lays the paywall out as a card over a dimmed backdrop, sized as a share
+  /// of the view so it follows the window as it resizes.
+  private func setupPopupBackground() {
+    guard case let .popup(height, width, cornerRadius) = presentationStyle else {
+      return
+    }
+    view.backgroundColor = .clear
+
+    let backgroundView = NSView()
+    backgroundView.backgroundColor = NSColor.black.withAlphaComponent(0.4)
+    backgroundView.translatesAutoresizingMaskIntoConstraints = false
+    backgroundView.addGestureRecognizer(
+      NSClickGestureRecognizer(target: self, action: #selector(backgroundClicked))
+    )
+    view.addSubview(backgroundView, positioned: .below, relativeTo: nil)
+    popupBackgroundView = backgroundView
+
+    let containerView = NSView()
+    containerView.translatesAutoresizingMaskIntoConstraints = false
+    containerView.wantsLayer = true
+    containerView.layer?.cornerRadius = CGFloat(cornerRadius)
+    containerView.layer?.masksToBounds = false
+    containerView.shadow = {
+      let shadow = NSShadow()
+      shadow.shadowColor = NSColor.black.withAlphaComponent(0.3)
+      shadow.shadowOffset = NSSize(width: 0, height: -2)
+      shadow.shadowBlurRadius = 10
+      return shadow
+    }()
+    view.addSubview(containerView)
+    popupContainerView = containerView
+
+    webView.wantsLayer = true
+    webView.layer?.cornerRadius = CGFloat(cornerRadius)
+    webView.layer?.masksToBounds = true
+    webView.translatesAutoresizingMaskIntoConstraints = false
+    containerView.addSubview(webView)
+
+    NSLayoutConstraint.activate([
+      backgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      backgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      backgroundView.topAnchor.constraint(equalTo: view.topAnchor),
+      backgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+
+      containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+      containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+      containerView.widthAnchor.constraint(
+        equalTo: view.widthAnchor,
+        multiplier: CGFloat(width / 100)
+      ),
+      containerView.heightAnchor.constraint(
+        equalTo: view.heightAnchor,
+        multiplier: CGFloat(height / 100)
+      ),
+
+      webView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor),
+      webView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor),
+      webView.topAnchor.constraint(equalTo: containerView.topAnchor),
+      webView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor)
+    ])
+  }
+
+  @objc private func backgroundClicked() {
+    isCustomBackgroundDismissal = true
+    PlatformView.animate(
+      withDuration: 0.25,
+      animations: {
+        self.popupContainerView?.alpha = 0
+        self.popupBackgroundView?.alpha = 0
+      },
+      completion: { [weak self] _ in
+        self?.isCustomBackgroundDismissal = false
+        self?.dismiss(result: .declined, closeReason: .manualClose)
+      }
+    )
+  }
+
+  @MainActor
+  func presentAlert(
+    title: String? = nil,
+    message: String? = nil,
+    actionTitle: String? = nil,
+    closeActionTitle: String = "Done",
+    action: (() -> Void)? = nil,
+    onClose: (() -> Void)? = nil
+  ) {
+    // A window shows one sheet at a time.
+    guard
+      presentedViewControllers?.isEmpty != false,
+      view.window?.attachedSheet == nil
+    else {
+      return
+    }
+
+    var model: [Action] = []
+    if let actionTitle = actionTitle,
+      let action = action {
+      model = [Action(title: actionTitle, call: action)]
+    }
+
+    AlertControllerFactory.present(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      actions: model,
+      onClose: onClose,
+      on: self
+    )
+    loadingState = .ready
+  }
+
+  /// Dismisses the paywall and waits for it to leave the screen.
+  ///
+  /// AppKit has no completion handler for this, so it waits for
+  /// `viewDidDisappear`, with a fallback in case the view never was on screen.
+  @MainActor
+  func dismiss(animated: Bool) async {
+    guard let presenter = presentingViewController else {
+      return
+    }
+    await withCheckedContinuation { continuation in
+      dismissalContinuations.append(continuation)
+      presenter.dismiss(self)
+      if isHiddenWithWindow {
+        finishDismissalWhileHidden()
+        return
+      }
+      DispatchQueue.main.asyncAfter(
+        deadline: .now() + PaywallOverlayAnimator.duration + 1
+      ) { [weak self] in
+        self?.resumeDismissalContinuations()
+      }
+    }
+  }
+
+  private func resumeDismissalContinuations() {
+    let continuations = dismissalContinuations
+    dismissalContinuations = []
+    continuations.forEach { $0.resume() }
+  }
+
+  private func beginHiding(with window: NSWindow) {
+    isHiddenWithWindow = true
+    windowHiddenWith = window
+    webView.setAllMediaPlaybackSuspended(true)
+
+    // An app can take the paywall down while it's hidden, as a `getPaywall`
+    // delegate does. Check it's still there once its window is back.
+    let checkStillShown = { [weak self] (_: Notification) in
+      DispatchQueue.main.async {
+        self?.finishDismissalIfGoneWhileHidden()
+      }
+    }
+    let center = NotificationCenter.default
+    unhideObservers = [
+      center.addObserver(
+        forName: NSApplication.didUnhideNotification,
+        object: nil,
+        queue: .main,
+        using: checkStillShown
+      ),
+      center.addObserver(
+        forName: NSWindow.didDeminiaturizeNotification,
+        object: nil,
+        queue: .main,
+        using: checkStillShown
+      )
+    ]
+  }
+
+  private func endHiding() {
+    isHiddenWithWindow = false
+    windowHiddenWith = nil
+    unhideObservers.forEach(NotificationCenter.default.removeObserver)
+    unhideObservers = []
+  }
+
+  /// Finishes the dismissal of a paywall that's still hidden, but whose
+  /// window has come back without it.
+  private func finishDismissalIfGoneWhileHidden() {
+    guard isHiddenWithWindow else {
+      return
+    }
+    // Still attached where it was hidden: in that window, and the window
+    // still on screen, hidden, or attached to the app's window.
+    if let window = view.window,
+      window === windowHiddenWith,
+      view.superview != nil || window.contentView === view,
+      window.isVisible
+        || window.isHiddenBySystem
+        || window.sheetParent != nil
+        || window.parent != nil {
+      return
+    }
+    finishDismissalWhileHidden()
+  }
+
+  /// AppKit sends no appearance calls to a paywall taken down while it's off
+  /// screen with its window, so this runs the dismissal they'd have started.
+  @discardableResult
+  private func finishDismissalWhileHidden() -> Task<Void, Never> {
+    endHiding()
+    handleViewWillDisappear()
+    let dismissal = handleViewDidDisappear()
+    resumeDismissalContinuations()
+    return Task {
+      await dismissal?.value
+    }
+  }
+}
+#endif

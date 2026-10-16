@@ -5,7 +5,7 @@
 //  Created by Yusuf Tör on 04/05/2022.
 //
 
-import UIKit
+import Foundation
 import Combine
 
 class AppSessionManager {
@@ -51,19 +51,19 @@ class AppSessionManager {
     notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillResignActive),
-      name: UIApplication.willResignActiveNotification,
+      name: SystemInfo.applicationWillResignActiveNotification,
       object: nil
     )
     notificationCenter.addObserver(
       self,
       selector: #selector(applicationDidBecomeActive),
-      name: UIApplication.didBecomeActiveNotification,
+      name: SystemInfo.applicationDidBecomeActiveNotification,
       object: nil
     )
     notificationCenter.addObserver(
       self,
       selector: #selector(applicationWillTerminate),
-      name: UIApplication.willTerminateNotification,
+      name: SystemInfo.applicationWillTerminateNotification,
       object: nil
     )
   }

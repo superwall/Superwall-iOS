@@ -5,7 +5,11 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Builds the dependencies backing ``CustomerCenterView`` and owns the single Customer Center
 /// presentation for ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
@@ -73,7 +77,7 @@ final class CustomerCenterManager {
   /// Presents the Customer Center for a Swift ``CustomerCenterDelegate``.
   func present(
     configuration: CustomerCenterConfiguration?,
-    from presenter: UIViewController?,
+    from presenter: PlatformViewController?,
     delegate: CustomerCenterDelegate?,
     onDismiss: (() -> Void)?
   ) {
@@ -89,7 +93,7 @@ final class CustomerCenterManager {
   /// Presents the Customer Center for an Objective-C ``CustomerCenterDelegateObjc``.
   func presentObjc(
     configuration: CustomerCenterConfiguration?,
-    from presenter: UIViewController?,
+    from presenter: PlatformViewController?,
     objcDelegate: CustomerCenterDelegateObjc?,
     onDismiss: (() -> Void)?
   ) {
@@ -104,7 +108,7 @@ final class CustomerCenterManager {
 
   private func present(
     configuration: CustomerCenterConfiguration?,
-    from presenter: UIViewController?,
+    from presenter: PlatformViewController?,
     adapter: CustomerCenterDelegateAdapter,
     retaining delegate: AnyObject?,
     onDismiss: (() -> Void)?
@@ -113,10 +117,16 @@ final class CustomerCenterManager {
       Logger.debug(logLevel: .warn, scope: .customerCenter, message: "Customer Center is already presented.")
       return
     }
-    var presenting = presenter ?? UIViewController.topMostViewController
+    var presenting = presenter ?? PlatformViewController.topMostViewController
+    #if os(macOS)
+    while let presented = presenting?.presentedViewControllers?.last {
+      presenting = presented
+    }
+    #else
     while let presented = presenting?.presentedViewController, !presented.isBeingDismissed {
       presenting = presented
     }
+    #endif
     guard let presenting else {
       Logger.debug(
         logLevel: .error,
@@ -137,7 +147,11 @@ final class CustomerCenterManager {
       self?.retainedDelegate = nil
       onDismiss?()
     }
+    #if os(macOS)
+    presenting.presentAsSheet(controller)
+    #else
     presenting.present(controller, animated: presentsAnimated)
+    #endif
     // UIKit refuses some presentations (the presenter isn't in a window, or is mid-transition)
     // and only logs it, so check that it took the controller before holding on to anything.
     if controller.presentingViewController == nil {
@@ -159,6 +173,16 @@ final class CustomerCenterManager {
       completion?()
       return
     }
+    #if os(macOS)
+    // AppKit's disappearance check runs on the next turn of the run loop. Keep
+    // ownership until onDismiss delivers the delegate callback and clears it.
+    let onDismiss = controller.onDismiss
+    controller.onDismiss = {
+      onDismiss?()
+      completion?()
+    }
+    controller.presentingViewController?.dismiss(controller)
+    #else
     // Dismiss from whatever presented the Customer Center. Asked directly, a controller that has
     // one of its own sheets open (a survey, Safari, the change-plan sheet) only closes that sheet
     // and stays on screen. Asking its presenter closes the sheet and the Customer Center together.
@@ -168,5 +192,6 @@ final class CustomerCenterManager {
       self?.retainedDelegate = nil
       completion?()
     }
+    #endif
   }
 }

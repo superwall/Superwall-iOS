@@ -5,7 +5,11 @@
 //  Created by Claude on 2026-01-27.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Handles purchase and restore flows in test mode.
 ///
@@ -25,7 +29,7 @@ final class TestModeTransactionHandler {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
-    guard let viewController = UIViewController.topMostViewController else {
+    guard let viewController = PlatformViewController.topMostViewController else {
       return .failed(PurchaseError.productUnavailable)
     }
 
@@ -109,7 +113,7 @@ final class TestModeTransactionHandler {
   /// or `.failed(nil)` when the user cancels.
   @MainActor
   func handleRestore() async -> RestorationResult {
-    guard let viewController = UIViewController.topMostViewController else {
+    guard let viewController = PlatformViewController.topMostViewController else {
       return .failed(nil)
     }
 

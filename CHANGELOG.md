@@ -6,6 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
+- Adds native macOS 12+ support for paywalls, SwiftUI embedding, StoreKit and web purchases, Customer Center, Test Mode, and a native paywall preview window. Includes a Mac example and native presentation tests.
 - Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8. Requires Xcode 26 (Swift 6.2) or later to build the SDK.
 - Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
 - Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
