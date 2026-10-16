@@ -283,7 +283,13 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
 
   /// Whether the paywall went off screen with its window, which was minimised
   /// or hidden with the app, and hasn't come back yet.
-  private var isHiddenWithWindow = false
+  private(set) var isHiddenWithWindow = false
+
+  /// The window the paywall was in when it was hidden.
+  private weak var windowHiddenWith: NSWindow?
+
+  /// Watch for the hidden window coming back, while the paywall is hidden.
+  private var unhideObservers: [NSObjectProtocol] = []
 
   /// Callers waiting in ``dismiss(animated:)`` for AppKit to finish.
   private var dismissalContinuations: [CheckedContinuation<Void, Never>] = []
@@ -2058,8 +2064,13 @@ extension PaywallViewController {
   override public func viewWillAppear() {
     super.viewWillAppear()
     if isHiddenWithWindow {
-      webView.setAllMediaPlaybackSuspended(false)
-      return
+      if view.window === windowHiddenWith {
+        webView.setAllMediaPlaybackSuspended(false)
+        return
+      }
+      // It's in a different window, so it was taken down while hidden and
+      // this is a new presentation.
+      finishDismissalWhileHidden()
     }
     handleViewWillAppear()
   }
@@ -2067,7 +2078,7 @@ extension PaywallViewController {
   override public func viewDidAppear() {
     super.viewDidAppear()
     if isHiddenWithWindow {
-      isHiddenWithWindow = false
+      endHiding()
       return
     }
     isMacPresentationInFlight = false
@@ -2076,9 +2087,9 @@ extension PaywallViewController {
 
   override public func viewWillDisappear() {
     super.viewWillDisappear()
-    if view.window?.isHiddenBySystem == true {
-      isHiddenWithWindow = true
-      webView.setAllMediaPlaybackSuspended(true)
+    if let window = view.window,
+      window.isHiddenBySystem {
+      beginHiding(with: window)
       return
     }
     handleViewWillDisappear()
@@ -2357,13 +2368,8 @@ extension PaywallViewController {
     await withCheckedContinuation { continuation in
       dismissalContinuations.append(continuation)
       presenter.dismiss(self)
-      // AppKit sends no appearance calls to a paywall it took off screen
-      // with its window, so finish the dismissal here.
       if isHiddenWithWindow {
-        isHiddenWithWindow = false
-        handleViewWillDisappear()
-        handleViewDidDisappear()
-        resumeDismissalContinuations()
+        finishDismissalWhileHidden()
         return
       }
       DispatchQueue.main.asyncAfter(
@@ -2378,6 +2384,71 @@ extension PaywallViewController {
     let continuations = dismissalContinuations
     dismissalContinuations = []
     continuations.forEach { $0.resume() }
+  }
+
+  private func beginHiding(with window: NSWindow) {
+    isHiddenWithWindow = true
+    windowHiddenWith = window
+    webView.setAllMediaPlaybackSuspended(true)
+
+    // An app can take the paywall down while it's hidden, as a `getPaywall`
+    // delegate does. Check it's still there once its window is back.
+    let checkStillShown = { [weak self] (_: Notification) in
+      DispatchQueue.main.async {
+        self?.finishDismissalIfGoneWhileHidden()
+      }
+    }
+    let center = NotificationCenter.default
+    unhideObservers = [
+      center.addObserver(
+        forName: NSApplication.didUnhideNotification,
+        object: nil,
+        queue: .main,
+        using: checkStillShown
+      ),
+      center.addObserver(
+        forName: NSWindow.didDeminiaturizeNotification,
+        object: nil,
+        queue: .main,
+        using: checkStillShown
+      )
+    ]
+  }
+
+  private func endHiding() {
+    isHiddenWithWindow = false
+    windowHiddenWith = nil
+    unhideObservers.forEach(NotificationCenter.default.removeObserver)
+    unhideObservers = []
+  }
+
+  /// Finishes the dismissal of a paywall that's still hidden, but whose
+  /// window has come back without it.
+  private func finishDismissalIfGoneWhileHidden() {
+    guard isHiddenWithWindow else {
+      return
+    }
+    // Still attached where it was hidden: in that window, and the window
+    // still on screen, hidden, or attached to the app's window.
+    if let window = view.window,
+      window === windowHiddenWith,
+      view.superview != nil || window.contentView === view,
+      window.isVisible
+        || window.isHiddenBySystem
+        || window.sheetParent != nil
+        || window.parent != nil {
+      return
+    }
+    finishDismissalWhileHidden()
+  }
+
+  /// AppKit sends no appearance calls to a paywall taken down while it's off
+  /// screen with its window, so this runs the dismissal they'd have started.
+  private func finishDismissalWhileHidden() {
+    endHiding()
+    handleViewWillDisappear()
+    handleViewDidDisappear()
+    resumeDismissalContinuations()
   }
 }
 #endif

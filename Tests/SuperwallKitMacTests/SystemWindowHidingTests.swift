@@ -100,5 +100,69 @@ struct SystemWindowHidingTests {
     #expect(cancellations == 0)
     #expect(finish?() == true)
   }
+
+  private func makePaywallViewController() -> PaywallViewController {
+    let dependencyContainer = DependencyContainer()
+    return PaywallViewController(
+      paywall: .stub(),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: SWWebView(
+        isiOSAppOnMac: false,
+        messageHandler: .init(
+          receiptManager: dependencyContainer.receiptManager,
+          factory: dependencyContainer,
+          permissionHandler: dependencyContainer.permissionHandler,
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
+        ),
+        isOnDeviceCacheEnabled: false,
+        factory: dependencyContainer
+      ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: dependencyContainer.makeCache(),
+      paywallArchiveManager: dependencyContainer.paywallArchiveManager,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+  }
+
+  @Test
+  func paywallRestoredWithItsWindowStaysHiddenUntilItAppears() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(paywall.isHiddenWithWindow)
+
+    parent.deminiaturize(nil)
+    try await settle(1.5)
+    #expect(!paywall.isHiddenWithWindow)
+    #expect(paywall.presentingViewController != nil)
+    paywall.presentingViewController?.dismiss(paywall)
+  }
+
+  @Test
+  func paywallTakenDownWhileHiddenFinishesItsDismissal() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(paywall.isHiddenWithWindow)
+
+    // As an app does from a `getPaywall` delegate, with the window minimised.
+    paywall.presentingViewController?.dismiss(paywall)
+    parent.deminiaturize(nil)
+    try await settle(1.5)
+    #expect(!paywall.isHiddenWithWindow)
+  }
 }
 #endif
