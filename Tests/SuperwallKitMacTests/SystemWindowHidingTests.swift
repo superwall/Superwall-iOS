@@ -5,6 +5,18 @@ import SwiftUI
 import Testing
 @testable import SuperwallKit
 
+private final class FinishRecorder: PaywallViewControllerDelegate {
+  var finishCount = 0
+
+  func paywall(
+    _ paywall: PaywallViewController,
+    didFinishWith result: PaywallResult,
+    shouldDismiss: Bool
+  ) {
+    finishCount += 1
+  }
+}
+
 @Suite(.serialized)
 @MainActor
 struct SystemWindowHidingTests {
@@ -172,6 +184,11 @@ struct SystemWindowHidingTests {
     let other = makeParent()
     defer { other.close() }
     let paywall = makePaywallViewController()
+    let recorder = FinishRecorder()
+    paywall.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
     parent.contentViewController?.presentAsSheet(paywall)
     try await settle()
 
@@ -189,6 +206,11 @@ struct SystemWindowHidingTests {
     other.contentViewController?.dismiss(paywall)
     parent.deminiaturize(nil)
     try await settle(1.5)
+
+    // Once for each close. If the first close finished after the paywall
+    // appeared again, it would have reset that presentation and the second
+    // close would go unreported.
+    #expect(recorder.finishCount == 2)
   }
 }
 #endif
