@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -16,9 +16,9 @@
 		3263BD7DC9861CCA911F823C /* SuperwallMacExample.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SuperwallMacExample.entitlements; sourceTree = "<group>"; };
 		5195551271ED7212BC12D847 /* SuperwallMacExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SuperwallMacExampleApp.swift; sourceTree = "<group>"; };
 		58AA8D2E3A3EFA027647BD60 /* SuperwallMacExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SuperwallMacExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		673422CD05F42B8D7A855B0E /* Superwall-iOS-macos */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "Superwall-iOS-macos"; path = ../..; sourceTree = SOURCE_ROOT; };
 		70F0D04ABC8C16BFD6ABEC2E /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		C2416E115AC6D39F930AC782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		C2CE8934283F0D66C1025585 /* Superwall-iOS-wt-548 */ = {isa = PBXFileReference; lastKnownFileType = folder; name = "Superwall-iOS-wt-548"; path = ../..; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,7 +56,7 @@
 		7EA7C4BA44914FBC32D948C3 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
-				673422CD05F42B8D7A855B0E /* Superwall-iOS-macos */,
+				C2CE8934283F0D66C1025585 /* Superwall-iOS-wt-548 */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -106,7 +106,6 @@
 				};
 			};
 			buildConfigurationList = F4E98D566B96941E0F918B65 /* Build configuration list for PBXProject "SuperwallMacExample" */;
-			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -118,7 +117,8 @@
 			packageReferences = (
 				3110B7FBBB11B175BFA51347 /* XCLocalSwiftPackageReference "../.." */,
 			);
-			preferredProjectObjectVersion = 54;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C3943FD8F9BD365D4AF87D34 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
