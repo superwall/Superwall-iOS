@@ -18,6 +18,9 @@ final class NetworkMock: Network {
   var configReturnValue: Result<Config, Error> = .success(.stub())
   var getWebEntitlementsResponse: RedeemResponse?
   var getEntitlementsResponse: EntitlementsResponse?
+  /// Returned in order, one per call, before falling back to `getEntitlementsResponse`.
+  var getEntitlementsResponses: [EntitlementsResponse] = []
+  var getEntitlementsCallCount = 0
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
   var pollRedemptionResultRequest: PollRedemptionResultRequest?
@@ -90,6 +93,10 @@ final class NetworkMock: Network {
     appUserId: String?,
     deviceId: String
   ) async throws -> EntitlementsResponse {
+    getEntitlementsCallCount += 1
+    if !getEntitlementsResponses.isEmpty {
+      return getEntitlementsResponses.removeFirst()
+    }
     if let getEntitlementsResponse = getEntitlementsResponse {
       return getEntitlementsResponse
     } else if let redeemError = redeemError {

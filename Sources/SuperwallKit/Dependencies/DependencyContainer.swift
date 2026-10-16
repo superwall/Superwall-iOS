@@ -232,6 +232,7 @@ final class DependencyContainer {
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
       productsManager: productsManager,
+      entitlementsRefresher: webEntitlementRedeemer,
       factory: self
     )
   }
