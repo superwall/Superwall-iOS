@@ -17,6 +17,7 @@ final class TransactionManager {
   private let placementsQueue: PlacementsQueue
   private let purchaseManager: PurchaseManager
   private let productsManager: ProductsManager
+  private let entitlementsRefresher: CustomPurchaseEntitlementsRefreshing
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -40,6 +41,7 @@ final class TransactionManager {
     placementsQueue: PlacementsQueue,
     purchaseManager: PurchaseManager,
     productsManager: ProductsManager,
+    entitlementsRefresher: CustomPurchaseEntitlementsRefreshing,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
@@ -48,6 +50,7 @@ final class TransactionManager {
     self.placementsQueue = placementsQueue
     self.purchaseManager = purchaseManager
     self.productsManager = productsManager
+    self.entitlementsRefresher = entitlementsRefresher
     self.factory = factory
   }
 
@@ -818,6 +821,7 @@ final class TransactionManager {
         purchaseDate: purchaseDate
       )
       await loadPurchasedProductsIfNeeded(for: product)
+      refreshEntitlementsAfterCustomPurchaseIfNeeded(for: product)
       await trackTransactionDidSucceed(transaction)
       await finalizeInternalPurchase(
         for: product,
@@ -841,6 +845,7 @@ final class TransactionManager {
         purchaseDate: purchaseDate
       )
       await loadPurchasedProductsIfNeeded(for: product)
+      refreshEntitlementsAfterCustomPurchaseIfNeeded(for: product)
       await trackTransactionDidSucceed(transaction)
     }
   }
@@ -883,6 +888,31 @@ final class TransactionManager {
     // (SW-5516: always redeem after a successful purchase & restore).
     Task {
       await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
+    }
+  }
+
+  /// Fetches the user's entitlements from Superwall after a custom product purchase.
+  ///
+  /// A custom product is sold through the developer's own checkout, whose
+  /// server reports the purchase to Superwall. Neither receipts nor `/redeem`
+  /// know about it, so its entitlements only reach the device through the
+  /// entitlements fetch. This runs in the background, so the purchase result
+  /// and paywall dismissal don't wait for it. Skipped in test mode, which
+  /// sets subscription state itself.
+  ///
+  /// - Returns: The background refresh, or `nil` if none was started.
+  @discardableResult
+  func refreshEntitlementsAfterCustomPurchaseIfNeeded(for product: StoreProduct) -> Task<Void, Never>? {
+    guard
+      product.isCustomProduct,
+      !factory.makeTestModeManager().isTestMode
+    else {
+      return nil
+    }
+    let entitlementIds = Set(product.entitlements.map(\.id))
+    let entitlementsRefresher = entitlementsRefresher
+    return Task {
+      await entitlementsRefresher.refreshEntitlementsAfterCustomPurchase(expecting: entitlementIds)
     }
   }
 

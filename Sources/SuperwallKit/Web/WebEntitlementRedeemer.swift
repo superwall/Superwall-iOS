@@ -21,7 +21,12 @@ enum StripeCheckoutCompletion: Equatable, Codable {
   case purchase(productId: String, shouldDismiss: Bool)
 }
 
-actor WebEntitlementRedeemer {
+/// Refreshes entitlements from the server after a custom product purchase.
+protocol CustomPurchaseEntitlementsRefreshing: Sendable {
+  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async
+}
+
+actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   private let network: Network
   private let storage: Storage
   private let entitlementsInfo: EntitlementsInfo
@@ -32,7 +37,11 @@ actor WebEntitlementRedeemer {
   private let notificationScheduler: NotificationScheduling
   private let stripePendingPollIntervalNs: UInt64
   private let stripePendingPollTimeoutNs: UInt64
+  /// How long to wait before each entitlements fetch after a custom product purchase.
+  private let customPurchaseRefreshDelaysNs: [UInt64]
   private var isProcessing = false
+  /// The throttled entitlements poll in flight, which concurrent polls wait on.
+  private var inFlightWebEntitlementsPoll: Task<Void, Never>?
   private var hasActiveStripePoll = false
   private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
@@ -45,6 +54,7 @@ actor WebEntitlementRedeemer {
     & ConfigStateFactory
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
+    & TestModeManagerFactory
 
   private enum StripePollTrigger: String {
     case checkoutComplete = "checkout_complete"
@@ -106,6 +116,7 @@ actor WebEntitlementRedeemer {
     notificationScheduler: NotificationScheduling = NotificationScheduler.shared,
     stripePendingPollIntervalNs: UInt64 = 1_500_000_000,
     stripePendingPollTimeoutNs: UInt64 = 60_000_000_000,
+    customPurchaseRefreshDelaysNs: [UInt64] = [1_000_000_000, 3_000_000_000, 6_000_000_000],
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -119,6 +130,7 @@ actor WebEntitlementRedeemer {
     self.receiptManager = receiptManager
     self.stripePendingPollIntervalNs = stripePendingPollIntervalNs
     self.stripePendingPollTimeoutNs = stripePendingPollTimeoutNs
+    self.customPurchaseRefreshDelaysNs = customPurchaseRefreshDelaysNs
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -1034,29 +1046,107 @@ actor WebEntitlementRedeemer {
     return elapsed >= timeoutSeconds
   }
 
-  // swiftlint:disable:next cyclomatic_complexity
+  /// How long entitlements fetched by ``pollWebEntitlements(config:isFirstTime:)``
+  /// stay fresh when the app has no web2app config to set `entitlementsMaxAge`.
+  ///
+  /// Every app polls, because purchases reported by a server, such as custom
+  /// store purchases, refunds and renewals, only reach the device through this
+  /// fetch. A shorter age surfaces a revocation, or a renewal past the cached
+  /// expiry, sooner, but adds a request to more foregrounds on every install.
+  /// 15 minutes bounds that to at most four requests an hour per active user,
+  /// while a change still shows up within a typical session. The fetch on
+  /// launch ignores it.
+  static let defaultEntitlementsMaxAge: Seconds = 15 * 60
+
+  /// Fetches entitlements from the server, unless they were fetched within
+  /// `entitlementsMaxAge`, or ``defaultEntitlementsMaxAge`` when the app has
+  /// no web2app config. The first poll after launch always fetches. Skipped in
+  /// test mode, and joins a poll that's already in flight.
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
   ) async {
-    if !isFirstTime {
-      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
-        ?? factory.makeEntitlementsMaxAge() {
-        if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
-          let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
-          // Only proceed if a certain amount of time has elapsed
-          guard timeElapsed > entitlementsMaxAge else {
-            return
-          }
-        }
-      } else {
-        // Don't proceed at all if there's no web2app config and it's not a UI test
-        if !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
-          return
-        }
+    if factory.makeTestModeManager().isTestMode {
+      return
+    }
+
+    if let inFlightPoll = inFlightWebEntitlementsPoll {
+      await inFlightPoll.value
+      return
+    }
+
+    if !isFirstTime,
+      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+      let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
+        ?? factory.makeEntitlementsMaxAge()
+        ?? Self.defaultEntitlementsMaxAge
+      let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
+      guard timeElapsed > entitlementsMaxAge else {
+        return
       }
     }
 
+    let poll = Task {
+      _ = await self.refreshWebEntitlements()
+    }
+    inFlightWebEntitlementsPoll = poll
+    await poll.value
+    inFlightWebEntitlementsPoll = nil
+  }
+
+  /// Refreshes entitlements after a custom product purchase until the
+  /// purchased product's entitlements are active, or the attempts run out.
+  ///
+  /// The developer's server reports the purchase to Superwall, which can lag
+  /// the purchase on the device, so each attempt waits a little longer than
+  /// the last. Stops early if the task is cancelled.
+  ///
+  /// - Parameter entitlementIds: The IDs of the purchased product's
+  ///   entitlements. When empty, the first successful fetch ends the refresh.
+  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async {
+    for (index, delay) in customPurchaseRefreshDelaysNs.enumerated() {
+      do {
+        try await Task.sleep(nanoseconds: delay)
+      } catch {
+        return
+      }
+
+      guard let customerInfo = await refreshWebEntitlements() else {
+        continue
+      }
+      let activeEntitlementIds = Set(customerInfo.entitlements.filter { $0.isActive }.map { $0.id })
+      if entitlementIds.isSubset(of: activeEntitlementIds) {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .webEntitlements,
+          message: "Entitlements refreshed after custom product purchase",
+          info: ["attempt": index + 1]
+        )
+        return
+      }
+    }
+
+    Logger.debug(
+      logLevel: .warn,
+      scope: .webEntitlements,
+      message: "The purchased custom product's entitlements weren't active after "
+        + "\(customPurchaseRefreshDelaysNs.count) attempts. Check that your server reports "
+        + "the purchase to Superwall.",
+      info: ["entitlement_ids": entitlementIds.sorted().joined(separator: ",")]
+    )
+  }
+
+  /// Fetches entitlements from the server now, ignoring `entitlementsMaxAge`
+  /// and whether the app has a web2app config.
+  ///
+  /// Custom store purchases are reported to Superwall by the developer's
+  /// server, so their entitlements come from this fetch even in apps that
+  /// don't sell on the web.
+  ///
+  /// - Returns: The fetched customer info, or `nil` if the fetch failed or
+  ///   its response was ignored.
+  @discardableResult
+  func refreshWebEntitlements() async -> CustomerInfo? {
     do {
       let existingWebEntitlements = Set(
         storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
@@ -1088,7 +1178,7 @@ actor WebEntitlementRedeemer {
           scope: .webEntitlements,
           message: "Ignoring empty web entitlements response because unexpired web entitlements are cached."
         )
-        return
+        return nil
       }
 
       // Update the latest redeem response with the entitlements and customer info from the response.
@@ -1112,7 +1202,7 @@ actor WebEntitlementRedeemer {
         // Use the injected superwall instance or fall back to shared
         let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
         guard let superwall = superwall else {
-          return
+          return response.customerInfo
         }
 
         await mergeAndApplyCustomerInfo(
@@ -1160,6 +1250,7 @@ actor WebEntitlementRedeemer {
           }
         }
       }
+      return response.customerInfo
     } catch {
       Logger.debug(
         logLevel: .warn,
@@ -1167,6 +1258,7 @@ actor WebEntitlementRedeemer {
         message: "Polling web entitlements failed",
         error: error
       )
+      return nil
     }
   }
 }
