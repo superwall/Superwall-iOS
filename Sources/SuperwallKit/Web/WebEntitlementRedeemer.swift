@@ -40,6 +40,8 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   /// How long to wait before each entitlements fetch after a custom product purchase.
   private let customPurchaseRefreshDelaysNs: [UInt64]
   private var isProcessing = false
+  /// The throttled entitlements poll in flight, which concurrent polls wait on.
+  private var inFlightWebEntitlementsPoll: Task<Void, Never>?
   private var hasActiveStripePoll = false
   private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
@@ -52,6 +54,7 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     & ConfigStateFactory
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
+    & TestModeManagerFactory
 
   private enum StripePollTrigger: String {
     case checkoutComplete = "checkout_complete"
@@ -1043,31 +1046,52 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     return elapsed >= timeoutSeconds
   }
 
+  /// How long entitlements fetched by ``pollWebEntitlements(config:isFirstTime:)``
+  /// stay fresh when the app has no web2app config to set `entitlementsMaxAge`.
+  ///
+  /// Every app polls, because purchases reported by a server, such as custom
+  /// store purchases, refunds and renewals, only reach the device through this
+  /// fetch. A shorter age surfaces a revocation, or a renewal past the cached
+  /// expiry, sooner, but adds a request to more foregrounds on every install.
+  /// 15 minutes bounds that to at most four requests an hour per active user,
+  /// while a change still shows up within a typical session. The fetch on
+  /// launch ignores it.
+  static let defaultEntitlementsMaxAge: Seconds = 15 * 60
+
   /// Fetches entitlements from the server, unless they were fetched within
-  /// `entitlementsMaxAge` or the app has no web2app config.
+  /// `entitlementsMaxAge`, or ``defaultEntitlementsMaxAge`` when the app has
+  /// no web2app config. The first poll after launch always fetches. Skipped in
+  /// test mode, and joins a poll that's already in flight.
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
   ) async {
-    if !isFirstTime {
-      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
-        ?? factory.makeEntitlementsMaxAge() {
-        if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
-          let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
-          // Only proceed if a certain amount of time has elapsed
-          guard timeElapsed > entitlementsMaxAge else {
-            return
-          }
-        }
-      } else {
-        // Don't proceed at all if there's no web2app config and it's not a UI test
-        if !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
-          return
-        }
+    if factory.makeTestModeManager().isTestMode {
+      return
+    }
+
+    if let inFlightPoll = inFlightWebEntitlementsPoll {
+      await inFlightPoll.value
+      return
+    }
+
+    if !isFirstTime,
+      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+      let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
+        ?? factory.makeEntitlementsMaxAge()
+        ?? Self.defaultEntitlementsMaxAge
+      let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
+      guard timeElapsed > entitlementsMaxAge else {
+        return
       }
     }
 
-    await refreshWebEntitlements()
+    let poll = Task {
+      _ = await self.refreshWebEntitlements()
+    }
+    inFlightWebEntitlementsPoll = poll
+    await poll.value
+    inFlightWebEntitlementsPoll = nil
   }
 
   /// Refreshes entitlements after a custom product purchase until the

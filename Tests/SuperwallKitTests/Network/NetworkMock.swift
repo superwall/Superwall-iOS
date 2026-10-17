@@ -21,6 +21,7 @@ final class NetworkMock: Network {
   /// Returned in order, one per call, before falling back to `getEntitlementsResponse`.
   var getEntitlementsResponses: [EntitlementsResponse] = []
   var getEntitlementsCallCount = 0
+  var getEntitlementsDelayNs: UInt64 = 0
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
   var pollRedemptionResultRequest: PollRedemptionResultRequest?
@@ -94,6 +95,9 @@ final class NetworkMock: Network {
     deviceId: String
   ) async throws -> EntitlementsResponse {
     getEntitlementsCallCount += 1
+    if getEntitlementsDelayNs > 0 {
+      try? await Task.sleep(nanoseconds: getEntitlementsDelayNs)
+    }
     if !getEntitlementsResponses.isEmpty {
       return getEntitlementsResponses.removeFirst()
     }

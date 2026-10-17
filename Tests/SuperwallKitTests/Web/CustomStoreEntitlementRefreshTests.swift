@@ -248,16 +248,96 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
   }
 
-  @Test("The throttled poll still skips apps without a web2app config")
-  func pollWebEntitlements_withoutWeb2AppConfig_skips() async {
+  // MARK: - Launch and foreground polling
+
+  private func web2AppConfig(entitlementsMaxAge: Seconds) -> Config {
+    return Config
+      .stub()
+      .setting(
+        \.web2appConfig,
+        to: .init(entitlementsMaxAge: entitlementsMaxAge, restoreAccessURL: URL(string: "https://superwall.com")!)
+      )
+  }
+
+  /// Runs the throttled poll, as the foreground and config refresh do, with
+  /// entitlements last fetched `lastFetchAge` seconds ago (`nil`: never).
+  private func pollCallCount(
+    lastFetchAge: Seconds?,
+    config: Config? = nil,
+    isFirstTime: Bool = false
+  ) async -> Int {
+    defer { clearEntitlementsState() }
+    if let lastFetchAge = lastFetchAge {
+      dependencyContainer.storage.save(
+        Date().addingTimeInterval(-lastFetchAge),
+        forType: LastWebEntitlementsFetchDate.self
+      )
+    }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    network.getEntitlementsResponse = entitlementsResponse([])
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
     let redeemer = makeRedeemer(network: network, superwall: superwall)
 
-    await redeemer.pollWebEntitlements()
+    await redeemer.pollWebEntitlements(config: config, isFirstTime: isFirstTime)
 
-    #expect(network.getEntitlementsCallCount == 0)
+    return network.getEntitlementsCallCount
+  }
+
+  @Test("The default max age is 15 minutes")
+  func defaultEntitlementsMaxAge_is15Minutes() {
+    #expect(WebEntitlementRedeemer.defaultEntitlementsMaxAge == 15 * 60)
+  }
+
+  @Test("Without a web2app config, a poll fetches when entitlements are older than 15 minutes")
+  func poll_withoutWeb2AppConfig_fetchesWhenStale() async {
+    #expect(dependencyContainer.makeEntitlementsMaxAge() == nil)
+    #expect(await pollCallCount(lastFetchAge: 16 * 60) == 1)
+  }
+
+  @Test("Without a web2app config, a poll skips when entitlements are fresher than 15 minutes")
+  func poll_withoutWeb2AppConfig_skipsWhenFresh() async {
+    #expect(await pollCallCount(lastFetchAge: 14 * 60) == 0)
+  }
+
+  @Test("Without a web2app config, a poll fetches when entitlements were never fetched")
+  func poll_withoutWeb2AppConfig_freshInstall_fetches() async {
+    #expect(await pollCallCount(lastFetchAge: nil) == 1)
+  }
+
+  @Test("The poll after the first config fetches even when entitlements are fresh")
+  func poll_firstConfig_fetchesWhenFresh() async {
+    #expect(await pollCallCount(lastFetchAge: 60, config: .stub(), isFirstTime: true) == 1)
+  }
+
+  @Test("With a web2app config, the server's max age applies instead of the default")
+  func poll_withWeb2AppConfig_usesServerMaxAge() async {
+    // Shorter than the default: fetches after 5 minutes.
+    #expect(await pollCallCount(lastFetchAge: 5 * 60, config: web2AppConfig(entitlementsMaxAge: 60)) == 1)
+    // Longer than the default: still fresh after 20 minutes.
+    #expect(await pollCallCount(lastFetchAge: 20 * 60, config: web2AppConfig(entitlementsMaxAge: 3_600)) == 0)
+  }
+
+  @Test("A poll in test mode doesn't fetch")
+  func poll_inTestMode_skips() async {
+    turnOnTestMode()
+    #expect(await pollCallCount(lastFetchAge: nil) == 0)
+    #expect(await pollCallCount(lastFetchAge: 60, config: .stub(), isFirstTime: true) == 0)
+  }
+
+  @Test("Concurrent polls share one fetch")
+  func poll_concurrent_sharesOneFetch() async {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    network.getEntitlementsDelayNs = 200_000_000
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    async let first: Void = redeemer.pollWebEntitlements()
+    async let second: Void = redeemer.pollWebEntitlements()
+    _ = await (first, second)
+
+    #expect(network.getEntitlementsCallCount == 1)
   }
 
   // MARK: - Transaction store

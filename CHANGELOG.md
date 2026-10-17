@@ -8,6 +8,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's entitlements from Superwall, even if they were fetched recently, and returns the updated `CustomerInfo`. Use it when your server has just reported a purchase to Superwall and you want the device to reflect it straight away.
 - After your `PurchaseController` returns `.purchased` for a custom product, the SDK now fetches the user's entitlements from Superwall in the background, retrying a few times over about 10 seconds until the product's entitlements are active, so a purchase your server reports to Superwall reaches `customerInfo` and `entitlements.web` without waiting for the next app foreground. This also works in apps without web checkout, and doesn't delay the purchase result or the paywall's dismissal.
+- Apps without web paywalls now fetch the user's entitlements from Superwall too: once on launch, then on foreground at most every 15 minutes. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
 
 ### Fixes
 
