@@ -47,7 +47,6 @@ class SWWebView: WKWebView {
   private let enableIframeNavigation: Bool
   private var activeProcessTerminationRetryCount = 0
   private let maxActiveProcessTerminationRetries = 3
-  private var reportedFoldState: FoldState?
 
   init(
     isMac: Bool,
@@ -169,22 +168,6 @@ class SWWebView: WKWebView {
 
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
-  }
-
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    reportFoldState()
-  }
-
-  /// Sends the fold state to the page when it changes. A fresh document has
-  /// lost the previous one, so a load passes `force`.
-  func reportFoldState(force: Bool = false) {
-    let state = FoldState.read(from: self)
-    guard force || state != reportedFoldState else {
-      return
-    }
-    reportedFoldState = state
-    evaluateJavaScript(state.script)
   }
 
   func loadURL(from paywall: Paywall) async {

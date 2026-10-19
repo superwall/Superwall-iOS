@@ -542,7 +542,6 @@ final class PaywallMessageHandler: WebEventDelegate {
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
       self.delegate?.webView.evaluateJavaScript(Self.preventZoomScript)
-      self.delegate?.webView.reportFoldState(force: true)
 
       if documentId != self.documentId {
         return

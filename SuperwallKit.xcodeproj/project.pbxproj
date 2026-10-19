@@ -579,7 +579,6 @@
 		D4B5A9708204AB6D58904733 /* GetPaywallVcOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 943CA7F8AE219A07C1245232 /* GetPaywallVcOperatorTests.swift */; };
 		D4D09356A2650ED3F8D518EE /* ConfigLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = B634347011742D475E3F1A27 /* ConfigLogic.swift */; };
 		D506526569FAA54E3220A02A /* PurchaseSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F67A5C0CA15AF645709A2545 /* PurchaseSource.swift */; };
-		D5342EEAC5AB0B53F2E22EE2 /* FoldStateScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 500BC3686FAAA3169C0B9FA1 /* FoldStateScriptTests.swift */; };
 		D56F32CB484F74EC7E49E581 /* PaywallViewControllerCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */; };
 		D5A1334579BE0B0A207B0BF7 /* TestModeModalViewController+TableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C0D4F9888B5827992153F5F /* TestModeModalViewController+TableView.swift */; };
 		D5C9A71CFB166225C082CAFB /* AutomaticPurchaseControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F3523491EC638DBBBD2133 /* AutomaticPurchaseControllerTests.swift */; };
@@ -696,7 +695,6 @@
 		FCF3B638D0D802202113DCBD /* ArchiveManifestUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 884DF3D8A1CA382BFEE9F8F4 /* ArchiveManifestUsage.swift */; };
 		FCF498808FF38EEC5E9895DB /* IdentityOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320AA5349848F696950F441A /* IdentityOptions.swift */; };
 		FEA3AED0B70D730993A16B2C /* DevModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577D25646DA26238881BF6AB /* DevModeTests.swift */; };
-		FF373F6A340D0E89D479B6C2 /* FoldStateScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E1341DF7B2D788F927B9989 /* FoldStateScript.swift */; };
 		FFC1A413FF8B96275C4C1649 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C16CBCBF2093DD9C5F3E105 /* Storage.swift */; };
 /* End PBXBuildFile section */
 
@@ -758,7 +756,6 @@
 		0D9CC1B947A08633E1C7BAE3 /* CoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManagerTests.swift; sourceTree = "<group>"; };
 		0DF71CC25A340374B0A19295 /* RestorationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestorationResult.swift; sourceTree = "<group>"; };
 		0DFD245D3CB9044C225E1503 /* WaitForEntitlementsAndConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitForEntitlementsAndConfigTests.swift; sourceTree = "<group>"; };
-		0E1341DF7B2D788F927B9989 /* FoldStateScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldStateScript.swift; sourceTree = "<group>"; };
 		0E3AC3B23DAAA8C1D125BDD3 /* CoreDataManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManager.swift; sourceTree = "<group>"; };
 		0EA0BD57CE7F03A50ACA9D25 /* DeepLinkRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkRouter.swift; sourceTree = "<group>"; };
 		0EC8705042D6AA74D40350A9 /* SK2ObserverModePurchaseDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK2ObserverModePurchaseDetector.swift; sourceTree = "<group>"; };
@@ -929,7 +926,6 @@
 		4EB1F47410CBC84D9ABD2F14 /* AutomaticPurchaseController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomaticPurchaseController.swift; sourceTree = "<group>"; };
 		4EC3DA8E774FBFE31F811FAF /* ConfigManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigManager.swift; sourceTree = "<group>"; };
 		4F63E6440964772B5B44AAF8 /* CustomerCenterConfiguration+Surveys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterConfiguration+Surveys.swift"; sourceTree = "<group>"; };
-		500BC3686FAAA3169C0B9FA1 /* FoldStateScriptTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoldStateScriptTests.swift; sourceTree = "<group>"; };
 		501D9B961F52A9BB0494BA5A /* SupportEmailComposerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportEmailComposerTests.swift; sourceTree = "<group>"; };
 		50458143450675EF205CE2C3 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
 		51407421A3CBF7AF0FC76E60 /* Bundle+Helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Helpers.swift"; sourceTree = "<group>"; };
@@ -1836,7 +1832,6 @@
 			isa = PBXGroup;
 			children = (
 				2A50766D6FBAFA61D1121B51 /* DevicePreloadScript.swift */,
-				0E1341DF7B2D788F927B9989 /* FoldStateScript.swift */,
 				63B0C49F4A92D8C5C05FA026 /* LocalFileSchemeHandler.swift */,
 				05B9771726558AF75743BF08 /* SubscriptionsApiEnvironmentScript.swift */,
 				9C2580C3CD6A8BF0C5258665 /* SWWebView.swift */,
@@ -2066,7 +2061,6 @@
 			isa = PBXGroup;
 			children = (
 				01AC1F76564A6EC47EE696F9 /* DevicePreloadScriptTests.swift */,
-				500BC3686FAAA3169C0B9FA1 /* FoldStateScriptTests.swift */,
 				A7A8FDBB0F8D450288C3FEA0 /* LocalFileSchemeHandlerTests.swift */,
 				E7050CACBCD334F3BE707474 /* SubscriptionsApiEnvironmentScriptTests.swift */,
 				23886A83274F67B1DCB8573A /* SWWebViewLoadingHandlerTests.swift */,
@@ -3877,7 +3871,6 @@
 				CE43399599386456DCCD1FDC /* FakeLocationAuthorizationStatusTests.swift in Sources */,
 				1F9AE04458B942D070FC4832 /* FakeTrackingAuthorizationStatusTests.swift in Sources */,
 				AC7D527612F631AAADC7D225 /* FileManagerMigratorTests.swift in Sources */,
-				D5342EEAC5AB0B53F2E22EE2 /* FoldStateScriptTests.swift in Sources */,
 				D4B5A9708204AB6D58904733 /* GetPaywallVcOperatorTests.swift in Sources */,
 				64B962A8B59ACE514B0E48AE /* GetPresenterOperatorTests.swift in Sources */,
 				D0D4568B72D20652C12AA89B /* GrantedEntitlementsTests.swift in Sources */,
@@ -4163,7 +4156,6 @@
 				ED1C693657DA7FCBAE2DDDC6 /* FeatureGatingBehaviour.swift in Sources */,
 				93102FF82C63E6A2C5C6EBB9 /* FeedbackSurveyView.swift in Sources */,
 				767974DF68CE67AE2066E3D6 /* FileManagerMigrator.swift in Sources */,
-				FF373F6A340D0E89D479B6C2 /* FoldStateScript.swift in Sources */,
 				0A5EFFC920E6BB29814BD66B /* Foundation+ASN1Coder.swift in Sources */,
 				12D25E5674DF81B033C9659E /* FreeTrialTemplate.swift in Sources */,
 				D978EAD4FA4865B5E07BF03B /* Future+Async.swift in Sources */,
