@@ -37,6 +37,13 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
 
 @MainActor
 final class PaywallMessageHandler: WebEventDelegate {
+  /// WebKit honours the last viewport tag, so this one must keep `viewport-fit=cover`
+  /// or every `env(safe-area-inset-*)` in the paywall reads zero.
+  nonisolated static let preventZoomScript =
+    "var meta = document.createElement('meta');" + "meta.name = 'viewport';"
+    + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';"
+    + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
+
   weak var delegate: PaywallMessageHandlerDelegate?
   private unowned let receiptManager: ReceiptManager
   private let factory: VariablesFactory
@@ -534,11 +541,8 @@ final class PaywallMessageHandler: WebEventDelegate {
         "var css = '*{-webkit-touch-callout:none;-webkit-user-select:none}'; var head = document.head || document.getElementsByTagName('head')[0]; var style = document.createElement('style'); style.type = 'text/css'; style.appendChild(document.createTextNode(css)); head.appendChild(style);"
       self.delegate?.webView.evaluateJavaScript(preventSelection)
 
-      let preventZoom =
-        "var meta = document.createElement('meta');" + "meta.name = 'viewport';"
-        + "meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';"
-        + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
-      self.delegate?.webView.evaluateJavaScript(preventZoom)
+      self.delegate?.webView.evaluateJavaScript(Self.preventZoomScript)
+      self.delegate?.webView.reportFoldState(force: true)
 
       if documentId != self.documentId {
         return

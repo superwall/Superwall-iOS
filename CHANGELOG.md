@@ -2,6 +2,16 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.0
+
+### Enhancements
+
+- Paywalls can now tell when a foldable iPhone is half-folded. On iOS 27.1 and later the SDK publishes `window.__SW_FOLD__` (`posture` of `continuous` or `folded`, plus the display `segments` on each side of the fold) and fires a `superwall:fold` event when it changes, mirroring the W3C Device Posture and Viewport Segments APIs that WKWebView does not expose.
+
+### Fixes
+
+- Fixes `env(safe-area-inset-*)` reading zero inside paywalls. The SDK's zoom-prevention viewport tag dropped `viewport-fit=cover`, so paywalls designed to respect the safe area ran under the status bar, Dynamic Island, home indicator and the iPhone Duo's camera strip.
+
 ## 4.18.0
 
 ### Enhancements
