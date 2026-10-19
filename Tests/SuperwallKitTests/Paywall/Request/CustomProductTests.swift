@@ -346,6 +346,35 @@ struct CustomProductTests {
   }
 
   @Test
+  func prepareToPurchase_customProduct_exposesTheTransactionIdItReports() async {
+    let dependencyContainer = DependencyContainer()
+    let product = makeCustomStoreProduct()
+    #expect(product.customTransactionId == nil)
+
+    await dependencyContainer.transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .purchaseFunc(product)
+    )
+    // What the purchase controller reads and passes to its checkout...
+    let idForCheckout = try? #require(product.customTransactionId)
+    #expect(idForCheckout.flatMap(UUID.init(uuidString:)) != nil)
+
+    // ...is the original transaction id `transaction_complete` reports.
+    let transaction = await dependencyContainer.transactionManager.latestTransaction(
+      for: product,
+      purchaseDate: Date()
+    )
+    #expect(transaction?.originalTransactionIdentifier == idForCheckout)
+
+    // Each purchase attempt gets its own id.
+    await dependencyContainer.transactionManager.prepareToPurchase(
+      product: product,
+      purchaseSource: .purchaseFunc(product)
+    )
+    #expect(product.customTransactionId != idForCheckout)
+  }
+
+  @Test
   func prepareToPurchase_customProduct_marksFreeTrialAvailableWhenUserHasNoPriorEntitlement() async {
     let dependencyContainer = DependencyContainer()
     let product = makeCustomStoreProduct()

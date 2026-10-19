@@ -850,7 +850,9 @@ final class TransactionManager {
     }
   }
 
-  private func latestTransaction(
+  /// The purchase's transaction. For a custom product, it carries the product's
+  /// `customTransactionId`, the id the purchase controller passed to its checkout.
+  func latestTransaction(
     for product: StoreProduct,
     purchaseDate: Date?
   ) async -> StoreTransaction? {

@@ -23,6 +23,10 @@ public protocol PurchaseController: AnyObject {
   ///
   /// Add your purchase logic here and return its result. You can use Apple's StoreKit APIs,
   /// or if you use RevenueCat, you can call [`Purchases.shared.purchase(product:)`](https://revenuecat.github.io/purchases-ios-docs/4.13.4/documentation/revenuecat/purchases/purchase(product:completion:)).
+  ///
+  /// For a custom product, route the purchase through your own checkout and pass it the
+  /// product's ``StoreProduct/customTransactionId``, so the purchase your server reports to
+  /// Superwall is attributed to the paywall that sold it.
   /// - Parameters:
   ///   - product: The ``StoreProduct`` the user would like to purchase.
   ///
