@@ -50,6 +50,22 @@ struct FoldStateScriptTests {
     #expect(state.posture == .continuous)
   }
 
+  @Test("A horizontal division that only overlaps the bottom edge leaves one segment")
+  func ignoresHorizontalDivisionAtEdge() {
+    let bounds = CGRect(x: 0, y: 0, width: 669, height: 470)
+    let state = FoldState(bounds: bounds, activeDivisions: [CGRect(x: 0, y: 456, width: 669, height: 40)])
+    #expect(state.posture == .continuous)
+    #expect(state.segments == [bounds])
+  }
+
+  @Test("A vertical division that only overlaps the right edge leaves one segment")
+  func ignoresVerticalDivisionAtEdge() {
+    let bounds = CGRect(x: 0, y: 0, width: 470, height: 669)
+    let state = FoldState(bounds: bounds, activeDivisions: [CGRect(x: 456, y: 0, width: 40, height: 669)])
+    #expect(state.posture == .continuous)
+    #expect(state.segments == [bounds])
+  }
+
   @Test("The script sets the global and notifies the page")
   func scriptPublishesState() {
     let state = FoldState(bounds: CGRect(x: 0, y: 0, width: 10, height: 20), activeDivisions: [])

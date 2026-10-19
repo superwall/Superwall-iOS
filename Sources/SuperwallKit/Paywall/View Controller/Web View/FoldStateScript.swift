@@ -20,28 +20,33 @@ struct FoldState: Equatable {
   let posture: Posture
   let segments: [CGRect]
 
-  /// Splits `bounds` along the first active division region, the way WebKit
-  /// reports viewport segments when its fold APIs are enabled.
+  /// Splits `bounds` along the first active division region whose centre line
+  /// crosses it, the way WebKit reports viewport segments when its fold APIs
+  /// are enabled. A division that only overlaps an edge leaves one segment.
   init(bounds: CGRect, activeDivisions: [CGRect]) {
-    guard let fold = activeDivisions.first(where: { bounds.intersects($0) }) else {
-      posture = .continuous
-      segments = [bounds]
-      return
+    for fold in activeDivisions {
+      let isVertical = fold.width < fold.height
+      if isVertical, fold.midX > bounds.minX, fold.midX < bounds.maxX {
+        let split = fold.midX - bounds.minX
+        posture = .folded
+        segments = [
+          CGRect(x: bounds.minX, y: bounds.minY, width: split, height: bounds.height),
+          CGRect(x: bounds.minX + split, y: bounds.minY, width: bounds.width - split, height: bounds.height)
+        ]
+        return
+      }
+      if !isVertical, fold.midY > bounds.minY, fold.midY < bounds.maxY {
+        let split = fold.midY - bounds.minY
+        posture = .folded
+        segments = [
+          CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width, height: split),
+          CGRect(x: bounds.minX, y: bounds.minY + split, width: bounds.width, height: bounds.height - split)
+        ]
+        return
+      }
     }
-    posture = .folded
-    if fold.width < fold.height {
-      let split = fold.midX - bounds.minX
-      segments = [
-        CGRect(x: bounds.minX, y: bounds.minY, width: split, height: bounds.height),
-        CGRect(x: bounds.minX + split, y: bounds.minY, width: bounds.width - split, height: bounds.height)
-      ]
-    } else {
-      let split = fold.midY - bounds.minY
-      segments = [
-        CGRect(x: bounds.minX, y: bounds.minY, width: bounds.width, height: split),
-        CGRect(x: bounds.minX, y: bounds.minY + split, width: bounds.width, height: bounds.height - split)
-      ]
-    }
+    posture = .continuous
+    segments = [bounds]
   }
 
   /// Reads the view's active division regions through UIKit's public
