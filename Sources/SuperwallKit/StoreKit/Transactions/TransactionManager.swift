@@ -34,6 +34,11 @@ final class TransactionManager {
     case purchasing(PurchaseSource)
   }
 
+  /// Tracks an event. Replaced in tests to observe what's tracked.
+  var trackEvent: (Trackable) async -> Void = { event in
+    _ = await Superwall.shared.track(event)
+  }
+
   init(
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
@@ -215,7 +220,7 @@ final class TransactionManager {
         state: state,
         paywallInfo: paywallInfo
       )
-      await Superwall.shared.track(trackedEvent)
+      await trackEvent(trackedEvent)
     }
 
     enum RestorationHandlerOutcome {
@@ -467,7 +472,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(transactionRestore)
+      await trackEvent(transactionRestore)
       await paywallViewController.webView.messageHandler.handle(.transactionRestore)
 
       let superwallOptions = factory.makeSuperwallOptions()
@@ -484,7 +489,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(trackedEvent)
+      await trackEvent(trackedEvent)
     }
 
     // `didRestore` is only reached on a successful restore, at which point
@@ -547,6 +552,105 @@ final class TransactionManager {
     }
   }
 
+  // MARK: - Custom store checkout
+
+  /// Handles a step of a custom store checkout that the paywall runs itself.
+  ///
+  /// Each step finishes like its `PurchaseController` counterpart for a custom
+  /// product: `transaction_start`, `transaction_complete` with a
+  /// ``CustomStoreTransaction``, the post-purchase entitlements refresh and the
+  /// dismissal, `transaction_abandon` or `transaction_fail` with the purchase
+  /// failure alert. The `PurchaseController` isn't called.
+  func handleCustomStoreCheckout(
+    _ checkout: CustomStoreCheckout,
+    paywallViewController: PaywallViewController
+  ) async {
+    let productId = checkout.productId
+    guard
+      let product = await storeKitManager.product(withId: productId),
+      product.isCustomProduct
+    else {
+      Logger.debug(
+        logLevel: .error,
+        scope: .transactions,
+        message: "Ignoring a custom store checkout of \"\(productId)\": "
+          + "it isn't a custom product of this paywall.",
+        info: ["checkout": checkout]
+      )
+      return
+    }
+
+    switch checkout {
+    case .start(_, let customTransactionId):
+      await prepareToPurchase(
+        product: product,
+        purchaseSource: .internal(productId, paywallViewController, true),
+        customStoreCheckoutTransactionId: customTransactionId
+      )
+    case let .complete(_, customTransactionId, shouldDismiss):
+      product.customTransactionId = customTransactionId
+      let source = await resumeCustomStoreCheckout(
+        of: product,
+        productId: productId,
+        paywallViewController: paywallViewController,
+        shouldDismiss: shouldDismiss
+      )
+      // The checkout may have ended in an in-app browser. Close it first, or
+      // the paywall's dismissal would wait on it.
+      await paywallViewController.closeSafari()
+      await handle(result: .purchased, state: .purchasing(source))
+    case .abandon:
+      let source = await resumeCustomStoreCheckout(
+        of: product,
+        productId: productId,
+        paywallViewController: paywallViewController
+      )
+      await handle(result: .cancelled, state: .purchasing(source))
+    case .fail(_, let message):
+      let source = await resumeCustomStoreCheckout(
+        of: product,
+        productId: productId,
+        paywallViewController: paywallViewController
+      )
+      await handle(
+        result: .failed(PurchaseError.customStoreCheckoutFailed(message)),
+        state: .purchasing(source)
+      )
+    }
+  }
+
+  /// Points the purchasing coordinator at a custom store checkout that has
+  /// ended, so its outcome is handled like a `PurchaseController` result.
+  ///
+  /// Keeps the free trial availability worked out when the checkout started.
+  /// When the coordinator has since moved on, or never saw the start, works it
+  /// out again.
+  private func resumeCustomStoreCheckout(
+    of product: StoreProduct,
+    productId: String,
+    paywallViewController: PaywallViewController,
+    shouldDismiss: Bool = false
+  ) async -> PurchaseSource {
+    let coordinator = factory.makePurchasingCoordinator()
+    var isCheckoutInProgress = false
+    if case let .internal(_, inProgressPaywall, _) = await coordinator.source,
+      inProgressPaywall === paywallViewController,
+      await coordinator.product?.productIdentifier == product.productIdentifier {
+      isCheckoutInProgress = true
+    }
+    let isTrialAvailable = isCheckoutInProgress
+      ? await coordinator.isFreeTrialAvailable
+      : await isFreeTrialAvailable(for: product)
+
+    let source = PurchaseSource.internal(productId, paywallViewController, shouldDismiss)
+    await coordinator.beginPurchase(
+      of: product,
+      source: source,
+      isFreeTrialAvailable: isTrialAvailable
+    )
+    return source
+  }
+
   /// Cancels the transaction timeout when the application resigns active.
   ///
   /// When the purchase sheet appears, the application resigns active.
@@ -591,7 +695,7 @@ final class TransactionManager {
           isObserved: isObserved,
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
-        await Superwall.shared.track(trackedEvent)
+        await trackEvent(trackedEvent)
         await paywallViewController.webView.messageHandler.handle(.transactionFail)
       }
     case .purchaseFunc,
@@ -616,7 +720,7 @@ final class TransactionManager {
           isObserved: isObserved,
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
-        await Superwall.shared.track(trackedEvent)
+        await trackEvent(trackedEvent)
       }
     }
   }
@@ -653,13 +757,19 @@ final class TransactionManager {
   }
 
   /// Tracks the analytics and logs the start of the transaction.
+  ///
+  /// - Parameters:
+  ///   - customStoreCheckoutTransactionId: Set when the paywall runs a custom
+  ///   store checkout itself: the transaction id Superwall generated for that
+  ///   checkout. The checkout's own browser owns the paywall's loading state.
   func prepareToPurchase(
     product: StoreProduct,
-    purchaseSource: PurchaseSource
+    purchaseSource: PurchaseSource,
+    customStoreCheckoutTransactionId: String? = nil
   ) async {
     // Always regenerate the custom transaction ID before a new purchase attempt.
     if product.isCustomProduct {
-      product.customTransactionId = UUID().uuidString
+      product.customTransactionId = customStoreCheckoutTransactionId ?? UUID().uuidString
     }
 
     let isFreeTrialAvailable = await isFreeTrialAvailable(for: product)
@@ -693,11 +803,13 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(transactionStart)
+      await trackEvent(transactionStart)
       await paywallViewController.webView.messageHandler.handle(.transactionStart)
 
-      await MainActor.run {
-        paywallViewController.loadingState = .loadingPurchase
+      if customStoreCheckoutTransactionId == nil {
+        await MainActor.run {
+          paywallViewController.loadingState = .loadingPurchase
+        }
       }
     case .purchaseFunc,
       .observeFunc:
@@ -725,7 +837,7 @@ final class TransactionManager {
           isObserved: isObserved,
           storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
         )
-        await Superwall.shared.track(trackedEvent)
+        await trackEvent(trackedEvent)
       }
     }
 
@@ -983,7 +1095,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(transactionAbandon)
+      await trackEvent(transactionAbandon)
       await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 
       await MainActor.run {
@@ -1008,7 +1120,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(trackedEvent)
+      await trackEvent(trackedEvent)
     }
   }
 
@@ -1044,7 +1156,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(transactionFail)
+      await trackEvent(transactionFail)
       await paywallViewController.webView.messageHandler.handle(.transactionFail)
     case .purchaseFunc,
       .observeFunc:
@@ -1064,7 +1176,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
-      await Superwall.shared.track(trackedEvent)
+      await trackEvent(trackedEvent)
     }
 
     let bundle = LocalizationLogic.localizedBundle()
@@ -1200,12 +1312,12 @@ final class TransactionManager {
       demandScore: deviceAttributes["demandScore"] as? Int,
       demandTier: deviceAttributes["demandTier"] as? String
     )
-    await Superwall.shared.track(trackedTransactionEvent)
+    await trackEvent(trackedTransactionEvent)
     await placementsQueue.flushInternal()
 
     switch type {
     case .nonRecurringProductPurchase:
-      await Superwall.shared.track(
+      await trackEvent(
         InternalSuperwallEvent.NonRecurringProductPurchase(
           paywallInfo: paywallInfo,
           product: product,
@@ -1213,7 +1325,7 @@ final class TransactionManager {
         )
       )
     case .freeTrialStart:
-      await Superwall.shared.track(
+      await trackEvent(
         InternalSuperwallEvent.FreeTrialStart(
           paywallInfo: paywallInfo,
           product: product,
@@ -1229,7 +1341,7 @@ final class TransactionManager {
         factory: factory
       )
     case .subscriptionStart:
-      await Superwall.shared.track(
+      await trackEvent(
         InternalSuperwallEvent.SubscriptionStart(
           paywallInfo: paywallInfo,
           product: product,

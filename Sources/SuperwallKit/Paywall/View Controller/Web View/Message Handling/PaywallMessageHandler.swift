@@ -32,6 +32,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
     shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout)
   func revealWebViewBehindSpinner()
 }
 
@@ -260,6 +261,22 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
+    case let .customCheckoutStart(_, productId, customTransactionId):
+      delegate?.handleCustomStoreCheckout(
+        .start(productId: productId, customTransactionId: customTransactionId)
+      )
+    case let .customCheckoutComplete(productId, customTransactionId, shouldDismiss):
+      delegate?.handleCustomStoreCheckout(
+        .complete(
+          productId: productId,
+          customTransactionId: customTransactionId,
+          shouldDismiss: shouldDismiss
+        )
+      )
+    case .customCheckoutAbandon(let productId):
+      delegate?.handleCustomStoreCheckout(.abandon(productId: productId))
+    case let .customCheckoutFail(productId, message):
+      delegate?.handleCustomStoreCheckout(.fail(productId: productId, message: message))
     case .requestStoreReview(let reviewType):
       requestReview(type: reviewType)
     case let .scheduleNotification(type, title, subtitle, body, delay):

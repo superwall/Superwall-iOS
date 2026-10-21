@@ -1654,6 +1654,11 @@ extension Superwall: PaywallViewControllerEventDelegate {
         purchaseTask = nil
       }
       await purchaseTask?.value
+    case .customStoreCheckout(let checkout):
+      await dependencyContainer.transactionManager.handleCustomStoreCheckout(
+        checkout,
+        paywallViewController: paywallViewController
+      )
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):

@@ -14,6 +14,7 @@ enum PaywallWebEvent: Equatable {
     shouldDismiss: Bool
   )
   case initiateRestore
+  case customStoreCheckout(CustomStoreCheckout)
   case custom(string: String)
   case openedURL(url: URL)
   case openedUrlInSafari(_ url: URL)

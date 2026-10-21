@@ -159,6 +159,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// Whether the paywall is running a custom store checkout. The paywall reports
+  /// how it ends, so closing its sheet isn't tracked as an abandoned Stripe checkout.
+  private var isCustomStoreCheckoutInProgress = false
+
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
 
@@ -500,6 +504,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
+  }
+
+  /// Closes the in-app browser, if one is open, and returns once it's gone.
+  func closeSafari() async {
+    await withCheckedContinuation { continuation in
+      closeSafari {
+        continuation.resume()
+      }
+    }
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
@@ -1299,8 +1312,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         // 1. Redeem did NOT succeed
         // 2. Dismissal was NOT programmatic (user dismissed it)
         // 3. No stripe checkout abandon message was received
+        // 4. It isn't a custom store checkout, whose outcome the paywall reports
         if !self.didRedeemSucceedDuringCheckout,
           !self.isCheckoutDismissedProgrammatically,
+          !self.isCustomStoreCheckoutInProgress,
           !self.didReceiveStripeCheckoutAbandonMessage {
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
@@ -1382,6 +1397,15 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
     }
+  }
+
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout) {
+    if case .start = checkout {
+      isCustomStoreCheckoutInProgress = true
+    } else {
+      isCustomStoreCheckoutInProgress = false
+    }
+    eventDidOccur(.customStoreCheckout(checkout))
   }
 
   private func enqueueStripeCheckoutTask(
