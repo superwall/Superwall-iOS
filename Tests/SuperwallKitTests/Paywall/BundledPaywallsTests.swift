@@ -83,19 +83,32 @@ struct BundledPaywallsTests {
   }
 
   @Test
-  func archiveManagerServesTheBundledPaywallOnlyForTheBundledVersion() throws {
+  func archiveManagerServesTheBundledPaywallOnlyForTheBundledVersion() async throws {
     let manager = PaywallArchiveManager(
       bundledPaywalls: BundledPaywalls(directory: try makeBundle())
     )
     let bundledPaywall = Paywall.stub().setting(\.url, to: Self.documentURL)
-    let archiveURL = try #require(manager.getBundledArchiveURL(for: bundledPaywall))
+    let archiveURL = try #require(await manager.getBundledArchiveURL(for: bundledPaywall))
     #expect(archiveURL.pathExtension == "webarchive")
     #expect(FileManager.default.fileExists(atPath: archiveURL.path))
-    #expect(manager.getBundledArchiveURL(for: bundledPaywall) == archiveURL)
+    #expect(await manager.getBundledArchiveURL(for: bundledPaywall) == archiveURL)
 
     let republished = Paywall.stub()
       .setting(\.url, to: URL(string: "https://cdn.example.com/onboarding.html?sw_cache_key=2")!)
-    #expect(manager.getBundledArchiveURL(for: republished) == nil)
+    #expect(await manager.getBundledArchiveURL(for: republished) == nil)
+  }
+
+  @Test
+  func preloadingBuildsTheBundledArchiveWithoutAManifest() async throws {
+    let directory = try makeBundle()
+    let manager = PaywallArchiveManager(bundledPaywalls: BundledPaywalls(directory: directory))
+    let paywall = Paywall.stub().setting(\.url, to: Self.documentURL)
+    #expect(paywall.manifest == nil)
+
+    await manager.preloadArchive(paywall: paywall)
+
+    let archiveURL = try #require(await manager.getBundledArchiveURL(for: paywall))
+    #expect(FileManager.default.fileExists(atPath: archiveURL.path))
   }
 
   @Test

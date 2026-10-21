@@ -32,6 +32,7 @@ final class PaywallArchiveManager {
 
   /// Attempts to preload the archive.
   func preloadArchive(paywall: Paywall) async {
+    _ = await getBundledArchiveURL(for: paywall)
     guard let manifest = paywall.manifest else {
       return
     }
@@ -74,7 +75,10 @@ final class PaywallArchiveManager {
 
   /// Returns the URL of a web archive built from the paywall that `superwall bundle`
   /// placed in the app, if the app bundles this exact version of the paywall.
-  func getBundledArchiveURL(for paywall: Paywall) -> URL? {
+  ///
+  /// The first call for a paywall reads its files and writes the archive, so it
+  /// runs off the main actor.
+  func getBundledArchiveURL(for paywall: Paywall) async -> URL? {
     let urls = [paywall.url] + paywall.urlConfig.endpoints.map(\.url)
     guard
       let cacheDirectory = cacheDirectory,
