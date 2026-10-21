@@ -126,8 +126,13 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 ### Device IP enrichment
 
 `DeviceIPCollector` owns session-local, timestamped IP observations. Collection is for the
-MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on; SuperwallKit's privacy
-manifest doesn't declare it, so apps that turn the MMP on declare it themselves. Keep collection
+MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on. The one exception is
+AppsFlyer: when an `appsflyerId` integration attribute is set, the IPv4 lookup alone runs, and only
+once the device has been seen on IPv6 this session and no fresh IPv4 address is known, and only
+`ipV4` is exposed. Nothing is looked up or exposed while `eventTrackingBehavior` is `.none`. Remember the IPv6 sighting for the session: enrichment may not run again, and the
+IPv4 address must keep being refreshed for late conversions.
+SuperwallKit's privacy manifest doesn't declare IP collection, so apps that turn on the MMP or set an
+AppsFlyer ID declare it themselves. Keep collection
 independent of enrichment success and purchase/configuration latency, preserve each family
 separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
 Do not add customer attributes or authentication headers to the public IP lookup requests.

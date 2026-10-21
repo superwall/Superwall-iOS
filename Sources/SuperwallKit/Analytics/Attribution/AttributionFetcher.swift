@@ -258,6 +258,9 @@ final class AttributionFetcher {
     }
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
+    if attributes[IntegrationAttribute.appsflyerId.description] != nil {
+      deviceHelper.startIPCollectionIfEnabled()
+    }
     return true
   }
 }

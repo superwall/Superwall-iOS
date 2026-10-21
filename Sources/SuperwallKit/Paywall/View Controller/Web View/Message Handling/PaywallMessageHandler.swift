@@ -20,13 +20,16 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
   func openDeepLink(_ url: URL, shouldDismiss: Bool)
   func presentSafariInApp(_ url: URL)
-  func presentSafariExternal(_ url: URL)
+  func presentSafariExternal(_ url: URL, drawsWaitingScreen: Bool, isTeleport: Bool)
+  func startTeleportWatch(_ watch: TeleportReturnCover.Watch)
+  func endTeleportWatch()
   func requestReview(type: ReviewType)
   func openPaymentSheet(_ url: URL)
   func handleStripeCheckoutSubmit(checkoutContextId: String, productId: String)
   func handleStripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func revealWebViewBehindSpinner()
@@ -39,20 +42,39 @@ final class PaywallMessageHandler: WebEventDelegate {
   private let factory: VariablesFactory
   private let permissionHandler: PermissionHandling
   private let customCallbackRegistry: CustomCallbackRegistry
+  /// Re-sends device attributes if the ATT answer changed the ad consent they report.
+  private let republishIfAdConsentChanged: () async -> Void
 
-  struct EnqueuedMessage {
-    let name: String
-    let paywall: Paywall
+  /// Whether the current page has had its templates and can take messages.
+  private var isDocumentReady = false
+  /// Whether the paywall is on screen, so a page that becomes ready should be
+  /// told with `paywall_open`.
+  private var isPaywallOpen = false
+  /// Goes up with every page that pings and every load the SDK starts, so the
+  /// setup for a page that has since been replaced doesn't mark the new one
+  /// ready.
+  private var documentId = 0
+  /// The last of the messages that must reach the page in order: refreshed
+  /// templates, `paywall_open` and `paywall_close`. Each waits for the one
+  /// before, so a template refresh that's slow to build can't arrive after
+  /// `paywall_open` and make the page forget it's open.
+  private var lastOrderedMessage: Task<Void, Never>?
+
+  /// Tracks an event. Replaced in tests to observe what's tracked.
+  var trackEvent: (Trackable) async -> Void = { event in
+    _ = await Superwall.shared.track(event)
   }
-  /// Used to enqueue `paywall_open` messages if the paywall isn't ready to receive them yet.
-  private var messageQueue: Queue<EnqueuedMessage> = Queue()
 
   init(
     receiptManager: ReceiptManager,
     factory: VariablesFactory,
     permissionHandler: PermissionHandling,
-    customCallbackRegistry: CustomCallbackRegistry
+    customCallbackRegistry: CustomCallbackRegistry,
+    republishIfAdConsentChanged: @escaping () async -> Void = {
+      await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
+    }
   ) {
+    self.republishIfAdConsentChanged = republishIfAdConsentChanged
     self.receiptManager = receiptManager
     self.factory = factory
     self.permissionHandler = permissionHandler
@@ -72,41 +94,35 @@ final class PaywallMessageHandler: WebEventDelegate {
 
     switch message {
     case .templateParamsAndUserAttributes:
-      Task {
+      sendInOrder {
         await self.passTemplatesToWebView(from: paywall)
       }
     case .onReady(let paywalljsVersion):
       delegate?.paywall.paywalljsVersion = paywalljsVersion
+      // Not ready until its templates are in, even if a page that reloaded
+      // itself left this set.
+      isDocumentReady = false
+      documentId += 1
+      let documentId = documentId
       let loadedAt = Date()
       Task {
-        await self.didLoadWebView(for: paywall, at: loadedAt)
+        await self.didLoadWebView(for: paywall, at: loadedAt, documentId: documentId)
       }
     case .close:
       hapticFeedback()
       delegate?.eventDidOccur(.closed)
     case .paywallOpen:
-      let paywallOpen = SuperwallEventObjc.paywallOpen.description
-      if delegate?.paywall.paywalljsVersion == nil {
-        let message = EnqueuedMessage(
-          name: paywallOpen,
-          paywall: paywall
-        )
-        messageQueue.enqueue(message)
-      } else {
-        Task {
-          await self.pass(placement: paywallOpen, from: paywall)
-        }
+      isPaywallOpen = true
+      // A page that isn't ready yet is told once it is.
+      if isDocumentReady {
+        sendPaywallOpen(from: paywall, documentId: documentId)
       }
     case .paywallClose:
-      let paywallClose = SuperwallEventObjc.paywallClose.description
-      if delegate?.paywall.paywalljsVersion == nil {
-        let message = EnqueuedMessage(
-          name: paywallClose,
-          paywall: paywall
-        )
-        messageQueue.enqueue(message)
-      } else {
-        Task {
+      isPaywallOpen = false
+      // A page that isn't ready yet was never told it is open.
+      if isDocumentReady {
+        let paywallClose = SuperwallEventObjc.paywallClose.description
+        sendInOrder {
           await self.pass(placement: paywallClose, from: paywall)
         }
       }
@@ -181,8 +197,16 @@ final class PaywallMessageHandler: WebEventDelegate {
       }
     case .openUrl(let url):
       openUrl(url)
-    case .openUrlInSafari(let url):
-      openUrlInSafari(url)
+    case let .openUrlInSafari(url, drawsWaitingScreen, isTeleport):
+      openUrlInSafari(
+        url,
+        drawsWaitingScreen: drawsWaitingScreen,
+        isTeleport: isTeleport
+      )
+    case .teleportWatchStart(let watch):
+      delegate?.startTeleportWatch(watch)
+    case .teleportWatchEnd:
+      delegate?.endTeleportWatch()
     case .openPaymentSheet(let url):
       openPaymentSheet(url)
     case .openDeepLink(let url):
@@ -206,14 +230,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         state: .start,
         productId: productId
       )
-    case let .stripeCheckoutComplete(checkoutContextId, productId):
+    case let .stripeCheckoutComplete(checkoutContextId, productId, shouldDismiss):
       trackStripeCheckoutEvent(
         state: .complete,
         productId: productId
       )
       delegate?.handleStripeCheckoutComplete(
         checkoutContextId: checkoutContextId,
-        productId: productId
+        productId: productId,
+        shouldDismiss: shouldDismiss
       )
     case let .stripeCheckoutSubmit(checkoutContextId, productId):
       trackStripeCheckoutEvent(
@@ -273,6 +298,52 @@ final class PaywallMessageHandler: WebEventDelegate {
         await Superwall.shared.track(event)
       }
     }
+  }
+
+  /// Called when a new page replaces the old one, and when the SDK starts
+  /// loading a page over one that is still on screen. The old page isn't
+  /// told about the paywall opening or closing, and the new one is told the
+  /// paywall is open once it pings. A teleport the old page was watching ends
+  /// with it, since the new page will never end it.
+  func documentWillLoad() {
+    isDocumentReady = false
+    documentId += 1
+    delegate?.endTeleportWatch()
+  }
+
+  /// Runs `send` after every message sent in order before it has gone.
+  private func sendInOrder(_ send: @escaping () async -> Void) {
+    lastOrderedMessage = Task { [lastOrderedMessage] in
+      await lastOrderedMessage?.value
+      await send()
+    }
+  }
+
+  /// Tells the page the paywall is open, after any template refresh sent
+  /// before it. Skipped if another page has replaced this one by then, since
+  /// that page is told once it's ready.
+  private func sendPaywallOpen(from paywall: Paywall, documentId: Int) {
+    let paywallOpen = SuperwallEventObjc.paywallOpen.description
+    let payload = presentationPayload()
+    sendInOrder {
+      if documentId != self.documentId {
+        return
+      }
+      await self.pass(placement: paywallOpen, from: paywall, payload: payload)
+    }
+  }
+
+  /// How this presentation came about, so purchases the paywall starts are attributed to it.
+  private func presentationPayload() -> [String: Any] {
+    guard let info = delegate?.info else {
+      return [:]
+    }
+    var payload: [String: Any] = ["presented_by": info.presentedBy]
+    payload["presentation_id"] = info.presentationId
+    payload["presentation_source_type"] = info.presentationSourceType
+    payload["presented_by_event_id"] = info.presentedByPlacementWithId
+    payload["presented_by_event_name"] = info.presentedByPlacementWithName
+    return payload
   }
 
   nonisolated private func pass(
@@ -375,7 +446,8 @@ final class PaywallMessageHandler: WebEventDelegate {
   /// feel native.
   nonisolated private func didLoadWebView(
     for paywall: Paywall,
-    at loadedAt: Date
+    at loadedAt: Date,
+    documentId: Int
   ) async {
     Task(priority: .utility) {
       guard let delegate = await self.delegate else {
@@ -468,22 +540,19 @@ final class PaywallMessageHandler: WebEventDelegate {
         + "var head = document.getElementsByTagName('head')[0];" + "head.appendChild(meta);"
       self.delegate?.webView.evaluateJavaScript(preventZoom)
 
-      while !messageQueue.isEmpty {
-        if let message = messageQueue.dequeue() {
-          Task {
-            await self.pass(
-              placement: message.name,
-              from: message.paywall
-            )
-          }
-        }
+      if documentId != self.documentId {
+        return
+      }
+      isDocumentReady = true
+      if isPaywallOpen {
+        sendPaywallOpen(from: paywall, documentId: documentId)
       }
     }
   }
 
   private func openUrl(_ url: URL) {
     #if os(visionOS)
-      openUrlInSafari(url)
+      openUrlInSafari(url, drawsWaitingScreen: false, isTeleport: false)
     #else
       detectHiddenPaywallEvent(
         "openUrl",
@@ -495,14 +564,25 @@ final class PaywallMessageHandler: WebEventDelegate {
     #endif
   }
 
-  private func openUrlInSafari(_ url: URL) {
+  private func openUrlInSafari(
+    _ url: URL,
+    drawsWaitingScreen: Bool,
+    isTeleport: Bool
+  ) {
     detectHiddenPaywallEvent(
       "openUrlInSafari",
       userInfo: ["url": url]
     )
     hapticFeedback()
     delegate?.eventDidOccur(.openedUrlInSafari(url))
-    delegate?.presentSafariExternal(url)
+    if isTeleport {
+      trackTeleportOpen()
+    }
+    delegate?.presentSafariExternal(
+      url,
+      drawsWaitingScreen: drawsWaitingScreen,
+      isTeleport: isTeleport
+    )
   }
 
   private func openPaymentSheet(_ url: URL) {
@@ -581,6 +661,15 @@ final class PaywallMessageHandler: WebEventDelegate {
         placementData: placementData
       )
       await Superwall.shared.track(event)
+    }
+  }
+
+  private func trackTeleportOpen() {
+    guard let delegate = delegate else { return }
+    let event = InternalSuperwallEvent.TeleportOpen(paywallInfo: delegate.info)
+    let trackEvent = self.trackEvent
+    Task {
+      await trackEvent(event)
     }
   }
 
@@ -677,6 +766,9 @@ final class PaywallMessageHandler: WebEventDelegate {
       await Superwall.shared.track(requestedEvent)
 
       let status = await permissionHandler.requestPermission(permissionType)
+      if permissionType == .tracking {
+        await republishIfAdConsentChanged()
+      }
 
       // Track permission result event
       let resultState: InternalSuperwallEvent.PermissionState =

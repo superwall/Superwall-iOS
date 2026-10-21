@@ -23,9 +23,9 @@ struct CustomerCenterPathResolverTests {
   }
   func sub(active: Bool = true, willRenew: Bool = true, expires: TimeInterval? = 86_400, revoked: Bool = false,
            offer: LatestSubscription.OfferType? = nil, store: ProductStore = .appStore, group: String? = "g1",
-           purchasedAgo: TimeInterval = 86_400) -> SubscriptionTransaction {
+           purchasedAgo: TimeInterval = 86_400, grace: Bool = false, retry: Bool = false) -> SubscriptionTransaction {
     SubscriptionTransaction(transactionId: "t", productId: "monthly", purchaseDate: now.addingTimeInterval(-purchasedAgo),
-      willRenew: willRenew, isRevoked: revoked, isInGracePeriod: false, isInBillingRetryPeriod: false, isActive: active,
+      willRenew: willRenew, isRevoked: revoked, isInGracePeriod: grace, isInBillingRetryPeriod: retry, isActive: active,
       expirationDate: expires.map { now.addingTimeInterval($0) }, offerType: offer, subscriptionGroupId: group, store: store)
   }
   func context(_ purchase: PurchasePresentation?, product: ProductDisplayInfo? = nil, family: Bool = false, email: Bool = true,
@@ -84,6 +84,31 @@ struct CustomerCenterPathResolverTests {
     #expect(expired == [.refund(productId: "monthly"), .contactSupport])  // expired keeps refund (Apple allows), loses manage/change
     let revoked = destinations(context(presentation(sub(revoked: true), product: monthly), product: monthly))
     #expect(revoked == [.contactSupport])
+  }
+
+  @Test(
+    "a failed renewal keeps the manage row though its expiration date has passed",
+    arguments: [(true, false), (false, true)]
+  )
+  func billingIssueKeepsManageRow(grace: Bool, retry: Bool) {
+    let lapsed = sub(active: false, expires: -86_400, grace: grace, retry: retry)
+    let appStore = destinations(context(presentation(lapsed, product: monthly), product: monthly))
+    #expect(appStore.contains(.appleManageSheet(subscriptionGroupId: "g1")))
+
+    let url = URL(string: "https://app.superwall.app/manage")!
+    let webLapsed = sub(active: false, expires: -86_400, store: .stripe, grace: grace, retry: retry)
+    let web = destinations(context(presentation(webLapsed, product: nil), web: url))
+    #expect(web.contains(.webManage(url)))
+  }
+
+  @Test("a failed renewal still hides the manage row when family shared or revoked")
+  func billingIssueManageRowGating() {
+    let lapsed = sub(active: false, expires: -86_400, retry: true)
+    let shared = destinations(context(presentation(lapsed, product: monthly), product: monthly, family: true))
+    #expect(!shared.contains(.appleManageSheet(subscriptionGroupId: "g1")))
+    let revoked = sub(active: false, expires: -86_400, revoked: true, retry: true)
+    let revokedPaths = destinations(context(presentation(revoked, product: monthly), product: monthly))
+    #expect(!revokedPaths.contains(.appleManageSheet(subscriptionGroupId: "g1")))
   }
 
   @Test("refund: hidden for trial, $0 price, revoked, outside window; shown inside window")

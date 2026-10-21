@@ -25,6 +25,32 @@ extension CustomerCenterViewModel {
     case managedElsewhere(storeLabelKey: String?)
   }
 
+  /// What the detail screen opened for `opened` shows now.
+  struct DetailContent: Equatable {
+    /// The purchase as it stands in ``purchases``, or as it was when the screen opened if it's
+    /// no longer listed.
+    let purchase: PurchasePresentation
+    /// `nil` when there are actions to show; otherwise which sentence to show instead.
+    let emptyState: DetailEmptyState?
+  }
+
+  /// Looks `opened` up again in ``purchases`` rather than trusting the copy the screen was built
+  /// with.
+  ///
+  /// A screen pushed onto the host's navigation controller is its own hosting controller, and
+  /// keeps whatever it was handed when it was pushed. Cancelling in Apple's sheet refreshes
+  /// ``purchases``, but that copy would still say "Renews on" and still offer to cancel.
+  ///
+  /// When the purchase is no longer listed — a restore under another account, say — the screen
+  /// keeps showing the card it opened with, but offers nothing to do with it: there is no longer
+  /// anything behind it to act on.
+  func detailContent(for opened: PurchasePresentation) -> DetailContent {
+    guard let current = purchases.first(where: { $0.id == opened.id }) else {
+      return DetailContent(purchase: opened, emptyState: .nothingToDo)
+    }
+    return DetailContent(purchase: current, emptyState: detailEmptyState(for: current))
+  }
+
   /// Whether the detail screen for `purchase` has anything to act on.
   func hasActions(for purchase: PurchasePresentation) -> Bool {
     !paths(for: purchase, isScreenLevel: false).isEmpty

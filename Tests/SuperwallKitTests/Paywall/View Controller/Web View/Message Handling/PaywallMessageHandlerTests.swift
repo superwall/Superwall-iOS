@@ -44,9 +44,10 @@ struct PaywallMessageHandlerTests {
 
   private func waitForEvent(
     named name: String,
-    in webView: FakeWebView
+    in webView: FakeWebView,
+    polls: Int = 250
   ) async -> [String: Any]? {
-    for _ in 0..<250 {
+    for _ in 0..<polls {
       if let event = passedEvents(in: webView).first(where: { $0["event_name"] as? String == name }) {
         return event
       }
@@ -55,11 +56,44 @@ struct PaywallMessageHandlerTests {
     return nil
   }
 
-  private func makeHandler() -> (PaywallMessageHandler, FakeWebView, PaywallMessageHandlerDelegateMock) {
+  /// Builds variables through the container, but holds them back while `isHeld`
+  /// is on, like a refresh waiting on subscription and device information.
+  private final class HeldVariablesFactory: VariablesFactory {
+    private let base: VariablesFactory
+    private let lock = NSLock()
+    private var _isHeld = false
+    var isHeld: Bool {
+      get { lock.withLock { _isHeld } }
+      set { lock.withLock { _isHeld = newValue } }
+    }
+
+    init(base: VariablesFactory) {
+      self.base = base
+    }
+
+    func makeJsonVariables(
+      products: [ProductVariable]?,
+      computedPropertyRequests: [ComputedPropertyRequest],
+      placement: PlacementData?
+    ) async -> JSON {
+      while isHeld {
+        try? await Task.sleep(nanoseconds: 10_000_000)
+      }
+      return await base.makeJsonVariables(
+        products: products,
+        computedPropertyRequests: computedPropertyRequests,
+        placement: placement
+      )
+    }
+  }
+
+  private func makeHandler(
+    variablesFactory: VariablesFactory? = nil
+  ) -> (PaywallMessageHandler, FakeWebView, PaywallMessageHandlerDelegateMock) {
     let dependencyContainer = DependencyContainer()
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
-      factory: dependencyContainer,
+      factory: variablesFactory ?? dependencyContainer,
       permissionHandler: FakePermissionHandler(),
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
@@ -75,6 +109,29 @@ struct PaywallMessageHandlerTests {
     )
     messageHandler.delegate = delegate
     return (messageHandler, webView, delegate)
+  }
+
+  // The paywall attributes purchases it starts (web checkouts, teleports) to how it was presented.
+  // Covers both the page being ready already and `paywall_open` waiting for it.
+  @Test(arguments: [true, false])
+  func paywallOpen_sendsThePresentation(pageReadyFirst: Bool) async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    if pageReadyFirst {
+      messageHandler.handle(.onReady(paywallJsVersion: "2"))
+      await waitForSetup(of: webView)
+      messageHandler.handle(.paywallOpen)
+    } else {
+      messageHandler.handle(.paywallOpen)
+      messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    }
+
+    let open = await waitForEvent(named: "paywall_open", in: webView)
+    #expect(open?["presented_by"] as? String == "programmatically")
+    #expect(open?["presentation_source_type"] as? String == "register")
+    #expect(open?["presentation_id"] == nil)
+    #expect(open?["presented_by_event_id"] == nil)
+    withExtendedLifetime(delegate) {}
   }
 
   // Regression: the paywall schedules its trial reminder off `freeTrial_start`, so a purchase
@@ -181,6 +238,276 @@ struct PaywallMessageHandlerTests {
     #expect(didHandleJs == true)
   }
 
+  private func paywallOpenCount(
+    in webView: FakeWebView,
+    reaching expected: Int,
+    keeping delegate: PaywallMessageHandlerDelegateMock
+  ) async -> Int {
+    let count = {
+      self.passedEvents(in: webView).filter { $0["event_name"] as? String == "paywall_open" }.count
+    }
+    for _ in 0..<250 {
+      if count() >= expected {
+        break
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    withExtendedLifetime(delegate) {}
+    return count()
+  }
+
+  /// Waits until the page's setup has run, which is when it becomes ready.
+  private func waitForSetup(of webView: FakeWebView) async {
+    for _ in 0..<250 {
+      if webView.evaluatedScripts.contains(where: { $0.contains("user-scalable=no") }) {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
+  @Test
+  func paywallOpenIsPassedStraightThroughOnceThePageIsReady() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+    #expect(!passedEvents(in: webView).contains { $0["event_name"] as? String == "paywall_open" })
+    messageHandler.handle(.paywallOpen)
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  /// A preloaded page is already ready when the paywall appears, so the
+  /// template refresh started on appearing could arrive after `paywall_open`
+  /// and make the page forget it's open, dropping later page views.
+  @Test
+  func paywallOpenWaitsForATemplateRefreshThatIsStillBeingBuilt() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+    let eventNames = {
+      self.passedEvents(in: webView).compactMap { $0["event_name"] as? String }
+    }
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(!eventNames().contains("paywall_open"))
+
+    variablesFactory.isHeld = false
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+    let names = eventNames()
+    let refreshedTemplates = names.indices.filter { names[$0] == "experiment" }.last
+    let paywallOpen = names.firstIndex(of: "paywall_open")
+    #expect(refreshedTemplates != nil && paywallOpen != nil)
+    if let refreshedTemplates, let paywallOpen {
+      #expect(names.filter { $0 == "experiment" }.count == 2)
+      #expect(refreshedTemplates < paywallOpen)
+    }
+  }
+
+  /// `paywall_close` waits in the same queue, so it can't overtake an open
+  /// that's still waiting for a template refresh.
+  @Test
+  func paywallCloseIsSentAfterAWaitingOpen() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    messageHandler.handle(.paywallClose)
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(await waitForEvent(named: "paywall_close", in: webView, polls: 1) == nil)
+
+    variablesFactory.isHeld = false
+    #expect(await waitForEvent(named: "paywall_close", in: webView) != nil)
+    withExtendedLifetime(delegate) {}
+    let names = passedEvents(in: webView).compactMap { $0["event_name"] as? String }
+    let paywallOpen = names.firstIndex(of: "paywall_open")
+    let paywallClose = names.firstIndex(of: "paywall_close")
+    #expect(paywallOpen != nil && paywallClose != nil)
+    if let paywallOpen, let paywallClose {
+      #expect(paywallOpen < paywallClose)
+    }
+  }
+
+  /// An open waiting for a template refresh is dropped if a new page replaces
+  /// the old one meanwhile. The new page is told once it's ready, and only once.
+  @Test
+  func paywallOpenWaitingForARefreshIsNotSentToAReplacedPage() async {
+    let dependencyContainer = DependencyContainer()
+    let variablesFactory = HeldVariablesFactory(base: dependencyContainer)
+    let (messageHandler, webView, delegate) = makeHandler(variablesFactory: variablesFactory)
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    variablesFactory.isHeld = true
+    messageHandler.handle(.templateParamsAndUserAttributes)
+    messageHandler.handle(.paywallOpen)
+    messageHandler.documentWillLoad()
+    variablesFactory.isHeld = false
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(await waitForEvent(named: "paywall_open", in: webView, polls: 1) == nil)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenWaitsForTheReadyMessage() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    #expect(passedEvents(in: webView).isEmpty)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsResentToADocumentReloadedWhileOpen() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.documentWillLoad()
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 2)
+  }
+
+  @Test
+  func paywallOpenIsNotSentToADocumentReloadedWhileHidden() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 0)
+  }
+
+  @Test
+  func paywallOpenIsNotResentAfterThePaywallCloses() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+    messageHandler.handle(.paywallClose)
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  // A page reloaded after iOS killed its web process never ends the old page's checkout watch.
+  @Test
+  func aNewDocumentEndsTheOldDocumentsTeleportWatch() {
+    let (messageHandler, _, delegate) = makeHandler()
+    messageHandler.handle(
+      .teleportWatchStart(
+        TeleportReturnCover.Watch(
+          teleportId: "v1:teleport",
+          teleportStatusUrl: URL(string: "https://subs.example.com/teleport/status")!,
+          checkoutStatusUrl: URL(string: "https://subs.example.com/checkout/status")!,
+          publicApiKey: "pk_test"
+        )
+      )
+    )
+    #expect(delegate.teleportWatch != nil)
+
+    messageHandler.documentWillLoad()
+
+    #expect(delegate.teleportWatch == nil)
+  }
+
+  @Test
+  func paywallOpenIsSentOnceWhenTheDocumentDiesBeforeItIsReady() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenIsResentToAPageThatReloadedItself() async {
+    // As with `location.reload()` or the dev server's live reload, where the
+    // SDK doesn't start the load.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 2)
+  }
+
+  @Test
+  func paywallOpenIsSentOnceWhenAPageIsReplacedDuringItsSetup() async {
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    // The first page pings, then is replaced before its setup finishes.
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.paywallOpen)
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 2, keeping: delegate) == 1)
+  }
+
+  @Test
+  func paywallOpenWaitsForAPageThatReplacedTheOldOne() async {
+    // As with a reload after the web content process dies, or the refresh
+    // button.
+    let (messageHandler, webView, delegate) = makeHandler()
+
+    messageHandler.documentWillLoad()
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+    await waitForSetup(of: webView)
+
+    webView.webView(webView, didCommit: nil)
+    messageHandler.handle(.paywallOpen)
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 0)
+
+    messageHandler.handle(.onReady(paywallJsVersion: "2"))
+
+    #expect(await paywallOpenCount(in: webView, reaching: 1, keeping: delegate) == 1)
+  }
+
   @Test
   func close() {
     let dependencyContainer = DependencyContainer()
@@ -258,6 +585,78 @@ struct PaywallMessageHandlerTests {
 
     #expect(delegate.eventDidOccur == .openedUrlInSafari(url))
     #expect(delegate.didPresentSafariExternal == true)
+  }
+
+  @Test
+  func openUrlInSafari_forcesSafariWhenAsked() {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    let url = URL(string: "https://example.com/sw-teleport/abc")!
+    messageHandler.handle(.openUrlInSafari(url, drawsWaitingScreen: true))
+
+    #expect(delegate.didPresentSafariExternal == true)
+    #expect(delegate.didDrawWaitingScreen == true)
+  }
+
+  @Test(arguments: [true, false])
+  func openUrlInSafari_tracksTeleportOpenOnlyForTeleports(isTeleport: Bool) async {
+    let dependencyContainer = DependencyContainer()
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = FakeWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let delegate = PaywallMessageHandlerDelegateMock(
+      paywallInfo: .stub(),
+      webView: webView
+    )
+    messageHandler.delegate = delegate
+    var tracked: [Trackable] = []
+    messageHandler.trackEvent = { tracked.append($0) }
+
+    let url = URL(string: "https://example.com/sw-teleport/abc?token=secret#ref=primary")!
+    messageHandler.handle(.openUrlInSafari(url, isTeleport: isTeleport))
+
+    for _ in 0..<15 where tracked.isEmpty {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+
+    #expect(delegate.didPresentSafariExternal == true)
+    #expect(delegate.didOpenAsTeleport == isTeleport)
+    guard isTeleport else {
+      #expect(tracked.isEmpty)
+      return
+    }
+    #expect(tracked.count == 1)
+    let event = tracked.first as? InternalSuperwallEvent.TeleportOpen
+    #expect(event?.superwallEvent.description == "teleport_open")
+    #expect(event?.paywallInfo.databaseId == delegate.info.databaseId)
+    let params = await event?.getSuperwallParameters()
+    #expect(params?["url"] == nil)
+    #expect(params?["paywall_id"] as? String == delegate.info.databaseId)
   }
 
   @Test
@@ -595,6 +994,135 @@ struct PaywallMessageHandlerTests {
     ))
   }
 
+  // MARK: - Open URL External Decoding Tests
+
+  @Test(arguments: [
+    (nil, false),
+    (false, false),
+    (true, true),
+  ] as [(Bool?, Bool)])
+  func decodeOpenUrlExternal_waitingScreen(waitingScreen: Bool?, draws: Bool) throws {
+    let field = waitingScreen.map { ", \"waiting_screen\": \($0)" } ?? ""
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "open_url_external",
+            "url": "https://example.com/sw-teleport/abc"\(field)
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(
+      URL(string: "https://example.com/sw-teleport/abc")!,
+      drawsWaitingScreen: draws
+    ))
+  }
+
+  @Test(arguments: [
+    (nil, false),
+    (false, false),
+    (true, true),
+  ] as [(Bool?, Bool)])
+  func decodeOpenUrlExternal_teleport(teleport: Bool?, isTeleport: Bool) throws {
+    let field = teleport.map { ", \"teleport\": \($0)" } ?? ""
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "open_url_external",
+            "url": "https://example.com/sw-teleport/abc",
+            "waiting_screen": true\(field)
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .openUrlInSafari(
+      URL(string: "https://example.com/sw-teleport/abc")!,
+      drawsWaitingScreen: true,
+      isTeleport: isTeleport
+    ))
+  }
+
+  @Test
+  func decodeTeleportWatch() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "teleport_watch_start",
+            "teleport_id": "v1:teleport",
+            "teleport_status_url": "https://subs.example.com/teleport/status",
+            "checkout_status_url": "https://subs.example.com/checkout/status",
+            "public_api_key": "pk_test"
+          },
+          { "eventName": "teleport_watch_end" }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages == [
+      .teleportWatchStart(
+        TeleportReturnCover.Watch(
+          teleportId: "v1:teleport",
+          teleportStatusUrl: URL(string: "https://subs.example.com/teleport/status")!,
+          checkoutStatusUrl: URL(string: "https://subs.example.com/checkout/status")!,
+          publicApiKey: "pk_test"
+        )
+      ),
+      .teleportWatchEnd,
+    ])
+  }
+
+  @Test
+  func decodeTeleportWatch_withoutACheckout() throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "eventName": "teleport_watch_start",
+            "teleport_id": "v1:teleport",
+            "teleport_status_url": "https://subs.example.com/teleport/status",
+            "public_api_key": "pk_test"
+          }
+        ]
+      }
+    }
+    """
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages == [
+      .teleportWatchStart(
+        TeleportReturnCover.Watch(
+          teleportId: "v1:teleport",
+          teleportStatusUrl: URL(string: "https://subs.example.com/teleport/status")!,
+          checkoutStatusUrl: nil,
+          publicApiKey: "pk_test"
+        )
+      ),
+    ])
+  }
+
   // MARK: - Haptic Feedback Message Decoding Tests
 
   @Test
@@ -721,7 +1249,36 @@ struct PaywallMessageHandlerTests {
 
     #expect(message == .stripeCheckoutComplete(
       checkoutContextId: "ctx_123",
-      productId: "prod_123"
+      productId: "prod_123",
+      shouldDismiss: nil
+    ))
+  }
+
+  @Test(arguments: [true, false])
+  func decodeStripeCheckoutComplete_withShouldDismiss(shouldDismiss: Bool) throws {
+    let json = """
+    {
+      "version": 1,
+      "payload": {
+        "events": [
+          {
+            "event_name": "stripe_checkout_complete",
+            "checkout_context_id": "ctx_123",
+            "product_identifier": "prod_123",
+            "should_dismiss": \(shouldDismiss)
+          }
+        ]
+      }
+    }
+    """
+
+    let data = json.data(using: .utf8)!
+    let wrapped = try JSONDecoder.fromSnakeCase.decode(WrappedPaywallMessages.self, from: data)
+
+    #expect(wrapped.payload.messages.first == .stripeCheckoutComplete(
+      checkoutContextId: "ctx_123",
+      productId: "prod_123",
+      shouldDismiss: shouldDismiss
     ))
   }
 
@@ -821,12 +1378,14 @@ struct PaywallMessageHandlerTests {
     messageHandler.handle(
       .stripeCheckoutComplete(
         checkoutContextId: "ctx_123",
-        productId: "prod_123"
+        productId: "prod_123",
+        shouldDismiss: false
       )
     )
 
     #expect(delegate.stripeCheckoutComplete?.checkoutContextId == "ctx_123")
     #expect(delegate.stripeCheckoutComplete?.productId == "prod_123")
+    #expect(delegate.stripeCheckoutCompleteShouldDismiss == false)
   }
 
   @Test

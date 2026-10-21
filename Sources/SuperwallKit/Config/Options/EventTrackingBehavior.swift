@@ -34,7 +34,8 @@ public enum EventTrackingBehavior: Int, CustomStringConvertible, Encodable, Send
   /// No events are sent to the Superwall servers.
   ///
   /// Install-attribution matching is also skipped — it would otherwise post
-  /// device metadata to the backend, bypassing the opt-out. Because the match
+  /// device metadata to the backend, bypassing the opt-out — and so are the
+  /// public IP address lookups it uses. Because the match
   /// never runs, `acquisition_*` user attributes aren't populated, so audience
   /// rules that depend on them won't match. Use ``superwallOnly`` instead if you
   /// need attribution-based targeting with minimal tracking.
