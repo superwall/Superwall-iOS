@@ -1087,7 +1087,7 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     }
 
     let poll = Task {
-      _ = await self.refreshWebEntitlements()
+      _ = await self.refreshWebEntitlements(dismissesCoveredPaywall: true)
     }
     inFlightWebEntitlementsPoll = poll
     await poll.value
@@ -1143,18 +1143,26 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   /// server, so their entitlements come from this fetch even in apps that
   /// don't sell on the web.
   ///
+  /// - Parameter dismissesCoveredPaywall: Whether newly active entitlements
+  ///   that cover the presented paywall's products count as a restore, which
+  ///   tracks it and dismisses the paywall. Only the poll does this, for users
+  ///   coming back from a web checkout. After an in-app purchase it would turn
+  ///   the purchase into a restore and close a paywall the developer kept open.
   /// - Returns: The fetched customer info, or `nil` if the fetch failed or
   ///   its response was ignored.
   @discardableResult
-  func refreshWebEntitlements() async -> CustomerInfo? {
+  func refreshWebEntitlements(dismissesCoveredPaywall: Bool = false) async -> CustomerInfo? {
     do {
-      let existingWebEntitlements = Set(
-        storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
-
       let response = try await network.getEntitlements(
         appUserId: factory.makeAppUserId(),
         deviceId: factory.makeDeviceId()
       )
+
+      // Read the cached entitlements after the fetch, not before it. Refreshes
+      // can overlap, and from here to the save below nothing suspends, so only
+      // the first response to arrive sees the change and acts on it.
+      let existingWebEntitlements = Set(
+        storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
       // A response with zero entitlements must not replace cached web
       // entitlements that are still within their expiry date. The server
@@ -1197,19 +1205,21 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
 
+      // Use the injected superwall instance or fall back to shared
+      let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+      guard let superwall = superwall else {
+        return response.customerInfo
+      }
+
+      // Apply the customer info even when the entitlements haven't changed,
+      // so new subscriptions and non-subscriptions reach `customerInfo`.
+      await mergeAndApplyCustomerInfo(
+        webCustomerInfo: response.customerInfo,
+        superwall: superwall
+      )
+
       let webEntitlements = Set(response.customerInfo.entitlements)
       if existingWebEntitlements != webEntitlements {
-        // Use the injected superwall instance or fall back to shared
-        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
-        guard let superwall = superwall else {
-          return response.customerInfo
-        }
-
-        await mergeAndApplyCustomerInfo(
-          webCustomerInfo: response.customerInfo,
-          superwall: superwall
-        )
-
         // Derive the status from device + web only, as the redeem path does.
         // The merged customer info also carries granted entitlements, which
         // are applied when the status publishes and must never enter the
@@ -1223,7 +1233,8 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         // If there's a paywall, check if we should dismiss it
-        if let paywallVc = superwall.paywallViewController {
+        if dismissesCoveredPaywall,
+          let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []
           for id in await paywallVc.info.productIds {

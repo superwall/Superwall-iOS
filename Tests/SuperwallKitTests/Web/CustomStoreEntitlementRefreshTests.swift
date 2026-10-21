@@ -224,6 +224,99 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(network.getEntitlementsCallCount == 3)
   }
 
+  // MARK: - Presented paywall
+
+  /// Presents a paywall selling a product that unlocks `pro`, and returns the
+  /// delegate that records tracked events.
+  @MainActor
+  private func presentPaywallUnlockingPro(superwall: Superwall) async -> MockSuperwallDelegate {
+    let cache = dependencyContainer.paywallManager.cache
+    let messageHandler = PaywallMessageHandler(
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      permissionHandler: FakePermissionHandler(),
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    let webView = SWWebView(
+      isMac: false,
+      messageHandler: messageHandler,
+      isOnDeviceCacheEnabled: true,
+      factory: dependencyContainer
+    )
+    let entitlement = Entitlement(id: "pro", isActive: true)
+    let product = Product(
+      name: "Custom Product",
+      type: .appStore(.init(id: "custom_prod_1")),
+      id: "custom_prod_1",
+      entitlements: [entitlement]
+    )
+    let paywallVc = PaywallViewControllerMock(
+      paywall: Paywall.stub().setting(\.products, to: [product]),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: webView,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: cache,
+      paywallArchiveManager: nil,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+    cache.save(paywallVc, forKey: "key")
+    cache.activePaywallVcKey = "key"
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = [entitlement]
+
+    let delegate = MockSuperwallDelegate()
+    let delegateAdapter = SuperwallDelegateAdapter()
+    delegateAdapter.swiftDelegate = delegate
+    superwall.delegate = delegate
+    dependencyContainer.delegateAdapter = delegateAdapter
+    return delegate
+  }
+
+  private func clearPresentedPaywall() {
+    dependencyContainer.paywallManager.cache.activePaywallVcKey = nil
+    dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = nil
+  }
+
+  @Test("The post-purchase refresh doesn't turn the purchase into a restore of the open paywall")
+  func refreshAfterCustomPurchase_paywallOpen_doesNotRestore() async {
+    defer {
+      clearEntitlementsState()
+      clearPresentedPaywall()
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let delegate = await presentPaywallUnlockingPro(superwall: superwall)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    await redeemer.refreshEntitlementsAfterCustomPurchase(expecting: ["pro"])
+
+    let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.restoreComplete))
+    #expect(superwall.paywallViewController != nil)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
+  @Test("A poll that unlocks the open paywall's entitlements still restores it")
+  func poll_paywallOpen_restores() async {
+    defer {
+      clearEntitlementsState()
+      clearPresentedPaywall()
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let delegate = await presentPaywallUnlockingPro(superwall: superwall)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    await redeemer.pollWebEntitlements()
+
+    let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(events.contains(SuperwallEventObjc.restoreComplete))
+  }
+
   // MARK: - Apps without web2app config
 
   @Test("Refreshing fetches entitlements without a web2app config or max age")
@@ -426,6 +519,39 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(network.getEntitlementsCallCount == 1)
     #expect(customerInfo.entitlements.map(\.id) == ["pro"])
     #expect(superwall.customerInfo.entitlements.map(\.id) == ["pro"])
+  }
+
+  @Test("refreshCustomerInfo returns new transactions when the entitlements haven't changed")
+  func refreshCustomerInfo_unchangedEntitlements_returnsNewTransactions() async {
+    defer { clearEntitlementsState() }
+    let entitlement = Entitlement(id: "pro", isActive: true, store: .custom)
+    dependencyContainer.storage.save(
+      RedeemResponse(results: [], customerInfo: CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [entitlement])),
+      forType: LatestRedeemResponse.self
+    )
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let renewal = SubscriptionTransaction(
+      transactionId: "renewal_1",
+      productId: "custom_prod_1",
+      purchaseDate: Date(),
+      willRenew: true,
+      isRevoked: false,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: true,
+      expirationDate: Date().addingTimeInterval(30 * 24 * 3600),
+      store: .custom
+    )
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(subscriptions: [renewal], nonSubscriptions: [], entitlements: [entitlement])
+    )
+    dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let customerInfo = await superwall.refreshCustomerInfo()
+
+    #expect(customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
+    #expect(superwall.customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
   }
 
   @Test("refreshCustomerInfo doesn't fetch in test mode")
