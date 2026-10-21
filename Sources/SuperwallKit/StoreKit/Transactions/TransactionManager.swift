@@ -561,6 +561,11 @@ final class TransactionManager {
   /// ``CustomStoreTransaction``, the post-purchase entitlements refresh and the
   /// dismissal, `transaction_abandon` or `transaction_fail` with the purchase
   /// failure alert. The `PurchaseController` isn't called.
+  ///
+  /// Steps for products that aren't custom products are ignored, and so are
+  /// steps that arrive while the purchasing coordinator holds another purchase,
+  /// so they can't take over its state. `Superwall` runs the steps one at a time
+  /// and never during a purchase started from a paywall.
   func handleCustomStoreCheckout(
     _ checkout: CustomStoreCheckout,
     paywallViewController: PaywallViewController
@@ -580,11 +585,44 @@ final class TransactionManager {
       return
     }
 
+    // The checkout is over after any step but its start, even one ignored below.
+    let checkoutProductId: String?
+    if case .start = checkout {
+      checkoutProductId = productId
+    } else {
+      checkoutProductId = nil
+    }
+
+    let ownership = await customStoreCheckoutOwnership(
+      of: product,
+      paywallViewController: paywallViewController
+    )
+    guard ownership != .otherPurchase else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .transactions,
+        message: "Ignoring a custom store checkout of \"\(productId)\": "
+          + "another purchase is in progress.",
+        info: ["checkout": checkout]
+      )
+      await MainActor.run {
+        if checkoutProductId == nil {
+          paywallViewController.customStoreCheckoutProductId = nil
+        }
+      }
+      return
+    }
+
+    await MainActor.run {
+      paywallViewController.customStoreCheckoutProductId = checkoutProductId
+    }
+
     switch checkout {
     case .start(_, let customTransactionId):
       await prepareToPurchase(
         product: product,
-        purchaseSource: .internal(productId, paywallViewController, true),
+        // Whether the purchase closes the paywall is only known when it completes.
+        purchaseSource: .internal(productId, paywallViewController, false),
         customStoreCheckoutTransactionId: customTransactionId
       )
     case let .complete(_, customTransactionId, shouldDismiss):
@@ -593,6 +631,7 @@ final class TransactionManager {
         of: product,
         productId: productId,
         paywallViewController: paywallViewController,
+        isInProgress: ownership == .thisCheckout,
         shouldDismiss: shouldDismiss
       )
       // The checkout may have ended in an in-app browser. Close it first, or
@@ -603,14 +642,16 @@ final class TransactionManager {
       let source = await resumeCustomStoreCheckout(
         of: product,
         productId: productId,
-        paywallViewController: paywallViewController
+        paywallViewController: paywallViewController,
+        isInProgress: ownership == .thisCheckout
       )
       await handle(result: .cancelled, state: .purchasing(source))
     case .fail(_, let message):
       let source = await resumeCustomStoreCheckout(
         of: product,
         productId: productId,
-        paywallViewController: paywallViewController
+        paywallViewController: paywallViewController,
+        isInProgress: ownership == .thisCheckout
       )
       await handle(
         result: .failed(PurchaseError.customStoreCheckoutFailed(message)),
@@ -619,35 +660,57 @@ final class TransactionManager {
     }
   }
 
+  private enum CustomStoreCheckoutOwnership {
+    /// The coordinator holds no purchase.
+    case none
+    /// The coordinator holds this checkout, from its start.
+    case thisCheckout
+    /// The coordinator holds another purchase.
+    case otherPurchase
+  }
+
+  private func customStoreCheckoutOwnership(
+    of product: StoreProduct,
+    paywallViewController: PaywallViewController
+  ) async -> CustomStoreCheckoutOwnership {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard let source = await coordinator.source else {
+      return .none
+    }
+    if await coordinator.isCustomStoreCheckout,
+      case let .internal(_, checkoutPaywall, _) = source,
+      checkoutPaywall === paywallViewController,
+      await coordinator.product?.productIdentifier == product.productIdentifier {
+      return .thisCheckout
+    }
+    return .otherPurchase
+  }
+
   /// Points the purchasing coordinator at a custom store checkout that has
   /// ended, so its outcome is handled like a `PurchaseController` result.
   ///
-  /// Keeps the free trial availability worked out when the checkout started.
-  /// When the coordinator has since moved on, or never saw the start, works it
-  /// out again.
+  /// A checkout the coordinator holds from its start keeps its start time and
+  /// free trial availability. Otherwise, such as when the start never arrived,
+  /// the checkout begins now.
   private func resumeCustomStoreCheckout(
     of product: StoreProduct,
     productId: String,
     paywallViewController: PaywallViewController,
+    isInProgress: Bool,
     shouldDismiss: Bool = false
   ) async -> PurchaseSource {
     let coordinator = factory.makePurchasingCoordinator()
-    var isCheckoutInProgress = false
-    if case let .internal(_, inProgressPaywall, _) = await coordinator.source,
-      inProgressPaywall === paywallViewController,
-      await coordinator.product?.productIdentifier == product.productIdentifier {
-      isCheckoutInProgress = true
-    }
-    let isTrialAvailable = isCheckoutInProgress
-      ? await coordinator.isFreeTrialAvailable
-      : await isFreeTrialAvailable(for: product)
-
     let source = PurchaseSource.internal(productId, paywallViewController, shouldDismiss)
-    await coordinator.beginPurchase(
-      of: product,
-      source: source,
-      isFreeTrialAvailable: isTrialAvailable
-    )
+    if isInProgress {
+      await coordinator.setSource(source)
+    } else {
+      await coordinator.beginPurchase(
+        of: product,
+        source: source,
+        isFreeTrialAvailable: await isFreeTrialAvailable(for: product),
+        isCustomStoreCheckout: true
+      )
+    }
     return source
   }
 
@@ -844,7 +907,8 @@ final class TransactionManager {
     await factory.makePurchasingCoordinator().beginPurchase(
       of: product,
       source: purchaseSource,
-      isFreeTrialAvailable: isFreeTrialAvailable
+      isFreeTrialAvailable: isFreeTrialAvailable,
+      isCustomStoreCheckout: customStoreCheckoutTransactionId != nil
     )
   }
 

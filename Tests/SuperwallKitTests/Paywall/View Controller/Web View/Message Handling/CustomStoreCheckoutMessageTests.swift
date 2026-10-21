@@ -49,6 +49,23 @@ struct CustomStoreCheckoutMessageTests {
     ))
   }
 
+  @Test("custom_checkout_start decodes without a checkout context")
+  func decodeStart_withoutCheckoutContext() throws {
+    let message = try decode("""
+      {
+        "event_name": "custom_checkout_start",
+        "product_identifier": "pro_monthly",
+        "custom_transaction_id": "txn_123"
+      }
+      """)
+
+    #expect(message == .customCheckoutStart(
+      checkoutContextId: nil,
+      productId: "pro_monthly",
+      customTransactionId: "txn_123"
+    ))
+  }
+
   @Test("custom_checkout_start without a transaction id doesn't decode")
   func decodeStart_withoutTransactionId_fails() {
     #expect(throws: (any Error).self) {

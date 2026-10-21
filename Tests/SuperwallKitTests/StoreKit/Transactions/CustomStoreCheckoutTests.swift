@@ -14,9 +14,12 @@ import Testing
 private final class RecordingPurchaseController: PurchaseController {
   private(set) var purchaseCount = 0
   private(set) var restoreCount = 0
+  /// How long each purchase takes.
+  var purchaseDurationNs: UInt64 = 0
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
     purchaseCount += 1
+    try? await Task.sleep(nanoseconds: purchaseDurationNs)
     return .purchased
   }
 
@@ -54,6 +57,49 @@ private actor TrackedTransactions {
   }
 }
 
+/// Decodes the `event_name`s of the messages passed to a paywall's page.
+@MainActor
+private func pageEvents(in webView: FakeWebView) -> [String] {
+  return webView.evaluatedScripts.flatMap { script -> [String] in
+    guard
+      let start = script.range(of: "accept64('"),
+      let end = script.range(of: "')", range: start.upperBound..<script.endIndex),
+      let data = Data(base64Encoded: String(script[start.upperBound..<end.lowerBound])),
+      let events = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+    else {
+      return []
+    }
+    return events.compactMap { $0["event_name"] as? String }
+  }
+}
+
+/// Records the checkout steps a paywall hands over, taking a while over each start.
+@MainActor
+private final class SlowStartEventDelegate: PaywallViewControllerEventDelegate {
+  private(set) var log: [String] = []
+
+  func eventDidOccur(_ paywallEvent: PaywallWebEvent, on paywallViewController: PaywallViewController) async {
+    guard case .customStoreCheckout(let checkout) = paywallEvent else {
+      return
+    }
+    switch checkout {
+    case .start:
+      log.append("start began")
+      try? await Task.sleep(nanoseconds: 200_000_000)
+      log.append("start ended")
+    default:
+      log.append("\(checkout)")
+    }
+  }
+
+  func waitForLog(count: Int) async -> [String] {
+    for _ in 0..<40 where log.count < count {
+      try? await Task.sleep(nanoseconds: 25_000_000)
+    }
+    return log
+  }
+}
+
 /// Records the alerts a paywall presents.
 @MainActor
 private final class AlertRecordingPaywallViewController: PaywallViewController {
@@ -75,13 +121,20 @@ private final class AlertRecordingPaywallViewController: PaywallViewController {
 @Suite(.serialized)
 @MainActor
 struct CustomStoreCheckoutTests {
-  let dependencyContainer = DependencyContainer()
-  private let purchaseController = RecordingPurchaseController()
+  let dependencyContainer: DependencyContainer
+  private let purchaseController: RecordingPurchaseController
   private let refresher = RecordingEntitlementsRefresher()
   private let tracked = TrackedTransactions()
 
   private let productId = "pro_monthly"
   private let serverTransactionId = "9b2f6a8e-6a2c-4d4b-9f5e-2f2b7c1d0e11"
+
+  init() {
+    purchaseController = RecordingPurchaseController()
+    dependencyContainer = DependencyContainer()
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+  }
 
   // MARK: - Helpers
 
@@ -108,7 +161,11 @@ struct CustomStoreCheckoutTests {
   }
 
   /// A transaction manager selling `productId` as a custom product.
-  private func makeTransactionManager() async -> (TransactionManager, StoreProduct) {
+  private func makeTransactionManager(
+    in dependencyContainer: DependencyContainer? = nil,
+    entitlementsRefresher: CustomPurchaseEntitlementsRefreshing? = nil
+  ) async -> (TransactionManager, StoreProduct) {
+    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let product = makeCustomStoreProduct()
     await dependencyContainer.storeKitManager.setProduct(product, forIdentifier: productId)
     let transactionManager = TransactionManager(
@@ -118,7 +175,7 @@ struct CustomStoreCheckoutTests {
       placementsQueue: dependencyContainer.placementsQueue,
       purchaseManager: dependencyContainer.purchaseManager,
       productsManager: dependencyContainer.productsManager,
-      entitlementsRefresher: refresher,
+      entitlementsRefresher: entitlementsRefresher ?? refresher,
       factory: dependencyContainer
     )
     let tracked = tracked
@@ -128,7 +185,11 @@ struct CustomStoreCheckoutTests {
     return (transactionManager, product)
   }
 
-  private func makePaywall() -> (AlertRecordingPaywallViewController, PaywallFinishRecorder) {
+  private func makePaywall(
+    in dependencyContainer: DependencyContainer? = nil,
+    eventDelegate: PaywallViewControllerEventDelegate? = nil
+  ) -> (AlertRecordingPaywallViewController, PaywallFinishRecorder) {
+    let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let messageHandler = PaywallMessageHandler(
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
@@ -143,6 +204,7 @@ struct CustomStoreCheckoutTests {
     )
     let paywallVc = AlertRecordingPaywallViewController(
       paywall: .stub(),
+      eventDelegate: eventDelegate,
       deviceHelper: dependencyContainer.deviceHelper,
       factory: dependencyContainer,
       storage: dependencyContainer.storage,
@@ -160,6 +222,18 @@ struct CustomStoreCheckoutTests {
       objcDelegate: nil
     )
     return (paywallVc, finishes)
+  }
+
+  private func webView(of paywallVc: PaywallViewController) -> FakeWebView {
+    return paywallVc.webView as! FakeWebView
+  }
+
+  /// Gives a message sent to the page from a task time to land.
+  private func waitForPageEvent(_ name: String, in paywallVc: PaywallViewController) async -> [String] {
+    for _ in 0..<40 where !pageEvents(in: webView(of: paywallVc)).contains(name) {
+      try? await Task.sleep(nanoseconds: 25_000_000)
+    }
+    return pageEvents(in: webView(of: paywallVc))
   }
 
   private func store(of event: InternalSuperwallEvent.Transaction) async -> String? {
@@ -199,6 +273,8 @@ struct CustomStoreCheckoutTests {
     #expect(product.customTransactionId == serverTransactionId)
     // The checkout's browser owns the loading state, not the purchase spinner.
     #expect(paywallVc.loadingState == .ready)
+    #expect(paywallVc.customStoreCheckoutProductId == productId)
+    #expect(await waitForPageEvent("transaction_start", in: paywallVc).contains("transaction_start"))
     #expect(purchaseController.purchaseCount == 0)
     await dependencyContainer.makePurchasingCoordinator().reset()
   }
@@ -236,6 +312,8 @@ struct CustomStoreCheckoutTests {
 
     #expect(await refresher.refreshedEntitlementIdsEventually() == [["pro"]])
     #expect(await finishes.waitForResults() == [.purchased(product)])
+    #expect(await waitForPageEvent("transaction_complete", in: paywallVc).contains("transaction_complete"))
+    #expect(paywallVc.customStoreCheckoutProductId == nil)
     #expect(purchaseController.purchaseCount == 0)
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
   }
@@ -308,6 +386,8 @@ struct CustomStoreCheckoutTests {
     #expect(isInternal(abandon))
     #expect(await store(of: abandon) == "CUSTOM")
     #expect(paywallVc.loadingState == .ready)
+    #expect(await waitForPageEvent("transaction_abandon", in: paywallVc).contains("transaction_abandon"))
+    #expect(paywallVc.customStoreCheckoutProductId == nil)
     #expect(await finishes.waitForResults().isEmpty)
     #expect(purchaseController.purchaseCount == 0)
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
@@ -339,6 +419,207 @@ struct CustomStoreCheckoutTests {
     #expect(purchaseController.purchaseCount == 0)
   }
 
+  // MARK: - Start time
+
+  @Test("Complete reports the checkout's start as its purchase date")
+  func complete_keepsStartAsPurchaseDate() async throws {
+    let (transactionManager, _) = await makeTransactionManager()
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: serverTransactionId),
+      paywallViewController: paywallVc
+    )
+    let startedAt = try #require(await dependencyContainer.makePurchasingCoordinator().purchaseDate)
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    await transactionManager.handleCustomStoreCheckout(
+      .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
+      paywallViewController: paywallVc
+    )
+
+    let complete = try #require(await tracked.events.last)
+    guard case let .complete(_, transaction, _) = complete.state else {
+      Issue.record("Expected transaction_complete, got \(complete.state)")
+      return
+    }
+    #expect(transaction?.transactionDate == startedAt)
+  }
+
+  // MARK: - Another purchase in progress
+
+  @Test("A step doesn't take over another purchase in progress", arguments: [
+    CustomStoreCheckout.start(productId: "pro_monthly", customTransactionId: "txn"),
+    .complete(productId: "pro_monthly", customTransactionId: "txn", shouldDismiss: true),
+    .abandon(productId: "pro_monthly"),
+    .fail(productId: "pro_monthly", message: "Unavailable")
+  ])
+  func otherPurchaseInProgress_isLeftAlone(checkout: CustomStoreCheckout) async {
+    let (transactionManager, _) = await makeTransactionManager()
+    let (paywallVc, finishes) = makePaywall()
+    let appStoreProduct = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: "app_store_product"),
+      entitlements: [.stub()]
+    )
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    // An App Store purchase from the same paywall, waiting on the App Store.
+    await coordinator.beginPurchase(
+      of: appStoreProduct,
+      source: .internal("app_store_product", paywallVc, true),
+      isFreeTrialAvailable: false
+    )
+
+    await transactionManager.handleCustomStoreCheckout(checkout, paywallViewController: paywallVc)
+
+    #expect(await tracked.waitForEvents(count: 1).isEmpty)
+    #expect(await coordinator.product?.productIdentifier == "app_store_product")
+    #expect(await coordinator.isCustomStoreCheckout == false)
+    #expect(await finishes.waitForResults().isEmpty)
+    #expect(paywallVc.alertMessages.isEmpty)
+    #expect(paywallVc.customStoreCheckoutProductId == nil)
+    await coordinator.reset()
+  }
+
+  @Test("A step waits for a purchase started from the paywall, then finishes the checkout")
+  func step_waitsForPaywallPurchase() async throws {
+    let purchaseController = RecordingPurchaseController()
+    purchaseController.purchaseDurationNs = 300_000_000
+    let dependencyContainer = DependencyContainer(purchaseController: purchaseController)
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let product = makeCustomStoreProduct()
+    await dependencyContainer.storeKitManager.setProduct(product, forIdentifier: productId)
+    let tracked = TrackedTransactions()
+    dependencyContainer.transactionManager.trackEvent = { event in
+      await tracked.record(event)
+    }
+    let (paywallVc, _) = makePaywall(in: dependencyContainer)
+
+    // A purchase through the purchase controller, then the checkout completes while it's in flight.
+    let purchase = Task { @MainActor in
+      await superwall.eventDidOccur(
+        .initiatePurchase(productId: productId, shouldDismiss: false),
+        on: paywallVc
+      )
+    }
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    await superwall.eventDidOccur(
+      .customStoreCheckout(
+        .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false)
+      ),
+      on: paywallVc
+    )
+    await purchase.value
+
+    let completedIds = await tracked.events.compactMap { event -> String? in
+      guard case let .complete(_, transaction, _) = event.state else {
+        return nil
+      }
+      return transaction?.originalTransactionIdentifier
+    }
+    // The purchase finished with its own transaction, then the checkout with the server's.
+    #expect(completedIds.count == 2)
+    #expect(completedIds.first != serverTransactionId)
+    #expect(completedIds.last == serverTransactionId)
+    #expect(purchaseController.purchaseCount == 1)
+  }
+
+  // MARK: - Ordering
+
+  @Test("The paywall hands over checkout steps one at a time, in order")
+  func steps_areHandedOverInOrder() async {
+    let eventDelegate = SlowStartEventDelegate()
+    let (paywallVc, _) = makePaywall(eventDelegate: eventDelegate)
+
+    paywallVc.handleCustomStoreCheckout(.start(productId: productId, customTransactionId: serverTransactionId))
+    paywallVc.handleCustomStoreCheckout(.abandon(productId: productId))
+
+    let log = await eventDelegate.waitForLog(count: 3)
+    #expect(log == ["start began", "start ended", "\(CustomStoreCheckout.abandon(productId: productId))"])
+  }
+
+  // MARK: - Subscription status
+
+  private func makeRedeemer(
+    in dependencyContainer: DependencyContainer,
+    superwall: Superwall
+  ) -> (WebEntitlementRedeemer, NetworkMock) {
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = EntitlementsResponse(
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
+    let redeemer = WebEntitlementRedeemer(
+      network: network,
+      storage: dependencyContainer.storage,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      delegate: dependencyContainer.delegateAdapter,
+      purchaseController: dependencyContainer.purchaseController,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      customPurchaseRefreshDelaysNs: [0, 0, 0],
+      superwall: superwall
+    )
+    return (redeemer, network)
+  }
+
+  @Test("Without a purchase controller, a completed checkout makes the subscription status active")
+  func complete_withoutPurchaseController_activatesSubscription() async {
+    defer {
+      dependencyContainer.storage.delete(LatestRedeemResponse.self)
+      dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let (redeemer, _) = makeRedeemer(in: dependencyContainer, superwall: superwall)
+    let (transactionManager, _) = await makeTransactionManager(entitlementsRefresher: redeemer)
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
+      paywallViewController: paywallVc
+    )
+
+    for _ in 0..<40 where !superwall.subscriptionStatus.isActive {
+      try? await Task.sleep(nanoseconds: 25_000_000)
+    }
+    #expect(superwall.subscriptionStatus == .active([Entitlement(id: "pro", isActive: true, store: .custom)]))
+  }
+
+  @Test("With a purchase controller, a completed checkout leaves the subscription status to the app")
+  func complete_withPurchaseController_doesNotSetSubscriptionStatus() async {
+    let purchaseController = RecordingPurchaseController()
+    let dependencyContainer = DependencyContainer(purchaseController: purchaseController)
+    defer {
+      dependencyContainer.storage.delete(LatestRedeemResponse.self)
+      dependencyContainer.storage.delete(LastWebEntitlementsFetchDate.self)
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let (redeemer, network) = makeRedeemer(in: dependencyContainer, superwall: superwall)
+    let (transactionManager, _) = await makeTransactionManager(
+      in: dependencyContainer,
+      entitlementsRefresher: redeemer
+    )
+    let (paywallVc, _) = makePaywall(in: dependencyContainer)
+    let statusBefore = superwall.subscriptionStatus
+
+    await transactionManager.handleCustomStoreCheckout(
+      .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
+      paywallViewController: paywallVc
+    )
+
+    for _ in 0..<40 where dependencyContainer.entitlementsInfo.web.isEmpty {
+      try? await Task.sleep(nanoseconds: 25_000_000)
+    }
+    // The web entitlements update as they do for any purchase...
+    #expect(network.getEntitlementsCallCount >= 1)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+    // ...but the status is the app's to set, and its purchase controller isn't asked to buy.
+    #expect(superwall.subscriptionStatus == statusBefore)
+    #expect(purchaseController.purchaseCount == 0)
+    #expect(self.purchaseController.purchaseCount == 0)
+  }
+
   // MARK: - Unknown products
 
   @Test("A checkout of a product the paywall doesn't sell is ignored", arguments: [
@@ -356,6 +637,7 @@ struct CustomStoreCheckoutTests {
     #expect(await tracked.waitForEvents(count: 1).isEmpty)
     #expect(await finishes.waitForResults().isEmpty)
     #expect(paywallVc.alertMessages.isEmpty)
+    #expect(paywallVc.customStoreCheckoutProductId == nil)
     #expect(purchaseController.purchaseCount == 0)
   }
 
