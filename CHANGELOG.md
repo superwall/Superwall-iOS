@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network. Apps that ship a bundle also fall back to their cached config after one second when config is slow to load.
+- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network.
 
 ## 4.18.0
 
