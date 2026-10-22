@@ -46,6 +46,7 @@
 		0EF8D358CA712DB3C45C1318 /* ConfirmHoldoutAssignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6752063E4547657E20072CE7 /* ConfirmHoldoutAssignment.swift */; };
 		0F00D32C125E8B86EA477631 /* PurchaseControllerObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CC67D2CEA90B70D6AC99419 /* PurchaseControllerObjc.swift */; };
 		0F6EB7DF5B8373B4718D00B9 /* AppStoreUpdateCheckTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90A67AE3E66A70518CCB3B4F /* AppStoreUpdateCheckTests.swift */; };
+		10F1F3CC52C118E5F5490530 /* BundledPaywalls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DAC55C7A60379A8D9BB870 /* BundledPaywalls.swift */; };
 		11477D1EB60D1FDA32F5099A /* Endpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 258FC2DB67022EF3D9B1FB67 /* Endpoint.swift */; };
 		11719638C88CFCA506264531 /* PopupTransitionDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */; };
 		11798EDE58E5D225E5414F2E /* FakeLocationAuthorizationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = D198C8645A213EEAD622C881 /* FakeLocationAuthorizationStatus.swift */; };
@@ -133,6 +134,7 @@
 		30113C71D033ADDF01214C75 /* PreloadingDisabled.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D2598EB46E9A27E2BD5104 /* PreloadingDisabled.swift */; };
 		309EC3675C7EF75050B076E7 /* ComputedPropertyRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51445FD3A0C38C2B502EAF1D /* ComputedPropertyRequest.swift */; };
 		30C0236F4E6A5260BFEF59AF /* CustomerCenterPushNavigator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F7CF7FEC54E1EB4DF66A2D /* CustomerCenterPushNavigator.swift */; };
+		31940D930D74370DA5E5762A /* BundledPaywallsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF986F222F6CC6B1C51776F6 /* BundledPaywallsTests.swift */; };
 		31DE588B2B4A26745C33753C /* ThrowableDecodable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62EC6A60945A85646E1230C1 /* ThrowableDecodable.swift */; };
 		31E937EB414F62268F6C953C /* TestModeInfoCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3548435BDE49161E3BDFA358 /* TestModeInfoCell.swift */; };
 		32A52161B29C999F06217B9A /* AppUpdateWarningView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D83A9FEE5901713FC693147 /* AppUpdateWarningView.swift */; };
@@ -940,6 +942,7 @@
 		532AB25EB4DA9BAA5E3FA530 /* OpacityAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpacityAnimation.swift; sourceTree = "<group>"; };
 		5383FA48A6E9EF8F30683C9B /* DebugManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugManager.swift; sourceTree = "<group>"; };
 		5384A032976EA60BD65844A5 /* SWLocalResourcesViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWLocalResourcesViewController.swift; sourceTree = "<group>"; };
+		53DAC55C7A60379A8D9BB870 /* BundledPaywalls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledPaywalls.swift; sourceTree = "<group>"; };
 		53F7B4D9230BF922AE19A830 /* ConfirmPaywallAssignment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmPaywallAssignment.swift; sourceTree = "<group>"; };
 		544C032167E8198513B2A860 /* PresentationValueObjc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresentationValueObjc.swift; sourceTree = "<group>"; };
 		5664E123CF093BFF557741E1 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1451,6 +1454,7 @@
 		FD778E66506BA51BEB5EE89C /* JSONEncoder+Superwall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "JSONEncoder+Superwall.swift"; sourceTree = "<group>"; };
 		FE0E783785F917188D12F4B4 /* Utils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
 		FEB7CF97D0926DCDAB133DB1 /* PermissionStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionStatus.swift; sourceTree = "<group>"; };
+		FF986F222F6CC6B1C51776F6 /* BundledPaywallsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledPaywallsTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -2695,6 +2699,7 @@
 		86DD4496D1218324B5CBBB89 /* Paywall */ = {
 			isa = PBXGroup;
 			children = (
+				FF986F222F6CC6B1C51776F6 /* BundledPaywallsTests.swift */,
 				EAECE41BF5F3184C8D79F1CC /* IntroOfferTokenManagerTests.swift */,
 				5902F3245E7904B5F94D6E4A /* Manager */,
 				75743C9AAFCAB9D91984F19C /* Presentation */,
@@ -3337,6 +3342,7 @@
 			isa = PBXGroup;
 			children = (
 				81C5A241FC9EF921D4E08FF1 /* ArchiveURLFetcher.swift */,
+				53DAC55C7A60379A8D9BB870 /* BundledPaywalls.swift */,
 				E2915A802FACB53B6094B011 /* ManifestDataFetcher.swift */,
 				BBB580546C647ED707C43FEC /* PaywallArchiveManager.swift */,
 				BCC728E79E36A4CDD87F3078 /* WebArchiveFileSytemManager.swift */,
@@ -3806,6 +3812,7 @@
 				C9766A8FAF76F716D5F16BD2 /* AttributionDeviceIdentifiersTests.swift in Sources */,
 				3CD2C23BAC2EA11174237785 /* AttributionTests.swift in Sources */,
 				D5C9A71CFB166225C082CAFB /* AutomaticPurchaseControllerTests.swift in Sources */,
+				31940D930D74370DA5E5762A /* BundledPaywallsTests.swift in Sources */,
 				B0DC8290B081B74CC65E9305 /* CELEvaluatorTests.swift in Sources */,
 				E984458E465D5A834CC52302 /* CacheMock.swift in Sources */,
 				CBFC0D2DCA996A5FF7E5174B /* CacheTests.swift in Sources */,
@@ -4035,6 +4042,7 @@
 				8C3A81E3D75F027539933310 /* BottomPaddingAnimation.swift in Sources */,
 				90E9A3B2C922288C8A86BCC9 /* Bundle+Helpers.swift in Sources */,
 				DE62F8E261EC7C60FBAAAE1D /* BundleHelper.swift in Sources */,
+				10F1F3CC52C118E5F5490530 /* BundledPaywalls.swift in Sources */,
 				BADAD7DDF7A8F0460CBFF362 /* ButtonFactory.swift in Sources */,
 				E08089FE5979B4524874BEE2 /* CELEvaluator.swift in Sources */,
 				B2B5684F46FB49AB9E3C1BE0 /* Cache.swift in Sources */,
