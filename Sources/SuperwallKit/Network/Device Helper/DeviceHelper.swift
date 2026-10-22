@@ -71,6 +71,8 @@ class DeviceHelper {
     UIDevice.modelName
   }()
 
+  var simulatorModel = UIDevice.simulatorModelName
+
   private let vendorIdLock = NSLock()
   private var cachedVendorId = ""
 
@@ -1149,6 +1151,7 @@ class DeviceHelper {
       appVersionPadded: appVersionPadded,
       osVersion: osVersion,
       deviceModel: model,
+      simulatorModel: simulatorModel,
       deviceLocale: localeIdentifier,
       preferredLocale: preferredLocaleIdentifier,
       deviceLanguageCode: languageCode,
