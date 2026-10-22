@@ -17,6 +17,7 @@ struct DeviceTemplate: Codable {
   var appVersionPadded: String
   var osVersion: String
   var deviceModel: String
+  var simulatorModel: String?
   var deviceLocale: String
   var preferredLocale: String
   var deviceLanguageCode: String
