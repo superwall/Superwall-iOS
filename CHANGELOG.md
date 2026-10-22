@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
+
 ## 4.18.1
 
 ### Enhancements

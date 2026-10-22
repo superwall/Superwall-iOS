@@ -123,6 +123,11 @@ public enum IntegrationAttribute: Int, CaseIterable {
   ///
   /// Kept when you reset or identify a different user.
   case singularDeviceId
+
+  /// The Airbridge Device ID, from `Airbridge.fetchDeviceUUID`.
+  ///
+  /// Kept when you reset or identify a different user.
+  case airbridgeId
 }
 
 // MARK: - CustomStringConvertible
@@ -175,6 +180,8 @@ extension IntegrationAttribute: CustomStringConvertible {
       return "appstackId"
     case .singularDeviceId:
       return "singularDeviceId"
+    case .airbridgeId:
+      return "airbridgeId"
     }
   }
 }
@@ -200,7 +207,8 @@ extension IntegrationAttribute {
       .kochavaDeviceId,
       .tenjinId,
       .appstackId,
-      .singularDeviceId:
+      .singularDeviceId,
+      .airbridgeId:
       return true
     case .amplitudeUserId,
       .brazeAliasName,
