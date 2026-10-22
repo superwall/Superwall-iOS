@@ -10,11 +10,16 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - After your `PurchaseController` returns `.purchased` for a custom product, the SDK now fetches the user's entitlements from Superwall in the background, retrying a few times over about 10 seconds until the product's entitlements are active, so a purchase your server reports to Superwall reaches `customerInfo` and `entitlements.web` without waiting for the next app foreground. This also works in apps without web checkout, and doesn't delay the purchase result or the paywall's dismissal.
 - Adds `StoreProduct.customTransactionId`, the transaction ID the SDK reports for a custom product's purchase. Pass it to your checkout and have your server send it back as `custom_transaction_id` with the purchase's events, and Superwall attributes that revenue, renewals included, to the paywall, campaign and experiment that sold it.
 - Apps without web paywalls now fetch the user's entitlements from Superwall too: once on launch, then on foreground at most every 15 minutes. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
-- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
 
 ### Fixes
 
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
+
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
 
 ## 4.18.1
 
