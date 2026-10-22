@@ -85,6 +85,13 @@ class DeviceHelper {
   }()
   #endif
 
+  #if os(macOS)
+  /// A native Mac app never runs in a simulator.
+  var simulatorModel: String?
+  #else
+  var simulatorModel = UIDevice.simulatorModelName
+  #endif
+
   private let vendorIdLock = NSLock()
   private var cachedVendorId = ""
 
@@ -1224,6 +1231,7 @@ class DeviceHelper {
       appVersionPadded: appVersionPadded,
       osVersion: osVersion,
       deviceModel: model,
+      simulatorModel: simulatorModel,
       deviceLocale: localeIdentifier,
       preferredLocale: preferredLocaleIdentifier,
       deviceLanguageCode: languageCode,

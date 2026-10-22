@@ -18,5 +18,25 @@ extension UIDevice {
       return identifier + String(UnicodeScalar(UInt8(value)))
     }
   }
+
+  /// The model a simulator emulates, such as `iPhone19,4`. `uname` reports the
+  /// host's architecture there instead. `nil` on a real device.
+  static var simulatorModelName: String? {
+    #if targetEnvironment(simulator)
+    return simulatorModelName(in: ProcessInfo.processInfo.environment)
+    #else
+    return nil
+    #endif
+  }
+
+  static func simulatorModelName(in environment: [String: String]) -> String? {
+    guard
+      let model = environment["SIMULATOR_MODEL_IDENTIFIER"],
+      !model.isEmpty
+    else {
+      return nil
+    }
+    return model
+  }
 }
 #endif

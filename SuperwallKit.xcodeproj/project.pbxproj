@@ -164,6 +164,7 @@
 		205B0A0F4179E2680B07172D /* WebArchiveManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5180737863E22145980065 /* WebArchiveManager.swift */; };
 		208D29CFA29543CD79AB2ECB /* TestModeModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 323B5E3D7E69FB3E718EED02 /* TestModeModal.swift */; };
 		20DD915D754F7819C44A677F /* PaywallInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 299441C3A6D3948BC5E0C741 /* PaywallInfo.swift */; };
+		20F88188CF7E5CC77C4A01A9 /* UIDevice+ModelNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4BCA31BA7FE7F7445B74116 /* UIDevice+ModelNameTests.swift */; };
 		210156385CF6A1EC64BFD5E4 /* DeviceIPCollectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 049BCF01B8C56CDBEF04071F /* DeviceIPCollectorTests.swift */; };
 		210BEE229900A19606803EDC /* SurveyOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03347D6B3B672A878CA2A7CA /* SurveyOption.swift */; };
 		212A031AB30019501E7BD4C1 /* StoreProductType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A959F1F550446C980DC5E5 /* StoreProductType.swift */; };
@@ -1897,6 +1898,7 @@
 		C3B96E2A1A289D96267EC0BC /* SK2StoreTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK2StoreTransaction.swift; sourceTree = "<group>"; };
 		C3F6B2A516ACAD9D6741F303 /* PaywallManagerMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallManagerMock.swift; sourceTree = "<group>"; };
 		C47EF86E73F81AA7B40C81C2 /* ContactStoreProxyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactStoreProxyTests.swift; sourceTree = "<group>"; };
+		C4BCA31BA7FE7F7445B74116 /* UIDevice+ModelNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIDevice+ModelNameTests.swift"; sourceTree = "<group>"; };
 		C567965E23812D8C25869C19 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C58AE43284A4CA189838C785 /* EntitlementProcessorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntitlementProcessorTests.swift; sourceTree = "<group>"; };
 		C59467B1B2F8AD9A097732AC /* CatalogueCacheTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogueCacheTests.swift; sourceTree = "<group>"; };
@@ -2721,6 +2723,7 @@
 				278542555C249AC8BD68D07A /* Date+IsoStringTests.swift */,
 				2789AA5AEC97C25B5E965FC4 /* Date+IsWithinAnHourBeforeTests.swift */,
 				F29BF6DAC3FD5F643EDCE074 /* TaskRetryingTests.swift */,
+				C4BCA31BA7FE7F7445B74116 /* UIDevice+ModelNameTests.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -4704,6 +4707,7 @@
 				474BCD30656157847E71E4FD /* TrackingAuthorizationStatusConversionTests.swift in Sources */,
 				2544787D3BD77572F1B57866 /* TrackingLogicTests.swift in Sources */,
 				9F84BAB3F37DF4E31B8917F4 /* TrackingManagerProxyTests.swift in Sources */,
+				20F88188CF7E5CC77C4A01A9 /* UIDevice+ModelNameTests.swift in Sources */,
 				42AE38DD020BF6F04E09283F /* URLSessionRetryLogicTests.swift in Sources */,
 				1DD42DD6C5E31D68D3FE3B43 /* Utils.swift in Sources */,
 				3AC3D67530EE590DB6F7A20C /* WaitForEntitlementsAndConfigTests.swift in Sources */,
