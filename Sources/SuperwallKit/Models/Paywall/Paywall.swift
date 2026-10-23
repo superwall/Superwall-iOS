@@ -513,6 +513,10 @@ extension Paywall: Equatable {
 // MARK: - Stubbable
 extension Paywall: Stubbable {
   static func stub() -> Paywall {
+    return stub(style: .modal)
+  }
+
+  static func stub(style: PaywallPresentationStyle) -> Paywall {
     return Paywall(
       databaseId: "id",
       identifier: "identifier",
@@ -523,7 +527,7 @@ extension Paywall: Stubbable {
       urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
-        style: .modal,
+        style: style,
         delay: 0
       ),
       backgroundColorHex: "",

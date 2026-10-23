@@ -9,6 +9,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds native macOS 12+ support for paywalls, SwiftUI embedding, StoreKit and web purchases, Customer Center, Test Mode, and a native paywall preview window. Includes a Mac example and native presentation tests.
 - Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
 
+### Fixes
+
+- Fixes paywall notifications not being scheduled again after the denied-permission alert couldn't show.
+
 ## 4.18.0
 
 ### Enhancements

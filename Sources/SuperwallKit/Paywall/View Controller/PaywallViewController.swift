@@ -1279,7 +1279,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     action: (() -> Void)? = nil,
     onClose: (() -> Void)? = nil
   ) {
+    // Callers can be waiting on `onClose`, so report the alert done when it
+    // can't show.
     guard presentedViewController == nil else {
+      onClose?()
       return
     }
 
@@ -2236,7 +2239,20 @@ extension PaywallViewController {
     } else {
       presentationStyle = paywall.presentation.style
     }
+    layOutWebView()
+  }
 
+  /// Lays the paywall out to fill the view an app embeds it in, as
+  /// `PaywallView` does. A popup's card and backdrop come from the SDK
+  /// presenting it, so embedded it fills the view like any other style.
+  func prepareForEmbedding() {
+    if case .popup = presentationStyle {
+      presentationStyle = .fullscreen
+    }
+    layOutWebView()
+  }
+
+  private func layOutWebView() {
     // A cached controller can move between popup and full-window presentations.
     // Remove it before reparenting so constraints to its old ancestor are removed.
     _ = view
@@ -2348,11 +2364,13 @@ extension PaywallViewController {
     action: (() -> Void)? = nil,
     onClose: (() -> Void)? = nil
   ) {
-    // A window shows one sheet at a time.
+    // A window shows one sheet at a time. Callers can be waiting on
+    // `onClose`, so report the alert done when it can't show.
     guard
       presentedViewControllers?.isEmpty != false,
       view.window?.attachedSheet == nil
     else {
+      onClose?()
       return
     }
 

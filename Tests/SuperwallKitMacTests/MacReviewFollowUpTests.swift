@@ -147,4 +147,70 @@ struct TestModeSheetNoShowTests {
     #expect(finish?() == true)
   }
 }
+@Suite(.serialized)
+@MainActor
+struct MacPaywallEmbeddingAndAlertTests {
+  private func makePaywallViewController(style: PaywallPresentationStyle) -> PaywallViewController {
+    let dependencyContainer = DependencyContainer()
+    return PaywallViewController(
+      paywall: .stub(style: style),
+      deviceHelper: dependencyContainer.deviceHelper,
+      factory: dependencyContainer,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      webView: SWWebView(
+        isiOSAppOnMac: false,
+        messageHandler: .init(
+          receiptManager: dependencyContainer.receiptManager,
+          factory: dependencyContainer,
+          permissionHandler: dependencyContainer.permissionHandler,
+          customCallbackRegistry: dependencyContainer.customCallbackRegistry
+        ),
+        isOnDeviceCacheEnabled: false,
+        factory: dependencyContainer
+      ),
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      cache: dependencyContainer.makeCache(),
+      paywallArchiveManager: dependencyContainer.paywallArchiveManager,
+      customCallbackRegistry: dependencyContainer.customCallbackRegistry
+    )
+  }
+
+  @Test
+  func embeddedPopupPaywallFillsItsView() {
+    let paywall = makePaywallViewController(style: .popup(height: 50, width: 80, cornerRadius: 12))
+    _ = paywall.view
+    // A popup's web view only goes in when the SDK presents it.
+    #expect(paywall.webView.superview == nil)
+
+    paywall.prepareForEmbedding()
+    #expect(paywall.webView.superview === paywall.view)
+    #expect(paywall.popupContainerView == nil)
+  }
+
+  @Test
+  func alertThatCantShowStillReportsItsClose() async throws {
+    _ = NSApplication.shared
+    let window = NSWindow(contentViewController: NSViewController.blank())
+    window.isReleasedWhenClosed = false
+    window.setContentSize(NSSize(width: 600, height: 500))
+    window.orderFront(nil)
+    defer { window.close() }
+    let paywall = makePaywallViewController(style: .modal)
+    window.contentViewController?.presentAsSheet(paywall)
+    try await Task.sleep(nanoseconds: 300_000_000)
+    // Checkout, say, is already open over the paywall.
+    let checkout = NSViewController.blank()
+    checkout.preferredContentSize = CGSize(width: 200, height: 100)
+    paywall.presentAsSheet(checkout)
+    try await Task.sleep(nanoseconds: 300_000_000)
+
+    var closes = 0
+    paywall.presentAlert(title: "Notifications are off", onClose: { closes += 1 })
+    #expect(closes == 1)
+
+    paywall.dismiss(checkout)
+    window.contentViewController?.dismiss(paywall)
+  }
+}
 #endif

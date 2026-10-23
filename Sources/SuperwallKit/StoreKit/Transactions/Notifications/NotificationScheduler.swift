@@ -86,7 +86,10 @@ actor NotificationScheduler: NotificationScheduling {
       if let notificationPermissionsDenied = Superwall.shared.options.paywalls.notificationPermissionsDenied {
         await withCheckedContinuation { continuation in
           Task { @MainActor in
-            Superwall.shared.paywallViewController?.presentAlert(
+            guard let paywallViewController = Superwall.shared.paywallViewController else {
+              return continuation.resume()
+            }
+            paywallViewController.presentAlert(
               title: notificationPermissionsDenied.title,
               message: notificationPermissionsDenied.message,
               actionTitle: notificationPermissionsDenied.actionButtonTitle,

@@ -13,6 +13,7 @@ struct PaywallViewControllerWrapper: NSViewControllerRepresentable {
   let paywallViewController: PaywallViewController
 
   func makeNSViewController(context: Context) -> PaywallViewController {
+    paywallViewController.prepareForEmbedding()
     return paywallViewController
   }
 
