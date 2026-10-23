@@ -733,4 +733,30 @@ struct ConfigManagerTests {
     _ = deviceHelper
     try await Task.sleep(nanoseconds: UInt64(0.3 * 1_000_000_000))
   }
+
+  @Test(arguments: [false, true])
+  func fetchConfiguration_onlyRequestsPrewarmWithoutCachedConfig(hasCachedConfig: Bool) async {
+    let storage = StorageMock()
+    let dependencyContainer = DependencyContainer()
+    let network = NetworkMock(options: SuperwallOptions(), factory: dependencyContainer)
+    storage.save(SubscriptionStatus.inactive, forType: SubscriptionStatusKey.self)
+    if hasCachedConfig {
+      let flags = FeatureFlags.stub().setting(\.enableConfigRefresh, to: false)
+      let cached = Config.stub().setting(\.featureFlags, to: flags)
+      storage.save(cached, forType: LatestConfig.self)
+    }
+    // Stop before applying config/StoreKit: this test covers the fetch decision.
+    network.configReturnValue = .failure(NetworkError.noInternet)
+    let (manager, deviceHelper) = makeConfigManager(
+      dependencyContainer: dependencyContainer,
+      storage: storage,
+      network: network
+    )
+
+    await manager.fetchConfiguration()
+
+    #expect(network.configPrewarmRequests == [!hasCachedConfig])
+    _ = deviceHelper
+  }
+
 }

@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.18.3
+
+### Enhancements
+
+- Prepares configuration decoding in the background while the first configuration request is in flight on launches without a usable cached configuration, reducing the work needed when the response arrives.
+
 ## 4.18.2
 
 ### Enhancements

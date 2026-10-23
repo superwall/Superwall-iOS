@@ -56,6 +56,10 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 4. Purchases are handled by `StoreKitManager` with automatic retry logic
 5. Events are tracked through the analytics system
 
+### Configuration decode prewarming
+
+On a launch without a usable cached config, start the config request before scheduling decode prewarming. Prewarm at most once per process on a utility queue using a separate decoder and the embedded representative fixture; discard that model without applying state, caching, tracking events or loading products. Never make the real response wait for warmup. Keep a test that decodes the fixture through the real Config models when the wire model changes.
+
 ### Minimum Toolchain and Platforms
 
 - Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.

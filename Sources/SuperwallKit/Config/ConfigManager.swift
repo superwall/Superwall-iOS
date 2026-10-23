@@ -329,7 +329,9 @@ class ConfigManager {
           )
         }
       } else {
-        let config = try await network.getConfig { [weak self] attempt in
+        // A valid cached config has already exercised the decoder this launch.
+        // On a cache miss, warm it only after the real request is in flight.
+        let config = try await network.getConfig(prewarmDecoding: cachedConfig == nil) { [weak self] attempt in
           self?.configRetryCount = attempt
           self?.configState.send(.retrying)
         }
