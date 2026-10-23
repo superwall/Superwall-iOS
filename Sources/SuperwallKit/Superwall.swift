@@ -1658,6 +1658,20 @@ extension Superwall: PaywallViewControllerEventDelegate {
         purchaseTask = nil
       }
       await purchaseTask?.value
+    case .customStoreCheckout(let checkout):
+      // A step waits for a purchase in flight, so it can't take over that
+      // purchase's state, and holds the purchase slot while it runs.
+      while let purchaseInFlight = purchaseTask {
+        await purchaseInFlight.value
+      }
+      purchaseTask = Task {
+        await dependencyContainer.transactionManager.handleCustomStoreCheckout(
+          checkout,
+          paywallViewController: paywallViewController
+        )
+        purchaseTask = nil
+      }
+      await purchaseTask?.value
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):

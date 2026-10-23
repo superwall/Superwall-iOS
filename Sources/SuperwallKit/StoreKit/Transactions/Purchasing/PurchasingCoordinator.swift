@@ -16,6 +16,8 @@ actor PurchasingCoordinator {
   var transactions: [String: StoreTransaction] = [:]
   var isFreeTrialAvailable = false
   var product: StoreProduct?
+  /// Whether the purchase is a custom store checkout that the paywall runs itself.
+  var isCustomStoreCheckout = false
   private var completion: ((PurchaseResult) -> Void)?
   private let factory: StoreTransactionFactory
 
@@ -45,12 +47,19 @@ actor PurchasingCoordinator {
   func beginPurchase(
     of product: StoreProduct,
     source: PurchaseSource,
-    isFreeTrialAvailable: Bool
+    isFreeTrialAvailable: Bool,
+    isCustomStoreCheckout: Bool = false
   ) {
     self.purchaseDate = Date()
     self.source = source
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.product = product
+    self.isCustomStoreCheckout = isCustomStoreCheckout
+  }
+
+  /// Replaces the source of the purchase in progress, keeping when it started.
+  func setSource(_ source: PurchaseSource) {
+    self.source = source
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -202,5 +211,6 @@ actor PurchasingCoordinator {
     product = nil
     source = nil
     isFreeTrialAvailable = false
+    isCustomStoreCheckout = false
   }
 }

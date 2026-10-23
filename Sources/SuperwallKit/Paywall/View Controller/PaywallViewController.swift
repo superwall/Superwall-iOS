@@ -159,6 +159,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// The custom product whose checkout the paywall is running, if any. The paywall
+  /// reports how that checkout ends, so closing its sheet isn't tracked as an
+  /// abandoned Stripe checkout. Set by `TransactionManager` once it has accepted the
+  /// checkout's start, and cleared when the checkout ends or the paywall is
+  /// presented or dismissed.
+  var customStoreCheckoutProductId: String?
+
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
 
@@ -169,6 +176,10 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
 
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
+
+  /// Runs the steps of a custom store checkout one at a time, in the order the
+  /// paywall sent them.
+  private let customStoreCheckoutCoordinator = SerialTaskCoordinator()
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
@@ -500,6 +511,15 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
 
     webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
+  }
+
+  /// Closes the in-app browser, if one is open, and returns once it's gone.
+  func closeSafari() async {
+    await withCheckedContinuation { continuation in
+      closeSafari {
+        continuation.resume()
+      }
+    }
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
@@ -1299,8 +1319,10 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
         // 1. Redeem did NOT succeed
         // 2. Dismissal was NOT programmatic (user dismissed it)
         // 3. No stripe checkout abandon message was received
+        // 4. It isn't a custom store checkout, whose outcome the paywall reports
         if !self.didRedeemSucceedDuringCheckout,
           !self.isCheckoutDismissedProgrammatically,
+          self.customStoreCheckoutProductId == nil,
           !self.didReceiveStripeCheckoutAbandonMessage {
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
@@ -1381,6 +1403,15 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+    }
+  }
+
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout) {
+    customStoreCheckoutCoordinator.enqueue { @MainActor [weak self] in
+      guard let self else {
+        return
+      }
+      await self.eventDelegate?.eventDidOccur(.customStoreCheckout(checkout), on: self)
     }
   }
 
@@ -1630,6 +1661,7 @@ extension PaywallViewController {
     // A purchase belongs to the presentation it was made in. It's cleared here rather than when
     // the view disappears: a sheet swiped away disappears before its close is reported.
     completedPurchaseProduct = nil
+    customStoreCheckoutProductId = nil
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     webView.scrollView.contentOffset = CGPoint.zero
@@ -1847,6 +1879,7 @@ extension PaywallViewController {
     }
 
     paywallResult = nil
+    customStoreCheckoutProductId = nil
     cache?.activePaywallVcKey = nil
     isPresented = false
     isPresentedBySDK = false
