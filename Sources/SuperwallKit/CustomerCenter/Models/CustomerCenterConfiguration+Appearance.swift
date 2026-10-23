@@ -7,7 +7,11 @@
 
 import Foundation
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension CustomerCenterConfiguration {
   // MARK: - Appearance
@@ -51,6 +55,18 @@ extension CustomerCenterConfiguration {
         self.dark = dark
       }
 
+      #if os(macOS)
+      @nonobjc public convenience init(light: NSColor, dark: NSColor) {
+        self.init(light: light.hexString, dark: dark.hexString)
+      }
+
+      /// Disfavored so that `.init(light: .red, dark: .blue)` keeps meaning `NSColor`, which also
+      /// has a `.red`, rather than becoming ambiguous.
+      @_disfavoredOverload
+      @nonobjc public convenience init(light: Color, dark: Color) {
+        self.init(light: NSColor(light), dark: NSColor(dark))
+      }
+      #else
       @nonobjc public convenience init(light: UIColor, dark: UIColor) {
         self.init(light: light.hexString, dark: dark.hexString)
       }
@@ -61,6 +77,7 @@ extension CustomerCenterConfiguration {
       @nonobjc public convenience init(light: Color, dark: Color) {
         self.init(light: UIColor(light), dark: UIColor(dark))
       }
+      #endif
 
       override public func isEqual(_ object: Any?) -> Bool {
         guard let other = object as? ColorPair else { return false }
@@ -77,11 +94,17 @@ extension CustomerCenterConfiguration {
   }
 }
 
-extension UIColor {
+extension PlatformColor {
   /// `#RRGGBBAA` representation.
   var hexString: String {
     var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+    #if os(macOS)
+    // AppKit raises unless the color is in an RGB space, which system colors
+    // such as `.white` aren't.
+    (usingColorSpace(.sRGB) ?? NSColor.black).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #else
     getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #endif
     return String(
       format: "#%02X%02X%02X%02X",
       Int(round(red * 255)),

@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 import SafariServices
 

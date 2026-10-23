@@ -628,7 +628,7 @@ struct AdConsentTests {
       }
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer

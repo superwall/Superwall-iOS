@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 23/09/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 enum PresentationRequestType: Equatable, CustomStringConvertible {
@@ -110,7 +114,7 @@ struct PresentationRequest {
   let presentationInfo: PresentationInfo
 
   /// The view controller to present the paywall on, if any.
-  var presenter: UIViewController?
+  var presenter: PlatformViewController?
 
   /// Overrides the default behavior and products of a paywall.
   var paywallOverrides: PaywallOverrides?

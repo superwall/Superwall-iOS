@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 20/09/2022.
 //
 
+#if !os(macOS)
 import UIKit
 
 extension UIViewController {
@@ -17,3 +18,4 @@ extension UIViewController {
     }
   }
 }
+#endif

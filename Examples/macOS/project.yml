@@ -1,0 +1,24 @@
+name: SuperwallMacExample
+options:
+  bundleIdPrefix: com.superwall
+  deploymentTarget:
+    macOS: "13.0"
+packages:
+  SuperwallKit:
+    path: ../..
+targets:
+  SuperwallMacExample:
+    type: application
+    platform: macOS
+    sources: [SuperwallMacExample]
+    dependencies:
+      - package: SuperwallKit
+    settings:
+      PRODUCT_BUNDLE_IDENTIFIER: com.superwall.SuperwallMacExample
+      INFOPLIST_FILE: SuperwallMacExample/Info.plist
+      CODE_SIGN_ENTITLEMENTS: SuperwallMacExample/SuperwallMacExample.entitlements
+      CODE_SIGN_STYLE: Automatic
+      CODE_SIGN_IDENTITY: "-"
+      SWIFT_VERSION: "5.0"
+      MARKETING_VERSION: "1.0"
+      CURRENT_PROJECT_VERSION: "1"

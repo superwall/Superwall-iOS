@@ -169,7 +169,7 @@ struct APIStoreProduct: StoreProductType {
   /// storefronts fall back to `en_US` since Superwall products are USD-only
   /// today.
   private var storefrontLocale: Locale {
-    if #available(iOS 16.0, *) {
+    if #available(iOS 16.0, macOS 13.0, *) {
       let region = Locale.Region(superwallProduct.storefront)
       if Locale.Region.isoRegions.contains(region) {
         var components = Locale.Components(languageCode: .english)

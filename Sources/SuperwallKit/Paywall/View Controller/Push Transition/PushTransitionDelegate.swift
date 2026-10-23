@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/10/2022.
 //
 
+#if !os(macOS)
 import UIKit
 
 final class PushTransitionDelegate: NSObject, UIViewControllerTransitioningDelegate {
@@ -22,3 +23,4 @@ final class PushTransitionDelegate: NSObject, UIViewControllerTransitioningDeleg
     return PushTransition(state: .dismissing)
   }
 }
+#endif

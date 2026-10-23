@@ -6,7 +6,11 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// How the Customer Center is put on screen, for ``CustomerCenterViewController`` and
 /// ``CustomerCenterView`` alike. Also reported on ``SuperwallEvent/customerCenterOpen(screen:presentation:)``.
@@ -29,6 +33,157 @@ public enum CustomerCenterPresentationStyle: Int, Sendable {
   }
 }
 
+#if os(macOS)
+/// An AppKit container for ``CustomerCenterView``.
+///
+/// Present it as a sheet, or place it in a window or a view of your own with
+/// ``CustomerCenterPresentationStyle/embedded``. AppKit has no navigation controller for the
+/// Customer Center's own screens to be pushed onto, so it brings its own navigation in either
+/// style. Embedded, it leaves out the close button.
+@objc(SWKCustomerCenterViewController)
+public final class CustomerCenterViewController: NSHostingController<CustomerCenterView> {
+  let viewModel: CustomerCenterViewModel
+  let presentationStyle: CustomerCenterPresentationStyle
+  var onDismiss: (() -> Void)?
+
+  /// Whether this controller was on screen as a presented sheet, recorded while it still is.
+  var wasPresentedModally = false
+
+  /// Latches ``deliverDismissal()``: a removal from a container is also a disappearance.
+  private var hasDeliveredDismissal = false
+
+  /// The size it opens at as a sheet, which takes its size from its content.
+  static let sheetSize = CGSize(width: 520, height: 680)
+
+  /// - Parameters:
+  ///   - configuration: Overrides ``SuperwallOptions/customerCenter``; `nil` uses the options value.
+  ///   - presentationStyle: Whether you present this controller as a sheet or place it yourself.
+  ///     Defaults to ``CustomerCenterPresentationStyle/sheet``.
+  ///   - delegate: Receives Customer Center events. The view controller does not retain its
+  ///     delegate. Keep a strong reference to it for the duration of the presentation — or present
+  ///     via `Superwall.shared.presentCustomerCenter(delegate:)`, which retains the delegate while
+  ///     the Customer Center is presented.
+  public convenience init(
+    configuration: CustomerCenterConfiguration? = nil,
+    presentationStyle: CustomerCenterPresentationStyle = .sheet,
+    delegate: CustomerCenterDelegate? = nil
+  ) {
+    self.init(
+      viewModel: CustomerCenterManager.makeViewModel(configuration: configuration),
+      adapter: CustomerCenterDelegateAdapter(swiftDelegate: delegate, objcDelegate: nil),
+      presentationStyle: presentationStyle
+    )
+  }
+
+  /// Objective-C initializer.
+  /// - Parameters:
+  ///   - configuration: Overrides ``SuperwallOptions/customerCenter``; `nil` uses the options value.
+  ///   - presentationStyle: Whether you present this controller as a sheet or place it yourself.
+  ///   - objcDelegate: Receives Customer Center events. The view controller does not retain its
+  ///     delegate. Keep a strong reference to it for the duration of the presentation — or present
+  ///     via `Superwall.shared.presentCustomerCenter(delegate:)`, which retains the delegate while
+  ///     the Customer Center is presented.
+  @available(swift, obsoleted: 1.0)
+  @objc(initWithConfiguration:presentationStyle:delegate:)
+  public convenience init(
+    configuration: CustomerCenterConfiguration?,
+    presentationStyle: CustomerCenterPresentationStyle,
+    objcDelegate: CustomerCenterDelegateObjc?
+  ) {
+    self.init(
+      viewModel: CustomerCenterManager.makeViewModel(configuration: configuration),
+      adapter: CustomerCenterDelegateAdapter(swiftDelegate: nil, objcDelegate: objcDelegate),
+      presentationStyle: presentationStyle
+    )
+  }
+
+  init(
+    viewModel: CustomerCenterViewModel,
+    adapter: CustomerCenterDelegateAdapter,
+    presentationStyle: CustomerCenterPresentationStyle
+  ) {
+    self.viewModel = viewModel
+    self.presentationStyle = presentationStyle
+    viewModel.callbacks = adapter.makeCallbacks()
+    viewModel.presentationMode = presentationStyle
+
+    var options = CustomerCenterNavigationOptions(
+      style: .sheet,
+      showsCloseButton: presentationStyle == .sheet
+    )
+    super.init(rootView: CustomerCenterView(viewModel: viewModel, navigationOptions: options))
+
+    // The close action needs `self`, which isn't available until `super.init` has run.
+    options.onClose = { [weak self] in self?.close() }
+    rootView = CustomerCenterView(viewModel: viewModel, navigationOptions: options)
+
+    if presentationStyle == .sheet {
+      preferredContentSize = Self.sheetSize
+    }
+  }
+
+  @available(*, unavailable)
+  required dynamic init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
+
+  override public func viewDidAppear() {
+    super.viewDidAppear()
+    wasPresentedModally = presentingViewController != nil
+  }
+
+  override public func viewDidDisappear() {
+    super.viewDidDisappear()
+    // AppKit is still in the middle of a dismissal here: it lets go of `presentingViewController`
+    // only once this returns. So settle whether the Customer Center left or was only hidden on the
+    // next turn of the run loop. That's still ahead of the view model's dismissal debounce, which
+    // the disappearance has just armed.
+    // AppKit may release its last reference as dismissal finishes. Retain this
+    // controller for the check so onDismiss can release the manager's delegate.
+    DispatchQueue.main.async {
+      if self.isLeavingHierarchy {
+        self.deliverDismissal()
+      } else {
+        self.viewModel.suppressDismissalUntilNextAppearance()
+      }
+    }
+  }
+
+  override public func removeFromParent() {
+    super.removeFromParent()
+    deliverDismissal()
+  }
+
+  private func close() {
+    if let presenting = presentingViewController {
+      presenting.dismiss(self)
+    } else {
+      view.window?.performClose(nil)
+    }
+  }
+
+  /// See the iOS controller: fires the view model's dismissal straight away rather than after its
+  /// visibility debounce, and runs `onDismiss` at most once.
+  private func deliverDismissal() {
+    guard !hasDeliveredDismissal else { return }
+    hasDeliveredDismissal = true
+    viewModel.dismiss()
+    onDismiss?()
+  }
+
+  /// Whether the Customer Center has gone, rather than being hidden along with its window or
+  /// covered within it.
+  private var isLeavingHierarchy: Bool {
+    if wasPresentedModally {
+      return presentingViewController == nil
+    }
+    if let window = view.window {
+      return window.isClosedRatherThanHidden
+    }
+    // Out of its window: removed, unless a container still holds it, as a tab view holds a tab
+    // that isn't showing.
+    return parent == nil
+  }
+}
+#else
 /// A UIKit container for ``CustomerCenterView``.
 ///
 /// Present it modally, or push it onto a navigation controller of your own with
@@ -228,3 +383,4 @@ extension UIViewController {
     return false
   }
 }
+#endif

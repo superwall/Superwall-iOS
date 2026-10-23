@@ -13,13 +13,13 @@ struct CustomerCenterTheme {
   init(appearance: CustomerCenterConfiguration.Appearance, colorScheme: ColorScheme) {
     func color(_ pair: CustomerCenterConfiguration.Appearance.ColorPair?) -> Color? {
       guard let pair else { return nil }
-      return UIColor(hex: colorScheme == .dark ? pair.dark : pair.light).map(Color.init)
+      return PlatformColor(hex: colorScheme == .dark ? pair.dark : pair.light).map(Color.init)
     }
     accent = color(appearance.accent)
   }
 }
 
-extension UIColor {
+extension PlatformColor {
   /// Parses `#RRGGBB` / `#RRGGBBAA` / `RRGGBB`.
   convenience init?(hex: String) {
     var value = hex.trimmingCharacters(in: .whitespacesAndNewlines)
