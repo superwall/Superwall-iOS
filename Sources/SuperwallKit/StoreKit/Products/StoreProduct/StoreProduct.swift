@@ -86,11 +86,28 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// Whether this product is a custom product backed by the Superwall API.
   nonisolated(unsafe) var isCustomProduct = false
 
-  /// A pre-generated transaction ID for custom products.
+  /// The transaction ID the SDK generates for a purchase of a custom product, or `nil`
+  /// for other products.
   ///
-  /// This is set before purchase and used as the `originalTransactionIdentifier`
-  /// in the resulting `CustomStoreTransaction`.
-  nonisolated(unsafe) var customTransactionId: String?
+  /// It's set before ``PurchaseController/purchase(product:)`` is called and reported as
+  /// the original transaction ID of the purchase's `transaction_complete` event. Pass it to
+  /// your checkout, for example as checkout metadata, and have your server send it back as
+  /// `custom_transaction_id` when it reports the purchase to Superwall. Superwall then
+  /// attributes the purchase's revenue, renewals included, to the paywall that sold it.
+  public internal(set) var customTransactionId: String? {
+    get {
+      customTransactionIdLock.lock()
+      defer { customTransactionIdLock.unlock() }
+      return storedCustomTransactionId
+    }
+    set {
+      customTransactionIdLock.lock()
+      defer { customTransactionIdLock.unlock() }
+      storedCustomTransactionId = newValue
+    }
+  }
+  private let customTransactionIdLock = NSLock()
+  nonisolated(unsafe) private var storedCustomTransactionId: String?
 
   /// A `Set` of ``Entitlements`` associated with the product.
   public var entitlements: Set<Entitlement> {
