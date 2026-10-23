@@ -14,6 +14,7 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 
 - `SuperwallKit/Superwall`
 - `SuperwallOptions`
+- <doc:UserSeeds>
 
 ### The Delegate
 

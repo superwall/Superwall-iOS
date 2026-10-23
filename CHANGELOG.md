@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.0
+
+### Enhancements
+
+- Adds `SuperwallOptions.enableUserIdSeed` to opt into user ID-derived seeds directly in the SDK. The default (`nil`) follows the remote flag; explicit `true` or `false` overrides it. Seeds are recalculated when identifying a new user ID, not when identifying the same user again.
+
 ## 4.18.2
 
 ### Enhancements

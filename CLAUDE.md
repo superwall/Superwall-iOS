@@ -150,3 +150,10 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### User seeds
+
+`SuperwallOptions.enableUserIdSeed` is a tri-state override: `nil` follows the remote
+`enable_userid_seed` toggle; explicit `true` or `false` wins. Preserve the existing
+SHA256 bucket algorithm and the same-user identify early return. Anonymous/reset seeds
+remain random. The Swift `Bool?` has an Objective-C `NSNumber?` bridge with the same selector.
