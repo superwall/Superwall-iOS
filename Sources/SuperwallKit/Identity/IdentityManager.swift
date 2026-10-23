@@ -258,15 +258,23 @@ class IdentityManager {
       // Regenerate seed based on userId.
       self.group.enter()
       Task {
-        let config = try? await self.configManager.configState
-          .compactMap { $0.getConfig() }
-          .throwableAsync()
-
-        if config?.featureFlags.enableUserIdSeed == true,
-          let seed = userId.sha256MappedToRange() {
-          self._seed = seed
+        let enableUserIdSeed: Bool
+        if let override = self.configManager.options.enableUserIdSeed {
+          enableUserIdSeed = override
+        } else {
+          let config = try? await self.configManager.configState
+            .compactMap { $0.getConfig() }
+            .throwableAsync()
+          enableUserIdSeed = config?.featureFlags.enableUserIdSeed == true
         }
-        self.group.leave()
+
+        self.queue.async {
+          if enableUserIdSeed,
+            let seed = userId.sha256MappedToRange() {
+            self._seed = seed
+          }
+          self.group.leave()
+        }
       }
 
       func getAssignmentsAsync() {
