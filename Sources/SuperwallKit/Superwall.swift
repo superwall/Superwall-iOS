@@ -1600,6 +1600,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: The updated ``CustomerInfo``.
   @discardableResult
   public func refreshCustomerInfo() async -> CustomerInfo {
+    // Await config because it decides whether test mode is on.
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
     if dependencyContainer.testModeManager?.isTestMode != true {
       await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements()
     }

@@ -703,6 +703,7 @@ enum InternalSuperwallEvent {
     /// for a custom product and `.appStore` for any other product.
     var store: ProductStore?
     var demandScore: Int?
+    var demandTier: String?
 
     private var resolvedStore: ProductStore {
       if let store = store {
@@ -713,7 +714,6 @@ enum InternalSuperwallEvent {
       }
       return .appStore
     }
-    var demandTier: String?
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved {
