@@ -94,6 +94,28 @@ struct NetworkTests {
     #expect(urlSession.didRequest)
   }
 
+  @Test(arguments: [false, true])
+  func config_onlyRequestsWarmupWhenExplicitlyEnabled(prewarm: Bool) async throws {
+    let dependencyContainer = DependencyContainer()
+    let urlSession = CustomURLSessionMock(factory: dependencyContainer)
+    urlSession.configResponse = .stub()
+    let network = Network(
+      urlSession: urlSession,
+      options: SuperwallOptions(),
+      factory: dependencyContainer
+    )
+    let publisher = CurrentValueSubject<UIApplication.State, Never>(.active)
+      .eraseToAnyPublisher()
+
+    _ = try await network.getConfig(
+      injectedApplicationStatePublisher: publisher,
+      maxRetry: 0,
+      prewarmDecoding: prewarm
+    )
+
+    #expect(urlSession.hasRequestStartedCallback == prewarm)
+  }
+
   // MARK: - Headers
 
   @Test func headers_xEntitlements_isCommaSeparatedString() async {

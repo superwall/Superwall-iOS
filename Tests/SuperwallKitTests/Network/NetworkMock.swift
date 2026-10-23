@@ -13,6 +13,7 @@ final class NetworkMock: Network {
   var sentSessionEvents: SessionEventsRequest?
   var sentEvents: [EventsRequest] = []
   var getConfigCalled = false
+  var configPrewarmRequests: [Bool] = []
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
@@ -42,10 +43,12 @@ final class NetworkMock: Network {
   override func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int? = nil,
+    prewarmDecoding: Bool = false,
     isRetryingCallback: ((Int) -> Void)? = nil,
     timeout: Seconds? = nil
   ) async throws -> Config {
     getConfigCalled = true
+    configPrewarmRequests.append(prewarmDecoding)
 
     switch configReturnValue {
     case .success(let success):

@@ -179,6 +179,7 @@ class Network {
   func getConfig(
     injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
     maxRetry: Int? = nil,
+    prewarmDecoding: Bool = false,
     isRetryingCallback: ((Int) -> Void)? = nil,
     timeout: Seconds? = nil
   ) async throws -> Config {
@@ -196,6 +197,7 @@ class Network {
           factory: factory,
           requestId: requestId
         ),
+        onRequestStarted: prewarmDecoding ? { ConfigDecodingPrewarmer.shared.start() } : nil,
         isRetryingCallback: isRetryingCallback
       )
       config.requestId = requestId

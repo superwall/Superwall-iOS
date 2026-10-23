@@ -58,17 +58,19 @@ enum NetworkError: LocalizedError, Equatable {
 }
 
 class CustomURLSession {
-  private let urlSession = URLSession(configuration: .default)
+  private let urlSession: URLSession
   private let factory: ApiFactory
 
-  init(factory: ApiFactory) {
+  init(factory: ApiFactory, urlSession: URLSession = URLSession(configuration: .default)) {
     self.factory = factory
+    self.urlSession = urlSession
   }
 
   @discardableResult
   func request<Kind, Response>(
     _ endpoint: Endpoint<Kind, Response>,
     data: Kind.RequestData,
+    onRequestStarted: (() -> Void)? = nil,
     isRetryingCallback: ((Int) -> Void)? = nil
   ) async throws -> Response {
     guard let request = await endpoint.makeRequest(
@@ -96,6 +98,9 @@ class CustomURLSession {
       timeout: endpoint.timeout,
       isRetryingCallback: isRetryingCallback
     ) {
+      if let onRequestStarted = onRequestStarted {
+        return try await self.data(for: request, onRequestStarted: onRequestStarted)
+      }
       return try await self.urlSession.data(for: request)
     }.value
 
@@ -146,6 +151,60 @@ class CustomURLSession {
     }
 
     return value
+  }
+
+  /// Uses an explicit task only when a caller needs the post-resume hook. The
+  /// ordinary request path keeps Foundation's native async implementation.
+  private func data(
+    for request: URLRequest,
+    onRequestStarted: () -> Void
+  ) async throws -> (Data, URLResponse) {
+    let state = RequestTaskState()
+    return try await withTaskCancellationHandler {
+      try await withCheckedThrowingContinuation { continuation in
+        let task = urlSession.dataTask(with: request) { data, response, error in
+          if let error = error {
+            continuation.resume(throwing: error)
+          } else if let data = data, let response = response {
+            continuation.resume(returning: (data, response))
+          } else {
+            continuation.resume(throwing: NetworkError.unknown)
+          }
+        }
+        if state.resume(task) {
+          onRequestStarted()
+        }
+      }
+    } onCancel: {
+      state.cancel()
+    }
+  }
+
+  /// Cancellation can arrive before the data task exists, including a retry's
+  /// timeout. Serialize registration/resume with cancellation so no task escapes.
+  private final class RequestTaskState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var task: URLSessionDataTask?
+    private var isCancelled = false
+
+    func resume(_ task: URLSessionDataTask) -> Bool {
+      lock.lock()
+      defer { lock.unlock() }
+      self.task = task
+      if isCancelled {
+        task.cancel()
+      }
+      task.resume()
+      return !isCancelled
+    }
+
+    func cancel() {
+      lock.lock()
+      isCancelled = true
+      let task = task
+      lock.unlock()
+      task?.cancel()
+    }
   }
 
   private func getRequestId(
