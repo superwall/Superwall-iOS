@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## Unreleased
+
+### Enhancements
+
+- Forwards the original and resolved deep-link URLs to enrichment before evaluating deep-link paywall rules. Enrichment failures continue through the normal placement flow.
+
 ## 4.18.2
 
 ### Enhancements

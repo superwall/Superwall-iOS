@@ -20,6 +20,10 @@ final class DeepLinkRouter {
     _ = await Superwall.shared.track(event)
   }
 
+  /// Resolves request-scoped acquisition context before deep-link placement evaluation.
+  /// Replaced in tests to control response ordering and failures.
+  var enrichDeepLink: (EnrichmentRequest.DeepLink) async throws -> Void
+
   /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
   var presentedPaywallInfo: () async -> PaywallInfo? = {
     await Superwall.shared.paywallViewController?.info
@@ -28,11 +32,13 @@ final class DeepLinkRouter {
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    enrichDeepLink: @escaping (EnrichmentRequest.DeepLink) async throws -> Void
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.enrichDeepLink = enrichDeepLink
 
     listenToConfig()
   }
@@ -72,17 +78,23 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
+    // Debug and local preview URLs are not acquisition evidence. In particular,
+    // their tokens must not be forwarded to the enrichment service.
+    let isDebugLink = debugManager.handle(deepLinkUrl: deepLinkUrl)
+    let isDevPreview = !isDebugLink && DevServerPreview.handle(url: deepLinkUrl)
+    let context = EnrichmentRequest.DeepLink(originalURL: url, resolvedURL: deepLinkUrl)
+    let enrichDeepLink = self.enrichDeepLink
     let trackEvent = self.trackEvent
     Task {
+      if !isDebugLink && !isDevPreview {
+        // DeviceHelper applies returned user attributes before this completes.
+        // A failed lookup must still allow the ordinary placement to run.
+        try? await enrichDeepLink(context)
+      }
       await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
 
-    // Check if this is a debug URL
-    if debugManager.handle(deepLinkUrl: deepLinkUrl) {
-      return true
-    }
-
-    if DevServerPreview.handle(url: deepLinkUrl) {
+    if isDebugLink || isDevPreview {
       return true
     }
 

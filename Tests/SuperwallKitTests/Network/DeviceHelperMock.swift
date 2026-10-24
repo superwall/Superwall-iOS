@@ -17,6 +17,7 @@ final class DeviceHelperMock: DeviceHelper {
   }
 
   override func getEnrichment(
+    deepLink: EnrichmentRequest.DeepLink? = nil,
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {

@@ -1099,6 +1099,7 @@ class DeviceHelper {
   }
 
   func getEnrichment(
+    deepLink: EnrichmentRequest.DeepLink? = nil,
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {
@@ -1106,7 +1107,8 @@ class DeviceHelper {
     let deviceAttributes = await getTemplateDevice()
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
-      device: JSON(deviceAttributes)
+      device: JSON(deviceAttributes),
+      deepLink: deepLink
     )
     enrichment = try await network.getEnrichment(
       request: request,
