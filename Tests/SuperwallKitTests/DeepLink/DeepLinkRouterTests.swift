@@ -252,6 +252,7 @@ struct DeepLinkRouterTests {
     let router = dependencyContainer.deepLinkRouter!
     let tracked = TrackedEvents()
     router.trackEvent = { tracked.append($0) }
+    router.enrichDeepLink = { _ in }
     router.presentedPaywallInfo = { presentedPaywallInfo }
 
     let handled = router.route(url: url)

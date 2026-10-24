@@ -215,7 +215,9 @@ final class DependencyContainer {
       webEntitlementRedeemer: webEntitlementRedeemer,
       debugManager: debugManager,
       configManager: configManager
-    )
+    ) { [weak deviceHelper] context in
+      try await deviceHelper?.getEnrichment(deepLink: context, maxRetry: 0, timeout: 1)
+    }
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,

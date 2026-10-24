@@ -12,4 +12,16 @@ struct Enrichment: Codable {
   let device: JSON
 }
 
-typealias EnrichmentRequest = Enrichment
+/// Request-only context is never cached as part of the enrichment response.
+struct EnrichmentRequest: Encodable {
+  struct DeepLink: Encodable, Equatable {
+    /// The URL delivered by the app, before Superwall rewrites an app-link URL.
+    let originalURL: URL
+    /// The destination used by deepLink_open and placement rules.
+    let resolvedURL: URL
+  }
+
+  let user: JSON
+  let device: JSON
+  var deepLink: DeepLink?
+}

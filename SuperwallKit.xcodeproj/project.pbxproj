@@ -694,6 +694,7 @@
 		FCEF5A897E34F9B7AB691C56 /* PaywallOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A64CCBCB23CC1715DF79AC /* PaywallOptions.swift */; };
 		FCF3B638D0D802202113DCBD /* ArchiveManifestUsage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 884DF3D8A1CA382BFEE9F8F4 /* ArchiveManifestUsage.swift */; };
 		FCF498808FF38EEC5E9895DB /* IdentityOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320AA5349848F696950F441A /* IdentityOptions.swift */; };
+		FE43A6CAD42DCA79C50382BA /* DeepLinkEnrichmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97AF268D8F0B95D506017D4E /* DeepLinkEnrichmentTests.swift */; };
 		FEA3AED0B70D730993A16B2C /* DevModeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 577D25646DA26238881BF6AB /* DevModeTests.swift */; };
 		FFC1A413FF8B96275C4C1649 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C16CBCBF2093DD9C5F3E105 /* Storage.swift */; };
 /* End PBXBuildFile section */
@@ -1140,6 +1141,7 @@
 		96A6D71D51DB3F1BCE3E167B /* CustomerCenterViewModel+UpdateBanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "CustomerCenterViewModel+UpdateBanner.swift"; sourceTree = "<group>"; };
 		96BEA0A81E531D4B82F9EEE7 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		97A579F56E5CEF54DB9E9B62 /* DarkBlurredBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DarkBlurredBackground.swift; sourceTree = "<group>"; };
+		97AF268D8F0B95D506017D4E /* DeepLinkEnrichmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeepLinkEnrichmentTests.swift; sourceTree = "<group>"; };
 		97D7F499B2CBFFF0A61F8D72 /* ConfigLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigLogicTests.swift; sourceTree = "<group>"; };
 		97DCDCDFEB2442B007C38E7F /* PurchasePresentationBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasePresentationBuilder.swift; sourceTree = "<group>"; };
 		9842687E40C9BBAE8EE5A126 /* PathsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathsListView.swift; sourceTree = "<group>"; };
@@ -1645,6 +1647,7 @@
 		14F8842196EB2B1F82B3E024 /* Network */ = {
 			isa = PBXGroup;
 			children = (
+				97AF268D8F0B95D506017D4E /* DeepLinkEnrichmentTests.swift */,
 				35F538F901BAF97DDCA86F84 /* DeviceHelperMock.swift */,
 				FB28BCE1EE94BFE935B984AB /* DeviceHelperTests.swift */,
 				BF59C083B597BBF7C8F8503F /* NetworkErrorTests.swift */,
@@ -3847,6 +3850,7 @@
 				654803E77F7CDBF6282D0110 /* Date+IsWithinAnHourBeforeTests.swift in Sources */,
 				D91750797BB4947F6975B2B9 /* Date+IsoStringTests.swift in Sources */,
 				8088933E13346C69FEE58919 /* DebugPickerLogicTests.swift in Sources */,
+				FE43A6CAD42DCA79C50382BA /* DeepLinkEnrichmentTests.swift in Sources */,
 				01BE837B492223B76A95CB5D /* DeepLinkRouterTests.swift in Sources */,
 				4ABF9FB54105917343865145 /* DependencyContainerInitTests.swift in Sources */,
 				8E04DDF7FA8D6A76E96378F3 /* DesignReviewSnapshots.swift in Sources */,

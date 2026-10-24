@@ -150,3 +150,7 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+## Deep-Link Enrichment Spike
+
+The draft forwarding prototype is documented in `docs/spikes/cpp-deep-link-enrichment.md`. `EnrichmentRequest` carries optional request-only original/resolved URL context; `Enrichment` remains the response/cache model. The deep-link router waits for enrichment before tracking its placement event and skips acquisition enrichment for return, redemption, debugger and local-preview links. Backend CPP matching and production rollout policy remain separate work.
