@@ -17,7 +17,7 @@ final class TransactionManager {
   private let placementsQueue: PlacementsQueue
   private let purchaseManager: PurchaseManager
   private let productsManager: ProductsManager
-  private let entitlementsRefresher: CustomPurchaseEntitlementsRefreshing
+  private let postPurchaseRedeemer: PostPurchaseRedeeming
   private let factory: Factory
   typealias Factory = OptionsFactory
     & TriggerFactory
@@ -41,7 +41,7 @@ final class TransactionManager {
     placementsQueue: PlacementsQueue,
     purchaseManager: PurchaseManager,
     productsManager: ProductsManager,
-    entitlementsRefresher: CustomPurchaseEntitlementsRefreshing,
+    postPurchaseRedeemer: PostPurchaseRedeeming,
     factory: Factory
   ) {
     self.storeKitManager = storeKitManager
@@ -50,7 +50,7 @@ final class TransactionManager {
     self.placementsQueue = placementsQueue
     self.purchaseManager = purchaseManager
     self.productsManager = productsManager
-    self.entitlementsRefresher = entitlementsRefresher
+    self.postPurchaseRedeemer = postPurchaseRedeemer
     self.factory = factory
   }
 
@@ -490,7 +490,7 @@ final class TransactionManager {
     // `didRestore` is only reached on a successful restore, at which point
     // receipts/entitlements have just been reloaded. Redeem existing codes so a
     // freshly-restored subscription is linked to the identified user server-side,
-    // mirroring the purchase path in `loadPurchasedProductsIfNeeded`. Skipped in
+    // mirroring the purchase path in `redeemAfterPurchase(for:)`. Skipped in
     // test mode, which sets subscription state without real receipt data
     // (SW-5516: always redeem after a successful purchase & restore).
     if factory.makeTestModeManager().isTestMode {
@@ -820,8 +820,7 @@ final class TransactionManager {
         for: product,
         purchaseDate: purchaseDate
       )
-      await loadPurchasedProductsIfNeeded(for: product)
-      refreshEntitlementsAfterCustomPurchaseIfNeeded(for: product)
+      await redeemAfterPurchase(for: product)
       await trackTransactionDidSucceed(transaction)
       await finalizeInternalPurchase(
         for: product,
@@ -844,8 +843,7 @@ final class TransactionManager {
         for: product,
         purchaseDate: purchaseDate
       )
-      await loadPurchasedProductsIfNeeded(for: product)
-      refreshEntitlementsAfterCustomPurchaseIfNeeded(for: product)
+      await redeemAfterPurchase(for: product)
       await trackTransactionDidSucceed(transaction)
     }
   }
@@ -873,58 +871,31 @@ final class TransactionManager {
     )
   }
 
-  private func loadPurchasedProductsIfNeeded(for product: StoreProduct) async {
-    if shouldSkipReceiptLoading(for: product) {
-      return
-    }
-
-    await receiptManager.loadPurchasedProducts(config: nil)
-
-    // A successful native (App Store) purchase doesn't otherwise hit `/redeem`,
-    // so a new subscription for an already-identified user isn't linked to them
-    // server-side until some other trigger fires. Redeem existing codes here so
-    // the freshly-loaded receipts + appTransactionId are always pushed to the
-    // backend right after a native purchase completes. This is the purchase path;
-    // the equivalent redeem for restores lives in `didRestore`. Gated by
-    // `shouldSkipReceiptLoading`, so it skips custom/web products and test mode
-    // (SW-5516: always redeem after a successful purchase & restore).
-    Task {
-      await Superwall.shared.dependencyContainer.webEntitlementRedeemer.redeem(.existingCodes)
-    }
-  }
-
-  /// Fetches the user's entitlements from Superwall after a custom product purchase.
+  /// Pushes a successful purchase to Superwall with `/redeem`, which links it
+  /// to the identified user and returns the user's entitlements (SW-5516).
   ///
-  /// A custom product is sold through the developer's own checkout, whose
-  /// server reports the purchase to Superwall. Neither receipts nor `/redeem`
-  /// know about it, so its entitlements only reach the device through the
-  /// entitlements fetch. This runs in the background, so the purchase result
-  /// and paywall dismissal don't wait for it. Skipped in test mode, which
-  /// sets subscription state itself.
+  /// An App Store purchase reloads its receipts first, so `/redeem` carries
+  /// them. A custom product has no receipt: its store reports the purchase to
+  /// Superwall, and `/redeem` returns the entitlements it granted. The redeem
+  /// runs in the background, so the purchase result and paywall dismissal
+  /// don't wait for it. Skipped in test mode, which sets subscription state
+  /// without real purchases.
   ///
-  /// - Returns: The background refresh, or `nil` if none was started.
+  /// - Returns: The background redeem, or `nil` if none was started.
   @discardableResult
-  func refreshEntitlementsAfterCustomPurchaseIfNeeded(for product: StoreProduct) -> Task<Void, Never>? {
-    guard
-      product.isCustomProduct,
-      !factory.makeTestModeManager().isTestMode
-    else {
+  func redeemAfterPurchase(for product: StoreProduct) async -> Task<Void, Never>? {
+    if factory.makeTestModeManager().isTestMode {
       return nil
     }
-    let entitlementIds = Set(product.entitlements.map(\.id))
-    let entitlementsRefresher = entitlementsRefresher
+
+    if !product.isCustomProduct {
+      await receiptManager.loadPurchasedProducts(config: nil)
+    }
+
+    let postPurchaseRedeemer = postPurchaseRedeemer
     return Task {
-      await entitlementsRefresher.refreshEntitlementsAfterCustomPurchase(expecting: entitlementIds)
+      await postPurchaseRedeemer.redeemAfterPurchase()
     }
-  }
-
-  private func shouldSkipReceiptLoading(for product: StoreProduct) -> Bool {
-    if product.isCustomProduct {
-      return true
-    }
-
-    // Test mode already sets subscription state without StoreKit/receipt data.
-    return factory.makeTestModeManager().isTestMode
   }
 
   private func finalizeInternalPurchase(
