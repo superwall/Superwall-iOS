@@ -15,6 +15,9 @@ enum PaywallWebEvent: Equatable {
   )
   case initiateRestore
   case customStoreCheckout(CustomStoreCheckout)
+  /// Sent by the SDK, not the page: the paywall was dismissed or presented
+  /// again, so a custom store checkout it started can't report how it ends.
+  case endCustomStoreCheckout
   case custom(string: String)
   case openedURL(url: URL)
   case openedUrlInSafari(_ url: URL)

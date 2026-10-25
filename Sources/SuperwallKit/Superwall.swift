@@ -1655,19 +1655,25 @@ extension Superwall: PaywallViewControllerEventDelegate {
       }
       await purchaseTask?.value
     case .customStoreCheckout(let checkout):
-      // A step waits for a purchase in flight, so it can't take over that
-      // purchase's state, and holds the purchase slot while it runs.
-      while let purchaseInFlight = purchaseTask {
-        await purchaseInFlight.value
-      }
-      purchaseTask = Task {
-        await dependencyContainer.transactionManager.handleCustomStoreCheckout(
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.transactionManager.handleCustomStoreCheckout(
           checkout,
           paywallViewController: paywallViewController
         )
-        purchaseTask = nil
       }
-      await purchaseTask?.value
+    case .endCustomStoreCheckout:
+      // Most paywalls have no checkout to end, so leave the purchase slot to
+      // purchases unless this one does.
+      guard await dependencyContainer.transactionManager.isRunningCustomStoreCheckout(
+        of: paywallViewController
+      ) else {
+        return
+      }
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.transactionManager.endCustomStoreCheckout(
+          of: paywallViewController
+        )
+      }
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):
@@ -1715,5 +1721,20 @@ extension Superwall: PaywallViewControllerEventDelegate {
         ]
       )
     }
+  }
+
+  /// Runs a custom store checkout step once any purchase in flight has finished,
+  /// so it can't take over that purchase's state, and holds the purchase slot
+  /// while it runs.
+  @MainActor
+  private func runCustomStoreCheckoutStep(_ step: @escaping () async -> Void) async {
+    while let purchaseInFlight = purchaseTask {
+      await purchaseInFlight.value
+    }
+    purchaseTask = Task {
+      await step()
+      purchaseTask = nil
+    }
+    await purchaseTask?.value
   }
 }

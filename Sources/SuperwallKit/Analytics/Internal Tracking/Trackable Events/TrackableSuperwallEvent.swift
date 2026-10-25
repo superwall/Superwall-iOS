@@ -714,9 +714,13 @@ enum InternalSuperwallEvent {
       return .appStore
     }
     var demandTier: String?
+    /// Whether the event may present a paywall from a campaign that uses it as a
+    /// trigger. Off for an abandon the SDK concludes rather than the buyer, such
+    /// as a checkout ended by its paywall closing.
+    var canTriggerPaywall = true
 
     var canImplicitlyTriggerPaywall: Bool {
-      if isObserved {
+      if isObserved || !canTriggerPaywall {
         return false
       }
       return superwallEvent.canImplicitlyTriggerPaywall

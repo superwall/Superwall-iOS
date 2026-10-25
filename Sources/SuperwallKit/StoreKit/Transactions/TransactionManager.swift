@@ -563,9 +563,14 @@ final class TransactionManager {
   /// failure alert. The `PurchaseController` isn't called.
   ///
   /// Steps for products that aren't custom products are ignored, and so are
-  /// steps that arrive while the purchasing coordinator holds another purchase,
-  /// so they can't take over its state. `Superwall` runs the steps one at a time
-  /// and never during a purchase started from a paywall.
+  /// steps that arrive while the purchasing coordinator holds a purchase that
+  /// isn't a custom store checkout, so they can't take over its state. A start
+  /// or a complete replaces another custom store checkout the coordinator still
+  /// holds, abandoning it: a paid checkout must always complete. An abandon of
+  /// a checkout that isn't in progress is ignored, as when it already completed
+  /// or ended with its paywall, and so is a fail while another checkout is in
+  /// progress. `Superwall` runs the steps one at a time and never during a
+  /// purchase started from a paywall.
   func handleCustomStoreCheckout(
     _ checkout: CustomStoreCheckout,
     paywallViewController: PaywallViewController
@@ -585,7 +590,7 @@ final class TransactionManager {
       return
     }
 
-    // The checkout is over after any step but its start, even one ignored below.
+    // The checkout is over after any step but its start.
     let checkoutProductId: String?
     if case .start = checkout {
       checkoutProductId = productId
@@ -593,24 +598,34 @@ final class TransactionManager {
       checkoutProductId = nil
     }
 
-    let ownership = await customStoreCheckoutOwnership(
+    guard var ownership = await ownershipOfHandledStep(
+      checkout,
       of: product,
       paywallViewController: paywallViewController
-    )
-    guard ownership != .otherPurchase else {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .transactions,
-        message: "Ignoring a custom store checkout of \"\(productId)\": "
-          + "another purchase is in progress.",
-        info: ["checkout": checkout]
-      )
-      await MainActor.run {
-        if checkoutProductId == nil {
-          paywallViewController.customStoreCheckoutProductId = nil
-        }
-      }
+    ) else {
       return
+    }
+
+    if checkoutProductId == nil {
+      // Close the checkout's in-app browser, if it's still open. The paywall's
+      // dismissal would wait on it, and closing it from here isn't tracked as
+      // an abandoned Stripe checkout. A purchase may start meanwhile, so look
+      // at the purchasing coordinator again afterwards.
+      await paywallViewController.closeSafari()
+      guard let ownershipAfterClose = await ownershipOfHandledStep(
+        checkout,
+        of: product,
+        paywallViewController: paywallViewController
+      ) else {
+        return
+      }
+      ownership = ownershipAfterClose
+    }
+
+    if ownership == .otherCustomStoreCheckout,
+      let staleSource = await factory.makePurchasingCoordinator().source {
+      await abandonCustomStoreCheckout(from: staleSource)
+      ownership = .none
     }
 
     await MainActor.run {
@@ -627,16 +642,16 @@ final class TransactionManager {
       )
     case let .complete(_, customTransactionId, shouldDismiss):
       product.customTransactionId = customTransactionId
+      // A checkout can complete after its paywall closed. The purchase still
+      // counts, but there's no paywall left to dismiss.
+      let isPaywallOpen = await paywallViewController.isActive
       let source = await resumeCustomStoreCheckout(
         of: product,
         productId: productId,
         paywallViewController: paywallViewController,
         isInProgress: ownership == .thisCheckout,
-        shouldDismiss: shouldDismiss
+        shouldDismiss: shouldDismiss && isPaywallOpen
       )
-      // The checkout may have ended in an in-app browser. Close it first, or
-      // the paywall's dismissal would wait on it.
-      await paywallViewController.closeSafari()
       await handle(result: .purchased, state: .purchasing(source))
     case .abandon:
       let source = await resumeCustomStoreCheckout(
@@ -660,12 +675,72 @@ final class TransactionManager {
     }
   }
 
+  /// Ends the custom store checkout that `paywallViewController` started, if it's
+  /// still in progress, tracking `transaction_abandon`.
+  ///
+  /// The paywall calls this when it's dismissed or presented again, after any
+  /// checkout steps it already handed over. Its page can't report how that
+  /// checkout ends any more, and the checkout would keep holding the purchasing
+  /// coordinator, where observer mode would skip App Store purchases because of
+  /// it. A completion that arrives afterwards is still handled, as a checkout
+  /// without a start.
+  func endCustomStoreCheckout(of paywallViewController: PaywallViewController) async {
+    await MainActor.run {
+      paywallViewController.customStoreCheckoutProductId = nil
+    }
+    guard let source = await customStoreCheckoutSource(of: paywallViewController) else {
+      return
+    }
+    await abandonCustomStoreCheckout(from: source)
+  }
+
+  /// Whether the purchasing coordinator holds a custom store checkout that
+  /// `paywallViewController` started.
+  func isRunningCustomStoreCheckout(of paywallViewController: PaywallViewController) async -> Bool {
+    return await customStoreCheckoutSource(of: paywallViewController) != nil
+  }
+
+  /// The source of the custom store checkout that the purchasing coordinator
+  /// holds for `paywallViewController`, if it holds one.
+  private func customStoreCheckoutSource(
+    of paywallViewController: PaywallViewController
+  ) async -> PurchaseSource? {
+    let coordinator = factory.makePurchasingCoordinator()
+    guard
+      await coordinator.isCustomStoreCheckout,
+      let source = await coordinator.source,
+      case let .internal(_, checkoutPaywall, _) = source,
+      checkoutPaywall === paywallViewController
+    else {
+      return nil
+    }
+    return source
+  }
+
+  /// Tracks `transaction_abandon` for the custom store checkout the purchasing
+  /// coordinator holds, started from `source`, and releases the coordinator.
+  ///
+  /// The SDK concludes this abandon, not the buyer, so it doesn't present a
+  /// paywall: one would appear after the buyer closed theirs, or close the
+  /// paywall they're buying from.
+  private func abandonCustomStoreCheckout(from source: PurchaseSource) async {
+    if case let .internal(_, checkoutPaywall, _) = source {
+      await MainActor.run {
+        checkoutPaywall.customStoreCheckoutProductId = nil
+      }
+    }
+    await trackCancelled(canTriggerPaywall: false)
+    await factory.makePurchasingCoordinator().reset()
+  }
+
   private enum CustomStoreCheckoutOwnership {
     /// The coordinator holds no purchase.
     case none
     /// The coordinator holds this checkout, from its start.
     case thisCheckout
-    /// The coordinator holds another purchase.
+    /// The coordinator holds a custom store checkout of another product or paywall.
+    case otherCustomStoreCheckout
+    /// The coordinator holds a purchase that isn't a custom store checkout.
     case otherPurchase
   }
 
@@ -677,13 +752,67 @@ final class TransactionManager {
     guard let source = await coordinator.source else {
       return .none
     }
-    if await coordinator.isCustomStoreCheckout,
-      case let .internal(_, checkoutPaywall, _) = source,
+    guard await coordinator.isCustomStoreCheckout else {
+      return .otherPurchase
+    }
+    if case let .internal(_, checkoutPaywall, _) = source,
       checkoutPaywall === paywallViewController,
       await coordinator.product?.productIdentifier == product.productIdentifier {
       return .thisCheckout
     }
-    return .otherPurchase
+    return .otherCustomStoreCheckout
+  }
+
+  /// Who holds the purchasing coordinator, if `checkout` can be handled.
+  ///
+  /// Logs and returns `nil` when the step must be ignored. The checkout is over
+  /// after an ignored step that isn't a start, so the paywall stops tracking it
+  /// unless the coordinator still holds a checkout of that paywall.
+  private func ownershipOfHandledStep(
+    _ checkout: CustomStoreCheckout,
+    of product: StoreProduct,
+    paywallViewController: PaywallViewController
+  ) async -> CustomStoreCheckoutOwnership? {
+    let ownership = await customStoreCheckoutOwnership(
+      of: product,
+      paywallViewController: paywallViewController
+    )
+    guard let reason = reasonToIgnore(checkout, ownership: ownership) else {
+      return ownership
+    }
+    Logger.debug(
+      logLevel: .warn,
+      scope: .transactions,
+      message: "Ignoring a custom store checkout of \"\(product.productIdentifier)\": \(reason).",
+      info: ["checkout": checkout]
+    )
+    if case .start = checkout {
+      return nil
+    }
+    if await customStoreCheckoutSource(of: paywallViewController) == nil {
+      await MainActor.run {
+        paywallViewController.customStoreCheckoutProductId = nil
+      }
+    }
+    return nil
+  }
+
+  /// Why a checkout step can't be handled, if it can't.
+  private func reasonToIgnore(
+    _ checkout: CustomStoreCheckout,
+    ownership: CustomStoreCheckoutOwnership
+  ) -> String? {
+    switch (checkout, ownership) {
+    case (_, .otherPurchase):
+      return "another purchase is in progress"
+    case (.abandon, .none),
+      (.abandon, .otherCustomStoreCheckout):
+      return "no checkout of it is in progress"
+    case (.fail, .otherCustomStoreCheckout):
+      return "another checkout is in progress"
+    default:
+      return nil
+    }
   }
 
   /// Points the purchasing coordinator at a custom store checkout that has
@@ -1125,7 +1254,10 @@ final class TransactionManager {
   }
 
   /// Track the cancelled
-  func trackCancelled() async {
+  ///
+  /// - Parameter canTriggerPaywall: Whether `transaction_abandon` may present
+  /// a paywall from a campaign that uses it as a trigger.
+  func trackCancelled(canTriggerPaywall: Bool = true) async {
     let coordinator = factory.makePurchasingCoordinator()
     guard
       let source = await coordinator.source,
@@ -1150,7 +1282,7 @@ final class TransactionManager {
       )
 
       let paywallInfo = await paywallViewController.info
-      let transactionAbandon = InternalSuperwallEvent.Transaction(
+      var transactionAbandon = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
@@ -1159,6 +1291,7 @@ final class TransactionManager {
         isObserved: isObserved,
         storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
       )
+      transactionAbandon.canTriggerPaywall = canTriggerPaywall
       await trackEvent(transactionAbandon)
       await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
 

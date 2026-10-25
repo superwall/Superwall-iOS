@@ -163,7 +163,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// reports how that checkout ends, so closing its sheet isn't tracked as an
   /// abandoned Stripe checkout. Set by `TransactionManager` once it has accepted the
   /// checkout's start, and cleared when the checkout ends or the paywall is
-  /// presented or dismissed.
+  /// presented or dismissed, which also ends the checkout.
   var customStoreCheckoutProductId: String?
 
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
@@ -1415,6 +1415,19 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
     }
   }
 
+  /// Ends a custom store checkout this paywall started, once the steps already
+  /// handed over have run. Its page can't report the outcome after the paywall
+  /// is dismissed or presented again.
+  func endCustomStoreCheckout() {
+    customStoreCheckoutProductId = nil
+    customStoreCheckoutCoordinator.enqueue { @MainActor [weak self] in
+      guard let self else {
+        return
+      }
+      await self.eventDelegate?.eventDidOccur(.endCustomStoreCheckout, on: self)
+    }
+  }
+
   private func enqueueStripeCheckoutTask(
     _ operation: @escaping (PaywallViewController) async -> Void
   ) {
@@ -1661,7 +1674,7 @@ extension PaywallViewController {
     // A purchase belongs to the presentation it was made in. It's cleared here rather than when
     // the view disappears: a sheet swiped away disappears before its close is reported.
     completedPurchaseProduct = nil
-    customStoreCheckoutProductId = nil
+    endCustomStoreCheckout()
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     webView.scrollView.contentOffset = CGPoint.zero
@@ -1879,7 +1892,7 @@ extension PaywallViewController {
     }
 
     paywallResult = nil
-    customStoreCheckoutProductId = nil
+    endCustomStoreCheckout()
     cache?.activePaywallVcKey = nil
     isPresented = false
     isPresentedBySDK = false
