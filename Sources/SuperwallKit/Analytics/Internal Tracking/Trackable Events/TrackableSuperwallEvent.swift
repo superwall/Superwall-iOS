@@ -703,6 +703,11 @@ enum InternalSuperwallEvent {
     /// for a custom product and `.appStore` for any other product.
     var store: ProductStore?
     var demandScore: Int?
+    var demandTier: String?
+    /// Whether the event may present a paywall from a campaign that uses it as a
+    /// trigger. Off for an abandon the SDK concludes rather than the buyer, such
+    /// as a checkout ended by its paywall closing.
+    var canTriggerPaywall = true
 
     private var resolvedStore: ProductStore {
       if let store = store {
@@ -713,11 +718,6 @@ enum InternalSuperwallEvent {
       }
       return .appStore
     }
-    var demandTier: String?
-    /// Whether the event may present a paywall from a campaign that uses it as a
-    /// trigger. Off for an abandon the SDK concludes rather than the buyer, such
-    /// as a checkout ended by its paywall closing.
-    var canTriggerPaywall = true
 
     var canImplicitlyTriggerPaywall: Bool {
       if isObserved || !canTriggerPaywall {

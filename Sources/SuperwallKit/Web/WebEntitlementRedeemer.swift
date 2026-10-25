@@ -42,6 +42,10 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   private var isProcessing = false
   /// The throttled entitlements poll in flight, which concurrent polls wait on.
   private var inFlightWebEntitlementsPoll: Task<Void, Never>?
+  /// How many entitlements fetches have started, and which of them last saved
+  /// its response. A response that arrives after a newer fetch's is dropped.
+  private var entitlementsFetchCount = 0
+  private var lastSavedEntitlementsFetch = 0
   private var hasActiveStripePoll = false
   private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
@@ -55,6 +59,7 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
     & TestModeManagerFactory
+    & PurchasedTransactionsFactory
 
   private enum StripePollTrigger: String {
     case checkoutComplete = "checkout_complete"
@@ -621,7 +626,9 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     }
 
     await MainActor.run {
-      superwall.customerInfo = mergedCustomerInfo
+      if superwall.customerInfo != mergedCustomerInfo {
+        superwall.customerInfo = mergedCustomerInfo
+      }
     }
   }
 
@@ -1061,7 +1068,7 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   /// Fetches entitlements from the server, unless they were fetched within
   /// `entitlementsMaxAge`, or ``defaultEntitlementsMaxAge`` when the app has
   /// no web2app config. The first poll after launch always fetches. Skipped in
-  /// test mode, and joins a poll that's already in flight.
+  /// test mode. Any other poll joins one that's already in flight.
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
@@ -1070,7 +1077,8 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
       return
     }
 
-    if let inFlightPoll = inFlightWebEntitlementsPoll {
+    if !isFirstTime,
+      let inFlightPoll = inFlightWebEntitlementsPoll {
       await inFlightPoll.value
       return
     }
@@ -1091,7 +1099,9 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     }
     inFlightWebEntitlementsPoll = poll
     await poll.value
-    inFlightWebEntitlementsPoll = nil
+    if inFlightWebEntitlementsPoll == poll {
+      inFlightWebEntitlementsPoll = nil
+    }
   }
 
   /// Refreshes entitlements after a custom product purchase until the
@@ -1099,15 +1109,25 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   ///
   /// The developer's server reports the purchase to Superwall, which can lag
   /// the purchase on the device, so each attempt waits a little longer than
-  /// the last. Stops early if the task is cancelled.
+  /// the last. Stops early if the task is cancelled or the user changes.
   ///
   /// - Parameter entitlementIds: The IDs of the purchased product's
   ///   entitlements. When empty, the first successful fetch ends the refresh.
   func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async {
+    let appUserId = factory.makeAppUserId()
     for (index, delay) in customPurchaseRefreshDelaysNs.enumerated() {
       do {
         try await Task.sleep(nanoseconds: delay)
       } catch {
+        return
+      }
+
+      if factory.makeAppUserId() != appUserId {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .webEntitlements,
+          message: "Stopped refreshing entitlements after a custom product purchase because the user changed."
+        )
         return
       }
 
@@ -1146,17 +1166,38 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   /// - Parameter dismissesCoveredPaywall: Whether newly active entitlements
   ///   that cover the presented paywall's products count as a restore, which
   ///   tracks it and dismisses the paywall. Only the poll does this, for users
-  ///   coming back from a web checkout. After an in-app purchase it would turn
-  ///   the purchase into a restore and close a paywall the developer kept open.
-  /// - Returns: The fetched customer info, or `nil` if the fetch failed or
-  ///   its response was ignored.
+  ///   coming back from a web checkout, and never while a purchase is in
+  ///   progress. After an in-app or custom store purchase it would turn the
+  ///   purchase into a restore and close a paywall the developer kept open.
+  /// - Returns: The latest customer info, or `nil` if the fetch failed or
+  ///   its response was ignored. When a newer fetch's response was saved
+  ///   first, that newer customer info.
   @discardableResult
+  // swiftlint:disable:next cyclomatic_complexity
   func refreshWebEntitlements(dismissesCoveredPaywall: Bool = false) async -> CustomerInfo? {
+    entitlementsFetchCount += 1
+    let fetch = entitlementsFetchCount
+    let appUserId = factory.makeAppUserId()
     do {
       let response = try await network.getEntitlements(
-        appUserId: factory.makeAppUserId(),
+        appUserId: appUserId,
         deviceId: factory.makeDeviceId()
       )
+
+      if factory.makeAppUserId() != appUserId {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .webEntitlements,
+          message: "Ignoring web entitlements response because the user changed during the fetch."
+        )
+        return nil
+      }
+
+      // Fetches can overlap and finish in any order. Once a newer fetch has
+      // saved its response, this one is out of date and must not replace it.
+      if fetch < lastSavedEntitlementsFetch {
+        return storage.get(LatestRedeemResponse.self)?.customerInfo
+      }
 
       // Read the cached entitlements after the fetch, not before it. Refreshes
       // can overlap, and from here to the save below nothing suspends, so only
@@ -1204,6 +1245,7 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+      lastSavedEntitlementsFetch = fetch
 
       // Use the injected superwall instance or fall back to shared
       let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
@@ -1233,7 +1275,10 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
         await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         // If there's a paywall, check if we should dismiss it
+        // A purchase in progress, such as one in a custom store's checkout,
+        // reports its own result, so its entitlements aren't a restore.
         if dismissesCoveredPaywall,
+          await factory.makePurchasingCoordinator().source == nil,
           let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []

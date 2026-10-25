@@ -6,6 +6,7 @@
 //
 // swiftlint:disable all
 
+import Combine
 import Foundation
 import Testing
 @testable import SuperwallKit
@@ -317,6 +318,31 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(events.contains(SuperwallEventObjc.restoreComplete))
   }
 
+  @Test("A poll during a purchase doesn't turn it into a restore of the open paywall")
+  func poll_paywallOpen_purchaseInProgress_doesNotRestore() async {
+    let coordinator = dependencyContainer.makePurchasingCoordinator()
+    defer {
+      clearEntitlementsState()
+      clearPresentedPaywall()
+    }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let delegate = await presentPaywallUnlockingPro(superwall: superwall)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+    // The user is paying in the custom store's checkout and comes back to the app.
+    let product = makeCustomStoreProduct()
+    await coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+
+    await redeemer.pollWebEntitlements()
+    await coordinator.reset()
+
+    let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
+    #expect(!events.contains(SuperwallEventObjc.restoreComplete))
+    #expect(superwall.paywallViewController != nil)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
   // MARK: - Apps without web2app config
 
   @Test("Refreshing fetches entitlements without a web2app config or max age")
@@ -433,6 +459,71 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(network.getEntitlementsCallCount == 1)
   }
 
+  @Test("The poll after the first config doesn't join a poll already in flight")
+  func poll_firstConfig_doesNotJoinInFlightPoll() async {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    network.getEntitlementsDelaysNs = [300_000_000, 0]
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let foregroundPoll = Task { await redeemer.pollWebEntitlements() }
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    await redeemer.pollWebEntitlements(config: .stub(), isFirstTime: true)
+    await foregroundPoll.value
+
+    #expect(network.getEntitlementsCallCount == 2)
+  }
+
+  // MARK: - Overlapping fetches
+
+  @Test("A fetch that finishes after a newer one doesn't overwrite its entitlements")
+  func refresh_staleResponseArrivingLast_isDropped() async {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // The older fetch started before the server knew about the purchase, and is slow.
+    network.getEntitlementsResponses = [
+      entitlementsResponse([Entitlement(id: "pro", isActive: false, store: .custom)]),
+      entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    ]
+    network.getEntitlementsDelaysNs = [300_000_000, 0]
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let olderFetch = Task { await redeemer.refreshWebEntitlements() }
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    let newerInfo = await redeemer.refreshWebEntitlements()
+    let olderInfo = await olderFetch.value
+
+    #expect(newerInfo?.entitlements.first?.isActive == true)
+    // The older fetch hands back the newer customer info instead of its own.
+    #expect(olderInfo?.entitlements.first?.isActive == true)
+    let saved = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(saved?.customerInfo.entitlements.first?.isActive == true)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
+  @Test("A refresh that changes nothing doesn't republish customerInfo")
+  func refresh_unchangedResponse_doesNotRepublishCustomerInfo() async {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+    await redeemer.refreshWebEntitlements()
+
+    var publishCount = 0
+    let cancellable = superwall.$customerInfo
+      .dropFirst()
+      .sink { _ in publishCount += 1 }
+    await redeemer.refreshWebEntitlements()
+    cancellable.cancel()
+
+    #expect(network.getEntitlementsCallCount == 2)
+    #expect(publishCount == 0)
+  }
+
   // MARK: - Transaction store
 
   @Test("transaction_complete for a custom product reports the CUSTOM store")
@@ -514,6 +605,7 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([customEntitlement])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 1)
@@ -548,6 +640,7 @@ struct CustomStoreEntitlementRefreshTests {
     )
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
@@ -564,9 +657,29 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true)])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 0)
     #expect(customerInfo == testModeCustomerInfo)
+  }
+
+  @Test("refreshCustomerInfo called before config waits for it to know about test mode")
+  func refreshCustomerInfo_beforeConfig_waitsForTestMode() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let testModeCustomerInfo = CustomerInfo(subscriptions: [], nonSubscriptions: [], entitlements: [])
+    superwall.customerInfo = testModeCustomerInfo
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true)])
+    dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let refresh = Task { await superwall.refreshCustomerInfo() }
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    // Config arrives and turns test mode on.
+    turnOnTestMode()
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    _ = await refresh.value
+
+    #expect(network.getEntitlementsCallCount == 0)
   }
 }

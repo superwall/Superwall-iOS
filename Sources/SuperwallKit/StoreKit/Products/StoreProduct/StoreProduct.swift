@@ -94,7 +94,20 @@ public final class StoreProduct: NSObject, StoreProductType, Sendable {
   /// your checkout, for example as checkout metadata, and have your server send it back as
   /// `custom_transaction_id` when it reports the purchase to Superwall. Superwall then
   /// attributes the purchase's revenue, renewals included, to the paywall that sold it.
-  public internal(set) nonisolated(unsafe) var customTransactionId: String?
+  public internal(set) var customTransactionId: String? {
+    get {
+      customTransactionIdLock.lock()
+      defer { customTransactionIdLock.unlock() }
+      return storedCustomTransactionId
+    }
+    set {
+      customTransactionIdLock.lock()
+      defer { customTransactionIdLock.unlock() }
+      storedCustomTransactionId = newValue
+    }
+  }
+  private let customTransactionIdLock = NSLock()
+  nonisolated(unsafe) private var storedCustomTransactionId: String?
 
   /// A `Set` of ``Entitlements`` associated with the product.
   public var entitlements: Set<Entitlement> {

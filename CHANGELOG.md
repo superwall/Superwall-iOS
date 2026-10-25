@@ -16,6 +16,18 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
+
+## 4.18.1
+
+### Enhancements
+
+- Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
+
 ## 4.18.0
 
 ### Enhancements

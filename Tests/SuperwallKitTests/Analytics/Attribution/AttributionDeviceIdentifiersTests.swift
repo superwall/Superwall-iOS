@@ -356,11 +356,12 @@ struct AttributionDeviceIdentifiersTests {
     // Every case lands on one side of the split — the exhaustive switch in
     // `isInstallScoped` forces that. Bump both counts when adding a case, so
     // nobody adds an integration without picking a side.
-    #expect(IntegrationAttribute.allCases.count == 23)
-    #expect(IntegrationAttribute.installScopedKeys.count == 11)
+    #expect(IntegrationAttribute.allCases.count == 24)
+    #expect(IntegrationAttribute.installScopedKeys.count == 12)
 
     #expect(IntegrationAttribute.installScopedKeys.contains("appsflyerId"))
     #expect(IntegrationAttribute.installScopedKeys.contains("adjustId"))
+    #expect(IntegrationAttribute.installScopedKeys.contains("airbridgeId"))
     #expect(!IntegrationAttribute.installScopedKeys.contains("amplitudeUserId"))
     #expect(!IntegrationAttribute.installScopedKeys.contains("customerioId"))
   }
