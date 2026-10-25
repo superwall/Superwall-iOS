@@ -29,12 +29,12 @@ private final class RecordingPurchaseController: PurchaseController {
   }
 }
 
-/// Records the custom purchase refreshes `TransactionManager` starts.
-private actor RecordingEntitlementsRefresher: CustomPurchaseEntitlementsRefreshing {
-  private(set) var refreshedEntitlementIds: [Set<String>] = []
+/// Records the post-purchase redeems `TransactionManager` starts.
+private actor RecordingPostPurchaseRedeemer: PostPurchaseRedeeming {
+  private(set) var redeemCount = 0
 
-  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async {
-    refreshedEntitlementIds.append(entitlementIds)
+  func redeemAfterPurchase() async {
+    redeemCount += 1
   }
 }
 
@@ -129,7 +129,7 @@ private final class AlertRecordingPaywallViewController: PaywallViewController {
 struct CustomStoreCheckoutTests {
   let dependencyContainer: DependencyContainer
   private let purchaseController: RecordingPurchaseController
-  private let refresher = RecordingEntitlementsRefresher()
+  private let redeemer = RecordingPostPurchaseRedeemer()
   private let tracked = TrackedTransactions()
 
   private let productId = "pro_monthly"
@@ -169,7 +169,7 @@ struct CustomStoreCheckoutTests {
   /// A transaction manager selling `productId` as a custom product.
   private func makeTransactionManager(
     in dependencyContainer: DependencyContainer? = nil,
-    entitlementsRefresher: CustomPurchaseEntitlementsRefreshing? = nil
+    postPurchaseRedeemer: PostPurchaseRedeeming? = nil
   ) async -> (TransactionManager, StoreProduct) {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let product = makeCustomStoreProduct()
@@ -181,7 +181,7 @@ struct CustomStoreCheckoutTests {
       placementsQueue: dependencyContainer.placementsQueue,
       purchaseManager: dependencyContainer.purchaseManager,
       productsManager: dependencyContainer.productsManager,
-      entitlementsRefresher: entitlementsRefresher ?? refresher,
+      postPurchaseRedeemer: postPurchaseRedeemer ?? redeemer,
       factory: dependencyContainer
     )
     let tracked = tracked
@@ -329,7 +329,7 @@ struct CustomStoreCheckoutTests {
     #expect(isInternal(complete))
     #expect(await store(of: complete) == "CUSTOM")
 
-    #expect(await refresher.refreshedEntitlementIdsEventually() == [["pro"]])
+    #expect(await redeemer.redeemCountEventually() == 1)
     #expect(await finishes.waitForResults() == [.purchased(product)])
     #expect(await waitForPageEvent("transaction_complete", in: paywallVc).contains("transaction_complete"))
     #expect(paywallVc.customStoreCheckoutProductId == nil)
@@ -613,7 +613,7 @@ struct CustomStoreCheckoutTests {
       return
     }
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
-    #expect(await refresher.refreshedEntitlementIdsEventually() == [["pro"]])
+    #expect(await redeemer.redeemCountEventually() == 1)
     #expect(await finishes.waitForResults() == [.purchased(product)])
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
   }
@@ -742,7 +742,7 @@ struct CustomStoreCheckoutTests {
       return
     }
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
-    #expect(await refresher.refreshedEntitlementIdsEventually() == [["pro"]])
+    #expect(await redeemer.redeemCountEventually() == 1)
     // There's no paywall left to dismiss.
     #expect(await finishes.waitForResults().isEmpty)
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
@@ -783,7 +783,8 @@ struct CustomStoreCheckoutTests {
     superwall: Superwall
   ) -> (WebEntitlementRedeemer, NetworkMock) {
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    network.getEntitlementsResponse = EntitlementsResponse(
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
       customerInfo: CustomerInfo(
         subscriptions: [],
         nonSubscriptions: [],
@@ -798,7 +799,6 @@ struct CustomStoreCheckoutTests {
       purchaseController: dependencyContainer.purchaseController,
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      customPurchaseRefreshDelaysNs: [0, 0, 0],
       superwall: superwall
     )
     return (redeemer, network)
@@ -812,7 +812,7 @@ struct CustomStoreCheckoutTests {
     }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let (redeemer, _) = makeRedeemer(in: dependencyContainer, superwall: superwall)
-    let (transactionManager, _) = await makeTransactionManager(entitlementsRefresher: redeemer)
+    let (transactionManager, _) = await makeTransactionManager(postPurchaseRedeemer: redeemer)
     let (paywallVc, _) = makePaywall()
 
     await transactionManager.handleCustomStoreCheckout(
@@ -838,7 +838,7 @@ struct CustomStoreCheckoutTests {
     let (redeemer, network) = makeRedeemer(in: dependencyContainer, superwall: superwall)
     let (transactionManager, _) = await makeTransactionManager(
       in: dependencyContainer,
-      entitlementsRefresher: redeemer
+      postPurchaseRedeemer: redeemer
     )
     let (paywallVc, _) = makePaywall(in: dependencyContainer)
     let statusBefore = superwall.subscriptionStatus
@@ -852,7 +852,7 @@ struct CustomStoreCheckoutTests {
       try? await Task.sleep(nanoseconds: 25_000_000)
     }
     // The web entitlements update as they do for any purchase...
-    #expect(network.getEntitlementsCallCount >= 1)
+    #expect(network.redeemCallCount >= 1)
     #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
     // ...but the status is the app's to set, and its purchase controller isn't asked to buy.
     #expect(superwall.subscriptionStatus == statusBefore)
@@ -900,12 +900,12 @@ struct CustomStoreCheckoutTests {
   }
 }
 
-private extension RecordingEntitlementsRefresher {
-  /// Gives the background refresh time to start.
-  func refreshedEntitlementIdsEventually() async -> [Set<String>] {
-    for _ in 0..<40 where refreshedEntitlementIds.isEmpty {
+private extension RecordingPostPurchaseRedeemer {
+  /// Gives the background redeem time to start.
+  func redeemCountEventually() async -> Int {
+    for _ in 0..<40 where redeemCount == 0 {
       try? await Task.sleep(nanoseconds: 25_000_000)
     }
-    return refreshedEntitlementIds
+    return redeemCount
   }
 }

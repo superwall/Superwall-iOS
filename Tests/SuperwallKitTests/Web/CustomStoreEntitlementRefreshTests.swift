@@ -11,16 +11,16 @@ import Foundation
 import Testing
 @testable import SuperwallKit
 
-/// Records the custom purchase refreshes `TransactionManager` starts.
-private actor EntitlementsRefresherMock: CustomPurchaseEntitlementsRefreshing {
-  private(set) var refreshedEntitlementIds: [Set<String>] = []
+/// Records the post-purchase redeems `TransactionManager` starts.
+private actor PostPurchaseRedeemerMock: PostPurchaseRedeeming {
+  private(set) var redeemCount = 0
 
-  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async {
-    refreshedEntitlementIds.append(entitlementIds)
+  func redeemAfterPurchase() async {
+    redeemCount += 1
   }
 }
 
-/// Tests for refreshing entitlements after custom store purchases, tagging their
+/// Tests for redeeming after custom store purchases, polling entitlements, tagging their
 /// transaction events and the public `refreshCustomerInfo()` API.
 @Suite(.serialized)
 struct CustomStoreEntitlementRefreshTests {
@@ -72,7 +72,7 @@ struct CustomStoreEntitlementRefreshTests {
   }
 
   private func makeTransactionManager(
-    refresher: CustomPurchaseEntitlementsRefreshing
+    redeemer: PostPurchaseRedeeming
   ) -> TransactionManager {
     return TransactionManager(
       storeKitManager: dependencyContainer.storeKitManager,
@@ -81,15 +81,14 @@ struct CustomStoreEntitlementRefreshTests {
       placementsQueue: dependencyContainer.placementsQueue,
       purchaseManager: dependencyContainer.purchaseManager,
       productsManager: dependencyContainer.productsManager,
-      entitlementsRefresher: refresher,
+      postPurchaseRedeemer: redeemer,
       factory: dependencyContainer
     )
   }
 
   private func makeRedeemer(
     network: NetworkMock,
-    superwall: Superwall,
-    refreshDelaysNs: [UInt64] = [0, 0, 0]
+    superwall: Superwall
   ) -> WebEntitlementRedeemer {
     return WebEntitlementRedeemer(
       network: network,
@@ -99,7 +98,6 @@ struct CustomStoreEntitlementRefreshTests {
       purchaseController: MockPurchaseController(),
       receiptManager: dependencyContainer.receiptManager,
       factory: dependencyContainer,
-      customPurchaseRefreshDelaysNs: refreshDelaysNs,
       superwall: superwall
     )
   }
@@ -116,48 +114,38 @@ struct CustomStoreEntitlementRefreshTests {
     dependencyContainer.testModeManager.evaluateTestMode(config: .stub(), options: options)
   }
 
-  // MARK: - Post-purchase refresh trigger
+  // MARK: - Post-purchase redeem
 
-  @Test("A custom product purchase starts an entitlements refresh for its entitlements")
-  func customProductPurchase_startsRefresh() async {
-    let refresher = EntitlementsRefresherMock()
-    let transactionManager = makeTransactionManager(refresher: refresher)
-    let product = makeCustomStoreProduct(entitlementIds: ["pro", "gold"])
+  @Test("A custom product purchase redeems existing codes")
+  func customProductPurchase_redeems() async {
+    let redeemer = PostPurchaseRedeemerMock()
+    let transactionManager = makeTransactionManager(redeemer: redeemer)
 
-    let task = transactionManager.refreshEntitlementsAfterCustomPurchaseIfNeeded(for: product)
+    let task = await transactionManager.redeemAfterPurchase(for: makeCustomStoreProduct())
     #expect(task != nil)
     await task?.value
 
-    #expect(await refresher.refreshedEntitlementIds == [["pro", "gold"]])
+    #expect(await redeemer.redeemCount == 1)
   }
 
-  @Test("An App Store product purchase doesn't start an entitlements refresh")
-  func appStoreProductPurchase_doesNotStartRefresh() async {
-    let refresher = EntitlementsRefresherMock()
-    let transactionManager = makeTransactionManager(refresher: refresher)
-
-    let task = transactionManager.refreshEntitlementsAfterCustomPurchaseIfNeeded(for: makeAppStoreProduct())
-
-    #expect(task == nil)
-    #expect(await refresher.refreshedEntitlementIds.isEmpty)
-  }
-
-  @Test("A custom product purchase in test mode doesn't start an entitlements refresh")
-  func customProductPurchase_inTestMode_doesNotStartRefresh() async {
+  @Test("A purchase in test mode doesn't redeem")
+  func purchase_inTestMode_doesNotRedeem() async {
     turnOnTestMode()
-    let refresher = EntitlementsRefresherMock()
-    let transactionManager = makeTransactionManager(refresher: refresher)
+    let redeemer = PostPurchaseRedeemerMock()
+    let transactionManager = makeTransactionManager(redeemer: redeemer)
 
-    let task = transactionManager.refreshEntitlementsAfterCustomPurchaseIfNeeded(for: makeCustomStoreProduct())
+    let customTask = await transactionManager.redeemAfterPurchase(for: makeCustomStoreProduct())
+    let appStoreTask = await transactionManager.redeemAfterPurchase(for: makeAppStoreProduct())
 
-    #expect(task == nil)
-    #expect(await refresher.refreshedEntitlementIds.isEmpty)
+    #expect(customTask == nil)
+    #expect(appStoreTask == nil)
+    #expect(await redeemer.redeemCount == 0)
   }
 
-  @Test("didPurchase of a custom product refreshes entitlements without blocking")
-  func didPurchase_customProduct_refreshesEntitlements() async {
-    let refresher = EntitlementsRefresherMock()
-    let transactionManager = makeTransactionManager(refresher: refresher)
+  @Test("didPurchase of a custom product redeems without blocking")
+  func didPurchase_customProduct_redeems() async {
+    let redeemer = PostPurchaseRedeemerMock()
+    let transactionManager = makeTransactionManager(redeemer: redeemer)
     let product = makeCustomStoreProduct()
 
     await transactionManager.prepareToPurchase(
@@ -167,62 +155,34 @@ struct CustomStoreEntitlementRefreshTests {
     await transactionManager.didPurchase()
 
     var attempts = 0
-    while await refresher.refreshedEntitlementIds.isEmpty && attempts < 30 {
+    while await redeemer.redeemCount == 0 && attempts < 30 {
       try? await Task.sleep(nanoseconds: 100_000_000)
       attempts += 1
     }
-    #expect(await refresher.refreshedEntitlementIds == [["pro"]])
+    #expect(await redeemer.redeemCount == 1)
     await dependencyContainer.makePurchasingCoordinator().reset()
   }
 
-  // MARK: - Retry policy
-
-  @Test("The post-purchase refresh stops once the purchased entitlements are active")
-  func refreshAfterCustomPurchase_stopsOnSuccess() async {
+  @Test("The post-purchase redeem applies the custom store's entitlements")
+  func redeemAfterPurchase_appliesEntitlements() async {
     defer { clearEntitlementsState() }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    // The developer's server hasn't reported the purchase on the first fetch.
-    network.getEntitlementsResponses = [
-      entitlementsResponse([Entitlement(id: "pro", isActive: false, store: .custom)]),
-      entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)]),
-      entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
-    ]
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
     let redeemer = makeRedeemer(network: network, superwall: superwall)
 
-    await redeemer.refreshEntitlementsAfterCustomPurchase(expecting: ["pro"])
+    await redeemer.redeemAfterPurchase()
 
-    #expect(network.getEntitlementsCallCount == 2)
-    let saved = dependencyContainer.storage.get(LatestRedeemResponse.self)
-    #expect(saved?.customerInfo.entitlements.first?.isActive == true)
-  }
-
-  @Test("The post-purchase refresh gives up after the last attempt")
-  func refreshAfterCustomPurchase_givesUpAfterAttempts() async {
-    defer { clearEntitlementsState() }
-    let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    network.getEntitlementsResponse = entitlementsResponse([
-      Entitlement(id: "pro", isActive: false, store: .custom)
-    ])
-    let redeemer = makeRedeemer(network: network, superwall: superwall)
-
-    await redeemer.refreshEntitlementsAfterCustomPurchase(expecting: ["pro"])
-
-    #expect(network.getEntitlementsCallCount == 3)
-  }
-
-  @Test("The post-purchase refresh retries failed fetches")
-  func refreshAfterCustomPurchase_retriesFailedFetches() async {
-    defer { clearEntitlementsState() }
-    let superwall = Superwall(dependencyContainer: dependencyContainer)
-    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    // No response configured, so every fetch throws.
-    let redeemer = makeRedeemer(network: network, superwall: superwall)
-
-    await redeemer.refreshEntitlementsAfterCustomPurchase(expecting: ["pro"])
-
-    #expect(network.getEntitlementsCallCount == 3)
+    #expect(network.redeemCallCount == 1)
+    #expect(network.getEntitlementsCallCount == 0)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
   }
 
   // MARK: - Presented paywall
@@ -280,8 +240,8 @@ struct CustomStoreEntitlementRefreshTests {
     dependencyContainer.entitlementsInfo.entitlementsByProductId["custom_prod_1"] = nil
   }
 
-  @Test("The post-purchase refresh doesn't turn the purchase into a restore of the open paywall")
-  func refreshAfterCustomPurchase_paywallOpen_doesNotRestore() async {
+  @Test("The post-purchase redeem doesn't turn the purchase into a restore of the open paywall")
+  func redeemAfterPurchase_paywallOpen_doesNotRestore() async {
     defer {
       clearEntitlementsState()
       clearPresentedPaywall()
@@ -289,10 +249,17 @@ struct CustomStoreEntitlementRefreshTests {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let delegate = await presentPaywallUnlockingPro(superwall: superwall)
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
-    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
     let redeemer = makeRedeemer(network: network, superwall: superwall)
 
-    await redeemer.refreshEntitlementsAfterCustomPurchase(expecting: ["pro"])
+    await redeemer.redeemAfterPurchase()
 
     let events = delegate.eventsReceived.map { $0.backingData.objcEvent }
     #expect(!events.contains(SuperwallEventObjc.restoreComplete))

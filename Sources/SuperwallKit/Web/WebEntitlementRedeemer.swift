@@ -21,12 +21,12 @@ enum StripeCheckoutCompletion: Equatable, Codable {
   case purchase(productId: String, shouldDismiss: Bool)
 }
 
-/// Refreshes entitlements from the server after a custom product purchase.
-protocol CustomPurchaseEntitlementsRefreshing: Sendable {
-  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async
+/// Redeems existing codes after a successful purchase.
+protocol PostPurchaseRedeeming: Sendable {
+  func redeemAfterPurchase() async
 }
 
-actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
+actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   private let network: Network
   private let storage: Storage
   private let entitlementsInfo: EntitlementsInfo
@@ -37,8 +37,6 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
   private let notificationScheduler: NotificationScheduling
   private let stripePendingPollIntervalNs: UInt64
   private let stripePendingPollTimeoutNs: UInt64
-  /// How long to wait before each entitlements fetch after a custom product purchase.
-  private let customPurchaseRefreshDelaysNs: [UInt64]
   private var isProcessing = false
   /// The throttled entitlements poll in flight, which concurrent polls wait on.
   private var inFlightWebEntitlementsPoll: Task<Void, Never>?
@@ -121,7 +119,6 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     notificationScheduler: NotificationScheduling = NotificationScheduler.shared,
     stripePendingPollIntervalNs: UInt64 = 1_500_000_000,
     stripePendingPollTimeoutNs: UInt64 = 60_000_000_000,
-    customPurchaseRefreshDelaysNs: [UInt64] = [1_000_000_000, 3_000_000_000, 6_000_000_000],
     superwall: Superwall? = nil
   ) {
     self.network = network
@@ -135,7 +132,6 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     self.receiptManager = receiptManager
     self.stripePendingPollIntervalNs = stripePendingPollIntervalNs
     self.stripePendingPollTimeoutNs = stripePendingPollTimeoutNs
-    self.customPurchaseRefreshDelaysNs = customPurchaseRefreshDelaysNs
 
     // Observe when the app enters the foreground
     NotificationCenter.default.addObserver(
@@ -1104,56 +1100,8 @@ actor WebEntitlementRedeemer: CustomPurchaseEntitlementsRefreshing {
     }
   }
 
-  /// Refreshes entitlements after a custom product purchase until the
-  /// purchased product's entitlements are active, or the attempts run out.
-  ///
-  /// The developer's server reports the purchase to Superwall, which can lag
-  /// the purchase on the device, so each attempt waits a little longer than
-  /// the last. Stops early if the task is cancelled or the user changes.
-  ///
-  /// - Parameter entitlementIds: The IDs of the purchased product's
-  ///   entitlements. When empty, the first successful fetch ends the refresh.
-  func refreshEntitlementsAfterCustomPurchase(expecting entitlementIds: Set<String>) async {
-    let appUserId = factory.makeAppUserId()
-    for (index, delay) in customPurchaseRefreshDelaysNs.enumerated() {
-      do {
-        try await Task.sleep(nanoseconds: delay)
-      } catch {
-        return
-      }
-
-      if factory.makeAppUserId() != appUserId {
-        Logger.debug(
-          logLevel: .debug,
-          scope: .webEntitlements,
-          message: "Stopped refreshing entitlements after a custom product purchase because the user changed."
-        )
-        return
-      }
-
-      guard let customerInfo = await refreshWebEntitlements() else {
-        continue
-      }
-      let activeEntitlementIds = Set(customerInfo.entitlements.filter { $0.isActive }.map { $0.id })
-      if entitlementIds.isSubset(of: activeEntitlementIds) {
-        Logger.debug(
-          logLevel: .debug,
-          scope: .webEntitlements,
-          message: "Entitlements refreshed after custom product purchase",
-          info: ["attempt": index + 1]
-        )
-        return
-      }
-    }
-
-    Logger.debug(
-      logLevel: .warn,
-      scope: .webEntitlements,
-      message: "The purchased custom product's entitlements weren't active after "
-        + "\(customPurchaseRefreshDelaysNs.count) attempts. Check that your server reports "
-        + "the purchase to Superwall.",
-      info: ["entitlement_ids": entitlementIds.sorted().joined(separator: ",")]
-    )
+  func redeemAfterPurchase() async {
+    await redeem(.existingCodes)
   }
 
   /// Fetches entitlements from the server now, ignoring `entitlementsMaxAge`

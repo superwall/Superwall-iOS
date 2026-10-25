@@ -232,7 +232,7 @@ final class DependencyContainer {
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
       productsManager: productsManager,
-      entitlementsRefresher: webEntitlementRedeemer,
+      postPurchaseRedeemer: webEntitlementRedeemer,
       factory: self
     )
   }
