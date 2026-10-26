@@ -529,6 +529,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
 
     storage.save(response, forType: LatestRedeemResponse.self)
+    // An entitlements fetch already in flight started before this response
+    // was saved, so it must not replace it when it finishes.
+    entitlementsFetchCount += 1
+    lastSavedEntitlementsFetch = entitlementsFetchCount
 
     await mergeAndApplyCustomerInfo(
       webCustomerInfo: response.customerInfo,

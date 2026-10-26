@@ -471,6 +471,36 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
   }
 
+  @Test("A poll that finishes after the post-purchase redeem doesn't overwrite its entitlements")
+  func poll_finishingAfterPostPurchaseRedeem_isDropped() async {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // The foreground poll started as the user came back from the checkout,
+    // before the server had the purchase, and is slow.
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: false, store: .custom)])
+    network.getEntitlementsDelayNs = 300_000_000
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let poll = Task { await redeemer.pollWebEntitlements() }
+    try? await Task.sleep(nanoseconds: 50_000_000)
+    await redeemer.redeemAfterPurchase()
+    await poll.value
+
+    #expect(network.getEntitlementsCallCount == 1)
+    let saved = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(saved?.customerInfo.entitlements.first?.isActive == true)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
   @Test("A refresh that changes nothing doesn't republish customerInfo")
   func refresh_unchangedResponse_doesNotRepublishCustomerInfo() async {
     defer { clearEntitlementsState() }
