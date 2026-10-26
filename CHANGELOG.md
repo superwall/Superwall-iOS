@@ -2,16 +2,28 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.18.1
+## 4.18.3
 
 ### Enhancements
 
 - Adds native macOS 12+ support for paywalls, SwiftUI embedding, StoreKit and web purchases, Customer Center, Test Mode, and a native paywall preview window. Includes a Mac example and native presentation tests.
-- Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
 
 ### Fixes
 
 - Fixes paywall notifications not being scheduled again after the denied-permission alert couldn't show.
+- Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
+
+## 4.18.1
+
+### Enhancements
+
+- Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
 
 ## 4.18.0
 
