@@ -140,21 +140,31 @@ struct LinkedCodeLogicTests {
   @Test func appClassNames_readTheImagesInsideTheBundle() {
     let testBundle = Bundle(for: AppSessionManagerTests.self).bundleURL
 
-    let names = LinkedCodeLogic.appClassNames(bundleURL: testBundle, frameworksURL: nil)
+    let names = LinkedCodeLogic.appClassNames(bundleURL: testBundle)
 
     #expect(names.contains("SuperwallKitTests.AppSessionManagerTests"))
   }
 
-  @Test func appClassNames_skipTheFrameworksFolder() {
+  @Test func appClassNames_readImagesNestedInTheBundle() {
     let testBundle = Bundle(for: AppSessionManagerTests.self).bundleURL
 
-    // Treat the test bundle as the frameworks folder of its parent directory.
-    let names = LinkedCodeLogic.appClassNames(
-      bundleURL: testBundle.deletingLastPathComponent(),
-      frameworksURL: testBundle
-    )
+    // The test bundle sits inside its parent like an embedded framework.
+    let names = LinkedCodeLogic.appClassNames(bundleURL: testBundle.deletingLastPathComponent())
 
-    #expect(!names.contains("SuperwallKitTests.AppSessionManagerTests"))
+    #expect(names.contains("SuperwallKitTests.AppSessionManagerTests"))
+  }
+
+  @Test(arguments: [
+    ("MyApp", true),
+    ("MyApp.debug.dylib", true),
+    ("Frameworks/Features.framework/Features", true),
+    ("Frameworks/AppsFlyerLib.framework/AppsFlyerLib", true),
+    ("Frameworks/libswift_Concurrency.dylib", false),
+    ("Frameworks/SuperwallKit.framework/SuperwallKit", false),
+    ("Frameworks/Superscript.framework/Superscript", false)
+  ])
+  func isThirdPartyImage_skipsSwiftLibrariesAndSuperwall(path: String, isThirdParty: Bool) {
+    #expect(LinkedCodeLogic.isThirdPartyImage(atRelativePath: path) == isThirdParty)
   }
 
   @Test(arguments: [("Tapes Dev", "Tapes_Dev"), ("blank-app", "blank_app"), ("1Up", "_1Up"), ("Kanna", "Kanna")])

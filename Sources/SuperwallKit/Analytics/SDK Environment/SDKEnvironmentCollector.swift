@@ -15,7 +15,8 @@ struct SDKEnvironmentSources {
   /// The directory holding the app's resource bundles.
   var resourcesDirectory: URL?
   var infoDictionary: [String: Any]
-  /// The Objective-C runtime names of the classes in the app's own code.
+  /// The Objective-C runtime names of the classes in the app's own code and
+  /// embedded frameworks.
   var classNames: () -> [String]
   /// The modules of Apple's frameworks and Swift libraries, to leave out.
   var systemModules: () -> Set<String>
@@ -29,7 +30,7 @@ struct SDKEnvironmentSources {
       resourcesDirectory: Bundle.main.resourceURL,
       infoDictionary: Bundle.main.infoDictionary ?? [:],
       classNames: {
-        LinkedCodeLogic.appClassNames(bundleURL: bundleURL, frameworksURL: frameworksURL)
+        LinkedCodeLogic.appClassNames(bundleURL: bundleURL)
       },
       systemModules: LinkedCodeLogic.loadedSystemModules
     )

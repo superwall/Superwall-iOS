@@ -497,6 +497,21 @@ struct SDKEnvironmentTests {
     #expect(reporter.storedHash.value == "old")
   }
 
+  @Test func reportOnce_withOverlappingCalls_sendsOnce() async {
+    let reporter = ReporterHarness(info: .stub(), savedHash: nil, sendDelay: 50_000_000)
+    let once = SDKEnvironmentReportOnce()
+
+    async let first = once.run { reporter.reporter }
+    async let second = once.run { reporter.reporter }
+    let results = await [first, second]
+    let later = await once.run { reporter.reporter }
+
+    #expect(results == [true, true])
+    #expect(later)
+    #expect(reporter.sent.value == 1)
+    #expect(reporter.storedHash.value == SDKEnvironmentInfo.stub().sdkHash)
+  }
+
   @Test func savedHash_isOnePerInstallAndSurvivesReset() {
     // `reset()` clears the cache and user-specific documents, never these.
     #expect(SDKEnvironmentHash.directory == .appSpecificDocuments)
@@ -593,7 +608,12 @@ private struct ReporterHarness {
   let storedHash: Box<String?>
   let reporter: SDKEnvironmentReporter
 
-  init(info: SDKEnvironmentInfo, savedHash: String?, isQueued: Bool = true) {
+  init(
+    info: SDKEnvironmentInfo,
+    savedHash: String?,
+    isQueued: Bool = true,
+    sendDelay: UInt64 = 0
+  ) {
     let storedHash = Box(savedHash)
     let sent = Counter()
     self.sent = sent
@@ -604,6 +624,8 @@ private struct ReporterHarness {
       saveHash: { storedHash.value = $0 },
       send: { _ in
         sent.increment()
+        // Holds the send open, so overlapping reports would both read the old hash.
+        try? await Task.sleep(nanoseconds: sendDelay)
         return isQueued
       }
     )

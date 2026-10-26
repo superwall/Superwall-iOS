@@ -60,3 +60,25 @@ struct SDKEnvironmentReporter {
     )
   }
 }
+
+/// Runs the report once per process. Configuring and the app becoming active can
+/// both start the app launch check at once, and reports that overlapped would each
+/// read the old hash and send the same SDKs twice.
+actor SDKEnvironmentReportOnce {
+  static let shared = SDKEnvironmentReportOnce()
+  private var report: Task<Bool, Never>?
+
+  /// Returns whether the report sent the event. Later callers wait for the first
+  /// report and get its result.
+  @discardableResult
+  func run(_ makeReporter: @escaping @Sendable () -> SDKEnvironmentReporter) async -> Bool {
+    if let report = report {
+      return await report.value
+    }
+    let report = Task {
+      await makeReporter().reportIfChanged()
+    }
+    self.report = report
+    return await report.value
+  }
+}

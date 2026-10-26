@@ -41,24 +41,18 @@ enum LinkedCodeLogic {
 
   // MARK: - Class names
 
-  /// The runtime names of the classes in the images inside `bundleURL`, except those
-  /// in `frameworksURL`.
+  /// The runtime names of the classes in the images inside `bundleURL`.
   ///
-  /// That's the main executable, and in a debug build the `<App>.debug.dylib` that
-  /// holds the app's code. Embedded frameworks are left out: their classes only
-  /// repeat the framework names already listed, a statically linked SDK's framework
-  /// is a stub whose classes are in the main executable, and the Swift
-  /// back-deployment `libswift*` dylibs Apple embeds live there too.
+  /// That's the main executable, in a debug build the `<App>.debug.dylib` that holds
+  /// the app's code, and the embedded frameworks, which can hold SDKs too: CocoaPods
+  /// builds each pod as one, and an app split into its own frameworks can link SDKs
+  /// into them. See ``isThirdPartyImage(atRelativePath:)`` for what's skipped.
   ///
   /// `objc_copyClassNamesForImage` reads the names without realizing the classes,
   /// unlike `objc_getClassList`. Swift classes that don't inherit from `NSObject`
   /// aren't Objective-C runtime classes, so a module made only of those isn't seen.
-  static func appClassNames(
-    bundleURL: URL,
-    frameworksURL: URL?
-  ) -> [String] {
+  static func appClassNames(bundleURL: URL) -> [String] {
     let bundlePrefixes = pathPrefixes(of: bundleURL)
-    let frameworksPath = frameworksURL.flatMap { relativePath(of: $0, in: bundlePrefixes) }
 
     var names: [String] = []
     for index in 0..<_dyld_image_count() {
@@ -67,11 +61,10 @@ enum LinkedCodeLogic {
       }
       // Only a string compare per image: most images are in the shared cache,
       // and resolving every path would touch the disk hundreds of times.
-      guard let path = relativePath(of: String(cString: imageName), in: bundlePrefixes) else {
-        continue
-      }
-      if let frameworksPath = frameworksPath,
-        path.hasPrefix(frameworksPath) {
+      guard
+        let path = relativePath(of: String(cString: imageName), in: bundlePrefixes),
+        isThirdPartyImage(atRelativePath: path)
+      else {
         continue
       }
       // Each call scans the loaded images for this one by path. That's about half
@@ -86,6 +79,22 @@ enum LinkedCodeLogic {
       }
     }
     return names
+  }
+
+  /// Whether to read the classes of the image at `path`, relative to the app bundle.
+  ///
+  /// Skips the Swift back-deployment `libswift*` dylibs Apple embeds, and
+  /// SuperwallKit's own frameworks when they're embedded.
+  static func isThirdPartyImage(atRelativePath path: String) -> Bool {
+    let components = path.split(separator: "/")
+    if let file = components.last,
+      file.hasPrefix("libswift") {
+      return false
+    }
+    return !components.contains { component in
+      component.hasSuffix(".framework")
+        && superwallModules.contains(String(component.dropLast(".framework".count)))
+    }
   }
 
   /// The modules of Apple's frameworks and Swift libraries loaded in the process.
@@ -131,12 +140,6 @@ enum LinkedCodeLogic {
     let path = url.path
     let resolved = url.resolvingSymlinksInPath().path
     return Array(Set([path, resolved, "/private" + resolved])).map { $0 + "/" }
-  }
-
-  private static func relativePath(of url: URL, in prefixes: [String]) -> String? {
-    let path = url.path + "/"
-    let resolved = url.resolvingSymlinksInPath().path + "/"
-    return relativePath(of: path, in: prefixes) ?? relativePath(of: resolved, in: prefixes)
   }
 
   private static func relativePath(of path: String, in prefixes: [String]) -> String? {
