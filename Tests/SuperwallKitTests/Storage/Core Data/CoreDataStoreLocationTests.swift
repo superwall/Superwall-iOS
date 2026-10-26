@@ -47,6 +47,66 @@ struct CoreDataStoreLocationTests {
     }
   }
 
+  /// Leaves a legacy store whose placements are only in its -wal file, as
+  /// happens when the app is killed before SQLite writes them into the main
+  /// file.
+  private func makeLegacyStoreWithPlacementsOnlyInWal(placementCount: Int) throws {
+    let liveUrl = rootUrl
+      .appendingPathComponent("live")
+      .appendingPathComponent("SuperwallKit_Model.sqlite")
+    try FileManager.default.createDirectory(
+      at: liveUrl.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    let container = NSPersistentContainer(
+      name: CoreDataStack.modelName,
+      managedObjectModel: CoreDataStack.managedObject
+    )
+    let description = NSPersistentStoreDescription(url: liveUrl)
+    description.shouldAddStoreAsynchronously = false
+    description.setOption(
+      ["wal_autocheckpoint": "0"] as NSDictionary,
+      forKey: NSSQLitePragmasOption
+    )
+    container.persistentStoreDescriptions = [description]
+    var loadError: Error?
+    container.loadPersistentStores { _, error in loadError = error }
+    if let loadError {
+      throw loadError
+    }
+
+    let context = container.newBackgroundContext()
+    try context.performAndWait {
+      for _ in 0..<placementCount {
+        _ = ManagedEventData(
+          context: context,
+          id: UUID().uuidString,
+          createdAt: Date(),
+          name: "placement",
+          parameters: Data()
+        )
+      }
+      try context.save()
+    }
+
+    // Copy the files while the store is still open, before closing it writes
+    // the -wal changes into the main file.
+    try FileManager.default.createDirectory(at: rootUrl, withIntermediateDirectories: true)
+    for suffix in ["", "-wal", "-shm"] {
+      try FileManager.default.copyItem(
+        atPath: liveUrl.path + suffix,
+        toPath: location.legacyUrl.path + suffix
+      )
+    }
+    for store in container.persistentStoreCoordinator.persistentStores {
+      try container.persistentStoreCoordinator.remove(store)
+    }
+
+    let walSize = try FileManager.default
+      .attributesOfItem(atPath: location.legacyUrl.path + "-wal")[.size] as? Int
+    #expect((walSize ?? 0) > 0)
+  }
+
   private func placementCount(in stack: CoreDataStack) async -> Int {
     await stack.count(for: ManagedEventData.fetchRequest())
   }
@@ -70,6 +130,18 @@ struct CoreDataStoreLocationTests {
 
     let stack = CoreDataStack(location: location)
     #expect(await placementCount(in: stack) == 3)
+  }
+
+  @Test
+  func movesPlacementsStillInWalFile() async throws {
+    defer { try? FileManager.default.removeItem(at: rootUrl) }
+    try makeLegacyStoreWithPlacementsOnlyInWal(placementCount: 5)
+
+    #expect(location.moveLegacyStore())
+
+    #expect(!FileManager.default.fileExists(atPath: location.legacyUrl.path))
+    let stack = CoreDataStack(location: location)
+    #expect(await placementCount(in: stack) == 5)
   }
 
   @Test
