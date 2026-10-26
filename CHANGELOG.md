@@ -14,6 +14,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
+- Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
 
 ## 4.18.2
 
