@@ -12,8 +12,12 @@ import Foundation
 
 struct FileManagerMigratorTests {
   @Test
-  func migrateFromV1ToV5() {
+  func migrateFromV1ToV6() {
     let cache = CacheMock()
+    let storeUrl = FileManager.default.temporaryDirectory
+      .appendingPathComponent("FileManagerMigratorTests-\(UUID().uuidString)")
+      .appendingPathComponent("SuperwallKit_Model.sqlite")
+    let coreDataStoreLocation = CoreDataStoreLocation(legacyUrl: storeUrl, url: storeUrl)
 
     // Write all possible values to the cache.
     cache.write("userId", forType: AppUserId.self, inDirectory: .cache)
@@ -33,7 +37,11 @@ struct FileManagerMigratorTests {
     #expect(cache.internalAppDocuments.count == 0)
 
     // Migrate
-    FileManagerMigrator.migrate(fromVersion: .v1, cache: cache)
+    FileManagerMigrator.migrate(
+      fromVersion: .v1,
+      cache: cache,
+      coreDataStoreLocation: coreDataStoreLocation
+    )
 
     // Check they're all in the documents, except transactions.
     #expect(cache.internalCache.count == 1)
@@ -57,9 +65,9 @@ struct FileManagerMigratorTests {
     #expect(newAssignments?.first?.experimentId == experimentId)
     #expect(newAssignments?.first?.variant == variant)
 
-    // Check the new version is v5
+    // Check the new version is v6
     let version = cache.read(Version.self)
-    #expect(version == .v5)
+    #expect(version == .v6)
   }
 
   @Test

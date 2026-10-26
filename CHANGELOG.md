@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.18.3
+
+### Fixes
+
+- Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+
 ## 4.18.2
 
 ### Enhancements
