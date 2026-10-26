@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+- Fixes paywalls letting the app rotate into orientations it doesn't allow. A paywall now allows the same orientations as the screen it covers, which matters for apps that lock orientation in a view controller rather than in their Info.plist, such as Unity games. Previously, a landscape-only game could be rotated to portrait while a paywall was showing and stayed in portrait after it closed.
 
 ## 4.18.2
 

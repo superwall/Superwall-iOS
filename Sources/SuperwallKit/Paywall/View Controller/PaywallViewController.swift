@@ -32,6 +32,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
     }
     return .darkContent
   }
+
+  /// A paywall allows the orientations of whatever presents it, so it can't rotate the app
+  /// into one the app doesn't allow.
+  override public var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+    return presentingViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
+  }
+
   /// The paywall to feed into the view controller.
   var paywall: Paywall
 
