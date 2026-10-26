@@ -6,18 +6,17 @@
 import Foundation
 import CoreData
 
-/// Where the Core Data store lives on disk.
-///
-/// The store used to sit in the root of Application Support, where Core Data
-/// puts it by default. It now lives in its own folder so the SDK doesn't
-/// clutter the host app's Application Support directory.
+/// Where the Core Data store lives on disk: its own folder in Application
+/// Support, so the SDK doesn't clutter the host app's Application Support
+/// directory.
 struct CoreDataStoreLocation {
   static let directoryName = "com.superwall.database.Store"
 
-  /// Where the store lived before it moved into its own folder.
+  /// A store in the root of Application Support, which `moveLegacyStore()`
+  /// moves to `url`.
   let legacyUrl: URL
 
-  /// Where the store lives now.
+  /// Where the store is kept.
   let url: URL
 
   static let `default`: CoreDataStoreLocation = {
@@ -61,7 +60,7 @@ struct CoreDataStoreLocation {
         withIntermediateDirectories: true
       )
       // Copies the store along with any changes still in its -wal file,
-      // replacing anything left at the new location by an earlier attempt.
+      // replacing anything left at `url` by an earlier attempt.
       try coordinator.replacePersistentStore(
         at: url,
         destinationOptions: nil,
@@ -69,9 +68,9 @@ struct CoreDataStoreLocation {
         sourceOptions: nil,
         ofType: NSSQLiteStoreType
       )
-      // Removing the main file is what switches the store over to the new
-      // location, so it goes first. If that fails, the legacy store is still
-      // whole and is used until the next attempt.
+      // Removing the main file is what makes `currentUrl` point at `url`, so
+      // it goes first. If that fails, the legacy store is still whole and
+      // stays in use until the next attempt.
       try fileManager.removeItem(at: legacyUrl)
     } catch {
       Logger.debug(
