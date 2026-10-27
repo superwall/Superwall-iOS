@@ -8,6 +8,7 @@
 
 import Foundation
 import Testing
+import UIKit
 @testable import SuperwallKit
 
 /// Records the purchases and restores it's asked for.
@@ -126,6 +127,14 @@ private final class AlertRecordingPaywallViewController: PaywallViewController {
     onClose: (() -> Void)? = nil
   ) {
     alertMessages.append(message)
+  }
+}
+
+/// A container, such as SwiftUI's sheet, that UIKit is dismissing.
+@MainActor
+private final class DismissingContainerViewController: UIViewController {
+  override var isBeingDismissed: Bool {
+    return true
   }
 }
 
@@ -922,6 +931,18 @@ struct CustomStoreCheckoutTests {
     #expect(paywallVc.alertMessages.isEmpty)
     #expect(await finishes.waitForResults().isEmpty)
     await dependencyContainer.makePurchasingCoordinator().reset()
+  }
+
+  @Test("A paywall inside a container that's being dismissed is closing")
+  func paywallInDismissingContainer_isClosing() {
+    let (paywallVc, _) = makePaywall()
+    #expect(paywallVc.isClosing == false)
+    let container = DismissingContainerViewController()
+
+    container.addChild(paywallVc)
+
+    #expect(paywallVc.isClosing)
+    paywallVc.removeFromParent()
   }
 
   @Test("Closing the in-app browser when none is open returns straight away")

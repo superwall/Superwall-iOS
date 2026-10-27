@@ -82,13 +82,18 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
   private var isPresentedBySDK = false
 
-  /// Whether the paywall is closing: being dismissed, popped, or dismissed with the
-  /// navigation controller it's in. UIKit clears this when the buyer lets go of a sheet
-  /// they started swiping away.
+  /// Whether the paywall is closing: it, or a view controller it's in such as a navigation
+  /// controller or SwiftUI's sheet, is being dismissed or removed from its parent. UIKit
+  /// clears this when the buyer lets go of a sheet they started swiping away.
   var isClosing: Bool {
-    return isBeingDismissed
-      || isMovingFromParent
-      || navigationController?.isBeingDismissed == true
+    var viewController: UIViewController? = self
+    while let current = viewController {
+      if current.isBeingDismissed || current.isMovingFromParent {
+        return true
+      }
+      viewController = current.parent
+    }
+    return false
   }
 
   /// Determines whether the paywall is presented or not.
