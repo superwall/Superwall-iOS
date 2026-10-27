@@ -572,12 +572,17 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
 
     // A newer fetch may have saved its customer info while this one was being processed.
+    let latestWebCustomerInfo =
+      storage.get(LatestRedeemResponse.self)?.customerInfo ?? response.customerInfo
     await mergeAndApplyCustomerInfo(
-      webCustomerInfo: storage.get(LatestRedeemResponse.self)?.customerInfo ?? response.customerInfo,
+      webCustomerInfo: latestWebCustomerInfo,
       superwall: superwall
     )
 
-    await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
+    await updateSubscriptionStatus(
+      with: mergedEntitlements(webCustomerInfo: latestWebCustomerInfo),
+      superwall: superwall
+    )
 
     if case .code(let code) = type {
       await handleCodeRedemptionCompletion(
@@ -599,11 +604,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     completion: StripeCheckoutCompletion,
     superwall: Superwall
   ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
-    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
-    let combinedEntitlements =
-      Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
-    let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+    let allEntitlements = mergedEntitlements(webCustomerInfo: response.customerInfo)
 
     var paywallEntitlementIds: Set<String> = []
 
@@ -638,6 +639,15 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
 
     return (allEntitlements, paywallEntitlementIds)
+  }
+
+  /// The device's active entitlements merged with `webCustomerInfo`'s.
+  private func mergedEntitlements(webCustomerInfo: CustomerInfo) -> Set<Entitlement> {
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+    let combinedEntitlements =
+      Array(activeDeviceEntitlements) + Array(webCustomerInfo.entitlements)
+    return Entitlement.mergePrioritized(combinedEntitlements)
   }
 
   /// Merges device and web entitlements into a single `CustomerInfo`, applying
