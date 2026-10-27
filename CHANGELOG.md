@@ -13,7 +13,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes a slow entitlements response, from a web redeem or refresh, overwriting a newer one that arrived first, and a response for a user who logged out or switched accounts mid-request being saved to the new user.
+- Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
 

@@ -40,9 +40,10 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   private var isProcessing = false
   /// The throttled entitlements poll in flight, which concurrent polls wait on.
   private var inFlightWebEntitlementsPoll: Task<Void, Never>?
-  /// How many requests that return entitlements (fetches, redeems, checkout polls) have been
-  /// sent, and which of them last saved its customer info. A response to an earlier request
-  /// never replaces a later one's, whichever arrives first.
+  /// The order of responses that carry entitlements, and which of them last saved its
+  /// customer info. A fetch takes its place when it's sent, as does a redeem of existing
+  /// codes; a code redemption takes it when it arrives, since it changed the entitlements.
+  /// An older response never replaces a newer one's customer info.
   private var entitlementsFetchCount = 0
   private var lastSavedEntitlementsFetch = 0
   private var hasActiveStripePoll = false
@@ -87,6 +88,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     case code(String)
     case existingCodes
     case integrationAttributes
+
+    /// Whether the redeem changes the user's entitlements on the server.
+    var redeemsNewCode: Bool {
+      if case .code = self {
+        return true
+      }
+      return false
+    }
 
     var description: String {
       switch self {
@@ -424,15 +433,18 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     await prepareUIForRedemption(type: type, superwall: superwall)
 
     do {
-      let fetch = startEntitlementsFetch()
+      // A background redeem changes nothing on the server, so its response is as old as
+      // its request. Redeeming a code does, so a fetch sent before the code was redeemed
+      // can still read the state before it: that response counts from when it arrives.
+      let sentFetch = type.redeemsNewCode ? nil : startEntitlementsFetch()
       let response = try await network.redeemEntitlements(request: request)
-      switch type {
-      case .code:
-        // The user is waiting on a code redemption, so it always finishes.
-        break
-      case .existingCodes, .integrationAttributes:
+      if !type.redeemsNewCode {
         // Saved after the user changed, it would give the new user the old one's entitlements.
-        guard factory.makeAppUserId() == request.appUserId else {
+        // The user is waiting on a code redemption, so that one always finishes.
+        guard
+          factory.makeAppUserId() == request.appUserId,
+          factory.makeAliasId() == request.aliasId
+        else {
           Logger.debug(
             logLevel: .debug,
             scope: .webEntitlements,
@@ -443,7 +455,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
       await handleRedemptionSuccess(
         response: response,
-        fetch: fetch,
+        fetch: sentFetch ?? startEntitlementsFetch(),
         type: type,
         superwall: superwall,
         callbackMode: .legacy
@@ -521,7 +533,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     await delegate.willRedeemLink()
   }
 
-  /// - Parameter fetch: The number `startEntitlementsFetch()` gave the request, when it was sent.
+  /// - Parameter fetch: The response's place in the fetch order, from `startEntitlementsFetch()`.
   private func handleRedemptionSuccess(
     response: RedeemResponse,
     fetch: Int,
@@ -532,14 +544,17 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     checkoutContextId: String? = nil
   ) async {
     var response = response
-    // A fetch sent after this request has already saved newer customer info. The codes'
-    // results are still this response's, but its customer info is out of date.
+    // A later fetch has already saved newer customer info. The codes' results are still this
+    // response's, but its customer info is out of date. Saved before anything suspends, so a
+    // fetch finishing meanwhile can't be overwritten.
     if fetch < lastSavedEntitlementsFetch,
       let latestCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo {
       response.customerInfo = latestCustomerInfo
     } else {
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
     }
+    storage.save(response, forType: LatestRedeemResponse.self)
+    lastSavedEntitlementsFetch = max(lastSavedEntitlementsFetch, fetch)
 
     switch type {
     case .code, .existingCodes:
@@ -556,12 +571,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       superwall: superwall
     )
 
-    storage.save(response, forType: LatestRedeemResponse.self)
-    // A fetch sent before this request must not replace it when it finishes.
-    lastSavedEntitlementsFetch = max(lastSavedEntitlementsFetch, fetch)
-
+    // A newer fetch may have saved its customer info while this one was being processed.
     await mergeAndApplyCustomerInfo(
-      webCustomerInfo: response.customerInfo,
+      webCustomerInfo: storage.get(LatestRedeemResponse.self)?.customerInfo ?? response.customerInfo,
       superwall: superwall
     )
 
@@ -977,14 +989,15 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
 
       do {
-        let fetch = startEntitlementsFetch()
         let response = try await network.pollRedemptionResult(request: request)
 
         if let code = response.results.first?.code {
           let superwall = superwall ?? Superwall.shared
+          // Redeeming the checkout's code changed the user's entitlements, so this response
+          // is newer than any fetch already in flight.
           await handleRedemptionSuccess(
             response: response,
-            fetch: fetch,
+            fetch: startEntitlementsFetch(),
             type: .code(code),
             superwall: superwall,
             callbackMode: .pollFakeCompatibility,
@@ -1132,7 +1145,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
-  /// Numbers a request that returns entitlements, just before it's sent.
+  /// The next place in the order of responses that carry entitlements.
   private func startEntitlementsFetch() -> Int {
     entitlementsFetchCount += 1
     return entitlementsFetchCount
