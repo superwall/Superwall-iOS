@@ -1198,6 +1198,7 @@
 		F326AADBFE0083F8F18E81CE /* Date+WithinAnHourBefore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61D3EA7000250D02303BEF81 /* Date+WithinAnHourBefore.swift */; };
 		F35F87C3126C03232F83292F /* SubscriptionsApiEnvironmentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B9771726558AF75743BF08 /* SubscriptionsApiEnvironmentScript.swift */; };
 		F365F06BBA58055920FC751B /* SuperwallPlacementInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EF73F40EFFEC58FA0D30DC4 /* SuperwallPlacementInfo.swift */; };
+		F3A690ADDF487EE112723FA4 /* SK2ReceiptManagerPurchaseCorrectionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 283ADCA47F09A1C98E50A08A /* SK2ReceiptManagerPurchaseCorrectionTests.swift */; };
 		F3A7AF6D766960ECFE03E4B8 /* UIViewController+TopVc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759D7C0FCB370EB4FC33F4E4 /* UIViewController+TopVc.swift */; };
 		F3A87B4F733975B09FA36FE6 /* TestModeModalViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C8FD734F57A50B6EAFBF833 /* TestModeModalViewController.swift */; };
 		F3B27F8E2BEB0042B8936269 /* CustomerCenterActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF11E9EB133B46E96F5ABF5 /* CustomerCenterActionTests.swift */; };
@@ -1406,6 +1407,7 @@
 		278542555C249AC8BD68D07A /* Date+IsoStringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsoStringTests.swift"; sourceTree = "<group>"; };
 		2789AA5AEC97C25B5E965FC4 /* Date+IsWithinAnHourBeforeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+IsWithinAnHourBeforeTests.swift"; sourceTree = "<group>"; };
 		27E41300E7467F017BCD5E5C /* Capabilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capabilities.swift; sourceTree = "<group>"; };
+		283ADCA47F09A1C98E50A08A /* SK2ReceiptManagerPurchaseCorrectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK2ReceiptManagerPurchaseCorrectionTests.swift; sourceTree = "<group>"; };
 		2845A6B61C43D18F869D750E /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		2888B05A273E9EB6E9382332 /* UIColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Hex.swift"; sourceTree = "<group>"; };
 		28A1C8B0D79B8AC70ECF0CBB /* ConfigState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigState.swift; sourceTree = "<group>"; };
@@ -3659,6 +3661,7 @@
 				A5835332B3293CD8D95892EB /* ReceiptManagerPurchasedProductFetchTests.swift */,
 				41BC64245E011EF07D9A195A /* ReceiptManagerTests.swift */,
 				6D188CC7A867F9FF40F9D676 /* ReceiptManagerTrialEligibilityTests.swift */,
+				283ADCA47F09A1C98E50A08A /* SK2ReceiptManagerPurchaseCorrectionTests.swift */,
 				4F6D9FFFFEE431AC0714C042 /* SK2ReceiptManagerTests.swift */,
 			);
 			path = "Receipt Manager";
@@ -4686,6 +4689,7 @@
 				F60296AB1F7C0F765977CC9D /* ReceiptManagerTrialEligibilityTests.swift in Sources */,
 				9A51B103AC1E6E458630C232 /* RedeemResponseTests.swift in Sources */,
 				80C1EFE2C50CAFB5C83CE9F0 /* SK2PriceFormatRoundingTests.swift in Sources */,
+				F3A690ADDF487EE112723FA4 /* SK2ReceiptManagerPurchaseCorrectionTests.swift in Sources */,
 				24DEDC5391554C8738C58FC1 /* SK2ReceiptManagerTests.swift in Sources */,
 				F18F62A512BD516B8622ACE5 /* SK2StoreProductCyclesTests.swift in Sources */,
 				34D026394FB1A2CB9E575066 /* SKProductSubscriptionPeriodMock.swift in Sources */,
