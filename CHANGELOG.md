@@ -9,10 +9,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's entitlements from Superwall, even if they were fetched recently, and returns the updated `CustomerInfo`. Use it when your server has just reported a purchase to Superwall and you want the device to reflect it straight away.
 - After a custom product purchase succeeds, the SDK now syncs with Superwall in the background, as it already does after App Store purchases, so entitlements your server has already reported to Superwall reach `customerInfo` and `entitlements.web` straight away. This works in apps without web checkout and doesn't delay the purchase result or the paywall's dismissal. If your server reports the purchase later, the entitlements arrive on the next app foreground, or call `refreshCustomerInfo()` once it has.
 - Adds `StoreProduct.customTransactionId`, the transaction ID the SDK reports for a custom product's purchase. Pass it to your checkout and have your server send it back as `custom_transaction_id` with the purchase's events, and Superwall attributes that revenue, renewals included, to the paywall, campaign and experiment that sold it.
-- Apps without web paywalls now fetch the user's entitlements from Superwall too: once on launch, then on foreground at most every 15 minutes. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
+- Apps without web paywalls now also refresh the user's entitlements from Superwall on foreground, at most every 15 minutes, as well as on launch. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
 
 ### Fixes
 
+- Fixes a slow entitlements response, from a web redeem or refresh, overwriting a newer one that arrived first, and a response for a user who logged out or switched accounts mid-request being saved to the new user.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
 
