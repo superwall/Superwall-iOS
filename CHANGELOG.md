@@ -7,7 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
-- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period. Apple keeps the subscriber's access during the grace period even though the subscription has passed its expiry date, so the entitlement, the subscription status and the subscription in `CustomerInfo` now stay active until the grace period ends. Requires StoreKit 2.
+- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2.
 
 ## 4.18.2
 

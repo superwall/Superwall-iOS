@@ -740,9 +740,8 @@ struct AutomaticPurchaseControllerTests {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     await setTrialStatus(on: superwall)
 
-    // The trial failed to convert and Apple granted a grace period. Before
-    // the fix the status flipped to inactive here and gated placements
-    // showed paywalls to a user Apple still considered subscribed.
+    // The trial failed to convert and Apple granted a grace period. The
+    // user is still subscribed, so gated placements must not show paywalls.
     let read = await readExpiredSubscription(state: .inGracePeriod)
     dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
 
