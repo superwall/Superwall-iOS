@@ -33,7 +33,10 @@ public final class SubscriptionTransaction: NSObject, Codable {
   public internal(set) var isInBillingRetryPeriod: Bool
 
   /// Indicates whether the subscription is active.
-  public let isActive: Bool
+  ///
+  /// This is `true` during a billing grace period, when Apple keeps the
+  /// subscriber's access even though ``expirationDate`` has passed.
+  public internal(set) var isActive: Bool
 
   /// The date that the subscription expires.
   ///

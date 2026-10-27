@@ -58,16 +58,19 @@ enum EntitlementTransactionType {
 
 /// Protocol for providing subscription status information
 protocol SubscriptionStatusProvider {
-  func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status?
+  func getSubscriptionStatus(for transaction: any EntitlementTransaction) async -> StoreKit.Product.SubscriptionInfo.Status?
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool
   func getSubscriptionState(from status: StoreKit.Product.SubscriptionInfo.Status?) -> LatestSubscription.State?
   @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
-  func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType?
+  func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType?
 }
 
 /// Default implementation using StoreKit directly
 struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
-  func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
+  func getSubscriptionStatus(for transaction: any EntitlementTransaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
+    guard let transaction = transaction as? Transaction else {
+      return nil
+    }
     return await transaction.subscriptionStatus
   }
 
@@ -96,7 +99,10 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
   }
 
   @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
-  func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
+  func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType? {
+    guard let transaction = transaction as? Transaction else {
+      return nil
+    }
     if transaction.offer?.type == .winBack {
       return .winback
     }
@@ -359,7 +365,7 @@ enum EntitlementProcessor {
       }
 
       if !isLifetime,
-        let renewableTransaction = mostRecentRenewableByEntitlement[entitlementId] as? Transaction {
+        let renewableTransaction = mostRecentRenewableByEntitlement[entitlementId] {
         let status = await subscriptionStatusProvider.getSubscriptionStatus(for: renewableTransaction)
 
         willRenew = subscriptionStatusProvider.getWillAutoRenew(from: status)
@@ -373,6 +379,11 @@ enum EntitlementProcessor {
         if let index = subscriptionTxnIndex {
           subscriptions[index].isInGracePeriod = state == .inGracePeriod
           subscriptions[index].isInBillingRetryPeriod = state == .inBillingRetryPeriod
+          // Apple keeps access during a billing grace period, but the
+          // transaction's expiry date is already behind us.
+          if state == .inGracePeriod {
+            subscriptions[index].isActive = true
+          }
         }
 
         if #available(iOS 17.2, visionOS 1.1, *) {
@@ -394,10 +405,18 @@ enum EntitlementProcessor {
             // isActive = true when Transaction.all contains a transaction
             // without revocationDate or with a future expirationDate, even
             // though the subscription as a whole is revoked or expired.
+            //
+            // It also computes isActive = false during a billing grace
+            // period: the latest transaction has expired, but Apple keeps
+            // the subscriber's access until the grace period ends.
             let resolvedIsActive: Bool
-            if state == .revoked || state == .expired {
+            switch state {
+            case .revoked,
+              .expired:
               resolvedIsActive = false
-            } else {
+            case .inGracePeriod:
+              resolvedIsActive = true
+            default:
               resolvedIsActive = entitlement.isActive
             }
 
