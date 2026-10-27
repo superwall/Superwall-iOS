@@ -82,7 +82,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
   private var isPresentedBySDK = false
 
-  /// Whether the paywall has begun to close, until it's presented again.
+  /// Whether the paywall has begun to close, from when it's about to disappear until it's
+  /// presented again. A delegate may keep a dismissed paywall on screen, so asking it to
+  /// close doesn't count.
   var isClosing = false
 
   /// Determines whether the paywall is presented or not.
@@ -1809,7 +1811,6 @@ extension PaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     let (result, closeReason) = resolvedDismissal(result: result, closeReason: closeReason)
-    isClosing = true
     dismissCompletionBlock = completion
     paywallResult = result
     paywall.closeReason = closeReason
