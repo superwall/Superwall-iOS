@@ -1301,16 +1301,16 @@ final class TransactionManager {
       )
 
       let paywallInfo = await paywallViewController.info
-      var transactionAbandon = InternalSuperwallEvent.Transaction(
+      let transactionAbandon = InternalSuperwallEvent.Transaction(
         state: .abandon(product),
         paywallInfo: paywallInfo,
         product: product,
         transaction: nil,
         source: .internal,
         isObserved: isObserved,
-        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1
+        storeKitVersion: purchaseManager.isUsingSK2 ? .storeKit2 : .storeKit1,
+        canTriggerPaywall: canTriggerPaywall
       )
-      transactionAbandon.canTriggerPaywall = canTriggerPaywall
       await trackEvent(transactionAbandon)
       if notifiesPage {
         await paywallViewController.webView.messageHandler.handle(.transactionAbandon)
