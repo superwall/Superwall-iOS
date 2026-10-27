@@ -673,7 +673,8 @@ struct AutomaticPurchaseControllerTests {
   /// and StoreKit reports `state` for it. Returns the purchases and the
   /// entitlement map the status sync reads.
   private func readExpiredSubscription(
-    state: LatestSubscription.State
+    state: LatestSubscription.State,
+    gracePeriodExpirationDate: Date? = nil
   ) async -> (purchases: Set<Purchase>, entitlementsByProductId: [String: Set<Entitlement>]) {
     let productId = "annual_product"
     let expiredAt = Date().addingTimeInterval(-3600)
@@ -709,7 +710,8 @@ struct AutomaticPurchaseControllerTests {
       subscriptions: &subscriptions,
       subscriptionStatusProvider: MockSubscriptionStatusProvider(
         mockWillAutoRenew: true,
-        mockState: state
+        mockState: state,
+        mockGracePeriodExpirationDate: gracePeriodExpirationDate
       )
     )
     // The read records the purchase as inactive: its expiry has passed.
@@ -742,7 +744,11 @@ struct AutomaticPurchaseControllerTests {
 
     // The trial failed to convert and Apple granted a grace period. The
     // user is still subscribed, so gated placements must not show paywalls.
-    let read = await readExpiredSubscription(state: .inGracePeriod)
+    let gracePeriodEndsAt = Date().addingTimeInterval(16 * 86_400)
+    let read = await readExpiredSubscription(
+      state: .inGracePeriod,
+      gracePeriodExpirationDate: gracePeriodEndsAt
+    )
     dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
 
     let controller = makeController()
@@ -754,9 +760,33 @@ struct AutomaticPurchaseControllerTests {
       let pro = entitlements.first { $0.id == "pro" }
       #expect(pro?.isActive == true)
       #expect(pro?.isInGracePeriod == true)
+      #expect(pro?.expiresAt == gracePeriodEndsAt)
     } else {
       Issue.record("A subscriber in a grace period must stay active, got \(status)")
     }
+  }
+
+  @Test("An empty read keeps a subscriber in a billing grace period active")
+  func testGracePeriod_emptyReadKeepsActiveStatus() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+
+    let read = await readExpiredSubscription(
+      state: .inGracePeriod,
+      gracePeriodExpirationDate: Date().addingTimeInterval(16 * 86_400)
+    )
+    let graceEntitlements = Set(read.entitlementsByProductId.values.flatMap { $0 })
+    dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
+    await MainActor.run {
+      superwall.subscriptionStatus = .active(graceEntitlements)
+    }
+
+    // StoreKit returns nothing at cold launch before it has loaded.
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status == .active(graceEntitlements))
   }
 
   @Test("A subscription in billing retry after its expiry sets an inactive status")

@@ -61,6 +61,7 @@ protocol SubscriptionStatusProvider {
   func getSubscriptionStatus(for transaction: any EntitlementTransaction) async -> StoreKit.Product.SubscriptionInfo.Status?
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool
   func getSubscriptionState(from status: StoreKit.Product.SubscriptionInfo.Status?) -> LatestSubscription.State?
+  func getGracePeriodExpirationDate(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date?
   @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
   func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType?
 }
@@ -96,6 +97,13 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
     default:
       return nil
     }
+  }
+
+  func getGracePeriodExpirationDate(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date? {
+    if case let .verified(info) = status?.renewalInfo {
+      return info.gracePeriodExpirationDate
+    }
+    return nil
   }
 
   @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
@@ -354,6 +362,7 @@ enum EntitlementProcessor {
       var willRenew = mostRecentRenewableByEntitlement[entitlementId]?.willRenew ?? false
       var state: LatestSubscription.State?
       var offerType: LatestSubscription.OfferType?
+      var gracePeriodExpiresAt: Date?
 
       let subscriptionTxnIndex: Array<SubscriptionTransaction>.Index?
       if let renewable = mostRecentRenewableByEntitlement[entitlementId] {
@@ -375,14 +384,21 @@ enum EntitlementProcessor {
         }
 
         state = subscriptionStatusProvider.getSubscriptionState(from: status)
+        if state == .inGracePeriod {
+          gracePeriodExpiresAt = subscriptionStatusProvider.getGracePeriodExpirationDate(from: status)
+        }
 
         if let index = subscriptionTxnIndex {
           subscriptions[index].isInGracePeriod = state == .inGracePeriod
           subscriptions[index].isInBillingRetryPeriod = state == .inBillingRetryPeriod
           // Apple keeps access during a billing grace period, but the
-          // transaction's expiry date is already behind us.
+          // transaction's expiry date is already behind us. Access lasts
+          // until the grace period ends, so that's when it expires.
           if state == .inGracePeriod {
             subscriptions[index].isActive = true
+            if let gracePeriodExpiresAt = gracePeriodExpiresAt {
+              subscriptions[index].expirationDate = gracePeriodExpiresAt
+            }
           }
         }
 
@@ -429,7 +445,7 @@ enum EntitlementProcessor {
               store: entitlement.store,
               startsAt: entitlement.startsAt,
               renewedAt: entitlement.renewedAt,
-              expiresAt: entitlement.expiresAt,
+              expiresAt: gracePeriodExpiresAt ?? entitlement.expiresAt,
               isLifetime: entitlement.isLifetime,
               willRenew: willRenew,
               state: state,
