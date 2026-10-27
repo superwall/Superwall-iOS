@@ -437,6 +437,28 @@ struct CustomStoreCheckoutTests {
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
   }
 
+  @Test("Closing a checkout sheet left open by a timeout isn't a second abandon")
+  func timeoutAbandon_sheetLeftOpen_closingItIsNotAnAbandon() async throws {
+    let (transactionManager, _) = await makeTransactionManager()
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: serverTransactionId),
+      paywallViewController: paywallVc
+    )
+    // The checkout's sheet is open when the paywall gives up on it.
+    paywallVc.isSafariVCPresented = true
+    await transactionManager.handleCustomStoreCheckout(
+      .abandon(productId: productId, reason: .timeout),
+      paywallViewController: paywallVc
+    )
+
+    #expect(await trackedStates() == ["start", "abandon"])
+    #expect(paywallVc.isCustomStoreCheckoutSheetLeftOpen)
+    #expect(paywallVc.isCheckoutSheetDismissalAnAbandon == false)
+    paywallVc.isSafariVCPresented = false
+  }
+
   @Test("A buyer's abandon that arrives as the paywall closes doesn't present a paywall")
   func abandon_whilePaywallCloses_doesNotTriggerPaywall() async throws {
     let (transactionManager, _) = await makeTransactionManager()

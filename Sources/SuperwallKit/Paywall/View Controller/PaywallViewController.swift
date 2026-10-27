@@ -171,6 +171,21 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// presented or dismissed, which also ends the checkout.
   var customStoreCheckoutProductId: String?
 
+  /// Whether the open checkout sheet belongs to a custom store checkout that ended while it
+  /// stayed open, as one that timed out does. The buyer closing it later isn't an abandon.
+  var isCustomStoreCheckoutSheetLeftOpen = false
+
+  /// Whether the buyer closing the checkout sheet abandons a Stripe checkout: no redeem
+  /// succeeded, the SDK didn't close it, the page didn't report the abandon itself, and it
+  /// isn't a custom store checkout, whose outcome the page reports.
+  var isCheckoutSheetDismissalAnAbandon: Bool {
+    return !didRedeemSucceedDuringCheckout
+      && !isCheckoutDismissedProgrammatically
+      && customStoreCheckoutProductId == nil
+      && !isCustomStoreCheckoutSheetLeftOpen
+      && !didReceiveStripeCheckoutAbandonMessage
+  }
+
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
 
@@ -1313,6 +1328,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       didRedeemSucceedDuringCheckout = false
       isCheckoutDismissedProgrammatically = false
       didReceiveStripeCheckoutAbandonMessage = false
+      isCustomStoreCheckoutSheetLeftOpen = false
       transactionAbandonWorkItem?.cancel()
       transactionAbandonWorkItem = nil
 
@@ -1329,15 +1345,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
           self.loadingState = .ready
         }
 
-        // Only track abandon if:
-        // 1. Redeem did NOT succeed
-        // 2. Dismissal was NOT programmatic (user dismissed it)
-        // 3. No stripe checkout abandon message was received
-        // 4. It isn't a custom store checkout, whose outcome the paywall reports
-        if !self.didRedeemSucceedDuringCheckout,
-          !self.isCheckoutDismissedProgrammatically,
-          self.customStoreCheckoutProductId == nil,
-          !self.didReceiveStripeCheckoutAbandonMessage {
+        if self.isCheckoutSheetDismissalAnAbandon {
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             Task {
@@ -1358,6 +1366,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
           DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
         }
         // Reset flags after handling
+        self.isCustomStoreCheckoutSheetLeftOpen = false
         self.didRedeemSucceedDuringCheckout = false
         self.isCheckoutDismissedProgrammatically = false
         self.didReceiveStripeCheckoutAbandonMessage = false

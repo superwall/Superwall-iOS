@@ -630,6 +630,10 @@ final class TransactionManager {
 
     await MainActor.run {
       paywallViewController.customStoreCheckoutProductId = checkoutProductId
+      if !checkout.closesBrowser, paywallViewController.isSafariVCPresented {
+        // The checkout already ended, so the buyer closing its sheet later abandons nothing.
+        paywallViewController.isCustomStoreCheckoutSheetLeftOpen = true
+      }
     }
 
     switch checkout {
