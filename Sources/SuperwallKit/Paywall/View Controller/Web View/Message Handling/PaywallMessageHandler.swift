@@ -261,7 +261,7 @@ final class PaywallMessageHandler: WebEventDelegate {
         checkoutContextId: checkoutContextId,
         productId: productId
       )
-    case let .customCheckoutStart(_, productId, customTransactionId):
+    case let .customCheckoutStart(productId, customTransactionId):
       delegate?.handleCustomStoreCheckout(
         .start(productId: productId, customTransactionId: customTransactionId)
       )

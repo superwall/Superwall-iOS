@@ -72,11 +72,7 @@ enum PaywallMessage: Decodable, Equatable {
   case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
   case stripeCheckoutFail(checkoutContextId: String, productId: String)
   case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
-  case customCheckoutStart(
-    checkoutContextId: String?,
-    productId: String,
-    customTransactionId: String
-  )
+  case customCheckoutStart(productId: String, customTransactionId: String)
   case customCheckoutComplete(
     productId: String,
     customTransactionId: String,
@@ -330,12 +326,7 @@ enum PaywallMessage: Decodable, Equatable {
       case .customCheckoutStart:
         if let productId = try? values.decode(String.self, forKey: .productId),
           let customTransactionId = try? values.decode(String.self, forKey: .customTransactionId) {
-          let checkoutContextId = try? values.decodeIfPresent(String.self, forKey: .checkoutContextId)
-          self = .customCheckoutStart(
-            checkoutContextId: checkoutContextId,
-            productId: productId,
-            customTransactionId: customTransactionId
-          )
+          self = .customCheckoutStart(productId: productId, customTransactionId: customTransactionId)
           return
         }
       case .customCheckoutComplete:
@@ -351,7 +342,7 @@ enum PaywallMessage: Decodable, Equatable {
         }
       case .customCheckoutAbandon:
         if let productId = try? values.decode(String.self, forKey: .productId) {
-          // Missing or unknown, the abandon is the buyer's, as before the paywall sent one.
+          // A missing or unknown reason counts as the buyer's.
           let reason = (try? values.decodeIfPresent(String.self, forKey: .reason))
             .flatMap(CustomStoreCheckout.AbandonReason.init(rawValue:)) ?? .buyer
           self = .customCheckoutAbandon(productId: productId, reason: reason)
