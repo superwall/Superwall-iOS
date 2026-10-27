@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.18.3
 
+### Enhancements
+
+- Sends the Apple Search Ads attribution token to `sdk-api.superwall.com` instead of `api.superwall.me`. The request and response are unchanged.
+
 ### Fixes
 
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
