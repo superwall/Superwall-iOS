@@ -413,6 +413,71 @@ struct CustomStoreCheckoutTests {
     #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
   }
 
+  @Test("An abandon the buyer didn't choose doesn't present a paywall", arguments: [
+    CustomStoreCheckout.AbandonReason.paywallClosed,
+    .timeout
+  ])
+  func abandon_notBuyersChoice_doesNotTriggerPaywall(reason: CustomStoreCheckout.AbandonReason) async throws {
+    let (transactionManager, _) = await makeTransactionManager()
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: serverTransactionId),
+      paywallViewController: paywallVc
+    )
+    await transactionManager.handleCustomStoreCheckout(
+      .abandon(productId: productId, reason: reason),
+      paywallViewController: paywallVc
+    )
+
+    #expect(await trackedStates() == ["start", "abandon"])
+    let abandon = try #require(await tracked.events.last)
+    #expect(abandon.canImplicitlyTriggerPaywall == false)
+    #expect(paywallVc.customStoreCheckoutProductId == nil)
+    #expect(await dependencyContainer.makePurchasingCoordinator().source == nil)
+  }
+
+  @Test("A buyer's abandon that arrives as the paywall closes doesn't present a paywall")
+  func abandon_whilePaywallCloses_doesNotTriggerPaywall() async throws {
+    let (transactionManager, _) = await makeTransactionManager()
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: serverTransactionId),
+      paywallViewController: paywallVc
+    )
+    // The page sends its abandon, then the close it was tapped for.
+    paywallVc.isClosing = true
+    await transactionManager.handleCustomStoreCheckout(
+      .abandon(productId: productId),
+      paywallViewController: paywallVc
+    )
+
+    #expect(await trackedStates() == ["start", "abandon"])
+    let abandon = try #require(await tracked.events.last)
+    #expect(abandon.canImplicitlyTriggerPaywall == false)
+  }
+
+  @Test("A second start of the checkout in progress is ignored")
+  func start_ofCheckoutInProgress_isIgnored() async throws {
+    let (transactionManager, product) = await makeTransactionManager()
+    let (paywallVc, _) = makePaywall()
+
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: serverTransactionId),
+      paywallViewController: paywallVc
+    )
+    await transactionManager.handleCustomStoreCheckout(
+      .start(productId: productId, customTransactionId: "another_id"),
+      paywallViewController: paywallVc
+    )
+
+    #expect(await trackedStates() == ["start"])
+    #expect(product.customTransactionId == serverTransactionId)
+    #expect(paywallVc.customStoreCheckoutProductId == productId)
+    await dependencyContainer.makePurchasingCoordinator().reset()
+  }
+
   // MARK: - Fail
 
   @Test("Fail tracks transaction_fail and shows the purchase failure alert")

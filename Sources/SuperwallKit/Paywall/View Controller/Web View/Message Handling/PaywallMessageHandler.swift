@@ -273,8 +273,8 @@ final class PaywallMessageHandler: WebEventDelegate {
           shouldDismiss: shouldDismiss
         )
       )
-    case .customCheckoutAbandon(let productId):
-      delegate?.handleCustomStoreCheckout(.abandon(productId: productId))
+    case let .customCheckoutAbandon(productId, reason):
+      delegate?.handleCustomStoreCheckout(.abandon(productId: productId, reason: reason))
     case let .customCheckoutFail(productId, message):
       delegate?.handleCustomStoreCheckout(.fail(productId: productId, message: message))
     case .requestStoreReview(let reviewType):

@@ -606,7 +606,7 @@ final class TransactionManager {
       return
     }
 
-    if checkoutProductId == nil {
+    if checkoutProductId == nil, checkout.closesBrowser {
       // Close the checkout's in-app browser, if it's still open. The paywall's
       // dismissal would wait on it, and closing it from here isn't tracked as
       // an abandoned Stripe checkout. A purchase may start meanwhile, so look
@@ -653,14 +653,19 @@ final class TransactionManager {
         shouldDismiss: shouldDismiss && isPaywallOpen
       )
       await handle(result: .purchased, state: .purchasing(source))
-    case .abandon:
-      let source = await resumeCustomStoreCheckout(
+    case .abandon(_, let reason):
+      _ = await resumeCustomStoreCheckout(
         of: product,
         productId: productId,
         paywallViewController: paywallViewController,
         isInProgress: ownership == .thisCheckout
       )
-      await handle(result: .cancelled, state: .purchasing(source))
+      // A close button's abandon can arrive after the paywall began to close.
+      let isClosing = await MainActor.run {
+        paywallViewController.isClosing || !paywallViewController.isActive
+      }
+      await trackCancelled(canTriggerPaywall: reason.isBuyersChoice && !isClosing)
+      await factory.makePurchasingCoordinator().reset()
     case .fail(_, let message):
       let source = await resumeCustomStoreCheckout(
         of: product,
@@ -805,6 +810,8 @@ final class TransactionManager {
     switch (checkout, ownership) {
     case (_, .otherPurchase):
       return "another purchase is in progress"
+    case (.start, .thisCheckout):
+      return "it's already in progress"
     case (.abandon, .none),
       (.abandon, .otherCustomStoreCheckout):
       return "no checkout of it is in progress"

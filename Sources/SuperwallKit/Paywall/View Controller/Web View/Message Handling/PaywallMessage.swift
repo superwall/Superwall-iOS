@@ -82,7 +82,7 @@ enum PaywallMessage: Decodable, Equatable {
     customTransactionId: String,
     shouldDismiss: Bool
   )
-  case customCheckoutAbandon(productId: String)
+  case customCheckoutAbandon(productId: String, reason: CustomStoreCheckout.AbandonReason)
   case customCheckoutFail(productId: String, message: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
@@ -174,6 +174,7 @@ enum PaywallMessage: Decodable, Equatable {
     case checkoutContextId
     case customTransactionId
     case message
+    case reason
     case type
     case title
     case subtitle
@@ -350,7 +351,10 @@ enum PaywallMessage: Decodable, Equatable {
         }
       case .customCheckoutAbandon:
         if let productId = try? values.decode(String.self, forKey: .productId) {
-          self = .customCheckoutAbandon(productId: productId)
+          // Missing or unknown, the abandon is the buyer's, as before the paywall sent one.
+          let reason = (try? values.decodeIfPresent(String.self, forKey: .reason))
+            .flatMap(CustomStoreCheckout.AbandonReason.init(rawValue:)) ?? .buyer
+          self = .customCheckoutAbandon(productId: productId, reason: reason)
           return
         }
       case .customCheckoutFail:

@@ -114,7 +114,7 @@ struct CustomStoreCheckoutMessageTests {
     ))
   }
 
-  @Test("custom_checkout_abandon decodes the product")
+  @Test("custom_checkout_abandon without a reason is the buyer's")
   func decodeAbandon() throws {
     let message = try decode("""
       {
@@ -123,7 +123,25 @@ struct CustomStoreCheckoutMessageTests {
       }
       """)
 
-    #expect(message == .customCheckoutAbandon(productId: "pro_monthly"))
+    #expect(message == .customCheckoutAbandon(productId: "pro_monthly", reason: .buyer))
+  }
+
+  @Test("custom_checkout_abandon decodes its reason, and an unknown one is the buyer's", arguments: [
+    ("buyer", CustomStoreCheckout.AbandonReason.buyer),
+    ("paywall_closed", .paywallClosed),
+    ("timeout", .timeout),
+    ("something_new", .buyer)
+  ])
+  func decodeAbandonReason(reason: String, expected: CustomStoreCheckout.AbandonReason) throws {
+    let message = try decode("""
+      {
+        "event_name": "custom_checkout_abandon",
+        "product_identifier": "pro_monthly",
+        "reason": "\(reason)"
+      }
+      """)
+
+    #expect(message == .customCheckoutAbandon(productId: "pro_monthly", reason: expected))
   }
 
   @Test("custom_checkout_fail decodes the product and message")
@@ -184,13 +202,13 @@ struct CustomStoreCheckoutMessageTests {
       customTransactionId: "txn_123",
       shouldDismiss: false
     ))
-    messageHandler.handle(.customCheckoutAbandon(productId: "pro_monthly"))
+    messageHandler.handle(.customCheckoutAbandon(productId: "pro_monthly", reason: .timeout))
     messageHandler.handle(.customCheckoutFail(productId: "pro_monthly", message: "Unavailable"))
 
     #expect(delegate.customStoreCheckouts == [
       .start(productId: "pro_monthly", customTransactionId: "txn_123"),
       .complete(productId: "pro_monthly", customTransactionId: "txn_123", shouldDismiss: false),
-      .abandon(productId: "pro_monthly"),
+      .abandon(productId: "pro_monthly", reason: .timeout),
       .fail(productId: "pro_monthly", message: "Unavailable")
     ])
     // Nothing goes through the purchase path.

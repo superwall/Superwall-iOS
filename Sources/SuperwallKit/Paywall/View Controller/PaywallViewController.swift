@@ -82,6 +82,9 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
   private var isPresentedBySDK = false
 
+  /// Whether the paywall has begun to close, until it's presented again.
+  var isClosing = false
+
   /// Determines whether the paywall is presented or not.
   var isActive: Bool {
     return isPresented || isBeingPresented
@@ -514,10 +517,19 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   /// Closes the in-app browser, if one is open, and returns once it's gone.
-  func closeSafari() async {
+  ///
+  /// UIKit never calls back a dismissal it ignores, as one during another transition, so
+  /// this returns after `timeoutNs` regardless. Its callers hold the purchase in progress.
+  func closeSafari(timeoutNs: UInt64 = 2_000_000_000) async {
+    let resumer = ContinuationResumer()
     await withCheckedContinuation { continuation in
+      resumer.set(continuation)
       closeSafari {
-        continuation.resume()
+        resumer.resume()
+      }
+      Task {
+        try? await Task.sleep(nanoseconds: timeoutNs)
+        resumer.resume()
       }
     }
   }
@@ -1671,6 +1683,7 @@ extension PaywallViewController {
 
     didCallDelegate = false
     paywall.closeReason = .none
+    isClosing = false
     // A purchase belongs to the presentation it was made in. It's cleared here rather than when
     // the view disappears: a sheet swiped away disappears before its close is reported.
     completedPurchaseProduct = nil
@@ -1796,6 +1809,7 @@ extension PaywallViewController {
     completion: (() -> Void)? = nil
   ) {
     let (result, closeReason) = resolvedDismissal(result: result, closeReason: closeReason)
+    isClosing = true
     dismissCompletionBlock = completion
     paywallResult = result
     paywall.closeReason = closeReason
@@ -1862,6 +1876,7 @@ extension PaywallViewController {
   }
 
   private func willDismiss() {
+    isClosing = true
     let result = paywallResult ?? .declined
     paywallStateSubject?.send(.willDismiss(info, result))
 
@@ -1944,5 +1959,25 @@ extension PaywallViewController: GameControllerDelegate {
       info: ["payload": payload],
       error: nil
     )
+  }
+}
+
+/// Resumes a continuation once, whichever of its callers comes first.
+private final class ContinuationResumer: @unchecked Sendable {
+  private let lock = NSLock()
+  private var continuation: CheckedContinuation<Void, Never>?
+
+  func set(_ continuation: CheckedContinuation<Void, Never>) {
+    lock.lock()
+    self.continuation = continuation
+    lock.unlock()
+  }
+
+  func resume() {
+    lock.lock()
+    let continuation = self.continuation
+    self.continuation = nil
+    lock.unlock()
+    continuation?.resume()
   }
 }
