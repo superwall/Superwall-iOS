@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
 
 ## 4.18.2
 

@@ -978,20 +978,20 @@ struct EntitlementProcessorTests {
   // - testRevokedNonConsumableDoesNotGrantLifetime() which tests revoked non-consumables don't grant lifetime access
   // - Integration tests with real StoreKit transactions that verify the full flow
 
-  @Test("Process and enhance entitlements with subscription in grace period")
+  @Test("A subscription in a billing grace period keeps its entitlement active after its expiry date")
   func testProcessAndEnhanceEntitlements_gracePeriod() async {
+    // During a billing grace period the latest transaction has already
+    // expired, but Apple keeps the subscriber's access.
+    let expiredAt = Date().addingTimeInterval(-3600)
     let transaction = createMockTransaction(
       productId: "subscription_product",
       transactionId: "txn_grace",
-      purchaseDate: Date(),
-      originalPurchaseDate: Date(),
-      expirationDate: Date().addingTimeInterval(3600),
+      purchaseDate: expiredAt.addingTimeInterval(-30 * 24 * 3600),
+      expirationDate: expiredAt,
       isRevoked: false,
       productType: .autoRenewable,
       willRenew: true,
-      isInGracePeriod: true,
-      isInBillingRetryPeriod: false,
-      isActive: true
+      isActive: false
     )
 
     let entitlement = Entitlement(
@@ -1004,14 +1004,15 @@ struct EntitlementProcessorTests {
     let rawEntitlementsByProductId = ["subscription_product": Set([entitlement])]
     let productIdsByEntitlementId = ["premium": Set(["subscription_product"])]
 
-    // First process transactions to create subscription objects
     let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
     var subscriptions = initialSubscriptions
+    #expect(subscriptions.first?.isActive == false)
 
-    // Mock provider returns grace period state
+    let gracePeriodEndsAt = Date().addingTimeInterval(16 * 24 * 3600)
     let mockProvider = MockSubscriptionStatusProvider(
       mockWillAutoRenew: true,
-      mockState: .inGracePeriod
+      mockState: .inGracePeriod,
+      mockGracePeriodExpirationDate: gracePeriodEndsAt
     )
 
     let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
@@ -1026,12 +1027,184 @@ struct EntitlementProcessorTests {
     let processedEntitlement = result["subscription_product"]?.first
     #expect(processedEntitlement?.id == "premium")
     #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.isInGracePeriod == true)
     #expect(processedEntitlement?.willRenew == true)
+    // Access lasts until the grace period ends.
+    #expect(processedEntitlement?.expiresAt == gracePeriodEndsAt)
 
-    // Verify subscription transaction was updated with grace period state
     #expect(subscriptions.count == 1)
     #expect(subscriptions.first?.isInGracePeriod == true)
     #expect(subscriptions.first?.isInBillingRetryPeriod == false)
+    #expect(subscriptions.first?.isActive == true)
+    #expect(subscriptions.first?.expirationDate == gracePeriodEndsAt)
+  }
+
+  @Test("A grace period without an end date keeps the transaction's expiry date")
+  func testProcessAndEnhanceEntitlements_gracePeriodWithoutEndDate() async {
+    let expiredAt = Date().addingTimeInterval(-3600)
+    let transaction = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_grace",
+      purchaseDate: expiredAt.addingTimeInterval(-30 * 24 * 3600),
+      expirationDate: expiredAt,
+      productType: .autoRenewable,
+      willRenew: true,
+      isActive: false
+    )
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    var subscriptions = EntitlementProcessor.processTransactions(from: [transaction]).subscriptions
+
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [transaction]],
+      rawEntitlementsByProductId: ["subscription_product": Set([entitlement])],
+      productIdsByEntitlementId: ["premium": Set(["subscription_product"])],
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: MockSubscriptionStatusProvider(
+        mockWillAutoRenew: true,
+        mockState: .inGracePeriod
+      )
+    )
+
+    let processedEntitlement = result["subscription_product"]?.first
+    #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.expiresAt == expiredAt)
+    #expect(subscriptions.first?.expirationDate == expiredAt)
+  }
+
+  @Test("A subscription renewed after a grace period expires at the end of the new period")
+  func testProcessAndEnhanceEntitlements_renewedAfterGracePeriod() async {
+    let expiredAt = Date().addingTimeInterval(-3 * 24 * 3600)
+    let renewedExpiresAt = expiredAt.addingTimeInterval(30 * 24 * 3600)
+    let lapsed = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_lapsed",
+      purchaseDate: expiredAt.addingTimeInterval(-30 * 24 * 3600),
+      expirationDate: expiredAt,
+      productType: .autoRenewable,
+      willRenew: true,
+      isActive: false
+    )
+    // The renewal charge went through, which adds a new transaction.
+    let renewal = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_renewal",
+      purchaseDate: Date().addingTimeInterval(-60),
+      originalPurchaseDate: lapsed.purchaseDate,
+      expirationDate: renewedExpiresAt,
+      productType: .autoRenewable,
+      willRenew: true,
+      isActive: true
+    )
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    var subscriptions = EntitlementProcessor.processTransactions(from: [lapsed, renewal]).subscriptions
+
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [lapsed, renewal]],
+      rawEntitlementsByProductId: ["subscription_product": Set([entitlement])],
+      productIdsByEntitlementId: ["premium": Set(["subscription_product"])],
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: MockSubscriptionStatusProvider(
+        mockWillAutoRenew: true,
+        mockState: .subscribed,
+        mockGracePeriodExpirationDate: Date().addingTimeInterval(13 * 24 * 3600)
+      )
+    )
+
+    let processedEntitlement = result["subscription_product"]?.first
+    #expect(processedEntitlement?.isActive == true)
+    #expect(processedEntitlement?.isInGracePeriod == false)
+    #expect(processedEntitlement?.expiresAt == renewedExpiresAt)
+    #expect(subscriptions.first { $0.transactionId == "txn_renewal" }?.expirationDate == renewedExpiresAt)
+    #expect(subscriptions.first { $0.transactionId == "txn_renewal" }?.isInGracePeriod == false)
+  }
+
+  @Test("A subscription in billing retry without a grace period loses its entitlement after its expiry date")
+  func testProcessAndEnhanceEntitlements_billingRetryAfterExpiry() async {
+    // Apple doesn't grant access during billing retry unless the
+    // developer enabled a grace period, which StoreKit reports separately.
+    let expiredAt = Date().addingTimeInterval(-3600)
+    let transaction = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_billing_retry",
+      purchaseDate: expiredAt.addingTimeInterval(-30 * 24 * 3600),
+      expirationDate: expiredAt,
+      productType: .autoRenewable,
+      willRenew: true,
+      isActive: false
+    )
+
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
+    var subscriptions = initialSubscriptions
+
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [transaction]],
+      rawEntitlementsByProductId: ["subscription_product": Set([entitlement])],
+      productIdsByEntitlementId: ["premium": Set(["subscription_product"])],
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: MockSubscriptionStatusProvider(
+        mockWillAutoRenew: true,
+        mockState: .inBillingRetryPeriod
+      )
+    )
+
+    let processedEntitlement = result["subscription_product"]?.first
+    #expect(processedEntitlement?.isActive == false)
+    #expect(processedEntitlement?.state == .inBillingRetryPeriod)
+    #expect(subscriptions.first?.isInBillingRetryPeriod == true)
+    #expect(subscriptions.first?.isActive == false)
+  }
+
+  @Test("An expired subscription stays inactive")
+  func testProcessAndEnhanceEntitlements_expiredAfterGracePeriod() async {
+    let expiredAt = Date().addingTimeInterval(-3600)
+    let transaction = createMockTransaction(
+      productId: "subscription_product",
+      transactionId: "txn_expired",
+      purchaseDate: expiredAt.addingTimeInterval(-30 * 24 * 3600),
+      expirationDate: expiredAt,
+      productType: .autoRenewable,
+      isActive: false
+    )
+
+    let entitlement = Entitlement(
+      id: "premium",
+      type: .serviceLevel,
+      productIds: Set(["subscription_product"])
+    )
+
+    let (_, initialSubscriptions) = EntitlementProcessor.processTransactions(from: [transaction])
+    var subscriptions = initialSubscriptions
+
+    let result = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["premium": [transaction]],
+      rawEntitlementsByProductId: ["subscription_product": Set([entitlement])],
+      productIdsByEntitlementId: ["premium": Set(["subscription_product"])],
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: MockSubscriptionStatusProvider(
+        mockWillAutoRenew: false,
+        mockState: .expired
+      )
+    )
+
+    #expect(result["subscription_product"]?.first?.isActive == false)
+    #expect(subscriptions.first?.isInGracePeriod == false)
+    #expect(subscriptions.first?.isActive == false)
   }
 
   @Test("Process and enhance entitlements with subscription in billing retry")
@@ -1339,18 +1512,21 @@ struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
   var mockWillAutoRenew: Bool
   var mockState: LatestSubscription.State?
   var mockOfferType: LatestSubscription.OfferType?
+  var mockGracePeriodExpirationDate: Date?
 
   init(
     mockWillAutoRenew: Bool = true,
     mockState: LatestSubscription.State? = .subscribed,
-    mockOfferType: LatestSubscription.OfferType? = nil
+    mockOfferType: LatestSubscription.OfferType? = nil,
+    mockGracePeriodExpirationDate: Date? = nil
   ) {
     self.mockWillAutoRenew = mockWillAutoRenew
     self.mockState = mockState
     self.mockOfferType = mockOfferType
+    self.mockGracePeriodExpirationDate = mockGracePeriodExpirationDate
   }
 
-  func getSubscriptionStatus(for transaction: Transaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
+  func getSubscriptionStatus(for transaction: any EntitlementTransaction) async -> StoreKit.Product.SubscriptionInfo.Status? {
     return nil // Simplified for testing
   }
 
@@ -1362,8 +1538,12 @@ struct MockSubscriptionStatusProvider: SubscriptionStatusProvider {
     return mockState
   }
 
+  func getGracePeriodExpirationDate(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date? {
+    return mockGracePeriodExpirationDate
+  }
+
   @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
-  func getOfferType(from transaction: Transaction) -> LatestSubscription.OfferType? {
+  func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType? {
     return mockOfferType
   }
 }
