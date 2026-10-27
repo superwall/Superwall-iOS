@@ -535,6 +535,37 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
   }
 
+  @Test("A code redemption isn't undone by a fetch sent while it was in flight")
+  func codeRedemption_finishingAfterFetchSentDuringIt_keepsRedemption() async throws {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
+    network.redeemDelay = 0.3
+    // The server answered the fetch before it had redeemed the code.
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: false, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let redeem = Task { await redeemer.redeem(.code("redemption_code")) }
+    for _ in 0..<100 where network.redeemCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    try #require(network.redeemCallCount == 1)
+    await redeemer.refreshWebEntitlements()
+    await redeem.value
+
+    let saved = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(saved?.customerInfo.entitlements.first?.isActive == true)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
   @Test("A post-purchase redeem for a user who has since changed saves nothing")
   func postPurchaseRedeem_userChangedDuringRedeem_isDropped() async throws {
     defer { clearEntitlementsState() }
