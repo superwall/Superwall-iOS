@@ -660,6 +660,10 @@ public final class Superwall: NSObject, ObservableObject {
     listenToConfig()
     listenToSubscriptionStatus()
     listenToCustomerInfo()
+    dependencyContainer.notificationTokenManager.listen(
+      configState: dependencyContainer.configManager.configState,
+      hasIdentity: dependencyContainer.identityManager.hasIdentity
+    )
   }
 
   private func listenToConfig() {

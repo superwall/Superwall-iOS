@@ -4,6 +4,12 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.18.3
 
+### Enhancements
+
+- Adds `Superwall.shared.setPushToken(_:)` to register the device's APNs token with Superwall, so Superwall can send it push notifications. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`. The SDK doesn't swizzle your app delegate or request notification permission itself. Along with the token, Superwall receives the notification permission the user has granted, which is checked again whenever the app becomes active. The token is only sent to Superwall: it doesn't appear in `SuperwallDelegate.handleSuperwallEvent(withInfo:)`, user attributes or audience filters. Nothing is sent until Superwall notifications are turned on for your app, and nothing is sent while `eventTrackingBehavior` is `.none`.
+- Adds `Superwall.shared.optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications for the device. The choice is remembered across launches, `reset()` and `identify(userId:)`.
+- Adds `Superwall.shared.handleNotificationResponse(_:)` to measure opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`; notifications Superwall didn't send are ignored.
+
 ### Fixes
 
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
