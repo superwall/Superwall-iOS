@@ -40,8 +40,9 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   private var isProcessing = false
   /// The throttled entitlements poll in flight, which concurrent polls wait on.
   private var inFlightWebEntitlementsPoll: Task<Void, Never>?
-  /// How many entitlements fetches have started, and which of them last saved
-  /// its response. A response that arrives after a newer fetch's is dropped.
+  /// How many requests that return entitlements (fetches, redeems, checkout polls) have been
+  /// sent, and which of them last saved its customer info. A response to an earlier request
+  /// never replaces a later one's, whichever arrives first.
   private var entitlementsFetchCount = 0
   private var lastSavedEntitlementsFetch = 0
   private var hasActiveStripePoll = false
@@ -423,9 +424,26 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     await prepareUIForRedemption(type: type, superwall: superwall)
 
     do {
+      let fetch = startEntitlementsFetch()
       let response = try await network.redeemEntitlements(request: request)
+      switch type {
+      case .code:
+        // The user is waiting on a code redemption, so it always finishes.
+        break
+      case .existingCodes, .integrationAttributes:
+        // Saved after the user changed, it would give the new user the old one's entitlements.
+        guard factory.makeAppUserId() == request.appUserId else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .webEntitlements,
+            message: "Ignoring redeem response because the user changed during the redeem."
+          )
+          return
+        }
+      }
       await handleRedemptionSuccess(
         response: response,
+        fetch: fetch,
         type: type,
         superwall: superwall,
         callbackMode: .legacy
@@ -503,15 +521,25 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     await delegate.willRedeemLink()
   }
 
+  /// - Parameter fetch: The number `startEntitlementsFetch()` gave the request, when it was sent.
   private func handleRedemptionSuccess(
     response: RedeemResponse,
+    fetch: Int,
     type: RedeemType,
     superwall: Superwall,
     callbackMode: RedemptionCallbackMode,
     completion: StripeCheckoutCompletion = .restore,
     checkoutContextId: String? = nil
   ) async {
-    storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+    var response = response
+    // A fetch sent after this request has already saved newer customer info. The codes'
+    // results are still this response's, but its customer info is out of date.
+    if fetch < lastSavedEntitlementsFetch,
+      let latestCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo {
+      response.customerInfo = latestCustomerInfo
+    } else {
+      storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+    }
 
     switch type {
     case .code, .existingCodes:
@@ -529,10 +557,8 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     )
 
     storage.save(response, forType: LatestRedeemResponse.self)
-    // An entitlements fetch already in flight started before this response
-    // was saved, so it must not replace it when it finishes.
-    entitlementsFetchCount += 1
-    lastSavedEntitlementsFetch = entitlementsFetchCount
+    // A fetch sent before this request must not replace it when it finishes.
+    lastSavedEntitlementsFetch = max(lastSavedEntitlementsFetch, fetch)
 
     await mergeAndApplyCustomerInfo(
       webCustomerInfo: response.customerInfo,
@@ -951,12 +977,14 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       }
 
       do {
+        let fetch = startEntitlementsFetch()
         let response = try await network.pollRedemptionResult(request: request)
 
         if let code = response.results.first?.code {
           let superwall = superwall ?? Superwall.shared
           await handleRedemptionSuccess(
             response: response,
+            fetch: fetch,
             type: .code(code),
             superwall: superwall,
             callbackMode: .pollFakeCompatibility,
@@ -1104,6 +1132,12 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     }
   }
 
+  /// Numbers a request that returns entitlements, just before it's sent.
+  private func startEntitlementsFetch() -> Int {
+    entitlementsFetchCount += 1
+    return entitlementsFetchCount
+  }
+
   func redeemAfterPurchase() async {
     await redeem(.existingCodes)
   }
@@ -1127,8 +1161,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   @discardableResult
   // swiftlint:disable:next cyclomatic_complexity
   func refreshWebEntitlements(dismissesCoveredPaywall: Bool = false) async -> CustomerInfo? {
-    entitlementsFetchCount += 1
-    let fetch = entitlementsFetchCount
+    let fetch = startEntitlementsFetch()
     let appUserId = factory.makeAppUserId()
     do {
       let response = try await network.getEntitlements(

@@ -501,6 +501,68 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
   }
 
+  @Test("A slow post-purchase redeem doesn't overwrite a refresh sent after it")
+  func postPurchaseRedeem_finishingAfterNewerRefresh_keepsRefresh() async throws {
+    defer { clearEntitlementsState() }
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // The redeem went out before the developer's server reported the purchase, and is slow.
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: false, store: .custom)]
+      )
+    )
+    network.redeemDelay = 0.3
+    network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true, store: .custom)])
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    let redeem = Task { await redeemer.redeemAfterPurchase() }
+    // Refresh only once the redeem has been sent.
+    for _ in 0..<100 where network.redeemCallCount == 0 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    try #require(network.redeemCallCount == 1)
+    let refreshed = await redeemer.refreshWebEntitlements()
+    await redeem.value
+
+    #expect(network.redeemCallCount == 1)
+    #expect(refreshed?.entitlements.first?.isActive == true)
+    let saved = dependencyContainer.storage.get(LatestRedeemResponse.self)
+    #expect(saved?.customerInfo.entitlements.first?.isActive == true)
+    #expect(dependencyContainer.entitlementsInfo.web.map(\.id) == ["pro"])
+  }
+
+  @Test("A post-purchase redeem for a user who has since changed saves nothing")
+  func postPurchaseRedeem_userChangedDuringRedeem_isDropped() async throws {
+    defer { clearEntitlementsState() }
+    try #require(dependencyContainer.makeAppUserId() == nil)
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    network.getWebEntitlementsResponse = RedeemResponse(
+      results: [],
+      customerInfo: CustomerInfo(
+        subscriptions: [],
+        nonSubscriptions: [],
+        entitlements: [Entitlement(id: "pro", isActive: true, store: .custom)]
+      )
+    )
+    network.redeemDelay = 0.2
+    let identityManager = dependencyContainer.identityManager
+    network.onRedeemEntitlements = {
+      identityManager?.identify(userId: "next_user", options: nil)
+    }
+    let redeemer = makeRedeemer(network: network, superwall: superwall)
+
+    await redeemer.redeemAfterPurchase()
+
+    #expect(network.redeemCallCount == 1)
+    #expect(dependencyContainer.storage.get(LatestRedeemResponse.self) == nil)
+    #expect(dependencyContainer.entitlementsInfo.web.isEmpty)
+  }
+
   @Test("A refresh that changes nothing doesn't republish customerInfo")
   func refresh_unchangedResponse_doesNotRepublishCustomerInfo() async {
     defer { clearEntitlementsState() }
