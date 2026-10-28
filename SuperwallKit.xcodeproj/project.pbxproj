@@ -620,6 +620,7 @@
 		E0F3648081AB86077201EB5D /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83416F0F1B5294C350D5CF70 /* FeatureFlags.swift */; };
 		E0F69E406F64A1160FF55BFA /* SWProduct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 460B6F98BADD9EC96A978E40 /* SWProduct.swift */; };
 		E1A838C9CE62C9479D0C68F4 /* SWDebugManagerLogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C733A9BE56EA9E10D75B073B /* SWDebugManagerLogicTests.swift */; };
+		E1BBC4F9C73D7C52A89C66EA /* CustomURLSessionLoggingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF96025B16CA748E9A6B145C /* CustomURLSessionLoggingTests.swift */; };
 		E20B1214CA9785C0D0C7AD7A /* PublishedSubscriptionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 328C01066B84891ECF4B7F34 /* PublishedSubscriptionStatus.swift */; };
 		E2E0E2A82200943E73E3A92A /* AppSessionManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59A767F107FB1FBBC2F22DB3 /* AppSessionManagerTests.swift */; };
 		E315F3C6BBCA8582BF540086 /* GetExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BE5DAD3AB51C8C6B5AB88D2 /* GetExperiment.swift */; };
@@ -1419,6 +1420,7 @@
 		EEE0510BC2F7917AA57B896D /* AlertControllerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertControllerFactory.swift; sourceTree = "<group>"; };
 		EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeManager.swift; sourceTree = "<group>"; };
 		EF6B2C623B994FF663F75719 /* IdentityManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentityManagerTests.swift; sourceTree = "<group>"; };
+		EF96025B16CA748E9A6B145C /* CustomURLSessionLoggingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomURLSessionLoggingTests.swift; sourceTree = "<group>"; };
 		EFA6E24E16D14D1A71DC568F /* GetPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPresenter.swift; sourceTree = "<group>"; };
 		F0B300DB3367C74A42536395 /* CustomerInfoDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerInfoDecodingTests.swift; sourceTree = "<group>"; };
 		F115F0BE94943D7B60CDDD4A /* LogPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogPresentation.swift; sourceTree = "<group>"; };
@@ -3140,6 +3142,7 @@
 		B5768D312352E16D6AC021D2 /* Custom URL Session */ = {
 			isa = PBXGroup;
 			children = (
+				EF96025B16CA748E9A6B145C /* CustomURLSessionLoggingTests.swift */,
 				D3506FCC35155DF104A1DFCA /* CustomURLSessionMock.swift */,
 				C054891709C534F59C93C815 /* URLSessionRetryLogicTests.swift */,
 			);
@@ -3845,6 +3848,7 @@
 				B2AC4436371BC96FAA4FB5B3 /* CustomCallbackRegistryTests.swift in Sources */,
 				2517FC60F3A7288C5FE34A73 /* CustomProductTests.swift in Sources */,
 				67A17C2C22DA5FFDFAD35228 /* CustomStoreEntitlementRefreshTests.swift in Sources */,
+				E1BBC4F9C73D7C52A89C66EA /* CustomURLSessionLoggingTests.swift in Sources */,
 				85728EABBC5C73193AC5F876 /* CustomURLSessionMock.swift in Sources */,
 				4A3DD598AC298C6A2A371622 /* CustomerCenterActionTests.swift in Sources */,
 				D163B7AB99BE796B233DAE28 /* CustomerCenterConfigurationTests.swift in Sources */,
