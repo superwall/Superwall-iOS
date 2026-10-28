@@ -137,7 +137,9 @@ independent of enrichment success and purchase/configuration latency, preserve e
 separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
 The MMP `/api/match` request carries the fresh `ipV4`/`ipV6` observations (`ipAttributesForMMPMatch`),
 since it only arrives over one family itself. It waits for due or in-flight lookups, capped at 1.5s,
-because paywalls wait on the match at first launch.
+because paywalls wait on the match at first launch. It rechecks the gates after that wait, since
+the app can turn tracking off meanwhile. Request logs reach the app's logging delegate, so
+`CustomURLSession.loggableBody` redacts `ipV4`/`ipV6` keys and the match failure log drops them.
 Do not add customer attributes or authentication headers to the public IP lookup requests.
 The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
 version set): its host is reachable over both, so `URLSession` could quietly report IPv4.

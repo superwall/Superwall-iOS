@@ -48,6 +48,39 @@ struct MMPMatchRequest: Encodable {
   let ipV6ObservedAt: String?
 }
 
+extension MMPMatchRequest {
+  /// A copy without the IP addresses, for logging.
+  func withoutIPAddresses() -> MMPMatchRequest {
+    return MMPMatchRequest(
+      platform: platform,
+      appUserId: appUserId,
+      deviceId: deviceId,
+      vendorId: vendorId,
+      idfa: idfa,
+      idfv: idfv,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
+      appVersion: appVersion,
+      sdkVersion: sdkVersion,
+      osVersion: osVersion,
+      deviceModel: deviceModel,
+      deviceLocale: deviceLocale,
+      deviceLanguageCode: deviceLanguageCode,
+      timezoneOffsetSeconds: timezoneOffsetSeconds,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      devicePixelRatio: devicePixelRatio,
+      bundleId: bundleId,
+      clientTimestamp: clientTimestamp,
+      metadata: metadata,
+      ipV4: nil,
+      ipV4ObservedAt: nil,
+      ipV6: nil,
+      ipV6ObservedAt: nil
+    )
+  }
+}
+
 struct MMPMatchResponse: Decodable {
   let matched: Bool
   let confidence: AttributionMatchInfo.Confidence?

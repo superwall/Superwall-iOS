@@ -519,7 +519,7 @@ class Network {
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /api/match",
-        info: ["payload": request],
+        info: ["payload": request.withoutIPAddresses()],
         error: error
       )
 
