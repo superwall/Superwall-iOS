@@ -40,6 +40,45 @@ struct MMPMatchRequest: Encodable {
   let bundleId: String
   let clientTimestamp: String
   let metadata: [String: String]
+  /// The device's public addresses, as seen by the enrichment lookups. The
+  /// match request itself only arrives over one of them.
+  let ipV4: String?
+  let ipV4ObservedAt: String?
+  let ipV6: String?
+  let ipV6ObservedAt: String?
+}
+
+extension MMPMatchRequest {
+  /// A copy without the IP addresses, for logging.
+  func withoutIPAddresses() -> MMPMatchRequest {
+    return MMPMatchRequest(
+      platform: platform,
+      appUserId: appUserId,
+      deviceId: deviceId,
+      vendorId: vendorId,
+      idfa: idfa,
+      idfv: idfv,
+      advertiserTrackingEnabled: advertiserTrackingEnabled,
+      applicationTrackingEnabled: applicationTrackingEnabled,
+      appVersion: appVersion,
+      sdkVersion: sdkVersion,
+      osVersion: osVersion,
+      deviceModel: deviceModel,
+      deviceLocale: deviceLocale,
+      deviceLanguageCode: deviceLanguageCode,
+      timezoneOffsetSeconds: timezoneOffsetSeconds,
+      screenWidth: screenWidth,
+      screenHeight: screenHeight,
+      devicePixelRatio: devicePixelRatio,
+      bundleId: bundleId,
+      clientTimestamp: clientTimestamp,
+      metadata: metadata,
+      ipV4: nil,
+      ipV4ObservedAt: nil,
+      ipV6: nil,
+      ipV6ObservedAt: nil
+    )
+  }
 }
 
 struct MMPMatchResponse: Decodable {

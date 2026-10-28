@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.18.4
+
+### Enhancements
+
+- Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
+
 ## 4.18.3
 
 ### Fixes
