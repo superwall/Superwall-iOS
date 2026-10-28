@@ -258,9 +258,10 @@ extension SubscriptionTransaction {
   }
 
   /// Whether the Customer Center should treat the subscription as still going: active, or with a
-  /// payment problem the customer can still fix. A failed renewal leaves `isActive` false, because
-  /// the expiration date has passed, but the subscription hasn't ended and the customer needs to
-  /// reach its management page to update their payment method.
+  /// payment problem the customer can still fix. A failed renewal in billing retry leaves `isActive`
+  /// false, because the expiration date has passed (a grace period keeps it true), but the
+  /// subscription hasn't ended and the customer needs to reach its management page to update their
+  /// payment method.
   var isCurrent: Bool {
     if isRevoked {
       return false
