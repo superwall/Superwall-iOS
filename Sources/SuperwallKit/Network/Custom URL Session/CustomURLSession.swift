@@ -69,6 +69,43 @@ class CustomURLSession {
     self.factory = factory
   }
 
+  /// Keys whose values are the device's public IP addresses. They're sent,
+  /// but never logged, since logs reach the app's logging delegate.
+  private static let ipAddressKeys: Set<String> = ["ipV4", "ipV6", "$ipV4", "$ipV6"]
+
+  /// The request body as text for the logs, with IP addresses redacted.
+  static func loggableBody(_ body: Data?) -> String {
+    guard let body = body else {
+      return "none"
+    }
+    // Most bodies carry no address, so only those that might are parsed.
+    guard
+      body.range(of: Data("ipV".utf8)) != nil,
+      let json = try? JSONSerialization.jsonObject(with: body),
+      let redacted = try? JSONSerialization.data(
+        withJSONObject: redactingIPAddresses(in: json),
+        options: [.sortedKeys]
+      )
+    else {
+      return String(data: body, encoding: .utf8) ?? "none"
+    }
+    return String(data: redacted, encoding: .utf8) ?? "none"
+  }
+
+  private static func redactingIPAddresses(in value: Any) -> Any {
+    if let dictionary = value as? [String: Any] {
+      var result: [String: Any] = [:]
+      for (key, child) in dictionary {
+        result[key] = ipAddressKeys.contains(key) ? "<redacted>" : redactingIPAddresses(in: child)
+      }
+      return result
+    }
+    if let array = value as? [Any] {
+      return array.map { redactingIPAddresses(in: $0) }
+    }
+    return value
+  }
+
   @discardableResult
   func request<Kind, Response>(
     _ endpoint: Endpoint<Kind, Response>,
@@ -88,7 +125,7 @@ class CustomURLSession {
       scope: .network,
       message: "Request Started",
       info: [
-        "body": String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "none",
+        "body": Self.loggableBody(request.httpBody),
         "url": request.url?.absoluteString ?? "unknown"
       ]
     )

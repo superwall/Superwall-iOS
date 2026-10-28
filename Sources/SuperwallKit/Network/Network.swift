@@ -479,6 +479,7 @@ class Network {
     }
 
     let vendorId = deviceHelper.vendorId
+    let ipAttributes = await deviceHelper.ipAttributesForMMPMatch()
 
     let request = MMPMatchRequest(
       platform: "ios",
@@ -501,7 +502,11 @@ class Network {
       devicePixelRatio: deviceHelper.devicePixelRatio,
       bundleId: deviceHelper.bundleId,
       clientTimestamp: Date().isoString,
-      metadata: metadata
+      metadata: metadata,
+      ipV4: ipAttributes["ipV4"],
+      ipV4ObservedAt: ipAttributes["ipV4ObservedAt"],
+      ipV6: ipAttributes["ipV6"],
+      ipV6ObservedAt: ipAttributes["ipV6ObservedAt"]
     )
 
     do {
@@ -527,7 +532,7 @@ class Network {
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /api/match",
-        info: ["payload": request],
+        info: ["payload": request.withoutIPAddresses()],
         error: error
       )
 

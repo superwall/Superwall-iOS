@@ -2,15 +2,21 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.18.3
+## 4.18.4
 
 ### Enhancements
 
+- Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
 - Adds native macOS 12+ support for paywalls, SwiftUI embedding, StoreKit and web purchases, Customer Center, Test Mode, and a native paywall preview window. Includes a Mac example and native presentation tests.
 
 ### Fixes
 
 - Fixes paywall notifications not being scheduled again after the denied-permission alert couldn't show.
+
+## 4.18.3
+
+### Fixes
+
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
 - Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
 
