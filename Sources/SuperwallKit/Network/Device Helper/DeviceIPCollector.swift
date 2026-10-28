@@ -21,6 +21,7 @@ actor DeviceIPCollector {
     let fetch: Fetch
     var lastAttempt: Date?
     var nextAttemptAt: Date?
+    var inFlight: Task<Void, Never>?
 
     init(name: String, family: Int?, fetch: @escaping Fetch) {
       self.name = name
@@ -107,7 +108,9 @@ actor DeviceIPCollector {
       }
       lookups[index].lastAttempt = date
       lookups[index].nextAttemptAt = date.addingTimeInterval(lifetime)
-      started.append(start(lookupAt: index, attemptedAt: date))
+      let task = start(lookupAt: index, attemptedAt: date)
+      lookups[index].inFlight = task
+      started.append(task)
     }
     if started.isEmpty {
       return nil
@@ -122,6 +125,11 @@ actor DeviceIPCollector {
   private func start(lookupAt index: Int, attemptedAt date: Date) -> Task<Void, Never> {
     let lookup = lookups[index]
     return Task {
+      defer {
+        if lookups[index].lastAttempt == date {
+          lookups[index].inFlight = nil
+        }
+      }
       do {
         record(try await lookup.fetch())
       } catch {
@@ -135,6 +143,28 @@ actor DeviceIPCollector {
           message: "Couldn't fetch the device's \(lookup.name) address",
           error: error
         )
+      }
+    }
+  }
+
+  /// Waits for the lookups in flight to finish, for at most `timeout` seconds.
+  /// The lookups carry on after a timeout.
+  func waitForLookups(timeout: TimeInterval) async {
+    let tasks = lookups.compactMap { $0.inFlight }
+    if tasks.isEmpty {
+      return
+    }
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      let resumer = ResumeOnce(continuation)
+      Task {
+        for task in tasks {
+          await task.value
+        }
+        resumer.resume()
+      }
+      Task {
+        try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+        resumer.resume()
       }
     }
   }
@@ -276,5 +306,23 @@ actor DeviceIPCollector {
       throw URLError(.cannotParseResponse)
     }
     return device.compactMapValues { $0 as? String }
+  }
+}
+
+/// Resumes a continuation the first time it's asked to and ignores the rest.
+private final class ResumeOnce: @unchecked Sendable {
+  private let lock = NSLock()
+  private var continuation: CheckedContinuation<Void, Never>?
+
+  init(_ continuation: CheckedContinuation<Void, Never>) {
+    self.continuation = continuation
+  }
+
+  func resume() {
+    lock.lock()
+    let continuation = self.continuation
+    self.continuation = nil
+    lock.unlock()
+    continuation?.resume()
   }
 }

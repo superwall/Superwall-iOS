@@ -40,6 +40,12 @@ struct MMPMatchRequest: Encodable {
   let bundleId: String
   let clientTimestamp: String
   let metadata: [String: String]
+  /// The device's public addresses, as seen by the enrichment lookups. The
+  /// match request itself only arrives over one of them.
+  let ipV4: String?
+  let ipV4ObservedAt: String?
+  let ipV6: String?
+  let ipV6ObservedAt: String?
 }
 
 struct MMPMatchResponse: Decodable {
