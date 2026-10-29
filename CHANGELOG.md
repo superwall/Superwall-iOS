@@ -11,11 +11,17 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `StoreProduct.customTransactionId`, the transaction ID the SDK reports for a custom product's purchase. Pass it to your checkout and have your server send it back as `custom_transaction_id` with the purchase's events, and Superwall attributes that revenue, renewals included, to the paywall, campaign and experiment that sold it.
 - Paywalls can now sell a custom store's products through the checkout endpoint set up for it on the dashboard, without calling your `PurchaseController`.
 - Apps without web paywalls now also refresh the user's entitlements from Superwall on foreground, at most every 15 minutes, as well as on launch. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
+- Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
 
 ### Fixes
 
 - Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
+
+## 4.18.3
+
+### Fixes
+
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
 - Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
 

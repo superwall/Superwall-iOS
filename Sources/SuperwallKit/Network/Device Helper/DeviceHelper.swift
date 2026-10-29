@@ -1093,6 +1093,29 @@ class DeviceHelper {
     }
   }
 
+  /// The device's IPv4 and IPv6 addresses for the MMP install match. Waits
+  /// up to `timeout` seconds for lookups that are due or already running, so
+  /// a match sent at first launch doesn't go out before they finish.
+  func ipAttributesForMMPMatch(timeout: TimeInterval = 1.5) async -> [String: String] {
+    guard collectsIPsForMMP() else {
+      return [:]
+    }
+    await ipCollector.refreshIfNeeded()
+    await ipCollector.waitForLookups(timeout: timeout)
+    // The app can turn tracking off while the lookups run.
+    guard collectsIPsForMMP() else {
+      return [:]
+    }
+    return await ipCollector.attributes()
+  }
+
+  private func collectsIPsForMMP() -> Bool {
+    if case .all = ipCollection(for: factory.makeConfigState().value.getConfig()) {
+      return true
+    }
+    return false
+  }
+
   /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
   @discardableResult
   func startIPCollectionIfEnabled() -> Task<Void, Never>? {
