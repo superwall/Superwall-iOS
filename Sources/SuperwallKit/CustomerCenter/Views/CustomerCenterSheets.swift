@@ -5,7 +5,9 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if !os(macOS)
 import SafariServices
+#endif
 import StoreKit
 import SwiftUI
 
@@ -200,16 +202,11 @@ struct CustomerCenterSheetsModifier: ViewModifier {
     let parameters = StoreKitSheetParameters(for: viewModel.sheet)
     content
       .modifier(ManageSubscriptionsSheet(isPresented: isManagePresented, groupId: parameters.manageGroupId))
-      .refundRequestSheet(for: parameters.refundTransactionId, isPresented: refundBinding) { result in
-        let status: CustomerCenterRefundStatus
-        switch result {
-        case .success(.success): status = .success
-        case .success(.userCancelled): status = .userCancelled
-        case .success: status = .error
-        case .failure: status = .error
+      .modifier(
+        RefundRequestSheet(transactionId: parameters.refundTransactionId, isPresented: refundBinding) { status in
+          Task { await viewModel.refundRequestDidFinish(status: status) }
         }
-        Task { await viewModel.refundRequestDidFinish(status: status) }
-      }
+      )
       // Records what the StoreKit sheets above were just rendered with. The write lands after that
       // render, so the presentation it lets through comes in a later update than the one StoreKit
       // took its parameter from. `onChange` would land at the same point; a task is used because
@@ -226,7 +223,12 @@ struct CustomerCenterSheetsModifier: ViewModifier {
         case let .changePlan(groupId, productIds):
           ChangePlanSheet(groupId: groupId, productIds: productIds)
         case .safari(let url):
+          #if os(macOS)
+          // Never set on macOS, where links open in the user's browser instead.
+          Link(url.absoluteString, destination: url).padding()
+          #else
           SafariView(url: url).ignoresSafeArea()
+          #endif
         case .noMailApp(let email):
           Text(strings.string("customer_center_no_mail_app", email)).padding()
         case .webManageUnavailable:
@@ -235,6 +237,40 @@ struct CustomerCenterSheetsModifier: ViewModifier {
           EmptyView()
         }
       }
+  }
+}
+
+/// StoreKit's refund sheet, which macOS only has from 14. The path resolver doesn't offer a refund
+/// where it's missing, so this never has to present there.
+private struct RefundRequestSheet: ViewModifier {
+  let transactionId: UInt64
+  let isPresented: Binding<Bool>
+  let onFinish: (CustomerCenterRefundStatus) -> Void
+
+  func body(content: Content) -> some View {
+    #if os(macOS)
+    if #available(macOS 14.0, *) {
+      sheet(on: content)
+    } else {
+      content
+    }
+    #else
+    sheet(on: content)
+    #endif
+  }
+
+  @available(macOS 14.0, *)
+  private func sheet(on content: Content) -> some View {
+    content.refundRequestSheet(for: transactionId, isPresented: isPresented) { result in
+      let status: CustomerCenterRefundStatus
+      switch result {
+      case .success(.success): status = .success
+      case .success(.userCancelled): status = .userCancelled
+      case .success: status = .error
+      case .failure: status = .error
+      }
+      onFinish(status)
+    }
   }
 }
 
@@ -254,18 +290,24 @@ struct ManageSubscriptionsSheet: ViewModifier {
   var groupSheetIsPresented: Binding<Bool> { isPresented.only(when: !groupId.isEmpty) }
 
   func body(content: Content) -> some View {
+    #if os(macOS)
+    // StoreKit's manage sheet is iOS-only. On macOS the view model opens the App
+    // Store's subscriptions page instead, so this is never asked to present.
+    content
+    #else
     // Nothing here may branch on `groupId`. It is derived from `viewModel.sheet` and changes as the
     // sheet is about to present, and swapping which modifier is applied then tears down the one
     // that was about to present, so the sheet never appears. Both variants are applied instead,
     // and only one can be presented. `#available` is constant for the process, so branching on it
     // is safe.
-    if #available(iOS 17.0, *) {
+    if #available(iOS 17.0, macOS 14.0, *) {
       content
         .manageSubscriptionsSheet(isPresented: plainSheetIsPresented)
         .manageSubscriptionsSheet(isPresented: groupSheetIsPresented, subscriptionGroupID: groupId)
     } else {
       content.manageSubscriptionsSheet(isPresented: isPresented)
     }
+    #endif
   }
 }
 
@@ -286,7 +328,7 @@ private struct ChangePlanSheet: View {
   let groupId: String?
   let productIds: [String]?
   var body: some View {
-    if #available(iOS 17.0, *) {
+    if #available(iOS 17.0, macOS 14.0, *) {
       if let productIds, productIds.count >= 2 {
         SubscriptionStoreView(productIDs: productIds)
       } else if let groupId {
@@ -300,8 +342,10 @@ private struct ChangePlanSheet: View {
   }
 }
 
+#if !os(macOS)
 struct SafariView: UIViewControllerRepresentable {
   let url: URL
   func makeUIViewController(context: Context) -> SFSafariViewController { SFSafariViewController(url: url) }
   func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
 }
+#endif

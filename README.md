@@ -95,3 +95,7 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 ## Contributing
 
 Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
+
+### Native macOS
+
+SuperwallKit supports native AppKit and SwiftUI Mac apps on macOS 12+. See the [integration guide](Sources/SuperwallKit/Documentation.docc/macOS.md) and [Mac example](Examples/macOS).

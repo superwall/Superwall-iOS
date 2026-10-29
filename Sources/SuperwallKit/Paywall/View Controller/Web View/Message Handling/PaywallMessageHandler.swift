@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length type_body_length file_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import WebKit
 
 protocol PaywallMessageHandlerDelegate: AnyObject {
@@ -704,14 +708,29 @@ final class PaywallMessageHandler: WebEventDelegate {
     if Superwall.shared.options.isGameControllerEnabled {
       return
     }
-    #if !os(visionOS)
+    #if os(macOS)
+      NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+    #elseif !os(visionOS)
       UIImpactFeedbackGenerator().impactOccurred(intensity: 0.7)
     #endif
   }
 
   /// Triggers haptic feedback based on the type specified from the paywall editor.
   private func triggerHapticFeedback(_ hapticType: String) {
-    #if !os(visionOS)
+    #if os(macOS)
+      // Only Force Touch trackpads have haptics, and they have two kinds of
+      // feedback that fit: a tap for selection changes, and a bump for the rest.
+      let pattern: NSHapticFeedbackManager.FeedbackPattern
+      switch hapticType {
+      case "selection":
+        pattern = .alignment
+      case "light", "medium", "heavy", "success", "warning", "error":
+        pattern = .generic
+      default:
+        return
+      }
+      NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .now)
+    #elseif !os(visionOS)
       switch hapticType {
       case "light":
         let generator = UIImpactFeedbackGenerator(style: .light)

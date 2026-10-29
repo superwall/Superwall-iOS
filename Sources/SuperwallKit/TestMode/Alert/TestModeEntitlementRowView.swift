@@ -5,7 +5,11 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Represents the selected state for an entitlement, including "Inactive" option.
 enum EntitlementStateOption: CaseIterable {
@@ -96,6 +100,7 @@ struct EntitlementSelection {
   var offerType: LatestSubscription.OfferType?
 }
 
+#if !os(macOS)
 /// A row view for selecting entitlement state and offer type.
 final class EntitlementRowView: UIView {
   private let entitlementId: String
@@ -326,3 +331,4 @@ final class EntitlementRowView: UIView {
     onSelectionChanged?(entitlementId, selection)
   }
 }
+#endif

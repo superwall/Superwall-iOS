@@ -20,7 +20,7 @@ enum CountryCode {
     }
     let locale = Locale(identifier: "und_\(code.uppercased())")
     let region: String?
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       region = locale.region?.identifier
     } else {
       region = locale.regionCode

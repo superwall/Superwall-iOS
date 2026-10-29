@@ -26,7 +26,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -74,7 +74,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -122,7 +122,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -171,7 +171,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -219,7 +219,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -267,7 +267,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -321,7 +321,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -378,7 +378,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -431,7 +431,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -490,7 +490,7 @@ struct SurveyManagerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer

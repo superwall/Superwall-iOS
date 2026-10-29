@@ -5,7 +5,11 @@
 //
 // swiftlint:disable type_body_length file_length function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Foundation
 import SystemConfiguration
 #if canImport(CoreTelephony)
@@ -65,13 +69,28 @@ class DeviceHelper {
     )
   }()
 
+  /// Whether this is an iPhone or iPad app running on a Mac. Unlike `isMac`,
+  /// it's `false` for native macOS apps.
+  let isiOSAppOnMac = ProcessInfo.processInfo.isiOSAppOnMac
+
+  #if os(macOS)
+  let isMac = true
+
+  let model: String = MacDeviceInfo.model
+  #else
   let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
     UIDevice.modelName
   }()
+  #endif
 
+  #if os(macOS)
+  /// A native Mac app never runs in a simulator.
+  var simulatorModel: String?
+  #else
   var simulatorModel = UIDevice.simulatorModelName
+  #endif
 
   private let vendorIdLock = NSLock()
   private var cachedVendorId = ""
@@ -97,12 +116,16 @@ class DeviceHelper {
     if !cachedVendorId.isEmpty {
       return cachedVendorId
     }
+    #if os(macOS)
+    cachedVendorId = MacDeviceInfo.vendorId()
+    #else
     cachedVendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    #endif
     return cachedVendorId
   }
 
   var languageCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.languageCode ?? ""
@@ -113,7 +136,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return languageCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale(identifier: preferredIdentifier).language.languageCode?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).languageCode ?? ""
@@ -121,7 +144,7 @@ class DeviceHelper {
   }
 
   private var regionCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale.autoupdatingCurrent.language.region?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.regionCode ?? ""
@@ -132,7 +155,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return regionCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale(identifier: preferredIdentifier).language.region?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).regionCode ?? ""
@@ -222,11 +245,18 @@ class DeviceHelper {
   /// `UIScreen.main` freely, and waiting there would leave placeholder values
   /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
   /// disambiguates.
+  ///
+  /// None of this applies to AppKit, whose screen and appearance can be read at
+  /// any point, so on macOS it's always safe.
   static var isUIKitReadSafe: Bool {
+    #if os(macOS)
+    return true
+    #else
     return isUIKitReadSafe(
-      hasApplication: UIApplication.sharedApplication != nil,
+      hasApplication: PlatformApplication.sharedApplication != nil,
       bundleURL: Bundle.main.bundleURL
     )
+    #endif
   }
 
   /// The decision above, split from the globals it reads.
@@ -259,6 +289,11 @@ class DeviceHelper {
   ) -> ScreenMetrics? {
     #if os(visionOS)
     return .placeholder
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.screenMetrics()
     #else
     let read = { () -> ScreenMetrics? in
       guard isUIKitReadSafe() else {
@@ -266,7 +301,7 @@ class DeviceHelper {
       }
       // Prefer the connected window scene's screen; fall back to the
       // deprecated `UIScreen.main` only when no scene is attached yet.
-      let screen = UIApplication.sharedApplication?
+      let screen = PlatformApplication.sharedApplication?
         .connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .first?
@@ -292,6 +327,10 @@ class DeviceHelper {
     }
 
     let isReachable = flags.contains(.reachable)
+    #if os(macOS)
+    // A Mac has no cellular radio, so any connection reports as Wi-Fi.
+    return isReachable ? "Wifi" : "No Internet"
+    #else
     let isWWAN = flags.contains(.isWWAN)
 
     if isReachable {
@@ -303,6 +342,7 @@ class DeviceHelper {
     } else {
       return "No Internet"
     }
+    #endif
   }
 
   var interfaceStyleOverride: InterfaceStyle?
@@ -363,7 +403,9 @@ class DeviceHelper {
   /// multi-window host can keep the scene alive in the background while another
   /// becomes active — where trait updates are deferred, so flips the user can see
   /// never fire it. Both show up as this no longer matching the active scene.
+  #if !os(macOS)
   private weak var observedTraitScene: UIWindowScene?
+  #endif
 
   /// The current traits, served from the cache on every version.
   ///
@@ -436,7 +478,7 @@ class DeviceHelper {
   /// observers cover this instead, rather than injecting a view into the host's
   /// window to reach `traitCollectionDidChange`.
   private func registerForTraitChanges() {
-    #if !os(visionOS)
+    #if !os(visionOS) && !os(macOS)
     Task { @MainActor [weak self] in
       if #available(iOS 17.0, *) {
         self?.performTraitChangeRegistration()
@@ -445,11 +487,11 @@ class DeviceHelper {
     #endif
   }
 
-  #if !os(visionOS)
+  #if !os(visionOS) && !os(macOS)
   @available(iOS 17.0, *)
   @MainActor
   private func performTraitChangeRegistration() {
-    guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
+    guard let scene = PlatformApplication.sharedApplication?.activeWindowScene else {
       return
     }
     // Already armed against the scene that's currently active.
@@ -501,12 +543,17 @@ class DeviceHelper {
   ) -> UITraits? {
     #if os(visionOS)
     return .unavailable
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.uiTraits()
     #else
     let read = { () -> UITraits? in
       guard isUIKitReadSafe() else {
         return nil
       }
-      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      let category = PlatformApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
       // Scale against `category` explicitly. The implicit `scaledValue(for:)` resolves
       // against `UITraitCollection.current`, which Apple documents as undefined outside
@@ -540,7 +587,34 @@ class DeviceHelper {
   /// likely to exist by then than when `DeviceHelper` was created, and fills the
   /// screen-metrics cache when init ran too early to read the screen.
   private func observeUITraitChanges() {
-    #if !os(visionOS)
+    #if os(macOS)
+    // AppKit posts no notification when the appearance changes, but the app's
+    // effective appearance can be observed directly.
+    let refreshTraits = { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+    }
+    let activation = NotificationCenter.default.addObserver(
+      forName: SystemInfo.applicationDidBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { _ in
+      refreshTraits()
+    }
+    traitObservers = [activation]
+    if let application = PlatformApplication.sharedApplication {
+      let appearance = application.observe(\.effectiveAppearance) { _, _ in
+        DispatchQueue.main.async {
+          refreshTraits()
+        }
+      }
+      traitObservers.append(appearance)
+    }
+    #elseif !os(visionOS)
     let names: [Notification.Name] = [
       UIContentSizeCategory.didChangeNotification,
       UIApplication.didBecomeActiveNotification
@@ -567,6 +641,7 @@ class DeviceHelper {
     #endif
   }
 
+  #if !os(macOS)
   /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
   /// backend audience filters. These tokens are a backend contract and must not change.
   static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
@@ -601,6 +676,7 @@ class DeviceHelper {
     default: return "unspecified"
     }
   }
+  #endif
 
   var platformWrapper: String?
 
@@ -676,6 +752,9 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
+    #if os(macOS)
+    return "mac"
+    #else
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -694,6 +773,7 @@ class DeviceHelper {
     @unknown default:
       return "unspecified"
     }
+    #endif
   }()
 
   private let appInstallDate: Date? = {
@@ -1267,7 +1347,7 @@ class DeviceHelper {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      if #available(iOS 17.0, *) {
+      if #available(iOS 17.0, macOS 14.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
     }

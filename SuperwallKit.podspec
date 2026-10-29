@@ -36,8 +36,11 @@ Pod::Spec.new do |s|
 	s.documentation_url = "https://docs.superwall.com/"
 	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '15.0'
+  s.osx.deployment_target = '12.0'
 	s.requires_arc = true
-  s.dependency 'Superscript', '1.0.15'
+  s.ios.dependency 'Superscript', '1.0.15'
+  # Native macOS requires the platform declaration added after 1.0.15.
+  s.osx.dependency 'Superscript', '~> 1.0.16'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {

@@ -8,7 +8,11 @@
 
 import Combine
 import StoreKit
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 final class TransactionManager {
   private let storeKitManager: StoreKitManager
@@ -171,7 +175,7 @@ final class TransactionManager {
     await coordinator.reset()
   }
 
-  @available(iOS 17.2, visionOS 1.1, *)
+  @available(iOS 17.2, macOS 14.2, visionOS 1.1, *)
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async {
     guard let product = try? await productsManager.products(
       identifiers: [transaction.productID],
@@ -284,7 +288,7 @@ final class TransactionManager {
             closeActionTitle: closeActionTitle,
             // swiftlint:disable:next trailing_closure
             action: {
-              guard let sharedApplication = UIApplication.sharedApplication else {
+              guard let sharedApplication = PlatformApplication.sharedApplication else {
                 return
               }
               sharedApplication.open(restoreUrl)
@@ -1070,7 +1074,7 @@ final class TransactionManager {
         closeActionTitle: resolvedCloseTitle
       )
     case .external:
-      guard let topMostViewController = await UIViewController.topMostViewController else {
+      guard let topMostViewController = await PlatformViewController.topMostViewController else {
         Logger.debug(
           logLevel: .error,
           scope: .transactions,
@@ -1079,6 +1083,14 @@ final class TransactionManager {
         )
         return
       }
+      #if os(macOS)
+      await AlertControllerFactory.present(
+        title: title,
+        message: message,
+        closeActionTitle: resolvedCloseTitle,
+        on: topMostViewController
+      )
+      #else
       let alertController = await AlertControllerFactory.make(
         title: title,
         message: message,
@@ -1086,6 +1098,7 @@ final class TransactionManager {
         sourceView: topMostViewController.view
       )
       await topMostViewController.present(alertController, animated: true)
+      #endif
     }
   }
 
@@ -1100,7 +1113,7 @@ final class TransactionManager {
 
     // Insert the transaction ID into the cache if observing. This prevents racing with
     // the SK2 observer.
-    if #available(iOS 17.2, *),
+    if #available(iOS 17.2, macOS 14.2, *),
       let purchaser = purchaseManager.purchaser as? ProductPurchaserSK2,
       let id = transaction?.sk2Transaction?.id {
       let observer = purchaser.sk2ObserverModePurchaseDetector
@@ -1109,7 +1122,7 @@ final class TransactionManager {
 
     let didStartOffer: Bool
 
-    if #available(iOS 17.2, visionOS 1.1, *),
+    if #available(iOS 17.2, macOS 14.2, visionOS 1.1, *),
       let sk2Transaction = transaction?.sk2Transaction {
       didStartOffer = sk2Transaction.offer != nil
     } else {

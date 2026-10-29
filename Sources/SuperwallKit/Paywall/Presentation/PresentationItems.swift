@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 02/12/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 final class PresentationItems: @unchecked Sendable {
@@ -43,8 +47,16 @@ final class PresentationItems: @unchecked Sendable {
   private var _paywallInfo: PaywallInfo?
 
   /// The window that presents the paywall.
+  ///
+  /// On macOS this is an overlay child window, or a standalone window when
+  /// the app has no window to show the paywall in.
   @MainActor
-  var window: UIWindow?
+  var window: PlatformWindow?
+
+  #if os(macOS)
+  /// Closes the paywall when the window above is closed.
+  let windowDelegate = PresentingWindowDelegate()
+  #endif
 
   private let queue = DispatchQueue(label: "com.superwall.presentationitems")
 
@@ -67,3 +79,21 @@ struct LastPresentationItems {
   /// The feature gating behavior of the previous paywall.
   let featureGatingBehavior: FeatureGatingBehavior
 }
+
+#if os(macOS)
+/// Treats closing the window the SDK made for a paywall as closing the
+/// paywall, so it's tracked as a manual close and can show a survey. The
+/// window itself closes once the paywall has been dismissed.
+final class PresentingWindowDelegate: NSObject, NSWindowDelegate {
+  func windowShouldClose(_ sender: NSWindow) -> Bool {
+    guard let paywallViewController = Superwall.shared.paywallViewController else {
+      return true
+    }
+    paywallViewController.dismiss(
+      result: .declined,
+      closeReason: .manualClose
+    )
+    return false
+  }
+}
+#endif

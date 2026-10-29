@@ -6,8 +6,91 @@
 //
 
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
+#if os(macOS)
+/// Tells a Customer Center screen whether it was covered or removed when it disappeared.
+///
+/// The AppKit counterpart of the UIKit probe below. AppKit marks nothing on a controller being
+/// dismissed or popped, and a navigation stack takes the screens under the top one out of the
+/// window, so leaving the window can't be read as leaving the stack. Only a window that closed
+/// counts as removal here. A popped screen is reported when SwiftUI takes it down instead.
+struct CustomerCenterLifecycleProbe: NSViewControllerRepresentable {
+  /// The screen disappeared but is still in the stack.
+  var onCovered: () -> Void
+  /// The screen disappeared because its window closed.
+  var onRemoved: () -> Void
+  /// SwiftUI took the screen down, reported once its update has finished.
+  var onDismantled: () -> Void
+
+  func makeNSViewController(context: Context) -> CustomerCenterLifecycleProbeController {
+    let controller = CustomerCenterLifecycleProbeController()
+    updateNSViewController(controller, context: context)
+    return controller
+  }
+
+  func updateNSViewController(_ controller: CustomerCenterLifecycleProbeController, context: Context) {
+    controller.onCovered = onCovered
+    controller.onRemoved = onRemoved
+    controller.onDismantled = onDismantled
+  }
+
+  static func dismantleNSViewController(
+    _ controller: CustomerCenterLifecycleProbeController,
+    coordinator: ()
+  ) {
+    // Changing observed state in the middle of SwiftUI's update is undefined behaviour.
+    let onDismantled = controller.onDismantled
+    DispatchQueue.main.async { onDismantled?() }
+  }
+}
+
+final class CustomerCenterLifecycleProbeController: NSViewController {
+  var onCovered: (() -> Void)?
+  var onRemoved: (() -> Void)?
+  var onDismantled: (() -> Void)?
+  /// Where the screen was last shown. A screen taken out of the window has already lost it by the
+  /// time it's told it disappeared.
+  private weak var window: NSWindow?
+
+  override func loadView() {
+    let view = NSView()
+    view.isHidden = true
+    self.view = view
+  }
+
+  override func viewDidAppear() {
+    super.viewDidAppear()
+    window = view.window ?? window
+  }
+
+  override func viewDidDisappear() {
+    super.viewDidDisappear()
+    // A window that's closing is still on its way off screen here, so look on the next turn of
+    // the run loop.
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if self.hasLeftHierarchy {
+        self.onRemoved?()
+      } else {
+        self.onCovered?()
+      }
+    }
+  }
+
+  /// Whether this disappearance is the screen's window closing, rather than the screen being
+  /// covered or its window hidden.
+  var hasLeftHierarchy: Bool {
+    return window?.isClosedRatherThanHidden ?? false
+  }
+}
+#else
 /// Tells a Customer Center screen whether it was covered or removed when it disappeared.
 ///
 /// SwiftUI's `onDisappear` fires for both. A screen the host has covered — by switching tabs,
@@ -100,3 +183,4 @@ final class CustomerCenterLifecycleProbeController: UIViewController {
     return top.presentingViewController == nil && top !== window?.rootViewController
   }
 }
+#endif
