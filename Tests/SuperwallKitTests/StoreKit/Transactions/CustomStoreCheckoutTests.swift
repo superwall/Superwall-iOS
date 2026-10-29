@@ -605,7 +605,7 @@ struct CustomStoreCheckoutTests {
     await coordinator.reset()
   }
 
-  @Test("A complete takes over another purchase in progress, since the buyer paid")
+  @Test("A complete is handled during another purchase, since the buyer paid, and leaves it in progress")
   func complete_duringOtherPurchase_finishesPurchase() async throws {
     let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
@@ -620,6 +620,7 @@ struct CustomStoreCheckoutTests {
       source: .purchaseFunc(appStoreProduct),
       isFreeTrialAvailable: false
     )
+    let otherPurchaseDate = await coordinator.purchaseDate
 
     await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
@@ -634,7 +635,15 @@ struct CustomStoreCheckoutTests {
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
     #expect(await redeemer.redeemCountEventually() == 1)
     #expect(await finishes.waitForResults() == [.purchased(product)])
-    #expect(await coordinator.source == nil)
+    guard case let .purchaseFunc(otherProduct) = await coordinator.source else {
+      Issue.record("Expected the other purchase to stay in progress")
+      return
+    }
+    #expect(otherProduct.productIdentifier == "app_store_product")
+    #expect(await coordinator.product?.productIdentifier == "app_store_product")
+    #expect(await coordinator.isCustomStoreCheckout == false)
+    #expect(await coordinator.purchaseDate == otherPurchaseDate)
+    await coordinator.reset()
   }
 
   @Test("A step waits for a purchase started from the paywall, then finishes the checkout")

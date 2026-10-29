@@ -95,8 +95,8 @@ final class CustomStoreCheckoutHandler {
     }
 
     if ownership == .otherPurchase {
-      // Only a complete gets here, and it takes over: the other purchase's
-      // result may then go untracked.
+      // Only a complete gets here. The buyer paid, so it's handled while the
+      // other purchase is set aside.
       Logger.debug(
         logLevel: .warn,
         scope: .transactions,
@@ -141,6 +141,8 @@ final class CustomStoreCheckoutHandler {
       )
     case let .complete(_, customTransactionId, shouldDismiss):
       product.customTransactionId = customTransactionId
+      let coordinator = factory.makePurchasingCoordinator()
+      let otherPurchase = ownership == .otherPurchase ? await coordinator.setAsidePurchase() : nil
       // The purchase still counts, but a closing paywall isn't dismissed again.
       let source = await resumeCustomStoreCheckout(
         of: product,
@@ -150,6 +152,9 @@ final class CustomStoreCheckoutHandler {
         shouldDismiss: shouldDismiss && isPaywallOpen
       )
       await transactionManager.handle(result: .purchased, state: .purchasing(source))
+      if let otherPurchase {
+        await coordinator.restore(otherPurchase)
+      }
     case .abandon(_, let reason):
       _ = await resumeCustomStoreCheckout(
         of: product,
