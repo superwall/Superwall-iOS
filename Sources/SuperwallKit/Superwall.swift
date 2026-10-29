@@ -1660,7 +1660,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
       await purchaseTask?.value
     case .customStoreCheckout(let checkout):
       await runCustomStoreCheckoutStep {
-        await self.dependencyContainer.transactionManager.handleCustomStoreCheckout(
+        await self.dependencyContainer.customStoreCheckoutHandler.handle(
           checkout,
           paywallViewController: paywallViewController
         )
@@ -1668,13 +1668,13 @@ extension Superwall: PaywallViewControllerEventDelegate {
     case .endCustomStoreCheckout:
       // Most paywalls have no checkout to end, so leave the purchase slot to
       // purchases unless this one does.
-      guard await dependencyContainer.transactionManager.isRunningCustomStoreCheckout(
+      guard await dependencyContainer.customStoreCheckoutHandler.isRunningCheckout(
         of: paywallViewController
       ) else {
         return
       }
       await runCustomStoreCheckoutStep {
-        await self.dependencyContainer.transactionManager.endCustomStoreCheckout(
+        await self.dependencyContainer.customStoreCheckoutHandler.endCheckout(
           of: paywallViewController
         )
       }

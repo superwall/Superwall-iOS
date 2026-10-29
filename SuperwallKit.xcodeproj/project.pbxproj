@@ -449,6 +449,7 @@
 		A9FC64A249BF2242BB526521 /* AppStoreProductTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4711FABAB250221629C47688 /* AppStoreProductTests.swift */; };
 		AA86FF87863EB7A7917969D3 /* PermissionHandling.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7D0B6F781D32B2DCDBE689C /* PermissionHandling.swift */; };
 		AACC7BEE37DDDD7068A1E48C /* TransactionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 646E6799FE4934BF76A06F34 /* TransactionManager.swift */; };
+		AB1F63AB42517FD8D39383E2 /* CustomStoreCheckoutHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B16CF5C193AD04BAB95FF5A /* CustomStoreCheckoutHandler.swift */; };
 		AB2CE21F84FBC43FBD39C30C /* DeviceIPCollector+IPv6.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89BE5D845E32F9EF657D8F25 /* DeviceIPCollector+IPv6.swift */; };
 		AB9B8A4541580644A47F153C /* CustomStoreCheckoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9245A391C144B5507D0F91C9 /* CustomStoreCheckoutTests.swift */; };
 		ABC17AE96AD396607E3CAB17 /* CoreDataStackMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E828EBAB18CCC0B236EF71D /* CoreDataStackMock.swift */; };
@@ -1024,6 +1025,7 @@
 		6A56D712042043783D7CA142 /* ProductPurchaserSK1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductPurchaserSK1.swift; sourceTree = "<group>"; };
 		6A970BB7B4C3063A22F0B252 /* DevServerCandidates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerCandidates.swift; sourceTree = "<group>"; };
 		6B103FA8F9AE387E7DB4B471 /* LocationPermissionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPermissionDelegate.swift; sourceTree = "<group>"; };
+		6B16CF5C193AD04BAB95FF5A /* CustomStoreCheckoutHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomStoreCheckoutHandler.swift; sourceTree = "<group>"; };
 		6B36C6BD72D66F94DE620F16 /* AccountDetailsSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailsSection.swift; sourceTree = "<group>"; };
 		6B7CFAF4B3E32AE628A249C8 /* AttributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttributionTests.swift; sourceTree = "<group>"; };
 		6B928799A028CB182E46CB4B /* CustomerCenterNavigator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerCenterNavigator.swift; sourceTree = "<group>"; };
@@ -1627,6 +1629,7 @@
 			isa = PBXGroup;
 			children = (
 				423DA7BED2F088AC6F8E7038 /* CustomStoreCheckout.swift */,
+				6B16CF5C193AD04BAB95FF5A /* CustomStoreCheckoutHandler.swift */,
 				5A413B6FF46B130D90A428B4 /* ProductPurchaserLogic.swift */,
 				49E522F5BCABB3A95B97549E /* PurchaseError.swift */,
 				73BE8AD685B39ACAB331109C /* PurchaseManager.swift */,
@@ -4089,6 +4092,7 @@
 				44E2AE9B0AED16C48027CD21 /* CustomCallback.swift in Sources */,
 				42B707D898A49DCB2B33837C /* CustomCallbackRegistry.swift in Sources */,
 				97E87A1449FFC7E043A52C30 /* CustomStoreCheckout.swift in Sources */,
+				AB1F63AB42517FD8D39383E2 /* CustomStoreCheckoutHandler.swift in Sources */,
 				8537CA38FFD40CF7C8A6A691 /* CustomStoreProduct.swift in Sources */,
 				D90B2915CA23976F48794449 /* CustomStoreTransaction.swift in Sources */,
 				9E21D97817B1BA97806283B3 /* CustomURLSession.swift in Sources */,

@@ -181,11 +181,11 @@ struct CustomStoreCheckoutTests {
     return StoreProduct(customProduct: apiProduct)
   }
 
-  /// A transaction manager selling `productId` as a custom product.
-  private func makeTransactionManager(
+  /// A checkout handler selling `productId` as a custom product.
+  private func makeCheckoutHandler(
     in dependencyContainer: DependencyContainer? = nil,
     postPurchaseRedeemer: PostPurchaseRedeeming? = nil
-  ) async -> (TransactionManager, StoreProduct) {
+  ) async -> (CustomStoreCheckoutHandler, StoreProduct) {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
     let product = makeCustomStoreProduct()
     await dependencyContainer.storeKitManager.setProduct(product, forIdentifier: productId)
@@ -203,7 +203,12 @@ struct CustomStoreCheckoutTests {
     transactionManager.trackEvent = { event in
       await tracked.record(event)
     }
-    return (transactionManager, product)
+    let checkoutHandler = CustomStoreCheckoutHandler(
+      transactionManager: transactionManager,
+      storeKitManager: dependencyContainer.storeKitManager,
+      factory: dependencyContainer
+    )
+    return (checkoutHandler, product)
   }
 
   private func makePaywall(
@@ -285,11 +290,11 @@ struct CustomStoreCheckoutTests {
 
   @Test("Start tracks transaction_start for the product with the server's transaction id")
   func start_tracksTransactionStart() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
     paywallVc.loadingState = .ready
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
@@ -317,14 +322,14 @@ struct CustomStoreCheckoutTests {
 
   @Test("Complete finishes the purchase like a purchase controller's, with the server's transaction id")
   func complete_finishesPurchase() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -354,10 +359,10 @@ struct CustomStoreCheckoutTests {
 
   @Test("Complete keeps the paywall open when the purchase action doesn't close it")
   func complete_withoutShouldDismiss_keepsPaywallOpen() async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
       paywallViewController: paywallVc
     )
@@ -373,10 +378,10 @@ struct CustomStoreCheckoutTests {
 
   @Test("Complete without a start, e.g. after another purchase replaced it, still finishes the purchase")
   func complete_withoutStart_finishesPurchase() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -397,14 +402,14 @@ struct CustomStoreCheckoutTests {
 
   @Test("Abandon tracks transaction_abandon for the custom product")
   func abandon_tracksTransactionAbandon() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .abandon(productId: productId),
       paywallViewController: paywallVc
     )
@@ -433,14 +438,14 @@ struct CustomStoreCheckoutTests {
     .timeout
   ])
   func abandon_notBuyersChoice_doesNotTriggerPaywall(reason: CustomStoreCheckout.AbandonReason) async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .abandon(productId: productId, reason: reason),
       paywallViewController: paywallVc
     )
@@ -454,16 +459,16 @@ struct CustomStoreCheckoutTests {
 
   @Test("Closing a checkout sheet left open by a timeout isn't a second abandon")
   func timeoutAbandon_sheetLeftOpen_closingItIsNotAnAbandon() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     // The checkout's sheet is open when the paywall gives up on it.
     paywallVc.isSafariVCPresented = true
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .abandon(productId: productId, reason: .timeout),
       paywallViewController: paywallVc
     )
@@ -476,16 +481,16 @@ struct CustomStoreCheckoutTests {
 
   @Test("A buyer's abandon that arrives as the paywall closes doesn't present a paywall")
   func abandon_whilePaywallCloses_doesNotTriggerPaywall() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     // The page sends its abandon, then the close it was tapped for.
     paywallVc.isDismissing = true
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .abandon(productId: productId),
       paywallViewController: paywallVc
     )
@@ -497,14 +502,14 @@ struct CustomStoreCheckoutTests {
 
   @Test("A second start of the checkout in progress is ignored")
   func start_ofCheckoutInProgress_isIgnored() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: "another_id"),
       paywallViewController: paywallVc
     )
@@ -519,10 +524,10 @@ struct CustomStoreCheckoutTests {
 
   @Test("Fail tracks transaction_fail and shows the purchase failure alert")
   func fail_tracksTransactionFailAndAlerts() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .fail(productId: productId, message: "Checkout is unavailable"),
       paywallViewController: paywallVc
     )
@@ -545,16 +550,16 @@ struct CustomStoreCheckoutTests {
 
   @Test("Complete reports the checkout's start as its purchase date")
   func complete_keepsStartAsPurchaseDate() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     let startedAt = try #require(await dependencyContainer.makePurchasingCoordinator().purchaseDate)
     try? await Task.sleep(nanoseconds: 100_000_000)
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
       paywallViewController: paywallVc
     )
@@ -575,7 +580,7 @@ struct CustomStoreCheckoutTests {
     .fail(productId: "pro_monthly", message: "Unavailable")
   ])
   func otherPurchaseInProgress_isLeftAlone(checkout: CustomStoreCheckout) async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
     let appStoreProduct = StoreProduct(
       sk1Product: MockSkProduct(productIdentifier: "app_store_product"),
@@ -589,7 +594,7 @@ struct CustomStoreCheckoutTests {
       isFreeTrialAvailable: false
     )
 
-    await transactionManager.handleCustomStoreCheckout(checkout, paywallViewController: paywallVc)
+    await checkoutHandler.handle(checkout, paywallViewController: paywallVc)
 
     #expect(await tracked.waitForEvents(count: 1).isEmpty)
     #expect(await coordinator.product?.productIdentifier == "app_store_product")
@@ -602,7 +607,7 @@ struct CustomStoreCheckoutTests {
 
   @Test("A complete takes over another purchase in progress, since the buyer paid")
   func complete_duringOtherPurchase_finishesPurchase() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
     let coordinator = dependencyContainer.makePurchasingCoordinator()
     let appStoreProduct = StoreProduct(
@@ -616,7 +621,7 @@ struct CustomStoreCheckoutTests {
       isFreeTrialAvailable: false
     )
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -722,20 +727,20 @@ struct CustomStoreCheckoutTests {
 
   @Test("A checkout ended with its paywall doesn't block a later checkout on another paywall")
   func endedCheckout_doesNotBlockLaterCheckout() async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let (closedPaywall, _) = makePaywall()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: "first"),
       paywallViewController: closedPaywall
     )
-    await transactionManager.endCustomStoreCheckout(of: closedPaywall)
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.endCheckout(of: closedPaywall)
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -753,16 +758,16 @@ struct CustomStoreCheckoutTests {
 
   @Test("Ending a paywall's checkout leaves other paywalls' checkouts and App Store purchases alone")
   func endCheckout_leavesOtherPurchasesAlone() async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
     let (otherPaywall, _) = makePaywall()
     let coordinator = dependencyContainer.makePurchasingCoordinator()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.endCustomStoreCheckout(of: otherPaywall)
+    await checkoutHandler.endCheckout(of: otherPaywall)
     #expect(await coordinator.isCustomStoreCheckout)
     #expect(paywallVc.customStoreCheckoutProductId == productId)
     await coordinator.reset()
@@ -772,7 +777,7 @@ struct CustomStoreCheckoutTests {
       source: .internal("app_store_product", paywallVc, true),
       isFreeTrialAvailable: false
     )
-    await transactionManager.endCustomStoreCheckout(of: paywallVc)
+    await checkoutHandler.endCheckout(of: paywallVc)
     #expect(await coordinator.product?.productIdentifier == "app_store_product")
 
     #expect(await trackedStates() == ["start"])
@@ -784,7 +789,7 @@ struct CustomStoreCheckoutTests {
     arguments: ["another product", "another paywall"], [true, false]
   )
   func newCheckout_replacesStaleCheckout(staleCheckoutOn: String, newCheckoutStarts: Bool) async throws {
-    let (transactionManager, product) = await makeTransactionManager()
+    let (checkoutHandler, product) = await makeCheckoutHandler()
     let otherProductId = "pro_annual"
     await dependencyContainer.storeKitManager.setProduct(
       makeCustomStoreProduct(id: otherProductId),
@@ -795,12 +800,12 @@ struct CustomStoreCheckoutTests {
     let isOtherPaywall = staleCheckoutOn == "another paywall"
 
     // A checkout whose end never arrives, e.g. its sheet was swiped away.
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: isOtherPaywall ? productId : otherProductId, customTransactionId: "stale"),
       paywallViewController: isOtherPaywall ? otherPaywall : paywallVc
     )
     if newCheckoutStarts {
-      await transactionManager.handleCustomStoreCheckout(
+      await checkoutHandler.handle(
         .start(productId: productId, customTransactionId: serverTransactionId),
         paywallViewController: paywallVc
       )
@@ -808,7 +813,7 @@ struct CustomStoreCheckoutTests {
       #expect(otherPaywall.customStoreCheckoutProductId == nil)
     }
     // Or only its completion arrives, e.g. its start was ignored.
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -834,7 +839,7 @@ struct CustomStoreCheckoutTests {
 
   @Test("A fail of another checkout leaves the checkout in progress alone")
   func failOfOtherCheckout_isIgnored() async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let otherProductId = "pro_annual"
     await dependencyContainer.storeKitManager.setProduct(
       makeCustomStoreProduct(id: otherProductId),
@@ -843,11 +848,11 @@ struct CustomStoreCheckoutTests {
     let (paywallVc, _) = makePaywall()
     let coordinator = dependencyContainer.makePurchasingCoordinator()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .fail(productId: otherProductId, message: "Unavailable"),
       paywallViewController: paywallVc
     )
@@ -861,17 +866,17 @@ struct CustomStoreCheckoutTests {
 
   @Test("A checkout that completes after its paywall closed still counts, without a dismissal")
   func completeAfterPaywallClosed_finishesPurchase() async throws {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     paywallVc.isOpen = false
-    await transactionManager.endCustomStoreCheckout(of: paywallVc)
+    await checkoutHandler.endCheckout(of: paywallVc)
     // The buyer paid in the browser anyway.
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -890,15 +895,15 @@ struct CustomStoreCheckoutTests {
 
   @Test("A checkout that completes as its paywall closes isn't dismissed again")
   func completeWhilePaywallCloses_doesNotDismiss() async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     paywallVc.isDismissing = true
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
       paywallViewController: paywallVc
     )
@@ -909,19 +914,19 @@ struct CustomStoreCheckoutTests {
 
   @Test("A fail after the paywall began to close is ignored", arguments: [true, false])
   func failAfterPaywallClosed_isIgnored(hasClosed: Bool) async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     paywallVc.isDismissing = true
     if hasClosed {
       paywallVc.isOpen = false
-      await transactionManager.endCustomStoreCheckout(of: paywallVc)
+      await checkoutHandler.endCheckout(of: paywallVc)
     }
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .fail(productId: productId, message: "Unavailable"),
       paywallViewController: paywallVc
     )
@@ -957,23 +962,23 @@ struct CustomStoreCheckoutTests {
 
   @Test("An abandon after the checkout already ended is ignored", arguments: [true, false])
   func lateAbandon_isIgnored(afterCompletion: Bool) async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
     if afterCompletion {
-      await transactionManager.handleCustomStoreCheckout(
+      await checkoutHandler.handle(
         .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
         paywallViewController: paywallVc
       )
     } else {
       // The paywall closed, then its page reported the abandon too.
-      await transactionManager.endCustomStoreCheckout(of: paywallVc)
+      await checkoutHandler.endCheckout(of: paywallVc)
     }
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .abandon(productId: productId),
       paywallViewController: paywallVc
     )
@@ -1019,10 +1024,10 @@ struct CustomStoreCheckoutTests {
     }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let (redeemer, _) = makeRedeemer(in: dependencyContainer, superwall: superwall)
-    let (transactionManager, _) = await makeTransactionManager(postPurchaseRedeemer: redeemer)
+    let (checkoutHandler, _) = await makeCheckoutHandler(postPurchaseRedeemer: redeemer)
     let (paywallVc, _) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
       paywallViewController: paywallVc
     )
@@ -1043,14 +1048,14 @@ struct CustomStoreCheckoutTests {
     }
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let (redeemer, network) = makeRedeemer(in: dependencyContainer, superwall: superwall)
-    let (transactionManager, _) = await makeTransactionManager(
+    let (checkoutHandler, _) = await makeCheckoutHandler(
       in: dependencyContainer,
       postPurchaseRedeemer: redeemer
     )
     let (paywallVc, _) = makePaywall(in: dependencyContainer)
     let statusBefore = superwall.subscriptionStatus
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
       paywallViewController: paywallVc
     )
@@ -1076,10 +1081,10 @@ struct CustomStoreCheckoutTests {
     .fail(productId: "unknown", message: "Unavailable")
   ])
   func unknownProduct_isIgnored(checkout: CustomStoreCheckout) async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(checkout, paywallViewController: paywallVc)
+    await checkoutHandler.handle(checkout, paywallViewController: paywallVc)
 
     #expect(await tracked.waitForEvents(count: 1).isEmpty)
     #expect(await finishes.waitForResults().isEmpty)
@@ -1090,14 +1095,14 @@ struct CustomStoreCheckoutTests {
 
   @Test("A checkout of an App Store product is ignored")
   func appStoreProduct_isIgnored() async {
-    let (transactionManager, _) = await makeTransactionManager()
+    let (checkoutHandler, _) = await makeCheckoutHandler()
     await dependencyContainer.storeKitManager.setProduct(
       StoreProduct(sk1Product: MockSkProduct(productIdentifier: "app_store_product"), entitlements: [.stub()]),
       forIdentifier: "app_store_product"
     )
     let (paywallVc, finishes) = makePaywall()
 
-    await transactionManager.handleCustomStoreCheckout(
+    await checkoutHandler.handle(
       .complete(productId: "app_store_product", customTransactionId: "txn", shouldDismiss: true),
       paywallViewController: paywallVc
     )
