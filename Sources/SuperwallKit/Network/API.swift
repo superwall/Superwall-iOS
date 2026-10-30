@@ -15,6 +15,7 @@ enum EndpointHost {
   case subscriptionsApi
   case paywallsV2
   case mmp
+  case sdkApi
 }
 
 protocol ApiHostConfig {
@@ -38,6 +39,7 @@ struct Api {
   let subscriptionsApi: SubscriptionsAPI
   let paywallsV2: PaywallsV2
   let mmp: MMP
+  let sdkApi: SdkApi
 
   init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
     base = Base(networkEnvironment: networkEnvironment)
@@ -47,6 +49,7 @@ struct Api {
     subscriptionsApi = SubscriptionsAPI(networkEnvironment: networkEnvironment)
     paywallsV2 = PaywallsV2(networkEnvironment: networkEnvironment)
     mmp = MMP(networkEnvironment: networkEnvironment)
+    sdkApi = SdkApi(networkEnvironment: networkEnvironment)
   }
 
   func getConfig(host: EndpointHost) -> ApiHostConfig {
@@ -65,6 +68,8 @@ struct Api {
       return paywallsV2
     case .mmp:
       return mmp
+    case .sdkApi:
+      return sdkApi
     }
   }
 
@@ -149,6 +154,18 @@ struct Api {
     let networkEnvironment: SuperwallOptions.NetworkEnvironment
     var host: String { return networkEnvironment.mmpHost }
     var path: String { return "/" }
+
+    init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
+      self.networkEnvironment = networkEnvironment
+    }
+  }
+
+  /// The SDK API, which serves the live (non-config) SDK endpoints under the same
+  /// `/api/v1/` paths as the legacy v1 API. See `NetworkEnvironment.sdkApiHost`.
+  struct SdkApi: ApiHostConfig {
+    let networkEnvironment: SuperwallOptions.NetworkEnvironment
+    var host: String { return networkEnvironment.sdkApiHost }
+    var path: String { return "/api/v1/" }
 
     init(networkEnvironment: SuperwallOptions.NetworkEnvironment) {
       self.networkEnvironment = networkEnvironment
