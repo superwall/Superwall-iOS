@@ -523,6 +523,8 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       Task {
         if let url = await paywallArchiveManager.getArchiveURL(forManifest: paywall.manifest) {
           loadWebViewFromArchive(url: url)
+        } else if let url = await paywallArchiveManager.getBundledArchiveURL(for: paywall) {
+          loadWebViewFromArchive(url: url)
         } else {
           // Fallback to old way if couldn't get archive
           await webView.loadURL(from: paywall)
@@ -535,7 +537,11 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
       loadWebViewFromArchive(url: webArchiveURL)
     } else {
       Task {
-        await webView.loadURL(from: paywall)
+        if let url = await paywallArchiveManager?.getBundledArchiveURL(for: paywall) {
+          loadWebViewFromArchive(url: url)
+        } else {
+          await webView.loadURL(from: paywall)
+        }
       }
     }
 

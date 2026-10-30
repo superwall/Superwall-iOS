@@ -36,6 +36,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
+- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network.
 
 ## 4.18.0
 
