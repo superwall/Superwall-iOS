@@ -65,39 +65,67 @@ class CustomURLSession {
     self.factory = factory
   }
 
+  private static let redacted = "<redacted>"
+
   /// Keys whose values are the device's public IP addresses. They're sent,
   /// but never logged, since logs reach the app's logging delegate.
   private static let ipAddressKeys: Set<String> = ["ipV4", "ipV6", "$ipV4", "$ipV6"]
 
-  /// The request body as text for the logs, with IP addresses redacted.
+  /// Events whose `parameters` carry the device's push token as `address`.
+  /// The token is sent, but never logged, for the same reason.
+  private static let pushTokenEventNames: Set<String> = [
+    PrivateSuperwallEvents.NotificationToken.name
+  ]
+  private static let pushTokenKey = "address"
+
+  /// Text found in every body that might carry a value to redact.
+  private static let sensitiveMarkers: [Data] = [Data("ipV".utf8)]
+    + pushTokenEventNames.map { Data($0.utf8) }
+
+  /// The request body as text for the logs, with IP addresses and push
+  /// tokens redacted.
   static func loggableBody(_ body: Data?) -> String {
     guard let body = body else {
       return "none"
     }
-    // Most bodies carry no address, so only those that might are parsed.
+    // Most bodies carry nothing sensitive, so only those that might are parsed.
+    guard sensitiveMarkers.contains(where: { body.range(of: $0) != nil }) else {
+      return String(data: body, encoding: .utf8) ?? "none"
+    }
     guard
-      body.range(of: Data("ipV".utf8)) != nil,
       let json = try? JSONSerialization.jsonObject(with: body),
-      let redacted = try? JSONSerialization.data(
-        withJSONObject: redactingIPAddresses(in: json),
+      let redactedBody = try? JSONSerialization.data(
+        withJSONObject: redactingSensitiveValues(in: json),
         options: [.sortedKeys]
       )
     else {
-      return String(data: body, encoding: .utf8) ?? "none"
+      // A body that might hold a sensitive value but can't be parsed is
+      // never logged raw.
+      return redacted
     }
-    return String(data: redacted, encoding: .utf8) ?? "none"
+    return String(data: redactedBody, encoding: .utf8) ?? "none"
   }
 
-  private static func redactingIPAddresses(in value: Any) -> Any {
+  private static func redactingSensitiveValues(in value: Any) -> Any {
     if let dictionary = value as? [String: Any] {
       var result: [String: Any] = [:]
       for (key, child) in dictionary {
-        result[key] = ipAddressKeys.contains(key) ? "<redacted>" : redactingIPAddresses(in: child)
+        result[key] = ipAddressKeys.contains(key) ? redacted : redactingSensitiveValues(in: child)
+      }
+      // An events body is `{"events": [{"event_name": …, "parameters": {…}}]}`.
+      // Only the token event's `address` is the token, so `address` keys
+      // elsewhere are left alone.
+      if let name = dictionary["event_name"] as? String,
+        pushTokenEventNames.contains(name),
+        var parameters = result["parameters"] as? [String: Any],
+        parameters[pushTokenKey] != nil {
+        parameters[pushTokenKey] = redacted
+        result["parameters"] = parameters
       }
       return result
     }
     if let array = value as? [Any] {
-      return array.map { redactingIPAddresses(in: $0) }
+      return array.map { redactingSensitiveValues(in: $0) }
     }
     return value
   }

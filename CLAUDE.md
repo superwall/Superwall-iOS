@@ -155,3 +155,19 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 `idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### Push notification tokens
+
+`NotificationTokenManager` reports the APNs token and notification permission
+in a `notification_token` event, and opens in `notification_open`. The app passes
+the token in (`setPushToken(_:)`); the SDK never swizzles or registers itself.
+Both are `PrivateSuperwallEvent`s, not `SuperwallEvent`s: they go through the
+normal event queue but never reach the delegate, implicit triggers or the
+on-device placement store, because customers forward delegate events to their
+own analytics. Anything sensitive the SDK sends must be a private event. Their
+params are sent unprefixed and the events encoder leaves dictionary keys alone,
+so the camelCase keys are the wire keys the server reads; don't rename them.
+Nothing is sent until the `user_notifications` flag is on, but the state is
+persisted in app-specific storage (surviving `reset()`) and flushed when the flag
+turns on. The state is re-sent when it or the identity changes, otherwise once a
+day.

@@ -63,7 +63,7 @@ extension Superwall {
         from: event
       )
     }
-    dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
+    saveOnDevice(eventData, from: event)
 
     // Only what actually goes to the server counts as sent. The queue learns of a
     // tracking-behavior change asynchronously, so check the options too.
@@ -91,6 +91,20 @@ extension Superwall {
       parameters: parameters
     )
 		return result
+  }
+
+  /// Stores the placement on-device, where audience filters count it.
+  ///
+  /// Private events only go to Superwall's servers, so what they carry isn't
+  /// kept where audience filters can read it.
+  private func saveOnDevice(
+    _ eventData: PlacementData,
+    from event: Trackable
+  ) {
+    guard !(event is PrivateSuperwallEvent) else {
+      return
+    }
+    dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
   }
 
   /// Attemps to implicitly trigger a paywall for a given analytical placement.

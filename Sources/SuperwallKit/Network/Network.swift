@@ -74,7 +74,7 @@ class Network {
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /events",
-        info: ["payload": events],
+        info: events.loggableSummary,
         error: error
       )
     }
