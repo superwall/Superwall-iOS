@@ -699,12 +699,28 @@ enum InternalSuperwallEvent {
     let source: Source
     let isObserved: Bool
     let storeKitVersion: SuperwallOptions.StoreKitVersion?
-    var store: ProductStore = .appStore
+    /// The store the transaction went through. When `nil`, it's `.custom`
+    /// for a custom product and `.appStore` for any other product.
+    var store: ProductStore?
     var demandScore: Int?
     var demandTier: String?
+    /// Whether the event may present a paywall from a campaign that uses it as a
+    /// trigger. Off for an abandon the SDK concludes rather than the buyer, such
+    /// as a checkout ended by its paywall closing.
+    var canTriggerPaywall = true
+
+    private var resolvedStore: ProductStore {
+      if let store = store {
+        return store
+      }
+      if product?.isCustomProduct == true {
+        return .custom
+      }
+      return .appStore
+    }
 
     var canImplicitlyTriggerPaywall: Bool {
-      if isObserved {
+      if isObserved || !canTriggerPaywall {
         return false
       }
       return superwallEvent.canImplicitlyTriggerPaywall
@@ -731,7 +747,7 @@ enum InternalSuperwallEvent {
       let storefrontCountryCode = storefront?.countryCode ?? ""
       let storefrontId = storefront?.id ?? ""
       var placementParams: [String: Any] = [
-        "store": store.description,
+        "store": resolvedStore.description,
         "source": source.rawValue
       ]
       if let storeKitVersion = storeKitVersion {

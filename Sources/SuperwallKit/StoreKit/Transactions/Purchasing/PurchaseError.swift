@@ -15,6 +15,8 @@ enum PurchaseError: LocalizedError {
   case unverifiedTransaction
   case testModeFailure
   case customProductWithoutPurchaseController
+  /// The paywall couldn't run a custom store checkout. Holds the paywall's reason.
+  case customStoreCheckoutFailed(String)
 
   var errorDescription: String? {
     switch self {
@@ -32,6 +34,8 @@ enum PurchaseError: LocalizedError {
       return "Simulated purchase failure (test mode)."
     case .customProductWithoutPurchaseController:
       return "Unable to purchase this product."
+    case .customStoreCheckoutFailed(let message):
+      return message.isEmpty ? "Unable to purchase this product." : message
     }
   }
 }

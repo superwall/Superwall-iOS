@@ -1582,6 +1582,47 @@ public final class Superwall: NSObject, ObservableObject {
       completion(customerInfo)
     }
   }
+
+  /// Fetches the user's entitlements from Superwall and returns the updated ``CustomerInfo``.
+  ///
+  /// Unlike ``getCustomerInfo()``, which returns the cached value, this asks the server
+  /// for the latest entitlements, even if they were fetched recently. Use it when your
+  /// server has just reported a purchase to Superwall, for example one of a custom
+  /// product sold through your own checkout, and you want the device to reflect it now.
+  ///
+  /// The fetched entitlements update ``customerInfo`` and ``entitlements``. If the fetch
+  /// fails, this returns the current ``customerInfo``. In test mode, nothing is fetched
+  /// and the test mode customer info is returned.
+  ///
+  /// - Note: The SDK already refreshes entitlements after a custom product purchase that
+  /// your ``PurchaseController`` reports as `.purchased`.
+  ///
+  /// - Returns: The updated ``CustomerInfo``.
+  @discardableResult
+  public func refreshCustomerInfo() async -> CustomerInfo {
+    // Await config because it decides whether test mode is on.
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+    if dependencyContainer.testModeManager?.isTestMode != true {
+      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements()
+    }
+    return await getCustomerInfo()
+  }
+
+  /// Fetches the user's entitlements from Superwall and returns the updated ``CustomerInfo``.
+  ///
+  /// Unlike ``getCustomerInfo(completion:)``, which returns the cached value, this asks the
+  /// server for the latest entitlements, even if they were fetched recently. See
+  /// ``refreshCustomerInfo()`` for details.
+  ///
+  /// - Parameter completion: Called with the updated ``CustomerInfo``.
+  public func refreshCustomerInfo(completion: @escaping (CustomerInfo) -> Void) {
+    Task {
+      let customerInfo = await refreshCustomerInfo()
+      completion(customerInfo)
+    }
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate
@@ -1617,6 +1658,26 @@ extension Superwall: PaywallViewControllerEventDelegate {
         purchaseTask = nil
       }
       await purchaseTask?.value
+    case .customStoreCheckout(let checkout):
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.customStoreCheckoutHandler.handle(
+          checkout,
+          paywallViewController: paywallViewController
+        )
+      }
+    case .endCustomStoreCheckout:
+      // Most paywalls have no checkout to end, so leave the purchase slot to
+      // purchases unless this one does.
+      guard await dependencyContainer.customStoreCheckoutHandler.isRunningCheckout(
+        of: paywallViewController
+      ) else {
+        return
+      }
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.customStoreCheckoutHandler.endCheckout(
+          of: paywallViewController
+        )
+      }
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):
@@ -1664,5 +1725,20 @@ extension Superwall: PaywallViewControllerEventDelegate {
         ]
       )
     }
+  }
+
+  /// Runs a custom store checkout step once any purchase in flight has finished,
+  /// so it can't take over that purchase's state, and holds the purchase slot
+  /// while it runs.
+  @MainActor
+  private func runCustomStoreCheckoutStep(_ step: @escaping () async -> Void) async {
+    while let purchaseInFlight = purchaseTask {
+      await purchaseInFlight.value
+    }
+    purchaseTask = Task {
+      await step()
+      purchaseTask = nil
+    }
+    await purchaseTask?.value
   }
 }

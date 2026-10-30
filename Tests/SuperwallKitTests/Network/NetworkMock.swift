@@ -18,6 +18,12 @@ final class NetworkMock: Network {
   var configReturnValue: Result<Config, Error> = .success(.stub())
   var getWebEntitlementsResponse: RedeemResponse?
   var getEntitlementsResponse: EntitlementsResponse?
+  /// Returned in order, one per call, before falling back to `getEntitlementsResponse`.
+  var getEntitlementsResponses: [EntitlementsResponse] = []
+  var getEntitlementsCallCount = 0
+  var getEntitlementsDelayNs: UInt64 = 0
+  /// Used in order, one per call, before falling back to `getEntitlementsDelayNs`.
+  var getEntitlementsDelaysNs: [UInt64] = []
   var redeemError: Error?
   var redeemRequest: RedeemRequest?
   var pollRedemptionResultRequest: PollRedemptionResultRequest?
@@ -90,6 +96,16 @@ final class NetworkMock: Network {
     appUserId: String?,
     deviceId: String
   ) async throws -> EntitlementsResponse {
+    getEntitlementsCallCount += 1
+    // Picked when the call starts, so a slow call keeps its own response.
+    let queuedResponse = getEntitlementsResponses.isEmpty ? nil : getEntitlementsResponses.removeFirst()
+    let delay = getEntitlementsDelaysNs.isEmpty ? getEntitlementsDelayNs : getEntitlementsDelaysNs.removeFirst()
+    if delay > 0 {
+      try? await Task.sleep(nanoseconds: delay)
+    }
+    if let queuedResponse = queuedResponse {
+      return queuedResponse
+    }
     if let getEntitlementsResponse = getEntitlementsResponse {
       return getEntitlementsResponse
     } else if let redeemError = redeemError {

@@ -16,6 +16,8 @@ actor PurchasingCoordinator {
   var transactions: [String: StoreTransaction] = [:]
   var isFreeTrialAvailable = false
   var product: StoreProduct?
+  /// Whether the purchase is a custom store checkout that the paywall runs itself.
+  var isCustomStoreCheckout = false
   private var completion: ((PurchaseResult) -> Void)?
   private let factory: StoreTransactionFactory
 
@@ -45,12 +47,56 @@ actor PurchasingCoordinator {
   func beginPurchase(
     of product: StoreProduct,
     source: PurchaseSource,
-    isFreeTrialAvailable: Bool
+    isFreeTrialAvailable: Bool,
+    isCustomStoreCheckout: Bool = false
   ) {
     self.purchaseDate = Date()
     self.source = source
     self.isFreeTrialAvailable = isFreeTrialAvailable
     self.product = product
+    self.isCustomStoreCheckout = isCustomStoreCheckout
+  }
+
+  /// A purchase in progress, set aside while another is handled.
+  struct Purchase {
+    let purchaseDate: Date?
+    let source: PurchaseSource?
+    let isFreeTrialAvailable: Bool
+    let product: StoreProduct?
+    let isCustomStoreCheckout: Bool
+    let completion: ((PurchaseResult) -> Void)?
+  }
+
+  /// Takes the purchase in progress out of the coordinator, leaving it free.
+  func setAsidePurchase() -> Purchase {
+    let purchase = Purchase(
+      purchaseDate: purchaseDate,
+      source: source,
+      isFreeTrialAvailable: isFreeTrialAvailable,
+      product: product,
+      isCustomStoreCheckout: isCustomStoreCheckout,
+      completion: completion
+    )
+    reset()
+    return purchase
+  }
+
+  /// Puts back a purchase that was set aside, unless another purchase began meanwhile.
+  func restore(_ purchase: Purchase) {
+    if source != nil {
+      return
+    }
+    purchaseDate = purchase.purchaseDate
+    source = purchase.source
+    isFreeTrialAvailable = purchase.isFreeTrialAvailable
+    product = purchase.product
+    isCustomStoreCheckout = purchase.isCustomStoreCheckout
+    completion = purchase.completion
+  }
+
+  /// Replaces the source of the purchase in progress, keeping when it started.
+  func setSource(_ source: PurchaseSource) {
+    self.source = source
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -202,5 +248,6 @@ actor PurchasingCoordinator {
     product = nil
     source = nil
     isFreeTrialAvailable = false
+    isCustomStoreCheckout = false
   }
 }
