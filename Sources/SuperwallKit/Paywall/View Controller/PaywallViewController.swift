@@ -205,7 +205,13 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   /// A loading spinner that appears when making a purchase.
-  private var loadingViewController: LoadingViewController?
+  private(set) var loadingViewController: LoadingViewController?
+
+  /// The view to show over the paywall while it's loading a purchase. Read on each use so a
+  /// change to ``PaywallOptions/transactionBackgroundView`` applies right away.
+  var transactionBackgroundView: () -> PaywallOptions.TransactionBackgroundView = {
+    Superwall.shared.options.paywalls.transactionBackgroundView
+  }
 
   /// A shimmer view that appears when loading the webpage.
   private var shimmerView: ShimmerView?
@@ -708,7 +714,7 @@ public class PaywallViewController: UIViewController, LoadingDelegate {
   }
 
   private func addLoadingView() {
-    guard Superwall.shared.options.paywalls.transactionBackgroundView == .spinner else {
+    guard transactionBackgroundView() == .spinner else {
       return
     }
 

@@ -130,7 +130,7 @@ public final class PaywallOptions: NSObject, Encodable {
     /// This shows your paywall background color overlayed with an activity indicator.
     case spinner
 
-    /// Removes the background view during a transaction.
+    /// Hides the SDK's loading spinner, so the paywall can show its own loading state.
     case none
 
     public var description: String {
@@ -151,11 +151,17 @@ public final class PaywallOptions: NSObject, Encodable {
       try container.encode(description, forKey: .transactionBackgroundView)
     }
   }
-  /// The view that appears behind Apple's payment sheet during a transaction. Defaults to `.spinner`.
+  /// The view that appears over the paywall during a purchase or restore, and wherever else the
+  /// SDK shows its loading spinner over the paywall. Defaults to `.spinner`.
   ///
-  /// Set this to `.none` to remove the background view during a transaction.
+  /// Set this to `.none` to hide the SDK's loading spinner, for example when the paywall shows its
+  /// own custom loading state on purchase and hides it when the purchase ends or is abandoned.
+  /// Nothing else changes: the transaction flow, events and messages to the paywall run as before.
+  /// This also hides the spinner shown by ``PaywallViewController/togglePaywallSpinner(isHidden:)``
+  /// and during web checkout.
   ///
-  /// **Note:** This feature is still in development and could change.
+  /// **Note:** The spinner also blocks taps on the paywall. Without it the paywall stays
+  /// interactive, so your custom loading state should block input itself.
   public var transactionBackgroundView: TransactionBackgroundView = .spinner
 
   private enum CodingKeys: String, CodingKey {
