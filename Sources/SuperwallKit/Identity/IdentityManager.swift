@@ -269,7 +269,9 @@ class IdentityManager {
         }
 
         self.queue.async {
+          // Skip if the user changed while the config loaded.
           if enableUserIdSeed,
+            self._appUserId == userId,
             let seed = userId.sha256MappedToRange() {
             self._seed = seed
           }

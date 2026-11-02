@@ -58,6 +58,30 @@ struct UserIdSeedTests {
   }
 
   @Test
+  func resetBeforeConfigLoadsKeepsTheNewSeed() async throws {
+    let cache = CacheMock()
+    cache.write(42, forType: Seed.self)
+    let dependencies = DependencyContainer(options: SuperwallOptions(), cache: cache)
+    let identityManager = try #require(dependencies.identityManager)
+
+    identityManager.identify(userId: "supabase-user-123", options: nil)
+    identityManager.reset(duringIdentify: false)
+    // The identity queue is serial, so this read runs after the reset.
+    let seedAfterReset = identityManager.seed
+
+    var config = Config.stub()
+    config.triggers = []
+    config.featureFlags.enableUserIdSeed = true
+    dependencies.configManager.configState.send(.retrieved(config))
+    _ = try await identityManager.hasIdentity.first().throwableAsync()
+
+    #expect(identityManager.appUserId == nil)
+    #expect(identityManager.seed == seedAfterReset)
+    #expect(dependencies.storage.get(Seed.self) == seedAfterReset)
+    withExtendedLifetime(dependencies) {}
+  }
+
+  @Test
   func identifyingSameUserDoesNotReassignExistingSeed() {
     let options = SuperwallOptions()
     options.enableUserIdSeed = true
