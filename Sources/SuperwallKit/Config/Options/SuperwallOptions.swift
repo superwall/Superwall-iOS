@@ -428,25 +428,15 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Enables experimental device variables. These are subject to change. Defaults to `false`.
   public var enableExperimentalDeviceVariables = false
 
-  /// Controls whether `identify(userId:)` derives `user.seed` from the supplied user ID.
+  /// Derives `user.seed` from the ID passed to `identify(userId:)`. Defaults to `false`.
   ///
-  /// Defaults to `nil`, which follows the remote `enable_userid_seed` flag. Set this to
-  /// `true` to opt in without a remote flag, or `false` to disable ID-derived seeds even
-  /// when the remote flag is enabled. Configure this before initializing the SDK.
+  /// When `false`, the seed is only derived from the user ID if Superwall has turned this on
+  /// for your app. Set this before configuring the SDK.
   ///
-  /// ID-derived seeds are deterministic numbers from 0 to 99. Anonymous users keep their
-  /// randomly generated seed until identified. This does not preserve the anonymous seed
-  /// or recalculate the seed when identifying an already identified user with the same ID.
-  @nonobjc public var enableUserIdSeed: Bool?
-
-  /// Objective-C bridge for ``enableUserIdSeed``. Use `nil` to follow the remote flag,
-  /// `@YES` to enable ID-derived seeds, or `@NO` to disable them.
-  @available(swift, obsoleted: 1.0)
-  @objc(enableUserIdSeed)
-  public var enableUserIdSeedObjC: NSNumber? {
-    get { enableUserIdSeed.map { NSNumber(value: $0) } }
-    set { enableUserIdSeed = newValue?.boolValue }
-  }
+  /// ID-derived seeds are numbers from 0 to 99, and the same ID always gets the same seed.
+  /// Anonymous users keep their random seed until identified. Identifying the user who is
+  /// already identified doesn't change their seed.
+  public var enableUserIdSeed = false
 
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
@@ -620,7 +610,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
-    try container.encodeIfPresent(enableUserIdSeed, forKey: .enableUserIdSeed)
+    try container.encode(enableUserIdSeed, forKey: .enableUserIdSeed)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
     try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
     try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)

@@ -258,10 +258,8 @@ class IdentityManager {
       // Regenerate seed based on userId.
       self.group.enter()
       Task {
-        let enableUserIdSeed: Bool
-        if let override = self.configManager.options.enableUserIdSeed {
-          enableUserIdSeed = override
-        } else {
+        var enableUserIdSeed = self.configManager.options.enableUserIdSeed
+        if !enableUserIdSeed {
           let config = try? await self.configManager.configState
             .compactMap { $0.getConfig() }
             .throwableAsync()

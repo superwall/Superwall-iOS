@@ -6,20 +6,18 @@ import Testing
 @Suite(.serialized)
 struct UserIdSeedTests {
   @Test(arguments: [
-    (nil as Bool?, false, 42),
-    (nil, true, 71),
-    (true, false, 71),
-    (true, true, 71),
     (false, false, 42),
-    (false, true, 42)
+    (false, true, 71),
+    (true, false, 71),
+    (true, true, 71)
   ])
-  func identifyResolvesLocalOverrideBeforeRemoteFlag(
-    override: Bool?,
+  func identifyUsesTheOptionOrTheRemoteFlag(
+    enabled: Bool,
     remoteEnabled: Bool,
     expectedSeed: Int
   ) async throws {
     let options = SuperwallOptions()
-    options.enableUserIdSeed = override
+    options.enableUserIdSeed = enabled
     let cache = CacheMock()
     cache.write(42, forType: Seed.self)
     let dependencies = DependencyContainer(options: options, cache: cache)
@@ -41,7 +39,7 @@ struct UserIdSeedTests {
   }
 
   @Test(arguments: [true, false])
-  func explicitOverrideWorksWhenRemoteConfigFails(_ enabled: Bool) async throws {
+  func optionDoesNotNeedRemoteConfig(_ enabled: Bool) async throws {
     let options = SuperwallOptions()
     options.enableUserIdSeed = enabled
     let cache = CacheMock()
@@ -98,27 +96,19 @@ struct UserIdSeedTests {
   }
 
   @Test
-  func optionDefaultsToRemoteAndEncodesExplicitOverrides() {
+  func optionDefaultsToFalseAndIsEncoded() {
     let options = SuperwallOptions()
-    #expect(options.enableUserIdSeed == nil)
-    #expect(options.toDictionary()["enableUserIdSeed"] == nil)
+    #expect(options.enableUserIdSeed == false)
+    #expect(options.toDictionary()["enableUserIdSeed"] as? Bool == false)
 
-    for enabled in [true, false] {
-      options.enableUserIdSeed = enabled
-      #expect(options.toDictionary()["enableUserIdSeed"] as? Bool == enabled)
-    }
+    options.enableUserIdSeed = true
+    #expect(options.toDictionary()["enableUserIdSeed"] as? Bool == true)
   }
 
   @Test
-  func objectiveCBridgePreservesAllThreeStates() {
+  func optionIsAvailableToObjectiveC() {
     let options = SuperwallOptions()
-    for enabled in [true, false] {
-      options.setValue(NSNumber(value: enabled), forKey: "enableUserIdSeed")
-      #expect(options.enableUserIdSeed == enabled)
-      #expect((options.value(forKey: "enableUserIdSeed") as? NSNumber)?.boolValue == enabled)
-    }
-    options.setValue(nil, forKey: "enableUserIdSeed")
-    #expect(options.enableUserIdSeed == nil)
-    #expect(options.value(forKey: "enableUserIdSeed") == nil)
+    options.setValue(true, forKey: "enableUserIdSeed")
+    #expect(options.enableUserIdSeed)
   }
 }

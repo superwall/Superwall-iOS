@@ -158,7 +158,6 @@ the ATT status: `identifierForAdvertisers` already filters the all-zero id.
 
 ### User seeds
 
-`SuperwallOptions.enableUserIdSeed` is a tri-state override: `nil` follows the remote
-`enable_userid_seed` toggle; explicit `true` or `false` wins. Preserve the existing
-SHA256 bucket algorithm and the same-user identify early return. Anonymous/reset seeds
-remain random. The Swift `Bool?` has an Objective-C `NSNumber?` bridge with the same selector.
+`SuperwallOptions.enableUserIdSeed` turns on user ID seeds locally; when it's `false` the remote
+`enable_userid_seed` flag still applies. Preserve the existing SHA256 bucket algorithm and the
+same-user identify early return. Anonymous/reset seeds remain random.
