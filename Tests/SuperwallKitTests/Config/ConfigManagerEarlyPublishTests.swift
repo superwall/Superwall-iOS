@@ -745,6 +745,33 @@ struct ConfigManagerEarlyPublishTests {
     await settle()
   }
 
+  @Test("StoreKit stops answering: config is published once the bound passes")
+  func publishesAfterBoundWhenStoreKitHangs() async {
+    let harness = makeHarness(
+      isSubscribed: false,
+      savedCustomerInfo: nil,
+      loadDelay: 3
+    )
+    harness.configManager.purchasesLoadTimeout = 0.5
+
+    let fetch = Task { await harness.configManager.fetchConfiguration() }
+    let waited = await waitForConfig(harness.configManager, timeout: 2.9)
+
+    #expect(harness.configManager.config != nil)
+    #expect(waited < 3, "config took \(waited)s, as long as the StoreKit load")
+    #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
+    #expect(harness.configManager.initialPurchasesLoad == nil, "paywalls would wait on the stuck load")
+
+    await fetch.value
+    // The load isn't cancelled: it still sets the purchase state when it lands.
+    let start = Date()
+    while !harness.receipt.didFinishLoad, Date().timeIntervalSince(start) < 5 {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(harness.receipt.didFinishLoad)
+    await settle()
+  }
+
   @Test("A purchase controller takes the fast path too")
   func publishesEarlyWithExternalPurchaseController() async {
     let controllerContainer = DependencyContainer(purchaseController: MockPurchaseController())
