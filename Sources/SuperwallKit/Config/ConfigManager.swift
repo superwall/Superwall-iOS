@@ -55,6 +55,10 @@ class ConfigManager {
     initialPurchasesLoadQueue.sync { _initialPurchasesLoad = task }
   }
 
+  /// How long config waits for the purchases load before it's published
+  /// anyway. A var so tests can shorten it.
+  var purchasesLoadTimeout: TimeInterval = 10
+
   private unowned let storeKitManager: StoreKitManager
   unowned let storage: Storage
   private unowned let network: Network
@@ -547,7 +551,7 @@ class ConfigManager {
         hasPublishedConfig = true
         await purchasesLoad.value
       } else {
-        await factory.loadPurchasedProducts(config: config)
+        await loadPurchasedProductsWithinTimeout(config: config)
       }
     }
 
@@ -575,6 +579,32 @@ class ConfigManager {
     // entitlements, and anything waiting on config must see that choice.
     if !hasPublishedConfig {
       configState.send(.retrieved(config))
+    }
+  }
+
+  /// Loads purchases from StoreKit, waiting at most `purchasesLoadTimeout`.
+  ///
+  /// StoreKit can stop answering: after a sandbox purchase was interrupted by
+  /// Apple ID verification, the read never returned, and with config
+  /// unpublished every `register` call waited for the whole session. So config
+  /// is published once the timeout passes and the read carries on, setting the
+  /// purchase state when it lands. It isn't stored as `initialPurchasesLoad`,
+  /// which paywalls wait on.
+  private func loadPurchasedProductsWithinTimeout(config: Config) async {
+    let purchasesLoad = Task { [factory] in
+      await factory.loadPurchasedProducts(config: config)
+    }
+    let loadedInTime = await CustomerCenterDeadline.value(
+      of: purchasesLoad,
+      within: purchasesLoadTimeout
+    ) != nil
+    if !loadedInTime {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .superwallCore,
+        message: "Loading purchases from StoreKit took over \(purchasesLoadTimeout)s. "
+          + "Continuing without waiting for it."
+      )
     }
   }
 

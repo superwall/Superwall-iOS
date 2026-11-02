@@ -15,6 +15,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
+- Fixes paywalls never showing for the rest of a session when StoreKit stops answering the SDK's purchase history read at launch, as it can after a sandbox purchase is interrupted by Apple ID verification. Config now becomes ready after at most 10 seconds, and the read updates the subscription status whenever it finishes.
 - Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 
