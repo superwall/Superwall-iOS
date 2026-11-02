@@ -82,10 +82,9 @@ class Storage {
   init(
     factory: DeviceHelperFactory & HasExternalPurchaseControllerFactory,
     cache: Cache = .makeDefault(),
-    coreDataManager: CoreDataManager = CoreDataManager()
+    coreDataManager: CoreDataManager? = nil
   ) {
     self.cache = cache
-    self.coreDataManager = coreDataManager
     self.factory = factory
 
     // Migration must run before any reads from cache, including the reads
@@ -93,7 +92,12 @@ class Storage {
     // Without this, users upgrading from SDK v3 (data store v2) could get
     // a new alias ID assigned before V2Migrator moves their data from
     // Documents to Application Support.
-    migrateData()
+    //
+    // It must also run before the Core Data store is opened, so that
+    // V5Migrator can move the store while nothing is using it.
+    Storage.migrateData(cache: cache)
+
+    self.coreDataManager = coreDataManager ?? CoreDataManager()
 
     self._didTrackFirstSeen = self.cache.read(DidTrackFirstSeen.self) == true
 
@@ -125,7 +129,7 @@ class Storage {
     }
   }
 
-  private func migrateData() {
+  private static func migrateData(cache: Cache) {
     let version = cache.read(Version.self) ?? cache.read(Version.self, fromDirectory: .appSpecificDocuments) ?? .v1
     FileManagerMigrator.migrate(
       fromVersion: version,

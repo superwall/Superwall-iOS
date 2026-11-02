@@ -616,6 +616,89 @@ struct DeviceHelperTests {
     #expect(template["ipV6"] as? String == "2001:db8::1")
   }
 
+  // MARK: - MMP install match addresses
+
+  private func makeCountingCollector(_ fetches: FetchCount, onFetch: @escaping () -> Void = {}) -> DeviceIPCollector {
+    return DeviceIPCollector(
+      ipV4Fetch: {
+        await fetches.increment()
+        onFetch()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await fetches.increment()
+        return ["ipV6": "2001:db8::2", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { Date(timeIntervalSince1970: 1_789_505_000) }
+    )
+  }
+
+  /// The match waits for the lookups and carries both families.
+  @Test func mmpMatchAddresses_withMMPOn_returnsBothFamilies() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(true, on: dependencyContainer)
+
+    let addresses = await deviceHelper.ipAttributesForMMPMatch()
+
+    #expect(addresses["ipV4"] == "8.8.8.8")
+    #expect(addresses["ipV6"] == "2001:db8::2")
+    #expect(addresses["ipV6ObservedAt"] == "2026-09-15T20:43:00Z")
+    #expect(await fetches.count == 2)
+  }
+
+  /// AppsFlyer alone doesn't put addresses on the MMP match.
+  @Test func mmpMatchAddresses_withMMPOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  @Test func mmpMatchAddresses_withEventTrackingOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  private final class ContainerBox: @unchecked Sendable {
+    var container: DependencyContainer?
+  }
+
+  /// Turning tracking off while the lookups run keeps the addresses off the match.
+  @Test func mmpMatchAddresses_whenTrackingTurnsOffDuringTheWait_returnsNothing() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 2)
+  }
+
   /// The lookups only serve install attribution, which the `.none` opt-out
   /// skips, so nothing is looked up or exposed even with the MMP on and an
   /// AppsFlyer ID set.
