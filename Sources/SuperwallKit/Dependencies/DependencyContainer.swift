@@ -36,6 +36,7 @@ final class DependencyContainer {
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
+  var customStoreCheckoutHandler: CustomStoreCheckoutHandler!
   var delegateAdapter: SuperwallDelegateAdapter!
   var purchaseManager: PurchaseManager!
   var receiptManager: ReceiptManager!
@@ -236,6 +237,12 @@ final class DependencyContainer {
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
       productsManager: productsManager,
+      postPurchaseRedeemer: webEntitlementRedeemer,
+      factory: self
+    )
+    customStoreCheckoutHandler = CustomStoreCheckoutHandler(
+      transactionManager: transactionManager,
+      storeKitManager: storeKitManager,
       factory: self
     )
   }

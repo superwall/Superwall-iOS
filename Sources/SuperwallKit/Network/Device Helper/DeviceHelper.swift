@@ -999,7 +999,8 @@ class DeviceHelper {
     MultiplePaywallUrlsCapability(),
     ConfigRefreshCapability(),
     WebViewTextInteractionCapability(),
-    ConfigCaching()
+    ConfigCaching(),
+    CustomStoreCheckoutCapability()
   ]
 
   private unowned let network: Network

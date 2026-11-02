@@ -90,6 +90,27 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// Whether the SDK started the current presentation via ``present(on:request:paywall:unsavedOccurrence:presentationStyleOverride:paywallStatePublisher:completion:)``.
   private var isPresentedBySDK = false
 
+  #if os(macOS)
+  /// Whether the paywall is closing: the SDK is dismissing it, or it's animating out of an
+  /// overlay. A sheet closed any other way goes in one step, before `dismiss` returns, so
+  /// it's never seen closing.
+  var isClosing = false
+  #else
+  /// Whether the paywall is closing: it, or a view controller it's in such as a navigation
+  /// controller or SwiftUI's sheet, is being dismissed or removed from its parent. UIKit
+  /// clears this when the buyer lets go of a sheet they started swiping away.
+  var isClosing: Bool {
+    var viewController: UIViewController? = self
+    while let current = viewController {
+      if current.isBeingDismissed || current.isMovingFromParent {
+        return true
+      }
+      viewController = current.parent
+    }
+    return false
+  }
+  #endif
+
   /// Determines whether the paywall is presented or not.
   var isActive: Bool {
     return isPresented || isBeingPresented
@@ -167,6 +188,28 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// Tracks whether explicit stripe_checkout_abandon was already received for this checkout flow.
   private var didReceiveStripeCheckoutAbandonMessage = false
 
+  /// The custom product whose checkout the paywall is running, if any. The paywall
+  /// reports how that checkout ends, so closing its sheet isn't tracked as an
+  /// abandoned Stripe checkout. Set by `TransactionManager` once it has accepted the
+  /// checkout's start, and cleared when the checkout ends or the paywall is
+  /// presented or dismissed, which also ends the checkout.
+  var customStoreCheckoutProductId: String?
+
+  /// Whether the open checkout sheet belongs to a custom store checkout that ended while it
+  /// stayed open, as one that timed out does. The buyer closing it later isn't an abandon.
+  var isCustomStoreCheckoutSheetLeftOpen = false
+
+  /// Whether the buyer closing the checkout sheet abandons a Stripe checkout: no redeem
+  /// succeeded, the SDK didn't close it, the page didn't report the abandon itself, and it
+  /// isn't a custom store checkout, whose outcome the page reports.
+  var isCheckoutSheetDismissalAnAbandon: Bool {
+    return !didRedeemSucceedDuringCheckout
+      && !isCheckoutDismissedProgrammatically
+      && customStoreCheckoutProductId == nil
+      && !isCustomStoreCheckoutSheetLeftOpen
+      && !didReceiveStripeCheckoutAbandonMessage
+  }
+
   /// What the user sees of a teleport's waiting screen while leaving and coming back.
   private var existingTeleportReturnCover: TeleportReturnCover?
 
@@ -177,6 +220,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
 
   /// Ensures Stripe checkout callbacks are forwarded to WebEntitlementRedeemer in order.
   private let stripeCheckoutCoordinator = SerialTaskCoordinator()
+
+  /// Runs the steps of a custom store checkout one at a time, in the order the
+  /// paywall sent them.
+  private let customStoreCheckoutCoordinator = SerialTaskCoordinator()
 
   /// Manages intro offer eligibility tokens for SK2 purchases on iOS 18.2+
   let introOfferTokenManager: IntroOfferTokenManager
@@ -558,6 +605,20 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     #else
     webView.scrollView.isScrollEnabled = paywall.isScrollEnabled
     #endif
+  }
+
+  /// Closes the in-app browser, if one is open, and returns once it's gone.
+  ///
+  /// UIKit never calls back a dismissal it ignores, as one during another transition, so
+  /// this returns after `timeoutNs` regardless. Its callers hold the purchase in progress.
+  func closeSafari(timeoutNs: UInt64 = 2_000_000_000) async {
+    let timeout = Task {
+      try? await Task.sleep(nanoseconds: timeoutNs)
+    }
+    closeSafari {
+      timeout.cancel()
+    }
+    await timeout.value
   }
 
   func closeSafari(completion: (() -> Void)? = nil) {
@@ -1375,6 +1436,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
       didRedeemSucceedDuringCheckout = false
       isCheckoutDismissedProgrammatically = false
       didReceiveStripeCheckoutAbandonMessage = false
+      isCustomStoreCheckoutSheetLeftOpen = false
       transactionAbandonWorkItem?.cancel()
       transactionAbandonWorkItem = nil
 
@@ -1391,13 +1453,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
           self.loadingState = .ready
         }
 
-        // Only track abandon if:
-        // 1. Redeem did NOT succeed
-        // 2. Dismissal was NOT programmatic (user dismissed it)
-        // 3. No stripe checkout abandon message was received
-        if !self.didRedeemSucceedDuringCheckout,
-          !self.isCheckoutDismissedProgrammatically,
-          !self.didReceiveStripeCheckoutAbandonMessage {
+        if self.isCheckoutSheetDismissalAnAbandon {
           let workItem = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
             Task {
@@ -1418,6 +1474,7 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
           DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1.0, execute: workItem)
         }
         // Reset flags after handling
+        self.isCustomStoreCheckoutSheetLeftOpen = false
         self.didRedeemSucceedDuringCheckout = false
         self.isCheckoutDismissedProgrammatically = false
         self.didReceiveStripeCheckoutAbandonMessage = false
@@ -1483,6 +1540,28 @@ extension PaywallViewController: PaywallMessageHandlerDelegate {
 
     enqueueStripeCheckoutTask { paywall in
       await paywall.webEntitlementRedeemer.handleStripeCheckoutAbandon(productId: productId)
+    }
+  }
+
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout) {
+    customStoreCheckoutCoordinator.enqueue { @MainActor [weak self] in
+      guard let self else {
+        return
+      }
+      await self.eventDelegate?.eventDidOccur(.customStoreCheckout(checkout), on: self)
+    }
+  }
+
+  /// Ends a custom store checkout this paywall started, once the steps already
+  /// handed over have run. Its page can't report the outcome after the paywall
+  /// is dismissed or presented again.
+  func endCustomStoreCheckout() {
+    customStoreCheckoutProductId = nil
+    customStoreCheckoutCoordinator.enqueue { @MainActor [weak self] in
+      guard let self else {
+        return
+      }
+      await self.eventDelegate?.eventDidOccur(.endCustomStoreCheckout, on: self)
     }
   }
 
@@ -1759,6 +1838,7 @@ extension PaywallViewController {
     // A purchase belongs to the presentation it was made in. It's cleared here rather than when
     // the view disappears: a sheet swiped away disappears before its close is reported.
     completedPurchaseProduct = nil
+    endCustomStoreCheckout()
     Superwall.shared.dependencyContainer.delegateAdapter.willPresentPaywall(withInfo: info)
 
     #if os(macOS)
@@ -1996,6 +2076,7 @@ extension PaywallViewController {
     #endif
 
     paywallResult = nil
+    endCustomStoreCheckout()
     cache?.activePaywallVcKey = nil
     isPresented = false
     isPresentedBySDK = false
@@ -2083,6 +2164,7 @@ extension PaywallViewController {
       dismissalBeforeAppearing = finishDismissalWhileHidden()
       return
     }
+    isClosing = false
     handleViewWillAppear()
   }
 
@@ -2120,6 +2202,7 @@ extension PaywallViewController {
     if isHiddenWithWindow {
       return
     }
+    isClosing = false
     handleViewDidDisappear()
     resumeDismissalContinuations()
   }
@@ -2402,6 +2485,7 @@ extension PaywallViewController {
     }
     await withCheckedContinuation { continuation in
       dismissalContinuations.append(continuation)
+      isClosing = !isHiddenWithWindow
       presenter.dismiss(self)
       if isHiddenWithWindow {
         finishDismissalWhileHidden()
@@ -2482,6 +2566,7 @@ extension PaywallViewController {
   @discardableResult
   private func finishDismissalWhileHidden() -> Task<Void, Never> {
     endHiding()
+    isClosing = false
     handleViewWillDisappear()
     let dismissal = handleViewDidDisappear()
     resumeDismissalContinuations()

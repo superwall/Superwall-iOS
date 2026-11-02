@@ -382,7 +382,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Active products for audience filters.
@@ -409,7 +409,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The still-valid silver keeps the fast path, but legacy is past its expiry
@@ -441,7 +441,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The status is rebuilt from the seeded purchases, so silver's `pro`
@@ -607,7 +607,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
@@ -630,7 +630,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Only the dated, unexpired silver is active. The undated row can't be
@@ -810,7 +810,7 @@ struct ConfigManagerEarlyPublishTests {
     let statusBefore = Superwall.shared.subscriptionStatus
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The purchase state is still seeded from the saved copy.

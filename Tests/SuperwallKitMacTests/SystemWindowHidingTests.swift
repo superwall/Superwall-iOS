@@ -159,6 +159,39 @@ struct SystemWindowHidingTests {
   }
 
   @Test
+  func paywallIsClosingOnlyWhileLeavingForGood() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+    #expect(!paywall.isClosing)
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(!paywall.isClosing)
+    parent.deminiaturize(nil)
+    try await settle(1.5)
+    #expect(!paywall.isClosing)
+
+    // A sheet closes in one step, before `dismiss` returns.
+    paywall.presentingViewController?.dismiss(paywall)
+    #expect(!paywall.isClosing)
+    #expect(paywall.presentingViewController == nil)
+
+    // An overlay is closing while it animates out.
+    let host = try #require(parent.contentViewController)
+    host.present(paywall, animator: PaywallOverlayAnimator(transition: .fade))
+    try await settle()
+    #expect(!paywall.isClosing)
+    host.dismiss(paywall)
+    #expect(paywall.isClosing)
+    try await settle()
+    #expect(!paywall.isClosing)
+    #expect(paywall.view.superview == nil)
+  }
+
+  @Test
   func paywallTakenDownWhileHiddenFinishesItsDismissal() async throws {
     let parent = makeParent()
     defer { parent.close() }
