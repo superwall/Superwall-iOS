@@ -799,6 +799,12 @@ struct CustomStoreEntitlementRefreshTests {
   }
 }
 
+/// Written by the refresh's task and read by the test, so it's locked.
 private final class RefreshResultBox: @unchecked Sendable {
-  var result: CustomerInfo?
+  private let lock = NSLock()
+  private var value: CustomerInfo?
+  var result: CustomerInfo? {
+    get { lock.lock(); defer { lock.unlock() }; return value }
+    set { lock.lock(); defer { lock.unlock() }; value = newValue }
+  }
 }
