@@ -1,18 +1,21 @@
 # Releases SuperwallKit when a new version reaches master.
 #
-#   version ──┬─ unit tests ──┐
-#             └─ UI tests ────┴─ release ──┬─ CocoaPods ── wrappers (Flutter, Expo, KMP)
+#   version ──┬─ unit tests ──────────┐
+#             └─ UI tests (if asked) ─┴─ release ──┬─ CocoaPods ── wrappers (Flutter, Expo, KMP)
 #                (4 schemes,               ├─ docs
 #                 on Limrun)               └─ Emerge
 #
 # 1. `version` reads the version from Constants.swift, checks the podspec and
 #    CHANGELOG.md agree, and stops the run if that version is already tagged
 #    (a merge that doesn't bump the version releases nothing).
-# 2. The unit tests and all four UI test schemes run against this exact commit,
-#    in parallel. The UI tests come from Superwall-iOS-UI-tests (main), pinned
-#    to this commit, and run on Limrun: each scheme gets 5 shards, so the four
-#    together use the organization's 20 simulators and 20 sandboxes.
-# 3. Only if every test passes: tag the commit, push release/<version>, and
+# 2. The unit tests run against this exact commit. The UI tests run too, in
+#    parallel, only if the pull request merged into master has the
+#    `uitests-required` label (or the manual run asks for them): add it for
+#    big changes, leave it off for small releases. The UI tests come from
+#    Superwall-iOS-UI-tests (main), pinned to this commit, and run on Limrun:
+#    each scheme gets 5 shards, so the four together use the organization's
+#    20 simulators and 20 sandboxes.
+# 3. Only if every test that ran passes: tag the commit, push release/<version>, and
 #    publish a GitHub release titled with the version, with that version's
 #    CHANGELOG.md section as its notes.
 # 4. Publish to CocoaPods, build the docs and upload to Emerge.
@@ -33,6 +36,11 @@ on:
   push:
     branches: [master]
   workflow_dispatch:
+    inputs:
+      ui-tests:
+        description: Run the UI tests on Limrun before releasing
+        type: boolean
+        default: false
 
 # One release at a time, and never cancel one halfway through.
 concurrency:
@@ -46,10 +54,14 @@ jobs:
   version:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
       version: ${{ steps.version.outputs.version }}
       prerelease: ${{ steps.version.outputs.prerelease }}
       release: ${{ steps.version.outputs.release }}
+      ui-tests: ${{ steps.ui-tests.outputs.run }}
     steps:
       - uses: actions/checkout@v4
 
@@ -97,6 +109,32 @@ jobs:
             echo "release=$release"
           } >> "$GITHUB_OUTPUT"
 
+      # The label goes on the pull request into master (usually develop ->
+      # master). Squash and merge commits both map back to it.
+      - name: Check whether the UI tests are needed
+        id: ui-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REQUESTED: ${{ inputs.ui-tests }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            run="${REQUESTED:-false}"
+            echo "Manual run: UI tests $([ "$run" = true ] && echo requested || echo not requested)."
+          else
+            prs=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+              --jq '[.[] | select(.base.ref == "master")]')
+            numbers=$(jq -r 'map("#\(.number)") | join(", ")' <<< "$prs")
+            if jq -e 'any(.[]; any(.labels[]; .name == "uitests-required"))' <<< "$prs" > /dev/null; then
+              run=true
+              echo "::notice::$numbers has the uitests-required label, so the UI tests will run."
+            else
+              run=false
+              echo "::notice::No uitests-required label on ${numbers:-the pull request}, so the UI tests are skipped."
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
   unit-tests:
     needs: version
     if: needs.version.outputs.release == 'true'
@@ -104,7 +142,7 @@ jobs:
 
   ui-tests:
     needs: version
-    if: needs.version.outputs.release == 'true'
+    if: needs.version.outputs.release == 'true' && needs.version.outputs.ui-tests == 'true'
     name: UI tests (${{ matrix.scheme }})
     runs-on: ubuntu-latest
     timeout-minutes: 120
@@ -153,6 +191,13 @@ jobs:
 
   release:
     needs: [version, unit-tests, ui-tests]
+    # Runs when the UI tests passed or weren't needed (skipped), never when
+    # they failed or were cancelled.
+    if: >-
+      !cancelled()
+      && needs.version.outputs.release == 'true'
+      && needs.unit-tests.result == 'success'
+      && (needs.ui-tests.result == 'success' || needs.ui-tests.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
