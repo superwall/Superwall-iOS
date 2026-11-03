@@ -284,5 +284,41 @@ struct SystemWindowHidingTests {
     // close would go unreported.
     #expect(recorder.finishCount == 2)
   }
+
+  @Test
+  func paywallShownAgainRightAfterItsWindowReturnsWithoutIt() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    let recorder = FinishRecorder()
+    paywall.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(paywall.isHiddenWithWindow)
+
+    // Taken down while hidden. The window coming back finishes that
+    // dismissal, and the app shows the same paywall again straight away.
+    paywall.presentingViewController?.dismiss(paywall)
+    parent.deminiaturize(nil)
+    for _ in 0..<300 where paywall.isHiddenWithWindow {
+      try await Task.sleep(nanoseconds: 5_000_000)
+    }
+    #expect(!paywall.isHiddenWithWindow)
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+    parent.contentViewController?.dismiss(paywall)
+    try await settle(1.5)
+
+    // Once for each close. If the first close finished after the paywall
+    // appeared again, it would have reset that presentation and the second
+    // close would go unreported.
+    #expect(recorder.finishCount == 2)
+  }
 }
 #endif

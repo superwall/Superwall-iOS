@@ -294,13 +294,13 @@ final class CustomerCenterViewModel: ObservableObject {
       #if os(macOS)
       // StoreKit's manage sheet is iOS-only, so open the App Store's own page.
       _ = groupId
-      openForManagement(Self.appStoreSubscriptionsURL, refresh: .receipts)
+      openForManagement(Self.appStoreSubscriptionsURL, refresh: .receipts, for: requester)
       #else
       presentSheet(.manageSubscriptions(groupId: groupId), for: requester)
       #endif
     case .webManage(let url):
       #if os(macOS)
-      openForManagement(url, refresh: .customerInfo)
+      openForManagement(url, refresh: .customerInfo, for: requester)
       #else
       presentSheet(.safari(url), for: requester)
       #endif
@@ -328,8 +328,8 @@ final class CustomerCenterViewModel: ObservableObject {
       }
     case let .url(url, inApp):
       #if os(macOS)
-      // There's no in-app browser on macOS, so every link opens in the user's.
-      _ = inApp
+      // No in-app browser on macOS: links open in the user's, unless their screen has left.
+      if inApp, screenOnTop != requester { return }
       dependencies.urlOpener.open(url)
       #else
       if inApp { presentSheet(.safari(url), for: requester) } else { dependencies.urlOpener.open(url) }

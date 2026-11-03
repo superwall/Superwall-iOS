@@ -10,7 +10,9 @@ import Testing
 struct CustomerCenterMacManagementTests {
   private let managementURL = URL(string: "https://superwall.app/manage")!
 
-  private func makeViewModel() async -> (CustomerCenterViewModel, CustomerInfoProviderMock, URLOpenerMock) {
+  private func makeViewModel(
+    tracker: EventTrackerMock = EventTrackerMock()
+  ) async -> (CustomerCenterViewModel, CustomerInfoProviderMock, URLOpenerMock) {
     let subscription = SubscriptionTransaction(
       transactionId: "web_1",
       productId: "web_pro_monthly",
@@ -28,7 +30,8 @@ struct CustomerCenterMacManagementTests {
     let (deps, info, _) = CustomerCenterDependencies.mock(
       info: CustomerInfo(subscriptions: [subscription], nonSubscriptions: [], entitlements: []),
       environment: EnvironmentMock(webManagementURL: managementURL),
-      urlOpener: opener
+      urlOpener: opener,
+      tracker: tracker
     )
     let configuration = CustomerCenterConfiguration.default
     configuration.support.webManagementURL = managementURL
@@ -63,6 +66,29 @@ struct CustomerCenterMacManagementTests {
     // Only the return from that visit refreshes.
     await viewModel.appDidBecomeActive()
     #expect(info.refreshReceiptsCount == 1)
+  }
+
+  @Test
+  func managementIsDroppedWhenItsScreenLeavesFirst() async throws {
+    let tracker = EventTrackerMock()
+    let (viewModel, _, opener) = await makeViewModel(tracker: tracker)
+    let web = try #require(managePath(viewModel))
+    let detail = UUID()
+    viewModel.claimPushedSurface(detail, depth: 1)
+    tracker.holdsTrack = true
+
+    let selecting = Task { await viewModel.select(web, purchase: viewModel.purchases.first) }
+    for _ in 0..<100 where !tracker.isHoldingTrack {
+      try await Task.sleep(nanoseconds: 10_000_000)
+    }
+    // The user goes back while the tap is still being tracked.
+    viewModel.releasePushedSurface(detail)
+    tracker.releaseTrack()
+    await selecting.value
+
+    #expect(opener.opened.isEmpty, "the management page opened after the user had gone back")
+    // Nothing was opened, so coming back to the app refreshes nothing.
+    #expect(viewModel.refreshOnReturn == nil)
   }
 
   @Test

@@ -2169,6 +2169,11 @@ extension PaywallViewController {
       return
     }
     isClosing = false
+    if dismissalBeforeAppearing != nil {
+      // A dismissal finished while hidden may still be running; `viewDidAppear`
+      // starts this presentation once it's done.
+      return
+    }
     handleViewWillAppear()
   }
 
@@ -2568,7 +2573,9 @@ extension PaywallViewController {
         || window.parent != nil {
       return
     }
-    finishDismissalWhileHidden()
+    // If the app shows it again straight away, that presentation waits for
+    // this dismissal to finish (see `viewDidAppear`).
+    dismissalBeforeAppearing = finishDismissalWhileHidden()
   }
 
   /// AppKit sends no appearance calls to a paywall taken down while it's off
