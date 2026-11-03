@@ -506,7 +506,9 @@ struct IdentityManagerBehaviorTests {
     }
     let allApplied = await eventually {
       let attributes = identityManager.userAttributes
-      return (0..<100).allSatisfy { attributes["key\($0)"] as? Int == $0 }
+      // `index` is typed explicitly: left to inference it becomes `Int?`, and
+      // the key turns into "keyOptional(0)".
+      return (0..<100).allSatisfy { (index: Int) in attributes["key\(index)"] as? Int == index }
     }
     #expect(allApplied)
   }

@@ -364,6 +364,23 @@ struct IdentityActionTests {
     #expect(context.tracked.last?["b"] as? Int == 2)
   }
 
+  @Test("Merges dispatched from many threads are all applied")
+  func concurrentMerges() async {
+    let context = FakeIdentityContext(readyState())
+    await withTaskGroup(of: Void.self) { group in
+      for index in 0..<200 {
+        group.addTask {
+          context.dispatch(.mergeAttributes(["key\(index)": index], shouldTrack: true, shouldNotify: false))
+        }
+      }
+    }
+    let attributes = context.state.userAttributes
+    // `index` is typed explicitly: left to inference it becomes `Int?`, and
+    // the key turns into "keyOptional(0)".
+    let missing = (0..<200).filter { (index: Int) in attributes["key\(index)"] as? Int != index }
+    #expect(missing.isEmpty, "missing \(missing)")
+  }
+
   @Test("Merging without tracking or notifying does neither")
   func quietMerge() async {
     let context = FakeIdentityContext(readyState())
