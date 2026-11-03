@@ -161,7 +161,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   private weak var eventDelegate: PaywallViewControllerEventDelegate?
 
   /// Defines whether the view controller is being presented or not.
-  private var isPresented = false
+  private(set) var isPresented = false
 
   /// Stores the completion block when calling dismiss.
   private var dismissCompletionBlock: (() -> Void)?
@@ -335,6 +335,9 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// The close of the paywall's last presentation, which it was taken down
   /// from while hidden. Its next presentation waits for this.
   private var dismissalBeforeAppearing: Task<Void, Never>?
+  /// An appearance waiting for `dismissalBeforeAppearing` before it starts. Cleared
+  /// if the paywall is taken down first, so it never starts.
+  private var deferredAppearance: UUID?
 
   /// The window the paywall was in when it was hidden.
   private weak var windowHiddenWith: NSWindow?
@@ -2186,10 +2189,16 @@ extension PaywallViewController {
     isMacPresentationInFlight = false
     if let dismissal = dismissalBeforeAppearing {
       dismissalBeforeAppearing = nil
+      let appearance = UUID()
+      deferredAppearance = appearance
       Task { [weak self] in
         await dismissal.value
-        self?.handleViewWillAppear()
-        self?.presentationDidFinish()
+        guard let self, self.deferredAppearance == appearance else {
+          return
+        }
+        self.deferredAppearance = nil
+        self.handleViewWillAppear()
+        self.presentationDidFinish()
       }
       return
     }
@@ -2203,6 +2212,10 @@ extension PaywallViewController {
       beginHiding(with: window)
       return
     }
+    if deferredAppearance != nil {
+      // Taken down before its appearance started, so there's nothing to end.
+      return
+    }
     handleViewWillDisappear()
   }
 
@@ -2212,6 +2225,11 @@ extension PaywallViewController {
       return
     }
     isClosing = false
+    if deferredAppearance != nil {
+      deferredAppearance = nil
+      resumeDismissalContinuations()
+      return
+    }
     handleViewDidDisappear()
     resumeDismissalContinuations()
   }
