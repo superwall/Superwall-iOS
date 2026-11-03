@@ -297,13 +297,27 @@ struct SystemWindowHidingTests {
     )
     parent.contentViewController?.presentAsSheet(paywall)
     try await settle()
+    // The dismissal reads the page's state first. Make that take a while, so
+    // the old dismissal is still running when the paywall is shown again. The
+    // SDK connects the message handler when it makes a paywall; this test
+    // makes its own.
+    paywall.webView.messageHandler.delegate = paywall
+    paywall.webView.loadHTMLString(
+      """
+      <script>
+      window.app = { getAllState() { const end = Date.now() + 1500; while (Date.now() < end) {} return {}; } };
+      </script>
+      """,
+      baseURL: nil
+    )
+    try await settle()
 
     parent.miniaturize(nil)
     try await settle(1.5)
     #expect(paywall.isHiddenWithWindow)
 
-    // Taken down while hidden. The window coming back finishes that
-    // dismissal, and the app shows the same paywall again straight away.
+    // Taken down while hidden. The window coming back starts that dismissal,
+    // and the app shows the same paywall again while it's still running.
     paywall.presentingViewController?.dismiss(paywall)
     parent.deminiaturize(nil)
     for _ in 0..<300 where paywall.isHiddenWithWindow {
@@ -311,9 +325,10 @@ struct SystemWindowHidingTests {
     }
     #expect(!paywall.isHiddenWithWindow)
     parent.contentViewController?.presentAsSheet(paywall)
-    try await settle()
+    // Let the old dismissal finish and the new presentation start.
+    try await settle(2.5)
     parent.contentViewController?.dismiss(paywall)
-    try await settle(1.5)
+    try await settle(2.5)
 
     // Once for each close. If the first close finished after the paywall
     // appeared again, it would have reset that presentation and the second
