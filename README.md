@@ -1,5 +1,5 @@
 <p align="center">
-  <img src=".github/assets/readme-banner.png" alt="Superwall" width="100%" />
+  <img src=".github/assets/readme-banner-bw.png" alt="Superwall" width="100%" />
 </p>
 
 <h1 align="center">SuperwallKit</h1>
