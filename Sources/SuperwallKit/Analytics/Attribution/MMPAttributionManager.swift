@@ -105,10 +105,16 @@ final class MMPAttributionManager {
     }
     lock.lock()
     defer { lock.unlock() }
-    guard
-      !hasStartedMatch,
-      let startMatch = startMatch
-    else {
+    if hasStartedMatch {
+      return
+    }
+    startMatchWhileLocked()
+  }
+
+  /// Starts the match, or ends its pending state if the app is opted out.
+  /// Call with `lock` held.
+  private func startMatchWhileLocked() {
+    guard let startMatch = startMatch else {
       return
     }
     guard let match = startMatch() else {
@@ -134,22 +140,20 @@ final class MMPAttributionManager {
 
   /// Ends the running match. One stopped by an opt-out starts again straight
   /// away if the app has already opted back in, since that opt-in found it
-  /// still running. Otherwise the next opt-in starts it. The pending state is
-  /// cleared before any restart, so it can't clear a newer match's.
+  /// still running, and the next opt-in starts it otherwise. A restart keeps
+  /// the pending state on throughout, so waiting paywalls keep waiting for it.
   private func finishMatch() {
     lock.lock()
-    let canStartAgain = didStopForOptOut
-    if canStartAgain {
+    defer { lock.unlock() }
+    if didStopForOptOut {
       didStopForOptOut = false
       hasStartedMatch = false
+      if configManager.config?.attribution?.mmp?.enabled == true {
+        startMatchWhileLocked()
+        return
+      }
     }
     isMatchPending.send(false)
-    lock.unlock()
-
-    if canStartAgain {
-      // Starts nothing while the app is still opted out.
-      startMatchIfEnabled()
-    }
   }
 
   /// On a first launch, a paywall can be requested while the install match is

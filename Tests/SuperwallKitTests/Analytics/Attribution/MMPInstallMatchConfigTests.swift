@@ -198,6 +198,40 @@ struct MMPInstallMatchConfigTests {
   }
 
   @Test
+  func paywallAlreadyWaitingKeepsWaitingForTheRestartedMatch() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let started = Counter()
+    let finished = Counter()
+    startMatches(on: dependencyContainer, counting: started) { attempt in
+      if attempt == 1 {
+        dependencyContainer.configManager.options.eventTrackingBehavior = .none
+        _ = await manager.matchInstall(
+          idfa: nil,
+          advertiserTrackingEnabled: false,
+          applicationTrackingEnabled: true
+        )
+        // Give the paywall time to start waiting on this match, then opt back
+        // in before it finishes.
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        dependencyContainer.configManager.options.eventTrackingBehavior = .all
+        return
+      }
+      try? await Task.sleep(nanoseconds: 300_000_000)
+      finished.count += 1
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    // The paywall starts waiting while the stopped match is still running.
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 10
+    )
+    #expect(started.count == 2)
+    #expect(finished.count == 1)
+  }
+
+  @Test
   func paywallWaitsForAMatchRestartedAfterAnOptOut() async {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.mmpAttributionManager!
