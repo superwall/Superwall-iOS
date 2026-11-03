@@ -46,10 +46,10 @@ Read the [agent integration guide](https://superwall.com/docs/agents/integrate-t
 <details>
 <summary>Moving from a different platform?</summary>
 
-Run this. It follows the same steps, starting from your existing setup:
+Run this from your app’s folder. It follows the same steps, starting from your existing setup:
 
 ```bash
-superwall migrate
+npx superwall migrate
 ```
 
 </details>
