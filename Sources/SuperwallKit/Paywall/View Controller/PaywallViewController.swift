@@ -1064,7 +1064,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
       transitioningDelegate = transitionDelegate
     case .fullscreenNoAnimation:
       modalPresentationStyle = .overFullScreen
-    case let .drawer(height, cornerRadius):
+    case .drawer(let height, _):
       modalPresentationStyle = .pageSheet
       #if !os(visionOS)
         if #available(iOS 16.0, *),
