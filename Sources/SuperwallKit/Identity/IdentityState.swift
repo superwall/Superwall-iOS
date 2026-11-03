@@ -14,7 +14,7 @@ import Foundation
 struct IdentityState {
   /// Work that has to finish before the identity is ready.
   enum Pending: Hashable {
-    /// `configure()` hasn't finished, or is waiting for assignments.
+    /// `configure()` is running, possibly waiting for assignments.
     case configuration
     /// `identify(userId:)` is running for this user id.
     case identification(String)
@@ -39,6 +39,9 @@ struct IdentityState {
   var seed: Int
   var userAttributes: [String: Any]
   var pending: Set<Pending>
+  /// Whether `configure()`, `identify(userId:)` or `reset()` has finished at
+  /// least once. Until then the identity hasn't been established.
+  var hasResolved: Bool
   let appInstalledAtString: String
 
   init(
@@ -46,7 +49,8 @@ struct IdentityState {
     aliasId: String,
     seed: Int,
     userAttributes: [String: Any] = [:],
-    pending: Set<Pending> = [.configuration],
+    pending: Set<Pending> = [],
+    hasResolved: Bool = false,
     appInstalledAtString: String
   ) {
     self.appUserId = appUserId
@@ -54,12 +58,14 @@ struct IdentityState {
     self.seed = seed
     self.userAttributes = userAttributes
     self.pending = pending
+    self.hasResolved = hasResolved
     self.appInstalledAtString = appInstalledAtString
   }
 
-  /// Whether paywalls can be shown to this identity.
+  /// Whether paywalls can be shown to this identity: it has been established
+  /// once, and nothing that changes it is in progress.
   var isReady: Bool {
-    pending.isEmpty
+    hasResolved && pending.isEmpty
   }
 
   /// The app user id, or the alias for an anonymous user.
@@ -99,7 +105,8 @@ struct IdentityState {
 enum IdentityUpdate: Reducer {
   /// Adds work that has to finish before the identity is ready.
   case begin(IdentityState.Pending)
-  /// Marks work as finished. Does nothing if it wasn't pending.
+  /// Marks work as finished. Does nothing if it wasn't pending. Finishing a
+  /// configure, identify or reset establishes the identity.
   case end(IdentityState.Pending)
   /// Logs in as `userId`, keeping the alias and seed. The seed is pending
   /// until the config says whether to derive it from the user id.
@@ -120,6 +127,15 @@ enum IdentityUpdate: Reducer {
       return state
     case .end(let item):
       state.pending.remove(item)
+      switch item {
+      case .configuration,
+        .identification,
+        .reset:
+        state.hasResolved = true
+      case .seed,
+        .assignments:
+        break
+      }
       return state
     case .identify(let userId):
       guard userId != state.appUserId else {
@@ -146,6 +162,7 @@ enum IdentityUpdate: Reducer {
         aliasId: aliasId,
         seed: seed,
         pending: state.pending,
+        hasResolved: state.hasResolved,
         appInstalledAtString: state.appInstalledAtString
       )
       .mergingIds()

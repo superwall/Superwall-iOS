@@ -183,6 +183,7 @@ class IdentityManager: IdentityContext {
 
   /// Checks for static config upgrade before setting identity.
   func configure() async {
+    store.update(IdentityUpdate.begin(.configuration))
     let neverCalledStaticConfig = storage?.neverCalledStaticConfig ?? false
     let isFirstAppOpen = !(storage?.get(DidTrackFirstSeen.self) ?? false)
 

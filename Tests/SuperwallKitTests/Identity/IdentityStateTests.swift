@@ -18,7 +18,8 @@ struct IdentityStateTests {
     aliasId: String = "$SuperwallAlias:alias-1",
     seed: Int = 42,
     userAttributes: [String: Any] = [:],
-    pending: Set<IdentityState.Pending> = []
+    pending: Set<IdentityState.Pending> = [],
+    hasResolved: Bool = true
   ) -> IdentityState {
     IdentityState(
       appUserId: appUserId,
@@ -26,6 +27,7 @@ struct IdentityStateTests {
       seed: seed,
       userAttributes: userAttributes,
       pending: pending,
+      hasResolved: hasResolved,
       appInstalledAtString: "2026-01-01"
     )
   }
@@ -40,11 +42,22 @@ struct IdentityStateTests {
     #expect(state(appUserId: "user").isLoggedIn)
   }
 
-  @Test("The identity is ready only when nothing is pending")
+  @Test("The identity is ready once established and while nothing is pending")
   func readiness() {
     #expect(state().isReady)
     #expect(state(pending: [.configuration]).isReady == false)
+    #expect(state(hasResolved: false).isReady == false)
     #expect(IdentityState(aliasId: "a", seed: 1, appInstalledAtString: "").isReady == false)
+  }
+
+  @Test("Finishing a configure, identify or reset establishes the identity")
+  func endingEstablishesTheIdentity() {
+    let unresolved = state(hasResolved: false)
+    #expect(IdentityUpdate.end(.configuration).reduce(unresolved).isReady)
+    #expect(IdentityUpdate.end(.identification("user")).reduce(unresolved).isReady)
+    #expect(IdentityUpdate.end(.reset).reduce(unresolved).isReady)
+    #expect(IdentityUpdate.end(.assignments).reduce(unresolved).isReady == false)
+    #expect(IdentityUpdate.end(.seed("user")).reduce(unresolved).isReady == false)
   }
 
   // MARK: - begin / end
@@ -172,6 +185,7 @@ struct IdentityStateTests {
     #expect(result.aliasId == "$SuperwallAlias:new")
     #expect(result.seed == 3)
     #expect(result.pending == [.reset, .configuration])
+    #expect(result.hasResolved)
     #expect(result.appInstalledAtString == "2026-01-01")
     #expect(result.userAttributes["custom"] == nil)
     #expect(result.userAttributes["appUserId"] == nil)

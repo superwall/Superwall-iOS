@@ -154,6 +154,7 @@ private func readyState(
     seed: 42,
     userAttributes: userAttributes,
     pending: [],
+    hasResolved: true,
     appInstalledAtString: "2026-01-01"
   )
 }
