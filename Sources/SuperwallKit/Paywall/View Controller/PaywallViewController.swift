@@ -438,6 +438,10 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
     if hasRegisteredCallback {
       customCallbackRegistry.unregister(paywallIdentifier: paywall.identifier)
     }
+    #if os(macOS)
+    // An app can release a paywall while it's hidden with its window.
+    unhideObservers.forEach(NotificationCenter.default.removeObserver)
+    #endif
   }
 
   private func configureUI() {
