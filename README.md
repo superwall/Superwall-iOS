@@ -1,105 +1,145 @@
 <p align="center">
-  <br />
-  <img src=https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png alt="logo" height="100px" />
-  <h3 style="font-size:26" align="center">In-App Paywalls Made Easy 💸</h3>
-  <br />
+  <img src="https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png" alt="Superwall" height="80" />
+</p>
+
+<h1 align="center">SuperwallKit</h1>
+
+<p align="center">
+  AI-powered paywalls, subscriptions and experiments for iOS and Mac apps.
 </p>
 
 <p align="center">
-  <a href="https://docs.superwall.com/docs/installation-via-spm">
-    <img src="https://img.shields.io/badge/SwiftPM-Compatible-orange" alt="SwiftPM Compatible">
+  <a href="https://github.com/superwall/Superwall-iOS/releases">
+    <img src="https://img.shields.io/github/v/release/superwall/Superwall-iOS?label=SDK&color=555555&labelColor=212223" alt="Latest SDK version" />
   </a>
-  <a href="https://docs.superwall.com/docs/installation-via-cocoapods">
-    <img src="https://img.shields.io/badge/pod-compatible-informational" alt="Cocoapods Compatible">
-  </a>
-  <a href="https://superwall.com/">
-    <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2015.0-blueviolet" alt="iOS Versions Supported">
-  </a>
-  <a href="Sources/SuperwallKit/Documentation.docc/macOS.md">
-    <img src="https://img.shields.io/badge/macos%20version-%3E%3D%2012.0-blueviolet" alt="macOS Versions Supported">
-  </a>
-  <a href="https://github.com/superwall/Superwall-iOS/blob/master/LICENSE">
-    <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
-  </a>
-  <a href="https://superwall.com/">
-    <img src="https://img.shields.io/badge/community-active-9cf" alt="Community Active">
-  </a>
-  <a href="https://superwall.com/">
-    <img src="https://img.shields.io/github/v/tag/superwall/Superwall-iOS" alt="Version Number">
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-555555?labelColor=212223" alt="MIT license" />
   </a>
   <a href="https://www.emergetools.com/app/example/ios/SuperwallKit/release?utm_campaign=badge-data">
-    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fwww.emergetools.com%2Fapi%2Fv2%2Fpublic_new_build%3FexampleId%3DSuperwallKit%26platform%3Dios%26badgeOption%3Dmax_install_size_only%26buildType%3Drelease&query=$.badgeMetadata&label=SuperwallKit&logo=apple" />
+    <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fwww.emergetools.com%2Fapi%2Fv2%2Fpublic_new_build%3FexampleId%3DSuperwallKit%26platform%3Dios%26badgeOption%3Dmax_install_size_only%26buildType%3Drelease&query=$.badgeMetadata&label=SuperwallKit&logo=apple" alt="SDK size" />
   </a>
 </p>
 
-----------------
+<p align="center">
+  <a href="#add-superwall-with-a-single-prompt">Get started</a> ·
+  <a href="https://superwall.com/docs/ios">Docs</a> ·
+  <a href="https://sdk.superwall.me/documentation/superwallkit/">API reference</a> ·
+  <a href="#examples">Examples</a>
+</p>
 
-[Superwall](https://superwall.com/) lets you remotely configure every aspect of your paywall — helping you find winners quickly.
+## Add Superwall with a single prompt
 
-## SuperwallKit.framework
+Paste this into your coding agent. It installs the SDK, sets up entitlements and adds your first paywall.
 
-**SuperwallKit** is an open source framework that provides a wrapper around `WebKit` for presenting and creating paywalls. It interacts with the Superwall backend letting you easily iterate paywalls on the fly in `Swift` or `Objective-C`!
-
-## Migrating to v4
-
-- If you're upgrading from v3.x of our SDK, please follow our [Migration Guide](https://docs.superwall.com/docs/migrating-to-v4)
-
-## Features
-|   | Superwall |
-| --- | --- |
-✅ | Server-side paywall iteration
-🎯 | Paywall conversion rate tracking - know whether a user converted after seeing a paywall
-🆓 | Trial start rate tracking - know and measure your trial start rate out of the box
-📊 | Analytics - automatic calculation of metrics like conversion and views
-✏️ | A/B Testing - automatically calculate metrics for different paywalls
-📝 | [Online documentation](https://docs.superwall.com/docs) up to date
-🔀 | [Integrations](https://docs.superwall.com/docs) - over a dozen integrations to easily send conversion data where you need it
-💯 | Well maintained - [frequent releases](https://github.com/superwall/Superwall-iOS/releases)
-📮 | Great support - email a founder: jake@superwall.com
-
-## Installation
-
-### Swift Package Manager
-
-The preferred installation method is with [Swift Package Manager](https://swift.org/package-manager/). This is a tool for automating the distribution of Swift code and is integrated into the swift compiler. In Xcode, do the following:
-
-- Select **File ▸ Add Packages...**
-- Search for `https://github.com/superwall/Superwall-iOS` in the search bar.
-- Set the **Dependency Rule** to **Up to Next Major Version** with the lower bound set to **4.0.0**.
-- Make sure your project name is selected in **Add to Project**.
-- Then, **Add Package**.
-
-### Cocoapods
-
-[Cocoapods](https://cocoapods.org) is an alternative dependency manager for iOS projects. For usage and installation instructions, please visit their website.
-To include the *Superwall* SDK in your app, add the following to your Podfile:
-
+```text
+Install Superwall into my app using the skill at github.com/superwall/skills
 ```
+
+Prefer a guided setup? Run this from your app’s folder. It signs you up or in, then runs Claude Code or Codex for you:
+
+```bash
+npx superwall integrate
+```
+
+Read the [agent integration guide](https://superwall.com/docs/agents/integrate-the-sdk) for details.
+
+<details>
+<summary>Moving from RevenueCat, Adapty or Qonversion?</summary>
+
+Run this. It follows the same steps, starting from your existing setup:
+
+```bash
+superwall migrate
+```
+
+</details>
+
+## Manual quick start
+
+Install and configure the SDK yourself. Requires Xcode 26 or later.
+
+### 1. Install the SDK
+
+In Xcode, choose **File ▸ Add Package Dependencies…** and add this URL, using **Up to Next Major Version** from **4.0.0**:
+
+```text
+https://github.com/superwall/Superwall-iOS
+```
+
+<details>
+<summary>Install with CocoaPods</summary>
+
+Add this to your Podfile:
+
+```ruby
 pod 'SuperwallKit', '< 5.0.0'
 ```
 
-Next, run `pod repo update` to update your local spec repo.
+Then run:
 
-Then, run `pod install` from your terminal.
+```bash
+pod install --repo-update
+```
 
-## Getting Started
+</details>
 
-[Sign up for a free account on Superwall](https://superwall.com/sign-up) and [read our docs](https://docs.superwall.com/docs).
+### 2. Configure the SDK
 
-You can also [view our iOS SDK docs](https://sdk.superwall.me/documentation/superwallkit/). If you'd like to view it in Xcode, select **Product ▸ Build Documentation**.
+[Create a Superwall account](https://superwall.com/sign-up) and copy your app’s public API key from the dashboard. Call `configure` once when your app launches:
 
-Read our Kodeco (previously Ray Wenderlich) tutorial: [Superwall: Remote Paywall Configuration on iOS](https://www.kodeco.com/38677971-superwall-remote-paywall-configuration-on-ios).
+```swift
+import SuperwallKit
 
-Check out our sample apps for a hands-on demonstration of the SDK:
+Superwall.configure(apiKey: "YOUR_PUBLIC_API_KEY")
+```
 
-- [Basic Example App](Examples/Basic)
-- [Advanced Example App](Examples/Advanced)
-- [Mac Example App](Examples/macOS)
+### 3. Register a placement
 
-## Native macOS
+A placement is a named point in your app where a campaign can show a paywall. On the dashboard, add the `premium_feature` placement to a campaign and give it a paywall. Then call this where someone opens the feature:
 
-SuperwallKit supports native AppKit and SwiftUI Mac apps on macOS 12+. See the [integration guide](Sources/SuperwallKit/Documentation.docc/macOS.md) and [Mac example](Examples/macOS).
+```swift
+Superwall.shared.register(placement: "premium_feature") {
+  // Open your feature here.
+}
+```
 
-## Contributing
+The campaign decides whether a paywall shows. With no paywall set up, the closure runs straight away. See the [iOS guide](https://superwall.com/docs/ios) for purchases and testing.
 
-Please see the [CONTRIBUTING](.github/CONTRIBUTING.md) file for how to help.
+## Platforms
+
+| Platform | Support |
+| --- | --- |
+| iOS | iOS 15+ · UIKit and SwiftUI |
+| macOS | macOS 12+ · native AppKit and SwiftUI · [Mac guide](Sources/SuperwallKit/Documentation.docc/macOS.md) |
+| Mac Catalyst · visionOS | Uses the iOS API |
+
+## What you get
+
+- Update paywalls from the dashboard without releasing a new app version.
+- Choose which paywall to show with campaigns and audience rules.
+- Run A/B tests across paywalls.
+- Track paywall views, trial starts and conversions.
+- Control access to features with placements.
+
+## Examples
+
+- [Basic](Examples/Basic): a starting integration.
+- [Advanced](Examples/Advanced): purchase controllers, user attributes and delegates.
+- [macOS](Examples/macOS): a native SwiftUI Mac app.
+
+## Upgrading
+
+See the [release notes](https://github.com/superwall/Superwall-iOS/releases) for changes between versions.
+
+<details>
+<summary>Upgrade from V3 to V4</summary>
+
+Follow the [V4 migration guide](https://superwall.com/docs/migrating-to-v4).
+
+</details>
+
+## Support and contributing
+
+[Read the docs](https://superwall.com/docs/ios) for setup help, or [report a bug](https://github.com/superwall/Superwall-iOS/issues) with your SDK version and steps to reproduce it. To contribute, read the [contributing guide](.github/CONTRIBUTING.md).
+
+SuperwallKit is available under the [MIT license](LICENSE).
