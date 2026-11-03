@@ -47,7 +47,7 @@ final class CustomStoreCheckoutHandler {
   /// progress or once the paywall began to close. `Superwall` runs the steps
   /// one at a time and never during a purchase started from a paywall.
   // swiftlint:disable:next function_body_length
-  func handle(
+  private func handleStep(
     _ checkout: CustomStoreCheckout,
     paywallViewController: PaywallViewController
   ) async {
@@ -66,16 +66,6 @@ final class CustomStoreCheckoutHandler {
       return
     }
 
-    if case let .complete(_, customTransactionId, _) = checkout,
-      !markCompleted(customTransactionId) {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .transactions,
-        message: "Ignoring a custom store checkout of \"\(productId)\": it already completed.",
-        info: ["checkout": checkout]
-      )
-      return
-    }
 
     // The checkout is over after any step but its start.
     let checkoutProductId: String?
@@ -201,14 +191,6 @@ final class CustomStoreCheckoutHandler {
         state: .purchasing(source)
       )
     }
-  }
-
-  /// Records a checkout's transaction as completed. Returns `false` if it
-  /// already was.
-  private func markCompleted(_ customTransactionId: String) -> Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return completedTransactionIds.insert(customTransactionId).inserted
   }
 
   /// Ends the custom store checkout that `paywallViewController` started, if it's
@@ -357,6 +339,23 @@ final class CustomStoreCheckoutHandler {
 }
 
 /// Who holds the purchasing coordinator when a custom store checkout step arrives.
+extension CustomStoreCheckoutHandler {
+  /// Handles a checkout step (see `handleStep`), ignoring a repeated complete.
+  func handle(_ checkout: CustomStoreCheckout, paywallViewController: PaywallViewController) async {
+    guard case let .complete(productId, customTransactionId, _) = checkout else {
+      return await handleStep(checkout, paywallViewController: paywallViewController)
+    }
+    lock.lock()
+    let isRepeat = !completedTransactionIds.insert(customTransactionId).inserted
+    lock.unlock()
+    if isRepeat {
+      let message = "Ignoring a custom store checkout of \"\(productId)\": it already completed."
+      return Logger.debug(logLevel: .warn, scope: .transactions, message: message, info: ["checkout": checkout])
+    }
+    await handleStep(checkout, paywallViewController: paywallViewController)
+  }
+}
+
 private enum CustomStoreCheckoutOwnership {
   /// The coordinator holds no purchase.
   case none
