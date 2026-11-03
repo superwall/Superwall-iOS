@@ -12,6 +12,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
 - Entitlements your server reports for a custom product purchase now show up in the app straight after the purchase.
 - Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves install attribution for apps using the Superwall MMP, by matching installs made over IPv4 or IPv6.
 
 ### Fixes
 
