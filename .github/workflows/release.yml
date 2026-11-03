@@ -23,8 +23,8 @@
 #    depends on SuperwallKit through CocoaPods, so it can't take the new
 #    version before then. Prereleases (-alpha, -beta, -rc) aren't sent to them.
 #
-# 6. Once everything has succeeded, announce the release in Slack (sdk-ops)
-#    with its notes.
+# 6. Once it's on CocoaPods and the wrappers are told, announce the release in
+#    Slack (sdk-ops) with its notes. Docs and Emerge don't hold this up.
 #
 # Any failure posts to Slack. Re-running failed jobs is safe: tagging,
 # releasing and publishing each skip what's already done.
@@ -323,14 +323,13 @@ jobs:
     secrets: inherit
 
   announce:
-    needs: [version, ui-tests, release, cocoapods, docs, emerge, wrappers]
-    # Everything succeeded; the wrappers are skipped for prereleases.
+    needs: [version, ui-tests, release, cocoapods, wrappers]
+    # Out on SPM and CocoaPods, and the wrappers told (skipped for prereleases).
+    # Docs and Emerge don't hold it up; their failures still post to Slack.
     if: >-
       !cancelled()
       && needs.release.result == 'success'
       && needs.cocoapods.result == 'success'
-      && needs.docs.result == 'success'
-      && needs.emerge.result == 'success'
       && (needs.wrappers.result == 'success' || needs.wrappers.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
