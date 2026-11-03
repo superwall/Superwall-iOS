@@ -233,6 +233,46 @@ struct DeviceIPCollectorTests {
     #expect(await failing.count == 2)
   }
 
+  /// The MMP match waits for a lookup that's already running, so a match at
+  /// first launch carries the address it's about to learn.
+  @Test func waitsForALookupInFlight() async {
+    let collector = DeviceIPCollector(
+      fetches: [{
+        try await Task.sleep(nanoseconds: 50_000_000)
+        return ["ipV4": "203.0.113.1", "ipV4ObservedAt": "2026-09-15T20:40:00Z"]
+      }],
+      now: { date }
+    )
+    await collector.refreshIfNeeded()
+    // A second refresh starts nothing, but the wait still covers the first.
+    #expect(await collector.refreshIfNeeded() == nil)
+    await collector.waitForLookups(timeout: 5)
+    #expect(await collector.attributes()["ipV4"] == "203.0.113.1")
+  }
+
+  @Test func stopsWaitingForASlowLookupAfterTheTimeout() async {
+    let collector = DeviceIPCollector(
+      fetches: [{
+        try? await Task.sleep(nanoseconds: 10_000_000_000)
+        return [:]
+      }],
+      now: { date }
+    )
+    await collector.refreshIfNeeded()
+    let start = Date()
+    await collector.waitForLookups(timeout: 0.1)
+    #expect(Date().timeIntervalSince(start) < 5)
+  }
+
+  @Test func returnsAtOnceWithNoLookupInFlight() async {
+    let counter = FetchCounter()
+    let collector = DeviceIPCollector(fetches: [{ try await counter.fetch() }], now: { date })
+    await collector.refreshIfNeeded()?.value
+    let start = Date()
+    await collector.waitForLookups(timeout: 10)
+    #expect(Date().timeIntervalSince(start) < 5)
+  }
+
   #if canImport(Network)
   @Test func readsTheBodyOfASuccessfulHTTPResponse() throws {
     let response = Data("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n{\"device\":{}}".utf8)

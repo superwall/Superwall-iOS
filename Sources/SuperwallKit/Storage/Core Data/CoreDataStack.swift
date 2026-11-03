@@ -38,12 +38,20 @@ class CoreDataStack {
   var backgroundContext: NSManagedObjectContext?
   var mainContext: NSManagedObjectContext?
 
-  init() {
+  init(location: CoreDataStoreLocation = .default) {
     // First load persistent container
     let persistentContainer = NSPersistentContainer(
       name: Self.modelName,
       managedObjectModel: Self.managedObject
     )
+    let storeUrl = location.currentUrl
+    try? FileManager.default.createDirectory(
+      at: storeUrl.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    persistentContainer.persistentStoreDescriptions = [
+      NSPersistentStoreDescription(url: storeUrl)
+    ]
 
     let dispatchGroup = DispatchGroup()
     dispatchGroup.enter()

@@ -1,18 +1,9 @@
 name: Build Documentation
 
+# Run by the release workflow after a release is published, or by hand.
 on:
-  push:
-    branches: [ master ]
-    paths:
-      - '.github/workflows/docs.yml'
-      - '**/*.swift'
-      - '**/*.md'
-      - '!Examples/**'
+  workflow_call:
   workflow_dispatch:
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build-docs:

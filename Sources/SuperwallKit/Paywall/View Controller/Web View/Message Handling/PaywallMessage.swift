@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/27/21.
 //
-// swiftlint:disable function_body_length
+// swiftlint:disable function_body_length file_length
 
 import Foundation
 
@@ -72,6 +72,14 @@ enum PaywallMessage: Decodable, Equatable {
   case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
   case stripeCheckoutFail(checkoutContextId: String, productId: String)
   case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  case customCheckoutStart(productId: String, customTransactionId: String)
+  case customCheckoutComplete(
+    productId: String,
+    customTransactionId: String,
+    shouldDismiss: Bool
+  )
+  case customCheckoutAbandon(productId: String, reason: CustomStoreCheckout.AbandonReason)
+  case customCheckoutFail(productId: String, message: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
   case requestCallback(
@@ -126,6 +134,10 @@ enum PaywallMessage: Decodable, Equatable {
     case stripeCheckoutSubmit = "stripe_checkout_submit"
     case stripeCheckoutFail = "stripe_checkout_fail"
     case stripeCheckoutAbandon = "stripe_checkout_abandon"
+    case customCheckoutStart = "custom_checkout_start"
+    case customCheckoutComplete = "custom_checkout_complete"
+    case customCheckoutAbandon = "custom_checkout_abandon"
+    case customCheckoutFail = "custom_checkout_fail"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
@@ -156,6 +168,9 @@ enum PaywallMessage: Decodable, Equatable {
     case checkoutStatusUrl
     case publicApiKey
     case checkoutContextId
+    case customTransactionId
+    case message
+    case reason
     case type
     case title
     case subtitle
@@ -306,6 +321,37 @@ enum PaywallMessage: Decodable, Equatable {
             checkoutContextId: checkoutContextId,
             productId: productId
           )
+          return
+        }
+      case .customCheckoutStart:
+        if let productId = try? values.decode(String.self, forKey: .productId),
+          let customTransactionId = try? values.decode(String.self, forKey: .customTransactionId) {
+          self = .customCheckoutStart(productId: productId, customTransactionId: customTransactionId)
+          return
+        }
+      case .customCheckoutComplete:
+        if let productId = try? values.decode(String.self, forKey: .productId),
+          let customTransactionId = try? values.decode(String.self, forKey: .customTransactionId) {
+          let shouldDismiss = (try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)) ?? true
+          self = .customCheckoutComplete(
+            productId: productId,
+            customTransactionId: customTransactionId,
+            shouldDismiss: shouldDismiss
+          )
+          return
+        }
+      case .customCheckoutAbandon:
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          // A missing or unknown reason counts as the buyer's.
+          let reason = (try? values.decodeIfPresent(String.self, forKey: .reason))
+            .flatMap(CustomStoreCheckout.AbandonReason.init(rawValue:)) ?? .buyer
+          self = .customCheckoutAbandon(productId: productId, reason: reason)
+          return
+        }
+      case .customCheckoutFail:
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          let message = (try? values.decodeIfPresent(String.self, forKey: .message)) ?? ""
+          self = .customCheckoutFail(productId: productId, message: message)
           return
         }
       case .requestStoreReview:

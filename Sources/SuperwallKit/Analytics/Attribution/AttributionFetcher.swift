@@ -315,7 +315,12 @@ extension AttributionFetcher {
   private var currentDeviceIdentifiers: [String: String] {
     var attributes: [String: String] = [:]
 
+    #if os(macOS)
+    // macOS has no Apple IDFV. The SDK's installation UUID is not an MMP identifier.
+    let vendorId = vendorIdProvider?() ?? ""
+    #else
     let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
+    #endif
     if !vendorId.isEmpty {
       attributes["idfv"] = vendorId
     }

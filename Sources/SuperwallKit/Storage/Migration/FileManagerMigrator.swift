@@ -14,12 +14,14 @@ enum DataStoreVersion: Int, CaseIterable, Codable {
   case v3
   case v4
   case v5
+  case v6
 }
 
 enum FileManagerMigrator {
   static func migrate(
     fromVersion version: DataStoreVersion,
-    cache: Cache
+    cache: Cache,
+    coreDataStoreLocation: CoreDataStoreLocation = .default
   ) {
     let rawCurrentVersion = version.rawValue
     let rawMaxVersion = DataStoreVersion.allCases.count - 1
@@ -37,6 +39,11 @@ enum FileManagerMigrator {
     case .v4:
       V4Migrator.migrateToNextVersion(cache: cache)
     case .v5:
+      V5Migrator.migrateToNextVersion(
+        cache: cache,
+        coreDataStoreLocation: coreDataStoreLocation
+      )
+    case .v6:
       break
     }
 
@@ -47,7 +54,8 @@ enum FileManagerMigrator {
 
     migrate(
       fromVersion: newVersion,
-      cache: cache
+      cache: cache,
+      coreDataStoreLocation: coreDataStoreLocation
     )
   }
 }

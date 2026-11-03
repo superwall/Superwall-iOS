@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 class PaywallManager {
   var presentedViewController: PaywallViewController? {
@@ -136,7 +140,12 @@ class PaywallManager {
     if isForPresentation {
       // Only preload if it's actually gonna present the view.
       // Not if we're just checking it's result
+      #if os(macOS)
+      // Reading `view` loads it. `loadViewIfNeeded()` needs macOS 14.
+      _ = paywallViewController.view
+      #else
       paywallViewController.loadViewIfNeeded()
+      #endif
     }
 
     return paywallViewController

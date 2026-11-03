@@ -66,7 +66,7 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
   /// Guarded rather than reading `Locale.regionCode` directly, which is deprecated at iOS 16 —
   /// `DeviceHelper.regionCode` makes the same split.
   static var deviceRegionCode: String? {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale.autoupdatingCurrent.language.region?.identifier
     }
     return Locale.autoupdatingCurrent.regionCode

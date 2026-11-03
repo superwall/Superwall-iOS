@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 06/06/2022.
 //
 
+#if !os(macOS)
 import UIKit
 
 enum TransitionState {
@@ -47,3 +48,4 @@ final class PushTransition: NSObject, UIViewControllerAnimatedTransitioning {
     animator = nil
   }
 }
+#endif

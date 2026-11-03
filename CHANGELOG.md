@@ -2,12 +2,42 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.0
+
+### Enhancements
+
+- Adds native macOS 12+ support, including paywalls, SwiftUI embedding, purchases, Customer Center and Test Mode. See the Mac example to get started.
+- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
+- Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
+- Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
+- Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves MMP install matching.
+- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network.
+
+### Fixes
+
+- Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
+- Fixes custom product purchases being reported as App Store purchases.
+
+## 4.18.3
+
+### Fixes
+
+- Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
+
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
+
 ## 4.18.1
 
 ### Enhancements
 
 - Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
-- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network.
 
 ## 4.18.0
 
