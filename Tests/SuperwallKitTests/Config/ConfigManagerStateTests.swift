@@ -76,7 +76,9 @@ struct ConfigUpdateTests {
 
 @Suite("ConfigManager store")
 struct ConfigManagerStoreTests {
-  private func makeConfigManager() -> (ConfigManager, NetworkMock) {
+  /// The container owns what the config manager holds unowned references to,
+  /// so tests keep it alive until they finish.
+  private func makeConfigManager() -> (ConfigManager, NetworkMock, DependencyContainer) {
     let dependencyContainer = DependencyContainer()
     let network = NetworkMock(
       options: SuperwallOptions(),
@@ -93,12 +95,13 @@ struct ConfigManagerStoreTests {
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       factory: dependencyContainer
     )
-    return (configManager, network)
+    return (configManager, network, dependencyContainer)
   }
 
   @Test("configState mirrors every config state change, in order")
   func configStateMirrorsTheStore() {
-    let (configManager, _) = makeConfigManager()
+    let (configManager, _, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
     var received: [ConfigState] = []
     let cancellable = configManager.configState.sink(
       receiveCompletion: { _ in },
@@ -118,7 +121,8 @@ struct ConfigManagerStoreTests {
 
   @Test("A failure completes configState with the error")
   func failureCompletesConfigState() async {
-    let (configManager, _) = makeConfigManager()
+    let (configManager, _, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
     configManager.store.update(ConfigUpdate.failed(TestError("offline")))
 
     await #expect(throws: TestError.self) {
@@ -130,14 +134,16 @@ struct ConfigManagerStoreTests {
 
   @Test("Refreshing without a config does nothing")
   func refreshWithoutConfig() async {
-    let (configManager, network) = makeConfigManager()
+    let (configManager, network, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
     await configManager.refreshConfiguration(isUserInitiated: true)
     #expect(network.getConfigCalled == false)
   }
 
   @Test("Refreshes called together run one after the other")
   func refreshesAreSerialized() async {
-    let (configManager, network) = makeConfigManager()
+    let (configManager, network, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
     configManager.store.update(ConfigUpdate.retrieved(.stub().setting(\.buildId, to: "old")))
     network.configReturnValue = .success(.stub().setting(\.buildId, to: "new"))
 

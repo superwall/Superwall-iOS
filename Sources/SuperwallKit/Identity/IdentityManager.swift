@@ -76,9 +76,11 @@ class IdentityManager: IdentityContext {
 
   let store: IdentityStore
 
-  private unowned let storage: Storage
-  private unowned let configManager: ConfigManager
-  private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
+  // Weak rather than unowned: side effects and queued actions can outlive
+  // these, and then they should do nothing rather than crash.
+  private weak var storage: Storage?
+  private weak var configManager: ConfigManager?
+  private weak var webEntitlementRedeemer: WebEntitlementRedeemer?
   private let notifyUserChangeHandler: (([String: Any]) -> Void)?
   private let resetForNewUserHandler: () -> Void
   private let trackHandler: (Trackable) async -> Void
@@ -181,15 +183,15 @@ class IdentityManager: IdentityContext {
 
   /// Checks for static config upgrade before setting identity.
   func configure() async {
-    let neverCalledStaticConfig = storage.neverCalledStaticConfig
-    let isFirstAppOpen = !(storage.get(DidTrackFirstSeen.self) ?? false)
+    let neverCalledStaticConfig = storage?.neverCalledStaticConfig ?? false
+    let isFirstAppOpen = !(storage?.get(DidTrackFirstSeen.self) ?? false)
 
     if IdentityLogic.shouldGetAssignments(
       isLoggedIn: isLoggedIn,
       neverCalledStaticConfig: neverCalledStaticConfig,
       isFirstAppOpen: isFirstAppOpen
     ) {
-      try? await configManager.getAssignments()
+      try? await configManager?.getAssignments()
     }
 
     store.update(IdentityUpdate.end(.configuration))
@@ -288,6 +290,9 @@ extension IdentityManager {
 // MARK: - IdentityContext
 extension IdentityManager {
   func userIdSeed(for userId: String) async -> Int? {
+    guard let configManager = configManager else {
+      return nil
+    }
     let config = try? await configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
@@ -298,11 +303,11 @@ extension IdentityManager {
   }
 
   func fetchAssignments() async {
-    try? await configManager.getAssignments()
+    try? await configManager?.getAssignments()
   }
 
   func redeemExistingWebEntitlements() async {
-    await webEntitlementRedeemer.redeem(.existingCodes)
+    await webEntitlementRedeemer?.redeem(.existingCodes)
   }
 
   func resetForNewUser() {
@@ -330,6 +335,9 @@ extension IdentityManager {
   }
 
   func persistIdentity(_ state: IdentityState) {
+    guard let storage = storage else {
+      return
+    }
     if let appUserId = state.appUserId {
       storage.save(appUserId, forType: AppUserId.self)
     } else {
@@ -349,6 +357,9 @@ extension IdentityManager {
   /// Saves only the fields an update changed. Updates that only touch
   /// pending work save nothing.
   private func persistChanges(from before: IdentityState, to after: IdentityState) {
+    guard let storage = storage else {
+      return
+    }
     if after.appUserId != before.appUserId {
       if let appUserId = after.appUserId {
         storage.save(appUserId, forType: AppUserId.self)

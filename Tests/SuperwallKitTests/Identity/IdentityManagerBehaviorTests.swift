@@ -142,6 +142,7 @@ struct IdentityManagerBehaviorTests {
   @Test("A fresh install generates and saves an alias and a seed")
   func freshInstallGeneratesIds() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
 
     #expect(identityManager.aliasId.hasPrefix(IdentityLogic.superwallPrefix))
@@ -168,7 +169,9 @@ struct IdentityManagerBehaviorTests {
     storage.save(["custom": "value"], forType: UserAttributes.self)
     storage.save(true, forType: DidCleanUserAttributes.self)
 
-    let identityManager = Harness(storage: storage).identityManager
+    let harness = Harness(storage: storage)
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
 
     #expect(identityManager.aliasId == "$SuperwallAlias:stored")
     #expect(identityManager.seed == 42)
@@ -189,7 +192,9 @@ struct IdentityManagerBehaviorTests {
       forType: UserAttributes.self
     )
 
-    let identityManager = Harness(storage: storage).identityManager
+    let harness = Harness(storage: storage)
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
 
     let cleaned = await eventually {
       storage.get(DidCleanUserAttributes.self) == true
@@ -203,17 +208,22 @@ struct IdentityManagerBehaviorTests {
   @Test("appAccountToken is the userId when it's a UUID, otherwise nil")
   func appAccountToken() async {
     let uuid = UUID()
-    let uuidUser = Harness().identityManager
+    let uuidHarness = Harness()
+    defer { withExtendedLifetime(uuidHarness) {} }
+    let uuidUser = uuidHarness.identityManager
     uuidUser.identify(userId: uuid.uuidString, options: nil)
     #expect(await eventually { uuidUser.appUserId == uuid.uuidString })
     #expect(uuidUser.appAccountToken == uuid)
 
-    let namedUser = Harness().identityManager
+    let namedHarness = Harness()
+    defer { withExtendedLifetime(namedHarness) {} }
+    let namedUser = namedHarness.identityManager
     namedUser.identify(userId: "not-a-uuid", options: nil)
     #expect(await eventually { namedUser.appUserId == "not-a-uuid" })
     #expect(namedUser.appAccountToken == nil)
 
-    #expect(Harness().identityManager.appAccountToken == nil)
+    let anonymousHarness = Harness()
+    #expect(anonymousHarness.identityManager.appAccountToken == nil)
   }
 
   // MARK: - Configure
@@ -221,6 +231,7 @@ struct IdentityManagerBehaviorTests {
   @Test("configure marks the identity ready without assignments for a new user")
   func configureWithoutAssignments() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     harness.storage.neverCalledStaticConfig = false
     #expect(harness.identityManager.identitySubject.value == false)
 
@@ -235,6 +246,7 @@ struct IdentityManagerBehaviorTests {
     let storage = StorageMock()
     storage.save("legacy-user", forType: AppUserId.self)
     let harness = Harness(storage: storage)
+    defer { withExtendedLifetime(harness) {} }
     harness.storage.neverCalledStaticConfig = true
     let gate = AssignmentsGate()
     harness.configManager.gate = gate
@@ -254,6 +266,7 @@ struct IdentityManagerBehaviorTests {
   @Test("hasIdentity only emits once the identity is ready")
   func hasIdentityEmitsWhenReady() async throws {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     harness.storage.neverCalledStaticConfig = false
 
     let emitted = Task {
@@ -276,6 +289,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify sets and saves the user id and adds it to the attributes")
   func identifySetsUserId() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
     let aliasId = identityManager.aliasId
 
@@ -292,7 +306,9 @@ struct IdentityManagerBehaviorTests {
 
   @Test("identify trims whitespace from the user id")
   func identifyTrimsWhitespace() async {
-    let identityManager = Harness().identityManager
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
     identityManager.identify(userId: "  user-1 \n", options: nil)
     #expect(await eventually { identityManager.appUserId == "user-1" })
   }
@@ -300,6 +316,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify ignores an empty or blank user id")
   func identifyIgnoresBlankUserId() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     harness.identityManager.identify(userId: "", options: nil)
     harness.identityManager.identify(userId: "   \n", options: nil)
     await settle()
@@ -311,6 +328,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identifying the current user again does nothing")
   func identifySameUserIsNoOp() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
     identityManager.identify(userId: "user-1", options: nil)
     #expect(await eventually { harness.configManager.getAssignmentsCount == 1 })
@@ -331,6 +349,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify derives the seed from the user id when the config enables it")
   func identifyDerivesSeed() async throws {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: true)))
     let expectedSeed = try #require("user-1".sha256MappedToRange())
 
@@ -346,6 +365,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify keeps the seed when the config doesn't enable user id seeds")
   func identifyKeepsSeed() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let seed = harness.identityManager.seed
     harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
 
@@ -359,6 +379,7 @@ struct IdentityManagerBehaviorTests {
   @Test("A newly identified user isn't ready until the config arrives, but merges still apply")
   func identifyWaitsForConfig() async {
     let harness = Harness(publishConfig: false)
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
     harness.storage.neverCalledStaticConfig = false
     await identityManager.configure()
@@ -379,6 +400,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify fetches assignments in the background by default")
   func identifyDoesNotWaitForAssignments() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let gate = AssignmentsGate()
     harness.configManager.gate = gate
 
@@ -393,6 +415,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify waits for assignments when asked to restore them")
   func identifyWaitsForAssignmentsWhenRestoring() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let gate = AssignmentsGate()
     harness.configManager.gate = gate
 
@@ -414,6 +437,7 @@ struct IdentityManagerBehaviorTests {
   @Test("reset gives the user a new anonymous identity")
   func resetCreatesNewAnonymousIdentity() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
     identityManager.identify(userId: "user-1", options: nil)
     identityManager.mergeUserAttributes(["custom": "value"])
@@ -446,6 +470,7 @@ struct IdentityManagerBehaviorTests {
   @Test("Merging attributes adds, overwrites and removes keys, and saves them")
   func mergeAttributes() async {
     let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
     let identityManager = harness.identityManager
 
     identityManager.mergeUserAttributes(["keep": "a", "overwrite": "b", "remove": "c"])
@@ -469,7 +494,9 @@ struct IdentityManagerBehaviorTests {
 
   @Test("Merges from many threads are all applied")
   func concurrentMerges() async {
-    let identityManager = Harness().identityManager
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
     await withTaskGroup(of: Void.self) { group in
       for index in 0..<100 {
         group.addTask {
@@ -486,7 +513,9 @@ struct IdentityManagerBehaviorTests {
 
   @Test("Merges dispatched from one thread apply in order")
   func mergesApplyInOrder() async {
-    let identityManager = Harness().identityManager
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
     for index in 0..<50 {
       identityManager.mergeUserAttributes(["counter": index])
     }
@@ -499,11 +528,13 @@ struct IdentityManagerBehaviorTests {
   func notificationsSeeEarlierMerges() async {
     var notifications: [[String: Any]] = []
     let lock = NSLock()
-    let identityManager = Harness(notifyUserChange: { attributes in
+    let harness = Harness(notifyUserChange: { attributes in
       lock.lock()
       notifications.append(attributes)
       lock.unlock()
-    }).identityManager
+    })
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
 
     identityManager.mergeUserAttributes(["first": 1])
     identityManager.mergeUserAttributesAndNotify(["second": 2])
