@@ -15,7 +15,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Fixes
 
-- Fixes paywall notifications not being scheduled again after the denied-permission alert couldn't show.
 - Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
 - Fixes custom product purchases being reported as App Store purchases.
 
