@@ -1,0 +1,395 @@
+# Releases SuperwallKit when a new version reaches master.
+#
+#   version ──┬─ unit tests ──────────┐
+#             └─ UI tests (if asked) ─┴─ release ──┬─ CocoaPods ── wrappers (Flutter, Expo, KMP)
+#                (4 schemes,               ├─ docs
+#                 on Limrun)               └─ Emerge
+#
+# 1. `version` reads the version from Constants.swift, checks the podspec and
+#    CHANGELOG.md agree, and stops the run if that version is already tagged
+#    (a merge that doesn't bump the version releases nothing).
+# 2. The unit tests run against this exact commit. The UI tests run too, in
+#    parallel, only if the pull request merged into master has the
+#    `uitests-required` label (or the manual run asks for them): add it for
+#    big changes, leave it off for small releases. The UI tests come from
+#    Superwall-iOS-UI-tests (main), pinned to this commit, and run on Limrun:
+#    each scheme gets 5 shards, so the four together use the organization's
+#    20 simulators and 20 sandboxes.
+# 3. Only if every test that ran passes: tag the commit, push release/<version>, and
+#    publish a GitHub release titled with the version, with that version's
+#    CHANGELOG.md section as its notes.
+# 4. Publish to CocoaPods, build the docs and upload to Emerge.
+# 5. Once the version is on the CocoaPods CDN, tell the wrapper SDKs. Expo
+#    depends on SuperwallKit through CocoaPods, so it can't take the new
+#    version before then. Prereleases (-alpha, -beta, -rc) aren't sent to them.
+#
+# 6. Once everything has succeeded, announce the release in Slack (sdk-ops)
+#    with its notes.
+#
+# Any failure posts to Slack. Re-running failed jobs is safe: tagging,
+# releasing and publishing each skip what's already done.
+#
+# Secrets: LIM_API_KEY, UI_TESTS_REPO_ACCESS_TOKEN (read access to
+# Superwall-iOS-UI-tests), COCOAPODS_TRUNK_TOKEN, EMERGE_API_KEY,
+# WRAPPER_DISPATCH_TOKEN, SLACK_WEBHOOK (sdk-ops: announcements and
+# failures).
+
+name: Release
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      ui-tests:
+        description: Run the UI tests on Limrun before releasing
+        type: boolean
+        default: false
+
+# One release at a time, and never cancel one halfway through.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      release: ${{ steps.version.outputs.release }}
+      ui-tests: ${{ steps.ui-tests.outputs.run }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read and check the version
+        id: version
+        run: |
+          if ! version=$(scripts/sdk-version.sh --check); then
+            echo "::error::Couldn't read the version, or SuperwallKit.podspec and Constants.swift disagree (see above)."
+            exit 1
+          fi
+          echo "Version: $version"
+
+          if ! scripts/release-notes.sh "$version" > /dev/null; then
+            echo "::error::CHANGELOG.md has no notes for $version (a '## $version' section)."
+            exit 1
+          fi
+
+          if [[ "$version" == *-alpha* || "$version" == *-beta* || "$version" == *-rc* ]]; then
+            prerelease=true
+          else
+            prerelease=false
+          fi
+
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" > /dev/null; then
+            echo "::notice::$version is already tagged, so there's nothing to release."
+            release=false
+          else
+            release=true
+          fi
+
+          {
+            echo "version=$version"
+            echo "prerelease=$prerelease"
+            echo "release=$release"
+          } >> "$GITHUB_OUTPUT"
+
+      # The label goes on the pull request into master (usually develop ->
+      # master). Squash and merge commits both map back to it.
+      - name: Check whether the UI tests are needed
+        id: ui-tests
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          REQUESTED: ${{ inputs.ui-tests }}
+        run: |
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            run="${REQUESTED:-false}"
+            echo "Manual run: UI tests $([ "$run" = true ] && echo requested || echo not requested)."
+          else
+            prs=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls" \
+              --jq '[.[] | select(.base.ref == "master")]')
+            numbers=$(jq -r 'map("#\(.number)") | join(", ")' <<< "$prs")
+            if jq -e 'any(.[]; any(.labels[]; .name == "uitests-required"))' <<< "$prs" > /dev/null; then
+              run=true
+              echo "::notice::$numbers has the uitests-required label, so the UI tests will run."
+            else
+              run=false
+              echo "::notice::No uitests-required label on ${numbers:-the pull request}, so the UI tests are skipped."
+            fi
+          fi
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
+  unit-tests:
+    needs: version
+    if: needs.version.outputs.release == 'true'
+    uses: ./.github/workflows/tests.yml
+
+  ui-tests:
+    needs: version
+    if: needs.version.outputs.release == 'true' && needs.version.outputs.ui-tests == 'true'
+    name: UI tests (${{ matrix.scheme }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scheme: UI Tests -swift -automatic
+            slug: swift-automatic
+          - scheme: UI Tests -swift -advanced
+            slug: swift-advanced
+          - scheme: UI Tests -objc -automatic
+            slug: objc-automatic
+          - scheme: UI Tests -objc -advanced
+            slug: objc-advanced
+    steps:
+      - name: Check out the UI tests
+        uses: actions/checkout@v4
+        with:
+          repository: superwall/Superwall-iOS-UI-tests
+          ref: main
+          token: ${{ secrets.UI_TESTS_REPO_ACCESS_TOKEN || github.token }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install the Limrun CLI
+        run: npm install --global lim
+
+      - name: Test this commit of SuperwallKit
+        run: scripts/pin-superwallkit.sh "$GITHUB_SHA" "https://github.com/$GITHUB_REPOSITORY"
+
+      - name: Run the UI tests on Limrun
+        env:
+          LIM_API_KEY: ${{ secrets.LIM_API_KEY }}
+        run: scripts/limrun-test.sh -s "${{ matrix.scheme }}" -n 5 -r limrun-results
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-tests-${{ matrix.slug }}
+          path: limrun-results
+          retention-days: 14
+
+  release:
+    needs: [version, unit-tests, ui-tests]
+    # Runs when the UI tests passed or weren't needed (skipped), never when
+    # they failed or were cancelled.
+    if: >-
+      !cancelled()
+      && needs.version.outputs.release == 'true'
+      && needs.unit-tests.result == 'success'
+      && (needs.ui-tests.result == 'success' || needs.ui-tests.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      PRERELEASE: ${{ needs.version.outputs.prerelease }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag the commit
+        run: |
+          if git ls-remote --exit-code --tags origin "refs/tags/$VERSION" > /dev/null; then
+            echo "$VERSION is already tagged."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$VERSION" -m "$VERSION" "$GITHUB_SHA"
+            git push origin "refs/tags/$VERSION"
+          fi
+
+      - name: Push the release branch
+        run: |
+          if git ls-remote --exit-code --heads origin "release/$VERSION" > /dev/null; then
+            echo "release/$VERSION already exists."
+          else
+            git push origin "$GITHUB_SHA:refs/heads/release/$VERSION"
+          fi
+
+      - name: Publish the GitHub release
+        run: |
+          if gh release view "$VERSION" > /dev/null 2>&1; then
+            echo "The $VERSION release already exists."
+            exit 0
+          fi
+          scripts/release-notes.sh "$VERSION" > notes.md
+          if [ "$PRERELEASE" = "true" ]; then
+            flags=(--prerelease --latest=false)
+          else
+            flags=(--latest)
+          fi
+          gh release create "$VERSION" \
+            --verify-tag \
+            --title "$VERSION" \
+            --notes-file notes.md \
+            "${flags[@]}"
+
+  cocoapods:
+    needs: [version, release]
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      COCOAPODS_TRUNK_TOKEN: ${{ secrets.COCOAPODS_TRUNK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # The CDN lists every published version in a file named after the first
+      # characters of the pod name's MD5 (SuperwallKit: 2c1).
+      - name: Publish to CocoaPods
+        run: |
+          on_cdn() {
+            curl -fsS "https://cdn.cocoapods.org/all_pods_versions_2_c_1.txt" |
+              grep '^SuperwallKit/' | tr '/' '\n' | grep -qxF "$VERSION"
+          }
+          on_trunk() {
+            curl -fsS "https://trunk.cocoapods.org/api/v1/pods/SuperwallKit" |
+              python3 -c 'import json, sys; sys.exit(0 if sys.argv[1] in [v["name"] for v in json.load(sys.stdin)["versions"]] else 1)' "$VERSION"
+          }
+          if on_trunk; then
+            echo "$VERSION is already on CocoaPods trunk."
+          else
+            # Trunk sometimes times out calling GitHub after the spec has
+            # validated ("Calling the GitHub commit API timed out"); 4.18.3
+            # was lost that way. Retry before giving up.
+            for attempt in 1 2 3; do
+              if pod trunk push SuperwallKit.podspec --allow-warnings; then
+                break
+              fi
+              if on_trunk; then
+                break
+              fi
+              if [ "$attempt" = 3 ]; then
+                echo "::error::pod trunk push failed three times."
+                exit 1
+              fi
+              sleep $((attempt * 60))
+            done
+          fi
+
+          echo "Waiting for $VERSION to reach the CocoaPods CDN..."
+          for _ in $(seq 1 60); do
+            if on_cdn; then
+              echo "$VERSION is on the CDN."
+              exit 0
+            fi
+            sleep 30
+          done
+          echo "::error::$VERSION is on trunk but hasn't reached the CDN after 30 minutes."
+          exit 1
+
+  docs:
+    needs: release
+    permissions:
+      contents: write
+    uses: ./.github/workflows/docs.yml
+
+  emerge:
+    needs: release
+    uses: ./.github/workflows/emerge-tools-upload.yml
+    secrets: inherit
+
+  wrappers:
+    needs: [version, cocoapods]
+    if: needs.version.outputs.prerelease == 'false'
+    uses: ./.github/workflows/notify-wrappers.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit
+
+  announce:
+    needs: [version, ui-tests, release, cocoapods, docs, emerge, wrappers]
+    # Everything succeeded; the wrappers are skipped for prereleases.
+    if: >-
+      !cancelled()
+      && needs.release.result == 'success'
+      && needs.cocoapods.result == 'success'
+      && needs.docs.result == 'success'
+      && needs.emerge.result == 'success'
+      && (needs.wrappers.result == 'success' || needs.wrappers.result == 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Post to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          VERSION: ${{ needs.version.outputs.version }}
+          PRERELEASE: ${{ needs.version.outputs.prerelease }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.version.outputs.version }}
+          # release only runs if these passed or were skipped.
+          UI_TESTS: ${{ needs.ui-tests.result }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          scripts/release-notes.sh "$VERSION" > notes.md
+          payload=$(python3 - <<'PY'
+          import json, os, re
+          version, url = os.environ["VERSION"], os.environ["RELEASE_URL"]
+          kind = "prerelease" if os.environ["PRERELEASE"] == "true" else "release"
+          lines = []
+          # CHANGELOG markdown to Slack mrkdwn: headings, bullets, bold, links.
+          for line in open("notes.md").read().splitlines():
+              line = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r"<\2|\1>", line)
+              line = re.sub(r"\*\*([^*]+)\*\*", r"*\1*", line)
+              heading = re.match(r"#+\s*(.+)", line)
+              if heading:
+                  line = f"*{heading.group(1)}*"
+              line = re.sub(r"^(\s*)[-*] ", r"\1• ", line)
+              lines.append(line)
+          notes = "\n".join(lines)
+          if len(notes) > 2800:
+              notes = notes[:2800].rsplit("\n", 1)[0] + "\n…"
+          header = f":rocket: *SuperwallKit {version}* {kind} is out: <{url}|release notes>"
+          if os.environ["UI_TESTS"] == "success":
+              ui = ":white_check_mark: UI tests passed (all four schemes, on Limrun)"
+          elif os.environ["EVENT"] == "workflow_dispatch":
+              ui = ":fast_forward: UI tests not run (not requested for this manual run)"
+          else:
+              ui = ":fast_forward: UI tests not run (no `uitests-required` label)"
+          header += f"\n:white_check_mark: Unit tests passed\n{ui}"
+          print(json.dumps({
+              "text": f"SuperwallKit {version} released: {url}",
+              "blocks": [
+                  {"type": "section", "text": {"type": "mrkdwn", "text": header}},
+                  {"type": "section", "text": {"type": "mrkdwn", "text": notes}},
+              ],
+          }))
+          PY
+          )
+          curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
+
+  report-failure:
+    needs: [version, unit-tests, ui-tests, release, cocoapods, docs, emerge, wrappers, announce]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          VERSION: ${{ needs.version.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          text="iOS release ${VERSION:-(unknown version)} failed: $RUN_URL"
+          payload=$(python3 -c 'import json, sys; print(json.dumps({"text": sys.argv[1]}))' "$text")
+          curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
