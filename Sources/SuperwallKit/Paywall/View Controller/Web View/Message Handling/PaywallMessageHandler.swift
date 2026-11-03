@@ -484,7 +484,7 @@ final class PaywallMessageHandler: WebEventDelegate {
       )
       await Superwall.shared.track(webViewLoad)
 
-      let behavior = await Superwall.shared.eventTrackingBehavior
+      let behavior = Superwall.shared.eventTrackingBehavior
       await self.passEventTrackingBehaviorToWebView(behavior)
     }
 
