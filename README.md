@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://user-images.githubusercontent.com/3296904/158817914-144c66d0-572d-43a4-9d47-d7d0b711c6d7.png" alt="Superwall" height="80" />
+  <img src=".github/assets/readme-banner.png" alt="Superwall" width="100%" />
 </p>
 
 <h1 align="center">SuperwallKit</h1>
