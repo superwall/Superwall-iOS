@@ -22,6 +22,7 @@
 
 <p align="center">
   <a href="#add-superwall-with-a-single-prompt">Get started</a> ·
+  <a href="#manual-quick-start">Manual setup</a> ·
   <a href="https://superwall.com/docs/ios">Docs</a> ·
   <a href="https://sdk.superwall.me/documentation/superwallkit/">API reference</a> ·
   <a href="#examples">Examples</a>
@@ -113,11 +114,11 @@ The campaign decides whether a paywall shows. With no paywall set up, the closur
 | macOS | macOS 12+ · native AppKit and SwiftUI · [Mac guide](Sources/SuperwallKit/Documentation.docc/macOS.md) |
 | Mac Catalyst · visionOS | Uses the iOS API |
 
-## What you get
+## What you get with Superwall
 
 - **Paywalls and onboarding flows:** build single paywalls or multi-page onboarding in the dashboard and publish changes without an app release.
 - **Experiments:** target audiences with campaigns and A/B test paywalls, prices and flows.
-- **Web checkout and funnels:** sell through Stripe on the web, send iOS users to web checkout from a paywall, and share web funnels as links.
+- **Web checkout and funnels:** sell through Stripe on the web, send US App Store users to web checkout from a paywall, and share web funnels as links.
 - **Subscriptions and entitlements:** StoreKit 2 purchases with server-side validation, or bring your own purchase controller.
 - **Retention:** free trial reminders, cancellation surveys, abandoned-purchase offers and win-back paywalls.
 - **Customer Center:** a ready-made screen where users manage their subscription.
