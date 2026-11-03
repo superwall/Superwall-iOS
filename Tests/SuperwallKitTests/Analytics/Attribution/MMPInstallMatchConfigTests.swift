@@ -117,31 +117,27 @@ struct MMPInstallMatchConfigTests {
     #expect(attempts.count == 2)
   }
 
-  @Test
-  func matchRequestStopsWhenTrackingIsTurnedOff() async {
-    let dependencyContainer = DependencyContainer()
-    // As if the app opted out while the match waited for its IP lookup.
-    dependencyContainer.configManager.options.eventTrackingBehavior = .none
-
-    await #expect(throws: MMPMatchError.trackingDisabled) {
-      _ = try await dependencyContainer.network.matchMMPInstall(
-        idfa: nil,
-        advertiserTrackingEnabled: false,
-        applicationTrackingEnabled: true
-      )
-    }
-  }
-
-  @Test
-  func matchStoppedByAnOptOutStartsAgainOnOptIn() async {
-    let dependencyContainer = DependencyContainer()
+  /// Starts matches the way `Superwall` does, skipping them while the app is
+  /// opted out. A match with no `run` opts the app out while it's under way,
+  /// as if during its IP lookup, so the request stops.
+  private func startMatches(
+    on dependencyContainer: DependencyContainer,
+    counting started: Counter,
+    run: ((Int) async -> Void)? = nil
+  ) {
     let manager = dependencyContainer.mmpAttributionManager!
-    dependencyContainer.configManager.options.eventTrackingBehavior = .none
-    let started = Counter()
-
     manager.matchInstallOnceEnabled {
+      if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
+        return nil
+      }
       started.count += 1
+      let attempt = started.count
       return Task {
+        if let run {
+          await run(attempt)
+          return
+        }
+        dependencyContainer.configManager.options.eventTrackingBehavior = .none
         _ = await manager.matchInstall(
           idfa: nil,
           advertiserTrackingEnabled: false,
@@ -149,15 +145,90 @@ struct MMPInstallMatchConfigTests {
         )
       }
     }
+  }
+
+  private func waitUntil(_ condition: () -> Bool) async {
+    for _ in 0..<100 where !condition() {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+    }
+  }
+
+  @Test
+  func matchStoppedByAnOptOutStartsAgainOnOptIn() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let started = Counter()
+    startMatches(on: dependencyContainer, counting: started)
     dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
     #expect(started.count == 1)
 
-    // Opting back in starts it again once the stopped match has finished.
-    for _ in 0..<100 where started.count == 1 {
-      try? await Task.sleep(nanoseconds: 20_000_000)
+    // Let the stopped match finish while the app is still opted out.
+    try? await Task.sleep(nanoseconds: 300_000_000)
+    #expect(started.count == 1)
+
+    dependencyContainer.configManager.options.eventTrackingBehavior = .all
+    manager.startMatchIfEnabled()
+    #expect(started.count == 2)
+  }
+
+  @Test
+  func matchStartsAgainWhenTheAppOptsInBeforeTheStoppedMatchFinishes() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let started = Counter()
+    startMatches(on: dependencyContainer, counting: started) { attempt in
+      if attempt > 1 {
+        return
+      }
+      dependencyContainer.configManager.options.eventTrackingBehavior = .none
+      _ = await manager.matchInstall(
+        idfa: nil,
+        advertiserTrackingEnabled: false,
+        applicationTrackingEnabled: true
+      )
+      // The app opts back in while this match is still finishing, so its
+      // opt-in finds the match running and can't start it.
+      dependencyContainer.configManager.options.eventTrackingBehavior = .all
       manager.startMatchIfEnabled()
     }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    await waitUntil { started.count == 2 }
     #expect(started.count == 2)
+  }
+
+  @Test
+  func paywallWaitsForAMatchRestartedAfterAnOptOut() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    let started = Counter()
+    let finished = Counter()
+    startMatches(on: dependencyContainer, counting: started) { attempt in
+      if attempt == 1 {
+        dependencyContainer.configManager.options.eventTrackingBehavior = .none
+        _ = await manager.matchInstall(
+          idfa: nil,
+          advertiserTrackingEnabled: false,
+          applicationTrackingEnabled: true
+        )
+        // The app opts back in while this match is still finishing.
+        dependencyContainer.configManager.options.eventTrackingBehavior = .all
+        return
+      }
+      // The restarted match finishes a moment later.
+      try? await Task.sleep(nanoseconds: 300_000_000)
+      finished.count += 1
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    await waitUntil { started.count == 2 }
+    #expect(started.count == 2)
+
+    await manager.waitForPendingMatch(
+      ifUsedBy: makeTrigger(expression: "user.acquisition_source == \"tiktok\""),
+      timeout: 10
+    )
+    #expect(finished.count == 1)
   }
 
   @Test
