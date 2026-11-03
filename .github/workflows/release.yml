@@ -392,7 +392,28 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
           VERSION: ${{ needs.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          text="iOS release ${VERSION:-(unknown version)} failed: $RUN_URL"
-          payload=$(python3 -c 'import json, sys; print(json.dumps({"text": sys.argv[1]}))' "$text")
+          # `release` pushes the tag first, so a later step of it can fail with the
+          # version already out. Check the tag rather than the job's result.
+          export TAGGED=false
+          if [ -n "$VERSION" ] && git ls-remote --exit-code --tags \
+              "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$VERSION" > /dev/null; then
+            TAGGED=true
+          fi
+          payload=$(python3 - <<'PY'
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          version = os.environ["VERSION"] or "(unknown version)"
+          failed = [name for name, job in needs.items() if job["result"] == "failure"]
+          jobs = ", ".join(failed) or "a job"
+          url = os.environ["RUN_URL"]
+          # Once it's tagged, the version is out on SPM whatever failed after.
+          if os.environ["TAGGED"] == "true":
+              text = f"iOS {version} is released (tagged, on SPM), but {jobs} failed. Re-run the failed jobs once fixed: {url}"
+          else:
+              text = f"iOS release {version} failed at {jobs}; nothing was tagged: {url}"
+          print(json.dumps({"text": text}))
+          PY
+          )
           curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
