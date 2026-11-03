@@ -7,32 +7,6 @@
 
 import Foundation
 
-/// A pure state transform: no side effects and no dispatch.
-///
-/// Reducers describe how state changes. Storage, network and tracking
-/// belong in a ``StoreAction``.
-protocol Reducer {
-  associatedtype State
-  func reduce(_ state: State) -> State
-}
-
-/// Async work that runs on a ``SequentialStore``'s queue.
-///
-/// The context supplies every dependency the action needs, so tests can run
-/// an action against a context built from mocks. Actions change state only
-/// by passing a ``Reducer`` to ``SequentialStore/update(_:)``.
-protocol StoreAction {
-  associatedtype Context
-  func execute(in context: Context) async
-}
-
-/// Work that runs synchronously on a ``SequentialStore``, for state whose
-/// changes never wait on anything. See ``SequentialStore/dispatch(_:in:)``.
-protocol SyncStoreAction {
-  associatedtype Context
-  func execute(in context: Context)
-}
-
 /// Identifies the store job that the current task is running, so a store can
 /// tell a call made from inside one of its own actions from one made outside.
 private struct StoreJob: Hashable {
@@ -117,12 +91,8 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
 
   private let coordinator = SerialTaskCoordinator()
 
-  /// Guards the two properties below. Never held while an action runs.
-  private let dispatchLock = NSLock()
-  /// Dispatched actions waiting for the draining thread to run them.
-  private var pendingDispatches: [() -> Void] = []
-  /// Whether a thread is running dispatched actions.
-  private var isDraining = false
+  /// Runs ``dispatch(_:in:)``'s actions one at a time without blocking.
+  private let dispatcher = SerialDispatcher()
 
   /// The current state.
   var state: State {
@@ -332,38 +302,7 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
       }
     }
 
-    let shouldDrain: Bool = withDispatchLock {
-      pendingDispatches.append(run)
-      if isDraining {
-        return false
-      }
-      isDraining = true
-      return true
-    }
-    guard shouldDrain else {
-      return
-    }
-
-    while let next = nextDispatch() {
-      next()
-    }
-  }
-
-  /// Takes the next dispatched action, or stops draining if there's none.
-  private func nextDispatch() -> (() -> Void)? {
-    withDispatchLock {
-      if pendingDispatches.isEmpty {
-        isDraining = false
-        return nil
-      }
-      return pendingDispatches.removeFirst()
-    }
-  }
-
-  private func withDispatchLock<T>(_ body: () -> T) -> T {
-    dispatchLock.lock()
-    defer { dispatchLock.unlock() }
-    return body()
+    dispatcher.run(run)
   }
 
   /// Returns once everything queued before this call has finished.
