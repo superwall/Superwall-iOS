@@ -24,7 +24,12 @@ extension CustomerCenterViewModel {
 
   /// Opens a page for managing a purchase in the user's browser or the App
   /// Store, and refreshes once they're back, as closing the iOS sheet does.
-  func openForManagement(_ url: URL, refresh: RefreshOnReturn) {
+  /// Like ``presentSheet(_:for:)``, it does nothing if the screen that asked,
+  /// `requester`, is no longer on top.
+  func openForManagement(_ url: URL, refresh: RefreshOnReturn, for requester: UUID?) {
+    if screenOnTop != requester {
+      return
+    }
     refreshOnReturn = refresh
     dependencies.urlOpener.open(url)
   }

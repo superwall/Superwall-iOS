@@ -284,5 +284,108 @@ struct SystemWindowHidingTests {
     // close would go unreported.
     #expect(recorder.finishCount == 2)
   }
+
+  @Test
+  func paywallShownAgainRightAfterItsWindowReturnsWithoutIt() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    let recorder = FinishRecorder()
+    paywall.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+    // The dismissal reads the page's state first. Make that take a while, so
+    // the old dismissal is still running when the paywall is shown again. The
+    // SDK connects the message handler when it makes a paywall; this test
+    // makes its own.
+    paywall.webView.messageHandler.delegate = paywall
+    paywall.webView.loadHTMLString(
+      """
+      <script>
+      window.app = { getAllState() { const end = Date.now() + 1500; while (Date.now() < end) {} return {}; } };
+      </script>
+      """,
+      baseURL: nil
+    )
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    #expect(paywall.isHiddenWithWindow)
+
+    // Taken down while hidden. The window coming back starts that dismissal,
+    // and the app shows the same paywall again while it's still running.
+    paywall.presentingViewController?.dismiss(paywall)
+    parent.deminiaturize(nil)
+    for _ in 0..<300 where paywall.isHiddenWithWindow {
+      try await Task.sleep(nanoseconds: 5_000_000)
+    }
+    #expect(!paywall.isHiddenWithWindow)
+    parent.contentViewController?.presentAsSheet(paywall)
+    // Let the old dismissal finish and the new presentation start.
+    try await settle(2.5)
+    parent.contentViewController?.dismiss(paywall)
+    try await settle(2.5)
+
+    // Once for each close. If the first close finished after the paywall
+    // appeared again, it would have reset that presentation and the second
+    // close would go unreported.
+    #expect(recorder.finishCount == 2)
+  }
+
+  @Test
+  func paywallTakenDownAgainBeforeItsDelayedAppearanceIsNotLeftPresented() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    let paywall = makePaywallViewController()
+    let recorder = FinishRecorder()
+    paywall.delegate = PaywallViewControllerDelegateAdapter(
+      swiftDelegate: recorder,
+      objcDelegate: nil
+    )
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle()
+    // Hold the old dismissal open, as in the test above.
+    paywall.webView.messageHandler.delegate = paywall
+    paywall.webView.loadHTMLString(
+      """
+      <script>
+      window.app = { getAllState() { const end = Date.now() + 1500; while (Date.now() < end) {} return {}; } };
+      </script>
+      """,
+      baseURL: nil
+    )
+    try await settle()
+
+    parent.miniaturize(nil)
+    try await settle(1.5)
+    paywall.presentingViewController?.dismiss(paywall)
+    parent.deminiaturize(nil)
+    for _ in 0..<300 where paywall.isHiddenWithWindow {
+      try await Task.sleep(nanoseconds: 5_000_000)
+    }
+
+    // Shown again, then taken down again while its appearance still waits for
+    // the old dismissal.
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle(0.3)
+    parent.contentViewController?.dismiss(paywall)
+    try await settle(0.3)
+
+    // Shown a third time while the old dismissal is still running: it must
+    // wait for it too, or that dismissal resets it.
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle(2.5)
+    #expect(paywall.isPresented)
+    parent.contentViewController?.dismiss(paywall)
+    try await settle(2.5)
+
+    #expect(!paywall.isPresented, "a paywall taken down before it appeared was left marked as presented")
+    // The first close and the third; nothing for the appearance that never started.
+    #expect(recorder.finishCount == 2)
+  }
 }
 #endif

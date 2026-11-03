@@ -161,7 +161,7 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   private weak var eventDelegate: PaywallViewControllerEventDelegate?
 
   /// Defines whether the view controller is being presented or not.
-  private var isPresented = false
+  private(set) var isPresented = false
 
   /// Stores the completion block when calling dismiss.
   private var dismissCompletionBlock: (() -> Void)?
@@ -335,6 +335,9 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
   /// The close of the paywall's last presentation, which it was taken down
   /// from while hidden. Its next presentation waits for this.
   private var dismissalBeforeAppearing: Task<Void, Never>?
+  /// An appearance waiting for `dismissalBeforeAppearing` before it starts. Cleared
+  /// if the paywall is taken down first, so it never starts.
+  private var deferredAppearance: UUID?
 
   /// The window the paywall was in when it was hidden.
   private weak var windowHiddenWith: NSWindow?
@@ -2165,10 +2168,15 @@ extension PaywallViewController {
       // It's in a different window, so it was taken down while hidden and
       // this is a new presentation. It starts once the old one has finished
       // closing, which would otherwise reset the new one's state.
-      dismissalBeforeAppearing = finishDismissalWhileHidden()
+      holdAppearances(until: finishDismissalWhileHidden())
       return
     }
     isClosing = false
+    if dismissalBeforeAppearing != nil {
+      // A dismissal finished while hidden may still be running; `viewDidAppear`
+      // starts this presentation once it's done.
+      return
+    }
     handleViewWillAppear()
   }
 
@@ -2180,11 +2188,16 @@ extension PaywallViewController {
     }
     isMacPresentationInFlight = false
     if let dismissal = dismissalBeforeAppearing {
-      dismissalBeforeAppearing = nil
+      let appearance = UUID()
+      deferredAppearance = appearance
       Task { [weak self] in
         await dismissal.value
-        self?.handleViewWillAppear()
-        self?.presentationDidFinish()
+        guard let self, self.deferredAppearance == appearance else {
+          return
+        }
+        self.deferredAppearance = nil
+        self.handleViewWillAppear()
+        self.presentationDidFinish()
       }
       return
     }
@@ -2198,6 +2211,10 @@ extension PaywallViewController {
       beginHiding(with: window)
       return
     }
+    if deferredAppearance != nil {
+      // Taken down before its appearance started, so there's nothing to end.
+      return
+    }
     handleViewWillDisappear()
   }
 
@@ -2207,6 +2224,11 @@ extension PaywallViewController {
       return
     }
     isClosing = false
+    if deferredAppearance != nil {
+      deferredAppearance = nil
+      resumeDismissalContinuations()
+      return
+    }
     handleViewDidDisappear()
     resumeDismissalContinuations()
   }
@@ -2568,7 +2590,21 @@ extension PaywallViewController {
         || window.parent != nil {
       return
     }
-    finishDismissalWhileHidden()
+    // If the app shows it again straight away, that presentation waits for
+    // this dismissal to finish (see `viewDidAppear`).
+    holdAppearances(until: finishDismissalWhileHidden())
+  }
+
+  /// Makes every appearance wait for `dismissal`, however many there are, until
+  /// it has finished: one cancelled while waiting doesn't let the next skip it.
+  private func holdAppearances(until dismissal: Task<Void, Never>) {
+    dismissalBeforeAppearing = dismissal
+    Task { [weak self] in
+      await dismissal.value
+      if self?.dismissalBeforeAppearing == dismissal {
+        self?.dismissalBeforeAppearing = nil
+      }
+    }
   }
 
   /// AppKit sends no appearance calls to a paywall taken down while it's off
