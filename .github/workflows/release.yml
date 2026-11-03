@@ -68,22 +68,11 @@ jobs:
       - name: Read and check the version
         id: version
         run: |
-          version=$(python3 - <<'PY'
-          import re
-          source = open("Sources/SuperwallKit/Misc/Constants.swift").read()
-          match = re.search(r'let sdkVersion = """\s*\n\s*(\S+)\s*\n\s*"""', source)
-          if not match:
-              raise SystemExit("Couldn't find sdkVersion in Constants.swift")
-          print(match.group(1))
-          PY
-          )
-          echo "Version: $version"
-
-          podspec=$(sed -nE 's/^[[:space:]]*s\.version[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' SuperwallKit.podspec)
-          if [ "$podspec" != "$version" ]; then
-            echo "::error::SuperwallKit.podspec says $podspec, Constants.swift says $version."
+          if ! version=$(scripts/sdk-version.sh --check); then
+            echo "::error::Couldn't read the version, or SuperwallKit.podspec and Constants.swift disagree (see above)."
             exit 1
           fi
+          echo "Version: $version"
 
           if ! scripts/release-notes.sh "$version" > /dev/null; then
             echo "::error::CHANGELOG.md has no notes for $version (a '## $version' section)."
