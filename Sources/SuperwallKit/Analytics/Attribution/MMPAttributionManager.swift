@@ -12,6 +12,8 @@ import Combine
 enum MMPMatchError: Error {
   case dependenciesUnavailable
   case unsupportedPlatform
+  /// The app turned off event tracking while the match was being prepared.
+  case trackingDisabled
 }
 
 /// Owns the MMP (mobile measurement partner) install-attribution flow: firing
@@ -119,6 +121,14 @@ final class MMPAttributionManager {
     }
   }
 
+  /// Lets `startMatchIfEnabled()` start the match again, for one that stopped
+  /// because the app opted out of tracking while it ran.
+  private func allowMatchToStartAgain() {
+    lock.lock()
+    hasStartedMatch = false
+    lock.unlock()
+  }
+
   /// On a first launch, a paywall can be requested while the install match is
   /// still running. If the MMP is on and the placement's audiences use
   /// `acquisition_*` attributes, this waits for the match, up to `timeout`, so
@@ -205,6 +215,11 @@ final class MMPAttributionManager {
     } catch MMPMatchError.dependenciesUnavailable, MMPMatchError.unsupportedPlatform {
       // Defensive path — `Network` already logged the skip and there's nothing
       // to track.
+      return false
+    } catch MMPMatchError.trackingDisabled {
+      // Like a match skipped before it started, it's tried again if the app
+      // opts back in.
+      allowMatchToStartAgain()
       return false
     } catch {
       await Superwall.shared.track(

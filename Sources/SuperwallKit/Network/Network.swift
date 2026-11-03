@@ -481,6 +481,17 @@ class Network {
     let vendorId = deviceHelper.vendorId
     let ipAttributes = await deviceHelper.ipAttributesForMMPMatch()
 
+    // The app can opt out of tracking while the IP lookup is awaited.
+    if factory.configManager.options.eventTrackingBehavior == .none {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /api/match",
+        info: ["reason": "Event tracking turned off"]
+      )
+      throw MMPMatchError.trackingDisabled
+    }
+
     let request = MMPMatchRequest(
       platform: "ios",
       appUserId: identityManager.appUserId,

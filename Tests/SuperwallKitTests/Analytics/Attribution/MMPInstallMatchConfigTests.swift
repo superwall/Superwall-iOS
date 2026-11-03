@@ -118,6 +118,49 @@ struct MMPInstallMatchConfigTests {
   }
 
   @Test
+  func matchRequestStopsWhenTrackingIsTurnedOff() async {
+    let dependencyContainer = DependencyContainer()
+    // As if the app opted out while the match waited for its IP lookup.
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+
+    await #expect(throws: MMPMatchError.trackingDisabled) {
+      _ = try await dependencyContainer.network.matchMMPInstall(
+        idfa: nil,
+        advertiserTrackingEnabled: false,
+        applicationTrackingEnabled: true
+      )
+    }
+  }
+
+  @Test
+  func matchStoppedByAnOptOutStartsAgainOnOptIn() async {
+    let dependencyContainer = DependencyContainer()
+    let manager = dependencyContainer.mmpAttributionManager!
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    let started = Counter()
+
+    manager.matchInstallOnceEnabled {
+      started.count += 1
+      return Task {
+        _ = await manager.matchInstall(
+          idfa: nil,
+          advertiserTrackingEnabled: false,
+          applicationTrackingEnabled: true
+        )
+      }
+    }
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    #expect(started.count == 1)
+
+    // Opting back in starts it again once the stopped match has finished.
+    for _ in 0..<100 where started.count == 1 {
+      try? await Task.sleep(nanoseconds: 20_000_000)
+      manager.startMatchIfEnabled()
+    }
+    #expect(started.count == 2)
+  }
+
+  @Test
   func doesNotStartOnOptInWhenTheMMPIsOff() {
     let dependencyContainer = DependencyContainer()
     let manager = dependencyContainer.mmpAttributionManager!
