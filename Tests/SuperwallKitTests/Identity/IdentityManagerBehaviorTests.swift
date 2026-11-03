@@ -66,8 +66,12 @@ private struct Harness {
   let configManager: AssignmentsSpyConfigManager
   let identityManager: IdentityManager
 
+  /// - Parameter publishConfig: Whether to start with a config that doesn't
+  ///   derive seeds from user ids. A newly identified user isn't ready until
+  ///   the config has said whether to.
   init(
     storage: StorageMock = StorageMock(),
+    publishConfig: Bool = true,
     notifyUserChange: (([String: Any]) -> Void)? = nil
   ) {
     let dependencyContainer = DependencyContainer()
@@ -90,8 +94,12 @@ private struct Harness {
       storage: storage,
       configManager: configManager,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
-      notifyUserChange: notifyUserChange
+      notifyUserChange: notifyUserChange,
+      track: { _ in }
     )
+    if publishConfig {
+      configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
+    }
   }
 
   var appInstalledAtString: String {
@@ -254,6 +262,12 @@ struct IdentityManagerBehaviorTests {
     await settle()
     await harness.identityManager.configure()
 
+    // Bounded first, so a regression fails here instead of hanging.
+    guard await eventually({ harness.identityManager.identitySubject.value }) else {
+      emitted.cancel()
+      Issue.record("the identity never became ready")
+      return
+    }
     #expect(try await emitted.value == true)
   }
 
@@ -317,7 +331,7 @@ struct IdentityManagerBehaviorTests {
   @Test("identify derives the seed from the user id when the config enables it")
   func identifyDerivesSeed() async throws {
     let harness = Harness()
-    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: true)))
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: true)))
     let expectedSeed = try #require("user-1".sha256MappedToRange())
 
     harness.identityManager.identify(userId: "user-1", options: nil)
@@ -333,13 +347,33 @@ struct IdentityManagerBehaviorTests {
   func identifyKeepsSeed() async {
     let harness = Harness()
     let seed = harness.identityManager.seed
-    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
 
     harness.identityManager.identify(userId: "user-1", options: nil)
     #expect(await eventually { harness.identityManager.identitySubject.value })
     await settle()
 
     #expect(harness.identityManager.seed == seed)
+  }
+
+  @Test("A newly identified user isn't ready until the config arrives, but merges still apply")
+  func identifyWaitsForConfig() async {
+    let harness = Harness(publishConfig: false)
+    let identityManager = harness.identityManager
+    harness.storage.neverCalledStaticConfig = false
+    await identityManager.configure()
+    #expect(await eventually { identityManager.identitySubject.value })
+
+    identityManager.identify(userId: "user-1", options: nil)
+    #expect(await eventually { identityManager.appUserId == "user-1" })
+    await settle()
+    #expect(identityManager.identitySubject.value == false)
+
+    identityManager.mergeUserAttributes(["plan": "pro"])
+    #expect(await eventually { identityManager.userAttributes["plan"] as? String == "pro" })
+
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
+    #expect(await eventually { identityManager.identitySubject.value })
   }
 
   @Test("identify fetches assignments in the background by default")

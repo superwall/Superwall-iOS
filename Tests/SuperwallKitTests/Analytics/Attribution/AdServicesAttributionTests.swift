@@ -128,7 +128,7 @@ struct AdServicesAttributionTests {
       lastAttemptDate: Date()
     )
     storage.save(saturated, forType: AdServicesAttributionAttemptsStorage.self)
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 
@@ -155,7 +155,7 @@ struct AdServicesAttributionTests {
       lastAttemptDate: firstAttempt.addingTimeInterval(30)
     )
     storage.save(expired, forType: AdServicesAttributionAttemptsStorage.self)
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 
@@ -209,7 +209,7 @@ struct AdServicesAttributionTests {
     storage.delete(AdServicesTokenStorage.self)
     storage.delete(AdServicesAttributionAttemptsStorage.self)
     storage.save(true, forType: AdServicesAttributionUnsupportedStorage.self)
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 

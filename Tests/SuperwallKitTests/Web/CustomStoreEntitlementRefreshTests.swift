@@ -695,7 +695,7 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([customEntitlement])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 1)
@@ -730,7 +730,7 @@ struct CustomStoreEntitlementRefreshTests {
     )
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
@@ -747,7 +747,7 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true)])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 0)
@@ -767,7 +767,7 @@ struct CustomStoreEntitlementRefreshTests {
     try? await Task.sleep(nanoseconds: 100_000_000)
     // Config arrives and turns test mode on.
     turnOnTestMode()
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     _ = await refresh.value
 
     #expect(network.getEntitlementsCallCount == 0)

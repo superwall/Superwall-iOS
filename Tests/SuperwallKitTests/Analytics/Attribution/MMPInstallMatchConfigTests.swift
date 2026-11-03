@@ -41,7 +41,7 @@ struct MMPInstallMatchConfigTests {
     }
     #expect(counter.count == 0)
 
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
     #expect(counter.count == 1)
   }
 
@@ -54,8 +54,8 @@ struct MMPInstallMatchConfigTests {
       counter.count += 1
       return Task {}
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: nil)))
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: nil)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: false)))
 
     #expect(counter.count == 0)
   }
@@ -64,7 +64,7 @@ struct MMPInstallMatchConfigTests {
   func matchesStraightAwayWhenConfigIsAlreadyLoaded() {
     let dependencyContainer = DependencyContainer()
     let counter = Counter()
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled {
       counter.count += 1
@@ -83,9 +83,9 @@ struct MMPInstallMatchConfigTests {
       counter.count += 1
       return Task {}
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: false)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     #expect(counter.count == 1)
   }
@@ -106,7 +106,7 @@ struct MMPInstallMatchConfigTests {
       started.count += 1
       return Task {}
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
     #expect(attempts.count == 1)
     #expect(started.count == 0)
 
@@ -127,7 +127,7 @@ struct MMPInstallMatchConfigTests {
       attempts.count += 1
       return Task {}
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: false)))
     manager.startMatchIfEnabled()
 
     #expect(attempts.count == 0)
@@ -160,7 +160,7 @@ struct MMPInstallMatchConfigTests {
         finished.count += 1
       }
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     let start = Date()
     await manager.waitForPendingMatch(
@@ -179,7 +179,7 @@ struct MMPInstallMatchConfigTests {
     let manager = dependencyContainer.mmpAttributionManager!
     let finished = Counter()
     manager.markMatchPending()
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     Task {
       try? await Task.sleep(nanoseconds: 100_000_000)
@@ -210,7 +210,7 @@ struct MMPInstallMatchConfigTests {
         try? await Task.sleep(nanoseconds: 60_000_000_000)
       }
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     let start = Date()
     await manager.waitForPendingMatch(
@@ -232,7 +232,7 @@ struct MMPInstallMatchConfigTests {
         try? await Task.sleep(nanoseconds: 60_000_000_000)
       }
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: true)))
 
     let start = Date()
     await manager.waitForPendingMatch(
@@ -252,7 +252,7 @@ struct MMPInstallMatchConfigTests {
         try? await Task.sleep(nanoseconds: 60_000_000_000)
       }
     }
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: false)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: false)))
 
     let start = Date()
     await manager.waitForPendingMatch(
