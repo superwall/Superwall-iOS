@@ -398,6 +398,24 @@ struct CustomStoreCheckoutTests {
     #expect(await finishes.waitForResults() == [.purchased(product)])
   }
 
+  @Test("A complete the page sends again isn't counted as a second purchase")
+  func repeatedComplete_isIgnored() async throws {
+    let (checkoutHandler, product) = await makeCheckoutHandler()
+    let (paywallVc, finishes) = makePaywall()
+    let complete = CustomStoreCheckout.complete(
+      productId: productId,
+      customTransactionId: serverTransactionId,
+      shouldDismiss: true
+    )
+
+    await checkoutHandler.handle(complete, paywallViewController: paywallVc)
+    await checkoutHandler.handle(complete, paywallViewController: paywallVc)
+
+    let events = await tracked.events
+    #expect(events.count == 1)
+    #expect(await finishes.waitForResults() == [.purchased(product)])
+  }
+
   // MARK: - Abandon
 
   @Test("Abandon tracks transaction_abandon for the custom product")

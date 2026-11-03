@@ -13,6 +13,10 @@ final class CustomStoreCheckoutHandler {
   private let transactionManager: TransactionManager
   private let storeKitManager: StoreKitManager
   private let factory: PurchasedTransactionsFactory
+  /// The transactions of the checkouts completed so far, so a complete the
+  /// page sends again isn't counted as a second purchase.
+  private var completedTransactionIds: Set<String> = []
+  private let lock = NSLock()
 
   init(
     transactionManager: TransactionManager,
@@ -57,6 +61,17 @@ final class CustomStoreCheckoutHandler {
         scope: .transactions,
         message: "Ignoring a custom store checkout of \"\(productId)\": "
           + "it isn't a custom product of this paywall.",
+        info: ["checkout": checkout]
+      )
+      return
+    }
+
+    if case let .complete(_, customTransactionId, _) = checkout,
+      !markCompleted(customTransactionId) {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .transactions,
+        message: "Ignoring a custom store checkout of \"\(productId)\": it already completed.",
         info: ["checkout": checkout]
       )
       return
@@ -186,6 +201,14 @@ final class CustomStoreCheckoutHandler {
         state: .purchasing(source)
       )
     }
+  }
+
+  /// Records a checkout's transaction as completed. Returns `false` if it
+  /// already was.
+  private func markCompleted(_ customTransactionId: String) -> Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return completedTransactionIds.insert(customTransactionId).inserted
   }
 
   /// Ends the custom store checkout that `paywallViewController` started, if it's
