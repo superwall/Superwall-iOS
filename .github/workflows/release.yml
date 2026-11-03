@@ -319,7 +319,7 @@ jobs:
     secrets: inherit
 
   announce:
-    needs: [version, release, cocoapods, docs, emerge, wrappers]
+    needs: [version, ui-tests, release, cocoapods, docs, emerge, wrappers]
     # Everything succeeded; the wrappers are skipped for prereleases.
     if: >-
       !cancelled()
@@ -338,6 +338,9 @@ jobs:
           VERSION: ${{ needs.version.outputs.version }}
           PRERELEASE: ${{ needs.version.outputs.prerelease }}
           RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.version.outputs.version }}
+          # release only runs if these passed or were skipped.
+          UI_TESTS: ${{ needs.ui-tests.result }}
+          EVENT: ${{ github.event_name }}
         run: |
           scripts/release-notes.sh "$VERSION" > notes.md
           payload=$(python3 - <<'PY'
@@ -358,6 +361,13 @@ jobs:
           if len(notes) > 2800:
               notes = notes[:2800].rsplit("\n", 1)[0] + "\n…"
           header = f":rocket: *SuperwallKit {version}* {kind} is out: <{url}|release notes>"
+          if os.environ["UI_TESTS"] == "success":
+              ui = ":white_check_mark: UI tests passed (all four schemes, on Limrun)"
+          elif os.environ["EVENT"] == "workflow_dispatch":
+              ui = ":fast_forward: UI tests not run (not requested for this manual run)"
+          else:
+              ui = ":fast_forward: UI tests not run (no `uitests-required` label)"
+          header += f"\n:white_check_mark: Unit tests passed\n{ui}"
           print(json.dumps({
               "text": f"SuperwallKit {version} released: {url}",
               "blocks": [
