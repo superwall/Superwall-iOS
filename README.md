@@ -115,11 +115,14 @@ The campaign decides whether a paywall shows. With no paywall set up, the closur
 
 ## What you get
 
-- Update paywalls from the dashboard without releasing a new app version.
-- Choose which paywall to show with campaigns and audience rules.
-- Run A/B tests across paywalls.
-- Track paywall views, trial starts and conversions.
-- Control access to features with placements.
+- **Paywalls and onboarding flows:** build single paywalls or multi-page onboarding in the dashboard and publish changes without an app release.
+- **Experiments:** target audiences with campaigns and A/B test paywalls, prices and flows.
+- **Web checkout and funnels:** sell through Stripe on the web, send iOS users to web checkout from a paywall, and share web funnels as links.
+- **Subscriptions and entitlements:** StoreKit 2 purchases with server-side validation, or bring your own purchase controller.
+- **Retention:** free trial reminders, cancellation surveys, abandoned-purchase offers and win-back paywalls.
+- **Customer Center:** a ready-made screen where users manage their subscription.
+- **Revenue analytics:** conversions, trials, MRR, churn and LTV, also available over SQL and webhooks.
+- **Agent tooling:** skills, an MCP server and a CLI so your coding agent can set up and run Superwall.
 
 ## Examples
 
