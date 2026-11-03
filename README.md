@@ -44,7 +44,7 @@ npx superwall integrate
 Read the [agent integration guide](https://superwall.com/docs/agents/integrate-the-sdk) for details.
 
 <details>
-<summary>Moving from RevenueCat, Adapty or Qonversion?</summary>
+<summary>Moving from a different platform?</summary>
 
 Run this. It follows the same steps, starting from your existing setup:
 
