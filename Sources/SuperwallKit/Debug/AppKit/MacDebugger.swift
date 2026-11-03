@@ -43,9 +43,8 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
     await locateDevServer()
-    choices = (manager.devServer?.surfaces ?? []).map {
-      Choice(id: $0.id, name: "Local: \($0.id)", identifier: $0.previewIdentifier)
-    }
+    let surfaces = manager.devServer?.surfaces ?? []
+    choices = surfaces.map { Self.localChoice(surfaceId: $0.id, previewIdentifier: $0.previewIdentifier) }
     let network: Network = Superwall.shared.dependencyContainer.network
     do {
       let published = try await network.listPreviewPaywalls()
@@ -65,7 +64,28 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
         ? error.localizedDescription
         : "Couldn't load the other published paywalls."
     }
-    selection = choices.first { $0.id == (surfaceId ?? paywallId) }?.id ?? choices.first?.id ?? ""
+    selection = Self.initialSelection(
+      in: choices,
+      linkedSurface: surfaces.first { $0.id == surfaceId }?.previewIdentifier,
+      linkedPaywallId: paywallId
+    )
+  }
+
+  /// A local surface's choice. Its ID is the surface's preview identifier, so it
+  /// can't clash with a published paywall's database ID.
+  nonisolated static func localChoice(surfaceId: String, previewIdentifier: String) -> Choice {
+    return Choice(id: previewIdentifier, name: "Local: \(surfaceId)", identifier: previewIdentifier)
+  }
+
+  /// The choice to select first: the linked local surface (by its preview
+  /// identifier), else the linked published paywall, else the first one.
+  nonisolated static func initialSelection(
+    in choices: [Choice],
+    linkedSurface: String?,
+    linkedPaywallId: String?
+  ) -> String {
+    let linked = linkedSurface ?? linkedPaywallId
+    return choices.first { $0.id == linked }?.id ?? choices.first?.id ?? ""
   }
 
   /// The choices when the preview list can't load: the local surfaces, then

@@ -737,6 +737,31 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(superwall.customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
   }
 
+  @Test("refreshCustomerInfo returns the current customer info when config and the fetch fail")
+  func refreshCustomerInfo_offlineFirstLaunch_returns() async throws {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    // A first launch: nothing has been loaded yet.
+    superwall.customerInfo = .blank()
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // No response: the fetch fails, as it does offline.
+    dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
+    dependencyContainer.configManager.configState.send(completion: .failure(NetworkError.unknown))
+
+    // Polled with a time limit, so a refresh that never returns fails the test
+    // instead of hanging it.
+    let box = RefreshResultBox()
+    Task { box.result = await superwall.refreshCustomerInfo() }
+    for _ in 0..<150 where box.result == nil {
+      try await Task.sleep(nanoseconds: 20_000_000)
+    }
+    let result = box.result
+    let didReturn = result != nil
+
+    #expect(didReturn, "refreshCustomerInfo never returned")
+    #expect(network.getEntitlementsCallCount == 1)
+    #expect(result?.isPlaceholder == true)
+  }
+
   @Test("refreshCustomerInfo doesn't fetch in test mode")
   func refreshCustomerInfo_inTestMode_doesNotFetch() async {
     turnOnTestMode()
@@ -772,4 +797,8 @@ struct CustomStoreEntitlementRefreshTests {
 
     #expect(network.getEntitlementsCallCount == 0)
   }
+}
+
+private final class RefreshResultBox: @unchecked Sendable {
+  var result: CustomerInfo?
 }
