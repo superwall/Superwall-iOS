@@ -52,8 +52,14 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
       choices += published.data.map { Choice(id: $0.id, name: $0.name, identifier: $0.identifier) }
       message = choices.isEmpty ? "No paywalls available." : ""
     } catch {
-      // The linked paywall can still be looked up on its own, as the UIKit debugger does.
+      // Fall back to the paywalls in the downloaded config, as the UIKit debugger does.
+      let configPaywalls = Superwall.shared.dependencyContainer.configManager?.config?.paywalls ?? []
+      choices += configPaywalls.map {
+        Choice(id: $0.databaseId, name: $0.name, identifier: $0.identifier)
+      }
+      // The linked paywall can still be looked up on its own.
       if let paywallId = paywallId,
+        !choices.contains(where: { $0.id == paywallId }),
         let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
         choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
       }
