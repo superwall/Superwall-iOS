@@ -26,6 +26,18 @@ struct ContentView: View {
         onRequestDismiss: { _, _ in
           isPaywallViewPresented = false
         },
+        onSkippedView: { reason in
+          // A skipped paywall shows nothing by default, and Mac sheets can't be swiped away.
+          VStack(spacing: 16) {
+            Text("No paywall to show: \(reason.description)")
+              .multilineTextAlignment(.center)
+            Button("Close") {
+              isPaywallViewPresented = false
+            }
+            .keyboardShortcut(.cancelAction)
+          }
+          .padding()
+        },
         feature: {
           eventLog.append("PaywallView feature unlocked")
         }

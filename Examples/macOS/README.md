@@ -8,7 +8,7 @@ xcodegen
 open SuperwallMacExample.xcodeproj
 ```
 
-Run the `SuperwallMacExample` scheme. The sample uses the Basic example's public demo API key and `non_gated_pro` placement. Replace both for your app. Enable Test Mode in your dashboard to simulate purchases without StoreKit product configuration.
+Run the `SuperwallMacExample` scheme. The sample uses the Basic example's public demo API key, bundle ID, StoreKit configuration and `non_gated_pro` placement. Replace them for your app.
 
 The app demonstrates campaign presentation, Customer Center, deep-link handling, and SDK events. Open another window to exercise presentation from the active window. The sandbox entitlements enable outgoing networking.
 
