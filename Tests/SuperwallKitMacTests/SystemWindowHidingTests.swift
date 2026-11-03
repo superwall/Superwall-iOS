@@ -88,6 +88,45 @@ struct SystemWindowHidingTests {
   }
 
   @Test
+  func orderingTheWindowOutDoesNotEndCheckout() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    var dismissals = 0
+    let checkout = CheckoutWebViewController(url: URL(string: "about:blank")!)
+    checkout.onDismiss = { dismissals += 1 }
+    parent.contentViewController?.presentAsSheet(checkout)
+    try await settle()
+
+    parent.orderOut(nil)
+    try await settle()
+    #expect(dismissals == 0)
+
+    // Closing checkout from code while the window is hidden still reports it.
+    checkout.dismissFromPaywall()
+    try await settle()
+    #expect(dismissals == 1)
+
+    parent.orderFront(nil)
+    try await settle()
+    #expect(dismissals == 1)
+  }
+
+  @Test
+  func closingCheckoutStillEndsIt() async throws {
+    let parent = makeParent()
+    defer { parent.close() }
+    var dismissals = 0
+    let checkout = CheckoutWebViewController(url: URL(string: "about:blank")!)
+    checkout.onDismiss = { dismissals += 1 }
+    parent.contentViewController?.presentAsSheet(checkout)
+    try await settle()
+
+    parent.contentViewController?.dismiss(checkout)
+    try await settle()
+    #expect(dismissals == 1)
+  }
+
+  @Test
   func minimisingDoesNotCancelTestModeSheet() async throws {
     let parent = makeParent()
     defer { parent.close() }

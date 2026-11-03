@@ -97,7 +97,16 @@ final class CheckoutWebViewController: NSViewController {
     if isHiddenWithWindow {
       return
     }
-    finishDismissal()
+    // A sheet hidden with its window, as by `orderOut`, keeps its presenter.
+    // AppKit lets go of it only once this returns, so check on the next turn
+    // of the run loop.
+    DispatchQueue.main.async {
+      if self.presentingViewController == nil {
+        self.finishDismissal()
+      } else {
+        self.isHiddenWithWindow = true
+      }
+    }
   }
 
   /// Dismisses checkout from code. AppKit sends no appearance calls to a sheet
