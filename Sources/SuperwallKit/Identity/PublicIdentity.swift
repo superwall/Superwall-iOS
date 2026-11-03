@@ -12,6 +12,7 @@ extension Superwall {
   /// Creates an account with Superwall. This links a `userId` to Superwall's automatically generated alias.
   ///
   /// Call this as soon as you have a `userId`.
+  /// Configure ``SuperwallOptions/enableUserIdSeed`` to derive `user.seed` from this ID.
   ///
   ///  - Parameters:
   ///     - userId: Your user's unique identifier, as defined by your backend system.
