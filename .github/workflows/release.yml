@@ -380,7 +380,7 @@ jobs:
           curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
 
   report-failure:
-    needs: [version, unit-tests, ui-tests, release, cocoapods, docs, emerge, wrappers]
+    needs: [version, unit-tests, ui-tests, release, cocoapods, docs, emerge, wrappers, announce]
     if: failure()
     runs-on: ubuntu-latest
     steps:
