@@ -371,12 +371,21 @@ struct SystemWindowHidingTests {
     // Shown again, then taken down again while its appearance still waits for
     // the old dismissal.
     parent.contentViewController?.presentAsSheet(paywall)
-    try await settle()
+    try await settle(0.3)
+    parent.contentViewController?.dismiss(paywall)
+    try await settle(0.3)
+
+    // Shown a third time while the old dismissal is still running: it must
+    // wait for it too, or that dismissal resets it.
+    parent.contentViewController?.presentAsSheet(paywall)
+    try await settle(2.5)
+    #expect(paywall.isPresented)
     parent.contentViewController?.dismiss(paywall)
     try await settle(2.5)
 
     #expect(!paywall.isPresented, "a paywall taken down before it appeared was left marked as presented")
-    #expect(recorder.finishCount == 1)
+    // The first close and the third; nothing for the appearance that never started.
+    #expect(recorder.finishCount == 2)
   }
 }
 #endif
