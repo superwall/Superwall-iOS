@@ -1244,9 +1244,9 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
   ///
-  /// When `duringIdentify` is true this runs on the identity manager's queue,
-  /// so nothing it calls may wait on that queue, such as reading
-  /// `identityManager.userAttributes`, or the queue hangs for good.
+  /// When `duringIdentify` is true this runs inside the identity manager's
+  /// identify action, so nothing it calls may wait for identity changes to
+  /// finish, such as `identityManager.flush()`.
   func reset(duringIdentify: Bool) {
     // Warn here rather than in the public reset() so the identify-triggered
     // reset — the actual user-switch moment — warns too.
@@ -1263,6 +1263,9 @@ public final class Superwall: NSObject, ObservableObject {
     // late-completing post can't race the new user's state.
     dependencyContainer.attributionPoster.cancelInFlight()
     dependencyContainer.storage.reset()
+    // The wipe above can land after the identity's reset has saved the new
+    // ids. Save them again once that reset has run.
+    dependencyContainer.identityManager.didResetStorage()
 
     // ASA attribution is install-scoped, so re-apply the cached campaign
     // dict to the new user's attributes after the wipe. AdServices state

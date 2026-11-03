@@ -224,9 +224,8 @@ final class MMPAttributionManager {
       return
     }
     // Merged without checking the current attributes first. The reset just
-    // wiped them, so there is nothing to compare against, and on the
-    // `identify()` path this runs on the identity manager's queue, where
-    // reading `userAttributes` would wait on that same queue and hang it.
+    // wiped them, so there is nothing to compare against. The merge queues
+    // behind the reset, so it lands on the new user.
     Superwall.shared.setUserAttributes(attributes)
   }
 

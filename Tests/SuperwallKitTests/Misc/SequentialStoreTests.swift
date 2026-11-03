@@ -255,11 +255,15 @@ struct SequentialStoreTests {
   @Test("waitUntil returns the first matching state")
   func waitUntilFutureState() async throws {
     let context = TestContext()
+    let registered = Gate()
     let waiter = Task {
-      try await context.store.waitUntil { $0.value >= 2 }
+      try await context.store.waitUntil {
+        // First called while registering, with the current state.
+        registered.open()
+        return $0.value >= 2
+      }
     }
-    // Let the waiter register.
-    try await Task.sleep(nanoseconds: 10_000_000)
+    await registered.wait()
     context.store.update(Add(amount: 1))
     context.store.update(Add(amount: 1))
     context.store.update(Add(amount: 1))
@@ -282,11 +286,13 @@ struct SequentialStoreTests {
   @Test("immediateUntil returns once the action has moved the state")
   func immediateUntilSeesTheChange() async throws {
     let context = TestContext()
+    let started = Gate()
     let gate = Gate()
     let result = Task {
       try await context.store.immediateUntil(
         Run { context in
           context.store.update(Add(amount: 1))
+          started.open()
           await gate.wait()
           context.store.update(Add(amount: 1))
         },
@@ -294,7 +300,7 @@ struct SequentialStoreTests {
         until: { $0.value == 2 }
       )
     }
-    try await Task.sleep(nanoseconds: 10_000_000)
+    await started.wait()
     #expect(context.store.state.value == 1)
     gate.open()
     #expect(try await result.value.value == 2)

@@ -424,7 +424,8 @@ struct IdentityManagerBehaviorTests {
     let attributes = identityManager.userAttributes
     #expect(attributes["keep"] as? String == "a")
     #expect(attributes.keys.contains("remove") == false)
-    #expect(attributes["dollar"] as? Int == 1)
+    // Dollar-prefixed keys are dropped (see IdentityStateTests).
+    #expect(attributes.keys.contains("dollar") == false)
     #expect(attributes["applicationInstalledAt"] as? String == harness.appInstalledAtString)
 
     let saved = harness.storage.get(UserAttributes.self)

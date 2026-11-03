@@ -51,6 +51,7 @@ struct IdentifyUserSwitchTests {
     #expect(identityManager.userAttributes["acquisition_source"] as? String == "test_network")
     superwall.reset()
   }
+
   @Test("Switching user starts the new user on a fresh alias without the old user's attributes")
   func switchingUserStartsAFreshIdentity() async {
     let superwall = Superwall.shared

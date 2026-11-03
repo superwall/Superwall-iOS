@@ -4,7 +4,6 @@
 //
 //  Created by Superwall on 03/11/2026.
 //
-// swiftlint:disable file_length
 
 import Foundation
 
@@ -187,7 +186,7 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
   /// - Throws: `CancellationError` if the calling task is cancelled first.
   @discardableResult
   func waitUntil(_ predicate: @escaping (State) -> Bool) async throws -> State {
-    try await waitUntil(predicate, afterRegistering: {})
+    try await waitUntil(predicate) {}
   }
 
   /// Registers the wait before running `afterRegistering`, so a state change
