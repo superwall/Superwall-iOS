@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import UserNotifications
 
 final class PermissionHandler: PermissionHandling {
@@ -46,10 +50,18 @@ final class PermissionHandler: PermissionHandling {
       message: "Missing \(key) in Info.plist. Cannot request \(permissionName) permission."
     )
 
-    guard let topViewController = UIViewController.topMostViewController else {
+    guard let topViewController = PlatformViewController.topMostViewController else {
       return
     }
 
+    #if os(macOS)
+    AlertControllerFactory.present(
+      title: "Configuration Error",
+      message: "Missing \(key) in Info.plist. Cannot request \(permissionName) permission.",
+      closeActionTitle: "OK",
+      on: topViewController
+    )
+    #else
     let alertController = AlertControllerFactory.make(
       title: "Configuration Error",
       message: "Missing \(key) in Info.plist. Cannot request \(permissionName) permission.",
@@ -62,6 +74,7 @@ final class PermissionHandler: PermissionHandling {
         continuation.resume()
       }
     }
+    #endif
   }
 
   func hasPermission(_ permission: PermissionType) async -> PermissionStatus {

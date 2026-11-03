@@ -7,7 +7,11 @@
 // swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// How a web checkout the paywall reported as complete finishes once its code is redeemed.
 /// Stored with the pending checkout, so a poll that recovers it later finishes it the same way.
@@ -147,7 +151,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleAppForeground),
-      name: UIApplication.willEnterForegroundNotification,
+      name: SystemInfo.applicationWillEnterForegroundNotification,
       object: nil
     )
   }
@@ -268,7 +272,13 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       await MainActor.run {
         // The success alert's close takes the spinner down once the purchase is finished.
         let paywallViewController = superwall.paywallViewController
-        if !(paywallViewController?.presentedViewController is UIAlertController) {
+        #if os(macOS)
+        // AppKit alerts are window sheets, not presented view controllers.
+        let isShowingAlert = paywallViewController?.view.window?.attachedSheet != nil
+        #else
+        let isShowingAlert = paywallViewController?.presentedViewController is UIAlertController
+        #endif
+        if !isShowingAlert {
           paywallViewController?.loadingState = .ready
         }
       }
@@ -855,10 +865,24 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
     closeActionTitle: String,
     onClose: (() -> Void)?
   ) {
-    guard let topVc = UIViewController.topMostViewController else {
+    guard let topVc = PlatformViewController.topMostViewController else {
       onClose?()
       return
     }
+    #if os(macOS)
+    // A window shows one sheet at a time.
+    guard topVc.view.window?.attachedSheet == nil else {
+      onClose?()
+      return
+    }
+    AlertControllerFactory.present(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      onClose: onClose,
+      on: topVc
+    )
+    #else
     guard topVc.presentedViewController == nil else {
       onClose?()
       return
@@ -871,6 +895,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
       sourceView: topVc.view
     )
     topVc.present(alertController, animated: true)
+    #endif
   }
 
   private func handleRedemptionFailure(

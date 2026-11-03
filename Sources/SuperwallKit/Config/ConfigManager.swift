@@ -7,7 +7,11 @@
 // swiftlint:disable type_body_length file_length
 
 import Combine
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 class ConfigManager {
   /// A publisher that emits just once only when `config` is non-`nil`.
@@ -599,11 +603,15 @@ class ConfigManager {
     }
   }
 
-  /// Swizzles the UIWindow's `sendEvent` to intercept the first `began` touch event if
-  /// config's triggers contain `touches_began`.
+  /// Watches for the first touch, or the first click on macOS, if config's
+  /// triggers contain `touches_began`.
   private func checkForTouchesBeganTrigger(in triggers: Set<Trigger>) async {
     if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
+      #if os(macOS)
+      await FirstClickMonitor.start()
+      #else
       await UIWindow.swizzleSendEvent()
+      #endif
     }
   }
 
@@ -859,9 +867,14 @@ class ConfigManager {
 
   @MainActor
   private func presentTestModeModal(reason: TestModeReason, config: Config) async {
-    guard let rootVC = UIApplication.sharedApplication?.activeWindow?.rootViewController else {
+    #if os(macOS)
+    // Without a window to attach to, as in a menu bar app, the modal opens a window of its own.
+    let rootVC = PlatformApplication.sharedApplication?.activeWindow?.rootViewController
+    #else
+    guard let rootVC = PlatformApplication.sharedApplication?.activeWindow?.rootViewController else {
       return
     }
+    #endif
 
     let testModeManager = factory.makeTestModeManager()
     let identityManager = testModeManager.identityManager

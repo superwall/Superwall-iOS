@@ -15,6 +15,9 @@
   <a href="https://superwall.com/">
     <img src="https://img.shields.io/badge/ios%20version-%3E%3D%2015.0-blueviolet" alt="iOS Versions Supported">
   </a>
+  <a href="Sources/SuperwallKit/Documentation.docc/macOS.md">
+    <img src="https://img.shields.io/badge/macos%20version-%3E%3D%2012.0-blueviolet" alt="macOS Versions Supported">
+  </a>
   <a href="https://github.com/superwall/Superwall-iOS/blob/master/LICENSE">
     <img src="https://img.shields.io/badge/license-MIT-green/" alt="MIT License">
   </a>
@@ -91,6 +94,11 @@ Check out our sample apps for a hands-on demonstration of the SDK:
 
 - [Basic Example App](Examples/Basic)
 - [Advanced Example App](Examples/Advanced)
+- [Mac Example App](Examples/macOS)
+
+## Native macOS
+
+SuperwallKit supports native AppKit and SwiftUI Mac apps on macOS 12+. See the [integration guide](Sources/SuperwallKit/Documentation.docc/macOS.md) and [Mac example](Examples/macOS).
 
 ## Contributing
 

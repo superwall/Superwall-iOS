@@ -6,7 +6,11 @@
 //
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension CustomerCenterConfiguration.PathType {
   /// The ID a path gets when none is given: the type's name for the built-in types, the URL's host
@@ -59,7 +63,7 @@ extension CustomerCenterConfiguration {
   /// Accent colour strings that aren't valid `#RRGGBB` or `#RRGGBBAA` hex, and so are ignored.
   var invalidAccentHexes: [String] {
     guard let accent = appearance.accent else { return [] }
-    return [accent.light, accent.dark].filter { UIColor(hex: $0) == nil }
+    return [accent.light, accent.dark].filter { PlatformColor(hex: $0) == nil }
   }
 
   /// Logs configuration mistakes that still render, just badly.

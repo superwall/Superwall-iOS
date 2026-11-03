@@ -12,9 +12,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Paywalls can now sell a custom store's products through the checkout endpoint set up for it on the dashboard, without calling your `PurchaseController`.
 - Apps without web paywalls now also refresh the user's entitlements from Superwall on foreground, at most every 15 minutes, as well as on launch. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
 - Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
+- Adds native macOS 12+ support for paywalls, SwiftUI embedding, StoreKit and web purchases, Customer Center, Test Mode, and a native paywall preview window. Includes a Mac example and native presentation tests.
 
 ### Fixes
 
+- Fixes paywall notifications not being scheduled again after the denied-permission alert couldn't show.
 - Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
 

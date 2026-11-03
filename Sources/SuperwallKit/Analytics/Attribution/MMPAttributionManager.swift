@@ -11,6 +11,7 @@ import Combine
 /// so the manager can skip silently without tracking a failed match.
 enum MMPMatchError: Error {
   case dependenciesUnavailable
+  case unsupportedPlatform
 }
 
 /// Owns the MMP (mobile measurement partner) install-attribution flow: firing
@@ -21,6 +22,14 @@ enum MMPMatchError: Error {
 /// returns the decoded response. Everything attribution-specific lives here,
 /// mirroring how `AttributionPoster` owns the Apple Search Ads flow.
 final class MMPAttributionManager {
+  // The install-matching backend currently accepts only iOS and Android.
+  // Do not send native Mac installs into the iOS attribution pool.
+  #if os(macOS)
+  static let isSupported = false
+  #else
+  static let isSupported = true
+  #endif
+
   private unowned let network: Network
   private unowned let storage: Storage
   private unowned let identityManager: IdentityManager
@@ -51,7 +60,7 @@ final class MMPAttributionManager {
   /// Marks this launch's install match as pending, so a paywall that's
   /// requested before the match is set up still waits for it.
   func markMatchPending() {
-    isMatchPending.send(true)
+    isMatchPending.send(Self.isSupported)
   }
 
   /// Calls `startMatch` once config says the MMP is enabled for this app,
@@ -63,6 +72,7 @@ final class MMPAttributionManager {
   /// because the app has opted out of tracking. A skipped match is tried
   /// again when the app opts back in, via `startMatchIfEnabled()`.
   func matchInstallOnceEnabled(_ startMatch: @escaping () -> Task<Void, Never>?) {
+    guard Self.isSupported else { return }
     lock.lock()
     self.startMatch = startMatch
     lock.unlock()
@@ -192,7 +202,7 @@ final class MMPAttributionManager {
       // A successful response means the request was processed, even if no
       // attribution match was found.
       return true
-    } catch MMPMatchError.dependenciesUnavailable {
+    } catch MMPMatchError.dependenciesUnavailable, MMPMatchError.unsupportedPlatform {
       // Defensive path — `Network` already logged the skip and there's nothing
       // to track.
       return false

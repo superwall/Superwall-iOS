@@ -36,8 +36,9 @@ Pod::Spec.new do |s|
 	s.documentation_url = "https://docs.superwall.com/"
 	s.swift_versions = ['5.5']
 	s.ios.deployment_target = '15.0'
+  s.osx.deployment_target = '12.0'
 	s.requires_arc = true
-  s.dependency 'Superscript', '1.0.15'
+  s.dependency 'Superscript', '1.0.17'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {

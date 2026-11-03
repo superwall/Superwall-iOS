@@ -233,7 +233,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The presented paywall view controller.
-  public var presentedViewController: UIViewController? {
+  public var presentedViewController: PlatformViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
 

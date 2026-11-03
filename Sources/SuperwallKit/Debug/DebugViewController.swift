@@ -6,6 +6,7 @@
 //
 // swiftlint:disable force_unwrapping file_length type_body_length function_body_length
 
+#if !os(macOS)
 import UIKit
 import Foundation
 import StoreKit
@@ -724,3 +725,4 @@ extension DebugViewController {
     )
   }
 }
+#endif
