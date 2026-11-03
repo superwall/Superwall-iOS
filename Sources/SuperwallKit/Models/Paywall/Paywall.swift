@@ -6,7 +6,12 @@
 //
 // swiftlint:disable function_body_length type_body_length file_length
 
+import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 struct Paywall: Codable {
   /// The id of the paywall in the database.
@@ -37,10 +42,10 @@ struct Paywall: Codable {
   let presentation: PaywallPresentationInfo
 
   let darkBackgroundColorHex: String?
-  let darkBackgroundColor: UIColor?
+  let darkBackgroundColor: PlatformColor?
 
   let backgroundColorHex: String
-  let backgroundColor: UIColor
+  let backgroundColor: PlatformColor
 
   let computedPropertyRequests: [ComputedPropertyRequest]
 
@@ -238,11 +243,11 @@ struct Paywall: Codable {
     )
 
     backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
-    let backgroundColor = UIColor(hexString: backgroundColorHex)
+    let backgroundColor = PlatformColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
 
     if let darkBackgroundColorHex = try values.decodeIfPresent(String.self, forKey: .darkBackgroundColorHex) {
-      let darkBackgroundColor = UIColor(hexString: darkBackgroundColorHex)
+      let darkBackgroundColor = PlatformColor(hexString: darkBackgroundColorHex)
       self.darkBackgroundColor = darkBackgroundColor
       self.darkBackgroundColorHex = darkBackgroundColorHex
     } else {
@@ -386,9 +391,9 @@ struct Paywall: Codable {
     htmlSubstitutions: String,
     presentation: PaywallPresentationInfo,
     backgroundColorHex: String,
-    backgroundColor: UIColor,
+    backgroundColor: PlatformColor,
     darkBackgroundColorHex: String?,
-    darkBackgroundColor: UIColor?,
+    darkBackgroundColor: PlatformColor?,
     productItems: [Product],
     productIds: [String],
     appStoreProductIds: [String],
@@ -508,6 +513,10 @@ extension Paywall: Equatable {
 // MARK: - Stubbable
 extension Paywall: Stubbable {
   static func stub() -> Paywall {
+    return stub(style: .modal)
+  }
+
+  static func stub(style: PaywallPresentationStyle) -> Paywall {
     return Paywall(
       databaseId: "id",
       identifier: "identifier",
@@ -518,7 +527,7 @@ extension Paywall: Stubbable {
       urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
-        style: .modal,
+        style: style,
         delay: 0
       ),
       backgroundColorHex: "",

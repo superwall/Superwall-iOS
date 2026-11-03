@@ -8,7 +8,11 @@
 import Combine
 import StoreKit
 import SystemConfiguration
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -19,8 +23,10 @@ protocol ViewControllerFactory: AnyObject {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
 
+  #if !os(macOS)
   @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
+  #endif
 }
 
 protocol CacheFactory: AnyObject {
@@ -51,7 +57,7 @@ protocol RequestFactory: AnyObject {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides?,
-    presenter: UIViewController?,
+    presenter: PlatformViewController?,
     isDebuggerLaunched: Bool?,
     isPaywallPresented: Bool,
     type: PresentationRequestType

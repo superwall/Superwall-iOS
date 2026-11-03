@@ -41,7 +41,7 @@ final class PresentPaywallOperatorTests {
         customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
       let webView = SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: messageHandler,
         isOnDeviceCacheEnabled: true,
         factory: dependencyContainer
@@ -112,7 +112,7 @@ final class PresentPaywallOperatorTests {
         customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
       let webView = SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: messageHandler,
         isOnDeviceCacheEnabled: true,
         factory: dependencyContainer

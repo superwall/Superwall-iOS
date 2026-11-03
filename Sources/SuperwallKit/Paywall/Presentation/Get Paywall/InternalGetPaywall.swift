@@ -7,14 +7,18 @@
 
 import Foundation
 import Combine
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Superwall {
   struct PaywallComponents {
     let viewController: PaywallViewController
     /// The paywall resolved for the request, including its experiment.
     let paywall: Paywall
-    let presenter: UIViewController?
+    let presenter: PlatformViewController?
     let audienceOutcome: AudienceFilterEvaluationOutcome
     let debugInfo: [String: Any]
   }

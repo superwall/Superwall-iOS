@@ -5,8 +5,13 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
+#if !os(macOS)
 extension UIView {
   class func springAnimate(
     withDuration duration: TimeInterval = 0.618,
@@ -42,3 +47,4 @@ extension UIView {
     )
   }
 }
+#endif

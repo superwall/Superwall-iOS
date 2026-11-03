@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 03/03/2022.
 //
 
+#if !os(macOS)
 import UIKit
 
 extension UIDevice {
@@ -38,3 +39,4 @@ extension UIDevice {
     return model
   }
 }
+#endif
