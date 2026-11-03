@@ -26,17 +26,13 @@ struct ContentView: View {
         onRequestDismiss: { _, _ in
           isPaywallViewPresented = false
         },
+        // A skipped or failed paywall shows nothing by default, and Mac sheets
+        // can't be swiped away.
         onSkippedView: { reason in
-          // A skipped paywall shows nothing by default, and Mac sheets can't be swiped away.
-          VStack(spacing: 16) {
-            Text("No paywall to show: \(reason.description)")
-              .multilineTextAlignment(.center)
-            Button("Close") {
-              isPaywallViewPresented = false
-            }
-            .keyboardShortcut(.cancelAction)
-          }
-          .padding()
+          paywallViewMessage("No paywall to show: \(reason.description)")
+        },
+        onErrorView: { error in
+          paywallViewMessage("Couldn’t load the paywall: \(error.localizedDescription)")
         },
         feature: {
           eventLog.append("PaywallView feature unlocked")
@@ -45,6 +41,18 @@ struct ContentView: View {
       .frame(width: 480, height: 720)
     }
     .presentSuperwallCustomerCenter(isPresented: $isCustomerCenterPresented)
+  }
+
+  private func paywallViewMessage(_ message: String) -> some View {
+    VStack(spacing: 16) {
+      Text(message)
+        .multilineTextAlignment(.center)
+      Button("Close") {
+        isPaywallViewPresented = false
+      }
+      .keyboardShortcut(.cancelAction)
+    }
+    .padding()
   }
 
   private var actions: some View {

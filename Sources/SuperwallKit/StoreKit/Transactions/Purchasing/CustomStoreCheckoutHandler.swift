@@ -13,6 +13,10 @@ final class CustomStoreCheckoutHandler {
   private let transactionManager: TransactionManager
   private let storeKitManager: StoreKitManager
   private let factory: PurchasedTransactionsFactory
+  /// The transactions of the checkouts completed so far, so a complete the
+  /// page sends again isn't counted as a second purchase.
+  private var completedTransactionIds: Set<String> = []
+  private let lock = NSLock()
 
   init(
     transactionManager: TransactionManager,
@@ -43,7 +47,7 @@ final class CustomStoreCheckoutHandler {
   /// progress or once the paywall began to close. `Superwall` runs the steps
   /// one at a time and never during a purchase started from a paywall.
   // swiftlint:disable:next function_body_length
-  func handle(
+  private func handleStep(
     _ checkout: CustomStoreCheckout,
     paywallViewController: PaywallViewController
   ) async {
@@ -61,6 +65,7 @@ final class CustomStoreCheckoutHandler {
       )
       return
     }
+
 
     // The checkout is over after any step but its start.
     let checkoutProductId: String?
@@ -334,6 +339,23 @@ final class CustomStoreCheckoutHandler {
 }
 
 /// Who holds the purchasing coordinator when a custom store checkout step arrives.
+extension CustomStoreCheckoutHandler {
+  /// Handles a checkout step (see `handleStep`), ignoring a repeated complete.
+  func handle(_ checkout: CustomStoreCheckout, paywallViewController: PaywallViewController) async {
+    guard case let .complete(productId, customTransactionId, _) = checkout else {
+      return await handleStep(checkout, paywallViewController: paywallViewController)
+    }
+    lock.lock()
+    let isRepeat = !completedTransactionIds.insert(customTransactionId).inserted
+    lock.unlock()
+    if isRepeat {
+      let message = "Ignoring a custom store checkout of \"\(productId)\": it already completed."
+      return Logger.debug(logLevel: .warn, scope: .transactions, message: message, info: ["checkout": checkout])
+    }
+    await handleStep(checkout, paywallViewController: paywallViewController)
+  }
+}
+
 private enum CustomStoreCheckoutOwnership {
   /// The coordinator holds no purchase.
   case none
