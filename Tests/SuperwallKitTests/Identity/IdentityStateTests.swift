@@ -50,12 +50,12 @@ struct IdentityStateTests {
     #expect(IdentityState(aliasId: "a", seed: 1, appInstalledAtString: "").isReady == false)
   }
 
-  @Test("Finishing a configure, identify or reset establishes the identity")
+  @Test("Finishing configure, or an identify or reset, establishes the identity")
   func endingEstablishesTheIdentity() {
     let unresolved = state(hasResolved: false)
     #expect(IdentityUpdate.end(.configuration).reduce(unresolved).isReady)
-    #expect(IdentityUpdate.end(.identification("user")).reduce(unresolved).isReady)
-    #expect(IdentityUpdate.end(.reset).reduce(unresolved).isReady)
+    #expect(IdentityUpdate.established.reduce(unresolved).isReady)
+    #expect(IdentityUpdate.established.reduce(state(pending: [.assignments], hasResolved: false)).isReady == false)
     #expect(IdentityUpdate.end(.assignments).reduce(unresolved).isReady == false)
     #expect(IdentityUpdate.end(.seed("user")).reduce(unresolved).isReady == false)
   }
@@ -64,20 +64,20 @@ struct IdentityStateTests {
 
   @Test("begin and end add and remove pending work")
   func beginAndEnd() {
-    let begun = IdentityUpdate.begin(.reset).reduce(state())
-    #expect(begun.pending == [.reset])
+    let begun = IdentityUpdate.begin(.assignments).reduce(state())
+    #expect(begun.pending == [.assignments])
     #expect(begun.isReady == false)
 
-    let ended = IdentityUpdate.end(.reset).reduce(begun)
+    let ended = IdentityUpdate.end(.assignments).reduce(begun)
     #expect(ended.pending.isEmpty)
     #expect(ended.isReady)
   }
 
   @Test("end leaves other pending work alone and ignores work that isn't pending")
   func endIsSelective() {
-    let start = state(pending: [.configuration, .identification("a")])
-    #expect(IdentityUpdate.end(.identification("b")).reduce(start).pending == start.pending)
-    #expect(IdentityUpdate.end(.identification("a")).reduce(start).pending == [.configuration])
+    let start = state(pending: [.configuration, .seed("a")])
+    #expect(IdentityUpdate.end(.seed("b")).reduce(start).pending == start.pending)
+    #expect(IdentityUpdate.end(.seed("a")).reduce(start).pending == [.configuration])
   }
 
   // MARK: - identify
@@ -99,8 +99,8 @@ struct IdentityStateTests {
   @Test("identify keeps work that was already pending")
   func identifyKeepsPending() {
     let result = IdentityUpdate.identify(userId: "user-1")
-      .reduce(state(pending: [.configuration, .identification("user-1")]))
-    #expect(result.pending == [.configuration, .identification("user-1"), .seed("user-1")])
+      .reduce(state(pending: [.configuration, .assignments]))
+    #expect(result.pending == [.configuration, .assignments, .seed("user-1")])
   }
 
   @Test("identify with the current user id changes nothing")
@@ -177,14 +177,14 @@ struct IdentityStateTests {
     let start = state(
       appUserId: "user-1",
       userAttributes: ["custom": 1, "appUserId": "user-1"],
-      pending: [.reset, .configuration]
+      pending: [.assignments, .configuration]
     )
     let result = IdentityUpdate.reset(aliasId: "$SuperwallAlias:new", seed: 3).reduce(start)
 
     #expect(result.appUserId == nil)
     #expect(result.aliasId == "$SuperwallAlias:new")
     #expect(result.seed == 3)
-    #expect(result.pending == [.reset, .configuration])
+    #expect(result.pending == [.assignments, .configuration])
     #expect(result.hasResolved)
     #expect(result.appInstalledAtString == "2026-01-01")
     #expect(result.userAttributes["custom"] == nil)

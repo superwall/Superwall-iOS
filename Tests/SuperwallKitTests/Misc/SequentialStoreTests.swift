@@ -55,6 +55,32 @@ private struct Run: StoreAction {
   }
 }
 
+/// Runs a closure synchronously as an action.
+private struct SyncRun: SyncStoreAction {
+  let name: String
+  let body: (TestContext) -> Void
+
+  init(_ name: String = "sync", _ body: @escaping (TestContext) -> Void) {
+    self.name = name
+    self.body = body
+  }
+
+  func execute(in context: TestContext) {
+    body(context)
+  }
+}
+
+/// Sets the counter to a value, so a test can read, then write, and see
+/// whether anything ran in between.
+private struct SetValue: Reducer {
+  let value: Int
+  func reduce(_ state: Counter) -> Counter {
+    var state = state
+    state.value = value
+    return state
+  }
+}
+
 /// Lets a test hold an action at a known point until it says so.
 private final class Gate: @unchecked Sendable {
   private let lock = NSLock()
@@ -414,5 +440,104 @@ struct SequentialStoreTests {
       let entries = log.filter { $0.hasPrefix("\(thread)-") }
       #expect(entries == (0..<50).map { "\(thread)-\($0)" })
     }
+  }
+
+  // MARK: - dispatch
+
+  @Test("dispatch runs the action before returning")
+  func dispatchIsSynchronous() {
+    let context = TestContext()
+    context.store.dispatch(SyncRun { $0.store.update(Add(amount: 1)) }, in: context)
+    #expect(context.store.state.value == 1)
+  }
+
+  @Test("dispatch from inside a dispatched action runs after it, before the outer dispatch returns")
+  func nestedDispatchIsDeferred() {
+    let context = TestContext()
+    context.store.dispatch(
+      SyncRun { context in
+        context.store.update(Log(entry: "outer start"))
+        context.store.dispatch(
+          SyncRun { $0.store.update(Log(entry: "nested")) },
+          in: context
+        )
+        context.store.update(Log(entry: "outer end"))
+      },
+      in: context
+    )
+    #expect(context.store.state.log == ["outer start", "outer end", "nested"])
+  }
+
+  @Test("Dispatches from many threads never overlap")
+  func dispatchesAreSerialized() async {
+    let context = TestContext()
+    await withTaskGroup(of: Void.self) { group in
+      for _ in 0..<500 {
+        group.addTask {
+          context.store.dispatch(
+            SyncRun { context in
+              // A read, then a write. Another action in between would lose
+              // an increment.
+              let value = context.store.state.value
+              context.store.update(SetValue(value: value + 1))
+            },
+            in: context
+          )
+        }
+      }
+    }
+    #expect(context.store.state.value == 500)
+  }
+
+  @Test("dispatch while another thread is running actions queues and returns without waiting")
+  func contendedDispatchDoesNotBlock() {
+    let context = TestContext()
+    let started = DispatchSemaphore(value: 0)
+    let proceed = DispatchSemaphore(value: 0)
+    let finished = DispatchSemaphore(value: 0)
+    var proceeded = false
+
+    Thread {
+      context.store.dispatch(
+        SyncRun { context in
+          started.signal()
+          // Waits for the other dispatch to return. If it waited for this
+          // action instead, both would be stuck.
+          proceeded = proceed.wait(timeout: .now() + 5) == .success
+          context.store.update(Log(entry: "first"))
+        },
+        in: context
+      )
+      finished.signal()
+    }
+    .start()
+
+    started.wait()
+    context.store.dispatch(SyncRun { $0.store.update(Log(entry: "second")) }, in: context)
+    // Queued behind the running action rather than run.
+    #expect(context.store.state.log.isEmpty)
+    proceed.signal()
+    finished.wait()
+
+    #expect(proceeded)
+    // The running thread picked it up before its dispatch returned.
+    #expect(context.store.state.log == ["first", "second"])
+  }
+
+  @Test("Action interceptors apply to dispatch")
+  func dispatchRunsActionInterceptors() {
+    let context = TestContext()
+    var seen: [String] = []
+    context.store.onAction { action, next in
+      seen.append((action as? SyncRun)?.name ?? "?")
+      if (action as? SyncRun)?.name == "blocked" {
+        return
+      }
+      next()
+    }
+    context.store.dispatch(SyncRun("allowed") { $0.store.update(Add(amount: 1)) }, in: context)
+    context.store.dispatch(SyncRun("blocked") { $0.store.update(Add(amount: 100)) }, in: context)
+    #expect(seen == ["allowed", "blocked"])
+    #expect(context.store.state.value == 1)
   }
 }

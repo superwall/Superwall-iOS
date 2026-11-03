@@ -11,12 +11,12 @@ import Combine
 /// Holds the user's identity and serializes every change to it.
 ///
 /// The identity lives in an ``IdentityState`` on a ``SequentialStore``.
-/// Reads are synchronous and never wait on pending work. Changes are
-/// ``IdentityAction``s that run one at a time, in the order they were
-/// called, so a merge called after `identify(userId:)` always lands on the
-/// identified user. Waiting on the config or on assignments happens outside
-/// the queue, and is tracked as pending work in the state instead, so it
-/// never holds up later changes.
+/// Reads are synchronous and never wait. Changes are ``IdentityAction``s,
+/// run one at a time in call order, normally on the calling thread, so a
+/// read straight after a change sees it and a merge called after
+/// `identify(userId:)` lands on the identified user. Waiting on the config or on assignments happens in side
+/// effects, tracked as pending work in the state, so it never holds up later
+/// changes.
 class IdentityManager: IdentityContext {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
@@ -112,7 +112,6 @@ class IdentityManager: IdentityContext {
     store = IdentityStore(initial: initialState)
     identitySubject.send(initialState.isReady)
 
-    IdentityInterceptors.installPending(on: store)
     IdentityInterceptors.installObservers(
       on: store,
       persist: { [weak self] before, after in
@@ -213,7 +212,7 @@ class IdentityManager: IdentityContext {
       return
     }
 
-    effect(
+    dispatch(
       .identify(
         userId: userId,
         restoreAssignments: options?.restorePaywallAssignments ?? false
@@ -221,7 +220,8 @@ class IdentityManager: IdentityContext {
     )
   }
 
-  /// Waits for every identity change called so far to finish.
+  /// Waits for any work queued on the identity store to finish. Identity
+  /// changes themselves run synchronously, so they're done already.
   func flush() async {
     await store.flush()
   }
@@ -233,8 +233,8 @@ extension IdentityManager {
   ///
   /// - Parameters:
   ///   - duringIdentify: Whether the reset is part of `identify(userId:)`
-  ///   switching user. Then it's already running inside the identify action,
-  ///   so it applies straight away instead of queueing behind it.
+  ///   switching user. Then it's running inside the identify action, so it
+  ///   applies straight away instead of after that action.
   func reset(duringIdentify: Bool) {
     if duringIdentify {
       store.update(
@@ -244,26 +244,26 @@ extension IdentityManager {
         )
       )
     } else {
-      effect(.reset)
+      dispatch(.reset)
     }
   }
 
-  /// Saves the identity again after the user's storage has been wiped. Runs
-  /// after any identity change already called, such as the reset that
-  /// came before the wipe.
+  /// Saves the identity again after the user's storage has been wiped. From
+  /// inside an identify, it runs once the identify has finished.
   func didResetStorage() {
-    effect(.persist)
+    dispatch(.persist)
   }
 }
 
 // MARK: - User Attributes
 extension IdentityManager {
-  /// Merges the attributes after any identity change already called.
+  /// Merges the attributes. From inside another identity change, such as the
+  /// reset an identify does, it lands once that change has finished.
   func mergeUserAttributes(
     _ newUserAttributes: [String: Any?],
     shouldTrackMerge: Bool = true
   ) {
-    effect(
+    dispatch(
       .mergeAttributes(
         newUserAttributes,
         shouldTrack: shouldTrackMerge,
@@ -278,7 +278,7 @@ extension IdentityManager {
     _ newUserAttributes: [String: Any?],
     shouldTrackMerge: Bool = true
   ) {
-    effect(
+    dispatch(
       .mergeAttributes(
         newUserAttributes,
         shouldTrack: shouldTrackMerge,

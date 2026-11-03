@@ -46,6 +46,9 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   var seeds: [String: Int] = [:]
   var configLatch: Latch?
   var assignmentsLatch: Latch?
+  /// Attributes the reset for a new user merges, as the SDK re-applies
+  /// install-scoped attribution.
+  var attributesMergedOnReset: [String: Any?]?
 
   private let lock = NSLock()
   private var _events: [String] = []
@@ -63,7 +66,6 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
 
   init(_ state: IdentityState) {
     store = IdentityStore(initial: state)
-    IdentityInterceptors.installPending(on: store)
     IdentityInterceptors.installObservers(
       on: store,
       persist: { _, _ in },
@@ -120,6 +122,9 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
     record("resetForNewUser")
     // What `Superwall.reset(duringIdentify: true)` does to this store.
     store.update(IdentityUpdate.reset(aliasId: "$SuperwallAlias:after-reset", seed: 5))
+    if let attributes = attributesMergedOnReset {
+      dispatch(.mergeAttributes(attributes, shouldTrack: false, shouldNotify: false))
+    }
   }
 
   func trackIdentityAlias() {
@@ -167,9 +172,10 @@ struct IdentityActionTests {
   func identifyAnonymousUser() async {
     let context = FakeIdentityContext(readyState())
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
-    // Pending from the moment it's dispatched.
-    #expect(context.state.isReady == false)
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
+    // Applied before dispatch returns. The seed is still pending.
+    #expect(context.state.appUserId == "user-1")
+    #expect(context.state.pending == [.seed("user-1")])
     await context.settle()
 
     let state = context.state
@@ -189,7 +195,7 @@ struct IdentityActionTests {
   func identifySameUser() async {
     let context = FakeIdentityContext(readyState(appUserId: "user-1"))
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     #expect(context.state.isReady)
     await context.settle()
 
@@ -204,7 +210,7 @@ struct IdentityActionTests {
       readyState(appUserId: "user-1", userAttributes: ["only_for_user_1": true])
     )
 
-    context.effect(.identify(userId: "user-2", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: false))
     await context.settle()
 
     let state = context.state
@@ -218,13 +224,24 @@ struct IdentityActionTests {
     #expect(context.persisted.last?.appUserId == "user-2")
   }
 
+  @Test("Attributes the switch's reset merges land on the new user before identify returns")
+  func resetMergesLandOnNewUser() {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+    context.attributesMergedOnReset = ["acquisition_source": "network"]
+
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: false))
+
+    #expect(context.state.appUserId == "user-2")
+    #expect(context.state.userAttributes["acquisition_source"] as? String == "network")
+  }
+
   @Test("identify waits for assignments only when restoring them")
   func identifyRestoringAssignments() async {
     let context = FakeIdentityContext(readyState())
     let assignments = Latch()
     context.assignmentsLatch = assignments
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: true))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
     await context.store.flush()
     #expect(context.state.pending.contains(.assignments))
     #expect(context.state.isReady == false)
@@ -240,7 +257,7 @@ struct IdentityActionTests {
     let assignments = Latch()
     context.assignmentsLatch = assignments
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     // Only the seed is outstanding: no config latch, so it resolves at once.
     let ready = try? await context.store.waitUntil { $0.isReady }
     #expect(ready != nil)
@@ -258,7 +275,7 @@ struct IdentityActionTests {
     let config = Latch()
     context.configLatch = config
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     await context.store.flush()
     #expect(context.state.pending == [.seed("user-1")])
     #expect(context.state.seed == 42)
@@ -277,8 +294,8 @@ struct IdentityActionTests {
     let config = Latch()
     context.configLatch = config
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
-    context.effect(.mergeAttributes(["plan": "pro"], shouldTrack: false, shouldNotify: false))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.mergeAttributes(["plan": "pro"], shouldTrack: false, shouldNotify: false))
     await context.store.flush()
 
     #expect(context.state.userAttributes["plan"] as? String == "pro")
@@ -297,8 +314,8 @@ struct IdentityActionTests {
     let config = Latch()
     context.configLatch = config
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
-    context.effect(.identify(userId: "user-2", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: false))
     await context.store.flush()
     config.open()
     await context.settle()
@@ -315,8 +332,8 @@ struct IdentityActionTests {
     let config = Latch()
     context.configLatch = config
 
-    context.effect(.identify(userId: "user-1", restoreAssignments: false))
-    context.effect(.reset)
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
+    context.dispatch(.reset)
     await context.store.flush()
     #expect(context.state.appUserId == nil)
     #expect(context.state.isReady == false)
@@ -333,9 +350,9 @@ struct IdentityActionTests {
   func mergesFollowIdentify() async {
     let context = FakeIdentityContext(readyState(appUserId: "user-1"))
 
-    context.effect(.mergeAttributes(["a": 1], shouldTrack: false, shouldNotify: false))
-    context.effect(.identify(userId: "user-2", restoreAssignments: false))
-    context.effect(.mergeAttributes(["b": 2], shouldTrack: true, shouldNotify: true))
+    context.dispatch(.mergeAttributes(["a": 1], shouldTrack: false, shouldNotify: false))
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: false))
+    context.dispatch(.mergeAttributes(["b": 2], shouldTrack: true, shouldNotify: true))
     await context.settle()
 
     let attributes = context.state.userAttributes
@@ -350,7 +367,7 @@ struct IdentityActionTests {
   @Test("Merging without tracking or notifying does neither")
   func quietMerge() async {
     let context = FakeIdentityContext(readyState())
-    context.effect(.mergeAttributes(["a": 1], shouldTrack: false, shouldNotify: false))
+    context.dispatch(.mergeAttributes(["a": 1], shouldTrack: false, shouldNotify: false))
     await context.settle()
     #expect(context.tracked.isEmpty)
     #expect(context.notified.isEmpty)
@@ -359,12 +376,12 @@ struct IdentityActionTests {
 
   // MARK: - Reset
 
-  @Test("reset gives the user a new anonymous identity and is pending until it runs")
+  @Test("reset gives the user a new anonymous identity straight away")
   func reset() async {
     let context = FakeIdentityContext(readyState(appUserId: "user-1", userAttributes: ["a": 1]))
 
-    context.effect(.reset)
-    #expect(context.state.isReady == false)
+    context.dispatch(.reset)
+    #expect(context.state.appUserId == nil)
     await context.settle()
 
     let state = context.state
@@ -374,14 +391,14 @@ struct IdentityActionTests {
     #expect(state.userAttributes["a"] == nil)
     #expect(state.userAttributes["aliasId"] as? String == state.aliasId)
     #expect(state.isReady)
-    #expect(context.readiness == [false, true])
+    #expect(context.readiness.isEmpty)
   }
 
   @Test("persist saves the identity as it is once earlier changes have run")
   func persistRunsAfterEarlierChanges() async {
     let context = FakeIdentityContext(readyState(appUserId: "user-1"))
-    context.effect(.reset)
-    context.effect(.persist)
+    context.dispatch(.reset)
+    context.dispatch(.persist)
     await context.settle()
     #expect(context.persisted.last?.appUserId == nil)
     #expect(context.persisted.last?.aliasId == context.state.aliasId)

@@ -16,16 +16,12 @@ struct IdentityState {
   enum Pending: Hashable {
     /// `configure()` is running, possibly waiting for assignments.
     case configuration
-    /// `identify(userId:)` is running for this user id.
-    case identification(String)
     /// The seed for this newly identified user is waiting on the config.
     /// Keyed by user id so a lookup that's overtaken by a reset or another
     /// identify still resolves its own entry.
     case seed(String)
     /// Assignments are being restored before the identity is ready.
     case assignments
-    /// A reset is running.
-    case reset
   }
 
   enum Keys {
@@ -105,9 +101,12 @@ struct IdentityState {
 enum IdentityUpdate: Reducer {
   /// Adds work that has to finish before the identity is ready.
   case begin(IdentityState.Pending)
-  /// Marks work as finished. Does nothing if it wasn't pending. Finishing a
-  /// configure, identify or reset establishes the identity.
+  /// Marks work as finished. Does nothing if it wasn't pending. Finishing
+  /// `configure()` establishes the identity.
   case end(IdentityState.Pending)
+  /// A configure, identify or reset has finished, so the identity is
+  /// established.
+  case established
   /// Logs in as `userId`, keeping the alias and seed. The seed is pending
   /// until the config says whether to derive it from the user id.
   case identify(userId: String)
@@ -127,15 +126,12 @@ enum IdentityUpdate: Reducer {
       return state
     case .end(let item):
       state.pending.remove(item)
-      switch item {
-      case .configuration,
-        .identification,
-        .reset:
+      if item == .configuration {
         state.hasResolved = true
-      case .seed,
-        .assignments:
-        break
       }
+      return state
+    case .established:
+      state.hasResolved = true
       return state
     case .identify(let userId):
       guard userId != state.appUserId else {

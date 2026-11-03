@@ -26,6 +26,13 @@ protocol StoreAction {
   func execute(in context: Context) async
 }
 
+/// Work that runs synchronously on a ``SequentialStore``, for state whose
+/// changes never wait on anything. See ``SequentialStore/dispatch(_:in:)``.
+protocol SyncStoreAction {
+  associatedtype Context
+  func execute(in context: Context)
+}
+
 /// Identifies the store job that the current task is running, so a store can
 /// tell a call made from inside one of its own actions from one made outside.
 private struct StoreJob: Hashable {
@@ -54,6 +61,9 @@ private enum StoreExecution {
 /// - ``immediate(_:in:)`` queues an action and waits for it to finish. Called
 ///   from inside an action on the same store, it runs the action inline, since
 ///   waiting for the queue from inside the queue would never finish.
+/// - ``dispatch(_:in:)`` runs a ``SyncStoreAction`` one at a time with other
+///   dispatches, on the calling thread when it can, for state whose changes
+///   never wait and whose callers read it back synchronously.
 /// - ``flush()`` waits for everything queued so far, which makes tests
 ///   deterministic without sleeping.
 ///
@@ -106,6 +116,13 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
   private var executionInterceptors: [ExecutionInterceptor] = []
 
   private let coordinator = SerialTaskCoordinator()
+
+  /// Guards the two properties below. Never held while an action runs.
+  private let dispatchLock = NSLock()
+  /// Dispatched actions waiting for the draining thread to run them.
+  private var pendingDispatches: [() -> Void] = []
+  /// Whether a thread is running dispatched actions.
+  private var isDraining = false
 
   /// The current state.
   var state: State {
@@ -287,6 +304,66 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
     try await waitUntil(until) {
       effect(action, in: context)
     }
+  }
+
+  /// Runs a ``SyncStoreAction``, one at a time with other dispatched actions,
+  /// in dispatch order. Never blocks.
+  ///
+  /// Use this instead of ``effect(_:in:)`` for actions that never wait, when
+  /// callers need to read their result straight after:
+  /// - When no other thread is running dispatched actions, `action` runs on
+  ///   the calling thread before this returns, followed by any actions
+  ///   dispatched meanwhile. A read on this thread then sees it.
+  /// - From inside a dispatched action, it runs once that action finishes,
+  ///   before the outer dispatch returns.
+  /// - While another thread is running dispatched actions, it's queued for
+  ///   that thread and this returns straight away. Waiting instead could
+  ///   deadlock: the running action may itself be waiting on something the
+  ///   caller holds.
+  ///
+  /// Execution interceptors don't apply.
+  func dispatch<A: SyncStoreAction>(
+    _ action: A,
+    in context: Context
+  ) where A.Context == Context {
+    let run = { [self] in
+      runActionInterceptors(action) {
+        action.execute(in: context)
+      }
+    }
+
+    let shouldDrain: Bool = withDispatchLock {
+      pendingDispatches.append(run)
+      if isDraining {
+        return false
+      }
+      isDraining = true
+      return true
+    }
+    guard shouldDrain else {
+      return
+    }
+
+    while let next = nextDispatch() {
+      next()
+    }
+  }
+
+  /// Takes the next dispatched action, or stops draining if there's none.
+  private func nextDispatch() -> (() -> Void)? {
+    withDispatchLock {
+      if pendingDispatches.isEmpty {
+        isDraining = false
+        return nil
+      }
+      return pendingDispatches.removeFirst()
+    }
+  }
+
+  private func withDispatchLock<T>(_ body: () -> T) -> T {
+    dispatchLock.lock()
+    defer { dispatchLock.unlock() }
+    return body()
   }
 
   /// Returns once everything queued before this call has finished.

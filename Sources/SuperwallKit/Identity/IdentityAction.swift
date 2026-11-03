@@ -50,18 +50,20 @@ extension IdentityContext {
     store.update(update)
   }
 
-  func effect(_ action: IdentityAction) {
-    store.effect(action, in: self)
-  }
-
-  func immediate(_ action: IdentityAction) async {
-    await store.immediate(action, in: self)
+  /// Runs `action`, normally before returning so that reads on this thread
+  /// see it. From inside another identity action, it runs once that one
+  /// finishes. See ``SequentialStore/dispatch(_:in:)``.
+  func dispatch(_ action: IdentityAction) {
+    store.dispatch(action, in: self)
   }
 }
 
-/// The async work that changes the identity. Each runs on the identity
-/// store's queue, one at a time, in the order it was dispatched.
-enum IdentityAction: StoreAction {
+/// The changes to the identity. None of them wait on anything: the config
+/// and assignments are waited for in side effects, tracked as pending work
+/// in the state. So they're dispatched synchronously, one at a time, and a
+/// read straight after a change normally sees it, as callers of the public
+/// identity API expect.
+enum IdentityAction: SyncStoreAction {
   /// Logs in as `userId`, resetting first if another user is logged in.
   case identify(userId: String, restoreAssignments: Bool)
   /// Applies the seed for `userId` once the config has said whether to
@@ -75,7 +77,7 @@ enum IdentityAction: StoreAction {
   /// wiped.
   case persist
 
-  func execute(in context: IdentityContext) async {
+  func execute(in context: IdentityContext) {
     switch self {
     case let .identify(userId, restoreAssignments):
       identify(userId: userId, restoreAssignments: restoreAssignments, in: context)
@@ -101,6 +103,7 @@ enum IdentityAction: StoreAction {
           seed: IdentityLogic.generateSeed()
         )
       )
+      context.update(.established)
       context.trackUserAttributes(context.state.userAttributes)
     case .persist:
       context.persistIdentity(context.state)
@@ -119,7 +122,7 @@ enum IdentityAction: StoreAction {
     if context.state.appUserId != nil {
       // Resets this store inline through `IdentityManager.reset(duringIdentify:)`
       // and wipes the user's storage, so it has to come before the new id
-      // is set and saved.
+      // is set and saved. Identity changes it makes run after this one.
       context.resetForNewUser()
     }
 
@@ -130,6 +133,7 @@ enum IdentityAction: StoreAction {
     // The reset above may have wiped every identity field from storage, not
     // just the ones this identify changed.
     context.persistIdentity(context.state)
+    context.update(.established)
 
     context.trackIdentityAlias()
     context.trackUserAttributes(context.state.userAttributes)
@@ -139,7 +143,7 @@ enum IdentityAction: StoreAction {
         return
       }
       let seed = await context.userIdSeed(for: userId)
-      context.effect(.resolveSeed(userId: userId, seed: seed))
+      context.dispatch(.resolveSeed(userId: userId, seed: seed))
     }
 
     context.sideEffect { [weak context] in
@@ -174,48 +178,8 @@ extension IdentityAction: CustomStringConvertible {
   }
 }
 
-/// Interceptors that keep the identity's pending work and its observers in
-/// step with the store.
+/// Interceptors that keep the identity's observers in step with the store.
 enum IdentityInterceptors {
-  /// Marks identify and reset as pending from the moment they're dispatched
-  /// until they finish, so the identity isn't ready in between.
-  static func installPending(on store: IdentityStore) {
-    store.onAction { action, next in
-      if let pending = pendingItem(for: action, state: store.state) {
-        store.update(IdentityUpdate.begin(pending))
-      }
-      next()
-    }
-
-    store.onActionExecution { action, next in
-      await next()
-      switch action as? IdentityAction {
-      case let .identify(userId, _)?:
-        store.update(IdentityUpdate.end(.identification(userId)))
-      case .reset?:
-        store.update(IdentityUpdate.end(.reset))
-      default:
-        break
-      }
-    }
-  }
-
-  private static func pendingItem(
-    for action: Any,
-    state: IdentityState
-  ) -> IdentityState.Pending? {
-    switch action as? IdentityAction {
-    case let .identify(userId, _)?:
-      // Identifying the current user again changes nothing, so it shouldn't
-      // make the identity briefly unready.
-      return userId == state.appUserId ? nil : .identification(userId)
-    case .reset?:
-      return .reset
-    default:
-      return nil
-    }
-  }
-
   /// Saves identity fields that an update changed, and reports readiness
   /// whenever it might have changed.
   static func installObservers(
