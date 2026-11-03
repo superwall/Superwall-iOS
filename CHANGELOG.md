@@ -10,7 +10,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
 - Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
 - Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
-- Entitlements your server reports for a custom product purchase now show up in the app straight after the purchase.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
 - Apps without web paywalls now also refresh entitlements when they come to the foreground.
 - Improves MMP install matching.
 
