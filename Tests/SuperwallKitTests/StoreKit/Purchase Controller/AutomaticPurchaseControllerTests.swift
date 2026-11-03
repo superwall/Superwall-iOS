@@ -665,4 +665,143 @@ struct AutomaticPurchaseControllerTests {
       Issue.record("An active purchase must produce an active status")
     }
   }
+
+  // MARK: - Billing grace period
+
+  /// Runs a StoreKit 2 read the way `SK2ReceiptManager.loadPurchases` does:
+  /// the latest transaction of an annual subscription expired an hour ago
+  /// and StoreKit reports `state` for it. Returns the purchases and the
+  /// entitlement map the status sync reads.
+  private func readExpiredSubscription(
+    state: LatestSubscription.State,
+    gracePeriodExpirationDate: Date? = nil
+  ) async -> (purchases: Set<Purchase>, entitlementsByProductId: [String: Set<Entitlement>]) {
+    let productId = "annual_product"
+    let expiredAt = Date().addingTimeInterval(-3600)
+    let purchaseDate = expiredAt.addingTimeInterval(-3 * 86_400)
+    let transaction = EntitlementProcessorTests.MockTransaction(
+      productId: productId,
+      transactionId: "trial",
+      purchaseDate: purchaseDate,
+      originalPurchaseDate: purchaseDate,
+      expirationDate: expiredAt,
+      isRevoked: false,
+      entitlementProductType: .autoRenewable,
+      willRenew: true,
+      renewedAt: nil,
+      isInGracePeriod: false,
+      isInBillingRetryPeriod: false,
+      isActive: false,
+      offerType: .trial,
+      subscriptionGroupId: "group"
+    )
+    let configEntitlement = Entitlement(
+      id: "pro",
+      isActive: false,
+      productIds: [productId],
+      store: .appStore
+    )
+
+    var subscriptions = EntitlementProcessor.processTransactions(from: [transaction]).subscriptions
+    let entitlementsByProductId = await EntitlementProcessor.buildEntitlementsWithLiveSubscriptionData(
+      from: ["pro": [transaction]],
+      rawEntitlementsByProductId: [productId: [configEntitlement]],
+      productIdsByEntitlementId: ["pro": [productId]],
+      subscriptions: &subscriptions,
+      subscriptionStatusProvider: MockSubscriptionStatusProvider(
+        mockWillAutoRenew: true,
+        mockState: state,
+        mockGracePeriodExpirationDate: gracePeriodExpirationDate
+      )
+    )
+    // The read records the purchase as inactive: its expiry has passed.
+    let purchases = SK2ReceiptManager.correctPurchases(
+      [Purchase(id: productId, isActive: false, purchaseDate: purchaseDate)],
+      entitlementsByProductId: entitlementsByProductId,
+      subscriptions: subscriptions
+    )
+    let customerInfo = CustomerInfo(
+      subscriptions: subscriptions,
+      nonSubscriptions: [],
+      entitlements: Array(entitlementsByProductId.values.flatMap { $0 })
+    )
+    return (purchases, customerInfo.entitlementsByProductId)
+  }
+
+  /// The status from before the renewal failed: the trial was active.
+  private func setTrialStatus(on superwall: Superwall) async {
+    let trial = entitlement(store: .appStore, expiresAt: Date().addingTimeInterval(86_400))
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+    await MainActor.run {
+      superwall.subscriptionStatus = .active([trial])
+    }
+  }
+
+  @Test("A subscription in a billing grace period keeps an active status after its expiry")
+  func testGracePeriod_keepsActiveStatus() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    await setTrialStatus(on: superwall)
+
+    // The trial failed to convert and Apple granted a grace period. The
+    // user is still subscribed, so gated placements must not show paywalls.
+    let gracePeriodEndsAt = Date().addingTimeInterval(16 * 86_400)
+    let read = await readExpiredSubscription(
+      state: .inGracePeriod,
+      gracePeriodExpirationDate: gracePeriodEndsAt
+    )
+    dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: read.purchases, superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status.isActive)
+    if case .active(let entitlements) = status {
+      let pro = entitlements.first { $0.id == "pro" }
+      #expect(pro?.isActive == true)
+      #expect(pro?.isInGracePeriod == true)
+      #expect(pro?.expiresAt == gracePeriodEndsAt)
+    } else {
+      Issue.record("A subscriber in a grace period must stay active, got \(status)")
+    }
+  }
+
+  @Test("An empty read keeps a subscriber in a billing grace period active")
+  func testGracePeriod_emptyReadKeepsActiveStatus() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    dependencyContainer.storage.delete(LatestRedeemResponse.self)
+
+    let read = await readExpiredSubscription(
+      state: .inGracePeriod,
+      gracePeriodExpirationDate: Date().addingTimeInterval(16 * 86_400)
+    )
+    let graceEntitlements = Set(read.entitlementsByProductId.values.flatMap { $0 })
+    dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
+    await MainActor.run {
+      superwall.subscriptionStatus = .active(graceEntitlements)
+    }
+
+    // StoreKit returns nothing at cold launch before it has loaded.
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: [], superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status == .active(graceEntitlements))
+  }
+
+  @Test("A subscription in billing retry after its expiry sets an inactive status")
+  func testBillingRetry_setsInactiveStatus() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    await setTrialStatus(on: superwall)
+
+    // No grace period: Apple doesn't grant access while it retries the charge.
+    let read = await readExpiredSubscription(state: .inBillingRetryPeriod)
+    dependencyContainer.entitlementsInfo.entitlementsByProductId = read.entitlementsByProductId
+
+    let controller = makeController()
+    await controller.syncSubscriptionStatus(withPurchases: read.purchases, superwall: superwall)
+
+    let status = await MainActor.run { superwall.subscriptionStatus }
+    #expect(status == .inactive)
+  }
 }

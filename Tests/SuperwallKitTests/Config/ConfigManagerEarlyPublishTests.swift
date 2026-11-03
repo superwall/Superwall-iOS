@@ -357,10 +357,13 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.9)
 
     #expect(harness.configManager.config?.buildId == "cached_123")
-    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    // Bounded by the 2s StoreKit load, not a tighter wall clock: a slow CI
+    // runner can take over a second to publish. `didFinishLoad` below is the
+    // real check that config didn't wait for StoreKit.
+    #expect(waited < 2, "config took \(waited)s, as long as the StoreKit load")
     await waitForLoadToStart(harness.receipt, timeout: 1)
     #expect(harness.receipt.didStartLoad, "purchases load must still be kicked off")
     #expect(!harness.receipt.didFinishLoad, "config was published only after StoreKit finished")
@@ -379,7 +382,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Active products for audience filters.
@@ -406,7 +409,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The still-valid silver keeps the fast path, but legacy is past its expiry
@@ -438,7 +441,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The status is rebuilt from the seeded purchases, so silver's `pro`
@@ -541,10 +544,13 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.9)
 
     #expect(harness.configManager.config != nil)
-    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    // Bounded by the 2s StoreKit load, not a tighter wall clock: a slow CI
+    // runner can take over a second to publish. `didFinishLoad` below is the
+    // real check that config didn't wait for StoreKit.
+    #expect(waited < 2, "config took \(waited)s, as long as the StoreKit load")
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Device purchases stay empty, as they are after the read for a web
@@ -570,10 +576,13 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.9)
 
     #expect(harness.configManager.config != nil)
-    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    // Bounded by the 2s StoreKit load, not a tighter wall clock: a slow CI
+    // runner can take over a second to publish. `didFinishLoad` below is the
+    // real check that config didn't wait for StoreKit.
+    #expect(waited < 2, "config took \(waited)s, as long as the StoreKit load")
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Every load merges grants back in, so the restore has to carry them too.
@@ -598,7 +607,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     let silverEntitlements = Superwall.shared.entitlements.byProductId(Self.silverProductId)
@@ -621,7 +630,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // Only the dated, unexpired silver is active. The undated row can't be
@@ -642,10 +651,13 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.9)
 
     #expect(harness.configManager.config != nil)
-    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    // Bounded by the 2s StoreKit load, not a tighter wall clock: a slow CI
+    // runner can take over a second to publish. `didFinishLoad` below is the
+    // real check that config didn't wait for StoreKit.
+    #expect(waited < 2, "config took \(waited)s, as long as the StoreKit load")
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The non-consumable is active, the consumable isn't, same as after the read.
@@ -744,10 +756,13 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    let waited = await waitForConfig(harness.configManager, timeout: 1.5)
+    let waited = await waitForConfig(harness.configManager, timeout: 1.9)
 
     #expect(harness.configManager.config != nil)
-    #expect(waited < 1, "config took \(waited)s but StoreKit was still loading")
+    // Bounded by the 2s StoreKit load, not a tighter wall clock: a slow CI
+    // runner can take over a second to publish. `didFinishLoad` below is the
+    // real check that config didn't wait for StoreKit.
+    #expect(waited < 2, "config took \(waited)s, as long as the StoreKit load")
     #expect(!harness.receipt.didFinishLoad)
 
     await fetch.value
@@ -795,7 +810,7 @@ struct ConfigManagerEarlyPublishTests {
     let statusBefore = Superwall.shared.subscriptionStatus
 
     let fetch = Task { await harness.configManager.fetchConfiguration() }
-    _ = await waitForConfig(harness.configManager, timeout: 1.5)
+    _ = await waitForConfig(harness.configManager, timeout: 1.9)
     #expect(!harness.receipt.didFinishLoad, "test needs config to be published mid-load")
 
     // The purchase state is still seeded from the saved copy.

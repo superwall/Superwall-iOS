@@ -3,13 +3,10 @@
 # its pinned native version, and opens a PR (with any integration work done by
 # an agent on top).
 #
-# iOS releases are created by hand (tag-version.yml only pings Slack), so
-# `release: published` fires for them. `published` rather than `created`:
-# `created` also fires for drafts.
-#
-# tag-version.yml pushes to CocoaPods trunk at the same time as the Slack ping,
-# so a release can be published before the pod exists. Flutter and Expo install
-# iOS through CocoaPods, so we wait for the version to show up on trunk first.
+# The release workflow (release.yml) calls this once the version is published
+# and has reached the CocoaPods CDN: Expo depends on SuperwallKit through
+# CocoaPods, so its bump can't build any earlier. It can also be run by hand
+# to announce a version again.
 #
 # Requires the WRAPPER_DISPATCH_TOKEN secret: a fine-grained PAT (or GitHub App
 # token) with "Contents: read & write" on every repo in WRAPPER_REPOS — that is
@@ -18,8 +15,12 @@
 name: Notify wrapper SDKs
 
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      version:
+        description: Released version to announce (e.g. 4.18.0)
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       version:
@@ -37,28 +38,22 @@ env:
 jobs:
   dispatch:
     runs-on: ubuntu-latest
-    # Wrappers only ship stable native versions.
-    if: github.event_name != 'release' || !github.event.release.prerelease
-    timeout-minutes: 75
+    timeout-minutes: 10
     steps:
       - name: Dispatch native-sdk-release
         env:
           GH_TOKEN: ${{ secrets.WRAPPER_DISPATCH_TOKEN }}
-          VERSION: ${{ inputs.version || github.event.release.tag_name }}
+          VERSION: ${{ inputs.version }}
         run: |
           VERSION="${VERSION#v}"
           if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::notice::'$VERSION' is not a stable x.y.z version, not notifying wrappers."
             exit 0
           fi
-          spec_url="https://trunk.cocoapods.org/api/v1/pods/SuperwallKit/specs/$VERSION"
-          for _ in $(seq 1 120); do
-            curl -sfo /dev/null "$spec_url" && break
-            echo "Waiting for SuperwallKit $VERSION on CocoaPods trunk..."
-            sleep 30
-          done
-          if ! curl -sfo /dev/null "$spec_url"; then
-            echo "::error::SuperwallKit $VERSION is not on CocoaPods trunk, not notifying wrappers. Re-run with workflow_dispatch once it is."
+          # SPM accepts both "x.y.z" and "vx.y.z" tags.
+          if ! git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY.git" \
+               "refs/tags/$VERSION" "refs/tags/v$VERSION" > /dev/null; then
+            echo "::error::No $VERSION tag in $GITHUB_REPOSITORY, so SPM can't resolve it. Not notifying wrappers."
             exit 1
           fi
           failed=0

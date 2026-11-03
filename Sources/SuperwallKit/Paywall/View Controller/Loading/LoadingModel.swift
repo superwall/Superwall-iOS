@@ -27,13 +27,13 @@ final class LoadingModel: ObservableObject {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationWillResignActive),
-      name: UIApplication.willResignActiveNotification,
+      name: SystemInfo.applicationWillResignActiveNotification,
       object: nil
     )
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationDidBecomeActive),
-      name: UIApplication.didBecomeActiveNotification,
+      name: SystemInfo.applicationDidBecomeActiveNotification,
       object: nil
     )
   }

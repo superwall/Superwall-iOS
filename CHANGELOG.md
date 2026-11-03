@@ -2,15 +2,30 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.18.3
+## 4.19.0
 
 ### Enhancements
 
+- Adds native macOS 12+ support, including paywalls, SwiftUI embedding, purchases, Customer Center and Test Mode. See the Mac example to get started.
+- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
+- Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
+- Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
+- Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves MMP install matching.
 - Sends Superwall the list of third-party SDKs your app includes, on app open when that list has changed since it was last sent, so the dashboard can suggest integrations for SDKs you already use and support can spot conflicts with other SDKs. It covers the Swift modules and Objective-C classes linked into your app and its embedded frameworks and resource bundles, without Apple's frameworks or your app's main module, and sends their names only as hashes. It describes your app's build, not your users, isn't passed to `SuperwallDelegate`, and isn't sent when `eventTrackingBehavior` is `.none`.
 
 ### Fixes
 
+- Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
+- Fixes custom product purchases being reported as App Store purchases.
+
+## 4.18.3
+
+### Fixes
+
 - Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
 
 ## 4.18.2
 

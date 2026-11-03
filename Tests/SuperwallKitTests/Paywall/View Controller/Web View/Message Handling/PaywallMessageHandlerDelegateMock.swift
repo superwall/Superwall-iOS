@@ -50,6 +50,7 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   var stripeCheckoutComplete: (checkoutContextId: String, productId: String)?
   var stripeCheckoutCompleteShouldDismiss: Bool?
   var stripeCheckoutAbandon: (checkoutContextId: String, productId: String)?
+  var customStoreCheckouts: [CustomStoreCheckout] = []
 
   var request: PresentationRequest?
 
@@ -121,6 +122,10 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
 
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String) {
     stripeCheckoutAbandon = (checkoutContextId, productId)
+  }
+
+  func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout) {
+    customStoreCheckouts.append(checkout)
   }
 
   func revealWebViewBehindSpinner() {}
