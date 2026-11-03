@@ -712,6 +712,10 @@ struct DeviceHelperTests {
       ipCollector: collector
     )
     box.container = dependencyContainer
+    // Other parts of the container hold `unowned` references to the device
+    // helper it made, so keep that one alive while the request uses this one.
+    let originalDeviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    defer { withExtendedLifetime(originalDeviceHelper) {} }
     dependencyContainer.deviceHelper = deviceHelper
     setMMPFlag(true, on: dependencyContainer)
 
