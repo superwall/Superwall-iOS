@@ -140,7 +140,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
-      fail-fast: false
+      # A scheme with a test that failed twice cancels the others: the release
+      # is blocked either way, so there's no point waiting for them.
+      fail-fast: true
       matrix:
         include:
           - scheme: UI Tests -swift -automatic
@@ -172,7 +174,9 @@ jobs:
       - name: Run the UI tests on Limrun
         env:
           LIM_API_KEY: ${{ secrets.LIM_API_KEY }}
-        run: scripts/limrun-test.sh -s "${{ matrix.scheme }}" -n 5 -r limrun-results
+        # -f stops at the first test that fails twice (a failed test is retried
+        # straight away) instead of finishing every shard.
+        run: scripts/limrun-test.sh -f -s "${{ matrix.scheme }}" -n 5 -r limrun-results
 
       - name: Upload results
         if: always()
