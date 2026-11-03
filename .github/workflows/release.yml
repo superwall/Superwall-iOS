@@ -392,7 +392,21 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
           VERSION: ${{ needs.version.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          NEEDS: ${{ toJSON(needs) }}
         run: |
-          text="iOS release ${VERSION:-(unknown version)} failed: $RUN_URL"
-          payload=$(python3 -c 'import json, sys; print(json.dumps({"text": sys.argv[1]}))' "$text")
+          payload=$(python3 - <<'PY'
+          import json, os
+          needs = json.loads(os.environ["NEEDS"])
+          version = os.environ["VERSION"] or "(unknown version)"
+          failed = [name for name, job in needs.items() if job["result"] == "failure"]
+          jobs = ", ".join(failed) or "a job"
+          url = os.environ["RUN_URL"]
+          # Once `release` has tagged it, the version is out on SPM whatever failed after.
+          if needs["release"]["result"] == "success":
+              text = f"iOS {version} is released (tagged, on SPM), but {jobs} failed. Re-run the failed jobs once fixed: {url}"
+          else:
+              text = f"iOS release {version} failed at {jobs}; nothing was tagged: {url}"
+          print(json.dumps({"text": text}))
+          PY
+          )
           curl -fsS -X POST -H 'Content-Type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"
