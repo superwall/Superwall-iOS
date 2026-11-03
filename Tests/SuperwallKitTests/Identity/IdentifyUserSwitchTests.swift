@@ -51,4 +51,41 @@ struct IdentifyUserSwitchTests {
     #expect(identityManager.userAttributes["acquisition_source"] as? String == "test_network")
     superwall.reset()
   }
+  @Test("Switching user starts the new user on a fresh alias without the old user's attributes")
+  func switchingUserStartsAFreshIdentity() async {
+    let superwall = Superwall.shared
+    let identityManager: IdentityManager = superwall.dependencyContainer.identityManager
+
+    superwall.identify(userId: "switch-fresh-a")
+    identityManager.mergeUserAttributes(["only_for_a": true])
+    let identifiedA = await eventually {
+      identityManager.appUserId == "switch-fresh-a"
+        && identityManager.userAttributes["only_for_a"] as? Bool == true
+    }
+    #expect(identifiedA)
+    let aliasA = identityManager.aliasId
+
+    superwall.identify(userId: "switch-fresh-b")
+    let identifiedB = await eventually { identityManager.appUserId == "switch-fresh-b" }
+    #expect(identifiedB)
+
+    #expect(identityManager.aliasId != aliasA)
+    #expect(identityManager.userAttributes["only_for_a"] == nil)
+    #expect(identityManager.userAttributes["appUserId"] as? String == "switch-fresh-b")
+    superwall.reset()
+  }
+
+  private func eventually(
+    timeout: TimeInterval = 3,
+    _ condition: () -> Bool
+  ) async -> Bool {
+    let deadline = Date().addingTimeInterval(timeout)
+    while Date() < deadline {
+      if condition() {
+        return true
+      }
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    return condition()
+  }
 }
