@@ -59,5 +59,33 @@ struct CustomerCenterDismissalTests {
     manager.dismiss(completion: nil)
     #expect(recorder.events == expected)
   }
+
+  @Test
+  func dismissingWhileHiddenDeliversCallbacks() async throws {
+    _ = NSApplication.shared
+    let container = DependencyContainer()
+    let manager = CustomerCenterManager(container: container)
+    let root = NSViewController.blank()
+    let window = NSWindow(contentViewController: root)
+    window.isReleasedWhenClosed = false
+    window.setContentSize(NSSize(width: 760, height: 620))
+    window.orderFront(nil)
+    defer { window.close() }
+    let recorder = Recorder()
+    let delegate = Delegate(recorder)
+    manager.present(configuration: nil, from: root, delegate: delegate) {
+      recorder.events.append("onDismiss")
+    }
+    let controller = try #require(manager.presentedControllerForTesting)
+    try await waitUntil { controller.wasPresentedModally }
+
+    // Hiding the window hides its sheet too, which disappears without leaving.
+    window.orderOut(nil)
+    try await waitUntil { controller.viewModel.isDismissalSuppressed }
+
+    manager.dismiss { recorder.events.append("completion") }
+    try await waitUntil { recorder.events == ["delegate", "onDismiss", "completion"] }
+    #expect(!manager.isPresented)
+  }
 }
 #endif

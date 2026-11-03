@@ -42,19 +42,39 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
     window.center()
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
+    await locateDevServer()
     choices = (manager.devServer?.surfaces ?? []).map {
       Choice(id: $0.id, name: "Local: \($0.id)", identifier: $0.previewIdentifier)
     }
+    let network: Network = Superwall.shared.dependencyContainer.network
     do {
-      let published = try await Superwall.shared.dependencyContainer.network.listPreviewPaywalls()
+      let published = try await network.listPreviewPaywalls()
       choices += published.data.map { Choice(id: $0.id, name: $0.name, identifier: $0.identifier) }
       message = choices.isEmpty ? "No paywalls available." : ""
     } catch {
+      // The linked paywall can still be looked up on its own, as the UIKit debugger does.
+      if let paywallId = paywallId,
+        let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
+        choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
+      }
       message = choices.isEmpty
         ? error.localizedDescription
-        : "Published paywalls unavailable; local previews are ready."
+        : "Couldn't load the other published paywalls."
     }
     selection = choices.first { $0.id == (surfaceId ?? paywallId) }?.id ?? choices.first?.id ?? ""
+  }
+
+  /// Finds a running dev server in dev mode, as the UIKit debugger does, so a dashboard link
+  /// lists local surfaces too. Only local deep links set the debug manager's copy otherwise.
+  private func locateDevServer() async {
+    let options = Superwall.shared.options
+    guard
+      DevMode.isActive(options),
+      let location = await DevServerLocator.shared.locate(devServerURL: options.devServerURL)
+    else {
+      return
+    }
+    manager.devServer = (base: location.base, surfaces: location.manifest.surfaces)
   }
 
   func preview() {

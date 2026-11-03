@@ -191,6 +191,26 @@ struct CustomerCenterSheetsModifier: ViewModifier {
       set: { viewModel.sheet = $0 }
     )
   }
+  /// A sheet that only shows a message. macOS sheets can't be swiped away, so it gets a
+  /// close button there.
+  @ViewBuilder
+  private func infoSheet(_ message: String) -> some View {
+    #if os(macOS)
+    VStack(spacing: 16) {
+      Text(message)
+        .fixedSize(horizontal: false, vertical: true)
+      Button(strings.string("customer_center_close")) {
+        itemSheet.wrappedValue = nil
+      }
+      .keyboardShortcut(.cancelAction)
+    }
+    .padding()
+    .frame(minWidth: 300)
+    #else
+    Text(message).padding()
+    #endif
+  }
+
   private var onItemSheetDismiss: () -> Void {
     {
       if viewModel.pendingSurvey != nil { viewModel.cancelSurvey() }
@@ -230,9 +250,9 @@ struct CustomerCenterSheetsModifier: ViewModifier {
           SafariView(url: url).ignoresSafeArea()
           #endif
         case .noMailApp(let email):
-          Text(strings.string("customer_center_no_mail_app", email)).padding()
+          infoSheet(strings.string("customer_center_no_mail_app", email))
         case .webManageUnavailable:
-          Text(strings.string("customer_center_web_manage_unavailable")).padding()
+          infoSheet(strings.string("customer_center_web_manage_unavailable"))
         default:
           EmptyView()
         }

@@ -189,6 +189,20 @@ struct MacPaywallEmbeddingAndAlertTests {
   }
 
   @Test
+  func popupCardStaysBelowTheRecoveryButtons() throws {
+    let paywall = makePaywallViewController(style: .popup(height: 100, width: 100, cornerRadius: 12))
+    _ = paywall.view
+    paywall.setPresentationStyle(withOverride: nil)
+
+    let subviews = paywall.view.subviews
+    let card = try #require(paywall.popupContainerView)
+    let cardIndex = try #require(subviews.firstIndex(of: card))
+    let buttonIndices = subviews.indices.filter { subviews[$0] is NSButton }
+    #expect(buttonIndices.count == 2)
+    #expect(buttonIndices.allSatisfy { $0 > cardIndex })
+  }
+
+  @Test
   func alertThatCantShowStillReportsItsClose() async throws {
     _ = NSApplication.shared
     let window = NSWindow(contentViewController: NSViewController.blank())

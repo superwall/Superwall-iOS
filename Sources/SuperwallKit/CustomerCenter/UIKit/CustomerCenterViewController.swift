@@ -160,6 +160,16 @@ public final class CustomerCenterViewController: NSHostingController<CustomerCen
     }
   }
 
+  /// Dismisses the Customer Center from whatever presented it. One hidden along with its window
+  /// has already disappeared and won't disappear again, so its dismissal is reported here.
+  func dismissFromPresenter() {
+    let isHidden = viewModel.isDismissalSuppressed
+    presentingViewController?.dismiss(self)
+    if isHidden {
+      deliverDismissal()
+    }
+  }
+
   /// See the iOS controller: fires the view model's dismissal straight away rather than after its
   /// visibility debounce, and runs `onDismiss` at most once.
   private func deliverDismissal() {

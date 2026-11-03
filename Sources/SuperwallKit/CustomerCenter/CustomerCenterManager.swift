@@ -181,7 +181,7 @@ final class CustomerCenterManager {
       onDismiss?()
       completion?()
     }
-    controller.presentingViewController?.dismiss(controller)
+    controller.dismissFromPresenter()
     #else
     // Dismiss from whatever presented the Customer Center. Asked directly, a controller that has
     // one of its own sheets open (a survey, Safari, the change-plan sheet) only closes that sheet

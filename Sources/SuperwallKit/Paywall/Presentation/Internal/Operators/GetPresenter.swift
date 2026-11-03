@@ -154,8 +154,8 @@ extension Superwall {
       window.center()
       presentationItems.window = window
     }
-    presentationItems.window?.makeKeyAndOrderFront(nil)
-    PlatformApplication.sharedApplication?.activate(ignoringOtherApps: true)
+    // It stays hidden until the paywall is in it, so it can't be closed empty
+    // while the presentation is still on its way.
     return presentationItems.window?.rootViewController
   }
 

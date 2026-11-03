@@ -51,7 +51,7 @@ enum TestModeModal {
         // `register` call waiting. Use the saved settings instead.
         noShowTimeout: noShowTimeout,
         onCancel: {
-          continuation.resume(returning: appliedSettings.result)
+          continuation.resume(returning: appliedSettings.closeWithoutOK())
         },
         content: { close in
           TestModeModalView(
@@ -63,6 +63,7 @@ enum TestModeModal {
             userLinkURL: userLinkURL,
             selections: savedSelections,
             freeTrialOverride: freeTrialOverride,
+            onEdit: appliedSettings.update,
             onReset: appliedSettings.reset
           ) { selections, freeTrialOverride in
             guard close() else { return }
@@ -89,6 +90,7 @@ private struct TestModeModalView: View {
   let userLinkURL: URL?
   @State var selections: [String: EntitlementSelection]
   @State var freeTrialOverride: FreeTrialOverride
+  let onEdit: ([String: EntitlementSelection], FreeTrialOverride) -> Void
   let onReset: () -> Void
   let onOK: ([String: EntitlementSelection], FreeTrialOverride) -> Void
 
@@ -131,7 +133,7 @@ private struct TestModeModalView: View {
           }
           TestModeAttributesDisclosure(title: "Device Attributes", source: .device)
           TestModeAttributesDisclosure(title: "User Attributes", source: .user)
-          Picker("Free Trial Override", selection: $freeTrialOverride) {
+          Picker("Free Trial Override", selection: freeTrialOverrideBinding) {
             ForEach(FreeTrialOverride.allCases, id: \.self) { option in
               Text(option.displayName).tag(option)
             }
@@ -171,15 +173,28 @@ private struct TestModeModalView: View {
     }
   }
 
+  private var freeTrialOverrideBinding: Binding<FreeTrialOverride> {
+    Binding(
+      get: { freeTrialOverride },
+      set: { override in
+        freeTrialOverride = override
+        onEdit(selections, override)
+      }
+    )
+  }
+
   private func selectionBinding(for entitlementId: String) -> Binding<EntitlementSelection> {
     Binding(
       get: { selections[entitlementId] ?? EntitlementSelection(state: nil, offerType: nil) },
       set: { selection in
+        var updated = selections
         if selection.state != nil {
-          selections[entitlementId] = selection
+          updated[entitlementId] = selection
         } else {
-          selections.removeValue(forKey: entitlementId)
+          updated.removeValue(forKey: entitlementId)
         }
+        selections = updated
+        onEdit(updated, freeTrialOverride)
       }
     )
   }

@@ -893,8 +893,8 @@ public class PaywallViewController: PlatformViewController, LoadingDelegate {
         }
 
         #if !os(macOS)
-        // On macOS they're already in front: they're added after the web view,
-        // and the shimmer goes in below it.
+        // On macOS they're already in front: the web view and the popup card
+        // go in below them, and the shimmer below the web view.
         self.view.bringSubviewToFront(self.refreshPaywallButton)
         self.view.bringSubviewToFront(self.exitButton)
         #endif
@@ -2279,6 +2279,11 @@ extension PaywallViewController {
   private func overlayHost(over presenter: NSViewController) -> NSViewController {
     let presentationItems = Superwall.shared.presentationItems
     if let window = presenter.view.window as? PaywallHostWindow {
+      if !(window is PaywallOverlayWindow) {
+        // The window the SDK made because the app had none, kept hidden until now.
+        window.makeKeyAndOrderFront(nil)
+        PlatformApplication.sharedApplication?.activate(ignoringOtherApps: true)
+      }
       return window.host
     }
     guard let parentWindow = presenter.view.window else {
@@ -2315,7 +2320,7 @@ extension PaywallViewController {
     }
   }
 
-  private func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
+  func setPresentationStyle(withOverride override: PaywallPresentationStyle?) {
     if let override = override,
       override != .none {
       presentationStyle = override
@@ -2390,7 +2395,8 @@ extension PaywallViewController {
       shadow.shadowBlurRadius = 10
       return shadow
     }()
-    view.addSubview(containerView)
+    // Below the refresh and exit buttons, so they stay usable if loading stalls.
+    view.addSubview(containerView, positioned: .below, relativeTo: refreshPaywallButton)
     popupContainerView = containerView
 
     webView.wantsLayer = true
