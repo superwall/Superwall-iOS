@@ -23,16 +23,16 @@
 #    depends on SuperwallKit through CocoaPods, so it can't take the new
 #    version before then. Prereleases (-alpha, -beta, -rc) aren't sent to them.
 #
-# 6. Once everything has succeeded, announce the release in the iOS Slack
-#    channel with its notes.
+# 6. Once everything has succeeded, announce the release in Slack (sdk-ops)
+#    with its notes.
 #
 # Any failure posts to Slack. Re-running failed jobs is safe: tagging,
 # releasing and publishing each skip what's already done.
 #
 # Secrets: LIM_API_KEY, UI_TESTS_REPO_ACCESS_TOKEN (read access to
 # Superwall-iOS-UI-tests), COCOAPODS_TRUNK_TOKEN, EMERGE_API_KEY,
-# WRAPPER_DISPATCH_TOKEN, SLACK_WEBHOOK (failures), SLACK_IOS_WEBHOOK
-# (release announcements in the iOS channel).
+# WRAPPER_DISPATCH_TOKEN, SLACK_WEBHOOK (sdk-ops: announcements and
+# failures).
 
 name: Release
 
@@ -332,17 +332,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Post to the iOS channel
+      - name: Post to Slack
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_IOS_WEBHOOK }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
           VERSION: ${{ needs.version.outputs.version }}
           PRERELEASE: ${{ needs.version.outputs.prerelease }}
           RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.version.outputs.version }}
         run: |
-          if [ -z "$SLACK_WEBHOOK_URL" ]; then
-            echo "::warning::SLACK_IOS_WEBHOOK isn't set, so the release wasn't announced."
-            exit 0
-          fi
           scripts/release-notes.sh "$VERSION" > notes.md
           payload=$(python3 - <<'PY'
           import json, os, re
