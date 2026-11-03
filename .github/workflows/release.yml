@@ -394,6 +394,13 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           NEEDS: ${{ toJSON(needs) }}
         run: |
+          # `release` pushes the tag first, so a later step of it can fail with the
+          # version already out. Check the tag rather than the job's result.
+          export TAGGED=false
+          if [ -n "$VERSION" ] && git ls-remote --exit-code --tags \
+              "https://github.com/$GITHUB_REPOSITORY.git" "refs/tags/$VERSION" > /dev/null; then
+            TAGGED=true
+          fi
           payload=$(python3 - <<'PY'
           import json, os
           needs = json.loads(os.environ["NEEDS"])
@@ -401,8 +408,8 @@ jobs:
           failed = [name for name, job in needs.items() if job["result"] == "failure"]
           jobs = ", ".join(failed) or "a job"
           url = os.environ["RUN_URL"]
-          # Once `release` has tagged it, the version is out on SPM whatever failed after.
-          if needs["release"]["result"] == "success":
+          # Once it's tagged, the version is out on SPM whatever failed after.
+          if os.environ["TAGGED"] == "true":
               text = f"iOS {version} is released (tagged, on SPM), but {jobs} failed. Re-run the failed jobs once fixed: {url}"
           else:
               text = f"iOS release {version} failed at {jobs}; nothing was tagged: {url}"
