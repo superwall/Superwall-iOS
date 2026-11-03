@@ -13,7 +13,7 @@ Superwall.shared.register(placement: "campaign_trigger") {
 
 For a sandboxed Mac app, enable outgoing network connections (`com.apple.security.network.client`). Add the appropriate usage descriptions and sandbox entitlements for any camera, microphone, contacts, photos or location permissions your paywall requests. Configure App Store products for the Mac app, or provide your own purchase controller. StoreKit purchases require the app's own product and signing configuration.
 
-CocoaPods requires Superscript 1.0.16 or later for its macOS platform declaration. Until that dependency is published, use Swift Package Manager.
+CocoaPods requires Superscript 1.0.17 or later for its macOS platform declaration. Until that dependency is published, use Swift Package Manager.
 
 ## Presentation
 

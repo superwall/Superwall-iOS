@@ -40,7 +40,7 @@ Pod::Spec.new do |s|
 	s.requires_arc = true
   s.ios.dependency 'Superscript', '1.0.15'
   # Native macOS requires the platform declaration added after 1.0.15.
-  s.osx.dependency 'Superscript', '~> 1.0.16'
+  s.osx.dependency 'Superscript', '~> 1.0.17'
 
   s.source_files  = "Sources/**/*.{swift}"
   s.resource_bundles = {
