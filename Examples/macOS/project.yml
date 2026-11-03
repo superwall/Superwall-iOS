@@ -14,7 +14,7 @@ targets:
     dependencies:
       - package: SuperwallKit
     settings:
-      PRODUCT_BUNDLE_IDENTIFIER: com.superwall.Basic
+      PRODUCT_BUNDLE_IDENTIFIER: com.superwall.Advanced
       INFOPLIST_FILE: SuperwallMacExample/Info.plist
       CODE_SIGN_ENTITLEMENTS: SuperwallMacExample/SuperwallMacExample.entitlements
       CODE_SIGN_STYLE: Automatic
@@ -29,5 +29,5 @@ schemes:
         SuperwallMacExample: all
     run:
       config: Debug
-      # Same demo API key as the Basic example, so it shares that example's products.
-      storeKitConfiguration: ../Basic/Basic/Superwall_Basic-Products.storekit
+      # Same demo API key as the Advanced example, so it shares that example's products.
+      storeKitConfiguration: ../Advanced/Advanced/Superwall_Advanced-Products.storekit

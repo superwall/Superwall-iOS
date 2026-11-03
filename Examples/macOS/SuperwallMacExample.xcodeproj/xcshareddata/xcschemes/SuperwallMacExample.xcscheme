@@ -64,7 +64,7 @@
       <CommandLineArguments>
       </CommandLineArguments>
       <StoreKitConfigurationFileReference
-         identifier = "../../../Basic/Basic/Superwall_Basic-Products.storekit">
+         identifier = "../../../Advanced/Advanced/Superwall_Advanced-Products.storekit">
       </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
