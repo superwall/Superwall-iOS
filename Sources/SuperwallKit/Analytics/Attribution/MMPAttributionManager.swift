@@ -12,6 +12,8 @@ import Combine
 enum MMPMatchError: Error {
   case dependenciesUnavailable
   case unsupportedPlatform
+  /// The app turned off event tracking while the match was being prepared.
+  case trackingDisabled
 }
 
 /// Owns the MMP (mobile measurement partner) install-attribution flow: firing
@@ -38,6 +40,9 @@ final class MMPAttributionManager {
   private let lock = NSLock()
   private var startMatch: (() -> Task<Void, Never>?)?
   private var hasStartedMatch = false
+  /// Set when the running match stopped because the app opted out of tracking,
+  /// so it can start again once that match has finished.
+  private var didStopForOptOut = false
   /// `true` from when this launch's install match is set up until it finishes
   /// or is skipped.
   private let isMatchPending = CurrentValueSubject<Bool, Never>(false)
@@ -100,10 +105,16 @@ final class MMPAttributionManager {
     }
     lock.lock()
     defer { lock.unlock() }
-    guard
-      !hasStartedMatch,
-      let startMatch = startMatch
-    else {
+    if hasStartedMatch {
+      return
+    }
+    startMatchWhileLocked()
+  }
+
+  /// Starts the match, or ends its pending state if the app is opted out.
+  /// Call with `lock` held.
+  private func startMatchWhileLocked() {
+    guard let startMatch = startMatch else {
       return
     }
     guard let match = startMatch() else {
@@ -115,8 +126,34 @@ final class MMPAttributionManager {
     isMatchPending.send(true)
     Task { [weak self] in
       await match.value
-      self?.isMatchPending.send(false)
+      self?.finishMatch()
     }
+  }
+
+  /// Marks the running match as stopped by an opt-out, so it can start again
+  /// when it finishes.
+  private func stopMatchForOptOut() {
+    lock.lock()
+    didStopForOptOut = true
+    lock.unlock()
+  }
+
+  /// Ends the running match. One stopped by an opt-out starts again straight
+  /// away if the app has already opted back in, since that opt-in found it
+  /// still running, and the next opt-in starts it otherwise. A restart keeps
+  /// the pending state on throughout, so waiting paywalls keep waiting for it.
+  private func finishMatch() {
+    lock.lock()
+    defer { lock.unlock() }
+    if didStopForOptOut {
+      didStopForOptOut = false
+      hasStartedMatch = false
+      if configManager.config?.attribution?.mmp?.enabled == true {
+        startMatchWhileLocked()
+        return
+      }
+    }
+    isMatchPending.send(false)
   }
 
   /// On a first launch, a paywall can be requested while the install match is
@@ -205,6 +242,11 @@ final class MMPAttributionManager {
     } catch MMPMatchError.dependenciesUnavailable, MMPMatchError.unsupportedPlatform {
       // Defensive path — `Network` already logged the skip and there's nothing
       // to track.
+      return false
+    } catch MMPMatchError.trackingDisabled {
+      // Like a match skipped before it started, it's tried again if the app
+      // opts back in.
+      stopMatchForOptOut()
       return false
     } catch {
       await Superwall.shared.track(
