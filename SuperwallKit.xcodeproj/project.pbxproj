@@ -763,6 +763,7 @@
 		9D9A101DDB1BB6FA3C58CA4B /* EntitlementUnknownFieldsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE875868E6FD1F70A32C9614 /* EntitlementUnknownFieldsTests.swift */; };
 		9DA1865EC920757351BAC235 /* PermissionStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEB7CF97D0926DCDAB133DB1 /* PermissionStatus.swift */; };
 		9DC74748B0DC9DA519E70FE6 /* Array+Capability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58466FF38687A9F8715F9B54 /* Array+Capability.swift */; };
+		9DDC4C602FCB1A396D646A59 /* MacDebuggerChoicesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E4E85B2739302D696701411 /* MacDebuggerChoicesTests.swift */; };
 		9E046BA77FB9AAC6F63954B8 /* SubscriptionsApiEnvironmentScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B9771726558AF75743BF08 /* SubscriptionsApiEnvironmentScript.swift */; };
 		9E21D97817B1BA97806283B3 /* CustomURLSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = B37D3D1DE18F6748B9E8963C /* CustomURLSession.swift */; };
 		9E5C7A4F83B1E2236C68E271 /* LimitedQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B921746BEC8F63DDB65C634 /* LimitedQueue.swift */; };
@@ -1575,6 +1576,7 @@
 		5D44CEC91693B4B900472C1C /* Survey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Survey.swift; sourceTree = "<group>"; };
 		5D8D539E4636D23E549B4520 /* TestModePurchaseDrawer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModePurchaseDrawer.swift; sourceTree = "<group>"; };
 		5E37562E243AE6632134D94A /* DevServerSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerSurface.swift; sourceTree = "<group>"; };
+		5E4E85B2739302D696701411 /* MacDebuggerChoicesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDebuggerChoicesTests.swift; sourceTree = "<group>"; };
 		5EB5A772C1F2ECE6D0E0BD69 /* PaywallState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallState.swift; sourceTree = "<group>"; };
 		5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionLookupMock.swift; sourceTree = "<group>"; };
 		5FEE388DB4E569DD11E460B0 /* CoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManagerTests.swift; sourceTree = "<group>"; };
@@ -3177,6 +3179,7 @@
 			isa = PBXGroup;
 			children = (
 				D64CEBB4A6C8D08F1D9667A9 /* CustomerCenterDismissalTests.swift */,
+				5E4E85B2739302D696701411 /* MacDebuggerChoicesTests.swift */,
 				31A0E45E8458B75ABDAB5CB6 /* MacDeviceInfoTests.swift */,
 				1A45FB79DD65E075388661BB /* MacReviewFollowUpTests.swift */,
 				56746F53FB760E82269E6C05 /* MacTeleportReturnCoverTests.swift */,
@@ -5288,6 +5291,7 @@
 			files = (
 				BA51F11F0D8A6AAFAA5E1D36 /* CustomerCenterDependenciesMocks.swift in Sources */,
 				E9DFA315184E2B88981A50C5 /* CustomerCenterDismissalTests.swift in Sources */,
+				9DDC4C602FCB1A396D646A59 /* MacDebuggerChoicesTests.swift in Sources */,
 				AB785564D30352943FCF14C1 /* MacDeviceInfoTests.swift in Sources */,
 				D008AC9E22039C457D4D78EF /* MacReviewFollowUpTests.swift in Sources */,
 				8D24B1CC09209F9F4CE3539D /* MacTeleportReturnCoverTests.swift in Sources */,

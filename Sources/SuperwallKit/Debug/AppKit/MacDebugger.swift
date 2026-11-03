@@ -6,7 +6,7 @@ import SwiftUI
 /// Native preview controls for dashboard and local-development deep links.
 @MainActor
 final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
-  struct Choice: Identifiable {
+  struct Choice: Identifiable, Equatable {
     let id: String
     let name: String
     let identifier: String
@@ -52,14 +52,12 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
       choices += published.data.map { Choice(id: $0.id, name: $0.name, identifier: $0.identifier) }
       message = choices.isEmpty ? "No paywalls available." : ""
     } catch {
-      // Fall back to the paywalls in the downloaded config, as the UIKit debugger does.
-      let configPaywalls = Superwall.shared.dependencyContainer.configManager?.config?.paywalls ?? []
-      choices += configPaywalls.map {
-        Choice(id: $0.databaseId, name: $0.name, identifier: $0.identifier)
+      let configPaywalls = (Superwall.shared.dependencyContainer.configManager?.config?.paywalls ?? []).map {
+        PaywallSummary(id: $0.databaseId, identifier: $0.identifier, name: $0.name)
       }
+      choices = Self.fallbackChoices(local: choices, configPaywalls: configPaywalls)
       // The linked paywall can still be looked up on its own.
-      if let paywallId = paywallId,
-        !choices.contains(where: { $0.id == paywallId }),
+      if let paywallId = Self.linkedPaywallToLookUp(paywallId, in: choices),
         let linked = try? await network.resolvePaywallIdentifier(forDatabaseId: paywallId) {
         choices.append(Choice(id: linked.id, name: linked.name, identifier: linked.identifier))
       }
@@ -68,6 +66,24 @@ final class MacDebugger: NSObject, ObservableObject, NSWindowDelegate {
         : "Couldn't load the other published paywalls."
     }
     selection = choices.first { $0.id == (surfaceId ?? paywallId) }?.id ?? choices.first?.id ?? ""
+  }
+
+  /// The choices when the preview list can't load: the local surfaces, then
+  /// the paywalls in the downloaded config, as the UIKit debugger offers.
+  nonisolated static func fallbackChoices(local: [Choice], configPaywalls: [PaywallSummary]) -> [Choice] {
+    return local + configPaywalls.map {
+      Choice(id: $0.id, name: $0.name, identifier: $0.identifier)
+    }
+  }
+
+  /// The linked paywall's database ID, if it isn't already one of `choices`.
+  nonisolated static func linkedPaywallToLookUp(_ paywallId: String?, in choices: [Choice]) -> String? {
+    guard let paywallId = paywallId,
+      !choices.contains(where: { $0.id == paywallId })
+    else {
+      return nil
+    }
+    return paywallId
   }
 
   /// Finds a running dev server in dev mode, as the UIKit debugger does, so a dashboard link
