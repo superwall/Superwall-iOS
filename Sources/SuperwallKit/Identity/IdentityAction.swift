@@ -67,9 +67,9 @@ extension IdentityContext {
 enum IdentityAction: SyncStoreAction {
   /// Logs in as `userId`, resetting first if another user is logged in.
   case identify(userId: String, restoreAssignments: Bool)
-  /// Applies the seed for `userId` once the config has said whether to
-  /// derive it from the user id.
-  case resolveSeed(userId: String, seed: Int?)
+  /// Applies the seed for an identify's user once the config has said
+  /// whether to derive it from the user id.
+  case resolveSeed(IdentifyOperation, seed: Int?)
   /// Merges attributes into the user's attributes.
   case mergeAttributes([String: Any?], shouldTrack: Bool, shouldNotify: Bool)
   /// Replaces the user with a new anonymous one.
@@ -82,9 +82,9 @@ enum IdentityAction: SyncStoreAction {
     switch self {
     case let .identify(userId, restoreAssignments):
       identify(userId: userId, restoreAssignments: restoreAssignments, in: context)
-    case let .resolveSeed(userId, seed):
+    case let .resolveSeed(operation, seed):
       let seedBefore = context.state.seed
-      context.update(.resolveSeed(userId: userId, seed: seed))
+      context.update(.resolveSeed(operation, seed: seed))
       if context.state.seed != seedBefore {
         context.trackUserAttributes(context.state.userAttributes)
       }
@@ -120,11 +120,13 @@ enum IdentityAction: SyncStoreAction {
       return
     }
 
+    let operation = IdentifyOperation(userId: userId)
+
     // Not ready from here on: otherwise the anonymous user the reset below
     // leaves would count as ready until the new id is set.
-    context.update(.begin(.seed(userId)))
+    context.update(.begin(.seed(operation)))
     if restoreAssignments {
-      context.update(.begin(.assignments(userId)))
+      context.update(.begin(.assignments(operation)))
     }
 
     if context.state.appUserId != nil {
@@ -134,7 +136,7 @@ enum IdentityAction: SyncStoreAction {
       context.resetForNewUser()
     }
 
-    context.update(.identify(userId: userId))
+    context.update(.identify(operation))
     // The reset above may have wiped every identity field from storage, not
     // just the ones this identify changed.
     context.persistIdentity(context.state)
@@ -148,7 +150,7 @@ enum IdentityAction: SyncStoreAction {
         return
       }
       let seed = await context.userIdSeed(for: userId)
-      context.dispatch(.resolveSeed(userId: userId, seed: seed))
+      context.dispatch(.resolveSeed(operation, seed: seed))
     }
 
     context.sideEffect { [weak context] in
@@ -158,7 +160,7 @@ enum IdentityAction: SyncStoreAction {
     context.sideEffect { [weak context] in
       await context?.fetchAssignments()
       if restoreAssignments {
-        context?.update(.end(.assignments(userId)))
+        context?.update(.end(.assignments(operation)))
       }
     }
   }

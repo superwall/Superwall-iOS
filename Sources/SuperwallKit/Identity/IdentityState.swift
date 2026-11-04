@@ -11,18 +11,30 @@ import Foundation
 /// still being resolved before paywalls can be shown to them.
 ///
 /// Changed only by ``IdentityUpdate`` reducers on ``IdentityManager``'s store.
+/// One call to `identify(userId:)` that changes the user. Pending work is
+/// keyed by it rather than by user id, so that each identify resolves only
+/// its own work, even when the same user is identified again before an
+/// earlier identify's work has finished.
+struct IdentifyOperation: Hashable {
+  let userId: String
+  let id: UUID
+
+  init(userId: String, id: UUID = UUID()) {
+    self.userId = userId
+    self.id = id
+  }
+}
+
 struct IdentityState {
   /// Work that has to finish before the identity is ready.
   enum Pending: Hashable {
     /// `configure()` is running, possibly waiting for assignments.
     case configuration
-    /// The seed for this newly identified user is waiting on the config.
-    /// Keyed by user id so a lookup that's overtaken by a reset or another
-    /// identify still resolves its own entry.
-    case seed(String)
-    /// Assignments are being restored for this user before the identity is
-    /// ready. Keyed by user id for the same reason as the seed.
-    case assignments(String)
+    /// The seed for this identify's user is waiting on the config.
+    case seed(IdentifyOperation)
+    /// Assignments are being restored for this identify's user before the
+    /// identity is ready.
+    case assignments(IdentifyOperation)
   }
 
   enum Keys {
@@ -108,12 +120,12 @@ enum IdentityUpdate: Reducer {
   /// A configure, identify or reset has finished, so the identity is
   /// established.
   case established
-  /// Logs in as `userId`, keeping the alias and seed. The seed is pending
-  /// until the config says whether to derive it from the user id.
-  case identify(userId: String)
-  /// Resolves the pending seed for `userId`. Sets `seed` if `userId` is
-  /// still the logged in user, otherwise only resolves it.
-  case resolveSeed(userId: String, seed: Int?)
+  /// Logs in as the operation's user, keeping the alias and seed. The seed
+  /// is pending until the config says whether to derive it from the user id.
+  case identify(IdentifyOperation)
+  /// Resolves the operation's pending seed. Sets `seed` if the operation's
+  /// user is still the logged in user, otherwise only resolves it.
+  case resolveSeed(IdentifyOperation, seed: Int?)
   /// Merges attributes into the user's attributes.
   case mergeAttributes([String: Any?])
   /// Replaces the user with a new anonymous one. Keeps any pending work.
@@ -134,18 +146,18 @@ enum IdentityUpdate: Reducer {
     case .established:
       state.hasResolved = true
       return state
-    case .identify(let userId):
-      guard userId != state.appUserId else {
+    case .identify(let operation):
+      guard operation.userId != state.appUserId else {
         return state
       }
-      state.appUserId = userId
-      state.pending.insert(.seed(userId))
+      state.appUserId = operation.userId
+      state.pending.insert(.seed(operation))
       return state.mergingIds()
-    case let .resolveSeed(userId, seed):
-      state.pending.remove(.seed(userId))
+    case let .resolveSeed(operation, seed):
+      state.pending.remove(.seed(operation))
       guard
         let seed = seed,
-        userId == state.appUserId,
+        operation.userId == state.appUserId,
         seed != state.seed
       else {
         return state

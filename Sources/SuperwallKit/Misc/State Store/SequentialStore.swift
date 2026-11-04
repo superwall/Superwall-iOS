@@ -169,7 +169,8 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
   }
 
   /// Registers the wait before running `afterRegistering`, so a state change
-  /// that `afterRegistering` causes can't be missed.
+  /// that `afterRegistering` causes can't be missed. `afterRegistering` runs
+  /// exactly once, whether or not the state already matches.
   private func waitUntil(
     _ predicate: @escaping (State) -> Bool,
     afterRegistering: () -> Void
@@ -191,13 +192,14 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
           waiters.append(Waiter(id: id, predicate: predicate, continuation: continuation))
           return .waiting
         }
+        afterRegistering()
         switch registration {
         case .cancelled:
           continuation.resume(throwing: CancellationError())
         case .matched(let state):
           continuation.resume(returning: state)
         case .waiting:
-          afterRegistering()
+          break
         }
       }
     } onCancel: {
@@ -254,7 +256,9 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
     }
   }
 
-  /// Queues `action`, then returns the first state that matches `until`.
+  /// Queues `action`, then returns the first state that matches `until`,
+  /// which is the current one if it already matches. `action` is queued
+  /// either way.
   ///
   /// - Throws: `CancellationError` if the calling task is cancelled first.
   @discardableResult

@@ -158,6 +158,24 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   }
 }
 
+extension IdentityState {
+  /// Pending work by kind and user, for comparing without the operation ids
+  /// an identify makes up.
+  var pendingSummary: [String] {
+    pending.map { item in
+      switch item {
+      case .configuration:
+        return "configuration"
+      case .seed(let operation):
+        return "seed:\(operation.userId)"
+      case .assignments(let operation):
+        return "assignments:\(operation.userId)"
+      }
+    }
+    .sorted()
+  }
+}
+
 private func readyState(
   appUserId: String? = nil,
   userAttributes: [String: Any] = [:]
@@ -184,7 +202,7 @@ struct IdentityActionTests {
     context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     // Applied before dispatch returns. The seed is still pending.
     #expect(context.state.appUserId == "user-1")
-    #expect(context.state.pending == [.seed("user-1")])
+    #expect(context.state.pendingSummary == ["seed:user-1"])
     await context.settle()
 
     let state = context.state
@@ -270,14 +288,42 @@ struct IdentityActionTests {
     }
     context.dispatch(.identify(userId: "user-2", restoreAssignments: true))
     first.open()
-    try await context.store.waitUntil { !$0.pending.contains(.assignments("user-1")) }
+    try await context.store.waitUntil { !$0.pendingSummary.contains("assignments:user-1") }
 
-    #expect(context.state.pending.contains(.assignments("user-2")))
+    #expect(context.state.pendingSummary.contains("assignments:user-2"))
     #expect(context.state.isReady == false)
 
     second.open()
     await context.settle()
     #expect(context.state.isReady)
+  }
+
+  @Test("Restoring assignments for a user identified again waits for the latest restore")
+  func sameUserRestoredTwiceWaitsForLatest() async throws {
+    let context = FakeIdentityContext(readyState())
+    let first = Latch()
+    let second = Latch()
+    context.assignmentsLatches = [first, second]
+
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
+    while !context.events.contains("fetchAssignments") {
+      try await Task.sleep(nanoseconds: 1_000_000)
+    }
+    context.dispatch(.reset)
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
+    while context.events.filter({ $0 == "fetchAssignments" }).count < 2 {
+      try await Task.sleep(nanoseconds: 1_000_000)
+    }
+
+    first.open()
+    try await context.store.waitUntil { $0.pendingSummary.filter { $0 == "assignments:user-1" }.count == 1 }
+    // The second restore is still running, so the user isn't ready.
+    #expect(context.state.pendingSummary.contains("assignments:user-1"))
+    #expect(context.state.isReady == false)
+
+    second.open()
+    try await context.store.waitUntil { $0.isReady }
+    await context.settle()
   }
 
   @Test("identify waits for assignments only when restoring them")
@@ -288,7 +334,7 @@ struct IdentityActionTests {
 
     context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
     await context.store.flush()
-    #expect(context.state.pending.contains(.assignments("user-1")))
+    #expect(context.state.pendingSummary.contains("assignments:user-1"))
     #expect(context.state.isReady == false)
 
     assignments.open()
@@ -322,7 +368,7 @@ struct IdentityActionTests {
 
     context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     await context.store.flush()
-    #expect(context.state.pending == [.seed("user-1")])
+    #expect(context.state.pendingSummary == ["seed:user-1"])
     #expect(context.state.seed == 42)
 
     config.open()

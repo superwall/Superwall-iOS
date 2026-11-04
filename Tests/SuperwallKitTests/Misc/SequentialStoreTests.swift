@@ -380,6 +380,19 @@ struct SequentialStoreTests {
     #expect(try await result.value.value == 2)
   }
 
+  @Test("immediateUntil still queues its action when the state already matches")
+  func immediateUntilAlreadyMatching() async throws {
+    let context = TestContext()
+    let state = try await context.store.immediateUntil(
+      Run { $0.store.update(Log(entry: "ran")) },
+      in: context,
+      until: { _ in true }
+    )
+    #expect(state.log.isEmpty)
+    await context.store.flush()
+    #expect(context.store.state.log == ["ran"])
+  }
+
   @Test("update interceptors wrap updates and can suppress them")
   func updateInterceptors() {
     let context = TestContext()
