@@ -24,7 +24,7 @@ final class FinishWithoutPaywallUITests {
   private func run(
     _ triggerResult: InternalTriggerResult,
     getPaywall: @escaping (PaywallRequest) async throws -> Paywall = { _ in .stub() }
-  ) async -> (states: [PaywallState], didThrow: Bool, didFinish: Bool) {
+  ) async -> (states: [PaywallState], didThrow: Bool, didFinish: Bool, didRunFeature: Bool) {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     var states: [PaywallState] = []
     var didFinish = false
@@ -36,18 +36,20 @@ final class FinishWithoutPaywallUITests {
     .store(in: &cancellables)
 
     var didThrow = false
+    var didRunFeature = false
     do {
       try await Superwall.shared.finishWithoutPaywallUI(
         request: .stub(),
         audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: triggerResult),
         debugInfo: [:],
         publisher: statePublisher,
+        feature: { didRunFeature = true },
         getPaywall: getPaywall
       )
     } catch {
       didThrow = true
     }
-    return (states, didThrow, didFinish)
+    return (states, didThrow, didFinish, didRunFeature)
   }
 
   private func paywall(gating: FeatureGatingBehavior) -> Paywall {
@@ -56,41 +58,36 @@ final class FinishWithoutPaywallUITests {
     return paywall
   }
 
-  /// Checks the step declined the paywall as if its page failed to load,
-  /// which is what iOS does without an internet connection.
-  private func expectDeclinedAsFailedToLoad(
-    _ result: (states: [PaywallState], didThrow: Bool, didFinish: Bool),
-    gating: FeatureGatingBehavior
-  ) {
-    #expect(!result.didThrow)
-    #expect(result.didFinish)
-    guard
-      result.states.count == 1,
-      case let .dismissed(paywallInfo, paywallResult) = result.states[0]
-    else {
-      Issue.record("Expected a dismissal, got \(result.states)")
-      return
-    }
-    guard case .declined = paywallResult else {
-      Issue.record("Expected the paywall to be declined, got \(paywallResult)")
-      return
-    }
-    #expect(paywallInfo.closeReason == .webViewFailedToLoad)
-    #expect(paywallInfo.featureGatingBehavior == gating)
-  }
-
-  @Test func nonGatedPaywall_isDeclinedAsFailedToLoad() async {
+  @Test func nonGatedPaywall_runsFeatureWithoutCallbacks() async {
     let result = await run(.paywall(experiment())) { _ in
       self.paywall(gating: .nonGated)
     }
-    expectDeclinedAsFailedToLoad(result, gating: .nonGated)
+
+    #expect(!result.didThrow)
+    #expect(result.didFinish)
+    #expect(result.didRunFeature)
+    // Nothing was shown, so there's no present or dismiss.
+    #expect(result.states.isEmpty)
   }
 
-  @Test func gatedPaywall_isDeclinedAsFailedToLoad() async {
+  @Test func gatedPaywall_sendsErrorWithoutRunningFeature() async {
     let result = await run(.paywall(experiment())) { _ in
       self.paywall(gating: .gated)
     }
-    expectDeclinedAsFailedToLoad(result, gating: .gated)
+
+    #expect(!result.didThrow)
+    #expect(result.didFinish)
+    #expect(!result.didRunFeature)
+    guard
+      result.states.count == 1,
+      case .presentationError(let error) = result.states[0]
+    else {
+      Issue.record("Expected a presentation error, got \(result.states)")
+      return
+    }
+    let nsError = error as NSError
+    #expect(nsError.domain == "SWKPresentationError")
+    #expect(nsError.code == 106)
   }
 
   @Test func paywallFetchFailure_sendsError() async {
@@ -100,6 +97,7 @@ final class FinishWithoutPaywallUITests {
 
     #expect(result.didThrow)
     #expect(result.didFinish)
+    #expect(!result.didRunFeature)
     guard
       result.states.count == 1,
       case .presentationError(let error) = result.states[0]

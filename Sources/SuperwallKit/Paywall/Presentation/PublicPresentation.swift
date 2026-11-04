@@ -215,7 +215,8 @@ extension Superwall {
         params: params,
         paywallOverrides: nil,
         isFeatureGatable: completion != nil,
-        publisher: publisher
+        publisher: publisher,
+        feature: completion
       )
     }
   }
@@ -259,7 +260,8 @@ extension Superwall {
     params: [String: Any]? = nil,
     paywallOverrides: PaywallOverrides? = nil,
     isFeatureGatable: Bool,
-    publisher: PassthroughSubject<PaywallState, Never>
+    publisher: PassthroughSubject<PaywallState, Never>,
+    feature: (() -> Void)? = nil
   ) async {
     do {
       try TrackingLogic.checkNotSuperwallEvent(placement)
@@ -281,6 +283,10 @@ extension Superwall {
       isPaywallPresented: isPaywallPresented,
       type: .presentation
     )
+    #if canImport(WebKit)
     await internallyPresent(presentationRequest, publisher)
+    #else
+    await internallyPresent(presentationRequest, publisher, feature: feature)
+    #endif
   }
 }

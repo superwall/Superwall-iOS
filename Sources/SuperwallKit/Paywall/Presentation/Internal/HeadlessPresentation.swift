@@ -14,9 +14,12 @@ extension Superwall {
   /// - Parameters:
   ///   - request: The presentation request.
   ///   - publisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - feature: The feature block passed to `register`, run when the
+  ///     matched paywall isn't gated.
   func internallyPresent(
     _ request: PresentationRequest,
-    _ publisher: PassthroughSubject<PaywallState, Never>
+    _ publisher: PassthroughSubject<PaywallState, Never>,
+    feature: (() -> Void)?
   ) async {
     do {
       try await waitForSubsStatusAndConfig(request, paywallStatePublisher: publisher)
@@ -33,7 +36,8 @@ extension Superwall {
         request: request,
         audienceOutcome: audienceOutcome,
         debugInfo: debugInfo,
-        publisher: publisher
+        publisher: publisher,
+        feature: feature
       )
     } catch {
       logErrors(from: request, error)
@@ -66,23 +70,28 @@ extension Superwall {
   /// Ends a `register` call once the audience filters have run, on a platform
   /// that can't show paywalls.
   ///
-  /// It ends the way iOS does when it has no internet connection:
+  /// The feature is unlocked or not as on iOS when a paywall fails to load,
+  /// but without the paywall's present and dismiss callbacks, since nothing
+  /// was shown:
   ///
   /// - A holdout or a placement with no matching audience is skipped, and the
   ///   feature runs.
   /// - If the paywall can't be fetched, the handler gets the error and the
   ///   feature doesn't run.
-  /// - Otherwise the paywall is declined as if its page failed to load. A
-  ///   non-gated feature runs, and a gated one gets an error instead.
+  /// - A non-gated paywall runs the feature.
+  /// - A gated paywall sends an error and doesn't run the feature.
   ///
   /// Built on every platform so the iOS tests cover it.
   ///
-  /// - Parameter getPaywall: Fetches the paywall. Replaced in tests.
+  /// - Parameters:
+  ///   - feature: The feature block passed to `register`, if any.
+  ///   - getPaywall: Fetches the paywall. Replaced in tests.
   func finishWithoutPaywallUI(
     request: PresentationRequest,
     audienceOutcome: AudienceFilterEvaluationOutcome,
     debugInfo: [String: Any],
     publisher: PassthroughSubject<PaywallState, Never>,
+    feature: (() -> Void)?,
     getPaywall: ((PaywallRequest) async throws -> Paywall)? = nil
   ) async throws {
     // Sends `skipped` and throws for anything other than a paywall.
@@ -108,7 +117,7 @@ extension Superwall {
       presentationSourceType: request.presentationSourceType
     )
 
-    var paywall: Paywall
+    let paywall: Paywall
     do {
       let getPaywall = getPaywall ?? dependencyContainer.paywallManager.getPaywall(from:)
       paywall = try await getPaywall(paywallRequest)
@@ -125,16 +134,28 @@ extension Superwall {
       throw PresentationPipelineError.noPaywallViewController
     }
 
-    Logger.debug(
-      logLevel: .warn,
-      scope: .paywallPresentation,
-      message: "A campaign matched, but paywalls can't be shown on this platform. "
-        + "It's declined as if the paywall failed to load.",
-      info: debugInfo
-    )
-    paywall.closeReason = .webViewFailedToLoad
-    let paywallInfo = paywall.getInfo(fromPlacement: request.presentationInfo.placementData)
-    publisher.send(.dismissed(paywallInfo, .declined))
-    publisher.send(completion: .finished)
+    switch paywall.featureGating {
+    case .nonGated:
+      Logger.debug(
+        logLevel: .warn,
+        scope: .paywallPresentation,
+        message: "A campaign matched, but paywalls can't be shown on this platform. "
+          + "The paywall isn't gated, so the feature runs.",
+        info: debugInfo
+      )
+      publisher.send(completion: .finished)
+      await MainActor.run {
+        feature?()
+      }
+    case .gated:
+      let error = InternalPresentationLogic.presentationError(
+        domain: "SWKPresentationError",
+        code: 106,
+        title: "Webview Unavailable",
+        value: "Trying to present a gated paywall, but paywalls can't be shown on this platform."
+      )
+      publisher.send(.presentationError(error))
+      publisher.send(completion: .finished)
+    }
   }
 }

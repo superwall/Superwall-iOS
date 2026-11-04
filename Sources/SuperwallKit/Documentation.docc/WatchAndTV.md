@@ -21,7 +21,7 @@ Neither platform has a web view, so paywalls, the debugger, Test Mode and Custom
 `register(placement:)` still runs the campaign's audience filters:
 
 - A holdout, or a placement with no matching audience, is skipped and runs the feature, as on iOS.
-- When a paywall would be shown, it's treated as a paywall that failed to load, as on iOS without an internet connection. The handler's `onDismiss` gets a declined result, with no `onPresent` before it. A non-gated feature runs. A gated feature doesn't, and the handler's `onError` gets an error instead. If the paywall itself can't be fetched, `onError` gets that error.
+- When a paywall would be shown, the feature is unlocked as on iOS when a paywall fails to load. A non-gated feature runs. A gated feature doesn't, and the handler's `onError` gets an error instead. If the paywall can't be fetched, `onError` gets that error. `onPresent` and `onDismiss` aren't called, since nothing is shown.
 
 `getPresentationResult(forPlacement:)` returns the paywall the user would see. Implicit placements, such as `app_launch`, don't trigger anything.
 
