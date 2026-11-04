@@ -198,11 +198,16 @@ struct IdentityActionTests {
   @Test("identify logs in, saves everything, tracks, and fetches assignments")
   func identifyAnonymousUser() async {
     let context = FakeIdentityContext(readyState())
+    // Holds the seed lookup, which otherwise can finish before the checks
+    // below run.
+    let config = Latch()
+    context.configLatch = config
 
     context.dispatch(.identify(userId: "user-1", restoreAssignments: false))
     // Applied before dispatch returns. The seed is still pending.
     #expect(context.state.appUserId == "user-1")
     #expect(context.state.pendingSummary == ["seed:user-1"])
+    config.open()
     await context.settle()
 
     let state = context.state
