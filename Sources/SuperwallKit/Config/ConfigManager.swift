@@ -709,7 +709,10 @@ class ConfigManager {
   }
 
   /// Preloads paywalls referenced by triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadAllPaywalls() async {
+    #if canImport(WebKit)
     // Queue the preload behind any that's already in flight and return. It's
     // kicked off from several places (config refresh, retry, reset, public
     // API), so the queue has to be safe to add to from any thread.
@@ -732,11 +735,9 @@ class ConfigManager {
         }
         if !prioritizedTriggers.isEmpty {
           var prioritizedIds = await getTreatmentPaywallIds(from: Set(prioritizedTriggers))
-          #if canImport(WebKit)
           if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
             prioritizedIds.remove(presentedPaywallId)
           }
-          #endif
           await self.preloadPaywalls(withIdentifiers: prioritizedIds)
 
           // Delay before preloading the rest to avoid contention.
@@ -749,17 +750,19 @@ class ConfigManager {
 
       // Do not preload the presented paywall. This is because if config refreshes, we
       // don't want to refresh the presented paywall until it's dismissed and presented again.
-      #if canImport(WebKit)
       if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
-      #endif
       await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
+    #endif
   }
 
   /// Preloads paywalls referenced by the provided triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadPaywalls(for placementNames: Set<String>) async {
+    #if canImport(WebKit)
     guard
       let config =
         try? await configState
@@ -771,19 +774,16 @@ class ConfigManager {
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
     var paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
     // Do not preload the presented paywall.
-    #if canImport(WebKit)
     if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
       paywallIds.remove(presentedPaywallId)
     }
-    #endif
     await preloadPaywalls(withIdentifiers: paywallIds)
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Preloads paywalls referenced by triggers.
-  ///
-  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
-    #if canImport(WebKit)
     let paywallCount = paywallIdentifiers.count
     let preloadStart = InternalSuperwallEvent.PaywallPreload(
       state: .start,
@@ -825,8 +825,8 @@ class ConfigManager {
       paywallCount: paywallCount
     )
     await Superwall.shared.track(preloadComplete)
-    #endif
   }
+  #endif
 
   // MARK: - Test Mode
 
