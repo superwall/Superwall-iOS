@@ -95,6 +95,8 @@ private struct Harness {
       configManager: configManager,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       notifyUserChange: notifyUserChange,
+      // Kept off the shared instance, which the defaults would reset and track to.
+      resetForNewUser: {},
       track: { _ in }
     )
     if publishConfig {
@@ -127,6 +129,15 @@ private func eventually(
 /// to have had the chance to.
 private func settle() async {
   try? await Task.sleep(nanoseconds: 200_000_000)
+}
+
+private func aliasUUID(of identityManager: IdentityManager) -> UUID? {
+  UUID(
+    uuidString: identityManager.aliasId.replacingOccurrences(
+      of: IdentityLogic.superwallPrefix,
+      with: ""
+    )
+  )
 }
 
 private func config(enableUserIdSeed: Bool) -> Config {
@@ -205,7 +216,7 @@ struct IdentityManagerBehaviorTests {
     #expect(attributes["invalid"] == nil)
   }
 
-  @Test("appAccountToken is the userId when it's a UUID, otherwise nil")
+  @Test("appAccountToken is the userId when it's a UUID, otherwise the alias's UUID")
   func appAccountToken() async {
     let uuid = UUID()
     let uuidHarness = Harness()
@@ -220,10 +231,12 @@ struct IdentityManagerBehaviorTests {
     let namedUser = namedHarness.identityManager
     namedUser.identify(userId: "not-a-uuid", options: nil)
     #expect(await eventually { namedUser.appUserId == "not-a-uuid" })
-    #expect(namedUser.appAccountToken == nil)
+    #expect(namedUser.appAccountToken == aliasUUID(of: namedUser))
 
     let anonymousHarness = Harness()
-    #expect(anonymousHarness.identityManager.appAccountToken == nil)
+    let anonymousUser = anonymousHarness.identityManager
+    #expect(anonymousUser.appAccountToken != nil)
+    #expect(anonymousUser.appAccountToken == aliasUUID(of: anonymousUser))
   }
 
   // MARK: - Configure

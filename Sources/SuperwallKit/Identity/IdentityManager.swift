@@ -12,11 +12,13 @@ import Combine
 ///
 /// The identity lives in an ``IdentityState`` on a ``SequentialStore``.
 /// Reads are synchronous and never wait. Changes are ``IdentityAction``s,
-/// run one at a time in call order, normally on the calling thread, so a
-/// read straight after a change sees it and a merge called after
-/// `identify(userId:)` lands on the identified user. Waiting on the config or on assignments happens in side
-/// effects, tracked as pending work in the state, so it never holds up later
-/// changes.
+/// run one at a time in call order, and a change returns once it has run, so
+/// a read straight after it sees it and a merge called after
+/// `identify(userId:)` lands on the identified user. The one exception: a
+/// change made while an identify on another thread is resetting for a new
+/// user runs after that reset, once the call has returned. Waiting on the
+/// config or on assignments happens in side effects, tracked as pending work
+/// in the state, so it never holds up later changes.
 class IdentityManager: IdentityContext {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
@@ -24,13 +26,20 @@ class IdentityManager: IdentityContext {
     store.state.userId
   }
 
-  /// Gets the `appAccountToken` from the `appUserId`, if it's a UUID.
+  /// The identified userId or Superwall-assigned UUID used for purchasing:
+  /// the `appUserId` if it's a UUID, otherwise the UUID in the alias.
   var appAccountToken: UUID? {
-    if let appUserId = appUserId,
+    let state = store.state
+    if let appUserId = state.appUserId,
       let uuid = UUID(uuidString: appUserId) {
       return uuid
     }
-    return nil
+    return UUID(
+      uuidString: state.aliasId.replacingOccurrences(
+        of: IdentityLogic.superwallPrefix,
+        with: ""
+      )
+    )
   }
 
   /// The userId passed to the SDK.
@@ -220,9 +229,11 @@ class IdentityManager: IdentityContext {
     )
   }
 
-  /// Waits for any work queued on the identity store to finish. Identity
-  /// changes themselves run synchronously, so they're done already.
+  /// Returns once identity changes dispatched so far, from any thread, have
+  /// run. Doesn't wait for their side effects, such as the seed waiting for
+  /// the config, or for changes handed over while a user switch was resetting.
   func flush() async {
+    store.dispatch(IdentityBarrier(), in: self)
     await store.flush()
   }
 }
@@ -312,7 +323,9 @@ extension IdentityManager {
   }
 
   func resetForNewUser() {
-    resetForNewUserHandler()
+    // Resets the rest of the SDK, which takes other objects' queues that may
+    // be held by threads waiting to change the identity.
+    store.callingOut(resetForNewUserHandler)
   }
 
   func trackIdentityAlias() {
@@ -378,4 +391,9 @@ extension IdentityManager {
       storage.save(after.userAttributes, forType: UserAttributes.self)
     }
   }
+}
+
+/// Does nothing. Dispatched to wait for the identity changes before it.
+private struct IdentityBarrier: SyncStoreAction {
+  func execute(in context: IdentityContext) {}
 }
