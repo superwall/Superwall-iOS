@@ -161,13 +161,19 @@ struct IdentityStateTests {
     #expect(result.userAttributes["keep"] as? String == "a")
     #expect(result.userAttributes["overwrite"] as? String == "B")
     #expect(result.userAttributes.keys.contains("remove") == false)
-    // `IdentityLogic.mergeAttributes` renames `$dollar` to `dollar` but then
-    // looks the value up under the new name, so the key ends up removed.
     #expect(result.userAttributes.keys.contains("dollar") == false)
     #expect(result.userAttributes["$dollar"] == nil)
     #expect(result.userAttributes["is_standard_event"] == nil)
     #expect(result.userAttributes["$is_standard_event"] == nil)
     #expect(result.userAttributes["applicationInstalledAt"] as? String == "2026-01-01")
+  }
+
+  @Test("A dollar-prefixed key doesn't touch the attribute without the dollar")
+  func dollarKeyLeavesUnprefixedKeyAlone() {
+    let start = state(userAttributes: ["plan": "pro"])
+    let result = IdentityUpdate.mergeAttributes(["$plan": "free"]).reduce(start)
+    #expect(result.userAttributes["plan"] as? String == "pro")
+    #expect(result.userAttributes["$plan"] == nil)
   }
 
   // MARK: - reset

@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
 - Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
+- Fixes a user attribute being deleted when an attribute with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
 - Fixes `reset()` leaving the new anonymous user's attributes without `aliasId` and `seed` until the next identity change, so audience filters on them didn't match.
 - Fixes `reset()` occasionally deleting the new anonymous user's alias and seed from disk, which gave the user yet another alias on the next launch.
 - Fixes the seed derived from the user ID, when that's enabled, being applied to a user who had since logged out or been switched for another.
