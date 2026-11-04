@@ -82,8 +82,19 @@ final class URLOpenerMock: CustomerCenterURLOpening {
 }
 final class EventTrackerMock: CustomerCenterEventTracking {
   var events: [SuperwallEvent] = []
+  /// Holds each `track` call open until `releaseTrack()`, so a test can act while it waits.
+  var holdsTrack = false
+  private var trackGate: CheckedContinuation<Void, Never>?
+  var isHoldingTrack: Bool { trackGate != nil }
   func track(_ event: Trackable) async {
     if let event = event as? TrackableSuperwallEvent { events.append(event.superwallEvent) }
+    if holdsTrack {
+      await withCheckedContinuation { trackGate = $0 }
+    }
+  }
+  func releaseTrack() {
+    trackGate?.resume()
+    trackGate = nil
   }
 }
 struct EnvironmentMock: CustomerCenterEnvironmentProviding {

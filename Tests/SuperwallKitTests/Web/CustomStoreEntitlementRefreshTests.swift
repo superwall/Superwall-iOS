@@ -199,7 +199,7 @@ struct CustomStoreEntitlementRefreshTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -737,6 +737,31 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(superwall.customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
   }
 
+  @Test("refreshCustomerInfo returns the current customer info when config and the fetch fail")
+  func refreshCustomerInfo_offlineFirstLaunch_returns() async throws {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    // A first launch: nothing has been loaded yet.
+    superwall.customerInfo = .blank()
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // No response: the fetch fails, as it does offline.
+    dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
+    dependencyContainer.configManager.store.update(ConfigUpdate.failed(NetworkError.unknown))
+
+    // Polled with a time limit, so a refresh that never returns fails the test
+    // instead of hanging it.
+    let box = RefreshResultBox()
+    Task { box.result = await superwall.refreshCustomerInfo() }
+    for _ in 0..<150 where box.result == nil {
+      try await Task.sleep(nanoseconds: 20_000_000)
+    }
+    let result = box.result
+    let didReturn = result != nil
+
+    #expect(didReturn, "refreshCustomerInfo never returned")
+    #expect(network.getEntitlementsCallCount == 1)
+    #expect(result?.isPlaceholder == true)
+  }
+
   @Test("refreshCustomerInfo doesn't fetch in test mode")
   func refreshCustomerInfo_inTestMode_doesNotFetch() async {
     turnOnTestMode()
@@ -771,5 +796,15 @@ struct CustomStoreEntitlementRefreshTests {
     _ = await refresh.value
 
     #expect(network.getEntitlementsCallCount == 0)
+  }
+}
+
+/// Written by the refresh's task and read by the test, so it's locked.
+private final class RefreshResultBox: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value: CustomerInfo?
+  var result: CustomerInfo? {
+    get { lock.lock(); defer { lock.unlock() }; return value }
+    set { lock.lock(); defer { lock.unlock() }; value = newValue }
   }
 }

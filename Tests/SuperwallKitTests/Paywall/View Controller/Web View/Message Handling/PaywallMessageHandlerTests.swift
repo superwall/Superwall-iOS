@@ -98,7 +98,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -195,7 +195,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -221,7 +221,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -518,7 +518,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -543,7 +543,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -570,7 +570,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -597,7 +597,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -624,7 +624,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -669,7 +669,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -697,7 +697,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -725,7 +725,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -753,7 +753,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -778,7 +778,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -807,7 +807,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -833,7 +833,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -862,7 +862,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -896,7 +896,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1183,7 +1183,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1364,7 +1364,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1398,7 +1398,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1425,7 +1425,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer
@@ -1454,7 +1454,7 @@ struct PaywallMessageHandlerTests {
       customCallbackRegistry: dependencyContainer.customCallbackRegistry
     )
     let webView = FakeWebView(
-      isMac: false,
+      isiOSAppOnMac: false,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: true,
       factory: dependencyContainer

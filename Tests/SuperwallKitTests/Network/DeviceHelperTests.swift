@@ -699,6 +699,37 @@ struct DeviceHelperTests {
     #expect(await fetches.count == 2)
   }
 
+  /// Turning tracking off while the lookups run stops the match request
+  /// itself, not just its addresses.
+  @Test func mmpMatchRequest_whenTrackingTurnsOffDuringTheWait_isNotSent() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    // Other parts of the container hold `unowned` references to the device
+    // helper it made, so keep that one alive while the request uses this one.
+    let originalDeviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    defer { withExtendedLifetime(originalDeviceHelper) {} }
+    dependencyContainer.deviceHelper = deviceHelper
+    setMMPFlag(true, on: dependencyContainer)
+
+    await #expect(throws: MMPMatchError.trackingDisabled) {
+      _ = try await dependencyContainer.network.matchMMPInstall(
+        idfa: nil,
+        advertiserTrackingEnabled: false,
+        applicationTrackingEnabled: true
+      )
+    }
+    // Tracking was on when the request started, so it did wait for the lookups.
+    #expect(await fetches.count == 2)
+  }
+
   /// The lookups only serve install attribution, which the `.none` opt-out
   /// skips, so nothing is looked up or exposed even with the MMP on and an
   /// AppsFlyer ID set.

@@ -5,9 +5,13 @@
 //  Created by Yusuf Tör on 28/02/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
-internal extension UIColor {
+internal extension PlatformColor {
   convenience init(hexString: String) {
     let hex = hexString.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
     var int = UInt64()
@@ -32,18 +36,24 @@ internal extension UIColor {
     )
   }
 
-  var readableOverlayColor: UIColor {
+  var readableOverlayColor: PlatformColor {
     return isDarkColor ? .white : .black
   }
 
-  var inverseReadableOverlayColor: UIColor {
+  var inverseReadableOverlayColor: PlatformColor {
     return isDarkColor ? .black : .white
   }
 
   var isDarkColor: Bool {
     var red, green, blue, alpha: CGFloat
     (red, green, blue, alpha) = (0, 0, 0, 0)
+    #if os(macOS)
+    // AppKit raises if the color isn't in an RGB space, and system colors like
+    // `.white` are grayscale, so convert first.
+    (usingColorSpace(.sRGB) ?? NSColor.black).getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #else
     self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+    #endif
     let lum = 0.2126 * red + 0.7152 * green + 0.0722 * blue
     return  lum < 0.50
   }

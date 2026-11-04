@@ -233,7 +233,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The presented paywall view controller.
-  public var presentedViewController: UIViewController? {
+  public var presentedViewController: PlatformViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
 
@@ -1607,8 +1607,11 @@ public final class Superwall: NSObject, ObservableObject {
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    if dependencyContainer.testModeManager?.isTestMode != true {
-      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements()
+    if dependencyContainer.testModeManager?.isTestMode != true,
+      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements() == nil {
+      // The fetch failed. `getCustomerInfo()` would wait for customer info that,
+      // on a first launch without a connection, never arrives.
+      return customerInfo
     }
     return await getCustomerInfo()
   }

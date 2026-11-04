@@ -6,6 +6,7 @@
 //  surfaces a `superwall dev` server serves and the app's published paywalls.
 //
 
+#if !os(macOS)
 import UIKit
 
 @MainActor
@@ -167,3 +168,4 @@ extension DebugPaywallPickerViewController: UISearchResultsUpdating {
     reload(query: searchController.searchBar.text ?? "")
   }
 }
+#endif

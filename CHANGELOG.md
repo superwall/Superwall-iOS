@@ -6,23 +6,24 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's entitlements from Superwall, even if they were fetched recently, and returns the updated `CustomerInfo`. Use it when your server has just reported a purchase to Superwall and you want the device to reflect it straight away.
-- After a custom product purchase succeeds, the SDK now syncs with Superwall in the background, as it already does after App Store purchases, so entitlements your server has already reported to Superwall reach `customerInfo` and `entitlements.web` straight away. This works in apps without web checkout and doesn't delay the purchase result or the paywall's dismissal. If your server reports the purchase later, the entitlements arrive on the next app foreground, or call `refreshCustomerInfo()` once it has.
-- Adds `StoreProduct.customTransactionId`, the transaction ID the SDK reports for a custom product's purchase. Pass it to your checkout and have your server send it back as `custom_transaction_id` with the purchase's events, and Superwall attributes that revenue, renewals included, to the paywall, campaign and experiment that sold it.
-- Paywalls can now sell a custom store's products through the checkout endpoint set up for it on the dashboard, without calling your `PurchaseController`.
-- Apps without web paywalls now also refresh the user's entitlements from Superwall on foreground, at most every 15 minutes, as well as on launch. Purchases, refunds and renewals that your server reports to Superwall, such as those of custom products, now reach a running app without it calling `refreshCustomerInfo()`. Apps with web paywalls keep the refresh interval set on the dashboard.
-- Improves install attribution matching for devices on both IPv4 and IPv6 networks: the install match now includes the device's IPv4 and IPv6 addresses, so it can be matched to an ad click made over either one.
+- Adds native macOS 12+ support, including paywalls, SwiftUI embedding, purchases, Customer Center and Test Mode. See the Mac example to get started.
+- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
+- Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
+- Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
+- Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves MMP install matching.
 
 ### Fixes
 
-- Fixes a slow background sync with Superwall, such as the one after a purchase, overwriting entitlements from a `refreshCustomerInfo()` or foreground refresh requested after it, and saving its response to a different user when the user logged out or switched accounts while it ran.
-- Fixes transaction events for custom products, such as `transaction_complete`, reporting their store as `APP_STORE` instead of `CUSTOM`.
-- Fixes a user attribute being deleted when an attribute with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
-- Fixes `reset()` leaving the new anonymous user's attributes without `aliasId` and `seed` until the next identity change, so audience filters on them didn't match.
-- Fixes `reset()` occasionally deleting the new anonymous user's alias and seed from disk, which gave the user yet another alias on the next launch.
-- Fixes the seed derived from the user ID, when that's enabled, being applied to a user who had since logged out or been switched for another.
-- Fixes `reset()`, and `identify(userId:)` switching from one user to another, sending several `user_attributes` events for one change.
-- Fixes config refreshes, such as one from `refreshConfiguration()` and one on app foreground, being able to run at the same time and apply their configs out of order. They now run one after the other. A refresh called after the config has arrived but before the launch config fetch has finished, such as while it loads purchases from the App Store or shows the test mode modal, now waits for the fetch to finish.
+- Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
+- Fixes custom product purchases being reported as App Store purchases.
+- Fixes a user attribute being deleted when one with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
+- Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
+- Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
+- Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
+- Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change.
+- Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
 
 ## 4.18.3
 

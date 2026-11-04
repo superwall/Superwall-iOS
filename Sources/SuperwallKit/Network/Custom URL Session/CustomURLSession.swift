@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 enum NetworkError: LocalizedError, Equatable {
   case unknown

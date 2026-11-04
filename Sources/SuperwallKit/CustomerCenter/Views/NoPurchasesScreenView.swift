@@ -28,7 +28,10 @@ struct NoPurchasesScreenView: View {
       Section { PathsListView(viewModel: viewModel, purchase: nil) }
       if viewModel.configuration.showsAccountDetails { AccountDetailsSection(viewModel: viewModel) }
     }
-    .listStyle(.insetGrouped)
-    .navigationBarTitleDisplayMode(.inline)
+    .customerCenterListStyle()
+    .customerCenterInlineTitle()
+    #if os(macOS)
+    .navigationTitle(strings.string("customer_center_management_title"))
+    #endif
   }
 }

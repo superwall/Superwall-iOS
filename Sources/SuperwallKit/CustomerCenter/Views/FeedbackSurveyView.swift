@@ -13,7 +13,7 @@ struct FeedbackSurveyView: View {
   @State private var answering: String?
 
   var body: some View {
-    NavigationView {
+    CustomerCenterNavigationContainer {
       List {
         if let survey = viewModel.pendingSurvey?.survey {
           ForEach(survey.options, id: \.id) { option in
@@ -29,17 +29,17 @@ struct FeedbackSurveyView: View {
           }
         }
       }
-      .listStyle(.insetGrouped)
+      .customerCenterListStyle()
       .navigationTitle(surveyTitle)
-      .navigationBarTitleDisplayMode(.inline)
+      .customerCenterInlineTitle()
       .toolbar {
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .customerCenterDismissal) {
           Button(strings.string("customer_center_cancel")) { viewModel.cancelSurvey() }
             .accessibilityIdentifier("customer_center.survey.cancel")
         }
       }
     }
-    .navigationViewStyle(.stack)
+    .customerCenterSheetFrame()
     .interactiveDismissDisabled(answering != nil)
   }
 
