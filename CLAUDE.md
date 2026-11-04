@@ -58,11 +58,18 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 ### Minimum Toolchain and Platforms
 
-- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), native macOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8, tvOS 15. CI builds iOS (tests), native macOS (tests), Mac Catalyst, visionOS, watchOS and tvOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
 - Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
 - Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
 - The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
-- Keep `Package.swift`, `SuperwallKit.podspec` and `project.yml` deployment targets in sync.
+- Keep the iOS and macOS deployment targets in `Package.swift`, `SuperwallKit.podspec` and `project.yml` in sync. watchOS and tvOS are Swift Package Manager only.
+
+### watchOS and tvOS
+
+- Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
+- `register` evaluates audience filters, then sends `skipped` or a code 108 error (`finishWithoutPaywallUI`). Implicit triggers and paywall preloading do nothing.
+- Superscript has no tvOS build, so `Package.swift` drops it on tvOS and `CELEvaluator` reports no match for any filter. Remove the condition once Superscript ships a tvOS slice.
+- When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
 
 ### Code Conventions
 

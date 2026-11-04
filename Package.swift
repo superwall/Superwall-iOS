@@ -9,7 +9,8 @@ let package = Package(
   platforms: [
     .iOS(.v15),
     .macOS(.v12),
-    .watchOS(.v8)
+    .watchOS(.v8),
+    .tvOS(.v15)
   ],
   products: [
     // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -27,7 +28,13 @@ let package = Package(
     .target(
       name: "SuperwallKit",
       dependencies: [
-        .product(name: "Superscript", package: "superscript-ios-next")
+        // Superscript has no tvOS build yet. Without it, audience filters
+        // never match on tvOS.
+        .product(
+          name: "Superscript",
+          package: "superscript-ios-next",
+          condition: .when(platforms: [.iOS, .macOS, .macCatalyst, .watchOS, .visionOS])
+        )
       ],
       exclude: ["Resources/BundleHelper.swift"],
       resources: [

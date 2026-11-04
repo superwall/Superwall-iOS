@@ -5,6 +5,7 @@
 //  Created by Superwall on 2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 #if os(macOS)
 import AppKit
@@ -119,3 +120,4 @@ final class PermissionHandler: PermissionHandling {
     }
   }
 }
+#endif

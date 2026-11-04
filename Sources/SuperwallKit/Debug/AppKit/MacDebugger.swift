@@ -1,3 +1,4 @@
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 import Combine
@@ -188,4 +189,5 @@ struct MacDebuggerView: View {
     .frame(width: 480)
   }
 }
+#endif
 #endif

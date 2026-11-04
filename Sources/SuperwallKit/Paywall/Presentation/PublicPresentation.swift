@@ -36,9 +36,12 @@ extension Superwall {
   }
 
   /// Dismisses the presented paywall, if one exists.
+  ///
+  /// Does nothing on watchOS and tvOS, which can't show paywalls.
   @MainActor
   @nonobjc
   public func dismiss() async {
+    #if canImport(WebKit)
     guard let paywallViewController = paywallViewController else {
       return
     }
@@ -50,8 +53,10 @@ extension Superwall {
         continuation.resume()
       }
     }
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Dismisses the presented paywall, if it exists, in order to present a different one.
   @MainActor
   func dismissForNextPaywall() async {
@@ -69,6 +74,7 @@ extension Superwall {
       }
     }
   }
+  #endif
 
   // MARK: - Register
 

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Combine
 import Foundation
 #if os(macOS)
@@ -333,3 +334,4 @@ enum RuntimeUtils {
     #endif
   }
 }
+#endif

@@ -7,6 +7,7 @@
 // swiftlint:disable function_body_length
 
 import Foundation
+#if canImport(Superscript)
 internal import Superscript
 
 final class EvaluationContext: HostContext {
@@ -106,6 +107,7 @@ final class EvaluationContext: HostContext {
     }
   }
 }
+#endif
 
 extension Dictionary where Key == String, Value == Any {
   func toPassableValue() -> PassableValue {

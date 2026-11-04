@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 10/9/21.
 //
 
+#if canImport(WebKit)
 import Foundation
 import Combine
 #if os(macOS)
@@ -195,3 +196,4 @@ extension Superwall {
     return try await getPaywall(presentationRequest)
   }
 }
+#endif

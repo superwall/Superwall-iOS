@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 23/09/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 /// Sweeps a highlight across a placeholder so it reads as loading rather than as a grey bar.
@@ -52,3 +53,4 @@ extension View {
     modifier(ShimmerModifier())
   }
 }
+#endif

@@ -609,7 +609,7 @@ class ConfigManager {
     if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
       #if os(macOS)
       await FirstClickMonitor.start()
-      #else
+      #elseif canImport(WebKit)
       await UIWindow.swizzleSendEvent()
       #endif
     }
@@ -732,9 +732,11 @@ class ConfigManager {
         }
         if !prioritizedTriggers.isEmpty {
           var prioritizedIds = await getTreatmentPaywallIds(from: Set(prioritizedTriggers))
+          #if canImport(WebKit)
           if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
             prioritizedIds.remove(presentedPaywallId)
           }
+          #endif
           await self.preloadPaywalls(withIdentifiers: prioritizedIds)
 
           // Delay before preloading the rest to avoid contention.
@@ -747,9 +749,11 @@ class ConfigManager {
 
       // Do not preload the presented paywall. This is because if config refreshes, we
       // don't want to refresh the presented paywall until it's dismissed and presented again.
+      #if canImport(WebKit)
       if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
         paywallIds.remove(presentedPaywallId)
       }
+      #endif
       await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
   }
@@ -767,14 +771,19 @@ class ConfigManager {
     let triggersToPreload = config.triggers.filter { placementNames.contains($0.placementName) }
     var paywallIds = await getTreatmentPaywallIds(from: triggersToPreload)
     // Do not preload the presented paywall.
+    #if canImport(WebKit)
     if let presentedPaywallId = await self.paywallManager.presentedViewController?.paywall.identifier {
       paywallIds.remove(presentedPaywallId)
     }
+    #endif
     await preloadPaywalls(withIdentifiers: paywallIds)
   }
 
   /// Preloads paywalls referenced by triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
+    #if canImport(WebKit)
     let paywallCount = paywallIdentifiers.count
     let preloadStart = InternalSuperwallEvent.PaywallPreload(
       state: .start,
@@ -816,6 +825,7 @@ class ConfigManager {
       paywallCount: paywallCount
     )
     await Superwall.shared.track(preloadComplete)
+    #endif
   }
 
   // MARK: - Test Mode
@@ -865,8 +875,11 @@ class ConfigManager {
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
+  /// Test mode never turns on where the SDK has no screens to show, so this
+  /// is never reached on watchOS or tvOS.
   @MainActor
   private func presentTestModeModal(reason: TestModeReason, config: Config) async {
+    #if canImport(WebKit)
     #if os(macOS)
     // Without a window to attach to, as in a menu bar app, the modal opens a window of its own.
     let rootVC = PlatformApplication.sharedApplication?.activeWindow?.rootViewController
@@ -933,5 +946,6 @@ class ConfigManager {
       Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
+    #endif
   }
 }

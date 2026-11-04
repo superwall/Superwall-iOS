@@ -7,7 +7,9 @@
 // swiftlint:disable function_body_length
 
 import Foundation
+#if canImport(Superscript)
 internal import Superscript
+#endif
 
 protocol ExpressionEvaluating {
   func evaluateExpression(
@@ -20,14 +22,18 @@ struct CELEvaluator: ExpressionEvaluating {
   private unowned let storage: Storage
   private unowned let factory: AudienceFilterAttributesFactory
   private let expressionLogic: ExpressionLogic
+  #if canImport(Superscript)
   private let evaluationContext: EvaluationContext
+  #endif
 
   init(
     storage: Storage,
     factory: AudienceFilterAttributesFactory
   ) {
     self.storage = storage
+    #if canImport(Superscript)
     self.evaluationContext = EvaluationContext(storage: storage)
+    #endif
     self.factory = factory
     self.expressionLogic = ExpressionLogic(storage: storage)
   }
@@ -43,6 +49,20 @@ struct CELEvaluator: ExpressionEvaluating {
       )
       return audienceMatched
     }
+    #if !canImport(Superscript)
+    // Superscript, which evaluates audience filters, has no tvOS build yet, so
+    // an audience with a filter never matches there.
+    Logger.debug(
+      logLevel: .warn,
+      scope: .superwallCore,
+      message: "Audience filters can't be evaluated on this platform, so the audience doesn't match.",
+      info: ["expression": expression]
+    )
+    return .noMatch(
+      source: .expression,
+      experimentId: audience.experiment.id
+    )
+    #else
     let attributes = await factory.makeAudienceFilterAttributes(
       forPlacement: placementData,
       withComputedProperties: audience.computedPropertyRequests
@@ -108,5 +128,6 @@ struct CELEvaluator: ExpressionEvaluating {
       )
       return noMatch
     }
+    #endif
   }
 }

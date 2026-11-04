@@ -13,20 +13,32 @@ import UIKit
 #endif
 
 class PaywallManager {
-  var presentedViewController: PaywallViewController? {
-    return cache.activePaywallViewController
-	}
-  private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
-  private unowned let paywallRequestManager: PaywallRequestManager
-  private unowned let factory: ViewControllerFactory
+  #if canImport(WebKit)
+  /// Every factory the paywall view controllers need.
+  typealias Factory = ViewControllerFactory
     & CacheFactory
     & DeviceHelperFactory
     & PaywallArchiveManagerFactory
 
+  var presentedViewController: PaywallViewController? {
+    return cache.activePaywallViewController
+  }
+  #else
+  /// watchOS and tvOS make no paywall view controllers, so only the factories
+  /// for fetching paywalls are needed.
+  typealias Factory = DeviceHelperFactory
+    & PaywallArchiveManagerFactory
+  #endif
+  private let queue = DispatchQueue(label: "com.superwall.paywallmanager")
+  private unowned let paywallRequestManager: PaywallRequestManager
+  private unowned let factory: Factory
+
+  #if canImport(WebKit)
   var cache: PaywallViewControllerCache {
     return queue.sync { _cache ?? createCache() }
   }
   private var _cache: PaywallViewControllerCache?
+  #endif
 
   private var paywallArchiveManager: PaywallArchiveManager {
     return queue.sync { _paywallArchiveManager ?? createPaywallArchiveManager() }
@@ -34,21 +46,20 @@ class PaywallManager {
   private var _paywallArchiveManager: PaywallArchiveManager?
 
   init(
-    factory: ViewControllerFactory
-      & CacheFactory
-      & DeviceHelperFactory
-      & PaywallArchiveManagerFactory,
+    factory: Factory,
     paywallRequestManager: PaywallRequestManager
   ) {
     self.factory = factory
     self.paywallRequestManager = paywallRequestManager
   }
 
+  #if canImport(WebKit)
   private func createCache() -> PaywallViewControllerCache {
     let cache = factory.makeCache()
     _cache = cache
     return cache
   }
+  #endif
 
   private func createPaywallArchiveManager() -> PaywallArchiveManager {
     let paywallArchiveManager = factory.makePaywallArchiveManager()
@@ -56,15 +67,18 @@ class PaywallManager {
     return paywallArchiveManager
   }
 
+  #if canImport(WebKit)
 	func resetCache() {
 		cache.removeAll()
 	}
+  #endif
 
   /// Removes cached `Paywall` and `PaywallViewController` objects so that
   /// they can be fetched again when the config refreshes.
   func removePaywalls(withIds ids: Set<String>) async {
     await paywallRequestManager.removePaywalls(withIds: ids)
 
+    #if canImport(WebKit)
     let deviceInfo = factory.makeDeviceInfo()
 
     for id in ids {
@@ -74,6 +88,7 @@ class PaywallManager {
       )
       cache.removePaywallViewController(forKey: cacheKey)
     }
+    #endif
   }
 
   func getPaywall(from request: PaywallRequest) async throws -> Paywall {
@@ -87,6 +102,7 @@ class PaywallManager {
     await paywallArchiveManager.preloadArchive(paywall: paywall)
   }
 
+  #if canImport(WebKit)
   /// Gets the paywall view controller for a given paywall.
   @MainActor
   func getViewController(
@@ -150,4 +166,5 @@ class PaywallManager {
 
     return paywallViewController
   }
+  #endif
 }

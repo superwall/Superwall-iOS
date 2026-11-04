@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 8/27/21.
 //
 
+#if canImport(WebKit)
 import Foundation
 #if !os(macOS)
 import UIKit
@@ -166,3 +167,4 @@ final class DebugManager {
     #endif
 	}
 }
+#endif

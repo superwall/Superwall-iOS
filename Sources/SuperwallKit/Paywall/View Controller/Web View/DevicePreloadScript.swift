@@ -5,6 +5,7 @@
 //  Created by Superwall on 10/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Builds the JavaScript injected into the paywall webview at document start.
@@ -27,3 +28,4 @@ enum DevicePreloadScript {
     return "window.__SW_DEVICE_PRELOAD__ = \(json);"
   }
 }
+#endif
