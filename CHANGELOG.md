@@ -7,6 +7,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds the `webApplePayReadiness` device attribute for apps with web checkout: `ready` when the browser can pay with Apple Pay at your checkout domain, `notReady` when Wallet has no card it can pay with there (or Safari's "Check for Apple Pay" is off), and `unknown:<reason>` when it couldn't be measured. Use `device.webApplePayReadiness == "notReady"` in an audience filter to send those users to an in-app purchase paywall instead of the web. The answer is stored and refreshed in the background once per launch. Turn it off with `SuperwallOptions.isWebApplePayReadinessEnabled`.
+- Adds the `hasApplePayCreditCard` and `hasApplePayDebitCard` device attributes: whether Wallet has an Amex, Mastercard, Visa or Discover card that can pay as credit, or as debit. These are PassKit's answers and can under-report, so for web checkout prefer `webApplePayReadiness`.
+- `device.isApplePayAvailable` reports whether the device supports Apple Pay again, true even with an empty Wallet. Since 4.11.2 it was always `true`, so audience filters that use it can match differently: `isApplePayAvailable == true` no longer matches devices without Apple Pay, and `== false` now matches them. PassKit is loaded at runtime, so apps still don't link it.
 
 ### Fixes
 

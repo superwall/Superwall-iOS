@@ -20,6 +20,7 @@ import StoreKit
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
   let webApplePayReadiness: WebApplePayReadinessTracker
+  private let nativeApplePay: NativeApplePayReader
   /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
   /// Settable for tests.
   var attStatusProvider: () -> Int?
@@ -1027,6 +1028,7 @@ class DeviceHelper {
       & OptionsFactory,
     ipCollector: DeviceIPCollector? = nil,
     webApplePayReadiness: WebApplePayReadinessTracker? = nil,
+    nativeApplePay: NativeApplePayReader? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
     attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
@@ -1039,6 +1041,9 @@ class DeviceHelper {
       load: { storage.get(WebApplePayReadinessStorage.self) },
       save: { storage.save($0, forType: WebApplePayReadinessStorage.self) }
     )
+    // Started here so PassKit is read once, off the main thread, before the
+    // first device attributes are needed. The web check is opt-out; these aren't.
+    self.nativeApplePay = nativeApplePay ?? NativeApplePayReader()
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -1292,6 +1297,7 @@ class DeviceHelper {
     // the same way by hand — keep them in step.
     let traits = currentUITraits
     let adConsent = reportedAdConsent
+    let nativeApplePay = await self.nativeApplePay.capabilities
     await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
@@ -1321,7 +1327,9 @@ class DeviceHelper {
       fontScale: traits.fontScale,
       preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
-      isApplePayAvailable: true,
+      isApplePayAvailable: nativeApplePay.isApplePayAvailable,
+      hasApplePayCreditCard: nativeApplePay.hasCreditCard,
+      hasApplePayDebitCard: nativeApplePay.hasDebitCard,
       webApplePayReadiness: await currentWebApplePayReadiness().rawValue,
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,

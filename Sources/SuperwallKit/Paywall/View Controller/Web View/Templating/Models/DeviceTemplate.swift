@@ -35,6 +35,8 @@ struct DeviceTemplate: Codable {
   var preferredContentSizeCategory: String
   var isLowPowerModeEnabled: Bool
   var isApplePayAvailable: Bool
+  var hasApplePayCreditCard: Bool
+  var hasApplePayDebitCard: Bool
   var webApplePayReadiness: String
   var bundleId: String
   var appInstallDate: String
