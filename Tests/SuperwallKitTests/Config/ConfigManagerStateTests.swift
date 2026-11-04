@@ -41,9 +41,9 @@ struct ConfigUpdateTests {
     var start = ConfigManagerState()
     start.configState = .retrieved(.stub())
     let state = ConfigUpdate.failed(TestError("boom")).reduce(start)
-    #expect(state.configState == .failed)
+    #expect(state.configState == .failed(TestError("any")))
     #expect(state.config == nil)
-    #expect((state.failure as? TestError)?.message == "boom")
+    #expect((state.configState.failure as? TestError)?.message == "boom")
   }
 
   @Test("triggers and the purchases load leave the config state alone")
@@ -70,6 +70,9 @@ struct ConfigUpdateTests {
     }
     if case .failure? = ConfigUpdate.failed(TestError("e")).publication {} else {
       Issue.record("failed should publish a failure")
+    }
+    if case .failure? = ConfigUpdate.set(.failed(TestError("e"))).publication {} else {
+      Issue.record("setting a failed state should publish a failure too")
     }
   }
 }

@@ -11,10 +11,17 @@ typealias ConfigStore = SequentialStore<ConfigManager, ConfigManagerState>
 
 /// What ``ConfigManager`` knows about the config. Changed only by
 /// ``ConfigUpdate`` reducers on its store.
+///
+/// What's published lives in ``configState``, an enum whose cases carry their
+/// own data. The other fields don't depend on its case:
+/// - The triggers are those of the config being applied. They take effect as
+///   soon as a config arrives, before it's published, so that events tracked
+///   while purchases load can still trigger paywalls. During a refresh they're
+///   the new config's while the old one is still published.
+/// - The retry count and the initial purchases load belong to the requests
+///   and loads, whatever the published state is.
 struct ConfigManagerState {
   var configState: ConfigState = .retrieving
-  /// Why the config fetch failed. Once set, `configState` publishes no more.
-  var failure: Error?
   var triggersByPlacementName: [String: Trigger] = [:]
   /// How many times the last config request was retried.
   var retryCount = 0
@@ -56,8 +63,7 @@ enum ConfigUpdate: Reducer {
     case .retrieved(let config):
       state.configState = .retrieved(config)
     case .failed(let error):
-      state.configState = .failed
-      state.failure = error
+      state.configState = .failed(error)
     case .set(let configState):
       state.configState = configState
     }
@@ -72,6 +78,8 @@ enum ConfigUpdate: Reducer {
       return .value(.retrying)
     case .retrieved(let config):
       return .value(.retrieved(config))
+    case .set(.failed(let error)):
+      return .failure(error)
     case .set(let configState):
       return .value(configState)
     case .failed(let error):
