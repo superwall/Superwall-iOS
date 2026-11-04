@@ -22,6 +22,9 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Configures the appearance and behaviour of paywalls.
   public var paywalls = PaywallOptions()
 
+  /// Configures the Customer Center presented via ``Superwall/presentCustomerCenter(configuration:from:delegate:onDismiss:)``.
+  public var customerCenter = CustomerCenterConfiguration.default
+
   /// A mapping of local resource IDs to ``AssetResource`` values.
   ///
   /// Use this to serve paywall assets (images, videos, Lottie animations) from the app
@@ -82,7 +85,8 @@ public final class SuperwallOptions: NSObject, Encodable {
   @objc(SWKTestModeBehavior)
   public enum TestModeBehavior: Int, Encodable, CustomStringConvertible {
     /// Activates test mode when enabled for a user via the dashboard or when a bundle ID
-    /// mismatch is detected, but never during UI tests.
+    /// mismatch is detected, but never during UI tests. A bundle ID mismatch is ignored in
+    /// App Store builds, so a wrong bundle ID on the dashboard can't put customers in test mode.
     case automatic
 
     /// Activates test mode only when specifically enabled for a user via the dashboard.
@@ -123,8 +127,7 @@ public final class SuperwallOptions: NSObject, Encodable {
 
   /// The StoreKit version that the SDK should use.
   ///
-  /// The SDK will use StoreKit 2 by default if the app is running on iOS 15+, otherwise it
-  /// will fallback to StoreKit 1.
+  /// Defaults to StoreKit 2.
   public var storeKitVersion: StoreKitVersion
 
   /// **WARNING**:  The different network environments that the SDK should use.
@@ -216,6 +219,24 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// Host for the Superwall V2 API (the `apps/api` Cloudflare Worker), whose
+    /// routes live under a `/v2/` path.
+    ///
+    /// This is a DIFFERENT host from ``baseHost`` (the legacy v1 API on
+    /// `api.superwall.me`): the V2 API is served from the `superwall.com`
+    /// domain — `api.superwall.com` in production and `api.superwall.dev` in the
+    /// developer/staging environment.
+    var apiV2Host: String {
+      switch self {
+      case .developer:
+        return "api.superwall.dev"
+      case .local:
+        return "localhost:3001"
+      default:
+        return "api.superwall.com"
+      }
+    }
+
     /// The base URL for the Superwall dashboard.
     var dashboardBaseUrl: String {
       switch self {
@@ -249,6 +270,32 @@ public final class SuperwallOptions: NSObject, Encodable {
         return "localhost:5999"
       default:
         return "enrichment-api.superwall.com"
+      }
+    }
+
+    /// The host that only answers over IPv4, used to learn the device's public
+    /// IPv4 address. There's no non-production version, so it's `nil` outside
+    /// release builds.
+    var ipV4EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "v4.superwall-enrichment.com"
+      default:
+        return nil
+      }
+    }
+
+    /// The host asked over IPv6 to learn the device's public IPv6 address.
+    /// It's reachable over both, so the SDK requires IPv6 for the request.
+    /// There's no non-production version, so it's `nil` outside release builds.
+    var ipV6EnrichmentHost: String? {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "beacon-v6.superwall.com"
+      default:
+        return nil
       }
     }
 
@@ -318,6 +365,30 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// You can also change this at runtime via ``Superwall/eventTrackingBehavior``.
   public var eventTrackingBehavior: EventTrackingBehavior = .all
 
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on with the conversions it uploads to Google Ads and Meta.
+  ///
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// Both are reported as denied while ``eventTrackingBehavior`` is
+  /// ``EventTrackingBehavior/none``. On iOS, personalization is reported as denied when
+  /// the user hasn't allowed tracking, unless you set `adConsent` yourself.
+  ///
+  /// You can also change this at runtime via ``Superwall/adConsent``.
+  public var adConsent = AdConsent() {
+    didSet {
+      isAdConsentSet = true
+    }
+  }
+
+  /// Whether the app has assigned ``adConsent``, even to the default value. Until
+  /// then, a consent banner's stored answer takes its place.
+  var isAdConsentSet = false
+
   /// Enables the sending of non-Superwall tracked events and properties back to the Superwall servers.
   /// Defaults to `true`.
   ///
@@ -363,12 +434,85 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Controls when the SDK enters test mode. Defaults to `.automatic`.
   ///
   /// - `.automatic`: Activates test mode when enabled for a user via the dashboard or when
-  ///   a bundle ID mismatch is detected, but never during UI tests.
+  ///   a bundle ID mismatch is detected, but never during UI tests. A bundle ID mismatch is
+  ///   ignored in App Store builds.
   /// - `.whenEnabledForUser`: Activates test mode only when specifically enabled for a
   ///   user via the dashboard.
   /// - `.never`: Test mode is never activated, regardless of configuration.
   /// - `.always`: Test mode is always activated, regardless of configuration.
   public var testModeBehavior: TestModeBehavior = .automatic
+
+  /// A running `superwall dev` server for ``SuperwallOptions/devServer`` to connect to.
+  public enum DevServer: Equatable {
+    /// Finds the dev server on `localhost` ports 6100–6104, which reaches a server
+    /// running on the same machine from a simulator.
+    case `default`
+
+    /// The dev server at an exact address — the `Device` URL's origin that
+    /// `superwall dev` prints, e.g. `http://192.168.1.10:6100`. Use this on a
+    /// physical device, which can't reach your machine via `localhost`.
+    case url(URL)
+  }
+
+  /// Connects this SDK instance to a running `superwall dev` server, for development builds only.
+  ///
+  /// Paywalls with a local counterpart on the dev server then render from your live, local
+  /// paywall code instead of their published versions, while configuration, placements,
+  /// audience evaluation, assignment and the enforcement of feature gating all stay real.
+  /// Paywalls without a local counterpart still load their published versions.
+  ///
+  /// What the local surface owns is what it renders and the settings its `config.ts`
+  /// declares: content, products, presentation style, feature gating, intro offer
+  /// eligibility, scrolling and background colours all come from your local code, so
+  /// changing them shows on the next presentation without a push. What `config.ts`
+  /// cannot express — surveys, computed properties — comes from the published paywall
+  /// the surface stands in for, and so does any setting your `config.ts` leaves out.
+  ///
+  /// A dev server older than this SDK sends no settings at all, in which case every
+  /// setting comes from the published paywall.
+  ///
+  /// Two exceptions. Local notifications are always the local paywall's: the published
+  /// ones are ignored and the ones your `config.ts` declares fire without a push, because
+  /// they reach the SDK from the paywall itself rather than from the dashboard. And the
+  /// on-device cache stays off however either side configures it, so a page you are
+  /// editing is never served from the web view's cache.
+  ///
+  /// Use ``DevServer/default`` on a simulator; on a physical device use ``DevServer/url(_:)``
+  /// with the `Device` URL that `superwall dev` prints. Defaults to `nil`: no dev server.
+  ///
+  /// The dev server also activates test mode (simulated purchases, product data from the
+  /// dashboard), disables paywall preloading, and skips the test mode intro sheet.
+  ///
+  /// The host app must allow local networking in its `Info.plist`
+  /// (`NSAppTransportSecurity` → `NSAllowsLocalNetworking`). That one key covers
+  /// every address `superwall dev` prints: `localhost`, `.local` hosts, and the
+  /// plain IP address in the `Device` URL, which App Transport Security stopped
+  /// permitting by default in iOS 17.
+  @nonobjc public var devServer: DevServer?
+
+  /// Objective-C only: connects to a `superwall dev` server found on `localhost`.
+  @available(swift, obsoleted: 1.0)
+  public func enableDevServer() {
+    devServer = .default
+  }
+
+  /// Objective-C only: connects to the `superwall dev` server at this address.
+  @available(swift, obsoleted: 1.0)
+  public func enableDevServer(url: URL) {
+    devServer = .url(url)
+  }
+
+  var isDevServerEnabled: Bool {
+    return devServer != nil
+  }
+
+  /// Where ``devServer``'s ``DevServer/url(_:)`` case points, if that's what is set.
+  var devServerURL: URL? {
+    if case .url(let url) = devServer {
+      return url
+    }
+    return nil
+  }
 
   /// Determines the number of times the SDK will attempt to get the Superwall configuration after a network
   /// failure before it times out. Defaults to 6.
@@ -418,23 +562,22 @@ public final class SuperwallOptions: NSObject, Encodable {
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
     case testModeBehavior
+    case adUserDataConsent
+    case adPersonalizationConsent
+    case isAdConsentSet
   }
 
   public override init() {
     let key = "SKIncludeConsumableInAppPurchaseHistory"
     if let includeConsumableHistory = Bundle.main.object(forInfoDictionaryKey: key) as? Bool,
       includeConsumableHistory {
-      if #available(iOS 18.0, *) {
+      if #available(iOS 18.0, macOS 15.0, *) {
         self.storeKitVersion = .storeKit2
       } else {
         self.storeKitVersion = .storeKit1
       }
     } else {
-      if #available(iOS 15.0, *) {
-        self.storeKitVersion = .storeKit2
-      } else {
-        self.storeKitVersion = .storeKit1
-      }
+      self.storeKitVersion = .storeKit2
     }
   }
 
@@ -457,6 +600,9 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
+    try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
+    try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
+    try container.encode(isAdConsentSet, forKey: .isAdConsentSet)
   }
 
   func toDictionary() -> [String: Any] {

@@ -5,7 +5,11 @@
 //
 // swiftlint:disable type_body_length file_length function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Foundation
 import SystemConfiguration
 #if canImport(CoreTelephony)
@@ -14,6 +18,19 @@ import CoreTelephony
 import StoreKit
 
 class DeviceHelper {
+  private let ipCollector: DeviceIPCollector
+  /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
+  /// Settable for tests.
+  var attStatusProvider: () -> Int?
+  /// Where a consent banner stores its answer. Settable so tests can use their own.
+  var consentDefaults: UserDefaults = .standard
+  /// Runs while device attributes are being built, after their ad consent is read.
+  /// For tests, to change consent mid-build.
+  var afterAdConsentSnapshot: (() async -> Void)?
+  /// The ad consent attributes in the last device attributes sent, or `nil` before
+  /// the first send. Guarded by `adConsentLock`.
+  private var publishedAdConsent: ReportedAdConsent?
+  private let adConsentLock = NSLock()
   var localeIdentifier: String {
     let localeIdentifier = factory.makeLocaleIdentifier()
     return localeIdentifier ?? Locale.autoupdatingCurrent.identifier
@@ -52,24 +69,63 @@ class DeviceHelper {
     )
   }()
 
-  let isMac: Bool = {
-    var output = false
-    if #available(iOS 14.0, *) {
-      output = ProcessInfo.processInfo.isiOSAppOnMac
-    }
-    return output
-  }()
+  /// Whether this is an iPhone or iPad app running on a Mac. Unlike `isMac`,
+  /// it's `false` for native macOS apps.
+  let isiOSAppOnMac = ProcessInfo.processInfo.isiOSAppOnMac
+
+  #if os(macOS)
+  let isMac = true
+
+  let model: String = MacDeviceInfo.model
+  #else
+  let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
     UIDevice.modelName
   }()
+  #endif
 
-  let vendorId: String = {
-    UIDevice.current.identifierForVendor?.uuidString ?? ""
-  }()
+  #if os(macOS)
+  /// A native Mac app never runs in a simulator.
+  var simulatorModel: String?
+  #else
+  var simulatorModel = UIDevice.simulatorModelName
+  #endif
+
+  private let vendorIdLock = NSLock()
+  private var cachedVendorId = ""
+
+  /// `identifierForVendor` is `nil` until the device has been unlocked once, so
+  /// an app launched in the background before first unlock would be stuck with
+  /// an empty id for the whole process if this were read only at init. Latch the
+  /// first non-empty read instead, so a later read picks the id up once it
+  /// exists and every read after that is a compare behind an uncontended lock.
+  /// It has to stay that cheap: the `X-Vendor-ID` header reads it on every
+  /// request, and so do `makeDeviceId()` and `getTemplateDevice()`.
+  ///
+  /// This also settles `makeDeviceId()`, so the `$SuperwallDevice:` identity can
+  /// change once mid-process in that window. That's the point: the value it
+  /// replaces is the empty suffix, which isn't a per-device identity at all —
+  /// every device in this state shares it — so there's nothing there worth
+  /// keeping stable or reconciling against. The window closes at first unlock,
+  /// and the repeated `UIDevice` read inside it is cheap.
+  var vendorId: String {
+    vendorIdLock.lock()
+    defer { vendorIdLock.unlock() }
+
+    if !cachedVendorId.isEmpty {
+      return cachedVendorId
+    }
+    #if os(macOS)
+    cachedVendorId = MacDeviceInfo.vendorId()
+    #else
+    cachedVendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    #endif
+    return cachedVendorId
+  }
 
   var languageCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.languageCode ?? ""
@@ -80,7 +136,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return languageCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale(identifier: preferredIdentifier).language.languageCode?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).languageCode ?? ""
@@ -88,7 +144,7 @@ class DeviceHelper {
   }
 
   private var regionCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale.autoupdatingCurrent.language.region?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.regionCode ?? ""
@@ -99,7 +155,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return regionCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, *) {
       return Locale(identifier: preferredIdentifier).language.region?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).regionCode ?? ""
@@ -122,30 +178,130 @@ class DeviceHelper {
     TimeZone.current.secondsFromGMT()
   }
 
-  /// Screen metrics, cached once at init on the main thread.
+  /// Screen metrics, cached from the main thread.
   ///
   /// `UIScreen` / `UIWindowScene` are main-thread-only (and `UIScreen.main`
   /// is deprecated), but these are read from background contexts such as
-  /// `matchMMPInstall`. Reading once up front, on the main thread, keeps those
+  /// `matchMMPInstall`. Reading on the main thread and caching keeps those
   /// reads safe instead of touching main-thread-only UIKit off-thread.
-  let screenWidth: Int
-  let screenHeight: Int
-  let devicePixelRatio: Double
+  ///
+  /// `nil` until a read is allowed to touch UIKit (see ``isUIKitReadSafe``).
+  /// When the SDK is configured before `UIApplicationMain` runs, the init-time
+  /// read stays empty and the cache fills on first post-launch read or on app
+  /// activation instead.
+  @DispatchQueueBacked
+  private var screenMetrics: ScreenMetrics?
 
-  private struct ScreenMetrics {
+  var screenWidth: Int {
+    currentScreenMetrics.width
+  }
+
+  var screenHeight: Int {
+    currentScreenMetrics.height
+  }
+
+  var devicePixelRatio: Double {
+    currentScreenMetrics.scale
+  }
+
+  struct ScreenMetrics {
     let width: Int
     let height: Int
     let scale: Double
+
+    /// The values used when the screen can't be read: before the application
+    /// exists, and on visionOS where there is no screen.
+    static let placeholder = ScreenMetrics(width: 0, height: 0, scale: 1.0)
   }
 
-  private static func makeScreenMetrics() -> ScreenMetrics {
-    #if os(visionOS)
-    return ScreenMetrics(width: 0, height: 0, scale: 1.0)
+  /// The cached metrics, filling the cache first when it's still empty.
+  private var currentScreenMetrics: ScreenMetrics {
+    if let cached = screenMetrics {
+      return cached
+    }
+    guard let metrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe) else {
+      return .placeholder
+    }
+    screenMetrics = metrics
+    return metrics
+  }
+
+  /// Whether UIKit's screen and trait APIs can be read without side effects.
+  ///
+  /// In an app, touching `UIScreen`, `UIFontMetrics`, or any other
+  /// appearance-adjacent UIKit API before `UIApplicationMain` has created the
+  /// application object — e.g. `configure` called from a SwiftUI `App.init` —
+  /// makes UIKit build its trait system before the app's asset-catalog accent
+  /// color is registered, permanently resetting the global tint to system blue.
+  /// Every appearance-adjacent read in this file — `UIScreen`, `UIFontMetrics`,
+  /// trait collections — must sit behind this check, and the check must come
+  /// first: even `UIFontMetrics.default.scaledValue(for:)` alone trips it. The
+  /// unguarded `UIDevice` reads (`model` and `interfaceType` at init, `vendorId`
+  /// on first use) are exempt: they don't touch the trait system, and the
+  /// sample-app repro keeps its tint with them in place.
+  ///
+  /// A missing application object doesn't always mean that window, though: some
+  /// processes never create one (unit-test runners, app extensions) yet can read
+  /// `UIScreen.main` freely, and waiting there would leave placeholder values
+  /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
+  /// disambiguates.
+  ///
+  /// None of this applies to AppKit, whose screen and appearance can be read at
+  /// any point, so on macOS it's always safe.
+  static var isUIKitReadSafe: Bool {
+    #if os(macOS)
+    return true
     #else
-    let read = { () -> ScreenMetrics in
+    return isUIKitReadSafe(
+      hasApplication: PlatformApplication.sharedApplication != nil,
+      bundleURL: Bundle.main.bundleURL
+    )
+    #endif
+  }
+
+  /// The decision above, split from the globals it reads.
+  ///
+  /// Both facts come from process-wide state that a test can't stage: the runner has
+  /// no application object and isn't an app bundle, so the deciding arm — an app
+  /// bundle with no application yet — is unreachable through the property. Taking
+  /// them as parameters lets both arms be pinned, so loosening `"app"` can't leave
+  /// the suite green while re-opening the accent-color bug.
+  static func isUIKitReadSafe(hasApplication: Bool, bundleURL: URL) -> Bool {
+    if hasApplication {
+      return true
+    }
+    return bundleURL.pathExtension != "app"
+  }
+
+  /// The instance's view of ``isUIKitReadSafe``, injected at init. Every
+  /// instance-level cache read and refresh consults this rather than the static,
+  /// so tests can hold a real instance in the pre-launch state and then release
+  /// it — the static's state can't be recreated in-process.
+  private let isUIKitReadSafe: () -> Bool
+
+  /// Reads the screen metrics, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeScreenMetrics(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> ScreenMetrics? {
+    #if os(visionOS)
+    return .placeholder
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.screenMetrics()
+    #else
+    let read = { () -> ScreenMetrics? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
       // Prefer the connected window scene's screen; fall back to the
       // deprecated `UIScreen.main` only when no scene is attached yet.
-      let screen = UIApplication.sharedApplication?
+      let screen = PlatformApplication.sharedApplication?
         .connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .first?
@@ -171,6 +327,10 @@ class DeviceHelper {
     }
 
     let isReachable = flags.contains(.reachable)
+    #if os(macOS)
+    // A Mac has no cellular radio, so any connection reports as Wi-Fi.
+    return isReachable ? "Wifi" : "No Internet"
+    #else
     let isWWAN = flags.contains(.isWWAN)
 
     if isReachable {
@@ -182,18 +342,309 @@ class DeviceHelper {
     } else {
       return "No Internet"
     }
+    #endif
   }
 
   var interfaceStyleOverride: InterfaceStyle?
 
+  /// Backs `X-Device-Interface-Style`. `getTemplateDevice()` resolves the override
+  /// the same way against its own trait snapshot — change one and change the other,
+  /// or the template and the header disagree on a backend-contract field.
+  ///
+  /// Not folded into a shared `interfaceStyle(from:)` helper on purpose: passing
+  /// `currentUITraits` would evaluate it eagerly, scheduling a needless cache
+  /// refresh — one per network request whenever an override is set, and a blocking
+  /// fill on the first pre-launch read. The early return here avoids it.
   var interfaceStyle: String {
     if let interfaceStyleOverride = interfaceStyleOverride {
       return interfaceStyleOverride.description
     }
+    return currentUITraits.interfaceStyle
+  }
+
+  var fontSize: Int {
+    return currentUITraits.fontSize
+  }
+
+  var fontScale: Double {
+    return currentUITraits.fontScale
+  }
+
+  var preferredContentSizeCategory: String {
+    return currentUITraits.preferredContentSizeCategory
+  }
+
+  /// Trait-derived values, cached from the main thread.
+  ///
+  /// `UIApplication.preferredContentSizeCategory`, `UIScreen.traitCollection` and
+  /// `UIFontMetrics` are main-thread-only, but these are read from background
+  /// contexts such as `getTemplateDevice()`. They're read on the main thread and
+  /// cached, then refreshed on trait-change notifications and on read.
+  ///
+  /// `nil` while a read isn't yet allowed to touch UIKit (see ``isUIKitReadSafe``),
+  /// which only happens when the SDK is configured before `UIApplicationMain` runs.
+  @DispatchQueueBacked
+  private var uiTraits: UITraits?
+
+  /// Set while a refresh of ``uiTraits`` is already scheduled, so a burst of reads
+  /// queues one main-thread hop rather than one per read.
+  @DispatchQueueBacked
+  private var isRefreshingUITraits = false
+
+  private var traitObservers: [NSObjectProtocol] = []
+
+  /// The `UITraitChangeRegistration` from ``registerForTraitChanges()``. Typed `Any?`
+  /// because the protocol is iOS 17+ and a stored property can't be gated on
+  /// availability.
+  private var traitChangeRegistration: Any?
+
+  /// The scene the registration was made against, held weakly. A registration goes
+  /// stale two ways: UIKit tears it down when its scene deallocates, and a
+  /// multi-window host can keep the scene alive in the background while another
+  /// becomes active — where trait updates are deferred, so flips the user can see
+  /// never fire it. Both show up as this no longer matching the active scene.
+  #if !os(macOS)
+  private weak var observedTraitScene: UIWindowScene?
+  #endif
+
+  /// The current traits, served from the cache on every version.
+  ///
+  /// `refreshUITraits()` keeps the cache fresh: main-thread reads refresh it
+  /// synchronously, off-main reads schedule one coalesced main-queue refresh —
+  /// blocking only to fill an empty cache, which happens when init ran before
+  /// `UIApplicationMain`.
+  ///
+  /// From iOS 17 the trait hook also updates the cache at the moment the appearance
+  /// flips. Below 17 there is no hook, so an in-place automatic light/dark change —
+  /// sunset while the app is frontmost — lands one read late via the refresh-on-read
+  /// backstop. That bounded lag is accepted in exchange for not blocking a
+  /// cooperative-pool thread on the main queue for every network request
+  /// (`X-Device-Interface-Style`) and template build; earlier releases read live here
+  /// and paid that hop each time. Text-size changes and flips made while backgrounded
+  /// still land immediately via the notification observers.
+  private var currentUITraits: UITraits {
+    refreshUITraits()
+    return uiTraits ?? .unavailable
+  }
+
+  private func refreshUITraits() {
+    #if !os(visionOS)
+    // The wrapper's setter and getter share one serial queue, so this write is
+    // ordered ahead of `currentUITraits`' read and the caller sees it.
+    if Thread.isMainThread {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
+      return
+    }
+    // An empty cache means init ran before `UIApplicationMain` created the
+    // application. Block on the first real read — `makeUITraits()` makes the
+    // main-thread hop itself — rather than scheduling it, so early off-main
+    // readers don't report placeholder values.
+    if uiTraits == nil {
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: isUIKitReadSafe) {
+        uiTraits = traits
+      }
+      return
+    }
+    if $isRefreshingUITraits.testAndSetTrue() {
+      return
+    }
+    DispatchQueue.main.async { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+      self.isRefreshingUITraits = false
+    }
+    #endif
+  }
+
+  /// Updates the cache at the moment the appearance or text size flips.
+  ///
+  /// There is no notification for `userInterfaceStyle`, so a system appearance
+  /// change while the app stays active — automatic light/dark at sunset — reaches
+  /// us only through a trait hook. Without this the cache reports the previous
+  /// token to `X-Device-Interface-Style` and to audience filters until something
+  /// else refreshes it.
+  ///
+  /// Registration needs a scene, which may not exist yet when `DeviceHelper` is
+  /// created, so this also runs on activation and re-arms if the observed scene has
+  /// since gone away or stopped being the active one.
+  ///
+  /// iOS 17+ only. Below 17 the refresh-on-read backstop and the two notification
+  /// observers cover this instead, rather than injecting a view into the host's
+  /// window to reach `traitCollectionDidChange`.
+  private func registerForTraitChanges() {
+    #if !os(visionOS) && !os(macOS)
+    Task { @MainActor [weak self] in
+      if #available(iOS 17.0, *) {
+        self?.performTraitChangeRegistration()
+      }
+    }
+    #endif
+  }
+
+  #if !os(visionOS) && !os(macOS)
+  @available(iOS 17.0, *)
+  @MainActor
+  private func performTraitChangeRegistration() {
+    guard let scene = PlatformApplication.sharedApplication?.activeWindowScene else {
+      return
+    }
+    // Already armed against the scene that's currently active.
+    if traitChangeRegistration != nil && observedTraitScene === scene {
+      return
+    }
+    // The observed scene either died or ceded activity to this one. Moving the
+    // registration rather than adding a second keeps it single: one live token,
+    // fired by the scene the user is looking at.
+    if let staleRegistration = traitChangeRegistration as? UITraitChangeRegistration {
+      observedTraitScene?.unregisterForTraitChanges(staleRegistration)
+    }
+    observedTraitScene = scene
+    traitChangeRegistration = scene.registerForTraitChanges(
+      [UITraitUserInterfaceStyle.self, UITraitPreferredContentSizeCategory.self]
+    ) { [weak self] (_: UITraitEnvironment, _: UITraitCollection) in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+    }
+  }
+  #endif
+
+  struct UITraits {
+    let interfaceStyle: String
+    let fontSize: Int
+    let fontScale: Double
+    let preferredContentSizeCategory: String
+
+    /// The values used when UIKit traits aren't available, e.g. on visionOS.
+    static let unavailable = UITraits(
+      interfaceStyle: "Unknown",
+      fontSize: 16,
+      fontScale: 1.0,
+      preferredContentSizeCategory: "unspecified"
+    )
+  }
+
+  /// Reads the current traits, or `nil` when UIKit can't be touched yet.
+  ///
+  /// `isUIKitReadSafe` is injectable because tests can't recreate the
+  /// pre-`UIApplicationMain` state in-process; it runs inside the main-thread
+  /// closure so the KVC read never happens off-thread.
+  static func makeUITraits(
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
+  ) -> UITraits? {
     #if os(visionOS)
-    return "Unknown"
+    return .unavailable
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.uiTraits()
     #else
-    let style = UIScreen.main.traitCollection.userInterfaceStyle
+    let read = { () -> UITraits? in
+      guard isUIKitReadSafe() else {
+        return nil
+      }
+      let category = PlatformApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      // Scale against `category` explicitly. The implicit `scaledValue(for:)` resolves
+      // against `UITraitCollection.current`, which Apple documents as undefined outside
+      // a view or view-controller trait callback and stores per thread — so the two
+      // font numbers could disagree with the category on the line above, which is read
+      // from `UIApplication` and doesn't depend on trait context. One source, so the
+      // three values in a snapshot can't contradict each other in the audience filters.
+      let scaledValue = UIFontMetrics.default.scaledValue(
+        for: 16.0,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: category)
+      )
+
+      return UITraits(
+        interfaceStyle: interfaceStyleToken(
+          for: UIScreen.main.traitCollection.userInterfaceStyle
+        ),
+        fontSize: Int(scaledValue.rounded()),
+        fontScale: ((Double(scaledValue) / 16.0) * 100).rounded() / 100,
+        preferredContentSizeCategory: contentSizeCategoryToken(for: category)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
+    #endif
+  }
+
+  /// Refreshes the cached traits when the user changes their text size, or when the
+  /// app becomes active after an appearance change. Both notifications are posted on
+  /// the main thread.
+  ///
+  /// Activation also retries ``registerForTraitChanges()``, since a window is more
+  /// likely to exist by then than when `DeviceHelper` was created, and fills the
+  /// screen-metrics cache when init ran too early to read the screen.
+  private func observeUITraitChanges() {
+    #if os(macOS)
+    // AppKit posts no notification when the appearance changes, but the app's
+    // effective appearance can be observed directly.
+    let refreshTraits = { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+    }
+    let activation = NotificationCenter.default.addObserver(
+      forName: SystemInfo.applicationDidBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { _ in
+      refreshTraits()
+    }
+    traitObservers = [activation]
+    if let application = PlatformApplication.sharedApplication {
+      let appearance = application.observe(\.effectiveAppearance) { _, _ in
+        DispatchQueue.main.async {
+          refreshTraits()
+        }
+      }
+      traitObservers.append(appearance)
+    }
+    #elseif !os(visionOS)
+    let names: [Notification.Name] = [
+      UIContentSizeCategory.didChangeNotification,
+      UIApplication.didBecomeActiveNotification
+    ]
+    traitObservers = names.map { name in
+      NotificationCenter.default.addObserver(
+        forName: name,
+        object: nil,
+        queue: .main
+      ) { [weak self] _ in
+        guard let self = self else {
+          return
+        }
+        if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.uiTraits = traits
+        }
+        if self.screenMetrics == nil,
+          let metrics = DeviceHelper.makeScreenMetrics(isUIKitReadSafe: self.isUIKitReadSafe) {
+          self.screenMetrics = metrics
+        }
+        self.registerForTraitChanges()
+      }
+    }
+    #endif
+  }
+
+  #if !os(macOS)
+  /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
+  /// backend audience filters. These tokens are a backend contract and must not change.
+  static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
     switch style {
     case .unspecified:
       return "Unspecified"
@@ -204,34 +655,6 @@ class DeviceHelper {
     default:
       return "Unknown"
     }
-    #endif
-	}
-
-  var fontSize: Int {
-    #if os(visionOS)
-    return 16
-    #else
-    return Int(UIFontMetrics.default.scaledValue(for: 16.0).rounded())
-    #endif
-  }
-
-  var fontScale: Double {
-    #if os(visionOS)
-    return 1.0
-    #else
-    let scale = UIFontMetrics.default.scaledValue(for: 16.0) / 16.0
-    return (scale * 100).rounded() / 100
-    #endif
-  }
-
-  var preferredContentSizeCategory: String {
-    #if os(visionOS)
-    return "unspecified"
-    #else
-    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
-      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
-    return Self.contentSizeCategoryToken(for: category)
-    #endif
   }
 
   /// Maps a `UIContentSizeCategory` to the fixed dashboard token string used by
@@ -253,6 +676,7 @@ class DeviceHelper {
     default: return "unspecified"
     }
   }
+  #endif
 
   var platformWrapper: String?
 
@@ -275,6 +699,13 @@ class DeviceHelper {
       return "true"
     }
     return Self.detectSandbox()
+  }
+
+  /// Whether the app is running outside App Store production: simulator,
+  /// TestFlight, or a development build. Unlike ``isSandbox`` this ignores
+  /// test mode, so it can be used to decide whether test mode may activate.
+  static var isSandboxEnvironment: Bool {
+    return detectSandbox() == "true"
   }
 
   private static func detectSandbox() -> String {
@@ -321,15 +752,9 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
-    #if compiler(>=5.9.2)
-    if #available(iOS 17.0, *) {
-      if UIDevice.current.userInterfaceIdiom == .vision {
-        return "vision"
-      }
-    }
-    #endif
-    // Ignore the exhaustive message because we need to be able to let devs using lower versions
-    // of xcode to build and they don't have vision support.
+    #if os(macOS)
+    return "mac"
+    #else
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -341,11 +766,14 @@ class DeviceHelper {
       return "carplay"
     case .tv:
       return "tv"
+    case .vision:
+      return "vision"
     case .unspecified:
       fallthrough
     @unknown default:
       return "unspecified"
     }
+    #endif
   }()
 
   private let appInstallDate: Date? = {
@@ -363,6 +791,9 @@ class DeviceHelper {
     }
     return installDate
   }()
+
+  /// The device's app install date, exposed internally for consumers such as the Customer Center.
+  var appInstallDateValue: Date? { appInstallDate }
 
   private let sdkVersionPadded: String
   private let appVersionPadded: String
@@ -479,11 +910,16 @@ class DeviceHelper {
     )
   }
 
+  /// - Parameter reportingUnknownFieldsAsNull: Only the audience filter
+  ///   attributes pass `true`. See ``CodingUserInfoKey/reportsUnknownFieldsAsNull``.
   func getDeviceAttributes(
     since placement: PlacementData?,
-    computedPropertyRequests: [ComputedPropertyRequest]
+    computedPropertyRequests: [ComputedPropertyRequest],
+    reportingUnknownFieldsAsNull: Bool = false
   ) async -> [String: Any] {
-    var dictionary = await getTemplateDevice()
+    var dictionary = await getTemplateDevice(
+      reportingUnknownFieldsAsNull: reportingUnknownFieldsAsNull
+    )
 
     let computedProperties = await getComputedDevicePropertiesSincePlacement(
       placement,
@@ -563,7 +999,8 @@ class DeviceHelper {
     MultiplePaywallUrlsCapability(),
     ConfigRefreshCapability(),
     WebViewTextInteractionCapability(),
-    ConfigCaching()
+    ConfigCaching(),
+    CustomStoreCheckoutCapability()
   ]
 
   private unowned let network: Network
@@ -573,6 +1010,8 @@ class DeviceHelper {
   private unowned let factory: IdentityFactory
     & LocaleIdentifierFactory
     & WebEntitlementFactory
+    & ConfigStateFactory
+    & OptionsFactory
 
   init(
     api: Api,
@@ -580,8 +1019,20 @@ class DeviceHelper {
     network: Network,
     entitlementsInfo: EntitlementsInfo,
     receiptManager: ReceiptManager,
-    factory: IdentityFactory & LocaleIdentifierFactory & WebEntitlementFactory
+    factory: IdentityFactory
+      & LocaleIdentifierFactory
+      & WebEntitlementFactory
+      & ConfigStateFactory
+      & OptionsFactory,
+    ipCollector: DeviceIPCollector? = nil,
+    isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
+    attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
+    self.attStatusProvider = attStatusProvider
+    self.ipCollector = ipCollector ?? DeviceIPCollector(
+      ipV4Url: api.enrichment.ipV4Url,
+      ipV6Url: api.enrichment.ipV6Url
+    )
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -591,11 +1042,164 @@ class DeviceHelper {
       reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
+    self.isUIKitReadSafe = isUIKitReadSafe
 
-    let screenMetrics = Self.makeScreenMetrics()
-    self.screenWidth = screenMetrics.width
-    self.screenHeight = screenMetrics.height
-    self.devicePixelRatio = screenMetrics.scale
+    // Both are `nil` when `configure` runs before `UIApplicationMain` — they
+    // fill on first post-launch read or on app activation.
+    self.screenMetrics = Self.makeScreenMetrics(isUIKitReadSafe: isUIKitReadSafe)
+    self.uiTraits = Self.makeUITraits(isUIKitReadSafe: isUIKitReadSafe)
+    observeUITraitChanges()
+    registerForTraitChanges()
+  }
+
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  /// Returns `notDetermined` when AppTrackingTransparency isn't linked.
+  static var attStatus: Int? {
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
+    return nil
+    #endif
+  }
+
+  /// The ad consent device attributes would report right now.
+  ///
+  /// The app's own ``SuperwallOptions/adConsent`` wins once it's been set, then a
+  /// consent banner's stored answer, then the granted default. The `.none` rule then
+  /// applies to all of them, and the ATT rule to all but the app's own setting,
+  /// which is always trusted.
+  var reportedAdConsent: ReportedAdConsent {
+    let options = factory.makeSuperwallOptions()
+    let consent: AdConsent
+    let source: AdConsentSource
+    if options.isAdConsentSet {
+      consent = options.adConsent
+      source = .developer
+    } else if let bannerConsent = TCFConsent.consent(from: consentDefaults) {
+      consent = bannerConsent
+      source = .tcf
+    } else {
+      consent = AdConsent()
+      source = .default
+    }
+    let reported = consent.reported(
+      for: options.eventTrackingBehavior,
+      attStatus: source == .developer ? nil : attStatusProvider()
+    )
+    return ReportedAdConsent(
+      adUserData: reported.adUserData.description,
+      adPersonalization: reported.adPersonalization.description,
+      source: source.rawValue
+    )
+  }
+
+  /// Notes the ad consent in device attributes that were just sent.
+  func recordPublishedDeviceAttributes(_ attributes: [String: Any]) {
+    guard let consent = ReportedAdConsent(attributes: attributes) else {
+      return
+    }
+    adConsentLock.lock()
+    publishedAdConsent = consent
+    adConsentLock.unlock()
+  }
+
+  /// Whether the ad consent or its source has changed since device attributes were
+  /// last sent, for example because the user answered the ATT prompt or a consent
+  /// banner.
+  ///
+  /// Returns `false` before the first send, which reports the current value anyway,
+  /// and while `eventTrackingBehavior` is ``EventTrackingBehavior/none``, when nothing
+  /// would be sent. Callers serialize through ``AdConsentUpdateQueue`` so the send
+  /// is recorded before the next check.
+  func adConsentNeedsRepublish() -> Bool {
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return false
+    }
+    let current = reportedAdConsent
+    adConsentLock.lock()
+    defer { adConsentLock.unlock() }
+    guard let published = publishedAdConsent else {
+      return false
+    }
+    return published != current
+  }
+
+  deinit {
+    for observer in traitObservers {
+      NotificationCenter.default.removeObserver(observer)
+    }
+  }
+
+  /// Which IP addresses to collect. The MMP gets both. AppsFlyer only needs
+  /// the IPv4 address, which the device's own requests don't show when it's
+  /// on an IPv6 network.
+  private enum IPCollection {
+    case none
+    case ipV4ForAppsFlyer
+    case all
+  }
+
+  private func ipCollection(for config: Config?) -> IPCollection {
+    // The lookups only serve install attribution, which the opt-out skips.
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      return .none
+    }
+    if config?.attribution?.mmp?.enabled == true {
+      return .all
+    }
+    let appsflyerId = storage.get(IntegrationAttributes.self)?[IntegrationAttribute.appsflyerId.description]
+    if appsflyerId?.isEmpty == false {
+      return .ipV4ForAppsFlyer
+    }
+    return .none
+  }
+
+  /// Starts the IP lookups once config turns the MMP on or an AppsFlyer ID is
+  /// set. On a cold launch the first device-attributes read happens before
+  /// config arrives, so without this the lookup would wait for some later read.
+  @discardableResult
+  func startIPCollectionIfEnabled(for config: Config?) -> Task<Void, Never>? {
+    switch ipCollection(for: config) {
+    case .none:
+      return nil
+    case .ipV4ForAppsFlyer:
+      return Task {
+        await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()?.value
+      }
+    case .all:
+      return Task {
+        await ipCollector.refreshIfNeeded()?.value
+      }
+    }
+  }
+
+  /// The device's IPv4 and IPv6 addresses for the MMP install match. Waits
+  /// up to `timeout` seconds for lookups that are due or already running, so
+  /// a match sent at first launch doesn't go out before they finish.
+  func ipAttributesForMMPMatch(timeout: TimeInterval = 1.5) async -> [String: String] {
+    guard collectsIPsForMMP() else {
+      return [:]
+    }
+    await ipCollector.refreshIfNeeded()
+    await ipCollector.waitForLookups(timeout: timeout)
+    // The app can turn tracking off while the lookups run.
+    guard collectsIPsForMMP() else {
+      return [:]
+    }
+    return await ipCollector.attributes()
+  }
+
+  private func collectsIPsForMMP() -> Bool {
+    if case .all = ipCollection(for: factory.makeConfigState().value.getConfig()) {
+      return true
+    }
+    return false
+  }
+
+  /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
+  @discardableResult
+  func startIPCollectionIfEnabled() -> Task<Void, Never>? {
+    return startIPCollectionIfEnabled(for: factory.makeConfigState().value.getConfig())
   }
 
   func getEnrichment(
@@ -627,9 +1231,19 @@ class DeviceHelper {
     }
   }
 
-  func getTemplateDevice() async -> [String: Any] {
+  func getTemplateDevice(reportingUnknownFieldsAsNull: Bool = false) async -> [String: Any] {
     let identityInfo = await factory.makeIdentityInfo()
     let aliases = [identityInfo.aliasId]
+
+    // Snapshot once. The four trait-derived fields below each go through
+    // `currentUITraits`, so reading them separately would schedule four cache
+    // refreshes per call and could interleave with one, tearing the snapshot.
+    // Taking the snapshot means `interfaceStyle` below resolves the override
+    // inline rather than going through ``interfaceStyle``, so the two resolve it
+    // the same way by hand — keep them in step.
+    let traits = currentUITraits
+    let adConsent = reportedAdConsent
+    await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
       publicApiKey: storage.apiKey,
@@ -641,6 +1255,7 @@ class DeviceHelper {
       appVersionPadded: appVersionPadded,
       osVersion: osVersion,
       deviceModel: model,
+      simulatorModel: simulatorModel,
       deviceLocale: localeIdentifier,
       preferredLocale: preferredLocaleIdentifier,
       deviceLanguageCode: languageCode,
@@ -652,10 +1267,10 @@ class DeviceHelper {
       interfaceType: interfaceType,
       timezoneOffset: Int(TimeZone.current.secondsFromGMT()),
       radioType: radioType,
-      interfaceStyle: interfaceStyle,
-      fontSize: fontSize,
-      fontScale: fontScale,
-      preferredContentSizeCategory: preferredContentSizeCategory,
+      interfaceStyle: interfaceStyleOverride?.description ?? traits.interfaceStyle,
+      fontSize: traits.fontSize,
+      fontScale: traits.fontScale,
+      preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
       isApplePayAvailable: true,
       bundleId: bundleId,
@@ -692,10 +1307,17 @@ class DeviceHelper {
       swiftVersion: currentSwiftVersion(),
       compilerVersion: currentCompilerVersion(),
       localResourceIds: Superwall.shared.options.localResources.keys.sorted().joined(separator: ","),
-      deviceId: factory.makeDeviceId()
+      deviceId: factory.makeDeviceId(),
+      adUserDataConsent: adConsent.adUserData,
+      adPersonalizationConsent: adConsent.adPersonalization,
+      adConsentSource: adConsent.source
     )
 
-    var deviceDictionary = template.toDictionary()
+    var deviceDictionary = template.toDictionary(
+      encoder: reportingUnknownFieldsAsNull
+        ? .reportingUnknownFieldsAsNull()
+        : JSONEncoder()
+    )
 
     let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
       enrichment?.device.dictionaryObject ?? [:]
@@ -703,17 +1325,32 @@ class DeviceHelper {
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
+    for key in ["ipV4", "ipV6", "ipV4ObservedAt", "ipV6ObservedAt"] {
+      deviceDictionary.removeValue(forKey: key)
+    }
+    // Kept in memory whatever the config says, since on a cold launch the
+    // first enrichment arrives before config does.
+    await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
+    // IP collection is for the MMP, which is off unless the backend turns it on,
+    // and for AppsFlyer, which only gets the IPv4 address.
+    switch ipCollection(for: factory.makeConfigState().value.getConfig()) {
+    case .none:
+      break
+    case .ipV4ForAppsFlyer:
+      await ipCollector.refreshIPv4IfOnlyIPv6IsKnown()
+      deviceDictionary.merge(await ipCollector.attributes(families: [4])) { _, observed in observed }
+    case .all:
+      await ipCollector.refreshIfNeeded()
+      deviceDictionary.merge(await ipCollector.attributes()) { _, observed in observed }
+    }
 
-    if #available(iOS 15.0, *),
-      let storefront = await Storefront.current {
+    if let storefront = await Storefront.current {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      #if compiler(>=6.1)
-      if #available(iOS 17.0, *) {
+      if #available(iOS 17.0, macOS 14.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
-      #endif
     }
 
     if Superwall.shared.options.enableExperimentalDeviceVariables {

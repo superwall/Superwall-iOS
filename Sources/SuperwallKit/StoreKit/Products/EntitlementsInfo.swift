@@ -51,6 +51,30 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
     return Set(entitlements)
   }
 
+  /// The entitlements granted via ``Superwall/grantedEntitlements``.
+  ///
+  /// Loaded from storage once and kept in memory: it's read on every status
+  /// publish, and a storage miss — the common case, since most apps never
+  /// grant — isn't memoized by the cache, so reading through would hit disk
+  /// every time.
+  var granted: Set<Entitlement> {
+    return queue.sync {
+      if let granted = backingGranted {
+        return granted
+      }
+      let granted = storage.get(GrantedEntitlements.self) ?? []
+      backingGranted = granted
+      return granted
+    }
+  }
+
+  func setGranted(_ granted: Set<Entitlement>) {
+    queue.sync {
+      backingGranted = granted
+      storage.save(granted, forType: GrantedEntitlements.self)
+    }
+  }
+
   // MARK: - Internal vars
   /// The entitlements that belong to each product ID.
   var entitlementsByProductId: [String: Set<Entitlement>] = [:] {
@@ -63,6 +87,9 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   // MARK: - Private vars
   /// The backing variable for ``EntitlementsInfo/active``.
   private var backingActive: Set<Entitlement> = []
+
+  /// The backing variable for `granted`; `nil` until first read.
+  private var backingGranted: Set<Entitlement>?
 
   /// The backing variable for ``EntitlementsInfo/all``.
   private var backingAll: Set<Entitlement> = []

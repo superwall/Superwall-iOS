@@ -7,9 +7,30 @@
 // swiftlint:disable type_body_length function_body_length trailing_closure file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
-actor WebEntitlementRedeemer {
+/// How a web checkout the paywall reported as complete finishes once its code is redeemed.
+/// Stored with the pending checkout, so a poll that recovers it later finishes it the same way.
+enum StripeCheckoutCompletion: Equatable, Codable {
+  /// Legacy: the paywall hears `restore_complete`, and the paywall dismisses
+  /// as `.restored` once its entitlements are active.
+  case restore
+  /// Like an App Store purchase: the paywall hears `transaction_complete`, so
+  /// the button's after-purchase actions run, and it dismisses as
+  /// `.purchased` only when `shouldDismiss` is true.
+  case purchase(productId: String, shouldDismiss: Bool)
+}
+
+/// Redeems existing codes after a successful purchase.
+protocol PostPurchaseRedeeming: Sendable {
+  func redeemAfterPurchase() async
+}
+
+actor WebEntitlementRedeemer: PostPurchaseRedeeming {
   private let network: Network
   private let storage: Storage
   private let entitlementsInfo: EntitlementsInfo
@@ -21,15 +42,28 @@ actor WebEntitlementRedeemer {
   private let stripePendingPollIntervalNs: UInt64
   private let stripePendingPollTimeoutNs: UInt64
   private var isProcessing = false
+  /// The throttled entitlements poll in flight, which concurrent polls wait on.
+  private var inFlightWebEntitlementsPoll: Task<Void, Never>?
+  /// The order of responses that carry entitlements, and which of them last saved its
+  /// customer info. A fetch takes its place when it's sent, as does a redeem of existing
+  /// codes; a code redemption takes it when it arrives, since it changed the entitlements.
+  /// An older response never replaces a newer one's customer info.
+  private var entitlementsFetchCount = 0
+  private var lastSavedEntitlementsFetch = 0
   private var hasActiveStripePoll = false
   private var lastCompletedStripePollResult: (contextId: String, outcome: StripePollOutcome)?
   private var awaitingCheckoutComplete = false
+  /// The checkout the paywall last reported complete, while it's being finished. An older
+  /// checkout's poll stops for it, so it doesn't wait behind a poll that can't redeem it.
+  private var completingCheckoutContextId: String?
   private var superwall: Superwall?
   typealias Factory = WebEntitlementFactory
     & OptionsFactory
     & ConfigStateFactory
     & HasExternalPurchaseControllerFactory
     & DeviceHelperFactory
+    & TestModeManagerFactory
+    & PurchasedTransactionsFactory
 
   private enum StripePollTrigger: String {
     case checkoutComplete = "checkout_complete"
@@ -58,6 +92,14 @@ actor WebEntitlementRedeemer {
     case code(String)
     case existingCodes
     case integrationAttributes
+
+    /// Whether the redeem changes the user's entitlements on the server.
+    var redeemsNewCode: Bool {
+      if case .code = self {
+        return true
+      }
+      return false
+    }
 
     var description: String {
       switch self {
@@ -109,15 +151,20 @@ actor WebEntitlementRedeemer {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(handleAppForeground),
-      name: UIApplication.willEnterForegroundNotification,
+      name: SystemInfo.applicationWillEnterForegroundNotification,
       object: nil
     )
+  }
 
-    // Also check once on SDK initialization so pending Stripe checkouts can be
-    // recovered on cold launch. Guard on factory readiness to avoid accessing
-    // dependencies (e.g. deviceHelper) before the container is fully set up.
+  /// Checks once on SDK initialization so pending Stripe checkouts can be
+  /// recovered on cold launch.
+  ///
+  /// Called by `Superwall` after the dependency container is fully built,
+  /// rather than from this actor's own `init`: the poll reads container state
+  /// from a background task, so it must not start while the container is
+  /// still being set up.
+  nonisolated func pollPendingStripeCheckoutOnColdLaunch() {
     Task {
-      guard factory.makeIsContainerReady() else { return }
       await pollPendingStripeCheckoutOnForegroundIfNeeded()
     }
   }
@@ -150,6 +197,21 @@ actor WebEntitlementRedeemer {
     return true
   }
 
+  private func isRedeemed(_ contextId: String) -> Bool {
+    lastCompletedStripePollResult?.contextId == contextId
+      && lastCompletedStripePollResult?.outcome == .redeemed
+  }
+
+  private func waitForActiveStripePoll() async {
+    let waitStart = DispatchTime.now().uptimeNanoseconds
+    while hasActiveStripePoll, !Task.isCancelled {
+      if DispatchTime.now().uptimeNanoseconds - waitStart >= stripePendingPollTimeoutNs {
+        return
+      }
+      try? await Task.sleep(nanoseconds: 100_000_000)
+    }
+  }
+
   /// Either starts a new poll or waits for an existing in-flight poll to
   /// finish. Returns `true` if the checkout was redeemed.
   func pollOrWaitForActiveStripePoll() async -> Bool {
@@ -161,16 +223,9 @@ actor WebEntitlementRedeemer {
     // If there's already an active poll (e.g. from cold-launch init task),
     // wait for it to finish rather than skipping.
     if hasActiveStripePoll {
-      let waitStart = DispatchTime.now().uptimeNanoseconds
-      while hasActiveStripePoll {
-        if Task.isCancelled {
-          return false
-        }
-        let elapsed = DispatchTime.now().uptimeNanoseconds - waitStart
-        if elapsed >= stripePendingPollTimeoutNs {
-          return false
-        }
-        try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+      await waitForActiveStripePoll()
+      if hasActiveStripePoll || Task.isCancelled {
+        return false
       }
       if let completed = lastCompletedStripePollResult,
         completed.contextId == waitingContextId {
@@ -195,7 +250,8 @@ actor WebEntitlementRedeemer {
     let outcome = await pollStripeRedemptionResult(
       contextId: pendingState.checkoutContextId,
       productId: pendingState.productId,
-      trigger: .paywallOpen
+      trigger: .paywallOpen,
+      completion: pendingState.completion
     )
 
     return outcome == .redeemed
@@ -203,9 +259,38 @@ actor WebEntitlementRedeemer {
 
   func handleStripeCheckoutComplete(
     contextId: String,
-    productId: String
+    productId: String,
+    completion: StripeCheckoutCompletion = .restore
   ) async {
     awaitingCheckoutComplete = false
+
+    // The page can report one purchase more than once (its status poll and the return check).
+    // Redeemed once is enough: a second redemption would put the spinner back up behind the
+    // success alert, with nothing left to take it down.
+    if isRedeemed(contextId) {
+      let superwall = self.superwall ?? Superwall.shared
+      await MainActor.run {
+        // The success alert's close takes the spinner down once the purchase is finished.
+        let paywallViewController = superwall.paywallViewController
+        #if os(macOS)
+        // AppKit alerts are window sheets, not presented view controllers.
+        let isShowingAlert = paywallViewController?.view.window?.attachedSheet != nil
+        #else
+        let isShowingAlert = paywallViewController?.presentedViewController is UIAlertController
+        #endif
+        if !isShowingAlert {
+          paywallViewController?.loadingState = .ready
+        }
+      }
+      return
+    }
+
+    completingCheckoutContextId = contextId
+    defer {
+      if completingCheckoutContextId == contextId {
+        completingCheckoutContextId = nil
+      }
+    }
 
     if let existingState = pendingStripeCheckoutState,
       existingState.checkoutContextId == contextId {
@@ -213,6 +298,7 @@ actor WebEntitlementRedeemer {
         .init(
           checkoutContextId: contextId,
           productId: productId,
+          completion: completion,
           remainingForegroundAttempts: existingState.remainingForegroundAttempts
         )
       )
@@ -220,20 +306,37 @@ actor WebEntitlementRedeemer {
       savePendingStripeCheckoutState(
         .init(
           checkoutContextId: contextId,
-          productId: productId
+          productId: productId,
+          completion: completion
         )
       )
     }
 
-    let outcome = await pollStripeRedemptionResult(
+    var outcome = await pollStripeRedemptionResult(
       contextId: contextId,
       productId: productId,
-      trigger: .checkoutComplete
+      trigger: .checkoutComplete,
+      completion: completion
     )
 
-    // Don't hide spinner if another poll is in-flight — it will handle the
-    // loading state when it finishes.
-    if outcome != .redeemed, outcome != .skippedInFlight {
+    // A poll already in flight is for another checkout (an older pending one, from the
+    // foreground or paywall open), so it never redeems this one. Wait it out, then poll this
+    // checkout: skipping left the spinner up with nothing left to take it down.
+    while outcome == .skippedInFlight, !Task.isCancelled {
+      await waitForActiveStripePoll()
+      if isRedeemed(contextId) {
+        outcome = .redeemed
+        break
+      }
+      outcome = await pollStripeRedemptionResult(
+        contextId: contextId,
+        productId: productId,
+        trigger: .checkoutComplete,
+        completion: completion
+      )
+    }
+
+    if outcome != .redeemed {
       let superwall = self.superwall ?? Superwall.shared
       await MainActor.run {
         superwall.paywallViewController?.loadingState = .ready
@@ -274,7 +377,8 @@ actor WebEntitlementRedeemer {
     let outcome = await pollStripeRedemptionResult(
       contextId: pendingState.checkoutContextId,
       productId: pendingState.productId,
-      trigger: .foreground
+      trigger: .foreground,
+      completion: pendingState.completion
     )
 
     // Consume foreground attempts after each trigger completes, except when skipped
@@ -339,9 +443,29 @@ actor WebEntitlementRedeemer {
     await prepareUIForRedemption(type: type, superwall: superwall)
 
     do {
+      // A background redeem changes nothing on the server, so its response is as old as
+      // its request. Redeeming a code does, so a fetch sent before the code was redeemed
+      // can still read the state before it: that response counts from when it arrives.
+      let sentFetch = type.redeemsNewCode ? nil : startEntitlementsFetch()
       let response = try await network.redeemEntitlements(request: request)
+      if !type.redeemsNewCode {
+        // Saved after the user changed, it would give the new user the old one's entitlements.
+        // The user is waiting on a code redemption, so that one always finishes.
+        guard
+          factory.makeAppUserId() == request.appUserId,
+          factory.makeAliasId() == request.aliasId
+        else {
+          Logger.debug(
+            logLevel: .debug,
+            scope: .webEntitlements,
+            message: "Ignoring redeem response because the user changed during the redeem."
+          )
+          return
+        }
+      }
       await handleRedemptionSuccess(
         response: response,
+        fetch: sentFetch ?? startEntitlementsFetch(),
         type: type,
         superwall: superwall,
         callbackMode: .legacy
@@ -419,13 +543,28 @@ actor WebEntitlementRedeemer {
     await delegate.willRedeemLink()
   }
 
+  /// - Parameter fetch: The response's place in the fetch order, from `startEntitlementsFetch()`.
   private func handleRedemptionSuccess(
     response: RedeemResponse,
+    fetch: Int,
     type: RedeemType,
     superwall: Superwall,
-    callbackMode: RedemptionCallbackMode
+    callbackMode: RedemptionCallbackMode,
+    completion: StripeCheckoutCompletion = .restore,
+    checkoutContextId: String? = nil
   ) async {
-    storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+    var response = response
+    // A later fetch has already saved newer customer info. The codes' results are still this
+    // response's, but its customer info is out of date. Saved before anything suspends, so a
+    // fetch finishing meanwhile can't be overwritten.
+    if fetch < lastSavedEntitlementsFetch,
+      let latestCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo {
+      response.customerInfo = latestCustomerInfo
+    } else {
+      storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+    }
+    storage.save(response, forType: LatestRedeemResponse.self)
+    lastSavedEntitlementsFetch = max(lastSavedEntitlementsFetch, fetch)
 
     switch type {
     case .code, .existingCodes:
@@ -438,17 +577,22 @@ actor WebEntitlementRedeemer {
     let (allEntitlements, paywallEntitlementIds) = await processEntitlements(
       response: response,
       type: type,
+      completion: completion,
       superwall: superwall
     )
 
-    storage.save(response, forType: LatestRedeemResponse.self)
-
-    _ = await mergeAndApplyCustomerInfo(
-      webCustomerInfo: response.customerInfo,
+    // A newer fetch may have saved its customer info while this one was being processed.
+    let latestWebCustomerInfo =
+      storage.get(LatestRedeemResponse.self)?.customerInfo ?? response.customerInfo
+    await mergeAndApplyCustomerInfo(
+      webCustomerInfo: latestWebCustomerInfo,
       superwall: superwall
     )
 
-    await updateSubscriptionStatus(with: allEntitlements, superwall: superwall)
+    await updateSubscriptionStatus(
+      with: mergedEntitlements(webCustomerInfo: latestWebCustomerInfo),
+      superwall: superwall
+    )
 
     if case .code(let code) = type {
       await handleCodeRedemptionCompletion(
@@ -457,7 +601,9 @@ actor WebEntitlementRedeemer {
         allEntitlementIds: Set(allEntitlements.map { $0.id }),
         paywallEntitlementIds: paywallEntitlementIds,
         superwall: superwall,
-        callbackMode: callbackMode
+        callbackMode: callbackMode,
+        completion: completion,
+        checkoutContextId: checkoutContextId
       )
     }
   }
@@ -465,17 +611,17 @@ actor WebEntitlementRedeemer {
   private func processEntitlements(
     response: RedeemResponse,
     type: RedeemType,
+    completion: StripeCheckoutCompletion,
     superwall: Superwall
   ) async -> (allEntitlements: Set<Entitlement>, paywallEntitlementIds: Set<String>) {
-    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
-    let combinedEntitlements =
-      Array(activeDeviceEntitlements) + Array(response.customerInfo.entitlements)
-    let allEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
+    let allEntitlements = mergedEntitlements(webCustomerInfo: response.customerInfo)
 
     var paywallEntitlementIds: Set<String> = []
 
-    if case .code = type, let paywallVc = superwall.paywallViewController {
+    // A restore is only complete once every entitlement the paywall offers is active, and the
+    // paywall hears restore_complete or restore_fail. A purchase bought one product, so none of
+    // that applies: it hears transaction_complete instead.
+    if case .code = type, completion == .restore, let paywallVc = superwall.paywallViewController {
       for id in await paywallVc.info.productIds {
         let entitlements = superwall.entitlements.byProductId(id)
         paywallEntitlementIds.formUnion(entitlements.map { $0.id })
@@ -505,30 +651,43 @@ actor WebEntitlementRedeemer {
     return (allEntitlements, paywallEntitlementIds)
   }
 
+  /// The device's active entitlements merged with `webCustomerInfo`'s.
+  private func mergedEntitlements(webCustomerInfo: CustomerInfo) -> Set<Entitlement> {
+    let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+    let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+    let combinedEntitlements =
+      Array(activeDeviceEntitlements) + Array(webCustomerInfo.entitlements)
+    return Entitlement.mergePrioritized(combinedEntitlements)
+  }
+
   /// Merges device and web entitlements into a single `CustomerInfo`, applying
   /// external purchase controller logic when needed, and assigns it to
   /// `superwall.customerInfo`.
   private func mergeAndApplyCustomerInfo(
     webCustomerInfo: CustomerInfo,
     superwall: Superwall
-  ) async -> CustomerInfo {
+  ) async {
     let mergedCustomerInfo: CustomerInfo
     if factory.makeHasExternalPurchaseController() {
       let subscriptionStatus = await MainActor.run { superwall.subscriptionStatus }
       mergedCustomerInfo = CustomerInfo.forExternalPurchaseController(
         storage: storage,
-        subscriptionStatus: subscriptionStatus
+        subscriptionStatus: subscriptionStatus,
+        granted: entitlementsInfo.granted
       )
     } else {
       let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
-      mergedCustomerInfo = deviceCustomerInfo.merging(with: webCustomerInfo)
+      mergedCustomerInfo = deviceCustomerInfo.merging(
+        with: webCustomerInfo,
+        granting: entitlementsInfo.granted
+      )
     }
 
     await MainActor.run {
-      superwall.customerInfo = mergedCustomerInfo
+      if superwall.customerInfo != mergedCustomerInfo {
+        superwall.customerInfo = mergedCustomerInfo
+      }
     }
-
-    return mergedCustomerInfo
   }
 
   private func updateSubscriptionStatus(
@@ -547,7 +706,9 @@ actor WebEntitlementRedeemer {
     allEntitlementIds: Set<String>,
     paywallEntitlementIds: Set<String>,
     superwall: Superwall,
-    callbackMode: RedemptionCallbackMode
+    callbackMode: RedemptionCallbackMode,
+    completion: StripeCheckoutCompletion,
+    checkoutContextId: String?
   ) async {
     guard let codeResult = response.results.first(where: { $0.code == code }) else { return }
 
@@ -589,11 +750,25 @@ actor WebEntitlementRedeemer {
         }
       }
 
-      if let paywallVc = superwall.paywallViewController,
-        !paywallEntitlementIds.isEmpty,
-        paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
-        superwallOptions.paywalls.automaticallyDismiss {
-        await superwall.dismiss(paywallVc, result: .restored)
+      switch completion {
+      case .restore:
+        if let paywallVc = superwall.paywallViewController,
+          !paywallEntitlementIds.isEmpty,
+          paywallEntitlementIds.subtracting(allEntitlementIds).isEmpty,
+          superwallOptions.paywalls.automaticallyDismiss {
+          await superwall.dismiss(paywallVc, result: .restored)
+        }
+      case let .purchase(productId, shouldDismiss):
+        if case .success(_, let redemptionInfo) = codeResult,
+          let paywallVc = superwall.paywallViewController {
+          await finishWebPurchase(
+            productId: productId,
+            trialPeriodDays: redemptionInfo.paywallInfo?.product?.trialPeriodDays ?? 0,
+            shouldDismiss: shouldDismiss && superwallOptions.paywalls.automaticallyDismiss,
+            paywallViewController: paywallVc,
+            superwall: superwall
+          )
+        }
       }
 
       await MainActor.run {
@@ -630,7 +805,7 @@ actor WebEntitlementRedeemer {
           onClose: { [weak self] in
             Task {
               await afterRedeem()
-              await self?.clearPendingStripeCheckoutState()
+              await self?.clearPendingStripeCheckoutState(for: checkoutContextId)
             }
           }
         )
@@ -642,14 +817,44 @@ actor WebEntitlementRedeemer {
           onClose: { [weak self] in
             Task {
               await afterRedeem()
-              await self?.clearPendingStripeCheckoutState()
+              await self?.clearPendingStripeCheckoutState(for: checkoutContextId)
             }
           }
         )
       }
     } else {
       await afterRedeem()
-      clearPendingStripeCheckoutState()
+      clearPendingStripeCheckoutState(for: checkoutContextId)
+    }
+  }
+
+  /// Finishes a redeemed web purchase the way `TransactionManager` finishes
+  /// an App Store purchase made from a paywall.
+  private func finishWebPurchase(
+    productId: String,
+    trialPeriodDays: Int,
+    shouldDismiss: Bool,
+    paywallViewController: PaywallViewController,
+    superwall: Superwall
+  ) async {
+    let product = StoreProduct.blank(productIdentifier: productId)
+    let paywallInfo = await paywallViewController.info
+    let didStartFreeTrial = trialPeriodDays > 0 && paywallInfo.isFreeTrialAvailable
+    let trialEndDate = didStartFreeTrial
+      ? Calendar.current.date(byAdding: .day, value: trialPeriodDays, to: Date())
+      : nil
+
+    await paywallViewController.markPurchaseCompleted(product)
+    await paywallViewController.webView.messageHandler.handle(
+      .transactionComplete(
+        trialEndDate: trialEndDate,
+        productIdentifier: productId,
+        didStartFreeTrial: didStartFreeTrial
+      )
+    )
+
+    if shouldDismiss {
+      await superwall.dismiss(paywallViewController, result: .purchased(product))
     }
   }
 
@@ -660,10 +865,24 @@ actor WebEntitlementRedeemer {
     closeActionTitle: String,
     onClose: (() -> Void)?
   ) {
-    guard let topVc = UIViewController.topMostViewController else {
+    guard let topVc = PlatformViewController.topMostViewController else {
       onClose?()
       return
     }
+    #if os(macOS)
+    // A window shows one sheet at a time.
+    guard topVc.view.window?.attachedSheet == nil else {
+      onClose?()
+      return
+    }
+    AlertControllerFactory.present(
+      title: title,
+      message: message,
+      closeActionTitle: closeActionTitle,
+      onClose: onClose,
+      on: topVc
+    )
+    #else
     guard topVc.presentedViewController == nil else {
       onClose?()
       return
@@ -676,6 +895,7 @@ actor WebEntitlementRedeemer {
       sourceView: topVc.view
     )
     topVc.present(alertController, animated: true)
+    #endif
   }
 
   private func handleRedemptionFailure(
@@ -750,6 +970,16 @@ actor WebEntitlementRedeemer {
     storage.delete(PendingStripeCheckoutPollStorage.self)
   }
 
+  /// Clears the pending checkout only if it's this checkout's, so a poll that finishes an older
+  /// checkout leaves a newer one to be recovered. Nil clears whatever is pending.
+  private func clearPendingStripeCheckoutState(for checkoutContextId: String?) {
+    if let checkoutContextId,
+      pendingStripeCheckoutState?.checkoutContextId != checkoutContextId {
+      return
+    }
+    clearPendingStripeCheckoutState()
+  }
+
   private func makePollRedemptionRequest(
     contextId: String
   ) -> PollRedemptionResultRequest {
@@ -763,7 +993,8 @@ actor WebEntitlementRedeemer {
   private func pollStripeRedemptionResult(
     contextId: String,
     productId: String,
-    trigger: StripePollTrigger
+    trigger: StripePollTrigger,
+    completion: StripeCheckoutCompletion = .restore
   ) async -> StripePollOutcome {
     if hasActiveStripePoll {
       return .skippedInFlight
@@ -786,17 +1017,27 @@ actor WebEntitlementRedeemer {
         clearPendingStripeCheckoutState()
         return .noRedemptionFound
       }
+      // A newer checkout was reported complete: this one stops so that one is polled. One that
+      // was only started doesn't stop it, since this one may still be paid for.
+      if let completingCheckoutContextId, completingCheckoutContextId != contextId {
+        return .noRedemptionFound
+      }
 
       do {
         let response = try await network.pollRedemptionResult(request: request)
 
         if let code = response.results.first?.code {
           let superwall = superwall ?? Superwall.shared
+          // Redeeming the checkout's code changed the user's entitlements, so this response
+          // is newer than any fetch already in flight.
           await handleRedemptionSuccess(
             response: response,
+            fetch: startEntitlementsFetch(),
             type: .code(code),
             superwall: superwall,
-            callbackMode: .pollFakeCompatibility
+            callbackMode: .pollFakeCompatibility,
+            completion: completion,
+            checkoutContextId: contextId
           )
           finalOutcome = .redeemed
           return finalOutcome
@@ -804,7 +1045,7 @@ actor WebEntitlementRedeemer {
 
         switch response.status {
         case .failed:
-          clearPendingStripeCheckoutState()
+          clearPendingStripeCheckoutState(for: contextId)
           finalOutcome = .checkoutFailed
           return finalOutcome
         case .pending:
@@ -816,7 +1057,7 @@ actor WebEntitlementRedeemer {
           try? await Task.sleep(nanoseconds: stripePendingPollIntervalNs)
           continue
         case .complete:
-          clearPendingStripeCheckoutState()
+          clearPendingStripeCheckoutState(for: contextId)
           finalOutcome = .noRedemptionFound
           return finalOutcome
         case .none:
@@ -888,37 +1129,139 @@ actor WebEntitlementRedeemer {
     return elapsed >= timeoutSeconds
   }
 
-  // swiftlint:disable:next cyclomatic_complexity
+  /// How long entitlements fetched by ``pollWebEntitlements(config:isFirstTime:)``
+  /// stay fresh when the app has no web2app config to set `entitlementsMaxAge`.
+  ///
+  /// Every app polls, because purchases reported by a server, such as custom
+  /// store purchases, refunds and renewals, only reach the device through this
+  /// fetch. A shorter age surfaces a revocation, or a renewal past the cached
+  /// expiry, sooner, but adds a request to more foregrounds on every install.
+  /// 15 minutes bounds that to at most four requests an hour per active user,
+  /// while a change still shows up within a typical session. The fetch on
+  /// launch ignores it.
+  static let defaultEntitlementsMaxAge: Seconds = 15 * 60
+
+  /// Fetches entitlements from the server, unless they were fetched within
+  /// `entitlementsMaxAge`, or ``defaultEntitlementsMaxAge`` when the app has
+  /// no web2app config. The first poll after launch always fetches. Skipped in
+  /// test mode. Any other poll joins one that's already in flight.
   func pollWebEntitlements(
     config: Config? = nil,
     isFirstTime: Bool = false
   ) async {
-    if !isFirstTime {
-      if let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
-        ?? factory.makeEntitlementsMaxAge() {
-        if let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
-          let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
-          // Only proceed if a certain amount of time has elapsed
-          guard timeElapsed > entitlementsMaxAge else {
-            return
-          }
-        }
-      } else {
-        // Don't proceed at all if there's no web2app config and it's not a UI test
-        if !ProcessInfo.processInfo.arguments.contains("SUPERWALL_UI_TESTS") {
-          return
-        }
+    if factory.makeTestModeManager().isTestMode {
+      return
+    }
+
+    if !isFirstTime,
+      let inFlightPoll = inFlightWebEntitlementsPoll {
+      await inFlightPoll.value
+      return
+    }
+
+    if !isFirstTime,
+      let lastFetchedWebEntitlementsAt = storage.get(LastWebEntitlementsFetchDate.self) {
+      let entitlementsMaxAge = config?.web2appConfig?.entitlementsMaxAge
+        ?? factory.makeEntitlementsMaxAge()
+        ?? Self.defaultEntitlementsMaxAge
+      let timeElapsed = Date().timeIntervalSince(lastFetchedWebEntitlementsAt)
+      guard timeElapsed > entitlementsMaxAge else {
+        return
       }
     }
 
+    let poll = Task {
+      _ = await self.refreshWebEntitlements(dismissesCoveredPaywall: true)
+    }
+    inFlightWebEntitlementsPoll = poll
+    await poll.value
+    if inFlightWebEntitlementsPoll == poll {
+      inFlightWebEntitlementsPoll = nil
+    }
+  }
+
+  /// The next place in the order of responses that carry entitlements.
+  private func startEntitlementsFetch() -> Int {
+    entitlementsFetchCount += 1
+    return entitlementsFetchCount
+  }
+
+  func redeemAfterPurchase() async {
+    await redeem(.existingCodes)
+  }
+
+  /// Fetches entitlements from the server now, ignoring `entitlementsMaxAge`
+  /// and whether the app has a web2app config.
+  ///
+  /// Custom store purchases are reported to Superwall by the developer's
+  /// server, so their entitlements come from this fetch even in apps that
+  /// don't sell on the web.
+  ///
+  /// - Parameter dismissesCoveredPaywall: Whether newly active entitlements
+  ///   that cover the presented paywall's products count as a restore, which
+  ///   tracks it and dismisses the paywall. Only the poll does this, for users
+  ///   coming back from a web checkout, and never while a purchase is in
+  ///   progress. After an in-app or custom store purchase it would turn the
+  ///   purchase into a restore and close a paywall the developer kept open.
+  /// - Returns: The latest customer info, or `nil` if the fetch failed or
+  ///   its response was ignored. When a newer fetch's response was saved
+  ///   first, that newer customer info.
+  @discardableResult
+  // swiftlint:disable:next cyclomatic_complexity
+  func refreshWebEntitlements(dismissesCoveredPaywall: Bool = false) async -> CustomerInfo? {
+    let fetch = startEntitlementsFetch()
+    let appUserId = factory.makeAppUserId()
     do {
+      let response = try await network.getEntitlements(
+        appUserId: appUserId,
+        deviceId: factory.makeDeviceId()
+      )
+
+      if factory.makeAppUserId() != appUserId {
+        Logger.debug(
+          logLevel: .debug,
+          scope: .webEntitlements,
+          message: "Ignoring web entitlements response because the user changed during the fetch."
+        )
+        return nil
+      }
+
+      // Fetches can overlap and finish in any order. Once a newer fetch has
+      // saved its response, this one is out of date and must not replace it.
+      if fetch < lastSavedEntitlementsFetch {
+        return storage.get(LatestRedeemResponse.self)?.customerInfo
+      }
+
+      // Read the cached entitlements after the fetch, not before it. Refreshes
+      // can overlap, and from here to the save below nothing suspends, so only
+      // the first response to arrive sees the change and acts on it.
       let existingWebEntitlements = Set(
         storage.get(LatestRedeemResponse.self)?.customerInfo.entitlements ?? [])
 
-      let response = try await network.getEntitlements(
-        appUserId: factory.makeAppUserId(),
-        deviceId: factory.makeDeviceId()
-      )
+      // A response with zero entitlements must not replace cached web
+      // entitlements that are still within their expiry date. The server
+      // reports a revocation by returning the entitlement as inactive —
+      // and it enumerates every config-mapped entitlement even for users
+      // with no purchases — so a fully empty array is a backend or config
+      // artifact (alias mismatch, failed upstream lookup), not a
+      // revocation. Real revocations arrive non-empty and apply
+      // immediately through the save below. If an empty response replaced
+      // the cache, the next cold launch would read the user as inactive
+      // until a network poll recovered them. Entitlements with no expiry
+      // date are not protected by this guard. We skip saving the fetch
+      // date so the next poll retries without waiting out
+      // `entitlementsMaxAge`.
+      let hasUnexpiredWebEntitlements = existingWebEntitlements.contains {
+        $0.isActive && ($0.expiresAt ?? .distantPast) > Date()
+      }
+      if response.customerInfo.entitlements.isEmpty && hasUnexpiredWebEntitlements {
+        Logger.debug(
+          logLevel: .warn,
+          scope: .webEntitlements,
+          message: "Ignoring empty web entitlements response because unexpired web entitlements are cached."
+        )
+        return nil
+      }
 
       // Update the latest redeem response with the entitlements and customer info from the response.
       if var latestRedeemResponse = storage.get(LatestRedeemResponse.self) {
@@ -935,32 +1278,41 @@ actor WebEntitlementRedeemer {
       }
 
       storage.save(Date(), forType: LastWebEntitlementsFetchDate.self)
+      lastSavedEntitlementsFetch = fetch
+
+      // Use the injected superwall instance or fall back to shared
+      let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
+      guard let superwall = superwall else {
+        return response.customerInfo
+      }
+
+      // Apply the customer info even when the entitlements haven't changed,
+      // so new subscriptions and non-subscriptions reach `customerInfo`.
+      await mergeAndApplyCustomerInfo(
+        webCustomerInfo: response.customerInfo,
+        superwall: superwall
+      )
 
       let webEntitlements = Set(response.customerInfo.entitlements)
       if existingWebEntitlements != webEntitlements {
-        // Use the injected superwall instance or fall back to shared
-        let superwall = superwall ?? (Superwall.isInitialized ? Superwall.shared : nil)
-        guard let superwall = superwall else {
-          return
-        }
-
-        let mergedCustomerInfo = await mergeAndApplyCustomerInfo(
-          webCustomerInfo: response.customerInfo,
-          superwall: superwall
+        // Derive the status from device + web only, as the redeem path does.
+        // The merged customer info also carries granted entitlements, which
+        // are applied when the status publishes and must never enter the
+        // assigned status — or clearing them could never revoke them.
+        let deviceCustomerInfo = storage.get(LatestDeviceCustomerInfo.self) ?? .blank()
+        let activeDeviceEntitlements = Set(deviceCustomerInfo.entitlements.filter { $0.isActive })
+        let deviceAndWebEntitlements = activeDeviceEntitlements.union(
+          Set(response.customerInfo.entitlements)
         )
-
-        let activeEntitlements = Set(mergedCustomerInfo.entitlements.filter { $0.isActive })
-        if activeEntitlements.isEmpty {
-          await superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
-        } else {
-          await superwall.internallySetSubscriptionStatus(
-            to: .active(activeEntitlements),
-            superwall: superwall
-          )
-        }
+        let activeEntitlements = deviceAndWebEntitlements.filter { $0.isActive }
+        await updateSubscriptionStatus(with: deviceAndWebEntitlements, superwall: superwall)
 
         // If there's a paywall, check if we should dismiss it
-        if let paywallVc = superwall.paywallViewController {
+        // A purchase in progress, such as one in a custom store's checkout,
+        // reports its own result, so its entitlements aren't a restore.
+        if dismissesCoveredPaywall,
+          await factory.makePurchasingCoordinator().source == nil,
+          let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []
           for id in await paywallVc.info.productIds {
@@ -987,6 +1339,7 @@ actor WebEntitlementRedeemer {
           }
         }
       }
+      return response.customerInfo
     } catch {
       Logger.debug(
         logLevel: .warn,
@@ -994,6 +1347,7 @@ actor WebEntitlementRedeemer {
         message: "Polling web entitlements failed",
         error: error
       )
+      return nil
     }
   }
 }

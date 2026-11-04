@@ -76,10 +76,23 @@ public final class Superwall: NSObject, ObservableObject {
       return options.eventTrackingBehavior
     }
     set {
+      let oldValue = options.eventTrackingBehavior
       options.eventTrackingBehavior = newValue
+
+      if newValue != .none {
+        dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
+      }
 
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
+        // Re-send the device attributes once the queue has the new behavior. Leaving
+        // `.none`, nothing was sent while opted out, such as an ad consent assignment
+        // or an ATT answer. Any behavior other than `.all` also discards the queued
+        // events (`PlacementsQueue.setTrackingBehavior`), which may include device
+        // attributes already recorded as sent.
+        if newValue != .none && (newValue != oldValue || newValue != .all) {
+          await republishDeviceAttributes(onlyIfAdConsentChanged: false)
+        }
       }
 
       let behavior = newValue
@@ -98,6 +111,44 @@ public final class Superwall: NSObject, ObservableObject {
       let configAttributes = dependencyContainer.makeConfigAttributes()
       Task {
         await track(configAttributes)
+      }
+    }
+  }
+
+  /// The user's consent for how their data is used for advertising, which Superwall
+  /// passes on with the conversions it uploads to Google Ads and Meta.
+  ///
+  /// If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent
+  /// banner when GDPR applies, and otherwise defaults to granted; apps with users in
+  /// the EEA, UK or Switzerland that don't use a TCF banner should set it from their
+  /// consent flow. Where the values came from is reported in the `adConsentSource`
+  /// device attribute (`developer`, `tcf` or `default`).
+  ///
+  /// On iOS, personalization is reported as denied when the user hasn't allowed
+  /// tracking, unless you set `adConsent` yourself.
+  ///
+  /// You can also set the initial value via ``SuperwallOptions/adConsent``
+  /// before calling `configure`.
+  public var adConsent: AdConsent {
+    get {
+      return options.adConsent
+    }
+    set {
+      options.adConsent = newValue
+
+      let generation = adConsentUpdates.nextGeneration()
+      let configAttributes = dependencyContainer.makeConfigAttributes()
+      adConsentUpdates.enqueue { [weak self] in
+        guard let self, self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(configAttributes)
+        let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+        // A newer assignment, queued behind this one, sends its own snapshot.
+        guard self.adConsentUpdates.isCurrent(generation) else {
+          return
+        }
+        await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
       }
     }
   }
@@ -182,7 +233,7 @@ public final class Superwall: NSObject, ObservableObject {
   }
 
   /// The presented paywall view controller.
-  public var presentedViewController: UIViewController? {
+  public var presentedViewController: PlatformViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
 
@@ -206,31 +257,106 @@ public final class Superwall: NSObject, ObservableObject {
   /// `PurchaseController`, you must set this.
   ///
   /// If you're using Combine or SwiftUI, you can subscribe or bind to it to get
-  /// notified whenever it changes.
+  /// notified whenever it changes. The publisher only ever emits the merged
+  /// status – never a value you assigned before granted entitlements were
+  /// applied. Changes are delivered in the order they were made. Subscribers
+  /// are usually called on the thread that changed the status, which is often
+  /// a background one; when several threads change it at once, one of them
+  /// delivers the others' changes too, and a slow subscriber holds those up.
+  /// Use `receive(on:)` before updating UI, and don't block in a subscriber.
   ///
   /// Otherwise, you can check the delegate function
   /// ``SuperwallDelegate/subscriptionStatusDidChange(from:to:)``
-  /// to receive a callback every time it changes.
-  @Published
-  public var subscriptionStatus: SubscriptionStatus = .unknown {
-    didSet {
-      let resolved = resolvedSubscriptionStatus(subscriptionStatus)
-      if resolved != subscriptionStatus {
-        subscriptionStatus = resolved
+  /// to receive a callback whenever the logical status changes.
+  ///
+  /// - Warning: If you've set ``grantedEntitlements``, they are merged into
+  /// every value you assign here. Assigning `.inactive` does **not** remove
+  /// them — the status stays active for as long as ``grantedEntitlements``
+  /// contains an active entitlement. To revoke them, set
+  /// ``grantedEntitlements`` to an empty set.
+  @PublishedSubscriptionStatus
+  public var subscriptionStatus: SubscriptionStatus = .unknown
+
+  // MARK: - Subscription status state
+
+  /// The status last handed to the SDK — device + web entitlements on the
+  /// automatic path, or the developer's value with a purchase controller —
+  /// before granted entitlements and test-mode overrides are merged in.
+  /// ``subscriptionStatus`` is always derived from this, never the reverse,
+  /// so clearing granted entitlements can recompute it.
+  ///
+  /// Read and written under `subscriptionStatusLock`, like ``subscriptionStatus``.
+  var assignedSubscriptionStatus: SubscriptionStatus {
+    get {
+      subscriptionStatusLock.lock()
+      defer {
+        subscriptionStatusLock.unlock()
+      }
+      return lockedAssignedSubscriptionStatus
+    }
+    set {
+      subscriptionStatusLock.lock()
+      lockedAssignedSubscriptionStatus = newValue
+      subscriptionStatusLock.unlock()
+    }
+  }
+  private var lockedAssignedSubscriptionStatus: SubscriptionStatus = .unknown
+
+  /// Serializes every read and write of the status across threads. Recursive so
+  /// a subscriber that assigns the status from within an emission re-enters
+  /// the pipeline instead of deadlocking.
+  let subscriptionStatusLock = NSRecursiveLock()
+
+  /// Merged statuses that have been stored but not yet emitted, oldest first.
+  /// Guarded by `subscriptionStatusLock`.
+  private var pendingSubscriptionStatusEmissions: [SubscriptionStatus] = []
+
+  /// Whether a thread is currently emitting the pending statuses. Guarded by
+  /// `subscriptionStatusLock`.
+  private var isEmittingSubscriptionStatus = false
+
+  /// Whether the one-time warning about granted entitlements overriding an
+  /// `.inactive` assignment has been logged.
+  var hasLoggedGrantedEntitlementsWarning = false
+
+  /// Stores the merged status and queues it for emission. Only
+  /// `publishSubscriptionStatus` calls this, with `subscriptionStatusLock`
+  /// held; `emitSubscriptionStatus()` sends it once the lock is released.
+  func storeMergedSubscriptionStatus(_ merged: SubscriptionStatus) {
+    _subscriptionStatus.store(merged)
+    pendingSubscriptionStatusEmissions.append(merged)
+  }
+
+  /// Emits every stored status to `$subscriptionStatus` subscribers in the
+  /// order it was stored, with the lock released while subscribers run.
+  ///
+  /// One thread drains the queue at a time. A writer that stores while a
+  /// drain is in progress returns straight away and the draining thread
+  /// sends its value next, so each value is emitted once, none is emitted
+  /// behind a newer one, and no writer ever waits on a subscriber. That last
+  /// point is what stops a subscriber that blocks on another thread from
+  /// deadlocking a writer on that thread.
+  func emitSubscriptionStatus() {
+    subscriptionStatusLock.lock()
+    if isEmittingSubscriptionStatus {
+      subscriptionStatusLock.unlock()
+      return
+    }
+    isEmittingSubscriptionStatus = true
+    subscriptionStatusLock.unlock()
+
+    while true {
+      subscriptionStatusLock.lock()
+      if pendingSubscriptionStatusEmissions.isEmpty {
+        isEmittingSubscriptionStatus = false
+        subscriptionStatusLock.unlock()
         return
       }
-      entitlements.subscriptionStatusDidSet(subscriptionStatus)
+      let next = pendingSubscriptionStatusEmissions.removeFirst()
+      subscriptionStatusLock.unlock()
 
-      // When using an external purchase controller, update CustomerInfo.entitlements
-      // to reflect the entitlements from the purchase controller.
-      // Skip this in test mode — test mode manages its own CustomerInfo.
-      if dependencyContainer.makeHasExternalPurchaseController(),
-        dependencyContainer.testModeManager?.isTestMode != true {
-        customerInfo = CustomerInfo.forExternalPurchaseController(
-          storage: dependencyContainer.storage,
-          subscriptionStatus: subscriptionStatus
-        )
-      }
+      objectWillChange.send()
+      _subscriptionStatus.emit(next)
     }
   }
 
@@ -253,7 +379,6 @@ public final class Superwall: NSObject, ObservableObject {
   ///
   /// Alternatively, you can subscribe to the published variable ``customerInfo`` or use the delegate
   /// method ``SuperwallDelegate/customerInfoDidChange(from:to:)``.
-  @available(iOS 15.0, *)
   public var customerInfoStream: AsyncStream<CustomerInfo> {
     AsyncStream<CustomerInfo>(bufferingPolicy: .bufferingNewest(1)) { continuation in
       if !customerInfo.isPlaceholder {
@@ -277,40 +402,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// Gets properties stored about the device that are used in audience filters.
   public func getDeviceAttributes() async -> [String: Any] {
     return await dependencyContainer.deviceHelper.getTemplateDevice()
-  }
-
-  /// Gets web entitlements and merges them with device entitlements before
-  /// setting the status if no external purchase controller.
-  @MainActor
-  func internallySetSubscriptionStatus(
-    to status: SubscriptionStatus,
-    superwall: Superwall? = nil
-  ) {
-    if dependencyContainer.makeHasExternalPurchaseController() {
-      return
-    }
-    let activeWebEntitlements = dependencyContainer.entitlementsInfo.web
-    let superwall = superwall ?? Superwall.shared
-    switch status {
-    case .active(let entitlements):
-      // Use mergePrioritized to intelligently merge device and web entitlements
-      // This ensures the highest priority version is kept for each entitlement ID
-      let combinedEntitlements = Array(entitlements) + Array(activeWebEntitlements)
-      let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
-      if mergedEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(mergedEntitlements)
-      }
-    case .inactive:
-      if activeWebEntitlements.isEmpty {
-        superwall.subscriptionStatus = .inactive
-      } else {
-        superwall.subscriptionStatus = .active(activeWebEntitlements)
-      }
-    case .unknown:
-      superwall.subscriptionStatus = .unknown
-    }
   }
 
   /// Returns the subscription status of the user.
@@ -381,6 +472,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// Items involved in the presentation of paywalls.
   let presentationItems = PresentationItems()
 
+  /// Serializes the device attribute updates that report ad consent.
+  let adConsentUpdates = AdConsentUpdateQueue()
+
   /// Determines whether a paywall is being presented.
   public var isPaywallPresented: Bool {
     paywallViewController != nil
@@ -389,8 +483,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// Handles all dependencies.
   let dependencyContainer: DependencyContainer
 
-  /// Used to serially execute register calls.
-  var previousRegisterTask: Task<Void, Never>?
+  /// Runs register calls one at a time, in the order they came in.
+  ///
+  /// `register(placement:)` can be called from any thread, so the queue of
+  /// register tasks has to be safe to add to from any thread.
+  let registerTaskCoordinator = SerialTaskCoordinator()
 
   /// The integration attributes to send to the server when `appTransactionId`
   /// is available. Protected by a queue for thread safety.
@@ -419,22 +516,24 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
-  // MARK: - Value Resolution
-
-  private func resolvedSubscriptionStatus(
-    _ status: SubscriptionStatus
-  ) -> SubscriptionStatus {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenSubscriptionStatus {
-      return override
+  /// Drops the attributes waiting on the app transaction id that identify the
+  /// person rather than the device.
+  ///
+  /// They were set for the user that `reset()` just replaced, so replaying them
+  /// when the id arrives would hand someone else's identity to the new user —
+  /// the same reason `AttributionFetcher.resetIntegrationAttributes()` drops
+  /// them from the attributes it already holds.
+  func resetEnqueuedIntegrationAttributes() {
+    enqueuedAttributesQueue.sync {
+      guard let enqueued = _enqueuedIntegrationAttributes else {
+        return
+      }
+      let kept = enqueued.filter { $0.key.isInstallScoped }
+      _enqueuedIntegrationAttributes = kept.isEmpty ? nil : kept
     }
-    if case .active(let entitlements) = status,
-      entitlements.isEmpty {
-      return .inactive
-    }
-    return status
   }
+
+  // MARK: - Value Resolution
 
   private func resolvedCustomerInfo(
     _ info: CustomerInfo
@@ -468,10 +567,15 @@ public final class Superwall: NSObject, ObservableObject {
 
     customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
-    subscriptionStatus = dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown
+    setSubscriptionStatus(assigned: dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown)
     dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
 
     addListeners()
+
+    // Recover any Stripe checkout that was pending when the app was killed.
+    // Kicked off here rather than inside an initializer so the redeemer's
+    // background poll can only ever see a fully-built dependency container.
+    dependencyContainer.webEntitlementRedeemer.pollPendingStripeCheckoutOnColdLaunch()
 
     // This task runs on a background thread, even if called from a main thread.
     // This is because the function isn't marked to run on the main thread,
@@ -484,36 +588,54 @@ public final class Superwall: NSObject, ObservableObject {
       let hadTrackedAppInstallBeforeConfigure = dependencyContainer.storage.hasTrackedAppInstall()
       dependencyContainer.storage.recordAppInstall(trackPlacement: track)
 
+      // The eligibility check has to run at launch whatever the config or
+      // tracking setting says: it records that this install may be matched,
+      // which a later launch relies on if this one ends before the match
+      // completes. It runs before config is fetched so a paywall can't get
+      // ahead of the match being marked as pending. Only the request itself
+      // waits for config to enable the MMP.
+      let shouldMatchInstall = dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
+        hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
+        appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
+      )
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.markMatchPending()
+      }
+
       async let fetchConfig: () = await dependencyContainer.configManager.fetchConfiguration()
       async let configureIdentity: () = await dependencyContainer.identityManager.configure()
 
       _ = await configureIdentity
 
-      // Skip install-attribution matching entirely when the developer has
-      // opted out of all event collection. The `/api/match` call and the
-      // `acquisition_*` attribute writes happen outside the event queue, so
-      // queue-level suppression wouldn't catch them.
-      if dependencyContainer.configManager.options.eventTrackingBehavior != .none,
-        dependencyContainer.storage.shouldAttemptInitialMMPInstallAttributionMatch(
-          hadTrackedAppInstallBeforeConfigure: hadTrackedAppInstallBeforeConfigure,
-          appInstalledAtString: dependencyContainer.deviceHelper.appInstalledAtString
-        ) {
-        let advertiserTrackingEnabled =
-          dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+      if shouldMatchInstall {
+        dependencyContainer.mmpAttributionManager.matchInstallOnceEnabled { [weak dependencyContainer] in
+          guard let dependencyContainer = dependencyContainer else {
+            return nil
+          }
+          // Skip matching when the app has opted out of all event collection.
+          // The `/api/match` call and the `acquisition_*` attribute writes
+          // happen outside the event queue, so queue-level suppression
+          // wouldn't catch them. It's tried again if the app opts back in.
+          if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
+            return nil
+          }
+          let advertiserTrackingEnabled =
+            dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
 
-        // We deliberately fire the match once and don't retry after ATT is
-        // granted: the backend matches on IP + device fingerprint + time decay,
-        // not IDFA, so a post-consent re-match wouldn't change the result. And
-        // because matches are time-decayed and reads are latest-wins, a later
-        // retry could only tie or worsen the earlier, better-timed match.
-        // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
-        // matching.)
-        dependencyContainer.storage.recordMMPInstallAttributionMatch {
-          await dependencyContainer.mmpAttributionManager.matchInstall(
-            idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
-            advertiserTrackingEnabled: advertiserTrackingEnabled,
-            applicationTrackingEnabled: true
-          )
+          // We deliberately fire the match once and don't retry after ATT is
+          // granted: the backend matches on IP + device fingerprint + time decay,
+          // not IDFA, so a post-consent re-match wouldn't change the result. And
+          // because matches are time-decayed and reads are latest-wins, a later
+          // retry could only tie or worsen the earlier, better-timed match.
+          // (`idfa`/`advertiserTrackingEnabled` are sent for downstream use, not
+          // matching.)
+          return dependencyContainer.storage.recordMMPInstallAttributionMatch {
+            await dependencyContainer.mmpAttributionManager.matchInstall(
+              idfa: dependencyContainer.attributionFetcher.identifierForAdvertisers,
+              advertiserTrackingEnabled: advertiserTrackingEnabled,
+              applicationTrackingEnabled: true
+            )
+          }
         }
       }
 
@@ -559,44 +681,6 @@ public final class Superwall: NSObject, ObservableObject {
             }
           }
         ))
-  }
-
-  private func listenToSubscriptionStatus() {
-    $subscriptionStatus
-      .removeDuplicates()
-      .dropFirst()
-      .scan((previous: subscriptionStatus, current: subscriptionStatus)) { previousPair, newStatus in
-        // Shift the current value to previous, and set the new status as the current value
-        (previous: previousPair.current, current: newStatus)
-      }
-      .receive(on: DispatchQueue.main)
-      .subscribe(
-        Subscribers.Sink(
-          receiveCompletion: { _ in },
-          receiveValue: { [weak self] statusPair in
-            guard let self = self else {
-              return
-            }
-            let oldStatus = statusPair.previous
-            let newStatus = statusPair.current
-
-            self.dependencyContainer.storage.save(newStatus, forType: SubscriptionStatusKey.self)
-
-            Task {
-              await self.dependencyContainer.delegateAdapter.subscriptionStatusDidChange(
-                from: oldStatus, to: newStatus)
-              let event = InternalSuperwallEvent.SubscriptionStatusDidChange(status: newStatus)
-              await self.track(event)
-            }
-            Task {
-              let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
-              let deviceAttributesPlacement = InternalSuperwallEvent.DeviceAttributes(
-                deviceAttributes: deviceAttributes)
-              await self.track(deviceAttributesPlacement)
-            }
-          }
-        )
-      )
   }
 
   private func listenToCustomerInfo() {
@@ -954,6 +1038,67 @@ public final class Superwall: NSObject, ObservableObject {
     }
   }
 
+  /// Re-sends device attributes if the ad consent they report, or its source, has
+  /// changed since they were last sent, such as after the user answers the ATT
+  /// prompt or a consent banner mid-session. Never prompts. Returns whether it sent them.
+  ///
+  /// Goes through the same queue as ``adConsent`` assignments, so it can't overtake
+  /// one. If an assignment is made while it waits, it defers to that.
+  @discardableResult
+  func republishDeviceAttributesIfAdConsentChanged() async -> Bool {
+    return await republishDeviceAttributes(onlyIfAdConsentChanged: true)
+  }
+
+  /// Re-sends device attributes through the same queue as ``adConsent`` assignments.
+  /// With `onlyIfAdConsentChanged`, it does so only when the reported ad consent or
+  /// its source differs from what was last sent. Returns whether it sent them.
+  @discardableResult
+  func republishDeviceAttributes(onlyIfAdConsentChanged: Bool) async -> Bool {
+    return await withCheckedContinuation { continuation in
+      enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: onlyIfAdConsentChanged) {
+        continuation.resume(returning: $0)
+      }
+    }
+  }
+
+  /// Queues a republish-if-changed without waiting for it. Called after every
+  /// device attributes send, so consent that changed while that send was being
+  /// built is sent too. Does nothing when the consent is unchanged.
+  func reconcileAdConsentAfterPublish() {
+    enqueueDeviceAttributesRepublish(onlyIfAdConsentChanged: true) { _ in }
+  }
+
+  private func enqueueDeviceAttributesRepublish(
+    onlyIfAdConsentChanged: Bool,
+    completion: @escaping @Sendable (Bool) -> Void
+  ) {
+    let generation = adConsentUpdates.currentGeneration
+    adConsentUpdates.enqueue { [weak self] in
+      guard
+        let self,
+        self.adConsentUpdates.isCurrent(generation),
+        !onlyIfAdConsentChanged
+          || self.dependencyContainer.deviceHelper.adConsentNeedsRepublish()
+      else {
+        completion(false)
+        return
+      }
+      let deviceAttributes = await self.dependencyContainer.makeSessionDeviceAttributes()
+      await self.track(InternalSuperwallEvent.DeviceAttributes(deviceAttributes: deviceAttributes))
+      completion(true)
+    }
+  }
+
+  /// Waits for every ad consent update queued so far to finish. For tests, so the
+  /// work a test starts can't outlive it.
+  func waitForPendingAdConsentUpdates() async {
+    await withCheckedContinuation { continuation in
+      adConsentUpdates.enqueue {
+        continuation.resume()
+      }
+    }
+  }
+
   /// Sets the user interface style, which overrides the system setting. Set to `nil` to revert
   /// back to using the system setting.
   public func setInterfaceStyle(to interfaceStyle: InterfaceStyle?) {
@@ -971,7 +1116,10 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameter props: A dictionary keyed by ``IntegrationAttribute`` specifying
   /// properties to associate with the user or events for the given provider.
   public func setIntegrationAttributes(_ props: [IntegrationAttribute: String?]) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // The fetcher doesn't take the app transaction id, but it still has to wait
+    // for one: setting attributes debounces a redeem, and the redeemer reads the
+    // id for itself.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes(props)
       return
@@ -982,10 +1130,7 @@ public final class Superwall: NSObject, ObservableObject {
       result[pair.key.description] = pair.value
     }
 
-    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(
-      attributes: props,
-      appTransactionId: appTransactionId
-    )
+    dependencyContainer.attributionFetcher.mergeIntegrationAttributes(attributes: props)
     setUserAttributes(props)
   }
 
@@ -995,7 +1140,9 @@ public final class Superwall: NSObject, ObservableObject {
   ///   - attribute: The ``IntegrationAttribute`` key specifying the integration provider.
   ///   - value: The value to associate with the attribute. Pass `nil` to remove the attribute.
   public func setIntegrationAttribute(_ attribute: IntegrationAttribute, _ value: String?) {
-    guard let appTransactionId = ReceiptManager.appTransactionId else {
+    // Waits for the app transaction id for the same reason as
+    // `setIntegrationAttributes(_:)` above.
+    guard ReceiptManager.appTransactionId != nil else {
       // Atomically merge with existing enqueued attributes
       mergeEnqueuedAttributes([attribute: value])
       return
@@ -1004,8 +1151,7 @@ public final class Superwall: NSObject, ObservableObject {
 
     dependencyContainer.attributionFetcher.setIntegrationAttribute(
       attribute: attribute,
-      value: value,
-      appTransactionId: appTransactionId
+      value: value
     )
     setUserAttributes([attribute.description: value])
   }
@@ -1093,12 +1239,30 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Reset
   /// Resets the `userId`, on-device paywall assignments, and data stored
   /// by Superwall.
+  ///
+  /// - Note: ``grantedEntitlements`` are not reset — you own that bucket and
+  /// its lifecycle. Set it again immediately after calling this if the next
+  /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
     reset(duringIdentify: false)
   }
 
   /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
+  ///
+  /// When `duringIdentify` is true this runs on the identity manager's queue,
+  /// so nothing it calls may wait on that queue, such as reading
+  /// `identityManager.userAttributes`, or the queue hangs for good.
   func reset(duringIdentify: Bool) {
+    // Warn here rather than in the public reset() so the identify-triggered
+    // reset — the actual user-switch moment — warns too.
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "The user was reset but grantedEntitlements persist across reset() "
+          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
+      )
+    }
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     // Cancel any in-flight attribution post before wiping its storage, so a
     // late-completing post can't race the new user's state.
@@ -1116,6 +1280,12 @@ public final class Superwall: NSObject, ObservableObject {
     // logout after that would otherwise leave the new user without attributes.
     dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
 
+    // Integration attributes are part install-scoped, part tied to the person
+    // signing out, and the reset just wiped them out of the user's attributes
+    // and off disk. Keep the install-scoped half for the new user, drop the rest.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
+
     // The first-session deep link is install-scoped too. Re-apply it so the
     // new user keeps the `firstDeepLinkUrl` attribute used for product page
     // attribution.
@@ -1128,9 +1298,7 @@ public final class Superwall: NSObject, ObservableObject {
       await Superwall.shared.track(InternalSuperwallEvent.Reset())
 
       #if os(iOS) || os(macOS) || os(visionOS)
-        if #available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *) {
-          await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-        }
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
       #endif
     }
   }
@@ -1201,7 +1369,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Returns: A ``PurchaseResult``.
   /// - Note: You only need to finish the transaction after this if you're providing a ``PurchaseController``
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
-  @available(iOS 15.0, *)
   public func purchase(_ product: StoreKit.Product) async -> PurchaseResult {
     if options.shouldObservePurchases {
       Logger.debug(
@@ -1258,7 +1425,6 @@ public final class Superwall: NSObject, ObservableObject {
   /// when configuring the SDK. Otherwise ``Superwall`` will handle this for you.
   /// - Warning: You cannot use this function while also setting ``SuperwallOptions/shouldObservePurchases``
   /// to `true`.
-  @available(iOS 15.0, *)
   public func purchase(
     _ product: StoreKit.Product,
     completion: @escaping (PurchaseResult) -> Void
@@ -1334,11 +1500,26 @@ public final class Superwall: NSObject, ObservableObject {
   /// see an alert if ``Superwall/subscriptionStatus`` is not ``SubscriptionStatus/active``
   /// after returning this value.
   public func restorePurchases() async -> RestorationResult {
+    return await restorePurchases(presentsFailureAlert: true)
+  }
+
+  /// Restores purchases, optionally suppressing the SDK's own restore-failure alert.
+  ///
+  /// Used internally by callers — such as the Customer Center — that present their own
+  /// restore-outcome UI and don't want the SDK's alert doubling up with theirs.
+  ///
+  /// - Parameter presentsFailureAlert: When `false`, suppresses the SDK's built-in
+  ///   restore-failure alert on failure. Defaults to `true` for the public API.
+  /// - Returns: A ``RestorationResult`` object that defines if the restoration was successful or not.
+  func restorePurchases(presentsFailureAlert: Bool) async -> RestorationResult {
     // Await config because we must have entitlements before restoring.
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    let result = await dependencyContainer.transactionManager.tryToRestore(.external)
+    let result = await dependencyContainer.transactionManager.tryToRestore(
+      .external,
+      presentsFailureAlert: presentsFailureAlert
+    )
     return result
   }
 
@@ -1411,6 +1592,50 @@ public final class Superwall: NSObject, ObservableObject {
       completion(customerInfo)
     }
   }
+
+  /// Fetches the user's entitlements from Superwall and returns the updated ``CustomerInfo``.
+  ///
+  /// Unlike ``getCustomerInfo()``, which returns the cached value, this asks the server
+  /// for the latest entitlements, even if they were fetched recently. Use it when your
+  /// server has just reported a purchase to Superwall, for example one of a custom
+  /// product sold through your own checkout, and you want the device to reflect it now.
+  ///
+  /// The fetched entitlements update ``customerInfo`` and ``entitlements``. If the fetch
+  /// fails, this returns the current ``customerInfo``. In test mode, nothing is fetched
+  /// and the test mode customer info is returned.
+  ///
+  /// - Note: The SDK already refreshes entitlements after a custom product purchase that
+  /// your ``PurchaseController`` reports as `.purchased`.
+  ///
+  /// - Returns: The updated ``CustomerInfo``.
+  @discardableResult
+  public func refreshCustomerInfo() async -> CustomerInfo {
+    // Await config because it decides whether test mode is on.
+    _ = try? await dependencyContainer.configManager.configState
+      .compactMap { $0.getConfig() }
+      .throwableAsync()
+    if dependencyContainer.testModeManager?.isTestMode != true,
+      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements() == nil {
+      // The fetch failed. `getCustomerInfo()` would wait for customer info that,
+      // on a first launch without a connection, never arrives.
+      return customerInfo
+    }
+    return await getCustomerInfo()
+  }
+
+  /// Fetches the user's entitlements from Superwall and returns the updated ``CustomerInfo``.
+  ///
+  /// Unlike ``getCustomerInfo(completion:)``, which returns the cached value, this asks the
+  /// server for the latest entitlements, even if they were fetched recently. See
+  /// ``refreshCustomerInfo()`` for details.
+  ///
+  /// - Parameter completion: Called with the updated ``CustomerInfo``.
+  public func refreshCustomerInfo(completion: @escaping (CustomerInfo) -> Void) {
+    Task {
+      let customerInfo = await refreshCustomerInfo()
+      completion(customerInfo)
+    }
+  }
 }
 
 // MARK: - PaywallViewControllerDelegate
@@ -1446,6 +1671,26 @@ extension Superwall: PaywallViewControllerEventDelegate {
         purchaseTask = nil
       }
       await purchaseTask?.value
+    case .customStoreCheckout(let checkout):
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.customStoreCheckoutHandler.handle(
+          checkout,
+          paywallViewController: paywallViewController
+        )
+      }
+    case .endCustomStoreCheckout:
+      // Most paywalls have no checkout to end, so leave the purchase slot to
+      // purchases unless this one does.
+      guard await dependencyContainer.customStoreCheckoutHandler.isRunningCheckout(
+        of: paywallViewController
+      ) else {
+        return
+      }
+      await runCustomStoreCheckoutStep {
+        await self.dependencyContainer.customStoreCheckoutHandler.endCheckout(
+          of: paywallViewController
+        )
+      }
     case .initiateRestore:
       await dependencyContainer.transactionManager.tryToRestore(.internal(paywallViewController))
     case .openedURL(let url):
@@ -1493,5 +1738,20 @@ extension Superwall: PaywallViewControllerEventDelegate {
         ]
       )
     }
+  }
+
+  /// Runs a custom store checkout step once any purchase in flight has finished,
+  /// so it can't take over that purchase's state, and holds the purchase slot
+  /// while it runs.
+  @MainActor
+  private func runCustomStoreCheckoutStep(_ step: @escaping () async -> Void) async {
+    while let purchaseInFlight = purchaseTask {
+      await purchaseInFlight.value
+    }
+    purchaseTask = Task {
+      await step()
+      purchaseTask = nil
+    }
+    await purchaseTask?.value
   }
 }

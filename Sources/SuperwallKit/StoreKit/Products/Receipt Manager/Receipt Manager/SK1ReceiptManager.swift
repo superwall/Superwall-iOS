@@ -8,6 +8,7 @@
 import Foundation
 
 final class SK1ReceiptManager: ReceiptManagerType {
+  let loadsSubscriptionGroupsFromProducts = true
   private let receiptData: () -> Data?
   var purchasedSubscriptionGroupIds: Set<String>?
   var purchases: Set<Purchase> = []
@@ -23,6 +24,10 @@ final class SK1ReceiptManager: ReceiptManagerType {
     receiptData: @escaping () -> Data? = ReceiptLogic.getReceiptData
   ) {
     self.receiptData = receiptData
+  }
+
+  func seedPurchases(_ purchases: Set<Purchase>) async {
+    self.purchases = purchases
   }
 
   func loadIntroOfferEligibility(forProducts storeProducts: Set<StoreProduct>) async {
@@ -72,6 +77,7 @@ final class SK1ReceiptManager: ReceiptManagerType {
 
     // Build map of active product IDs for quick lookup
     let activeProductIds = Set(purchases.filter { $0.isActive }.map { $0.id })
+    let purchasedProductIds = Set(purchases.map { $0.id })
 
     // Process all entitlements from config, enhancing them with active status
     // For SK1, we collect all product IDs per entitlement, then mark as active if ANY product is active
@@ -92,12 +98,22 @@ final class SK1ReceiptManager: ReceiptManagerType {
       // Entitlement is active if ANY of its products is active
       let isActive = productIds.contains { activeProductIds.contains($0) }
 
+      // A receipt transaction for any of the entitlement's products makes
+      // it an App Store entitlement, matching the StoreKit 2 path. Without
+      // one the store stays nil, per the `Entitlement.store` contract. The
+      // anti-downgrade guard relies on active device-derived entitlements
+      // carrying `.appStore`: a device read may only refute those, and a
+      // nil store marks a grant from outside the App Store (web, manual).
+      let store: EntitlementStore? =
+        productIds.contains { purchasedProductIds.contains($0) } ? .appStore : nil
+
       entitlements.append(
         Entitlement(
           id: entitlementId,
           type: entitlementTypes[entitlementId] ?? .serviceLevel,
           isActive: isActive,
-          productIds: productIds
+          productIds: productIds,
+          store: store
         )
       )
     }

@@ -6,15 +6,23 @@
 //
 // swiftlint:disable function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
-enum NetworkError: LocalizedError {
+enum NetworkError: LocalizedError, Equatable {
   case unknown
   case notAuthenticated
   case decoding
   case notFound
   case invalidUrl
   case noInternet
+
+  /// The server responded with a status code outside the 2xx range that isn't
+  /// covered by a more specific case.
+  case http(statusCode: Int)
 
   var errorDescription: String? {
     switch self {
@@ -24,6 +32,31 @@ enum NetworkError: LocalizedError {
     case .notFound: return NSLocalizedString("Not found", comment: "")
     case .invalidUrl: return NSLocalizedString("URL invalid", comment: "")
     case .noInternet: return NSLocalizedString("No Internet", comment: "")
+    case .http(let statusCode):
+      return String(
+        format: NSLocalizedString("HTTP error %d.", comment: ""),
+        statusCode
+      )
+    }
+  }
+
+  /// The error a response with the given status code should surface as, or `nil` if
+  /// the response was successful.
+  static func make(fromStatusCode statusCode: Int) -> NetworkError? {
+    switch statusCode {
+    case 200...299: return nil
+    case 401: return .notAuthenticated
+    case 404: return .notFound
+    default: return .http(statusCode: statusCode)
+    }
+  }
+
+  /// The message logged when a request fails with this error.
+  var logMessage: String {
+    switch self {
+    case .notAuthenticated: return "Unable to Authenticate"
+    case .notFound: return "Not Found"
+    default: return "Request Failed"
     }
   }
 }
@@ -34,6 +67,43 @@ class CustomURLSession {
 
   init(factory: ApiFactory) {
     self.factory = factory
+  }
+
+  /// Keys whose values are the device's public IP addresses. They're sent,
+  /// but never logged, since logs reach the app's logging delegate.
+  private static let ipAddressKeys: Set<String> = ["ipV4", "ipV6", "$ipV4", "$ipV6"]
+
+  /// The request body as text for the logs, with IP addresses redacted.
+  static func loggableBody(_ body: Data?) -> String {
+    guard let body = body else {
+      return "none"
+    }
+    // Most bodies carry no address, so only those that might are parsed.
+    guard
+      body.range(of: Data("ipV".utf8)) != nil,
+      let json = try? JSONSerialization.jsonObject(with: body),
+      let redacted = try? JSONSerialization.data(
+        withJSONObject: redactingIPAddresses(in: json),
+        options: [.sortedKeys]
+      )
+    else {
+      return String(data: body, encoding: .utf8) ?? "none"
+    }
+    return String(data: redacted, encoding: .utf8) ?? "none"
+  }
+
+  private static func redactingIPAddresses(in value: Any) -> Any {
+    if let dictionary = value as? [String: Any] {
+      var result: [String: Any] = [:]
+      for (key, child) in dictionary {
+        result[key] = ipAddressKeys.contains(key) ? "<redacted>" : redactingIPAddresses(in: child)
+      }
+      return result
+    }
+    if let array = value as? [Any] {
+      return array.map { redactingIPAddresses(in: $0) }
+    }
+    return value
   }
 
   @discardableResult
@@ -55,7 +125,7 @@ class CustomURLSession {
       scope: .network,
       message: "Request Started",
       info: [
-        "body": String(data: request.httpBody ?? Data(), encoding: .utf8) ?? "none",
+        "body": Self.loggableBody(request.httpBody),
         "url": request.url?.absoluteString ?? "unknown"
       ]
     )
@@ -132,36 +202,24 @@ class CustomURLSession {
         requestId = id
       }
 
-      if response.statusCode == 401 {
+      // Any non-2xx response is surfaced as an error. Without this, error responses
+      // fall through to decoding and are reported as `.decoding`, which describes
+      // the wrong failure and logs them as decoding failures.
+      if let error = NetworkError.make(fromStatusCode: response.statusCode) {
         Logger.debug(
           logLevel: .error,
           scope: .network,
-          message: "Unable to Authenticate",
+          message: error.logMessage,
           info: [
             "request": request.debugDescription,
             "api_key": auth ?? "N/A",
             "url": request.url?.absoluteString ?? "unknown",
+            "status_code": response.statusCode,
             "request_id": requestId,
             "request_duration": requestDuration
           ]
         )
-        throw NetworkError.notAuthenticated
-      }
-
-      if response.statusCode == 404 {
-        Logger.debug(
-          logLevel: .error,
-          scope: .network,
-          message: "Not Found",
-          info: [
-            "request": request.debugDescription,
-            "api_key": auth ?? "N/A",
-            "url": request.url?.absoluteString ?? "unknown",
-            "request_id": requestId,
-            "request_duration": requestDuration
-          ]
-        )
-        throw NetworkError.notFound
+        throw error
       }
     }
 

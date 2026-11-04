@@ -5,6 +5,7 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if !os(macOS)
 import UIKit
 
 /// A cell displaying a label, detail text, and optional copy/view buttons.
@@ -113,10 +114,8 @@ final class TestModeInfoCell: UITableViewCell {
 
     if hasNavigation {
       let chevron = UIImageView()
-      if #available(iOS 13.0, *) {
-        let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
-        chevron.image = UIImage(systemName: "chevron.right", withConfiguration: config)
-      }
+      let config = UIImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
+      chevron.image = UIImage(systemName: "chevron.right", withConfiguration: config)
       chevron.tintColor = primaryColor
       chevron.sizeToFit()
       accessoryView = chevron
@@ -140,3 +139,4 @@ final class TestModeInfoCell: UITableViewCell {
     }
   }
 }
+#endif

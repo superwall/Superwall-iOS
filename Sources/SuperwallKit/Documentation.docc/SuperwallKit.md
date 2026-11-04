@@ -19,3 +19,13 @@ See our [docs](https://docs.superwall.com/docs) for more information.
 
 - `SuperwallDelegate`
 - `PurchaseController`
+
+### Customer Center
+
+- <doc:CustomerCenter>
+- `CustomerCenterConfiguration`
+- `CustomerCenterDelegate`
+
+## Native Mac apps
+
+- <doc:macOS>

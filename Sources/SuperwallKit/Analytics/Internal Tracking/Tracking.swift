@@ -52,17 +52,30 @@ extension Superwall {
 
     let verbosePlacements = existingDisableVerboseEvents ?? previousDisableVerboseEvents
 
+    var isQueuedForSending = false
     if TrackingLogic.isNotDisabledVerbosePlacement(
       event,
       disableVerbosePlacements: verbosePlacements,
       isSandbox: dependencyContainer.makeIsSandbox()
     ) {
-      await dependencyContainer.placementsQueue.enqueue(
+      isQueuedForSending = await dependencyContainer.placementsQueue.enqueue(
         data: eventData.jsonData,
         from: event
       )
     }
     dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
+
+    // Only what actually goes to the server counts as sent. The queue learns of a
+    // tracking-behavior change asynchronously, so check the options too.
+    if isQueuedForSending,
+      dependencyContainer.configManager.options.eventTrackingBehavior != .none,
+      let deviceAttributes = event as? InternalSuperwallEvent.DeviceAttributes {
+      dependencyContainer.deviceHelper.recordPublishedDeviceAttributes(
+        deviceAttributes.deviceAttributes
+      )
+      // Catch a consent change that landed while these attributes were being built.
+      reconcileAdConsentAfterPublish()
+    }
 
     if event.canImplicitlyTriggerPaywall {
       Task.detached { [weak self] in
@@ -90,11 +103,9 @@ extension Superwall {
     forPlacement placement: Trackable,
     withData placementData: PlacementData
   ) async {
-    // Assign the current register task while capturing the previous one.
-    previousRegisterTask = Task { [weak self, previousRegisterTask] in
-      // Wait until the previous register task is finished before continuing.
-      await previousRegisterTask?.value
-
+    // Queue the work behind any register call already in flight and return,
+    // so implicit triggers and `register` calls don't present over each other.
+    registerTaskCoordinator.enqueue { [weak self] in
       await self?.internallyHandleImplicitTrigger(
         forPlacement: placement,
         withData: placementData

@@ -6,11 +6,21 @@
 //
 
 import Foundation
+#if !os(macOS)
 import UIKit
+#endif
 
 final class DebugManager {
+  #if os(macOS)
+  @MainActor private var macDebugger: MacDebugger?
+  #else
   @MainActor var viewController: DebugViewController?
+  #endif
 	var isDebuggerLaunched = false
+
+  /// The surfaces a running `superwall dev` server exposes, and where it lives.
+  /// Set when the debugger is opened from a `superwall_dev` deep link.
+  @MainActor var devServer: (base: URL, surfaces: [DevServerSurface])?
 
   private unowned let storage: Storage
   private unowned let factory: ViewControllerFactory
@@ -68,39 +78,59 @@ final class DebugManager {
   ///
   /// Remember to add your URL scheme in settings for QR code scanning to work.
   @MainActor
-  func launchDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+  func launchDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    devSurfaceId: String? = nil
+  ) async {
+    #if os(macOS)
+    await Superwall.shared.dismiss()
+    macDebugger?.close()
+    let debugger = MacDebugger(manager: self)
+    macDebugger = debugger
+    isDebuggerLaunched = true
+    await debugger.show(paywallId: paywallDatabaseId, surfaceId: devSurfaceId)
+    #else
     if Superwall.shared.isPaywallPresented {
       await Superwall.shared.dismiss()
-      await launchDebugger(withPaywallId: paywallDatabaseId)
+      await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 		} else {
 			if viewController == nil {
         let milliseconds = 200
         let nanoseconds = UInt64(milliseconds * 1_000_000)
         try? await Task.sleep(nanoseconds: nanoseconds)
-        await presentDebugger(withPaywallId: paywallDatabaseId)
+        await presentDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 			} else {
         await closeDebugger(animated: true)
-        await launchDebugger(withPaywallId: paywallDatabaseId)
+        await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 			}
 		}
+    #endif
 	}
 
+  #if !os(macOS)
   @MainActor
-	func presentDebugger(withPaywallId paywallDatabaseId: String? = nil) async {
+	func presentDebugger(
+    withPaywallId paywallDatabaseId: String? = nil,
+    devSurfaceId: String? = nil
+  ) async {
 		isDebuggerLaunched = true
 		if let viewController = viewController {
       if viewController.isBeingPresented {
         return
       }
 			viewController.paywallDatabaseId = paywallDatabaseId
+      viewController.devServer = devServer
+      viewController.selectDevSurface(id: devSurfaceId)
 			await viewController.loadPreview()
-			await UIViewController.topMostViewController?.present(
+			await PlatformViewController.topMostViewController?.present(
         viewController,
         animated: true
       )
 		} else {
       let viewController = factory.makeDebugViewController(withDatabaseId: paywallDatabaseId)
-			UIViewController.topMostViewController?.present(
+      viewController.devServer = devServer
+      viewController.selectDevSurface(id: devSurfaceId)
+			PlatformViewController.topMostViewController?.present(
         viewController,
         animated: true,
         completion: nil
@@ -109,8 +139,14 @@ final class DebugManager {
 		}
 	}
 
+  #endif
+
   @MainActor
   func closeDebugger(animated: Bool) async {
+    #if os(macOS)
+    macDebugger?.close()
+    macDebugger = nil
+    #else
     func dismissViewController() async {
       return await withCheckedContinuation { continuation in
         viewController?.dismiss(animated: animated) { [weak self] in
@@ -127,5 +163,6 @@ final class DebugManager {
 		} else {
       await dismissViewController()
 		}
+    #endif
 	}
 }

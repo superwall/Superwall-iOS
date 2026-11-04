@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `superscript-ios-next` at exact version 1.0.14 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
+- Dependencies: `superscript-ios-next` at exact version 1.0.17 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
 
 ## Architecture Overview
 
@@ -56,6 +56,14 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 4. Purchases are handled by `StoreKitManager` with automatic retry logic
 5. Events are tracked through the analytics system
 
+### Minimum Toolchain and Platforms
+
+- Xcode 26 / Swift 6.2 (`swift-tools-version:6.2`), iOS 15, macOS 12, watchOS 8. tvOS isn't supported (WebKit, SafariServices and Superscript have no tvOS build). CI builds iOS (tests), native macOS (tests), Mac Catalyst and visionOS (`build-platforms.yml`). Apple requires the iOS 26 SDK for App Store Connect uploads, so there's no reason to support older Xcodes.
+- Don't add `#if compiler(...)` checks for anything below 6.2; only gate APIs newer than that (e.g. `compiler(>=6.3.2)` for iOS 26.4 StoreKit APIs).
+- Don't add `@available`/`#available` checks or fallback branches for iOS 15 or older (StoreKit 2, sheet detents, `UIMenu` buttons and friends are always there).
+- The package pins `swiftLanguageModes: [.v5]`. Moving to Swift 6 language mode is a separate change.
+- Keep `Package.swift`, `SuperwallKit.podspec` and `project.yml` deployment targets in sync.
+
 ### Code Conventions
 
 - 2-space indentation (enforced by SwiftLint)
@@ -72,6 +80,10 @@ When bumping the version, update all three files:
 3. `CHANGELOG.md` (add new version entry at top)
 
 - Follows semantic versioning
+- **Never use an `## Unreleased` heading in `CHANGELOG.md`.** Unreleased changes always live under the next concrete version number (e.g. `## 4.16.4`).
+- To pick that number, compare the version on `develop` with the version on `master`:
+  - If develop's version is **above** master's, a release is already staged — add your entries to that existing top section. Do not bump again.
+  - If develop's version **equals** master's, start the next release: add a new version section and bump all three files together (patch/minor/major per the change).
 
 ### Testing
 
@@ -110,3 +122,45 @@ When creating PRs, always include the checklist from `.github/PULL_REQUEST_TEMPL
 - [ ] I have run `swiftlint` in the main directory and fixed any issues.
 - [ ] I have updated the SDK documentation as well as the online docs.
 - [ ] I have reviewed the [contributing guide](https://github.com/superwall-me/paywall-ios/tree/master/.github/CONTRIBUTING.md)
+
+### Device IP enrichment
+
+`DeviceIPCollector` owns session-local, timestamped IP observations. Collection is for the
+MMP and stays off unless the backend's `attributionOptions.mmp.enabled` is on. The one exception is
+AppsFlyer: when an `appsflyerId` integration attribute is set, the IPv4 lookup alone runs, and only
+once the device has been seen on IPv6 this session and no fresh IPv4 address is known, and only
+`ipV4` is exposed. Nothing is looked up or exposed while `eventTrackingBehavior` is `.none`. Remember the IPv6 sighting for the session: enrichment may not run again, and the
+IPv4 address must keep being refreshed for late conversions.
+SuperwallKit's privacy manifest doesn't declare IP collection, so apps that turn on the MMP or set an
+AppsFlyer ID declare it themselves. Keep collection
+independent of enrichment success and purchase/configuration latency, preserve each family
+separately, and filter stale cached `ipV4`/`ipV6` fields before exposing device attributes.
+The MMP `/api/match` request carries the fresh `ipV4`/`ipV6` observations (`ipAttributesForMMPMatch`),
+since it only arrives over one family itself. It waits for due or in-flight lookups, capped at 1.5s,
+because paywalls wait on the match at first launch. It rechecks the gates after that wait, since
+the app can turn tracking off meanwhile. Request logs reach the app's logging delegate, so
+`CustomURLSession.loggableBody` redacts `ipV4`/`ipV6` keys and the match failure log drops them.
+Do not add customer attributes or authentication headers to the public IP lookup requests.
+The IPv6 lookup must stay on a connection that may only use IPv6 (`NWConnection` with the IP
+version set): its host is reachable over both, so `URLSession` could quietly report IPv4.
+
+### Integration device identifiers
+
+AttributionFetcher refreshes IDFV/IDFA/ATT when setting integration attributes and
+on app activation after an integration has been configured. Compare the complete
+refreshed snapshot, not just provider IDs. Sync device values into user attributes
+(the server integration router reads those) only when that snapshot changes, since
+every sync costs a `user_attributes` event; explicit nulls clear stale IDs after
+ATT revocation. ATT is serialized as a numeric string in integration attributes.
+`idfv`, `idfa` and `attStatus` are SDK-owned user-attribute keys — document any
+change to that set in the changelog and the online docs. Don't gate the IDFA on
+the ATT status: `identifierForAdvertisers` already filters the all-zero id.
+
+### Native macOS
+
+- `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
+- `SuperwallKitMac` in `project.yml` builds the Mac framework and runs `Tests/SuperwallKitMacTests`. Use `xcodebuild -project SuperwallKit.xcodeproj -scheme SuperwallKitMac -destination 'platform=macOS' test CODE_SIGNING_ALLOWED=NO` after `xcodegen`. The SDK minimum is macOS 12; the test runner requires macOS 14 with Xcode 26.
+- Paywall overlays use SDK-owned child windows, never add subviews directly to a customer's SwiftUI hosting view. Required host dimensions prevent cached `preferredContentSize` from resizing the window. Remove old web-view constraints when reusing a controller across styles.
+- Native Mac device identity is an app-scoped persistent UUID, not Apple's IDFV. Do not forward it as `idfv` to attribution partners. Native macOS skips MMP install matching until the backend accepts a Mac platform; never send it as an iOS install.
+- Native teleport returns forward the page waiting-screen and return functions directly. iOS snapshot/background-task handling stays in the UIKit implementation; Mac pages keep rendering when the browser opens. Keep the page-function names and legacy fallbacks shared.
+- See `Sources/SuperwallKit/Documentation.docc/macOS.md` and `Examples/macOS` for platform behavior and integration instructions.

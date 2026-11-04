@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 11/05/2023.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 extension Superwall {
@@ -13,18 +17,20 @@ extension Superwall {
   /// and sends back a `presented` state to the paywall state publisher.
   ///
   /// - Parameters:
-  ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
+  ///   - paywallViewController: The view controller to present.
+  ///   - paywall: The paywall resolved for the request.
   ///   - presenter: The view controller to present that paywall on.
   ///   - unsavedOccurrence: The audience occurrence to save, if available.
   ///   - debugInfo: Information to help with debugging.
   ///   - request: The request to present the paywall.
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///
-  /// - Returns: A publisher that contains info for the next pipeline operator.
+  /// - Throws: `PresentationPipelineError.paywallAlreadyPresented` if another paywall is on screen.
   @MainActor
   func presentPaywallViewController(
     _ paywallViewController: PaywallViewController,
-    on presenter: UIViewController,
+    paywall: Paywall,
+    on presenter: PlatformViewController,
     unsavedOccurrence: TriggerAudienceOccurrence?,
     debugInfo: [String: Any],
     request: PresentationRequest,
@@ -43,6 +49,7 @@ extension Superwall {
       paywallViewController.present(
         on: presenter,
         request: request,
+        paywall: paywall,
         unsavedOccurrence: unsavedOccurrence,
         presentationStyleOverride: request.paywallOverrides?.presentationStyle,
         paywallStatePublisher: paywallStatePublisher

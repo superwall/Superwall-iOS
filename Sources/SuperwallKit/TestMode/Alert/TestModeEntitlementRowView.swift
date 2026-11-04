@@ -5,7 +5,11 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Represents the selected state for an entitlement, including "Inactive" option.
 enum EntitlementStateOption: CaseIterable {
@@ -96,6 +100,7 @@ struct EntitlementSelection {
   var offerType: LatestSubscription.OfferType?
 }
 
+#if !os(macOS)
 /// A row view for selecting entitlement state and offer type.
 final class EntitlementRowView: UIView {
   private let entitlementId: String
@@ -207,10 +212,8 @@ final class EntitlementRowView: UIView {
     updateOfferTypeButtonTitle()
     updateAppearance()
     updateOfferTypeVisibilityWithoutReset()
-    if #available(iOS 14.0, *) {
-      updateStateMenu()
-      updateOfferTypeMenu()
-    }
+    updateStateMenu()
+    updateOfferTypeMenu()
 
     if notify {
       notifySelectionChanged()
@@ -253,22 +256,12 @@ final class EntitlementRowView: UIView {
   }
 
   private func setupMenus() {
-    if #available(iOS 14.0, *) {
-      updateStateMenu()
-      updateOfferTypeMenu()
-      stateButton.showsMenuAsPrimaryAction = true
-      offerTypeButton.showsMenuAsPrimaryAction = true
-    } else {
-      stateButton.addTarget(self, action: #selector(showStateActionSheet), for: .touchUpInside)
-      offerTypeButton.addTarget(
-        self,
-        action: #selector(showOfferTypeActionSheet),
-        for: .touchUpInside
-      )
-    }
+    updateStateMenu()
+    updateOfferTypeMenu()
+    stateButton.showsMenuAsPrimaryAction = true
+    offerTypeButton.showsMenuAsPrimaryAction = true
   }
 
-  @available(iOS 14.0, *)
   private func updateStateMenu() {
     let actions = EntitlementStateOption.allCases.map { [weak self] option in
       UIAction(
@@ -282,7 +275,6 @@ final class EntitlementRowView: UIView {
     stateButton.menu = UIMenu(children: actions)
   }
 
-  @available(iOS 14.0, *)
   private func updateOfferTypeMenu() {
     let actions = OfferTypeOption.allCases.map { [weak self] option in
       UIAction(
@@ -294,57 +286,6 @@ final class EntitlementRowView: UIView {
       }
     }
     offerTypeButton.menu = UIMenu(children: actions)
-  }
-
-  @objc private func showStateActionSheet() {
-    guard let viewController = findViewController() else { return }
-
-    let alertController = UIAlertController(
-      title: "Select State",
-      message: nil,
-      preferredStyle: .actionSheet
-    )
-
-    for option in EntitlementStateOption.allCases {
-      let action = UIAlertAction(title: option.displayName, style: .default) { [weak self] _ in
-        self?.selectedStateOption = option
-      }
-      alertController.addAction(action)
-    }
-
-    alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    viewController.present(alertController, animated: true)
-  }
-
-  @objc private func showOfferTypeActionSheet() {
-    guard let viewController = findViewController() else { return }
-
-    let alertController = UIAlertController(
-      title: "Select Offer Type",
-      message: nil,
-      preferredStyle: .actionSheet
-    )
-
-    for option in OfferTypeOption.allCases {
-      let action = UIAlertAction(title: option.displayName, style: .default) { [weak self] _ in
-        self?.selectedOfferType = option
-      }
-      alertController.addAction(action)
-    }
-
-    alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-    viewController.present(alertController, animated: true)
-  }
-
-  private func findViewController() -> UIViewController? {
-    var responder: UIResponder? = self
-    while let nextResponder = responder?.next {
-      if let viewController = nextResponder as? UIViewController {
-        return viewController
-      }
-      responder = nextResponder
-    }
-    return nil
   }
 
   private func updateStateButtonTitle() {
@@ -362,9 +303,7 @@ final class EntitlementRowView: UIView {
     if selectedStateOption == .inactive {
       selectedOfferType = .none
       // Update the menu to reflect the reset
-      if #available(iOS 14.0, *) {
-        updateOfferTypeMenu()
-      }
+      updateOfferTypeMenu()
     }
   }
 
@@ -392,3 +331,4 @@ final class EntitlementRowView: UIView {
     onSelectionChanged?(entitlementId, selection)
   }
 }
+#endif

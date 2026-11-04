@@ -7,12 +7,18 @@
 
 import Foundation
 import Combine
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 extension Superwall {
   struct PaywallComponents {
     let viewController: PaywallViewController
-    let presenter: UIViewController?
+    /// The paywall resolved for the request, including its experiment.
+    let paywall: Paywall
+    let presenter: PlatformViewController?
     let audienceOutcome: AudienceFilterEvaluationOutcome
     let debugInfo: [String: Any]
   }
@@ -33,6 +39,7 @@ extension Superwall {
 
       await paywallComponents.viewController.set(
         request: request,
+        paywall: paywallComponents.paywall,
         paywallStatePublisher: publisher,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence
       )

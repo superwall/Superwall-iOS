@@ -41,20 +41,40 @@ class SWWebView: WKWebView {
     }
   }
   private let wkConfig: WKWebViewConfiguration
-  private let isMac: Bool
+  private let isiOSAppOnMac: Bool
   private let isOnDeviceCacheEnabled: Bool
   private var completion: ((Error?) -> Void)?
   private let enableIframeNavigation: Bool
   private var activeProcessTerminationRetryCount = 0
   private let maxActiveProcessTerminationRetries = 3
 
+  #if os(macOS)
+  /// Whether the page scrolls, set from the paywall's setting.
+  ///
+  /// AppKit's WKWebView has no scroll view to switch off, so this hides the
+  /// page's overflow instead, and applies it again after each load.
+  var isScrollEnabled = true {
+    didSet {
+      applyScrollEnabled()
+    }
+  }
+
+  private func applyScrollEnabled() {
+    let overflow = isScrollEnabled ? "" : "hidden"
+    evaluateJavaScript(
+      "document.documentElement.style.overflow = '\(overflow)';"
+        + "if (document.body) { document.body.style.overflow = '\(overflow)'; }"
+    )
+  }
+  #endif
+
   init(
-    isMac: Bool,
+    isiOSAppOnMac: Bool,
     messageHandler: PaywallMessageHandler,
     isOnDeviceCacheEnabled: Bool,
-    factory: FeatureFlagsFactory
+    factory: FeatureFlagsFactory & DeviceHelperFactory & OptionsFactory
   ) {
-    self.isMac = isMac
+    self.isiOSAppOnMac = isiOSAppOnMac
     self.messageHandler = messageHandler
     self.isOnDeviceCacheEnabled = isOnDeviceCacheEnabled
     let featureFlags = factory.makeFeatureFlags()
@@ -65,9 +85,11 @@ class SWWebView: WKWebView {
     )
 
     let config = WKWebViewConfiguration()
+    #if !os(macOS)
     config.allowsInlineMediaPlayback = true
-    config.allowsAirPlayForMediaPlayback = true
     config.allowsPictureInPictureMediaPlayback = true
+    #endif
+    config.allowsAirPlayForMediaPlayback = true
     config.mediaTypesRequiringUserActionForPlayback = []
 
     // Register custom URL scheme handler for local files (videos, images, etc.)
@@ -79,21 +101,18 @@ class SWWebView: WKWebView {
 
     let preferences = WKPreferences()
 
-    if #available(iOS 15.0, *),
-      !isMac {
-      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true // ignore-xcode-12
+    if !isiOSAppOnMac {
+      preferences.isTextInteractionEnabled = featureFlags?.enableTextInteraction == true
     }
     preferences.javaScriptCanOpenWindowsAutomatically = true
 
-    #if compiler(>=5.9.0)
-    if #available(iOS 17.0, *) {
+    if #available(iOS 17.0, macOS 14.0, *) {
       if featureFlags?.enableThrottleSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .throttle
       } else if featureFlags?.enableNoneSchedulingPolicy == true {
         preferences.inactiveSchedulingPolicy = .none
       }
     }
-    #endif
 
     config.preferences = preferences
     wkConfig = config
@@ -102,6 +121,10 @@ class SWWebView: WKWebView {
 
     #if os(visionOS)
     size = .zero
+    #elseif os(macOS)
+    // Lay the page out at the size it's most often shown at, as iOS uses the
+    // screen size, so a preloaded paywall doesn't reflow when it appears.
+    size = PaywallSheetSize.preferred
     #else
     size = CGSize(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
     #endif
@@ -116,16 +139,52 @@ class SWWebView: WKWebView {
       RawWebMessageHandler(delegate: messageHandler),
       name: "paywallMessageHandler"
     )
+
+    // Inject the device locale before any page JavaScript runs so paywall.js
+    // can render localized strings on first paint, rather than after the
+    // (receipt/product-gated) template_variables message arrives.
+    if let preloadSource = DevicePreloadScript.source(
+      deviceLocale: factory.makeDeviceInfo().locale
+    ) {
+      wkConfig.userContentController.addUserScript(
+        WKUserScript(
+          source: preloadSource,
+          injectionTime: .atDocumentStart,
+          forMainFrameOnly: true
+        )
+      )
+    }
+    if let environmentSource = SubscriptionsApiEnvironmentScript.source(
+      for: factory.makeSuperwallOptions().networkEnvironment
+    ) {
+      wkConfig.userContentController.addUserScript(
+        WKUserScript(
+          source: environmentSource,
+          injectionTime: .atDocumentStart,
+          forMainFrameOnly: true
+        )
+      )
+    }
     self.navigationDelegate = self
 
     translatesAutoresizingMaskIntoConstraints = false
     allowsBackForwardNavigationGestures = true
     allowsLinkPreview = false
+    #if os(macOS)
+    // AppKit's WKWebView has no background color or opacity to clear. This is
+    // the key it reads instead, so the paywall's own background shows through,
+    // as popups rely on.
+    setValue(false, forKey: "drawsBackground")
+    allowsMagnification = false
+    if #available(macOS 13.3, *) {
+      isInspectable = true
+    }
+    #else
     backgroundColor = .clear
     scrollView.maximumZoomScale = 1.0
     scrollView.minimumZoomScale = 1.0
     isOpaque = false
-    #if compiler(>=5.8) && os(iOS)
+    #if os(iOS)
     if #available(iOS 16.4, *) {
       isInspectable = true
     }
@@ -141,6 +200,7 @@ class SWWebView: WKWebView {
     scrollView.minimumZoomScale = 1.0
     scrollView.backgroundColor = .clear
     scrollView.isOpaque = false
+    #endif
   }
 
   required init?(coder: NSCoder) {
@@ -237,8 +297,19 @@ extension SWWebView: WKNavigationDelegate {
     decisionHandler(.cancel)
   }
 
+  func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+    // A new page has replaced the old one. A load that fails before this
+    // point leaves the old page, and whether it was ready, as it was.
+    messageHandler.documentWillLoad()
+  }
+
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
     activeProcessTerminationRetryCount = 0
+    #if os(macOS)
+    if !isScrollEnabled {
+      applyScrollEnabled()
+    }
+    #endif
     completion?(nil)
   }
 

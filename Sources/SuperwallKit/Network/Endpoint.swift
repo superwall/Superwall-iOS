@@ -207,15 +207,45 @@ extension Endpoint where
   }
 }
 
-// MARK: - PaywallsResponse
+// MARK: - PaywallSummary
 extension Endpoint where
   Kind == EndpointKinds.Superwall,
-  Response == Paywalls {
-  static func paywalls() -> Self {
+  Response == PaywallSummary {
+  /// Resolves a numeric paywall database id to its identifier (slug).
+  ///
+  /// Used by the debug/preview flow so it no longer has to fetch every paywall
+  /// for the app just to translate a deep-link `paywall_id` into an identifier.
+  static func resolvePaywall(
+    byDatabaseId databaseId: String,
+    retryCount: Int
+  ) -> Self {
     return Endpoint(
+      retryCount: retryCount,
       components: Components(
-        host: .base,
-        path: "paywalls"
+        host: .paywallsV2,
+        path: "paywalls/resolve",
+        queryItems: [URLQueryItem(name: "id", value: databaseId)]
+      ),
+      method: .get
+    )
+  }
+}
+
+// MARK: - PaywallPreviewList
+extension Endpoint where
+  Kind == EndpointKinds.Superwall,
+  Response == PaywallPreviewList {
+  /// Lists the paywalls available to preview for the application in the
+  /// debugger's signed preview token.
+  ///
+  /// Backs the debugger's "Your Paywalls" picker. Returns id/identifier/name
+  /// only.
+  static func listPreviewPaywalls(retryCount: Int) -> Self {
+    return Endpoint(
+      retryCount: retryCount,
+      components: Components(
+        host: .paywallsV2,
+        path: "paywalls/preview-list"
       ),
       method: .get
     )

@@ -20,7 +20,10 @@ final class AutomaticPurchaseController {
     self.entitlementsInfo = entitlementsInfo
   }
 
-  func syncSubscriptionStatus(withPurchases purchases: Set<Purchase>) async {
+  func syncSubscriptionStatus(
+    withPurchases purchases: Set<Purchase>,
+    superwall: Superwall? = nil
+  ) async {
     let activePurchases = purchases.filter { $0.isActive }
     var entitlements: Set<Entitlement> = []
 
@@ -29,11 +32,98 @@ final class AutomaticPurchaseController {
       entitlements = entitlements.union(purchaseEntitlements)
     }
 
+    let activeProductIds = Set(activePurchases.map { $0.id })
+
     await MainActor.run { [entitlements] in
+      let superwall = superwall ?? Superwall.shared
       if entitlements.isEmpty {
-        Superwall.shared.internallySetSubscriptionStatus(to: .inactive)
+        // A device read with no entitlements can mean different things,
+        // and only one of them may demote a subscriber:
+        //
+        // - Purchases exist but none is active: an authoritative answer.
+        //   Refunded and expired transactions stay in the set as inactive
+        //   (SK2 reads `Transaction.all`; the SK1 receipt keeps cancelled
+        //   purchases), so this downgrades immediately.
+        // - The purchases set is completely empty: a non-answer. StoreKit
+        //   returns nothing at cold launch before it hydrates, the SK1
+        //   receipt can be missing, and web/Stripe subscribers have no App
+        //   Store purchases at all.
+        // - A purchase is still active but maps to no entitlement: a
+        //   mapping failure (the config no longer knows the product), not
+        //   an authoritative answer for the entitlement it unlocks.
+        //
+        // On a non-answer, keep an `.active` status while one of its
+        // entitlements is within its expiry date. A device read also has no
+        // authority over entitlements not granted by the App Store, so those
+        // hold the status even when unrelated inactive purchases exist. A
+        // nil store means no App Store transaction unlocks the entitlement
+        // (web or manual grant — both receipt managers stamp `.appStore` on
+        // entitlements a receipt transaction unlocks, so active
+        // device-derived entitlements always carry it), so nil is protected
+        // too. Entitlements with no expiry date never hold the status, so a
+        // revoked lifetime purchase can still deactivate here.
+        //
+        // The check reads the assigned status (device + web), not the
+        // published one: that also carries developer-granted entitlements,
+        // which would hold a lapsed App Store entitlement in place.
+        //
+        // Two separate questions. Whether an entitlement holds the status up
+        // needs an expiry the read can be bounded by. Whether it stays in
+        // the status needs two things: the read had no authority over it or
+        // confirmed it, and its own expiry hasn't passed. A lifetime App
+        // Store unlock has no expiry, so it can't hold, but an empty read
+        // said nothing about it either, so it stays while another
+        // entitlement holds. A refunded subscription next to a live web one
+        // is dropped because the read refuted it, and an App Store
+        // subscription whose cached expiry is already behind us is dropped
+        // because the clock did — time passing needs no read to confirm it.
+        //
+        // The clock only settles App Store and nil-store records here. Web
+        // entitlements are merged back in from the redeem cache by
+        // `internallySetSubscriptionStatus`, which is authoritative for
+        // them, so a lapsed web record comes straight back until the web
+        // poll says otherwise.
+        if case .active(let currentEntitlements) = superwall.assignedSubscriptionStatus {
+          func isLapsed(_ entitlement: Entitlement) -> Bool {
+            guard let expiresAt = entitlement.expiresAt else {
+              return false
+            }
+            return expiresAt <= Date()
+          }
+          func isRefuted(_ entitlement: Entitlement) -> Bool {
+            if purchases.isEmpty || entitlement.store != .appStore {
+              return false
+            }
+            // A still-active purchase that unlocks this entitlement means
+            // the empty entitlement set is a mapping failure. With the
+            // mapping missing, SK2's subscription-level correction of
+            // `Purchase.isActive` is disabled too, so this is the raw
+            // transaction-level value and can miss a revocation that sets
+            // no `revocationDate`. The hold is still bounded by the expiry
+            // gate below, which beats locking out a paying subscriber over
+            // a lost product mapping.
+            return !entitlement.productIds.contains { activeProductIds.contains($0) }
+          }
+          let holdsStatus = currentEntitlements.contains { entitlement in
+            entitlement.isActive
+              && entitlement.expiresAt != nil
+              && !isLapsed(entitlement)
+              && !isRefuted(entitlement)
+          }
+          if holdsStatus {
+            let survivors = currentEntitlements.filter { !isRefuted($0) && !isLapsed($0) }
+            if survivors != currentEntitlements {
+              superwall.internallySetSubscriptionStatus(
+                to: .active(survivors),
+                superwall: superwall
+              )
+            }
+            return
+          }
+        }
+        superwall.internallySetSubscriptionStatus(to: .inactive, superwall: superwall)
       } else {
-        Superwall.shared.internallySetSubscriptionStatus(to: .active(entitlements))
+        superwall.internallySetSubscriptionStatus(to: .active(entitlements), superwall: superwall)
       }
     }
   }

@@ -20,14 +20,35 @@ struct HomeView: View {
 
   init(isLoggedIn: Binding<Bool>) {
     _isLoggedIn = isLoggedIn
-    UINavigationBar.appearance().titleTextAttributes = [
-      .foregroundColor: UIColor.white,
-      .font: UIFont.rubikBold(.five)
-    ]
   }
 
   var firstName: String? {
     Superwall.shared.userAttributes["firstName"] as? String
+  }
+
+  /// Presents the Customer Center with a code-built configuration and a delegate that prints
+  /// each callback it receives. See `CustomerCenterExampleDelegate`.
+  private func presentCustomerCenter() {
+    let configuration = CustomerCenterConfiguration(
+      managementScreen: .init(
+        paths: [
+          .restore,
+          .changePlan,
+          .refund,
+          .manageSubscription,
+          .url(URL(string: "https://superwall.com/faq")!, title: "FAQ"),
+          .contactSupport
+        ]
+      ),
+      noPurchasesScreen: .init(
+        paths: [.restore]
+      ),
+      support: .init(email: "support@superwall.com")
+    )
+    Superwall.shared.presentCustomerCenter(
+      configuration: configuration,
+      delegate: CustomerCenterExampleDelegate()
+    )
   }
 
   var body: some View {
@@ -81,6 +102,9 @@ struct HomeView: View {
           Superwall.shared.register(placement: "diamond") {
             page = .diamond
           }
+        }
+        BrandedButton(title: "Customer Center") {
+          presentCustomerCenter()
         }
       }
       .padding(.horizontal)

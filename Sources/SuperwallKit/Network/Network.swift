@@ -7,14 +7,24 @@
 // swiftlint:disable type_body_length file_length
 
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 class Network {
   private let urlSession: CustomURLSession
   private let factory: ApiFactory
   private let options: SuperwallOptions
-  private var applicationStateSubject: CurrentValueSubject<UIApplication.State, Never> = .init(.background)
+  /// Requests wait while this is `background`. A Mac app is never suspended, so
+  /// there it starts out active rather than waiting for its first activation.
+  #if os(macOS)
+  private var applicationStateSubject: CurrentValueSubject<ApplicationState, Never> = .init(.active)
+  #else
+  private var applicationStateSubject: CurrentValueSubject<ApplicationState, Never> = .init(.background)
+  #endif
 
   init(
     urlSession: CustomURLSession? = nil,
@@ -32,13 +42,13 @@ class Network {
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationStateDidChange),
-      name: UIApplication.didBecomeActiveNotification,
+      name: SystemInfo.applicationDidBecomeActiveNotification,
       object: nil
     )
     NotificationCenter.default.addObserver(
       self,
       selector: #selector(applicationStateDidChange),
-      name: UIApplication.didEnterBackgroundNotification,
+      name: SystemInfo.applicationDidEnterBackgroundNotification,
       object: nil
     )
   }
@@ -46,7 +56,7 @@ class Network {
   @objc
   @MainActor
   private func applicationStateDidChange() {
-    guard let sharedApplication = UIApplication.sharedApplication else {
+    guard let sharedApplication = PlatformApplication.sharedApplication else {
       return
     }
     applicationStateSubject.send(sharedApplication.applicationState)
@@ -122,21 +132,54 @@ class Network {
     }
   }
 
-  func getPaywalls() async throws -> [Paywall] {
+  /// Resolves a numeric paywall database id to its identifier (slug) so the
+  /// debug/preview flow can fetch a single paywall instead of all of them.
+  func resolvePaywallIdentifier(
+    forDatabaseId databaseId: String,
+    retryCount: Int = 6
+  ) async throws -> PaywallSummary {
     do {
-      let response = try await urlSession.request(
-        .paywalls(),
+      return try await urlSession.request(
+        .resolvePaywall(
+          byDatabaseId: databaseId,
+          retryCount: retryCount
+        ),
         data: SuperwallRequestData(
           factory: factory,
           isForDebugging: true
         )
       )
-      return response.paywalls
     } catch {
       Logger.debug(
         logLevel: .error,
         scope: .network,
-        message: "Request Failed: /paywalls",
+        message: "Request Failed: /v2/paywalls/resolve",
+        error: error
+      )
+      throw error
+    }
+  }
+
+  /// Lists the paywalls available to preview for the application in the
+  /// debugger's signed preview token, backing the debugger's paywall picker.
+  ///
+  /// Retries less than the resolver: this only populates an optional picker, so
+  /// a failure should degrade to "no alternatives to offer" quickly rather than
+  /// hold the debugger up.
+  func listPreviewPaywalls(retryCount: Int = 2) async throws -> PaywallPreviewList {
+    do {
+      return try await urlSession.request(
+        .listPreviewPaywalls(retryCount: retryCount),
+        data: SuperwallRequestData(
+          factory: factory,
+          isForDebugging: true
+        )
+      )
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .network,
+        message: "Request Failed: /v2/paywalls/preview-list",
         error: error
       )
       throw error
@@ -144,7 +187,7 @@ class Network {
   }
 
   func getConfig(
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
     maxRetry: Int? = nil,
     isRetryingCallback: ((Int) -> Void)? = nil,
     timeout: Seconds? = nil
@@ -180,7 +223,7 @@ class Network {
 
   @MainActor
   private func appInForeground(
-    _ injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil
+    _ injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil
   ) async throws {
     // Share extensions shouldn't need to wait for the app to be in the foreground to run.
     let isShareExtension = Bundle.main.bundlePath.hasSuffix(".appex")
@@ -200,7 +243,7 @@ class Network {
 
   func getEnrichment(
     request: EnrichmentRequest,
-    injectedApplicationStatePublisher: (AnyPublisher<UIApplication.State, Never>)? = nil,
+    injectedApplicationStatePublisher: (AnyPublisher<ApplicationState, Never>)? = nil,
     maxRetry: Int?,
     timeout: Seconds?
   ) async throws -> Enrichment {
@@ -399,6 +442,9 @@ class Network {
     advertiserTrackingEnabled: Bool,
     applicationTrackingEnabled: Bool
   ) async throws -> MMPMatchResponse {
+    guard MMPAttributionManager.isSupported else {
+      throw MMPMatchError.unsupportedPlatform
+    }
     guard
       let deviceHelper = factory.deviceHelper,
       let identityManager = factory.identityManager
@@ -433,6 +479,18 @@ class Network {
     }
 
     let vendorId = deviceHelper.vendorId
+    let ipAttributes = await deviceHelper.ipAttributesForMMPMatch()
+
+    // The app can opt out of tracking while the IP lookup is awaited.
+    if factory.configManager.options.eventTrackingBehavior == .none {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /api/match",
+        info: ["reason": "Event tracking turned off"]
+      )
+      throw MMPMatchError.trackingDisabled
+    }
 
     let request = MMPMatchRequest(
       platform: "ios",
@@ -455,7 +513,11 @@ class Network {
       devicePixelRatio: deviceHelper.devicePixelRatio,
       bundleId: deviceHelper.bundleId,
       clientTimestamp: Date().isoString,
-      metadata: metadata
+      metadata: metadata,
+      ipV4: ipAttributes["ipV4"],
+      ipV4ObservedAt: ipAttributes["ipV4ObservedAt"],
+      ipV6: ipAttributes["ipV6"],
+      ipV6ObservedAt: ipAttributes["ipV6ObservedAt"]
     )
 
     do {
@@ -481,7 +543,7 @@ class Network {
         logLevel: .error,
         scope: .network,
         message: "Request Failed: /api/match",
-        info: ["payload": request],
+        info: ["payload": request.withoutIPAddresses()],
         error: error
       )
 

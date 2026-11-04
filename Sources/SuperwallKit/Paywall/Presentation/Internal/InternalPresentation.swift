@@ -5,7 +5,11 @@
 //  Created by Yusuf Tör on 04/03/2022.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 import SafariServices
 
@@ -38,6 +42,7 @@ extension Superwall {
 
       try await presentPaywallViewController(
         paywallComponents.viewController,
+        paywall: paywallComponents.paywall,
         on: presenter,
         unsavedOccurrence: paywallComponents.audienceOutcome.unsavedOccurrence,
         debugInfo: paywallComponents.debugInfo,

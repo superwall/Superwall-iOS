@@ -16,7 +16,7 @@ import Foundation
 import StoreKit
 
 /// A delegate protocol for handling verified transactions in observer mode.
-@available(iOS 17.2, *)
+@available(iOS 17.2, macOS 14.2, *)
 protocol SK2ObserverModePurchaseDetectorDelegate: AnyObject {
   /// Handles a verified transaction.
   /// - Parameters:
@@ -27,7 +27,7 @@ protocol SK2ObserverModePurchaseDetectorDelegate: AnyObject {
 }
 
 /// Actor responsibile for detecting purchases from StoreKit2 that should be processed by observer mode.
-@available(iOS 17.2, *)
+@available(iOS 17.2, macOS 14.2, *)
 actor SK2ObserverModePurchaseDetector {
   private let storage: Storage
   private let allTransactionsProvider: AllTransactionsProviderType
@@ -155,7 +155,6 @@ actor SK2ObserverModePurchaseDetector {
 
 /// A wrapper protocol that allows for abstracting out calls to an `AsyncSequence<VerificationResult<Transaction>>`.
 /// This will usually be `Transaction.all` in production but allows us to inject custom AsyncSequences for testing.
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 protocol AllTransactionsProviderType: Sendable {
   func getAllTransactions() async -> [StoreKit.VerificationResult<StoreKit.Transaction>]
   func getMostRecentVerifiedTransaction(
@@ -165,7 +164,6 @@ protocol AllTransactionsProviderType: Sendable {
 
 /// A concretete implementation of `AllTransactionsProviderType` that fetches
 /// transactions from StoreKit's ``StoreKit/Transaction/all``
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2AllTransactionsProvider: AllTransactionsProviderType, Sendable {
   func getAllTransactions() async -> [StoreKit.VerificationResult<StoreKit.Transaction>] {
     return await StoreKit.Transaction.all.extractValues()

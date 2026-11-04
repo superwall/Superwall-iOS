@@ -8,7 +8,11 @@
 import Combine
 import StoreKit
 import SystemConfiguration
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 protocol ViewControllerFactory: AnyObject {
   @MainActor
@@ -19,8 +23,10 @@ protocol ViewControllerFactory: AnyObject {
     delegate: PaywallViewControllerDelegateAdapter?
   ) -> PaywallViewController
 
+  #if !os(macOS)
   @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController
+  #endif
 }
 
 protocol CacheFactory: AnyObject {
@@ -51,7 +57,7 @@ protocol RequestFactory: AnyObject {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides?,
-    presenter: UIViewController?,
+    presenter: PlatformViewController?,
     isDebuggerLaunched: Bool?,
     isPaywallPresented: Bool,
     type: PresentationRequestType
@@ -78,6 +84,17 @@ protocol ConfigManagerFactory: AnyObject {
     withId paywallId: String?,
     isDebuggerLaunched: Bool
   ) -> Paywall?
+
+  /// Whether the purchases load could change what the SDK knows about
+  /// `entitlementIds`, and so whether callers have to wait for it.
+  ///
+  /// The load re-merges the web and granted sources when it lands, so it isn't
+  /// only the App Store half that can move. But both of those assign
+  /// `customerInfo` themselves as they change — the redeemer when web
+  /// entitlements arrive, and the granted-entitlements setter on both its
+  /// paths — so the copy read during the window is never behind on them. That
+  /// leaves the device half, which is why only App Store products count.
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool
 }
 
 protocol IdentityFactory: AnyObject {
@@ -131,7 +148,6 @@ protocol ApiFactory: AnyObject {
 protocol StoreTransactionFactory: AnyObject {
   func makeStoreTransaction(from transaction: SK1Transaction) async -> StoreTransaction
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction
 
   func makeStoreTransaction(from transaction: CustomStoreTransaction) async -> StoreTransaction
@@ -157,6 +173,13 @@ protocol UserAttributesPlacementFactory: AnyObject {
 
 protocol ReceiptFactory: AnyObject {
   func loadPurchasedProducts(config: Config?) async
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async
+  /// The purchases load that config was published ahead of, if any.
+  var initialPurchasesLoad: Task<Void, Never>? { get }
   func refreshSK1Receipt() async
   func isFreeTrialAvailable(for product: StoreProduct) async -> Bool
   var isTestMode: Bool { get }

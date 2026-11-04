@@ -6,6 +6,7 @@
 //
 // swiftlint:disable force_unwrapping file_length type_body_length function_body_length
 
+#if !os(macOS)
 import UIKit
 import Foundation
 import StoreKit
@@ -118,7 +119,19 @@ final class DebugViewController: UIViewController {
   var paywallDatabaseId: String?
 	var paywallIdentifier: String?
   var paywall: Paywall?
-  var paywalls: [Paywall] = []
+
+  /// Set when the debugger is opened from a `superwall dev` link: the surfaces
+  /// that server exposes, and where to load them from.
+  var devServer: (base: URL, surfaces: [DevServerSurface])?
+
+  /// The dev-server surface to render instead of fetching a published paywall.
+  private var devSurface: DevServerSurface?
+
+  /// Backs the "Your Paywalls" picker.
+  ///
+  /// Populated from `GET /v2/paywalls/preview-list`. Empty when the request fails or the app
+  /// has a single paywall, in which case the picker declines to open.
+  var previewPaywalls: [PaywallSummary] = []
   var previewViewContent: UIView?
   private var cancellable: AnyCancellable?
   private var initialLocaleIdentifier: String?
@@ -156,6 +169,7 @@ final class DebugViewController: UIViewController {
     initialLocaleIdentifier = Superwall.shared.options.localeIdentifier
     addSubviews()
     Task { await loadPreview() }
+    Task { await loadPreviewPaywalls() }
   }
 
   private func addSubviews() {
@@ -204,33 +218,92 @@ final class DebugViewController: UIViewController {
   func loadPreview() async {
     activityIndicator.startAnimating()
     previewViewContent?.removeFromSuperview()
+    await ensureDevServer()
+    await finishLoadingPreview()
+  }
 
-    if paywalls.isEmpty {
-      do {
-        paywalls = try await network.getPaywalls()
-        await finishLoadingPreview()
-      } catch {
-        Logger.debug(
-          logLevel: .error,
-          scope: .debugViewController,
-          message: "Failed to Fetch Paywalls",
-          error: error
-        )
-      }
-    } else {
-      await finishLoadingPreview()
+  /// Dev mode's local surfaces belong in the debugger however it was opened —
+  /// a dashboard preview link should list them too, not just a dev link.
+  ///
+  /// The manifest is fetched again on every load, not only the first: a
+  /// surface's products and presentation settings come from its config.ts,
+  /// and edits made since the debugger opened must show up in the preview.
+  /// When the server can't be reached the last snapshot stands; a surface the
+  /// server no longer lists is dropped, since presenting it would fail too.
+  private func ensureDevServer() async {
+    guard
+      DevMode.isActive(Superwall.shared.options),
+      let location = await DevServerLocator.shared.locate(
+        devServerURL: Superwall.shared.options.devServerURL
+      )
+    else {
+      return
     }
+    let located = (base: location.base, surfaces: location.manifest.surfaces)
+    devServer = located
+    // Presenting a `dev:` surface resolves it from the debug manager's copy,
+    // so both stores have to agree however the debugger was opened.
+    debugManager.devServer = located
+    // The selected surface was picked from the previous manifest; carry the
+    // selection over to the fresh one so the preview renders what it says now.
+    // Resolved the same way Present resolves it, so the two can't disagree
+    // about whether the surface still exists.
+    guard let devSurface = devSurface else {
+      return
+    }
+    if let resolved = DevServerPreview.resolveSurface(
+      previewIdentifier: devSurface.previewIdentifier,
+      fresh: location,
+      snapshot: nil
+    ) {
+      self.devSurface = resolved.surface
+      return
+    }
+    Logger.debug(
+      logLevel: .warn,
+      scope: .debugViewController,
+      message: "The dev server no longer lists the surface \(devSurface.id). "
+        + "Pick another paywall to preview."
+    )
+    self.devSurface = nil
+    if paywallIdentifier == devSurface.previewIdentifier {
+      paywallIdentifier = nil
+      paywallDatabaseId = nil
+    }
+    // The title still named the dropped surface over an empty preview.
+    previewPickerButton.setTitle("Choose a paywall", for: .normal)
   }
 
 	func finishLoadingPreview() async {
+    if let devSurface = devSurface {
+      await loadDevServerPreview(surface: devSurface)
+      return
+    }
+
 		var paywallId: String?
 
 		if let paywallIdentifier = paywallIdentifier {
 			paywallId = paywallIdentifier
 		} else if let paywallDatabaseId = paywallDatabaseId {
-			paywallId = paywalls.first { $0.databaseId == paywallDatabaseId }?.identifier
-			paywallIdentifier = paywallId
+      // Resolve the numeric database id from the deep link to the paywall's
+      // identifier (slug) with a single lookup.
+      do {
+        let resolution = try await network.resolvePaywallIdentifier(forDatabaseId: paywallDatabaseId)
+        paywallId = resolution.identifier
+        paywallIdentifier = resolution.identifier
+      } catch {
+        Logger.debug(
+          logLevel: .error,
+          scope: .debugViewController,
+          message: "Failed to Resolve Paywall",
+          error: error
+        )
+        return
+      }
     } else {
+      // Nothing selected: leave the picker for the developer rather than a
+      // spinner with nothing behind it.
+      activityIndicator.stopAnimating()
       return
     }
 
@@ -244,8 +317,7 @@ final class DebugViewController: UIViewController {
       )
       var paywall = try await paywallRequestManager.getPaywall(from: request)
 
-      let productVariables = await storeKitManager.getProductVariables(for: paywall)
-      paywall.productVariables = productVariables
+      paywall.productVariables = await storeKitManager.getProductVariables(for: paywall)
 
       self.paywall = paywall
       self.previewPickerButton.setTitle("\(paywall.name)", for: .normal)
@@ -310,34 +382,131 @@ final class DebugViewController: UIViewController {
     }
   }
 
-  @objc func pressedPreview() {
-    guard let id = paywallDatabaseId else { return }
-
-    let options: [AlertOption] = paywalls.map { paywall in
-      var name = paywall.name
-
-      if id == paywall.databaseId {
-        name = "\(name) ✓"
-      }
-
-      let alert = AlertOption(
-        title: name,
-        action: { [weak self] in
-          self?.paywallDatabaseId = paywall.databaseId
-          self?.paywallIdentifier = paywall.identifier
-          Task { await self?.loadPreview() }
-        },
-        style: .default
+  /// Populates the "Your Paywalls" picker from the application in the debugger's
+  /// preview token.
+  ///
+  /// Kicked off from `viewDidLoad` alongside — not after — the preview load, so
+  /// the picker is available even when the requested paywall fails to render.
+  /// Best-effort: a failure leaves `previewPaywalls` empty and `pressedPreview`
+  /// declines to open, which is the behaviour before this was restored.
+  private func loadPreviewPaywalls() async {
+    do {
+      let list = try await network.listPreviewPaywalls()
+      previewPaywalls = list.data
+    } catch {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .debugViewController,
+        message: "Failed to Load Paywall Picker",
+        info: nil,
+        error: error
       )
-      return alert
+    }
+  }
+
+  /// Picks the dev-server surface the debugger opens with, if any.
+  func selectDevSurface(id: String?) {
+    guard let id = id else {
+      return
+    }
+    devSurface = devServer?.surfaces.first { $0.id == id }
+  }
+
+  /// Renders a surface straight from the dev server, synthesised from the
+  /// manifest (local URL + the products its `config.ts` declares). Nothing is
+  /// fetched from the dashboard, so a paywall that has never been pushed —
+  /// or whose app lives in another environment — still previews.
+  ///
+  /// `ensureDevServer` has just refreshed `devServer`, so the surface passed
+  /// in is the one the manifest describes now.
+  private func loadDevServerPreview(surface: DevServerSurface) async {
+    guard
+      let devServer = devServer,
+      let url = DevServerManifest(surfaces: devServer.surfaces)
+        .mountURL(for: surface, base: devServer.base)
+    else {
+      activityIndicator.stopAnimating()
+      return
     }
 
-    presentAlert(
-      title: nil,
-      message: "Your Paywalls",
-      options: options,
-      on: previewPickerButton
-    )
+    var paywall = Paywall.devServer(surface: surface, url: url)
+    // Product variables are best-effort here: a surface can name products the
+    // store has no record of yet, and the preview must still render.
+    paywall.productVariables = await storeKitManager.getProductVariables(for: paywall)
+    self.paywall = paywall
+    paywallIdentifier = surface.previewIdentifier
+    paywallDatabaseId = paywall.databaseId
+    previewPickerButton.setTitle("\(surface.id) (local)", for: .normal)
+    activityIndicator.stopAnimating()
+    addPaywallPreview()
+  }
+
+  /// The published paywalls to offer. The debugger's preview list needs the
+  /// token a dashboard preview link carries; the downloaded config carries the
+  /// same paywalls for free, which is what a `superwall dev` link relies on.
+  private var publishedPaywalls: [PaywallSummary] {
+    if !previewPaywalls.isEmpty {
+      return previewPaywalls
+    }
+    let config = Superwall.shared.dependencyContainer.configManager?.config
+    return (config?.paywalls ?? []).map {
+      PaywallSummary(id: $0.databaseId, identifier: $0.identifier, name: $0.name)
+    }
+  }
+
+  /// Whether the picker has anything to offer: local surfaces, a choice of
+  /// published paywalls, or no paywall selected yet.
+  private var canOpenPicker: Bool {
+    if devServer?.surfaces.isEmpty == false {
+      return true
+    }
+    if publishedPaywalls.count > 1 {
+      return true
+    }
+    if paywallDatabaseId == nil {
+      return true
+    }
+    return false
+  }
+
+  @objc func pressedPreview() {
+    guard canOpenPicker else {
+      return
+    }
+    let devSurfaces = devServer?.surfaces ?? []
+    let published = publishedPaywalls
+
+    let picker = DebugPaywallPickerViewController(
+      localSurfaceIds: devSurfaces.map { $0.id },
+      publishedNames: published.map { $0.name },
+      selectedLocalId: devSurface?.id,
+      selectedPublishedIndex: published.firstIndex { $0.id == paywallDatabaseId }
+    ) { [weak self] kind in
+      guard let self = self else {
+        return
+      }
+      switch kind {
+      case .local(let index):
+        self.devSurface = devSurfaces[index]
+      case .published(let index):
+        self.devSurface = nil
+        self.paywallDatabaseId = published[index].id
+        self.paywallIdentifier = published[index].identifier
+      }
+      Task { await self.loadPreview() }
+    }
+
+    let navigationController = UINavigationController(rootViewController: picker)
+    navigationController.navigationBar.barStyle = .black
+    navigationController.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.white]
+    navigationController.modalPresentationStyle = .pageSheet
+    #if !os(visionOS)
+    if let sheet = navigationController.sheetPresentationController {
+      sheet.detents = [.medium(), .large()]
+      sheet.prefersGrabberVisible = true
+    }
+    #endif
+    present(navigationController, animated: true)
   }
 
   @objc func pressedExitButton() {
@@ -556,3 +725,4 @@ extension DebugViewController {
     )
   }
 }
+#endif

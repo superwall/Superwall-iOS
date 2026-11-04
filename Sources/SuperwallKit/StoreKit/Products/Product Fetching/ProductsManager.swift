@@ -46,8 +46,7 @@ final class ProductsManager {
       self.productsFetcher = productsFetcher
       return
     }
-    if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
+    if storeKitVersion == .storeKit2 {
       self.productsFetcher = ProductsFetcherSK2(entitlementsInfo: entitlementsInfo)
     } else {
       self.productsFetcher = ProductsFetcherSK1(entitlementsInfo: entitlementsInfo)

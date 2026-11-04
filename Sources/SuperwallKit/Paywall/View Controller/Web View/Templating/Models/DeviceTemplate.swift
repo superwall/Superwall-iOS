@@ -17,6 +17,7 @@ struct DeviceTemplate: Codable {
   var appVersionPadded: String
   var osVersion: String
   var deviceModel: String
+  var simulatorModel: String?
   var deviceLocale: String
   var preferredLocale: String
   var deviceLanguageCode: String
@@ -69,9 +70,12 @@ struct DeviceTemplate: Codable {
   var compilerVersion: String
   var localResourceIds: String
   var deviceId: String
+  var adUserDataConsent: String
+  var adPersonalizationConsent: String
+  var adConsentSource: String
 
-  func toDictionary() -> [String: Any] {
-    guard let data = try? JSONEncoder().encode(self) else {
+  func toDictionary(encoder: JSONEncoder = JSONEncoder()) -> [String: Any] {
+    guard let data = try? encoder.encode(self) else {
       return [:]
     }
     let jsonObject = try? JSONSerialization.jsonObject(with: data, options: .allowFragments)

@@ -333,6 +333,13 @@ extension PaywallRequestManager {
       return false
     }
 
+    // Config can be published before the first purchases load finishes (see
+    // `ConfigManager.fetchConfiguration`), and until it does `customerInfo` is
+    // the copy restored from disk. A trial started in this group since the last
+    // launch is only in the read, and advertising a trial Apple won't grant is
+    // the thing this check exists to prevent, so wait for it.
+    await factory.initialPurchasesLoad?.value
+
     let subscriptions = await MainActor.run {
       Superwall.shared.customerInfo.subscriptions
     }
@@ -360,6 +367,18 @@ extension PaywallRequestManager {
     if productEntitlementIds.isEmpty {
       return false
     }
+    // Same reason as `hasActiveIntroOffer`: config can be published before the
+    // purchases load finishes, and until it does `customerInfo` is the copy
+    // restored from disk. The `isPlaceholder` check below can't stand in for
+    // this — the early publish only happens when a non-blank copy is saved,
+    // which is exactly when `isPlaceholder` is false.
+    //
+    // An entitlement the load can't move is answered without waiting, which is
+    // what keeps a web-only paywall quick.
+    if factory.purchasesLoadCouldChange(entitlementIds: productEntitlementIds) {
+      await factory.initialPurchasesLoad?.value
+    }
+
     let customerInfo = await MainActor.run {
       Superwall.shared.customerInfo
     }

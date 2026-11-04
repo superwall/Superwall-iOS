@@ -38,12 +38,20 @@ class CoreDataStack {
   var backgroundContext: NSManagedObjectContext?
   var mainContext: NSManagedObjectContext?
 
-  init() {
+  init(location: CoreDataStoreLocation = .default) {
     // First load persistent container
     let persistentContainer = NSPersistentContainer(
       name: Self.modelName,
       managedObjectModel: Self.managedObject
     )
+    let storeUrl = location.currentUrl
+    try? FileManager.default.createDirectory(
+      at: storeUrl.deletingLastPathComponent(),
+      withIntermediateDirectories: true
+    )
+    persistentContainer.persistentStoreDescriptions = [
+      NSPersistentStoreDescription(url: storeUrl)
+    ]
 
     let dispatchGroup = DispatchGroup()
     dispatchGroup.enter()
@@ -78,20 +86,16 @@ class CoreDataStack {
     self.mainContext = mainContext
   }
 
-  func count<T: NSFetchRequestResult>(
-    for fetchRequest: NSFetchRequest<T>,
-    completion: @escaping ((Int) -> Void)
-  ) {
+  func count<T: NSFetchRequestResult>(for fetchRequest: NSFetchRequest<T>) async -> Int {
     guard
       let backgroundContext = backgroundContext,
       persistentContainer != nil
     else {
-      return completion(0)
+      return 0
     }
-    backgroundContext.perform {
+    return await backgroundContext.perform {
       do {
-        let count = try backgroundContext.count(for: fetchRequest)
-        completion(count)
+        return try backgroundContext.count(for: fetchRequest)
       } catch let error as NSError {
         Logger.debug(
           logLevel: .error,
@@ -100,21 +104,22 @@ class CoreDataStack {
           info: error.userInfo,
           error: error
         )
-        completion(0)
+        return 0
       }
     }
   }
 
-  func getLastSavedPlacement(
+  /// When the most recent placement with this name was saved, optionally only looking
+  /// before `date`.
+  func getLastSavedPlacementDate(
     name: String,
-    before date: Date?,
-    completion: @escaping ((ManagedEventData?) -> Void)
-  ) {
+    before date: Date?
+  ) async -> Date? {
     guard let backgroundContext = backgroundContext else {
-      return completion(nil)
+      return nil
     }
 
-    backgroundContext.perform {
+    return await backgroundContext.perform {
       let fetchRequest = ManagedEventData.fetchRequest()
       if let date = date {
         fetchRequest.predicate = NSPredicate(format: "name == %@ AND createdAt < %@", name, date as NSDate)
@@ -125,11 +130,7 @@ class CoreDataStack {
       fetchRequest.fetchLimit = 1
 
       do {
-        let results = try backgroundContext.fetch(fetchRequest)
-        guard let placement = results.first else {
-          return completion(nil)
-        }
-        completion(placement)
+        return try backgroundContext.fetch(fetchRequest).first?.createdAt
       } catch {
         Logger.debug(
           logLevel: .error,
@@ -138,7 +139,7 @@ class CoreDataStack {
           info: ["placement": name],
           error: error
         )
-        completion(nil)
+        return nil
       }
     }
   }

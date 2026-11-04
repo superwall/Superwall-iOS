@@ -13,7 +13,6 @@
 
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, macOS 12.0, watchOS 8.0, *)
 extension StoreKit.VerificationResult where SignedType == StoreKit.Transaction {
   var verifiedTransaction: StoreKit.Transaction? {
     switch self {

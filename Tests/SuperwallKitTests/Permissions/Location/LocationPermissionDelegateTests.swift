@@ -17,7 +17,7 @@ struct LocationPermissionDelegateTests {
       receivedStatus = status
     }
 
-    // Simulate iOS 14+ delegate call with a mock manager
+    // Simulate the authorization change delegate call with a mock manager
     let mockManager = MockLocationManager()
     mockManager.mockAuthorizationStatus = FakeLocationAuthorizationStatus.authorizedWhenInUse.rawValue
     delegate.locationManagerDidChangeAuthorization(mockManager)
@@ -79,23 +79,6 @@ struct LocationPermissionDelegateTests {
 
     #expect(receivedStatus == FakeLocationAuthorizationStatus.authorizedAlways.rawValue)
   }
-
-  #if !os(visionOS)
-  @Test func iOS13DelegateMethod_callsCallback() {
-    var receivedStatus: Int?
-    let delegate = LocationPermissionDelegate { status in
-      receivedStatus = status
-    }
-
-    let mockManager = MockLocationManager()
-    delegate.locationManager(
-      mockManager,
-      didChangeAuthorization: FakeLocationAuthorizationStatus.authorizedWhenInUse.rawValue
-    )
-
-    #expect(receivedStatus == FakeLocationAuthorizationStatus.authorizedWhenInUse.rawValue)
-  }
-  #endif
 }
 
 // MARK: - Mock

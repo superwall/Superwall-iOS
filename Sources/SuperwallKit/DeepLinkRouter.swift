@@ -21,6 +21,16 @@ final class DeepLinkRouter {
   private unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
+  /// Tracks an event. Replaced in tests to observe what's tracked.
+  var trackEvent: (Trackable) async -> Void = { event in
+    _ = await Superwall.shared.track(event)
+  }
+
+  /// The ``PaywallInfo`` of the presented paywall, if one is presented. Replaced in tests.
+  var presentedPaywallInfo: () async -> PaywallInfo? = {
+    await Superwall.shared.paywallViewController?.info
+  }
+
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
@@ -39,6 +49,14 @@ final class DeepLinkRouter {
 
   @discardableResult
   func route(url: URL) -> Bool {
+    // A return link only brings the app back from a Superwall web flow. The
+    // flow's paywall finishes the job itself, so the link must not be tracked
+    // as a deep link: `deepLink_open` dismisses the presented paywall.
+    if url.isSuperwallReturnLink {
+      handleReturnLink(url)
+      return true
+    }
+
     // Check if the URL matches the expected web2app format
     if let code = url.redeemableCode {
       Task {
@@ -66,12 +84,17 @@ final class DeepLinkRouter {
 
     captureFirstSessionDeepLink(deepLinkUrl)
 
+    let trackEvent = self.trackEvent
     Task {
-      await Superwall.shared.track(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
+      await trackEvent(InternalSuperwallEvent.DeepLink(url: deepLinkUrl))
     }
 
     // Check if this is a debug URL
     if debugManager.handle(deepLinkUrl: deepLinkUrl) {
+      return true
+    }
+
+    if DevServerPreview.handle(url: deepLinkUrl) {
       return true
     }
 
@@ -99,6 +122,38 @@ final class DeepLinkRouter {
     if storage.recordFirstSessionDeepLink(url) {
       identityManager.mergeUserAttributes(
         [Self.firstDeepLinkUrlAttributeKey: url.absoluteString]
+      )
+    }
+  }
+
+  private func handleReturnLink(_ url: URL) {
+    // The paywall that teleported takes its waiting screen out of sight at once.
+    let userInfo = url.superwallReturnReason.map { ["reason": $0] }
+    if Thread.isMainThread {
+      NotificationCenter.default.post(
+        name: .superwallReturnLinkOpened,
+        object: nil,
+        userInfo: userInfo
+      )
+    } else {
+      DispatchQueue.main.async {
+        NotificationCenter.default.post(
+          name: .superwallReturnLinkOpened,
+          object: nil,
+          userInfo: userInfo
+        )
+      }
+    }
+    // Tracked as `teleport_return` instead, with the `PaywallInfo` of the presented paywall.
+    let trackEvent = self.trackEvent
+    let presentedPaywallInfo = self.presentedPaywallInfo
+    Task {
+      let paywallInfo = await presentedPaywallInfo()
+      await trackEvent(
+        InternalSuperwallEvent.TeleportReturn(
+          paywallInfo: paywallInfo,
+          reason: url.superwallReturnReason
+        )
       )
     }
   }
@@ -176,8 +231,22 @@ final class DeepLinkRouter {
       return true
     }
 
+    // Return links from Superwall web flows
+    if url.isSuperwallReturnLink {
+      return true
+    }
+
     // Debug/preview URLs
     if DebugManager.outcomeForDeepLink(url: url) != nil {
+      return true
+    }
+
+    // Dev links count as Superwall's only while dev mode is verifiably on.
+    // Before initialization there are no options to check (and touching
+    // `Superwall.shared` would assert), so don't claim the link — it is
+    // stored above and routed again once config arrives.
+    if Superwall.isInitialized,
+      DevServerPreview.canHandle(url: url, options: Superwall.shared.options) {
       return true
     }
 
@@ -195,6 +264,36 @@ final class DeepLinkRouter {
 }
 
 extension URL {
+  /// Whether this link brings the user back to the app from a teleported
+  /// Superwall web flow, such as a paywall's checkout page. Matches
+  /// `scheme://superwall/return` and
+  /// `https://<subdomain>.superwall.link/app-link/superwall/return`.
+  var isSuperwallReturnLink: Bool {
+    if scheme != "http",
+      scheme != "https",
+      host == "superwall",
+      path == "/return" {
+      return true
+    }
+
+    if let host,
+      host.hasSuffix(".superwall.link"),
+      path == "/app-link/superwall/return" {
+      return true
+    }
+
+    return false
+  }
+
+  /// Why the web flow sent the user back, when it says, such as `purchased` after paying on a
+  /// checkout page or `closed` when they closed it instead.
+  var superwallReturnReason: String? {
+    URLComponents(url: self, resolvingAgainstBaseURL: false)?
+      .queryItems?
+      .first { $0.name == "reason" }?
+      .value
+  }
+
   /// The web checkout code to redeem given a Superwall deep link format.
   var redeemableCode: String? {
     let urlComponents = URLComponents(url: self, resolvingAgainstBaseURL: false)

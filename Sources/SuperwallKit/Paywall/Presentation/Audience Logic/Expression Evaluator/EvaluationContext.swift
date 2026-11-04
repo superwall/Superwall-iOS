@@ -7,7 +7,7 @@
 // swiftlint:disable function_body_length
 
 import Foundation
-import Superscript
+internal import Superscript
 
 final class EvaluationContext: HostContext {
   let storage: Storage
@@ -124,6 +124,11 @@ func toPassableValue(from anyValue: Any) -> PassableValue {
   }
 
   switch anyValue {
+  case is NSNull:
+    // A field the SDK explicitly reported as unknown. Without this it would fall
+    // through to the `default` case and come out as an empty map, which can't be
+    // compared to anything.
+    return .null
   case let value as Int:
     return .int(value)
   case let value as UInt64:

@@ -39,7 +39,6 @@ extension PHAuthorizationStatus {
   }
 }
 
-@available(macCatalyst 14.0, *)
 extension AVAuthorizationStatus {
   var toPermissionStatus: PermissionStatus {
     switch self {

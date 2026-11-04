@@ -17,7 +17,6 @@ final class PaywallManagerMock: PaywallManager {
     for paywall: Paywall,
     isDebuggerLaunched: Bool,
     isForPresentation: Bool,
-    isPreloading: Bool,
     delegate: PaywallViewControllerDelegateAdapter?
   ) async throws -> PaywallViewController {
     if let getPaywallError = getPaywallError {

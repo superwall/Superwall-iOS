@@ -5,7 +5,11 @@
 //  Created by Claude on 2026-01-27.
 //
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// Handles purchase and restore flows in test mode.
 ///
@@ -25,7 +29,7 @@ final class TestModeTransactionHandler {
     product: StoreProduct,
     purchaseSource: PurchaseSource
   ) async -> PurchaseResult {
-    guard let viewController = topViewController() else {
+    guard let viewController = PlatformViewController.topMostViewController else {
       return .failed(PurchaseError.productUnavailable)
     }
 
@@ -78,10 +82,10 @@ final class TestModeTransactionHandler {
       if hasActiveEntitlements {
         let status = SubscriptionStatus.active(entitlementSet)
         testModeManager.overriddenSubscriptionStatus = status
-        Superwall.shared.subscriptionStatus = status
+        Superwall.shared.setSubscriptionStatus(assigned: status)
       } else {
         testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       }
 
       // Track free trial start if free trial is shown (respecting override)
@@ -109,7 +113,7 @@ final class TestModeTransactionHandler {
   /// or `.failed(nil)` when the user cancels.
   @MainActor
   func handleRestore() async -> RestorationResult {
-    guard let viewController = topViewController() else {
+    guard let viewController = PlatformViewController.topMostViewController else {
       return .failed(nil)
     }
 
@@ -147,7 +151,7 @@ final class TestModeTransactionHandler {
         testModeManager.overriddenCustomerInfo = customerInfo
         Superwall.shared.customerInfo = customerInfo
         testModeManager.overriddenSubscriptionStatus = .inactive
-        Superwall.shared.subscriptionStatus = .inactive
+        Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       } else {
         // Update test mode manager with selected entitlement IDs
         let activeIds = Set(entitlements.map { $0.id })
@@ -164,10 +168,10 @@ final class TestModeTransactionHandler {
         if hasActive {
           let status = SubscriptionStatus.active(entitlements)
           testModeManager.overriddenSubscriptionStatus = status
-          Superwall.shared.subscriptionStatus = status
+          Superwall.shared.setSubscriptionStatus(assigned: status)
         } else {
           testModeManager.overriddenSubscriptionStatus = .inactive
-          Superwall.shared.subscriptionStatus = .inactive
+          Superwall.shared.setSubscriptionStatus(assigned: .inactive)
         }
       }
 
@@ -176,17 +180,5 @@ final class TestModeTransactionHandler {
     case .cancelled:
       return .failed(nil)
     }
-  }
-
-  @MainActor
-  private func topViewController() -> UIViewController? {
-    guard let window = UIApplication.sharedApplication?.windows.first(where: { $0.isKeyWindow }),
-      var topVC = window.rootViewController else {
-      return nil
-    }
-    while let presented = topVC.presentedViewController {
-      topVC = presented
-    }
-    return topVC
   }
 }

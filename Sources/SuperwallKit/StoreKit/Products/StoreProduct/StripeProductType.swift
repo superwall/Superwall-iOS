@@ -665,7 +665,6 @@ struct StripeProductType: StoreProductType {
 }
 
 // MARK: - Hashable
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 extension StripeProductType: Hashable {
   static func == (lhs: StripeProductType, rhs: StripeProductType) -> Bool {
     return lhs.entitlements == rhs.entitlements

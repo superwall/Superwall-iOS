@@ -4,7 +4,7 @@
 //
 //  Created by brian on 7/27/21.
 //
-// swiftlint:disable function_body_length
+// swiftlint:disable function_body_length file_length
 
 import Foundation
 
@@ -49,7 +49,13 @@ enum PaywallMessage: Decodable, Equatable {
   case close
   case restore
   case openUrl(_ url: URL)
-  case openUrlInSafari(_ url: URL)
+  case openUrlInSafari(
+    _ url: URL,
+    drawsWaitingScreen: Bool = false,
+    isTeleport: Bool = false
+  )
+  case teleportWatchStart(TeleportReturnCover.Watch)
+  case teleportWatchEnd
   case openPaymentSheet(_ url: URL)
   case openDeepLink(url: URL)
   case purchase(productId: String, shouldDismiss: Bool)
@@ -60,11 +66,20 @@ enum PaywallMessage: Decodable, Equatable {
   case stripeCheckoutStart(checkoutContextId: String, productId: String)
   case stripeCheckoutComplete(
     checkoutContextId: String,
-    productId: String
+    productId: String,
+    shouldDismiss: Bool?
   )
   case stripeCheckoutSubmit(checkoutContextId: String, productId: String)
   case stripeCheckoutFail(checkoutContextId: String, productId: String)
   case stripeCheckoutAbandon(checkoutContextId: String, productId: String)
+  case customCheckoutStart(productId: String, customTransactionId: String)
+  case customCheckoutComplete(
+    productId: String,
+    customTransactionId: String,
+    shouldDismiss: Bool
+  )
+  case customCheckoutAbandon(productId: String, reason: CustomStoreCheckout.AbandonReason)
+  case customCheckoutFail(productId: String, message: String)
   case requestStoreReview(ReviewType)
   case requestPermission(permissionType: PermissionType, requestId: String)
   case requestCallback(
@@ -86,7 +101,7 @@ enum PaywallMessage: Decodable, Equatable {
 
   case transactionRestore
   case transactionStart
-  case transactionComplete(trialEndDate: Date?, productIdentifier: String)
+  case transactionComplete(trialEndDate: Date?, productIdentifier: String, didStartFreeTrial: Bool)
   case transactionFail
   case transactionAbandon
   case transactionTimeout
@@ -106,6 +121,8 @@ enum PaywallMessage: Decodable, Equatable {
     case restore
     case openUrl = "open_url"
     case openUrlInSafari = "open_url_external"
+    case teleportWatchStart = "teleport_watch_start"
+    case teleportWatchEnd = "teleport_watch_end"
     case openDeepLink = "open_deep_link"
     case purchase
     case custom
@@ -117,6 +134,10 @@ enum PaywallMessage: Decodable, Equatable {
     case stripeCheckoutSubmit = "stripe_checkout_submit"
     case stripeCheckoutFail = "stripe_checkout_fail"
     case stripeCheckoutAbandon = "stripe_checkout_abandon"
+    case customCheckoutStart = "custom_checkout_start"
+    case customCheckoutComplete = "custom_checkout_complete"
+    case customCheckoutAbandon = "custom_checkout_abandon"
+    case customCheckoutFail = "custom_checkout_fail"
     case requestStoreReview = "request_store_review"
     case scheduleNotification = "schedule_notification"
     case requestPermission = "request_permission"
@@ -140,7 +161,16 @@ enum PaywallMessage: Decodable, Equatable {
     case attributes
     case reviewType
     case browserType
+    case waitingScreen
+    case teleport
+    case teleportId
+    case teleportStatusUrl
+    case checkoutStatusUrl
+    case publicApiKey
     case checkoutContextId
+    case customTransactionId
+    case message
+    case reason
     case type
     case title
     case subtitle
@@ -193,9 +223,32 @@ enum PaywallMessage: Decodable, Equatable {
       case .openUrlInSafari:
         if let urlString = try? values.decode(String.self, forKey: .url),
           let url = URL(string: urlString) {
-          self = .openUrlInSafari(url)
+          let waitingScreen = (try? values.decodeIfPresent(Bool.self, forKey: .waitingScreen)) ?? false
+          let teleport = (try? values.decodeIfPresent(Bool.self, forKey: .teleport)) ?? false
+          self = .openUrlInSafari(
+            url,
+            drawsWaitingScreen: waitingScreen,
+            isTeleport: teleport
+          )
           return
         }
+      case .teleportWatchStart:
+        if let teleportId = try? values.decode(String.self, forKey: .teleportId),
+          let teleportStatusUrl = try? values.decode(URL.self, forKey: .teleportStatusUrl),
+          let publicApiKey = try? values.decode(String.self, forKey: .publicApiKey) {
+          self = .teleportWatchStart(
+            TeleportReturnCover.Watch(
+              teleportId: teleportId,
+              teleportStatusUrl: teleportStatusUrl,
+              checkoutStatusUrl: try? values.decodeIfPresent(URL.self, forKey: .checkoutStatusUrl),
+              publicApiKey: publicApiKey
+            )
+          )
+          return
+        }
+      case .teleportWatchEnd:
+        self = .teleportWatchEnd
+        return
       case .openDeepLink:
         if let urlString = try? values.decode(String.self, forKey: .link),
           let url = URL(string: urlString) {
@@ -235,9 +288,11 @@ enum PaywallMessage: Decodable, Equatable {
       case .stripeCheckoutComplete:
         if let checkoutContextId = try? values.decode(String.self, forKey: .checkoutContextId),
           let productId = try? values.decode(String.self, forKey: .productId) {
+          let shouldDismiss = try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)
           self = .stripeCheckoutComplete(
             checkoutContextId: checkoutContextId,
-            productId: productId
+            productId: productId,
+            shouldDismiss: shouldDismiss
           )
           return
         }
@@ -266,6 +321,37 @@ enum PaywallMessage: Decodable, Equatable {
             checkoutContextId: checkoutContextId,
             productId: productId
           )
+          return
+        }
+      case .customCheckoutStart:
+        if let productId = try? values.decode(String.self, forKey: .productId),
+          let customTransactionId = try? values.decode(String.self, forKey: .customTransactionId) {
+          self = .customCheckoutStart(productId: productId, customTransactionId: customTransactionId)
+          return
+        }
+      case .customCheckoutComplete:
+        if let productId = try? values.decode(String.self, forKey: .productId),
+          let customTransactionId = try? values.decode(String.self, forKey: .customTransactionId) {
+          let shouldDismiss = (try? values.decodeIfPresent(Bool.self, forKey: .shouldDismiss)) ?? true
+          self = .customCheckoutComplete(
+            productId: productId,
+            customTransactionId: customTransactionId,
+            shouldDismiss: shouldDismiss
+          )
+          return
+        }
+      case .customCheckoutAbandon:
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          // A missing or unknown reason counts as the buyer's.
+          let reason = (try? values.decodeIfPresent(String.self, forKey: .reason))
+            .flatMap(CustomStoreCheckout.AbandonReason.init(rawValue:)) ?? .buyer
+          self = .customCheckoutAbandon(productId: productId, reason: reason)
+          return
+        }
+      case .customCheckoutFail:
+        if let productId = try? values.decode(String.self, forKey: .productId) {
+          let message = (try? values.decodeIfPresent(String.self, forKey: .message)) ?? ""
+          self = .customCheckoutFail(productId: productId, message: message)
           return
         }
       case .requestStoreReview:

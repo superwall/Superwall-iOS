@@ -41,7 +41,7 @@ final class PresentPaywallOperatorTests {
         customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
       let webView = SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: messageHandler,
         isOnDeviceCacheEnabled: true,
         factory: dependencyContainer
@@ -67,6 +67,7 @@ final class PresentPaywallOperatorTests {
       do {
         _ = try await Superwall.shared.presentPaywallViewController(
           paywallVc,
+          paywall: .stub(),
           on: UIViewController(),
           unsavedOccurrence: nil,
           debugInfo: [:],
@@ -111,7 +112,7 @@ final class PresentPaywallOperatorTests {
         customCallbackRegistry: dependencyContainer.customCallbackRegistry
       )
       let webView = SWWebView(
-        isMac: false,
+        isiOSAppOnMac: false,
         messageHandler: messageHandler,
         isOnDeviceCacheEnabled: true,
         factory: dependencyContainer
@@ -135,6 +136,7 @@ final class PresentPaywallOperatorTests {
       do {
         _ = try await Superwall.shared.presentPaywallViewController(
           paywallVc,
+          paywall: .stub(),
           on: UIViewController(),
           unsavedOccurrence: nil,
           debugInfo: [:],

@@ -19,6 +19,7 @@ actor PaywallRequestManager {
   typealias Factory = DeviceHelperFactory
     & ConfigManagerFactory
     & ReceiptFactory
+    & OptionsFactory
 
   init(
     storeKitManager: StoreKitManager,
@@ -100,16 +101,21 @@ actor PaywallRequestManager {
     activeTasks[requestHash] = task
 
     var paywall = try await task.value
-    paywall = await updatePaywall(paywall, for: request)
+    // The request that fetched the paywall keeps the id its response events were tracked with.
+    paywall = await updatePaywall(paywall, for: request, isNewPresentation: false)
 
     return paywall
   }
 
   private func updatePaywall(
     _ paywall: Paywall,
-    for request: PaywallRequest
+    for request: PaywallRequest,
+    isNewPresentation: Bool = true
   ) async -> Paywall {
     var paywall = paywall
+    if isNewPresentation {
+      paywall.presentationId = UUID().uuidString
+    }
     paywall.experiment = request.responseIdentifiers.experiment
     paywall.presentationSourceType = request.presentationSourceType
     if let featureGating = request.overrides.featureGatingBehavior {
@@ -125,8 +131,16 @@ actor PaywallRequestManager {
     isDebuggerLaunched: Bool
   ) {
     activeTasks[requestHash] = nil
-    if !isDebuggerLaunched {
-      paywallsByHash[requestHash] = paywall
+    if isDebuggerLaunched {
+      return
     }
+    // The request hash carries no dev-server component, so memoising in dev
+    // mode would freeze whatever the dev server's state was at first fetch —
+    // a transient miss would pin the published paywall for the whole process.
+    // Preloading is off in dev mode, so this caching buys nothing there.
+    if DevMode.isActive(factory.makeSuperwallOptions()) {
+      return
+    }
+    paywallsByHash[requestHash] = paywall
   }
 }

@@ -14,7 +14,6 @@
 
 import StoreKit
 
-@available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
 struct SK2StoreProductDiscount: StoreProductDiscountType {
   let underlyingSK2Discount: SK2ProductDiscount
 
@@ -55,7 +54,6 @@ struct SK2StoreProductDiscount: StoreProductDiscountType {
 // MARK: - Private
 
 private extension StoreProductDiscount.PaymentMode {
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   init?(subscriptionOfferPaymentMode paymentMode: StoreKit.Product.SubscriptionOffer.PaymentMode) {
     switch paymentMode {
     case .payUpFront:

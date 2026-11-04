@@ -8,7 +8,6 @@
 import Foundation
 import StoreKit
 
-@available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 final class ProductPurchaserSK2: Purchasing {
   private unowned let identityManager: IdentityManager
   private unowned let receiptManager: ReceiptManager
@@ -21,7 +20,7 @@ final class ProductPurchaserSK2: Purchasing {
 
   // swiftlint:disable:next identifier_name
   var _sk2ObserverModePurchaseDetector: Any?
-  @available(iOS 17.2, *)
+  @available(iOS 17.2, macOS 14.2, *)
   var sk2ObserverModePurchaseDetector: SK2ObserverModePurchaseDetector {
     // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2ObserverModePurchaseDetector! as! SK2ObserverModePurchaseDetector
@@ -39,7 +38,7 @@ final class ProductPurchaserSK2: Purchasing {
     self.coordinator = coordinator
     self.factory = factory
 
-    if #available(iOS 17.2, *) {
+    if #available(iOS 17.2, macOS 14.2, *) {
       _sk2ObserverModePurchaseDetector = SK2ObserverModePurchaseDetector(
         storage: storage,
         allTransactionsProvider: SK2AllTransactionsProvider(),
@@ -72,7 +71,7 @@ final class ProductPurchaserSK2: Purchasing {
 
     if shouldObservePurchases,
       storeKitVersion == .storeKit2,
-      #available(iOS 17.2, visionOS 1.1, *) {
+      #available(iOS 17.2, macOS 14.2, visionOS 1.1, *) {
       Task(priority: .utility) { [weak self] in
         guard let self = self else {
           return
@@ -93,16 +92,14 @@ final class ProductPurchaserSK2: Purchasing {
         options.insert(.appAccountToken(appAccountToken))
       }
 
-      #if compiler(>=6.1)
       // Add intro offer eligibility token if available for this product
       // This allows overriding Apple's automatic eligibility determination
       if let token = product.introOfferToken {
         options.insert(.introductoryOfferEligibility(compactJWS: token.token))
       }
-      #endif
 
       #if compiler(>=6.3.2)
-      if #available(iOS 26.4, macOS 26.4, tvOS 26.4, watchOS 26.4, visionOS 26.4, *),
+      if #available(iOS 26.4, macOS 26.4, watchOS 26.4, visionOS 26.4, *),
         let plan = product.billingPlanType {
         let sk2Plan: StoreKit.Product.SubscriptionInfo.BillingPlanType
         switch plan {
@@ -116,13 +113,22 @@ final class ProductPurchaserSK2: Purchasing {
       let result: StoreKit.Product.PurchaseResult
 
       #if os(visionOS)
-      guard let sharedApplication = UIApplication.sharedApplication else {
+      guard let sharedApplication = PlatformApplication.sharedApplication else {
         return .cancelled
       }
       guard let scene = await sharedApplication.connectedScenes.first else {
         return .cancelled
       }
       result = try await sk2Product.purchase(confirmIn: scene, options: options)
+      #elseif os(macOS)
+      let window = await MainActor.run {
+        Superwall.shared.paywallViewController?.view.window ?? PlatformApplication.sharedApplication?.activeWindow
+      }
+      if #available(macOS 15.2, *), let window = window {
+        result = try await sk2Product.purchase(confirmIn: window, options: options)
+      } else {
+        result = try await sk2Product.purchase(options: options)
+      }
       #else
       result = try await sk2Product.purchase(options: options)
       #endif
@@ -190,7 +196,7 @@ final class ProductPurchaserSK2: Purchasing {
   }
 }
 
-@available(iOS 17.2, visionOS 1.1, *)
+@available(iOS 17.2, macOS 14.2, visionOS 1.1, *)
 extension ProductPurchaserSK2: SK2ObserverModePurchaseDetectorDelegate {
   func logSK2ObserverModeTransaction(_ transaction: SK2Transaction) async throws {
     let transactionManager = factory.makeTransactionManager()

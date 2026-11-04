@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length file_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
@@ -22,6 +26,7 @@ final class DependencyContainer {
   var identityManager: IdentityManager!
   var storeKitManager: StoreKitManager!
   var appSessionManager: AppSessionManager!
+  var tcfConsentObserver: TCFConsentObserver!
   var storage: Storage!
   var network: Network!
   var paywallManager: PaywallManager!
@@ -31,6 +36,7 @@ final class DependencyContainer {
   var debugManager: DebugManager!
   var api: Api!
   var transactionManager: TransactionManager!
+  var customStoreCheckoutHandler: CustomStoreCheckoutHandler!
   var delegateAdapter: SuperwallDelegateAdapter!
   var purchaseManager: PurchaseManager!
   var receiptManager: ReceiptManager!
@@ -48,13 +54,33 @@ final class DependencyContainer {
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
+  private var _customerCenterManager: CustomerCenterManager?
+
+  /// Builds the dependencies backing the Customer Center and owns its presentation state.
+  ///
+  /// Built lazily on first access rather than in `init`, since `DependencyContainer.init` is not
+  /// itself main-actor-isolated (many test suites, and potentially host apps, construct it off the
+  /// main thread), while `CustomerCenterManager` is `@MainActor`. All production call sites
+  /// (`Superwall.presentCustomerCenter`/`dismissCustomerCenter`/the Objective-C variant) are
+  /// themselves `@MainActor`, so this accessor is only ever reached from the main actor.
+  @MainActor
+  var customerCenterManager: CustomerCenterManager {
+    if let manager = _customerCenterManager {
+      return manager
+    }
+    let manager = CustomerCenterManager(container: self)
+    _customerCenterManager = manager
+    return manager
+  }
+
   init(
     apiKey: String = "",
     purchaseController controller: PurchaseController? = nil,
-    options: SuperwallOptions? = nil
+    options: SuperwallOptions? = nil,
+    cache: Cache = .makeDefault()
   ) {
     delegateAdapter = SuperwallDelegateAdapter()
-    storage = Storage(factory: self)
+    storage = Storage(factory: self, cache: cache)
     storage.configure(apiKey: apiKey)
     entitlementsInfo = EntitlementsInfo(
       storage: storage,
@@ -165,7 +191,8 @@ final class DependencyContainer {
     mmpAttributionManager = MMPAttributionManager(
       network: network,
       storage: storage,
-      identityManager: identityManager
+      identityManager: identityManager,
+      configManager: configManager
     )
 
     testModeManager = TestModeManager(
@@ -182,6 +209,8 @@ final class DependencyContainer {
       storage: storage,
       delegate: self
     )
+
+    tcfConsentObserver = TCFConsentObserver()
 
     debugManager = DebugManager(
       storage: storage,
@@ -210,6 +239,12 @@ final class DependencyContainer {
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
       productsManager: productsManager,
+      postPurchaseRedeemer: webEntitlementRedeemer,
+      factory: self
+    )
+    customStoreCheckoutHandler = CustomStoreCheckoutHandler(
+      transactionManager: transactionManager,
+      storeKitManager: storeKitManager,
       factory: self
     )
   }
@@ -309,7 +344,7 @@ extension DependencyContainer: ViewControllerFactory {
       customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: deviceHelper.isMac,
+      isiOSAppOnMac: deviceHelper.isiOSAppOnMac,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
@@ -335,6 +370,7 @@ extension DependencyContainer: ViewControllerFactory {
     return paywallViewController
   }
 
+  #if !os(macOS)
   @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController {
     let viewController = DebugViewController(
@@ -349,6 +385,7 @@ extension DependencyContainer: ViewControllerFactory {
     viewController.modalPresentationStyle = .overFullScreen
     return viewController
   }
+  #endif
 }
 
 extension DependencyContainer: VariablesFactory {
@@ -393,7 +430,7 @@ extension DependencyContainer: RequestFactory {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
-    presenter: UIViewController? = nil,
+    presenter: PlatformViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType
@@ -471,7 +508,8 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
 
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
       since: placement,
-      computedPropertyRequests: computedPropertyRequests
+      computedPropertyRequests: computedPropertyRequests,
+      reportingUnknownFieldsAsNull: true
     )
     return [
       "user": userAttributes,
@@ -498,6 +536,23 @@ extension DependencyContainer: ConfigManagerFactory {
       deviceLocale: deviceInfo.locale
     )
   }
+
+  func purchasesLoadCouldChange(entitlementIds: Set<String>) -> Bool {
+    if entitlementIds.isEmpty {
+      return false
+    }
+    guard let config = configManager.config else {
+      // Without config we can't rule the load out, so say yes and let the
+      // caller wait.
+      return true
+    }
+    return config.products.contains { product in
+      guard case .appStore = product.type else {
+        return false
+      }
+      return product.entitlements.contains { entitlementIds.contains($0.id) }
+    }
+  }
 }
 
 // MARK: - StoreTransactionFactory
@@ -510,7 +565,6 @@ extension DependencyContainer: StoreTransactionFactory {
     )
   }
 
-  @available(iOS 15.0, tvOS 15.0, watchOS 8.0, *)
   func makeStoreTransaction(from transaction: SK2Transaction) async -> StoreTransaction {
     return StoreTransaction(
       transaction: SK2StoreTransaction(transaction: transaction),
@@ -598,6 +652,26 @@ extension DependencyContainer: ReceiptFactory {
     await receiptManager.loadPurchasedProducts(config: config)
   }
 
+  func restorePurchases(
+    from customerInfo: CustomerInfo,
+    grantedEntitlements: Set<Entitlement>,
+    config: Config
+  ) async {
+    await receiptManager.restorePurchases(
+      from: customerInfo,
+      grantedEntitlements: grantedEntitlements,
+      config: config
+    )
+  }
+
+  /// nil means the load already finished, or config was never published early.
+  /// It is also nil for the moment before `processConfig` stores the task; a
+  /// purchase started that early skips the wait, which only affects whether the
+  /// transaction is reported as a trial start.
+  var initialPurchasesLoad: Task<Void, Never>? {
+    configManager.initialPurchasesLoad
+  }
+
   func refreshSK1Receipt() async {
     return await receiptManager.refreshSK1Receipt()
   }
@@ -614,7 +688,13 @@ extension DependencyContainer: ReceiptFactory {
         return false
       }
     }
-    return await receiptManager.isFreeTrialAvailable(for: product)
+    // Config can be published before the first purchases load finishes (see
+    // `ConfigManager.fetchConfiguration`). Only the upgrade check inside reads
+    // what that load computes, so it waits there rather than here.
+    return await receiptManager.isFreeTrialAvailable(
+      for: product,
+      waitingFor: initialPurchasesLoad
+    )
   }
 
   var isTestMode: Bool {

@@ -5,12 +5,11 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if !os(macOS)
 import UIKit
 
 /// The main modal view controller for the test mode modal.
 final class TestModeModalViewController: UIViewController {
-  private static let settingsKey = "com.superwall.testmode.entitlementSettings"
-  private static let freeTrialOverrideKey = "com.superwall.testmode.freeTrialOverride"
   static let freeTrialCellId = "FreeTrialCell"
 
   let reason: TestModeReason
@@ -111,7 +110,6 @@ final class TestModeModalViewController: UIViewController {
     return stack
   }()
 
-
   private lazy var resetButton: UIButton = {
     let button = UIButton(type: .system)
     button.translatesAutoresizingMaskIntoConstraints = false
@@ -156,14 +154,20 @@ final class TestModeModalViewController: UIViewController {
     self.networkEnvironment = networkEnvironment
 
     // Load saved override or use initial
-    if let savedOverrideRaw = UserDefaults.standard.string(forKey: Self.freeTrialOverrideKey),
-      let savedOverride = FreeTrialOverride(rawValue: savedOverrideRaw) {
-      self.selectedFreeTrialOverride = savedOverride
-    } else {
-      self.selectedFreeTrialOverride = initialFreeTrialOverride
-    }
+    self.selectedFreeTrialOverride = TestModeSettingsStore.loadFreeTrialOverride(
+      fallback: initialFreeTrialOverride
+    )
 
     super.init(nibName: nil, bundle: nil)
+
+    // Loaded up front so the saved choices can be handed back even if the
+    // sheet never gets shown.
+    let savedSettings = loadSavedSettings()
+    for entitlementId in availableEntitlements {
+      if let selection = savedSettings[entitlementId], selection.state != nil {
+        selectedEntitlements[entitlementId] = selection
+      }
+    }
   }
 
   required init?(coder: NSCoder) {
@@ -186,11 +190,7 @@ final class TestModeModalViewController: UIViewController {
 
   @objc private func dismissModal() {
     saveSettings()
-    dismiss(animated: true) { [weak self] in
-      guard let self = self else { return }
-      let entitlements = self.buildEntitlements()
-      self.onDismiss?(entitlements, self.selectedFreeTrialOverride)
-    }
+    dismiss(animated: true) { [weak self] in self?.finish() }
   }
 
   @objc private func resetToDefaults() {
@@ -214,70 +214,19 @@ final class TestModeModalViewController: UIViewController {
 
 extension TestModeModalViewController {
   func saveSettings() {
-    var settingsToSave: [String: [String: String]] = [:]
-    for (entitlementId, selection) in selectedEntitlements {
-      var selectionDict: [String: String] = [:]
-      if let state = selection.state {
-        selectionDict["state"] = state.rawValue
-      }
-      if let offerType = selection.offerType {
-        selectionDict["offerType"] = offerType.rawValue
-      }
-      if !selectionDict.isEmpty {
-        settingsToSave[entitlementId] = selectionDict
-      }
-    }
-    UserDefaults.standard.set(settingsToSave, forKey: Self.settingsKey)
-
-    // Save free trial override
-    UserDefaults.standard.set(selectedFreeTrialOverride.rawValue, forKey: Self.freeTrialOverrideKey)
+    TestModeSettingsStore.save(selectedEntitlements, freeTrialOverride: selectedFreeTrialOverride)
   }
 
   func loadSavedSettings() -> [String: EntitlementSelection] {
-    guard let savedDict = UserDefaults.standard.dictionary(
-      forKey: Self.settingsKey
-    ) as? [String: [String: String]] else {
-      return [:]
-    }
-
-    var result: [String: EntitlementSelection] = [:]
-    for (entitlementId, selectionDict) in savedDict {
-      var state: LatestSubscription.State?
-      var offerType: LatestSubscription.OfferType?
-
-      if let stateRaw = selectionDict["state"] {
-        state = LatestSubscription.State(rawValue: stateRaw)
-      }
-      if let offerTypeRaw = selectionDict["offerType"] {
-        offerType = LatestSubscription.OfferType(rawValue: offerTypeRaw)
-      }
-
-      result[entitlementId] = EntitlementSelection(state: state, offerType: offerType)
-    }
-    return result
+    return TestModeSettingsStore.loadSelections()
   }
 
   func clearSavedSettings() {
-    UserDefaults.standard.removeObject(forKey: Self.settingsKey)
-    UserDefaults.standard.removeObject(forKey: Self.freeTrialOverrideKey)
+    TestModeSettingsStore.clear()
   }
 
   func buildEntitlements() -> Set<Entitlement> {
-    var entitlements: Set<Entitlement> = []
-    for (entitlementId, selection) in selectedEntitlements {
-      guard let state = selection.state else { continue }
-      let isActive = state == .subscribed || state == .inGracePeriod || state == .inBillingRetryPeriod
-      let entitlement = Entitlement(
-        id: entitlementId,
-        type: .serviceLevel,
-        isActive: isActive,
-        store: .appStore,
-        state: state,
-        offerType: selection.offerType
-      )
-      entitlements.insert(entitlement)
-    }
-    return entitlements
+    return TestModeSettingsStore.entitlements(from: selectedEntitlements)
   }
 }
 
@@ -383,11 +332,7 @@ extension TestModeModalViewController {
       }
       entitlementsStackView.addArrangedSubview(rowView)
       entitlementRowViews.append(rowView)
-
-      // If we have an initial selection, add it to selectedEntitlements
-      if let selection = initialSelection, selection.state != nil {
-        selectedEntitlements[entitlementId] = selection
-      }
     }
   }
 }
+#endif

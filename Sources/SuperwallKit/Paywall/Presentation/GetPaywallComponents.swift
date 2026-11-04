@@ -37,7 +37,7 @@ extension Superwall {
       from: audienceOutcome
     )
 
-    let paywallViewController = try await getPaywallViewController(
+    let (paywallViewController, paywall) = try await getPaywallViewController(
       request: request,
       audienceOutcome: audienceOutcome,
       debugInfo: debugInfo,
@@ -61,6 +61,7 @@ extension Superwall {
 
     return PaywallComponents(
       viewController: paywallViewController,
+      paywall: paywall,
       presenter: presenter,
       audienceOutcome: audienceOutcome,
       debugInfo: debugInfo

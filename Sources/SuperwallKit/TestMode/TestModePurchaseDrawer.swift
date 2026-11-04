@@ -6,7 +6,11 @@
 //
 // swiftlint:disable file_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 /// The result of a test mode purchase interaction.
 enum TestModePurchaseResult {
@@ -18,6 +22,7 @@ enum TestModePurchaseResult {
   case failed
 }
 
+#if !os(macOS)
 /// Presents a bottom sheet for test mode purchases instead of calling StoreKit.
 ///
 /// Shows three options: Purchase, Abandon, Failure — each fires the same
@@ -39,11 +44,9 @@ enum TestModePurchaseDrawer {
     )
     modal.modalPresentationStyle = .pageSheet
     #if !os(visionOS)
-    if #available(iOS 15.0, *) {
-      if let sheet = modal.sheetPresentationController {
-        sheet.detents = [.medium()]
-        sheet.prefersGrabberVisible = false
-      }
+    if let sheet = modal.sheetPresentationController {
+      sheet.detents = [.medium()]
+      sheet.prefersGrabberVisible = false
     }
     #endif
     viewController.present(modal, animated: true)
@@ -477,3 +480,4 @@ extension TestModePurchaseViewController: UIAdaptivePresentationControllerDelega
     }
   }
 }
+#endif

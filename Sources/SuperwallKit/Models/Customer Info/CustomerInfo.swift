@@ -134,7 +134,10 @@ public final class CustomerInfo: NSObject, Codable {
   ///
   /// - Parameter webCustomerInfo: The CustomerInfo from web2app endpoints containing web purchases/redemptions
   /// - Returns: A new CustomerInfo with merged data from both sources
-  func merging(with webCustomerInfo: CustomerInfo) -> CustomerInfo {
+  func merging(
+    with webCustomerInfo: CustomerInfo,
+    granting grantedEntitlements: Set<Entitlement> = []
+  ) -> CustomerInfo {
     // Merge non-subscription transactions (consumables, non-consumables)
     // Start with device transactions, then add web transactions that don't already exist
     var mergedNonSubscriptions = self.nonSubscriptions
@@ -155,20 +158,63 @@ public final class CustomerInfo: NSObject, Codable {
       mergedSubscriptions.append(webSub)
     }
 
-    // Merge entitlements using priority-based merging
+    // Merge entitlements from device, web, and developer-granted sources
+    // using priority-based merging.
     // This uses `Entitlement.mergePrioritized` which intelligently selects the highest
     // priority entitlement for each ID based on:
     // - Active status (active > inactive)
     // - Latest expiration date
     // - Other priority criteria defined in `shouldTakePriorityOver`
-    let combinedEntitlements = self.entitlements + webCustomerInfo.entitlements
+    let combinedEntitlements =
+      self.entitlements + webCustomerInfo.entitlements + Array(grantedEntitlements)
     let mergedEntitlements = Entitlement.mergePrioritized(combinedEntitlements)
 
-    // Return merged CustomerInfo with sorted transactions and entitlements
+    // Return merged CustomerInfo with sorted transactions and entitlements.
+    // It stays a placeholder until real data has arrived from either side —
+    // granted entitlements alone don't mean the device has been read.
     return CustomerInfo(
       subscriptions: mergedSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
       nonSubscriptions: mergedNonSubscriptions.sorted { $0.purchaseDate < $1.purchaseDate },
-      entitlements: mergedEntitlements.sorted { $0.id < $1.id }
+      entitlements: mergedEntitlements.sorted { $0.id < $1.id },
+      isPlaceholder: isPlaceholder && webCustomerInfo.isPlaceholder
+    )
+  }
+
+  /// Composes customer info from a fresh device snapshot under an external
+  /// purchase controller, preserving the entitlements that came from the
+  /// controller — its active entitlements won't necessarily be in device data.
+  static func preservingExternalControllerEntitlements(
+    device deviceCustomerInfo: CustomerInfo,
+    web webCustomerInfo: CustomerInfo?,
+    current currentCustomerInfo: CustomerInfo,
+    granted grantedEntitlements: Set<Entitlement>
+  ) -> CustomerInfo {
+    // Merge with web customer info if available
+    let baseCustomerInfo = webCustomerInfo.map {
+      deviceCustomerInfo.merging(with: $0)
+    } ?? deviceCustomerInfo
+
+    // Get entitlements that are only in current CustomerInfo (i.e., from external controller)
+    // by filtering out anything that matches device or web entitlements by ID
+    let deviceAndWebEntitlementIds = Set(baseCustomerInfo.entitlements.map { $0.id })
+    let externalOnlyEntitlements = currentCustomerInfo.entitlements.filter { entitlement in
+      // Keep external entitlement if it's not already in device/web
+      !deviceAndWebEntitlementIds.contains(entitlement.id)
+    }
+
+    // Merge external controller entitlements with device + web + granted.
+    // Granted entitlements are their own source here: the externalOnly
+    // filter above would drop one whose ID collides with an expired device
+    // entitlement, leaving customerInfo reporting it inactive while
+    // subscriptionStatus reports it active.
+    let allEntitlements =
+      baseCustomerInfo.entitlements + externalOnlyEntitlements + Array(grantedEntitlements)
+    let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
+
+    return CustomerInfo(
+      subscriptions: baseCustomerInfo.subscriptions,
+      nonSubscriptions: baseCustomerInfo.nonSubscriptions,
+      entitlements: finalEntitlements.sorted { $0.id < $1.id }
     )
   }
 
@@ -184,7 +230,8 @@ public final class CustomerInfo: NSObject, Codable {
   /// - Returns: A new CustomerInfo with all sources merged
   static func forExternalPurchaseController(
     storage: Storage,
-    subscriptionStatus: SubscriptionStatus
+    subscriptionStatus: SubscriptionStatus,
+    granted grantedEntitlements: Set<Entitlement>
   ) -> CustomerInfo {
     // Get web CustomerInfo
     let webCustomerInfo = storage.get(LatestRedeemResponse.self)?.customerInfo ?? .blank()
@@ -211,9 +258,18 @@ public final class CustomerInfo: NSObject, Codable {
       externalEntitlements = []
     }
 
-    // Merge: active from external controller + all web + inactive device
+    // Developer-granted entitlements come in as their own source rather than
+    // recovered from subscriptionStatus — that's an already-merged value
+    // where sources are no longer distinguishable. They also can't ride in via
+    // the appStore filter above: widening it to admit them would resurrect
+    // revoked web entitlements, whose revocation is signalled only by their
+    // absence from webCustomerInfo.
+
+    // Merge: active from external controller + all web + inactive device + granted
     // This gives us complete history while respecting external controller as source of truth for active status
-    let allEntitlements = externalEntitlements + webCustomerInfo.entitlements + inactiveDeviceEntitlements
+    let allEntitlements =
+      externalEntitlements + webCustomerInfo.entitlements + inactiveDeviceEntitlements
+      + Array(grantedEntitlements)
     let finalEntitlements = Entitlement.mergePrioritized(allEntitlements)
 
     return CustomerInfo(

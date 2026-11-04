@@ -108,5 +108,10 @@ extension Superwall {
     // Get the identity. This may or may not wait depending on whether the dev
     // specifically wants to wait for assignments.
     try await dependencyContainer.identityManager.hasIdentity.throwableAsync()
+
+    let trigger = request.presentationInfo.placementName.flatMap {
+      dependencyContainer.configManager.triggersByPlacementName[$0]
+    }
+    await dependencyContainer.mmpAttributionManager.waitForPendingMatch(ifUsedBy: trigger)
   }
 }

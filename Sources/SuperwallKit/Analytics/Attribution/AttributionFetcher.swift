@@ -19,7 +19,18 @@ final class AttributionFetcher {
   private let queue = DispatchQueue(label: "com.superwall.attributionfetcher")
   private let timerQueue = DispatchQueue(label: "com.superwall.attributionfetcher.timer")
   private var redeemTimer: DispatchSourceTimer?
+  private var activeObserver: NSObjectProtocol?
+  private let vendorIdProvider: (() -> String)?
+  private let attStatusProvider: (() -> Int?)?
+  private let idfaProvider: (() -> String?)?
+  private let syncUserAttributes: ([String: Any?]) -> Void
   private var _integrationAttributes: [String: String] = [:]
+
+  /// The identifiers last handed to `syncUserAttributes`. Only a change
+  /// is worth syncing: every sync costs a `user_attributes` event, a delegate
+  /// callback, a Core Data row and a re-encode of the whole attribute dict.
+  private var _lastSyncedDeviceIdentifiers: [String: String]?
+
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
   private unowned let deviceHelper: DeviceHelper
@@ -27,33 +38,32 @@ final class AttributionFetcher {
   var identifierForAdvertisers: String? {
     // should match available platforms here:
     // https://developer.apple.com/documentation/adsupport/asidentifiermanager/1614151-advertisingidentifier
-    #if os(iOS) || os(tvOS) || os(macOS) || os(visionOS)
-    if #available(macCatalyst 13.1, macOS 10.14, *) {
-      let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
-      guard let identifierManagerProxy = identifierManagerProxy else {
-        Logger.debug(
-          logLevel: .warn,
-          scope: .analytics,
-          message: "AdSupport framework not imported. Attribution data incomplete."
-        )
-        return nil
-      }
-
-      guard let identifierValue = identifierManagerProxy.adsIdentifier else {
-        return nil
-      }
-
-      // When ATT hasn't been authorized iOS returns the all-zeros UUID
-      // sentinel. Don't pass that through as an IDFA — it pollutes attribution
-      // payloads with junk that downstream MMPs treat as a real id.
-      if identifierValue == Self.zeroAdvertisingIdentifier {
-        return nil
-      }
-
-      return identifierValue.uuidString
+    #if os(iOS) || os(macOS) || os(visionOS)
+    let identifierManagerProxy = AttributionTypeFactory.asIdProxy()
+    guard let identifierManagerProxy = identifierManagerProxy else {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .analytics,
+        message: "AdSupport framework not imported. Attribution data incomplete."
+      )
+      return nil
     }
-    #endif
+
+    guard let identifierValue = identifierManagerProxy.adsIdentifier else {
+      return nil
+    }
+
+    // When ATT hasn't been authorized iOS returns the all-zeros UUID
+    // sentinel. Don't pass that through as an IDFA — it pollutes attribution
+    // payloads with junk that downstream MMPs treat as a real id.
+    if identifierValue == Self.zeroAdvertisingIdentifier {
+      return nil
+    }
+
+    return identifierValue.uuidString
+    #else
     return nil
+    #endif
   }
 
   // Non-optional construction via `init(uuid:)` — `init(uuidString:)` returns
@@ -78,8 +88,6 @@ final class AttributionFetcher {
     #endif
   }
 
-  // should match OS availability in https://developer.apple.com/documentation/ad_services
-  @available(iOS 14.3, tvOS 14.3, macOS 11.1, watchOS 6.2, macCatalyst 14.3, *)
   var adServicesToken: String? {
     get async throws {
       #if canImport(AdServices)
@@ -102,7 +110,6 @@ final class AttributionFetcher {
   }
 
   #if canImport(AdServices)
-  @available(iOS 14.3, macOS 11.1, macCatalyst 14.3, *)
   private static var realAdServicesToken: String? {
     get throws {
       return try AAAttribution.attributionToken()
@@ -135,54 +142,55 @@ final class AttributionFetcher {
   init(
     storage: Storage,
     deviceHelper: DeviceHelper,
-    webEntitlementRedeemer: WebEntitlementRedeemer
+    webEntitlementRedeemer: WebEntitlementRedeemer,
+    vendorIdProvider: (() -> String)? = nil,
+    attStatusProvider: (() -> Int?)? = nil,
+    idfaProvider: (() -> String?)? = nil,
+    syncUserAttributes: @escaping ([String: Any?]) -> Void = {
+      Superwall.shared.setUserAttributes($0)
+    }
   ) {
+    self.syncUserAttributes = syncUserAttributes
+    self.vendorIdProvider = vendorIdProvider
+    self.attStatusProvider = attStatusProvider
+    self.idfaProvider = idfaProvider
     self.storage = storage
     self.deviceHelper = deviceHelper
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self._integrationAttributes = storage.get(IntegrationAttributes.self) ?? [:]
+    if let notification = SystemInfo.applicationDidBecomeActiveNotification {
+      activeObserver = NotificationCenter.default.addObserver(
+        forName: notification,
+        object: nil,
+        queue: nil
+      ) { [weak self] _ in
+        self?.refreshDeviceIdentifiers()
+      }
+    }
+  }
+
+  deinit {
+    if let activeObserver {
+      NotificationCenter.default.removeObserver(activeObserver)
+    }
   }
 
   func setIntegrationAttribute(
     attribute: IntegrationAttribute,
-    value: String?,
-    appTransactionId: String
+    value: String?
   ) {
-    let attributes = [attribute.description: value]
-    mergeIntegrationAttributes(attributes: attributes, appTransactionId: appTransactionId)
+    mergeIntegrationAttributes(attributes: [attribute.description: value])
   }
 
-  func mergeIntegrationAttributes(
-    attributes: [String: String?],
-    appTransactionId: String
-  ) {
+  func mergeIntegrationAttributes(attributes: [String: String?]) {
     queue.async { [weak self] in
       guard let self = self else { return }
 
-      // Check if any values have actually changed
-      var hasChanges = false
-      for (key, newValue) in attributes {
-        let currentValue = self._integrationAttributes[key]
-        if currentValue != newValue {
-          hasChanges = true
-          break
-        }
+      // Compare after refreshing device data: the provider ID can stay the
+      // same while ATT changes or a previously unavailable IDFV appears.
+      if self._mergeIntegrationAttributes(attributes: attributes) {
+        self._debouncedRedeem()
       }
-
-      // If no changes, don't proceed
-      guard hasChanges else {
-        return
-      }
-
-      // Update attributes immediately
-      self._mergeIntegrationAttributes(
-        attributes: attributes,
-        appTransactionId: appTransactionId,
-        shouldRedeem: false // Don't redeem immediately
-      )
-
-      // Debounce only the redeem call
-      self._debouncedRedeem()
     }
   }
 
@@ -222,52 +230,169 @@ final class AttributionFetcher {
     }
   }
 
-  private func _mergeIntegrationAttributes(
-    attributes: [String: String?],
-    appTransactionId: String,
-    shouldRedeem: Bool = true
-  ) {
+  /// - Returns: Whether the integration attributes changed.
+  private func _mergeIntegrationAttributes(attributes: [String: String?]) -> Bool {
     var mergedAttributes = _integrationAttributes
-    var hasChanges = false
-
-    mergedAttributes["idfa"] = identifierForAdvertisers
-
-    let identifierForVendor = deviceHelper.vendorId
-    mergedAttributes["idfv"] = identifierForVendor
-
-    for key in attributes.keys {
-      let newValue = attributes[key]
-      let currentValue = _integrationAttributes[key]
-
-      if currentValue != newValue {
-        hasChanges = true
-        if let value = newValue {
-          mergedAttributes[key] = value
-        } else {
-          mergedAttributes.removeValue(forKey: key)
-        }
-      }
+    for (key, value) in attributes {
+      mergedAttributes[key] = value
+    }
+    let device = currentDeviceIdentifiers
+    for key in DeviceIdentifiers.keys {
+      mergedAttributes[key] = device[key]
     }
 
-    // Only proceed if there are actual changes
-    guard hasChanges else {
-      return
+    // The router reads user attributes, not the integration_attributes event.
+    // Explicit nulls clear an IDFA retained from before consent was revoked.
+    if device != _lastSyncedDeviceIdentifiers {
+      _lastSyncedDeviceIdentifiers = device
+      syncUserAttributes(DeviceIdentifiers.userAttributes(for: device))
     }
 
+    guard mergedAttributes != _integrationAttributes else { return false }
+    let updatedAttributes = mergedAttributes
     Task {
-      let attributes = InternalSuperwallEvent.IntegrationAttributes(
-        audienceFilterParams: mergedAttributes
+      let event = InternalSuperwallEvent.IntegrationAttributes(
+        audienceFilterParams: updatedAttributes
       )
-      await Superwall.shared.track(attributes)
+      await Superwall.shared.track(event)
     }
-
     storage.save(mergedAttributes, forType: IntegrationAttributes.self)
     _integrationAttributes = mergedAttributes
+    if attributes[IntegrationAttribute.appsflyerId.description] != nil {
+      deviceHelper.startIPCollectionIfEnabled()
+    }
+    return true
+  }
+}
 
-    if shouldRedeem {
-      Task {
-        await webEntitlementRedeemer.redeem(.integrationAttributes)
+// MARK: - Device identifiers
+extension AttributionFetcher {
+  /// Forgets what was last synced when a write lands on one of the SDK's keys
+  /// carrying something other than what the SDK put there, so the next merge
+  /// puts its own value back.
+  ///
+  /// The sync gate compares against what the SDK last sent rather than what the
+  /// user's attributes actually hold, so without this an app that removed
+  /// `idfv` would keep it missing until an identifier itself changed — which on
+  /// a settled device may be never.
+  ///
+  /// Compares the values rather than just the keys because the SDK's own sync
+  /// comes back through this same setter, as do internal writers like the
+  /// enrichment response, which echoes the user's attributes back verbatim. A
+  /// write that agrees with what was sent isn't an overwrite and mustn't cost a
+  /// resync.
+  func forgetSyncedDeviceIdentifiers(ifChangedBy attributes: [String: Any?]) {
+    let touched = attributes.filter { DeviceIdentifiers.keys.contains($0.key) }
+    if touched.isEmpty {
+      return
+    }
+    queue.async { [weak self] in
+      guard let self,
+        let lastSynced = self._lastSyncedDeviceIdentifiers else {
+        return
       }
+      let isOverwritten = touched.contains { key, value in
+        !DeviceIdentifiers.isWhatWasSent(value, forKey: key, in: lastSynced)
+      }
+      if isOverwritten {
+        self._lastSyncedDeviceIdentifiers = nil
+      }
+    }
+  }
+
+  /// The ATT authorization status, or `nil` where the OS has no such concept.
+  private var attStatus: Int? {
+    if let attStatusProvider {
+      return attStatusProvider()
+    }
+    #if os(iOS) || targetEnvironment(macCatalyst) || os(macOS) || os(visionOS)
+    return TrackingManagerProxy().trackingAuthorizationStatus()
+    #else
+    return nil
+    #endif
+  }
+
+  private var currentDeviceIdentifiers: [String: String] {
+    var attributes: [String: String] = [:]
+
+    #if os(macOS)
+    // macOS has no Apple IDFV. The SDK's installation UUID is not an MMP identifier.
+    let vendorId = vendorIdProvider?() ?? ""
+    #else
+    let vendorId = vendorIdProvider?() ?? deviceHelper.vendorId
+    #endif
+    if !vendorId.isEmpty {
+      attributes["idfv"] = vendorId
+    }
+
+    if let attStatus {
+      attributes["attStatus"] = String(attStatus)
+    }
+
+    // Don't gate this on the ATT status. `TrackingManagerProxy` returns
+    // `notDetermined` both for a genuine one and for a build where the class
+    // can't be found, so the status can't tell those apart. The OS hands back
+    // the all-zero id when it doesn't want to share one, and
+    // `identifierForAdvertisers` already filters that out.
+    attributes["idfa"] = idfaProvider?() ?? identifierForAdvertisers
+
+    return attributes
+  }
+
+  func refreshDeviceIdentifiers() {
+    queue.async { [weak self] in
+      guard let self, !self._integrationAttributes.isEmpty else { return }
+      if self._mergeIntegrationAttributes(attributes: [:]) {
+        self._debouncedRedeem()
+      }
+    }
+  }
+
+  /// Re-scopes the integration attributes for the user that `reset()` just
+  /// created.
+  ///
+  /// Identifiers that describe the person — see `isInstallScoped` — belong to
+  /// whoever was just signed out, so they go. The install-scoped ones describe
+  /// the same device either way and stay, along with the device identifiers.
+  ///
+  /// A reset clears the user's attributes and deletes the stored copy, which
+  /// lives in the user-specific directory, while the in-memory copy outlives
+  /// it. So write what's kept back to disk and hand all of it — not just what
+  /// changed — to the new user, who has none of it. Without the file the next
+  /// cold launch would start empty and the activation refresh would never run
+  /// again, so a later consent change would never clear the IDFA.
+  ///
+  /// Runs synchronously: `identify` redeems for the new user right after the
+  /// reset, and that request reads the stored attributes rather than this
+  /// object. No redeem is scheduled here; the identity redeems on its own.
+  func resetIntegrationAttributes() {
+    queue.sync {
+      if _integrationAttributes.isEmpty {
+        return
+      }
+      var kept = _integrationAttributes.filter { key, _ in
+        DeviceIdentifiers.keys.contains(key)
+          || IntegrationAttribute.installScopedKeys.contains(key)
+      }
+      if kept.isEmpty {
+        _integrationAttributes = [:]
+        _lastSyncedDeviceIdentifiers = nil
+        return
+      }
+
+      let device = currentDeviceIdentifiers
+      for key in DeviceIdentifiers.keys {
+        kept[key] = device[key]
+      }
+      _integrationAttributes = kept
+      _lastSyncedDeviceIdentifiers = device
+      storage.save(kept, forType: IntegrationAttributes.self)
+
+      var userAttributes = DeviceIdentifiers.userAttributes(for: device)
+      for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
+        userAttributes[key] = value
+      }
+      syncUserAttributes(userAttributes)
     }
   }
 }

@@ -2,17 +2,121 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
-## 4.16.3
+## 4.19.1
 
 ### Enhancements
 
 - Saves the first deep link received during the first app session as the `firstDeepLinkUrl` user attribute. If you assign deep links to your App Store custom product pages, you can use this attribute to break down results and filter audiences by the product page that drove the install. Requires `Superwall.handleDeepLink(_:)` to be set up.
+
+## 4.19.0
+
+### Enhancements
+
+- Adds native macOS 12+ support, including paywalls, SwiftUI embedding, purchases, Customer Center and Test Mode. See the Mac example to get started.
+- Adds `Superwall.shared.refreshCustomerInfo()`, which fetches the user's latest entitlements from Superwall and returns the updated `CustomerInfo`.
+- Adds `StoreProduct.customTransactionId`. Send it back from your server with a custom product's purchase events to attribute that revenue to the paywall that sold it.
+- Paywalls can sell custom store products through the checkout set up on the dashboard, without a `PurchaseController`.
+- Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
+- Apps without web paywalls now also refresh entitlements when they come to the foreground.
+- Improves MMP install matching.
+
+### Fixes
+
+- Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
+- Fixes custom product purchases being reported as App Store purchases.
+
+## 4.18.3
+
+### Fixes
+
+- Moves the SDK's database out of the root of Application Support and into its own folder. Existing data is moved over on first launch.
+- Fixes entitlements becoming inactive while an App Store subscription is in a billing grace period, when using StoreKit 2. During the grace period, the expiry date is when the grace period ends.
+
+## 4.18.2
+
+### Enhancements
+
+- Adds `airbridgeId` as an `IntegrationAttribute`, for the Airbridge Device ID from `Airbridge.fetchDeviceUUID`. It is kept when you reset or identify a different user.
+
+## 4.18.1
+
+### Enhancements
+
+- Adds the `device.simulatorModel` paywall variable: the model a simulator emulates, such as `iPhone19,4`. `device.deviceModel` reports the host's architecture (`arm64`) in a simulator, so this lets paywalls that depend on the device model, such as the iPhone Duo safe area setting, be checked there. It is never sent from a real device.
+
+## 4.18.0
+
+### Enhancements
+
+- Raises the minimum iOS deployment target from iOS 13 to iOS 15, and the Swift Package Manager minimums for macOS and watchOS to macOS 12 and watchOS 8. Requires Xcode 26 (Swift 6.2) or later to build the SDK.
+- Adds the Customer Center, a self-service screen where users can view, restore, manage, cancel, refund and change their purchases, and contact support. Present it with `Superwall.shared.presentCustomerCenter()`, `CustomerCenterView` or `CustomerCenterViewController`, and configure it with `SuperwallOptions.customerCenter`.
+- Adds `CustomerCenterDelegate` and events for when the Customer Center opens, closes, and when users pick an action, answer a survey or request a refund.
+- Adds best-effort public IPv4 and IPv6 device attributes for apps using the Superwall MMP, and the IPv4 attribute for apps that set an AppsFlyer ID. Apps that use the MMP or set an AppsFlyer ID should declare IP address collection in their privacy manifest.
+- Adds return links, `yourscheme://superwall/return` and `https://<subdomain>.superwall.link/app-link/superwall/return`. To open your app from a teleported web flow without the Open in App alert, add `applinks:<subdomain>.superwall.link` to your app's associated domains. They bring the user back to your app from a Superwall web flow, such as a paywall's checkout page, and leave the paywall open. Unlike other deep links, they don't track `deepLink_open` and don't dismiss the presented paywall.
+- Adds the `teleportOpen` event (`teleport_open`), tracked with the paywall's info when a paywall teleports the user to a web flow, such as its checkout page.
+- Adds the `teleportReturn` event (`teleport_return`), tracked instead of `deepLink_open` when a return link brings the user back to your app, with the presented paywall's info if there is one.
+- A web purchase from a paywall's checkout page now finishes like an App Store purchase: once the code is redeemed, the paywall runs the purchase button's after-purchase actions, and it's dismissed (as `.purchased`) only when those actions close it. Redemption itself is unchanged, including `willRedeemLink`, `didRedeemLink` and the redemption events.
+- Adds `SuperwallOptions.adConsent` and `Superwall.shared.adConsent` to report a user's ad consent (`adUserData` and `adPersonalization`, each an `AdConsentStatus` of `.granted` or `.denied`), which Superwall passes on with the conversions it uploads to Google Ads and Meta. If `adConsent` is never set, the SDK uses the consent stored by an IAB TCF consent banner when GDPR applies, and otherwise defaults to granted; apps with users in the EEA, UK or Switzerland that don't use a TCF banner should set it from their consent flow. Where the values came from is reported in the new `adConsentSource` device attribute (`developer`, `tcf` or `default`). The values are reported as the `adUserDataConsent` and `adPersonalizationConsent` device attributes, and both as denied while `eventTrackingBehavior` is `.none`. Personalization is also reported as denied when the user has denied App Tracking Transparency or it's restricted, unless you set `adConsent` yourself.
+
+### Fixes
+
+- Fixes a preloaded paywall tracking only its first page view when its variables were refreshed after it opened.
+- Fixes the SDK getting stuck in test mode when a sheet such as the Customer Center is already open as it finishes loading.
+- Fixes subscribers staying in test mode on every launch after the dashboard setting that caused it had been corrected. The SDK no longer saves a config that turns test mode on, and no longer starts a launch from one saved by an earlier version.
+- Stops matching installs for attribution unless the Superwall MMP is turned on for your app.
+- Fixes paywalls on first launch missing acquisition attributes in their audience filters: they now wait up to 2 seconds for install attribution to finish.
+- Fixes a paywall reporting `.declined` instead of `.purchased` when it closed after a purchase through an after-purchase action list, such as one that sets state and then closes.
+- Fixes the paywall's loading spinner staying up after a web checkout completed while an older pending checkout was still being polled.
+- Fixes a web purchase on a paywall whose products carry different entitlements showing the restore failed alert.
+- Fixes the test mode sheet not showing in apps with more than one scene or window.
+- Fixes a paywall staying blank after iOS terminated its web content process.
+
+## 4.17.0
+
+### Enhancements
+
+- Adds `grantedEntitlements` so you can grant entitlements from your own backend, which the SDK merges with device and web entitlements.
+- Adds `userAttributes` to the `RedemptionInfo` you get from `didRedeemLink`, so you can read the answers someone gave on your web paywall funnel after they redeem in your app.
+- Adds `SuperwallOptions.devServer` for development builds: with a `superwall dev` server running, paywalls render from your live, local paywall code while configuration, placements, audience evaluation and assignment stay real. Use `.default` on a simulator, which finds the dev server on localhost automatically; on a physical device use `.url(...)` with the Device URL `superwall dev` prints. The dev server also activates test mode, disables preloading, and skips the test mode intro sheet.
+
+### Fixes
+
+- Fixes trial reminders being scheduled for users who bought without getting the intro offer.
+- Refreshes the IDFV, IDFA and tracking consent for integrations when the app becomes active or integration attributes are set again, and clears the IDFA when consent is revoked. These now also go into the user attributes `idfv`, `idfa` and `attStatus`, so server-side integrations such as AppsFlyer can read them. The SDK owns those three keys and will overwrite any value your app has set on them. `reset()` and identifying a different user now keep the integration attributes that describe the device, such as the AppsFlyer and Adjust IDs, and drop the ones that describe the person, such as the Amplitude and Customer.io user IDs.
+- Fixes duplicate device attribute and subscription status change events being tracked when the subscription status is repeatedly set to the same logical state. As part of this, `subscriptionStatusDidChange` now fires only when the logical status changes — the status case, the set of entitlements, or an entitlement's `isActive` flag. Updates to transaction metadata such as expiry dates or renewal state no longer trigger it; use `customerInfoDidChange` for those.
+- Fixes subscribers with an unexpired subscription being reported as `inactive` on cold launch when the App Store has no purchases to report. Refunded and expired App Store subscriptions still deactivate immediately.
+- Fixes slow cold launches for subscribers on a weak network by no longer fetching their purchased products from StoreKit before the SDK is ready. Applies to StoreKit 2.
+- Fixes a data race during SDK configuration that Thread Sanitizer flagged on every launch.
+- Fixes a crash when `register` is called from more than one thread at a time.
+- Fixes a hang when identifying a different user after an install attribution match had been found.
+- Fixes issue where paying web users could end up having a temporary inactive subscription status if the server temporarily returns no entitlement data for them.
+- Fixes audiences matching users they shouldn't when you use a Purchase Controller.
+- Fixes paywall opens and purchases being reported under the wrong experiment when two campaigns share a paywall and a second placement fires while it is on screen.
+
+## 4.16.3
+
+### Fixes
+
+- Fixes a build error when compiling the SDK with Xcode 26.0.
 
 ## 4.16.2
 
 ### Enhancements
 
 - Adds the user's system-wide text size (Dynamic Type) as three device attributes for use in paywalls and audience filters: `fontScale`, `fontSize`, and `preferredContentSizeCategory`.
+- Links subscriptions to the user server-side after successful purchase or restore.
+
+### Fixes
+
+- Fixes issue on localized paywalls where the default language would briefly show before re-rendering once device attributes arrive.
+- Fixes a crash when an audience filter contains an expression that can't be evaluated, such as a computed property with an unquoted argument (`daysSince(app_install)`). Updates Superscript to 1.0.15, which also stops any future evaluation failure from aborting the app. View the original Rust release changelog [here](https://github.com/superwall/superscript/releases/tag/1.0.15).
+- Fixes network requests that can never succeed, such as those with an invalid API key, taking up to a minute to fail instead of failing straight away. Timeouts and server errors still retry as before.
+- Fixes failed network requests being reported as a decoding error rather than the HTTP error that actually occurred.
+- Fixes issue where the paywall debugger wouldn't work for accounts with many paywalls.
+- Fixes Main Thread Checker warnings caused by reading the device's interface style and text size from a background thread.
+- Prevents unused App Tracking Transparency support from triggering App Store Connect tracking warnings.
+- Stops Apple's microphone, location, and contacts class and selector names appearing in your app's binary when you don't use those permissions.
+- Fixes the app's accent color resetting to the system blue when configuring the SDK from a SwiftUI `App` initializer.
 
 ## 4.16.1
 

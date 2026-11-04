@@ -78,7 +78,14 @@ public protocol SuperwallDelegateObjc: AnyObject {
   @MainActor
   @objc optional func handleSuperwallEvent(withInfo eventInfo: SuperwallEventInfo)
 
-  /// Called when the ``Superwall/subscriptionStatusObjc`` changes.
+  /// Called when the logical state of ``Superwall/subscriptionStatusObjc`` changes:
+  /// the status moves between unknown, inactive, and active, an entitlement is
+  /// gained or lost, or an entitlement's `isActive` flag changes.
+  ///
+  /// Updates that only change transaction metadata — such as expiry dates,
+  /// renewal state, or the store an entitlement came from — don't trigger this
+  /// callback. Use ``SuperwallDelegateObjc/customerInfoDidChange(from:to:)`` to
+  /// react to those.
   ///
   /// You can use this function to update the state of your application.
   ///

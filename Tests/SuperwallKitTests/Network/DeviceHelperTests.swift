@@ -12,6 +12,32 @@ import UIKit
 @testable import SuperwallKit
 
 struct DeviceHelperTests {
+  /// Scales the way `makeUITraits()` does — explicitly against the resolved category,
+  /// not the ambient `UITraitCollection.current`. Computing an expectation with the
+  /// implicit overload would make both sides inherit the same ambient-trait fault, so
+  /// the assertion couldn't fail on it.
+  @MainActor
+  private static func expectedScaledValue(for category: UIContentSizeCategory) -> Double {
+    return Double(
+      UIFontMetrics.default.scaledValue(
+        for: 16.0,
+        compatibleWith: UITraitCollection(preferredContentSizeCategory: category)
+      )
+    )
+  }
+
+  /// The SDK needs Swift 6.2 to build. In the Swift 5 language mode it builds in, a
+  /// Swift 6 compiler reports its language version as 5.10.
+  @Test func swiftAndCompilerVersions_matchTheToolchainFloor() {
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: Gate(false))
+    withExtendedLifetime(dependencyContainer) {
+      #expect(["5.10", "6.2"].contains(deviceHelper.currentSwiftVersion()))
+      let compilerVersion = deviceHelper.currentCompilerVersion()
+      #expect(compilerVersion != "Unknown")
+      #expect(compilerVersion.compare("6.2", options: .numeric) != .orderedAscending)
+    }
+  }
+
   @Test func makePaddedSdkVersion_withBeta() {
     let version = "3.0.0-beta.1"
     let paddedVersion = DeviceHelper.makePaddedVersion(using: version)
@@ -79,5 +105,805 @@ struct DeviceHelperTests {
   @Test func contentSizeCategoryToken_unknownCategoryIsUnspecified() {
     #expect(DeviceHelper.contentSizeCategoryToken(for: .unspecified) == "unspecified")
     #expect(DeviceHelper.contentSizeCategoryToken(for: UIContentSizeCategory(rawValue: "someUnknownValue")) == "unspecified")
+  }
+
+  // These tokens are a backend/audience-filter contract and must not change.
+  @Test func interfaceStyleToken_mapsEveryStyle() {
+    #expect(DeviceHelper.interfaceStyleToken(for: .unspecified) == "Unspecified")
+    #expect(DeviceHelper.interfaceStyleToken(for: .light) == "Light")
+    #expect(DeviceHelper.interfaceStyleToken(for: .dark) == "Dark")
+    #expect(DeviceHelper.interfaceStyleToken(for: UIUserInterfaceStyle(rawValue: 99)!) == "Unknown")
+  }
+
+  /// Reading these used to touch main-thread-only UIKit APIs, tripping
+  /// "UIApplication.preferredContentSizeCategory must be used from main thread only"
+  /// when the device template was built on a background thread.
+  @Test func traits_areReadableOffTheMainThread() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let traits = await Task.detached { () -> (isMainThread: Bool, interfaceStyle: String, fontSize: Int, fontScale: Double, contentSizeCategory: String) in
+      return (
+        Thread.isMainThread,
+        deviceHelper.interfaceStyle,
+        deviceHelper.fontSize,
+        deviceHelper.fontScale,
+        deviceHelper.preferredContentSizeCategory
+      )
+    }.value
+
+    // Compared against the live UIKit values, not just non-empty: the placeholder
+    // `UITraits.unavailable` would satisfy any weaker assertion.
+    let expected = await MainActor.run { () -> (String, Int, Double, String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = Self.expectedScaledValue(for: category)
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(scaledValue.rounded()),
+        ((scaledValue / 16.0) * 100).rounded() / 100,
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
+    #expect(traits.isMainThread == false)
+    #expect(traits.interfaceStyle == expected.0)
+    #expect(traits.fontSize == expected.1)
+    #expect(traits.fontScale == expected.2)
+    #expect(traits.contentSizeCategory == expected.3)
+  }
+
+  /// The cached traits must hold the device's real values, not placeholders.
+  @MainActor
+  @Test func traits_matchTheCurrentTraitValues() {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+
+    #expect(deviceHelper.preferredContentSizeCategory == DeviceHelper.contentSizeCategoryToken(for: category))
+    #expect(deviceHelper.interfaceStyle == DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle))
+    let scaledValue = Self.expectedScaledValue(for: category)
+    let expectedScale: Double = ((scaledValue / 16.0) * 100).rounded() / 100
+
+    #expect(deviceHelper.fontSize == Int(scaledValue.rounded()))
+    #expect(deviceHelper.fontScale == expectedScale)
+  }
+
+  /// Every read schedules a main-thread write to the cache, so a fault in the
+  /// refresh-on-read backstop would leave the cache blanked or stale rather than
+  /// holding the device's real values. Nothing here can change the device's traits,
+  /// so this pins that the writes keep the cache correct, not that a flip is picked
+  /// up — no in-process way exists to move `UIScreen.main`'s trait collection.
+  @Test func traits_stayCorrectAfterRepeatedReadsTriggerRefreshes() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    for _ in 0..<5 {
+      _ = await Task.detached {
+        (deviceHelper.interfaceStyle, deviceHelper.fontSize, deviceHelper.preferredContentSizeCategory)
+      }.value
+      // The refresh is enqueued on the main queue before this hop, so hopping to the
+      // main actor drains it deterministically instead of sleeping on it.
+      await MainActor.run {}
+    }
+
+    let expected = await MainActor.run { () -> (String, Int, String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(Self.expectedScaledValue(for: category).rounded()),
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
+    #expect(deviceHelper.interfaceStyle == expected.0)
+    #expect(deviceHelper.fontSize == expected.1)
+    #expect(deviceHelper.preferredContentSizeCategory == expected.2)
+  }
+
+  /// Taking the four trait fields from one `currentUITraits` snapshot inlined the
+  /// `interfaceStyleOverride` short-circuit that the `interfaceStyle` property used
+  /// to apply, so pin that the override still wins and the other three fields still
+  /// come from the device.
+  ///
+  /// The snapshot itself isn't pinned here — nothing observable distinguishes one
+  /// read from four, since `makeUITraits()`'s hop count can't be counted from a
+  /// test. That property rests on the comments at both call sites.
+  @Test func templateDevice_keepsTheInterfaceStyleOverrideAndFillsTheRestFromTheDevice() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let expected = await MainActor.run { () -> (style: String, fontSize: Int, fontScale: Double, category: String) in
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      let scaledValue = Self.expectedScaledValue(for: category)
+      return (
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        Int(scaledValue.rounded()),
+        ((scaledValue / 16.0) * 100).rounded() / 100,
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+
+    // No override: every field mirrors the device.
+    let template = await deviceHelper.getTemplateDevice()
+    #expect(template["interfaceStyle"] as? String == expected.style)
+    // The template resolves the override by hand instead of going through
+    // `interfaceStyle`, which is what `X-Device-Interface-Style` uses. Pin that the
+    // two agree so the duplicated precedence rule can't drift silently.
+    #expect(template["interfaceStyle"] as? String == deviceHelper.interfaceStyle)
+    #expect(template["fontSize"] as? Int == expected.fontSize)
+    // Cast both sides to `Double`: comparing against the `[String: Any]` value
+    // directly can resolve to SwiftyJSON's `NSNumber ==`.
+    #expect(template["fontScale"] as? Double == Double(expected.fontScale))
+    #expect(template["preferredContentSizeCategory"] as? String == expected.category)
+
+    // Override set: it wins for `interfaceStyle` alone, and the snapshot still
+    // supplies the other three.
+    deviceHelper.interfaceStyleOverride = .dark
+    let overridden = await deviceHelper.getTemplateDevice()
+    #expect(overridden["interfaceStyle"] as? String == "Dark")
+    #expect(overridden["interfaceStyle"] as? String == deviceHelper.interfaceStyle)
+    #expect(overridden["interfaceStyleMode"] as? String == "manual")
+    #expect(overridden["fontSize"] as? Int == expected.fontSize)
+    #expect(overridden["fontScale"] as? Double == Double(expected.fontScale))
+    #expect(overridden["preferredContentSizeCategory"] as? String == expected.category)
+
+    deviceHelper.interfaceStyleOverride = nil
+  }
+
+  /// `configure` from a SwiftUI `App.init` runs before `UIApplicationMain` has
+  /// created the application object. Touching `UIScreen` or `UIFontMetrics` at
+  /// that point makes UIKit build its trait system before the app's accent color
+  /// is registered, permanently resetting the global tint to system blue (#493).
+  /// Both readers must return nothing rather than touch UIKit; the flag is
+  /// injected because the pre-launch state can't be recreated in-process.
+  @Test func makeScreenMetrics_beforeTheApplicationExists_readsNothing() {
+    #expect(DeviceHelper.makeScreenMetrics(isUIKitReadSafe: { false }) == nil)
+  }
+
+  @Test func makeUITraits_beforeTheApplicationExists_readsNothing() {
+    #expect(DeviceHelper.makeUITraits(isUIKitReadSafe: { false }) == nil)
+  }
+
+  /// This test runner has no `UIApplication` and never launches one, like an app
+  /// extension. Deferring UIKit reads there would leave the device attributes as
+  /// placeholders forever, so the gate must allow reads despite the missing
+  /// application object.
+  @Test func isUIKitReadSafe_withoutAnApplicationOutsideAnAppBundle_allowsReads() {
+    #expect(DeviceHelper.isUIKitReadSafe)
+  }
+
+  /// The arm that actually prevents #493 — an app bundle whose application object
+  /// doesn't exist yet, i.e. `configure` from a SwiftUI `App.init`. The property
+  /// can't reach it: this runner is neither an app bundle nor ever gets an
+  /// application, so drive the decision through the parameterised overload. Without
+  /// this, loosening `"app"` would leave the whole suite green.
+  @Test func isUIKitReadSafe_insideAnAppBundleBeforeLaunch_defersReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: false,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.app")
+      ) == false
+    )
+  }
+
+  /// Once `UIApplicationMain` has built the application object the accent colour is
+  /// already registered, so an app bundle stops deferring.
+  @Test func isUIKitReadSafe_insideAnAppBundleAfterLaunch_allowsReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: true,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.app")
+      )
+    )
+  }
+
+  /// Processes that never run `UIApplicationMain` — app extensions, this runner —
+  /// must not wait for an application that will never arrive.
+  @Test func isUIKitReadSafe_outsideAnAppBundleWithoutAnApplication_allowsReads() {
+    #expect(
+      DeviceHelper.isUIKitReadSafe(
+        hasApplication: false,
+        bundleURL: URL(fileURLWithPath: "/private/var/containers/Bundle/Application/Demo.appex")
+      )
+    )
+  }
+
+  @Test func makeScreenMetrics_whenReadsAreAllowed_readsTheScreen() {
+    let metrics = DeviceHelper.makeScreenMetrics()
+    #expect((metrics?.width ?? 0) > 0)
+    #expect((metrics?.height ?? 0) > 0)
+    #expect((metrics?.scale ?? 0) >= 1.0)
+  }
+
+  /// The screen metrics moved from init-time `let`s to a cache so a too-early
+  /// init can heal itself, so pin that reads still match the screen and stay
+  /// safe off the main thread, where `matchMMPInstall` reads them.
+  @Test func screenMetrics_matchTheScreenWhenReadOffTheMainThread() async {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+
+    let expected = await MainActor.run { () -> (width: Int, height: Int, scale: Double) in
+      let screen = UIApplication.sharedApplication?
+        .connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .first?
+        .screen ?? UIScreen.main
+      return (
+        Int(screen.bounds.width.rounded()),
+        Int(screen.bounds.height.rounded()),
+        Double(screen.scale)
+      )
+    }
+
+    let read = await Task.detached { () -> (isMainThread: Bool, width: Int, height: Int, scale: Double) in
+      return (
+        Thread.isMainThread,
+        deviceHelper.screenWidth,
+        deviceHelper.screenHeight,
+        deviceHelper.devicePixelRatio
+      )
+    }.value
+
+    #expect(read.isMainThread == false)
+    #expect(read.width == expected.width)
+    #expect(read.height == expected.height)
+    #expect(read.scale == expected.scale)
+  }
+
+  // MARK: - Instance-level self-healing
+
+  /// Flippable gate for the tests below, standing in for "the application doesn't
+  /// exist yet" / "launch has completed".
+  private final class Gate: @unchecked Sendable {
+    var isOpen: Bool
+    init(_ isOpen: Bool) {
+      self.isOpen = isOpen
+    }
+  }
+
+  /// Builds a `DeviceHelper` with an injected gate. The container is returned
+  /// alongside because the helper only holds its factory `unowned`.
+  private func makeDeviceHelper(
+    gate: Gate,
+    ipCollector: DeviceIPCollector? = nil
+  ) -> (DeviceHelper, DependencyContainer) {
+    let dependencyContainer = DependencyContainer()
+    let deviceHelper = DeviceHelper(
+      api: dependencyContainer.api,
+      storage: dependencyContainer.storage,
+      network: dependencyContainer.network,
+      entitlementsInfo: dependencyContainer.entitlementsInfo,
+      receiptManager: dependencyContainer.receiptManager,
+      factory: dependencyContainer,
+      ipCollector: ipCollector,
+      isUIKitReadSafe: { gate.isOpen }
+    )
+    return (deviceHelper, dependencyContainer)
+  }
+
+  /// Cached enrichment can carry IP observations that have since gone stale.
+  /// Only fresh ones may reach the device attributes, and `ipAddress` passes
+  /// through as the enrichment sent it.
+  private func makeIPEnrichment() -> Enrichment {
+    return Enrichment(
+      user: JSON([:]),
+      device: JSON([
+        "ipV4": "1.1.1.1",
+        "ipV4ObservedAt": "2000-01-01T00:00:00Z",
+        "ipV6": "2001:db8::1",
+        "ipV6ObservedAt": "2026-09-15T20:40:00Z",
+        "ipAddress": "1.1.1.1"
+      ])
+    )
+  }
+
+  private func makeConfig(mmpEnabled: Bool) -> Config {
+    var config = Config.stub()
+    config.attribution = Attribution(
+      appleSearchAds: AppleSearchAds(enabled: true),
+      mmp: MMPAttribution(enabled: mmpEnabled)
+    )
+    return config
+  }
+
+  private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: isEnabled)))
+  }
+
+  /// On a cold launch the first enrichment is read before config arrives. Its
+  /// IPs must still count once config turns the MMP on, and config arriving
+  /// must start the IPv4 lookup without waiting for another read.
+  @Test func coldLaunch_keepsEnrichmentIPsAndStartsLookupWhenConfigArrives() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      fetches: [{
+        await fetches.increment()
+        return [:]
+      }],
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    let beforeConfig = await deviceHelper.getTemplateDevice()
+    #expect(beforeConfig["ipV6"] == nil)
+    #expect(await fetches.count == 0)
+
+    let config = makeConfig(mmpEnabled: true)
+    await deviceHelper.startIPCollectionIfEnabled(for: config)?.value
+    #expect(await fetches.count == 1)
+
+    dependencyContainer.configManager.configState.send(.retrieved(config))
+    deviceHelper.enrichment = nil
+    let afterConfig = await deviceHelper.getTemplateDevice()
+    #expect(afterConfig["ipV6"] as? String == "2001:db8::1")
+  }
+
+  @Test func configWithMMPOff_doesNotStartLookup() {
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: Gate(true))
+    _ = dependencyContainer
+    #expect(deviceHelper.startIPCollectionIfEnabled(for: makeConfig(mmpEnabled: false)) == nil)
+  }
+
+  private actor FetchCount {
+    var count = 0
+    func increment() {
+      count += 1
+    }
+  }
+
+  @Test func templateDevice_dropsStaleIPObservations() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let collector = DeviceIPCollector(fetches: [], now: { now })
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(true, on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV4ObservedAt"] == nil)
+    #expect(template["ipV6"] as? String == "2001:db8::1")
+    #expect(template["ipV6ObservedAt"] as? String == "2026-09-15T20:40:00Z")
+    #expect(template["ipAddress"] as? String == "1.1.1.1")
+  }
+
+  /// IP collection is off unless the backend turns on the MMP flag: no lookup
+  /// is started and no `ipV4`/`ipV6` attributes are exposed.
+  @Test func templateDevice_withoutMMPFlag_skipsIPCollection() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let collector = DeviceIPCollector(fetches: [{ [:] }], now: { now })
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+    #expect(template["ipAddress"] as? String == "1.1.1.1")
+    // A lookup would have been started, so this one wouldn't be skipped.
+    #expect(await collector.refreshIfNeeded() != nil)
+  }
+
+  private func setAppsflyerId(on dependencyContainer: DependencyContainer) {
+    dependencyContainer.storage.save(["appsflyerId": "af-1"], forType: IntegrationAttributes.self)
+  }
+
+  /// With an AppsFlyer ID set and the MMP off, a device on IPv6 looks up its
+  /// IPv4 address, and only the IPv4 address is exposed.
+  @Test func templateDevice_withAppsflyerIdOnIPv6_looksUpIPv4Only() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let ipV6Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await ipV6Fetches.increment()
+        return [:]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    let device = ["ipAddress": "2001:db8::1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"]
+    deviceHelper.enrichment = Enrichment(user: JSON([:]), device: JSON(device))
+    await collector.record(device)
+
+    await deviceHelper.startIPCollectionIfEnabled()?.value
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(await ipV4Fetches.count == 1)
+    #expect(await ipV6Fetches.count == 0)
+    #expect(template["ipV4"] as? String == "8.8.8.8")
+    #expect(template["ipV4ObservedAt"] as? String == "2026-09-15T20:43:00Z")
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+  }
+
+  /// Setting an AppsFlyer ID starts the IPv4 lookup straight away, rather than
+  /// waiting for the next time the device attributes are built.
+  @Test func settingAppsflyerId_startsIPv4Lookup() async {
+    let (lookups, lookupStarted) = AsyncStream<Void>.makeStream()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        lookupStarted.yield()
+        return [:]
+      },
+      ipV6Fetch: { [:] }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    dependencyContainer.storage.delete(IntegrationAttributes.self)
+    let fetcher = AttributionFetcher(
+      storage: dependencyContainer.storage,
+      deviceHelper: deviceHelper,
+      webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
+      vendorIdProvider: { "vendor-1" },
+      attStatusProvider: { 3 },
+      idfaProvider: { nil },
+      syncUserAttributes: { _ in }
+    )
+    defer { fetcher.cancelPendingOperations() }
+    await collector.record(["ipAddress": "2001:db8::1", "ipAddressObservedAt": Date().isoString])
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    // Ends the wait, failing the test, if the lookup never starts.
+    let timeout = Task {
+      try? await Task.sleep(nanoseconds: 5_000_000_000)
+      lookupStarted.finish()
+    }
+    defer { timeout.cancel() }
+
+    var iterator = lookups.makeAsyncIterator()
+    #expect(await iterator.next() != nil)
+  }
+
+  /// With the MMP on, an AppsFlyer ID doesn't narrow collection: both lookups
+  /// run and both addresses are exposed.
+  @Test func templateDevice_withMMPAndAppsflyerId_collectsBothFamilies() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let ipV6Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await ipV6Fetches.increment()
+        return ["ipV6": "2001:db8::1", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(true, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+
+    await deviceHelper.startIPCollectionIfEnabled()?.value
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(await ipV4Fetches.count == 1)
+    #expect(await ipV6Fetches.count == 1)
+    #expect(template["ipV4"] as? String == "8.8.8.8")
+    #expect(template["ipV6"] as? String == "2001:db8::1")
+  }
+
+  // MARK: - MMP install match addresses
+
+  private func makeCountingCollector(_ fetches: FetchCount, onFetch: @escaping () -> Void = {}) -> DeviceIPCollector {
+    return DeviceIPCollector(
+      ipV4Fetch: {
+        await fetches.increment()
+        onFetch()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await fetches.increment()
+        return ["ipV6": "2001:db8::2", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { Date(timeIntervalSince1970: 1_789_505_000) }
+    )
+  }
+
+  /// The match waits for the lookups and carries both families.
+  @Test func mmpMatchAddresses_withMMPOn_returnsBothFamilies() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(true, on: dependencyContainer)
+
+    let addresses = await deviceHelper.ipAttributesForMMPMatch()
+
+    #expect(addresses["ipV4"] == "8.8.8.8")
+    #expect(addresses["ipV6"] == "2001:db8::2")
+    #expect(addresses["ipV6ObservedAt"] == "2026-09-15T20:43:00Z")
+    #expect(await fetches.count == 2)
+  }
+
+  /// AppsFlyer alone doesn't put addresses on the MMP match.
+  @Test func mmpMatchAddresses_withMMPOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  @Test func mmpMatchAddresses_withEventTrackingOff_returnsNothing() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  private final class ContainerBox: @unchecked Sendable {
+    var container: DependencyContainer?
+  }
+
+  /// Turning tracking off while the lookups run keeps the addresses off the match.
+  @Test func mmpMatchAddresses_whenTrackingTurnsOffDuringTheWait_returnsNothing() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    setMMPFlag(true, on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 2)
+  }
+
+  /// Turning tracking off while the lookups run stops the match request
+  /// itself, not just its addresses.
+  @Test func mmpMatchRequest_whenTrackingTurnsOffDuringTheWait_isNotSent() async {
+    let fetches = FetchCount()
+    let box = ContainerBox()
+    let collector = makeCountingCollector(fetches) {
+      box.container?.configManager.options.eventTrackingBehavior = .none
+    }
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    box.container = dependencyContainer
+    // Other parts of the container hold `unowned` references to the device
+    // helper it made, so keep that one alive while the request uses this one.
+    let originalDeviceHelper: DeviceHelper = dependencyContainer.deviceHelper
+    defer { withExtendedLifetime(originalDeviceHelper) {} }
+    dependencyContainer.deviceHelper = deviceHelper
+    setMMPFlag(true, on: dependencyContainer)
+
+    await #expect(throws: MMPMatchError.trackingDisabled) {
+      _ = try await dependencyContainer.network.matchMMPInstall(
+        idfa: nil,
+        advertiserTrackingEnabled: false,
+        applicationTrackingEnabled: true
+      )
+    }
+    // Tracking was on when the request started, so it did wait for the lookups.
+    #expect(await fetches.count == 2)
+  }
+
+  /// The lookups only serve install attribution, which the `.none` opt-out
+  /// skips, so nothing is looked up or exposed even with the MMP on and an
+  /// AppsFlyer ID set.
+  @Test func templateDevice_withEventTrackingOff_skipsIPCollection() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await fetches.increment()
+        return ["ipV4": "8.8.8.8", "ipV4ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      ipV6Fetch: {
+        await fetches.increment()
+        return ["ipV6": "2001:db8::2", "ipV6ObservedAt": "2026-09-15T20:43:00Z"]
+      },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    dependencyContainer.configManager.options.eventTrackingBehavior = .none
+    setMMPFlag(true, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    deviceHelper.enrichment = makeIPEnrichment()
+
+    #expect(deviceHelper.startIPCollectionIfEnabled() == nil)
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] == nil)
+    #expect(template["ipV6"] == nil)
+    #expect(template["ipV6ObservedAt"] == nil)
+    #expect(await fetches.count == 0)
+  }
+
+  /// On an IPv4 network the enrichment already shows the IPv4 address, so an
+  /// AppsFlyer app doesn't look it up.
+  @Test func templateDevice_withAppsflyerIdOnIPv4_skipsLookup() async {
+    let now = Date(timeIntervalSince1970: 1_789_505_000)
+    let ipV4Fetches = FetchCount()
+    let collector = DeviceIPCollector(
+      ipV4Fetch: {
+        await ipV4Fetches.increment()
+        return [:]
+      },
+      ipV6Fetch: { [:] },
+      now: { now }
+    )
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: collector
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    setAppsflyerId(on: dependencyContainer)
+    deviceHelper.enrichment = Enrichment(
+      user: JSON([:]),
+      device: JSON(["ipAddress": "1.1.1.1", "ipAddressObservedAt": "2026-09-15T20:40:00Z"])
+    )
+
+    let template = await deviceHelper.getTemplateDevice()
+
+    #expect(template["ipV4"] as? String == "1.1.1.1")
+    #expect(template["ipV6"] == nil)
+    #expect(await ipV4Fetches.count == 0)
+    // A lookup would have been started, so this one wouldn't be skipped.
+    #expect(await collector.refreshIfNeeded(families: [4]) != nil)
+  }
+
+  private func expectedLiveValues() async -> (
+    width: Int, height: Int, scale: Double, style: String, category: String
+  ) {
+    await MainActor.run {
+      let screen = UIApplication.sharedApplication?
+        .connectedScenes
+        .compactMap { $0 as? UIWindowScene }
+        .first?
+        .screen ?? UIScreen.main
+      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+        ?? UIScreen.main.traitCollection.preferredContentSizeCategory
+      return (
+        Int(screen.bounds.width.rounded()),
+        Int(screen.bounds.height.rounded()),
+        Double(screen.scale),
+        DeviceHelper.interfaceStyleToken(for: UIScreen.main.traitCollection.userInterfaceStyle),
+        DeviceHelper.contentSizeCategoryToken(for: category)
+      )
+    }
+  }
+
+  /// While reads are disallowed, an instance must serve placeholders rather than
+  /// touch UIKit — the pre-launch state a `configure` in a SwiftUI `App.init`
+  /// puts the SDK in.
+  @Test func instance_whileReadsAreDisallowed_servesPlaceholders() {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+
+    #expect(deviceHelper.screenWidth == 0)
+    #expect(deviceHelper.screenHeight == 0)
+    #expect(deviceHelper.devicePixelRatio == 1.0)
+    #expect(deviceHelper.interfaceStyle == "Unknown")
+    #expect(deviceHelper.fontSize == 16)
+    #expect(deviceHelper.preferredContentSizeCategory == "unspecified")
+  }
+
+  /// Once the gate opens, the next read must fill both caches with the device's
+  /// live values — not keep serving `.placeholder`/`.unavailable`. The traits are
+  /// read from off the main thread so the read exercises the blocking
+  /// empty-cache branch in `refreshUITraits()`, the path `getTemplateDevice()`
+  /// and the MMP match take after a too-early init.
+  @Test func instance_healsOnFirstAllowedRead() async {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+    #expect(deviceHelper.screenWidth == 0)
+    #expect(deviceHelper.interfaceStyle == "Unknown")
+
+    gate.isOpen = true
+    let expected = await expectedLiveValues()
+
+    let read = await Task.detached { () -> (width: Int, height: Int, scale: Double, style: String, category: String) in
+      return (
+        deviceHelper.screenWidth,
+        deviceHelper.screenHeight,
+        deviceHelper.devicePixelRatio,
+        deviceHelper.interfaceStyle,
+        deviceHelper.preferredContentSizeCategory
+      )
+    }.value
+
+    #expect(read.width == expected.width)
+    #expect(read.height == expected.height)
+    #expect(read.scale == expected.scale)
+    #expect(read.style == expected.style)
+    #expect(read.category == expected.category)
+  }
+
+  /// The notification observer must fill both caches after a too-early init.
+  /// Posted as `UIContentSizeCategory.didChangeNotification`, which shares the
+  /// handler with `didBecomeActiveNotification` but doesn't wake the app-session
+  /// machinery of the containers other tests hold. Closing the gate again before
+  /// reading proves the values came from the notification's fill, not from the
+  /// read itself.
+  @MainActor
+  @Test func instance_fillsCachesOnNotification() async {
+    let gate = Gate(false)
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(gate: gate)
+    _ = dependencyContainer
+    #expect(deviceHelper.screenWidth == 0)
+
+    gate.isOpen = true
+    NotificationCenter.default.post(
+      name: UIContentSizeCategory.didChangeNotification,
+      object: nil
+    )
+    // The observer's fill consults the gate when its block *runs*, not when it
+    // was enqueued, so the gate has to stay open until the fill has landed.
+    // `OperationQueue.main` runs one operation at a time in enqueue order, so
+    // an operation added after the post can't run before the observer's block
+    // — and if delivery was inline, the fill already happened. Nothing reads
+    // the helper while the gate is open, so the fill stays the only possible
+    // writer and closing the gate before the assertions keeps the proof.
+    await withCheckedContinuation { continuation in
+      OperationQueue.main.addOperation {
+        continuation.resume()
+      }
+    }
+    gate.isOpen = false
+
+    let expected = await expectedLiveValues()
+    #expect(deviceHelper.screenWidth == expected.width)
+    #expect(deviceHelper.screenHeight == expected.height)
+    #expect(deviceHelper.devicePixelRatio == expected.scale)
+    #expect(deviceHelper.interfaceStyle == expected.style)
+    #expect(deviceHelper.preferredContentSizeCategory == expected.category)
   }
 }

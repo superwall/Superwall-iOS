@@ -18,7 +18,9 @@ extension Superwall {
   ///   - paywallStatePublisher: A `PassthroughSubject` that gets sent ``PaywallState`` objects.
   ///   - dependencyContainer: Used with testing only.
   ///
-  /// - Returns: A ``PaywallViewController``.
+  /// - Returns: A ``PaywallViewController`` and the paywall resolved for this
+  /// request. The paywall is applied to the view controller when the request
+  /// claims it, so that an earlier request that's on screen isn't changed.
   /// - throws: An error if unable to retrieve paywall or a paywall is
   /// already presented.
   func getPaywallViewController(
@@ -27,7 +29,7 @@ extension Superwall {
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil,
     dependencyContainer: DependencyContainer
-  ) async throws -> PaywallViewController {
+  ) async throws -> (viewController: PaywallViewController, paywall: Paywall) {
     let experiment = try await getExperiment(
       request: request,
       audienceOutcome: audienceOutcome,
@@ -70,11 +72,10 @@ extension Superwall {
         for: paywall,
         isDebuggerLaunched: paywallRequest.isDebuggerLaunched,
         isForPresentation: isForPresentation,
-        isPreloading: false,
         delegate: delegate
       )
 
-      return paywallViewController
+      return (paywallViewController, paywall)
     } catch {
       throw await presentationFailure(error, request, debugInfo, paywallStatePublisher)
     }

@@ -27,8 +27,15 @@ final class AudioSessionProxy: NSObject {
   // ROT13("requestRecordPermission:")
   static let mangledRequestPermissionSelector = "erdhrfgErpbeqCrezvffvba:"
 
-  static var audioSessionClass: AnyClass? {
-    NSClassFromString(mangledClassName.rot13())
+  private let audioSessionClass: AnyClass?
+
+  init(
+    audioSessionClass: AnyClass? = NSClassFromString(
+      AudioSessionProxy.mangledClassName.rot13()
+    )
+  ) {
+    self.audioSessionClass = audioSessionClass
+    super.init()
   }
 
   private static func classIMP(_ cls: AnyClass, _ sel: Selector) -> IMP? {
@@ -42,7 +49,7 @@ final class AudioSessionProxy: NSObject {
   }
 
   func sharedInstance() -> AnyObject? {
-    let cls: AnyClass = Self.audioSessionClass ?? FakeAudioSession.self
+    guard let cls = audioSessionClass else { return nil }
     let sel = NSSelectorFromString(Self.mangledSharedInstanceSelector.rot13())
 
     guard let imp = Self.classIMP(cls, sel) else { return nil }
@@ -58,9 +65,10 @@ final class AudioSessionProxy: NSObject {
   // 0x64656e79 ('deny') = denied
   // 0x67726e74 ('grnt') = granted
   func recordPermission() -> Int {
-    let cls: AnyClass = Self.audioSessionClass ?? FakeAudioSession.self
-
-    guard let instance = sharedInstance() else {
+    guard
+      let cls = audioSessionClass,
+      let instance = sharedInstance()
+    else {
       return -1
     }
 
@@ -73,10 +81,15 @@ final class AudioSessionProxy: NSObject {
     return function(instance, sel)
   }
 
-  func requestRecordPermission() async -> Bool {
-    let cls: AnyClass = Self.audioSessionClass ?? FakeAudioSession.self
-
-    guard let instance = sharedInstance() else {
+  // Named away from Apple's `requestRecordPermission` deliberately:
+  // `withCheckedContinuation`'s `function: String = #function` default expands the
+  // enclosing method name into a string literal in the binary, which is the same
+  // leak the mangling exists to prevent.
+  func requestPermission() async -> Bool {
+    guard
+      let cls = audioSessionClass,
+      let instance = sharedInstance()
+    else {
       return false
     }
 

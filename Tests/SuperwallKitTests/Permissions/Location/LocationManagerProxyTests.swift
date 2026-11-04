@@ -50,45 +50,36 @@ struct LocationManagerProxyTests {
   }
 }
 
-// MARK: - FakeLocationManager Tests
+// MARK: - Missing CoreLocation Tests
 
+/// These replace the tests for the deleted `FakeLocationManager`. The fake stood in
+/// for `CLLocationManager` when CoreLocation was unavailable, but its `@objc` members
+/// emitted Apple's real selector names into the binary — the leak this SDK's mangling
+/// exists to prevent. The proxy now guards on a missing class instead, so pin what it
+/// returns down that path.
 @Suite
-struct FakeLocationManagerTests {
-  @Test func authorizationStatus_returnsNotDetermined() {
-    let manager = FakeLocationManager()
-    #expect(manager.authorizationStatus == FakeLocationAuthorizationStatus.notDetermined.rawValue)
+struct LocationManagerProxyMissingClassTests {
+  @Test func missingManager_authorizationStatus_returnsNotDetermined() {
+    let proxy = LocationManagerProxy(locationManagerClass: nil)
+    #expect(proxy.authorizationStatus() == FakeLocationAuthorizationStatus.notDetermined.rawValue)
   }
 
-  @Test func requestWhenInUseAuthorization_doesNotCrash() {
-    let manager = FakeLocationManager()
-    manager.requestWhenInUseAuthorization()
-    // Should complete without crashing
+  /// Reports failure rather than the fake's silent success. The caller resumes with
+  /// `.unsupported` on `false`; with the fake it saw `true` and then waited forever
+  /// for a delegate callback the fake never made.
+  @Test func missingManager_requestWhenInUseAuthorization_reportsFailure() {
+    let proxy = LocationManagerProxy(locationManagerClass: nil)
+    #expect(proxy.requestWhenInUseAuthorization() == false)
   }
 
-  @Test func requestAlwaysAuthorization_doesNotCrash() {
-    let manager = FakeLocationManager()
-    manager.requestAlwaysAuthorization()
-    // Should complete without crashing
+  @Test func missingManager_requestAlwaysAuthorization_reportsFailure() {
+    let proxy = LocationManagerProxy(locationManagerClass: nil)
+    #expect(proxy.requestAlwaysAuthorization() == false)
   }
 
-  @Test func delegate_canBeSet() {
-    let manager = FakeLocationManager()
-    let delegate = NSObject()
-
-    manager.delegate = delegate
-    #expect(manager.delegate === delegate)
-  }
-
-  @Test func delegate_isWeak() {
-    let manager = FakeLocationManager()
-
-    autoreleasepool {
-      let delegate = NSObject()
-      manager.delegate = delegate
-      #expect(manager.delegate != nil)
-    }
-
-    // After autoreleasepool, the delegate should be deallocated
-    #expect(manager.delegate == nil)
+  @Test func missingManager_setDelegate_doesNotCrash() {
+    let proxy = LocationManagerProxy(locationManagerClass: nil)
+    proxy.setDelegate(LocationPermissionDelegate { _ in })
+    proxy.setDelegate(nil)
   }
 }

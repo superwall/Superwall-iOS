@@ -33,23 +33,22 @@ struct TrackingManagerProxyTests {
     // Should return a valid ATTrackingManager.AuthorizationStatus value (0-3)
     #expect(status >= 0 && status <= 3)
   }
-}
 
-// MARK: - FakeTrackingManager Tests
+  @Test func trackingPlistKey_isCorrectlyDecoded() {
+    #expect(PermissionHandler.PlistKey.tracking == "NSUserTrackingUsageDescription")
+  }
 
-@Suite
-struct FakeTrackingManagerTests {
-  @Test func trackingAuthorizationStatus_returnsNotDetermined() {
-    let status = FakeTrackingManager.trackingAuthorizationStatus
+  @Test func missingManager_trackingAuthorizationStatus_returnsNotDetermined() {
+    let proxy = TrackingManagerProxy(trackingManagerClass: nil)
+    let status = proxy.trackingAuthorizationStatus()
+
     #expect(status == FakeTrackingAuthorizationStatus.notDetermined.rawValue)
   }
 
-  @Test func requestTrackingAuthorization_callsCompletionWithNotDetermined() async {
-    await withCheckedContinuation { continuation in
-      FakeTrackingManager.requestTrackingAuthorization { status in
-        #expect(status == FakeTrackingAuthorizationStatus.notDetermined.rawValue)
-        continuation.resume()
-      }
-    }
+  @Test func missingManager_requestAuthorization_returnsNotDetermined() async {
+    let proxy = TrackingManagerProxy(trackingManagerClass: nil)
+    let status = await proxy.requestAuthorization()
+
+    #expect(status == FakeTrackingAuthorizationStatus.notDetermined.rawValue)
   }
 }

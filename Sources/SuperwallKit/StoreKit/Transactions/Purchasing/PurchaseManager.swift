@@ -24,7 +24,6 @@ final class PurchaseManager: Purchasing {
 
   // swiftlint:disable:next identifier_name
   var _sk2TransactionListener: Any?
-  @available(iOS 15.0, *)
   var sk2TransactionListener: SK2TransactionListener {
     // swiftlint:disable:next force_cast force_unwrapping
     return self._sk2TransactionListener! as! SK2TransactionListener
@@ -49,8 +48,7 @@ final class PurchaseManager: Purchasing {
     let options = factory.makeSuperwallOptions()
     let shouldFinishTransactions = !hasPurchaseController && !options.shouldObservePurchases
 
-    if #available(iOS 15.0, *),
-      storeKitVersion == .storeKit2 {
+    if storeKitVersion == .storeKit2 {
       purchaser = ProductPurchaserSK2(
         identityManager: identityManager,
         receiptManager: receiptManager,

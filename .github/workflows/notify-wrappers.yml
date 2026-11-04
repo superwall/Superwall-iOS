@@ -1,0 +1,72 @@
+# Tells the cross-platform wrappers (Flutter, Expo, KMP) that a new native SDK
+# release exists. Each wrapper's native-sdk-bump.yml picks the event up, bumps
+# its pinned native version, and opens a PR (with any integration work done by
+# an agent on top).
+#
+# The release workflow (release.yml) calls this once the version is published
+# and has reached the CocoaPods CDN: Expo depends on SuperwallKit through
+# CocoaPods, so its bump can't build any earlier. It can also be run by hand
+# to announce a version again.
+#
+# Requires the WRAPPER_DISPATCH_TOKEN secret: a fine-grained PAT (or GitHub App
+# token) with "Contents: read & write" on every repo in WRAPPER_REPOS — that is
+# the permission the repository_dispatch API checks. GITHUB_TOKEN cannot
+# dispatch into other repositories.
+name: Notify wrapper SDKs
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Released version to announce (e.g. 4.18.0)
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Released version to announce (e.g. 4.18.0)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  PLATFORM: ios
+  WRAPPER_REPOS: superwall/Superwall-Flutter superwall/expo-superwall superwall/Superwall-KMP
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Dispatch native-sdk-release
+        env:
+          GH_TOKEN: ${{ secrets.WRAPPER_DISPATCH_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          VERSION="${VERSION#v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::notice::'$VERSION' is not a stable x.y.z version, not notifying wrappers."
+            exit 0
+          fi
+          # SPM accepts both "x.y.z" and "vx.y.z" tags.
+          if ! git ls-remote --exit-code --tags "https://github.com/$GITHUB_REPOSITORY.git" \
+               "refs/tags/$VERSION" "refs/tags/v$VERSION" > /dev/null; then
+            echo "::error::No $VERSION tag in $GITHUB_REPOSITORY, so SPM can't resolve it. Not notifying wrappers."
+            exit 1
+          fi
+          failed=0
+          for repo in $WRAPPER_REPOS; do
+            # One wrapper being unreachable must not stop the others.
+            if gh api "repos/$repo/dispatches" \
+                 -f event_type=native-sdk-release \
+                 -f "client_payload[platform]=$PLATFORM" \
+                 -f "client_payload[version]=$VERSION"; then
+              echo "Notified $repo of $PLATFORM $VERSION"
+            else
+              echo "::error::Could not dispatch to $repo"
+              failed=1
+            fi
+          done
+          exit $failed
