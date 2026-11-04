@@ -166,28 +166,23 @@ enum TrackingLogic {
 
   /// Checks whether the user is registering a placement with the same name as a superwall event.
   static func checkNotSuperwallEvent(_ event: String) throws {
-    for superwallEvent in SuperwallEventObjc.allCases
-    where superwallEvent.description == event {
-      Logger.debug(
-        logLevel: .error,
-        scope: .paywallPresentation,
-        message: "Do not register a placement with the same name as a SuperwallEvent",
-        info: ["event": event]
-      )
-      let userInfo: [String: Any] = [
-        NSLocalizedDescriptionKey: NSLocalizedString(
-          "",
-          value: "Do not register a placement with the same name as a SuperwallEvent",
-          comment: ""
-        )
-      ]
-      let error = NSError(
-        domain: "com.superwall",
-        code: 400,
-        userInfo: userInfo
-      )
-      throw error
+    let isSuperwallEvent = SuperwallEventObjc.allCases.contains { $0.description == event }
+    guard isSuperwallEvent else {
+      return
     }
+    let message = "\"\(event)\" is the name of a standard Superwall event, so it can't be "
+      + "used as a placement. Rename your placement."
+    Logger.debug(
+      logLevel: .error,
+      scope: .paywallPresentation,
+      message: message,
+      info: ["event": event]
+    )
+    throw NSError(
+      domain: "com.superwall",
+      code: 400,
+      userInfo: [NSLocalizedDescriptionKey: message]
+    )
   }
 
   static func canTriggerPaywall(

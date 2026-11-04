@@ -258,6 +258,8 @@ extension Superwall {
     do {
       try TrackingLogic.checkNotSuperwallEvent(placement)
     } catch {
+      publisher.send(.presentationError(error))
+      publisher.send(completion: .finished)
       return
     }
 

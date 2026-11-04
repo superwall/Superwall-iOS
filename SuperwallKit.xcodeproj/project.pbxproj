@@ -204,6 +204,7 @@
 		27556DACB728CF1BFD2F364F /* ASN1Decoder+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = D07ACB41E733B6CF8EA722E0 /* ASN1Decoder+Extras.swift */; };
 		27745BFB9659D731639AF8A0 /* IdentityOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 320AA5349848F696950F441A /* IdentityOptions.swift */; };
 		27922394A1279BFEFB804A7D /* SupportEmailComposerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55747A8F33554B2A163CFCAC /* SupportEmailComposerTests.swift */; };
+		27BE7D61E072E9E2DDCA5A3C /* StandardEventPlacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0846AAAB3C367F0CFD12F03 /* StandardEventPlacementTests.swift */; };
 		27DC2F109FAE3357DC8418F6 /* AutomaticPurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB1F47410CBC84D9ABD2F14 /* AutomaticPurchaseController.swift */; };
 		28A1E7AFF222A9C36F4AE019 /* Superwall+CustomerCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618F0D37FD3B2213A296DEF4 /* Superwall+CustomerCenter.swift */; };
 		28FED9AE68193B568FF887E1 /* Superscript in Frameworks */ = {isa = PBXBuildFile; productRef = 721C720FA8360B9851DE843D /* Superscript */; };
@@ -2041,6 +2042,7 @@
 		EEE0510BC2F7917AA57B896D /* AlertControllerFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertControllerFactory.swift; sourceTree = "<group>"; };
 		EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeManager.swift; sourceTree = "<group>"; };
 		EFA6E24E16D14D1A71DC568F /* GetPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GetPresenter.swift; sourceTree = "<group>"; };
+		F0846AAAB3C367F0CFD12F03 /* StandardEventPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandardEventPlacementTests.swift; sourceTree = "<group>"; };
 		F115F0BE94943D7B60CDDD4A /* LogPresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogPresentation.swift; sourceTree = "<group>"; };
 		F13CC9902419E7D68B47C184 /* PopupTransitionDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupTransitionDelegate.swift; sourceTree = "<group>"; };
 		F16AFE9C93A441CFB6A95F10 /* String+CamelCase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+CamelCase.swift"; sourceTree = "<group>"; };
@@ -4230,6 +4232,7 @@
 			children = (
 				04B18C784B150F3189D5E38F /* CustomCallbackRegistryTests.swift */,
 				3B42581DA875E3D9D0D3791B /* PresentationIdTests.swift */,
+				F0846AAAB3C367F0CFD12F03 /* StandardEventPlacementTests.swift */,
 				00C4C5AFA2ED656B615DCBCE /* Audience Logic */,
 				13E5E212DB0A9ECD6AB2D061 /* Internal Presentation */,
 			);
@@ -4724,6 +4727,7 @@
 				97879F627E5C226333E691F9 /* SWWebViewLoadingHandlerTests.swift in Sources */,
 				56A5E5D081BAB396DCA5F927 /* SWWebViewLogicTests.swift in Sources */,
 				42DC2D582F485DC4FCB2DB85 /* SerialTaskCoordinatorTests.swift in Sources */,
+				27BE7D61E072E9E2DDCA5A3C /* StandardEventPlacementTests.swift in Sources */,
 				6112EC99DE7341E8A3D12C8F /* StorageMock.swift in Sources */,
 				1834A99EBB9B159F0DC1A7A0 /* StorageTests.swift in Sources */,
 				1B36B4ABCC549A42CAC3ECF9 /* StoreKitManagerTests.swift in Sources */,
