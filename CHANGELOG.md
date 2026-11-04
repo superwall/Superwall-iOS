@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.19.1
 
+### Enhancements
+
+- Adds the `webApplePayReadiness` device attribute for apps with web checkout: `ready` when the browser can pay with Apple Pay at your checkout domain, `notReady` when Wallet has no card it can pay with there (or Safari's "Check for Apple Pay" is off), and `unknown:<reason>` when it couldn't be measured. Use `device.webApplePayReadiness == "notReady"` in an audience filter to send those users to an in-app purchase paywall instead of the web. The answer is stored and refreshed in the background once per launch. Turn it off with `SuperwallOptions.isWebApplePayReadinessEnabled`.
+
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.

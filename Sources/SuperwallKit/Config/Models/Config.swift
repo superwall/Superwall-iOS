@@ -35,18 +35,25 @@ struct Config: Codable, Equatable {
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
     let restoreAccessURL: URL
+    /// The web app's own domain, such as `https://myapp.superwall.app`, which
+    /// web checkout and teleported paywalls are served from. `nil` when the
+    /// server doesn't send it.
+    let domainBaseURL: URL?
 
     enum CodingKeys: String, CodingKey {
       case entitlementsMaxAgeMs = "entitlementsMaxAgeMs"
       case restoreAccessURL = "restoreAccessUrl"
+      case domainBaseURL = "domainBaseUrl"
     }
 
     init(
       entitlementsMaxAge: Seconds,
-      restoreAccessURL: URL
+      restoreAccessURL: URL,
+      domainBaseURL: URL? = nil
     ) {
       self.entitlementsMaxAge = entitlementsMaxAge
       self.restoreAccessURL = restoreAccessURL
+      self.domainBaseURL = domainBaseURL
     }
 
     init(from decoder: Decoder) throws {
@@ -62,12 +69,17 @@ struct Config: Codable, Equatable {
         // swiftlint:disable:next force_unwrapping
         restoreAccessURL = URL(string: "https://superwall.com")!
       }
+
+      domainBaseURL = (try? values.decodeIfPresent(String.self, forKey: .domainBaseURL))
+        .flatMap { $0 }
+        .flatMap { URL(string: $0) }
     }
 
     func encode(to encoder: Encoder) throws {
       var container = encoder.container(keyedBy: CodingKeys.self)
       try container.encode((entitlementsMaxAge * 1000), forKey: .entitlementsMaxAgeMs)
       try container.encode(restoreAccessURL.absoluteString, forKey: .restoreAccessURL)
+      try container.encodeIfPresent(domainBaseURL?.absoluteString, forKey: .domainBaseURL)
     }
   }
 

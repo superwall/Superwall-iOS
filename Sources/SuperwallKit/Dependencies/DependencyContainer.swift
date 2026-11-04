@@ -504,6 +504,7 @@ extension DependencyContainer: AudienceFilterAttributesFactory {
     var userAttributes = identityManager.userAttributes
     userAttributes["isLoggedIn"] = identityManager.isLoggedIn
 
+    await deviceHelper.waitForWebApplePayReadinessIfNeeded(for: configManager.config)
     let deviceAttributes = await deviceHelper.getDeviceAttributes(
       since: placement,
       computedPropertyRequests: computedPropertyRequests,

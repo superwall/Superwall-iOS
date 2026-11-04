@@ -489,6 +489,7 @@ class ConfigManager {
     triggersByPlacementName = ConfigLogic.getTriggersByPlacementName(from: config.triggers)
     choosePaywallVariants(from: config.triggers)
     deviceHelper.startIPCollectionIfEnabled(for: config)
+    deviceHelper.startWebApplePayReadinessIfEnabled(for: config)
   }
 
   /// Applies `config`, loads purchases from StoreKit, and sends `configState`.

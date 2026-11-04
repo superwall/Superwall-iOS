@@ -251,6 +251,16 @@ enum LatestEnrichment: Storable {
   typealias Value = Enrichment
 }
 
+/// The last real `webApplePayReadiness` measurement. It describes the device's
+/// Wallet rather than the user, so it survives `reset()`.
+enum WebApplePayReadinessStorage: Storable {
+  static var key: String {
+    "store.webApplePayReadiness"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = WebApplePayMeasurement
+}
+
 /// Apple Search Ads attribution is install-scoped — the campaign that drove
 /// the install doesn't change when a user logs out and another user logs in
 /// on the same device. So all the AdServices state lives in

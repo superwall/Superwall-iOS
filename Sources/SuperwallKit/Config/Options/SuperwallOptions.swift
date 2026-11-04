@@ -428,6 +428,24 @@ public final class SuperwallOptions: NSObject, Encodable {
   /// Enables experimental device variables. These are subject to change. Defaults to `false`.
   public var enableExperimentalDeviceVariables = false
 
+  /// Measures whether the browser can pay with Apple Pay at your web checkout,
+  /// and reports it as the `webApplePayReadiness` device attribute: `ready`,
+  /// `notReady`, or `unknown:<reason>`. Defaults to `true`.
+  ///
+  /// Use it in an audience filter to send users whose browser has no Apple Pay
+  /// card for your checkout to an in-app purchase paywall instead of the web,
+  /// for example `device.webApplePayReadiness == "notReady"`.
+  ///
+  /// It only runs for apps with a web checkout domain set up on the dashboard.
+  /// The SDK loads a tiny page at that domain in a hidden web view, with nothing
+  /// fetched over the network, and asks Apple Pay whether the Wallet holds a card
+  /// it can pay with there. The answer is stored and refreshed in the background
+  /// once per launch. On the first launch, an audience filter that uses the
+  /// attribute waits up to two seconds for the first answer.
+  ///
+  /// When `false`, nothing is measured and the attribute reads `unknown:disabled`.
+  public var isWebApplePayReadinessEnabled = true
+
   /// Disables the app transaction check on SDK launch. Defaults to `false`.
   public var shouldBypassAppTransactionCheck = false
 
@@ -561,6 +579,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     case maxConfigRetryCount
     case shouldObservePurchases
     case enableExperimentalDeviceVariables
+    case isWebApplePayReadinessEnabled
     case testModeBehavior
     case adUserDataConsent
     case adPersonalizationConsent
@@ -599,6 +618,7 @@ public final class SuperwallOptions: NSObject, Encodable {
     try container.encode(maxConfigRetryCount, forKey: .maxConfigRetryCount)
     try container.encode(shouldObservePurchases, forKey: .shouldObservePurchases)
     try container.encode(enableExperimentalDeviceVariables, forKey: .enableExperimentalDeviceVariables)
+    try container.encode(isWebApplePayReadinessEnabled, forKey: .isWebApplePayReadinessEnabled)
     try container.encode(testModeBehavior.description, forKey: .testModeBehavior)
     try container.encode(adConsent.adUserData.description, forKey: .adUserDataConsent)
     try container.encode(adConsent.adPersonalization.description, forKey: .adPersonalizationConsent)
