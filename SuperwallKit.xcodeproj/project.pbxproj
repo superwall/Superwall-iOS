@@ -32,6 +32,7 @@
 		0452310946E325D8B753A41E /* CustomerCenterSheetOwnershipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5444B4623A190F24DCCB93AB /* CustomerCenterSheetOwnershipTests.swift */; };
 		04837AB515A46E1CF2ACB536 /* PaywallOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A64CCBCB23CC1715DF79AC /* PaywallOptions.swift */; };
 		049C6308BED7973E01770B69 /* WebEntitlementRedeemer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22919EFD263425D38E7D9D38 /* WebEntitlementRedeemer.swift */; };
+		050E697E5DD824174D9C5B50 /* NativeApplePay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848BFCA672D4B274F27B40A8 /* NativeApplePay.swift */; };
 		05232C3C67BD40FC48356705 /* CustomerCenterEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518841D661079BCD21DA7692 /* CustomerCenterEnvironment.swift */; };
 		0526B5E40C69803EF4762661 /* ManagedEventData.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3F4F74393061C17CEB18F90 /* ManagedEventData.swift */; };
 		052FC539131621EA1CEED14D /* EvaluationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911CD5859EC1BE7E428F06C4 /* EvaluationResult.swift */; };
@@ -284,6 +285,7 @@
 		385EC34379B7C967B3207450 /* PermissionsHandler+Contacts.swift in Sources */ = {isa = PBXBuildFile; fileRef = D561728FDB68F572D5E33223 /* PermissionsHandler+Contacts.swift */; };
 		3860BFEF3E9A4F76A90480F1 /* TestModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF301A818CE83F4EBB3A7003 /* TestModeManager.swift */; };
 		38A74D299EDFCA3F0A5261B7 /* TransactionErrorLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76A719AD2F4475F83DFC9575 /* TransactionErrorLogic.swift */; };
+		38BA3F4333B488A893EBBAFE /* WebApplePayReadinessTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B818B0AB57BD7E567D1C9F3F /* WebApplePayReadinessTracker.swift */; };
 		3901D8DF937E01D4D60F7D5E /* ReceiptManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41BC64245E011EF07D9A195A /* ReceiptManagerTests.swift */; };
 		3953A52BFB14974A6C65D9C1 /* FakeTrackingAuthorizationStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 019FA4010BA11D24C68B8544 /* FakeTrackingAuthorizationStatus.swift */; };
 		3A4A22150A6EB1C234BAC722 /* TestModeRestoreDrawer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A0325FB47A06456B909BCB5 /* TestModeRestoreDrawer.swift */; };
@@ -401,6 +403,7 @@
 		4D37588A69A4C770C86FC585 /* RedeemRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8719AC2E83128EE469E58C36 /* RedeemRequest.swift */; };
 		4D6E3B36581544C778A5287E /* DevicePreloadScriptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7AF7DDBB49A9C91C817DE35 /* DevicePreloadScriptTests.swift */; };
 		4DB054F621604B8103272E96 /* PublicPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01E54BC1CA38F828AC77F774 /* PublicPresentation.swift */; };
+		4DB829F8A43F15DED2ED45CD /* WebApplePayProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0D7DA0D917BCEF91880037 /* WebApplePayProbe.swift */; };
 		4DE4C3ECAF0746E209D9999E /* CustomerCenterLifecycleProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1F45571132885930AFC67E2 /* CustomerCenterLifecycleProbe.swift */; };
 		4E04140F2CFFB082EB62C249 /* SWBounceButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 299F91895EE88281B5ED8320 /* SWBounceButton.swift */; };
 		4E078EFFD0C1992563021220 /* PurchaseController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D45DC0981EE9BBE3BF56C48 /* PurchaseController.swift */; };
@@ -452,6 +455,7 @@
 		57822DEE0B4860565F153C25 /* EmptyResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = B88E86C67F934540D846B8BA /* EmptyResponse.swift */; };
 		57B142D37BC344DC595E7327 /* CustomerCenterConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E48D6D7B8E5EFCC2623446B /* CustomerCenterConfiguration.swift */; };
 		57D9DBEAF532864ADD42E5D0 /* PresentationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C825F0AD231C62462873E51A /* PresentationRequest.swift */; };
+		5812EF5C757344D06BE9A01F /* NativeApplePay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 848BFCA672D4B274F27B40A8 /* NativeApplePay.swift */; };
 		58130FF342A6A6555E51F3FC /* MacDebugger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35D33F447370CBA94B4B947 /* MacDebugger.swift */; };
 		58170B6B2E4224AD27549567 /* UserInitiatedEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE406AAED11F2B63E4A5A1FD /* UserInitiatedEvents.swift */; };
 		58507339B3F06022CD8157DF /* FreeTrialTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7553D295A9E169B45FAC1477 /* FreeTrialTemplate.swift */; };
@@ -482,6 +486,7 @@
 		6032E2C998A812CF03B54E7F /* MockIntroductoryPeriod.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CC60976C0805D54B53CD384 /* MockIntroductoryPeriod.swift */; };
 		605ADA9ABA10D107D617EA21 /* GetPresenterOperatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63EA0BC28040842DDC0E4AF8 /* GetPresenterOperatorTests.swift */; };
 		6088EB3672B7E2987C008C39 /* EntitlementPriorityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D195B8E7B45C80D80BBBAF64 /* EntitlementPriorityTests.swift */; };
+		60C354A0D1C0CDA8964EF2D1 /* StoreKitTransactionLookupMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B56F9062BB8F0246AF0079 /* StoreKitTransactionLookupMock.swift */; };
 		6112EC99DE7341E8A3D12C8F /* StorageMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = BEE2AED3E355128B1555EA7C /* StorageMock.swift */; };
 		612746B0E412DECFE4C7C011 /* InAppReceiptAttribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9553EC1E394EF7AE8788291 /* InAppReceiptAttribute.swift */; };
 		61AE58F17230AE1578B9FB19 /* Documentation.docc in Sources */ = {isa = PBXBuildFile; fileRef = C22CA9431D5F791BE7A9BE27 /* Documentation.docc */; };
@@ -597,6 +602,7 @@
 		79F386FF651A6616C15C8A46 /* Trigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2628BCB13E80DC539F35C7B5 /* Trigger.swift */; };
 		7A23452F93A7ADCADBED6CD0 /* GrantedEntitlementsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 059B55B97426DFB82CF0366E /* GrantedEntitlementsTests.swift */; };
 		7A2F61104667FE50C244E755 /* Platform.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3E983DEEDC533AA672C8B9 /* Platform.swift */; };
+		7A36E0BB46496AEB2C3D2F7E /* NativeApplePayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D69993F2485688A800EF237 /* NativeApplePayTests.swift */; };
 		7A7AF8B38747AFACC902266F /* Stubbable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3BFF03C1812D7239003448A /* Stubbable.swift */; };
 		7A7D4424C0987AE40B61575E /* StoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CDDA18AABDC7C71ECB7D0FA /* StoreProductDiscount.swift */; };
 		7A810CAE7DEB417315A9CE82 /* StripeProductType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE89E115B095A63FAC09719 /* StripeProductType.swift */; };
@@ -729,7 +735,6 @@
 		97E7C13B7DA2552238C727CD /* PaywallViewControllerCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAEECE2DBFEB8817E6C36DA /* PaywallViewControllerCache.swift */; };
 		97E87A1449FFC7E043A52C30 /* CustomStoreCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423DA7BED2F088AC6F8E7038 /* CustomStoreCheckout.swift */; };
 		98193046E2347D4D6D74F408 /* SystemInfo+NotificationName.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD23BBF9EA198ED8798A8F62 /* SystemInfo+NotificationName.swift */; };
-		9828A5D9B8420A57FAE97D50 /* StoreKitTransactionLookupMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */; };
 		98BFA6594FE9A9097AC5F88F /* ConfigState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A1C8B0D79B8AC70ECF0CBB /* ConfigState.swift */; };
 		98D9EE858E3181C5BA99200E /* SurveyShowCondition.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5E2D026C30691F11D4E839F /* SurveyShowCondition.swift */; };
 		98E2EDDAB9D000D64DAAE029 /* CustomerCenterViewModel+Catalogue.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDA4A3208522A84B3070BBA /* CustomerCenterViewModel+Catalogue.swift */; };
@@ -855,6 +860,7 @@
 		AD351F8B209D471513FF1CC0 /* EntitlementsResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EBE35B7BB7FEBE02C8992D8 /* EntitlementsResponse.swift */; };
 		AD37AF683B693B5088CF3D47 /* MacDeviceInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD20518E533BF9E047E172E9 /* MacDeviceInfo.swift */; };
 		AD5EBB6DBA919E3CBC5B85B7 /* SessionEventsRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B40D6FA6547CB5B9520B0B64 /* SessionEventsRequest.swift */; };
+		AD61F0CE5D5FEB1FF78B1B69 /* StoreKitTransactionLookupMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7B56F9062BB8F0246AF0079 /* StoreKitTransactionLookupMock.swift */; };
 		AE0555AA0B433427E5D17309 /* InternalGetPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F57F454704875FFFC5CE1827 /* InternalGetPresentationResult.swift */; };
 		AE2C6A68BDCC41ADC53C4C04 /* UIView+SpringAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F636156244B674A56ADC461C /* UIView+SpringAnimation.swift */; };
 		AE4D18DF834BF0C7EF32C5D2 /* PaywallMessageHandlerDelegateMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = ECB01EC5CDEF1066F0946CB7 /* PaywallMessageHandlerDelegateMock.swift */; };
@@ -918,6 +924,7 @@
 		B84CA6014D8D6EF201DB3935 /* LocalizationGrouping.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABC1253C6D5DD8D967BE05D1 /* LocalizationGrouping.swift */; };
 		B89435087910E6B501471622 /* Email.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BDB77756A3775FF4ED31C48 /* Email.swift */; };
 		B91D4755E1FDCBBC2D3CD8C3 /* InternalPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B36299FDDEC7022F0F45A801 /* InternalPresentation.swift */; };
+		B920EAA8F48CE211C6997654 /* WebApplePayProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0D7DA0D917BCEF91880037 /* WebApplePayProbe.swift */; };
 		B967996F7B613CDD028E6658 /* LoggerMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4976DC691C3001D7B49DE270 /* LoggerMock.swift */; };
 		B9964D534AC18F336FF95282 /* CustomStoreCheckout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 423DA7BED2F088AC6F8E7038 /* CustomStoreCheckout.swift */; };
 		BA0F9C3C11CD8F5367839DA6 /* SuperwallEventObjc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63F4E993A2A86075BB6FB9FD /* SuperwallEventObjc.swift */; };
@@ -960,6 +967,7 @@
 		C11C2C2A2D9E795AA1C7B887 /* TriggerAudienceOccurrence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A716D8F8AA3CD7BBED04F4F /* TriggerAudienceOccurrence.swift */; };
 		C134D65AEE8476DF0A8A2D82 /* DispatchQueueBacked.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ABC4A0048583B47040C498B /* DispatchQueueBacked.swift */; };
 		C18384B9272067CFE7C7610D /* StoreProductType.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5A959F1F550446C980DC5E5 /* StoreProductType.swift */; };
+		C1F97ED04BCA3A266F008E36 /* WebApplePayReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F7FB6DB9EB4B645402FEBD /* WebApplePayReadinessTests.swift */; };
 		C23744AAAF31A533693281B6 /* SurveyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61B5ABEC694245E0DC00E409 /* SurveyManager.swift */; };
 		C2FB4D9A0320946B3FEA1BC7 /* PaywallPresentationStyleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90839170F942BAB77C473639 /* PaywallPresentationStyleTests.swift */; };
 		C32766E26E92FD03B1BA60A3 /* ProductPurchaserSK1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A56D712042043783D7CA142 /* ProductPurchaserSK1.swift */; };
@@ -982,6 +990,7 @@
 		C68E1F083843DDC97EFF55F6 /* StripeStoreProductDiscount.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AD42859B8BFEC078665FA1E /* StripeStoreProductDiscount.swift */; };
 		C68EF5D7D3FD7E9FB2A95C47 /* Dictionary+Filter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1752442EC1C51EE4D01141AF /* Dictionary+Filter.swift */; };
 		C69AD041B29701D044F84F1A /* TestModeManagerFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = B17DB6AB272712E9350966E4 /* TestModeManagerFactory.swift */; };
+		C6BBCA5CF4264A75CCCB68B7 /* WebApplePayReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9F7FB6DB9EB4B645402FEBD /* WebApplePayReadinessTests.swift */; };
 		C6C4E18C325B984BAE93CF49 /* MacDebugger.swift in Sources */ = {isa = PBXBuildFile; fileRef = B35D33F447370CBA94B4B947 /* MacDebugger.swift */; };
 		C71FC781059E1BE197CE9C38 /* AppVersionComparator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 120D7D604E496BA935989AEA /* AppVersionComparator.swift */; };
 		C738CD9CD4736A0FE2C24B58 /* CoreDataStoreLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E90878D4A3CAB9ADDB7245D /* CoreDataStoreLocation.swift */; };
@@ -1076,12 +1085,12 @@
 		D89F615A7826947C9246F6B1 /* WebArchive.swift in Sources */ = {isa = PBXBuildFile; fileRef = E72593E1D4123B176EC83499 /* WebArchive.swift */; };
 		D90B2915CA23976F48794449 /* CustomStoreTransaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0704117EF9F98A047714162B /* CustomStoreTransaction.swift */; };
 		D916475C6CE464EEB094F419 /* TaskRetryLogic.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7867A3C9B173BC2D6000937 /* TaskRetryLogic.swift */; };
+		D93421E71C0230B342BC2B8D /* NativeApplePayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D69993F2485688A800EF237 /* NativeApplePayTests.swift */; };
 		D978EAD4FA4865B5E07BF03B /* Future+Async.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DE36D141F461F6E945823FA /* Future+Async.swift */; };
 		D9891C19CF6E7ABB1EBBF760 /* SupportEmailComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AC35B7D7641BEB17798C199 /* SupportEmailComposer.swift */; };
 		D99C565B5803B6ECE29A3D8B /* CustomerCenterEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 518841D661079BCD21DA7692 /* CustomerCenterEnvironment.swift */; };
 		D9A7960B069AC50F1D8CAF22 /* AdServicesAttributionAttempts.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D538EA68425ECB218BA3CA /* AdServicesAttributionAttempts.swift */; };
 		D9F09F3831386B3F55B47381 /* ProductStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7106327DAD1C9044E4A57DD5 /* ProductStore.swift */; };
-		DAA0ADB0FF7971A2D3781F34 /* StoreKitTransactionLookupMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */; };
 		DAA4F3E3A4E104BD658E9F93 /* CustomerCenterViewModel+Refund.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12BC920C6393F67609CE54A0 /* CustomerCenterViewModel+Refund.swift */; };
 		DAC4C58899350F708A01D622 /* SurveyPresentationResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B66B5A624F8A2E225EACA69 /* SurveyPresentationResult.swift */; };
 		DAD9395E01C49E3F1AE77A0D /* PaywallViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7569A0893012A88442B7ED36 /* PaywallViewController.swift */; };
@@ -1246,6 +1255,7 @@
 		FADE14FA0130CB8B549CC061 /* TCFConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4440A6832E1195B9C1C8633A /* TCFConsent.swift */; };
 		FAE2C990CFBD7485E4DBA8F5 /* PresentationRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = C825F0AD231C62462873E51A /* PresentationRequest.swift */; };
 		FB4CBE2FD04F7AA9581D370F /* AddPaywallProducts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A6A722D119902A42DC2737 /* AddPaywallProducts.swift */; };
+		FB960A13D427D0F1D177458B /* WebApplePayReadinessTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = B818B0AB57BD7E567D1C9F3F /* WebApplePayReadinessTracker.swift */; };
 		FC02ED6C77D283677B7A8326 /* PageViewData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E321E7EEC07CA9A8B9A5619 /* PageViewData.swift */; };
 		FC051A3A8D640AF49D798B25 /* RawExperiment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7611B89AB647CB1AB79CA912 /* RawExperiment.swift */; };
 		FC0EE678BEF952290D0CAD94 /* ReceiptRefreshDelegateWrapper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B812E74B11477D98D21421F9 /* ReceiptRefreshDelegateWrapper.swift */; };
@@ -1339,6 +1349,7 @@
 		0C39015ED9E8F5D9F0F78F1E /* RawWebMessageHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawWebMessageHandler.swift; sourceTree = "<group>"; };
 		0C8FD734F57A50B6EAFBF833 /* TestModeModalViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeModalViewController.swift; sourceTree = "<group>"; };
 		0C95DABA23C6CBEF0AAA63C0 /* PaywallProducts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallProducts.swift; sourceTree = "<group>"; };
+		0D69993F2485688A800EF237 /* NativeApplePayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApplePayTests.swift; sourceTree = "<group>"; };
 		0D84EBFB7492EE4D10955D82 /* SuperwallKit_StoreKitTestCertificate.cer */ = {isa = PBXFileReference; path = SuperwallKit_StoreKitTestCertificate.cer; sourceTree = "<group>"; };
 		0DF71CC25A340374B0A19295 /* RestorationResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestorationResult.swift; sourceTree = "<group>"; };
 		0DF73A1C2BD7E0DA00E3D7A4 /* TestModeSettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestModeSettingsStore.swift; sourceTree = "<group>"; };
@@ -1579,7 +1590,6 @@
 		5E37562E243AE6632134D94A /* DevServerSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerSurface.swift; sourceTree = "<group>"; };
 		5E4E85B2739302D696701411 /* MacDebuggerChoicesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacDebuggerChoicesTests.swift; sourceTree = "<group>"; };
 		5EB5A772C1F2ECE6D0E0BD69 /* PaywallState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallState.swift; sourceTree = "<group>"; };
-		5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionLookupMock.swift; sourceTree = "<group>"; };
 		5FEE388DB4E569DD11E460B0 /* CoreDataManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataManagerTests.swift; sourceTree = "<group>"; };
 		607E4F987EF6E823789D0486 /* LocationManagerProxyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManagerProxyTests.swift; sourceTree = "<group>"; };
 		60B80BEE0364C0EF86E2084E /* sl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sl; path = sl.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -1698,6 +1708,7 @@
 		83416F0F1B5294C350D5CF70 /* FeatureFlags.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlags.swift; sourceTree = "<group>"; };
 		83A6A722D119902A42DC2737 /* AddPaywallProducts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddPaywallProducts.swift; sourceTree = "<group>"; };
 		848592ACE8760E53F2163F01 /* Typealiases.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typealiases.swift; sourceTree = "<group>"; };
+		848BFCA672D4B274F27B40A8 /* NativeApplePay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApplePay.swift; sourceTree = "<group>"; };
 		84BEAF22E527C8A2172D3564 /* PaywallSkippedReason.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallSkippedReason.swift; sourceTree = "<group>"; };
 		84D6F69BA2B44540FAF05E36 /* SK1StoreTransaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SK1StoreTransaction.swift; sourceTree = "<group>"; };
 		8577C8F9CDAAA733E0B99B98 /* TrackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackTests.swift; sourceTree = "<group>"; };
@@ -1876,6 +1887,7 @@
 		B730226BC4F32B0A3A0FA6E9 /* ReceiptManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptManager.swift; sourceTree = "<group>"; };
 		B7E0E27369A406D3492A11E2 /* AudioSessionProxy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioSessionProxy.swift; sourceTree = "<group>"; };
 		B812E74B11477D98D21421F9 /* ReceiptRefreshDelegateWrapper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptRefreshDelegateWrapper.swift; sourceTree = "<group>"; };
+		B818B0AB57BD7E567D1C9F3F /* WebApplePayReadinessTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebApplePayReadinessTracker.swift; sourceTree = "<group>"; };
 		B82C445909EE84183824ECEB /* NetworkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkTests.swift; sourceTree = "<group>"; };
 		B84489E65AE8F692F620866F /* InternalPresentationLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternalPresentationLogic.swift; sourceTree = "<group>"; };
 		B88E86C67F934540D846B8BA /* EmptyResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyResponse.swift; sourceTree = "<group>"; };
@@ -1942,6 +1954,7 @@
 		C98A7BE19AE9CDCA027959CB /* ConfirmHoldoutAssignmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfirmHoldoutAssignmentTests.swift; sourceTree = "<group>"; };
 		C9B0C261DCC1ED74DD2BF3EA /* HiddenListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HiddenListener.swift; sourceTree = "<group>"; };
 		C9D685A5912892EF9C2931B1 /* V4Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = V4Migrator.swift; sourceTree = "<group>"; };
+		C9F7FB6DB9EB4B645402FEBD /* WebApplePayReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebApplePayReadinessTests.swift; sourceTree = "<group>"; };
 		CA65A320EE640CDB878F43E9 /* UIWindow+Landscape.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIWindow+Landscape.swift"; sourceTree = "<group>"; };
 		CB8384E2DB0A3627BE1CCB7D /* PurchasingCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchasingCoordinator.swift; sourceTree = "<group>"; };
 		CB96F8411D5C857311D7811C /* TransactionType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransactionType.swift; sourceTree = "<group>"; };
@@ -1984,6 +1997,7 @@
 		D69BCC259F5FBE15AB02D662 /* PermissionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionHandler.swift; sourceTree = "<group>"; };
 		D7434029CB9E4680C85D3FB6 /* PermissionHandler+Microphone.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PermissionHandler+Microphone.swift"; sourceTree = "<group>"; };
 		D7781E6093CC05F1467B431D /* DevServerLocator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevServerLocator.swift; sourceTree = "<group>"; };
+		D7B56F9062BB8F0246AF0079 /* StoreKitTransactionLookupMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreKitTransactionLookupMock.swift; sourceTree = "<group>"; };
 		D7E232690489360042465DB2 /* Redeemable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Redeemable.swift; sourceTree = "<group>"; };
 		D80A133E003EB984F73641D9 /* ProductsFetcherSK1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductsFetcherSK1.swift; sourceTree = "<group>"; };
 		D81D656CEA8B5B86458038D4 /* ms */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ms; path = ms.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -2070,6 +2084,7 @@
 		FA3A82C80F89023672D56AD7 /* LogLevel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogLevel.swift; sourceTree = "<group>"; };
 		FAF5344F4E3EA46B5E041F7E /* PaywallWindowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallWindowTests.swift; sourceTree = "<group>"; };
 		FBE7D1E1AF61D199E17B5C05 /* SWLocalizationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SWLocalizationViewController.swift; sourceTree = "<group>"; };
+		FC0D7DA0D917BCEF91880037 /* WebApplePayProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebApplePayProbe.swift; sourceTree = "<group>"; };
 		FC52CA0CE82A5605AFF7A075 /* ExperimentTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExperimentTemplate.swift; sourceTree = "<group>"; };
 		FC6C4D551369C55D8AFB7F96 /* PaywallLogic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallLogic.swift; sourceTree = "<group>"; };
 		FD5180737863E22145980065 /* WebArchiveManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebArchiveManager.swift; sourceTree = "<group>"; };
@@ -2429,7 +2444,10 @@
 				89BE5D845E32F9EF657D8F25 /* DeviceIPCollector+IPv6.swift */,
 				76D61D89D2905A8747E37458 /* InterfaceStyle.swift */,
 				DD20518E533BF9E047E172E9 /* MacDeviceInfo.swift */,
+				848BFCA672D4B274F27B40A8 /* NativeApplePay.swift */,
 				61062B4B7A0AB23514A2F439 /* SwiftVersion.swift */,
+				FC0D7DA0D917BCEF91880037 /* WebApplePayProbe.swift */,
+				B818B0AB57BD7E567D1C9F3F /* WebApplePayReadinessTracker.swift */,
 			);
 			path = "Device Helper";
 			sourceTree = "<group>";
@@ -2480,14 +2498,6 @@
 			path = Analytics;
 			sourceTree = "<group>";
 		};
-		27E3D7D0DECBD0766F8BC93B /* Actions */ = {
-			isa = PBXGroup;
-			children = (
-				5F87594A6B66C1188A0C738A /* StoreKitTransactionLookupMock.swift */,
-			);
-			path = Actions;
-			sourceTree = "<group>";
-		};
 		29AF8407DB4560B41050C02F /* Web View */ = {
 			isa = PBXGroup;
 			children = (
@@ -2518,7 +2528,9 @@
 		2BBB4DE8383CB3FBF6B7CC89 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				0D69993F2485688A800EF237 /* NativeApplePayTests.swift */,
 				8A65C58C6438B50E26C75D08 /* TestModeSettingsStoreTests.swift */,
+				C9F7FB6DB9EB4B645402FEBD /* WebApplePayReadinessTests.swift */,
 			);
 			name = Shared;
 			path = Tests/Shared;
@@ -2957,10 +2969,12 @@
 		5CE8CEF97A892FFF3D0D8F06 = {
 			isa = PBXGroup;
 			children = (
+				D440E6E91F2E1F8A1B423286 /* Actions */,
 				2BBB4DE8383CB3FBF6B7CC89 /* Shared */,
 				F414D9D4179E9C07A0A474C1 /* Sources */,
 				7268D503E61FFC9274B1D001 /* SuperwallKitMacTests */,
 				F747F71EF07417D0BE706936 /* SuperwallKitTests */,
+				6C0A76CD19771587F43EBD8A /* ViewModel */,
 				778C04FFAA9840C37CA3C1CA /* Products */,
 			);
 			sourceTree = "<group>";
@@ -3131,7 +3145,8 @@
 				DD64A76F1FEDD8F43E5570EF /* CustomerCenterViewModelTests.swift */,
 				26DC5F42E6DF697D74DF643E /* PurchaseDetailActionsTests.swift */,
 			);
-			path = ViewModel;
+			name = ViewModel;
+			path = Tests/SuperwallKitTests/CustomerCenter/ViewModel;
 			sourceTree = "<group>";
 		};
 		6CA03A908C710F4F27075427 /* ViewModel */ = {
@@ -4009,8 +4024,8 @@
 				0E3AC3B23DAAA8C1D125BDD3 /* CoreDataManager.swift */,
 				50458143450675EF205CE2C3 /* CoreDataStack.swift */,
 				4E90878D4A3CAB9ADDB7245D /* CoreDataStoreLocation.swift */,
-				2DAF3427CF469F5373C2BFD7 /* Managed Models */,
 				EC51351CA716C5C3B71E2FA1 /* SuperwallKit_Model.xcdatamodeld */,
+				2DAF3427CF469F5373C2BFD7 /* Managed Models */,
 			);
 			path = "Core Data";
 			sourceTree = "<group>";
@@ -4068,6 +4083,15 @@
 				F2B97376CC3325C950AC2F33 /* Transactions */,
 			);
 			path = StoreKit;
+			sourceTree = "<group>";
+		};
+		D440E6E91F2E1F8A1B423286 /* Actions */ = {
+			isa = PBXGroup;
+			children = (
+				D7B56F9062BB8F0246AF0079 /* StoreKitTransactionLookupMock.swift */,
+			);
+			name = Actions;
+			path = Tests/SuperwallKitTests/CustomerCenter/Actions;
 			sourceTree = "<group>";
 		};
 		D4D73135E0F2AA5DF091DD96 /* Localizations */ = {
@@ -4278,7 +4302,7 @@
 				9EEE9DEA2D40D4B75D4DB8F8 /* CustomerCenterEventsTests.swift */,
 				57CA773735D822E6BB33060F /* CustomerCenterManagerTests.swift */,
 				EE4587F221C48ABD585CCD1B /* CustomerCenterStringsTests.swift */,
-				27E3D7D0DECBD0766F8BC93B /* Actions */,
+				D440E6E91F2E1F8A1B423286 /* Actions */,
 				0C7CF5D713104B22771F6C97 /* Logic */,
 				6A50FB7E85639BB85B344358 /* Models */,
 				AC8755E8FD3F18CA3DF6EDF5 /* UIKit */,
@@ -4470,10 +4494,9 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = B7BB212B66F694F1FDA2FA4F /* Build configuration list for PBXProject "SuperwallKit" */;
+			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -4526,14 +4549,13 @@
 				89F17188BC665EFC6FE5CEFA /* XCRemoteSwiftPackageReference "superscript-ios-next" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 778C04FFAA9840C37CA3C1CA /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
 				A00B37232DA76D364CFDAF07 /* SuperwallKit */,
-				AE77960D397D727A12230C60 /* SuperwallKitTests */,
 				1BD599B276B452779E56C098 /* SuperwallKitMac */,
 				9E062627F99AAB78FBECC434 /* SuperwallKitMacTests */,
+				AE77960D397D727A12230C60 /* SuperwallKitTests */,
 			);
 		};
 /* End PBXProject section */
@@ -4681,6 +4703,7 @@
 				772B96BBEF9BED16A4800705 /* MockSkProduct.swift in Sources */,
 				14EE66CD583764739B77DFAE /* MockSubscriptionPeriod.swift in Sources */,
 				6F7F87F78DDFE6566ABEE5AE /* MockSuperwallDelegate.swift in Sources */,
+				7A36E0BB46496AEB2C3D2F7E /* NativeApplePayTests.swift in Sources */,
 				8571E04DEBA613A75E4EFEE8 /* NetworkErrorTests.swift in Sources */,
 				711E793A952F0678FCFD1AD8 /* NetworkMock.swift in Sources */,
 				40C501C5168BBAA0838B0333 /* NetworkTests.swift in Sources */,
@@ -4731,7 +4754,7 @@
 				6112EC99DE7341E8A3D12C8F /* StorageMock.swift in Sources */,
 				1834A99EBB9B159F0DC1A7A0 /* StorageTests.swift in Sources */,
 				1B36B4ABCC549A42CAC3ECF9 /* StoreKitManagerTests.swift in Sources */,
-				DAA0ADB0FF7971A2D3781F34 /* StoreKitTransactionLookupMock.swift in Sources */,
+				AD61F0CE5D5FEB1FF78B1B69 /* StoreKitTransactionLookupMock.swift in Sources */,
 				2DB5C441712019B5B8769CCA /* StorePresentationObjectsOperatorTests.swift in Sources */,
 				DFB391AAD211903A3068E13A /* StoreProductBillingPlanTests.swift in Sources */,
 				47AB5BA9DC6DA591D143FA3B /* StripeTrialEligibilityTests.swift in Sources */,
@@ -4758,6 +4781,7 @@
 				42AE38DD020BF6F04E09283F /* URLSessionRetryLogicTests.swift in Sources */,
 				1DD42DD6C5E31D68D3FE3B43 /* Utils.swift in Sources */,
 				3AC3D67530EE590DB6F7A20C /* WaitForEntitlementsAndConfigTests.swift in Sources */,
+				C6BBCA5CF4264A75CCCB68B7 /* WebApplePayReadinessTests.swift in Sources */,
 				C070A796A6689AC7EFF610DB /* WebEntitlementRedeemerTests.swift in Sources */,
 				6001D5EAB0937FA808A79076 /* WebProductPricingTests.swift in Sources */,
 				5B0E472B996C47C21B3F3AFA /* WebSubscriptionPathTests.swift in Sources */,
@@ -5019,6 +5043,7 @@
 				07862D18809FA5DEA95AE440 /* NSManagedObjectContext+mergeChanges.swift in Sources */,
 				49C68FD2E53B082A52F429F1 /* NSView+Platform.swift in Sources */,
 				E69EDE00D20F8AA745FF67D9 /* NSWindow+SystemHiding.swift in Sources */,
+				050E697E5DD824174D9C5B50 /* NativeApplePay.swift in Sources */,
 				2698874EEAE37BAECE7B8FD8 /* Network.swift in Sources */,
 				A50C9EFDE9ED8778BB4C44D3 /* NoPurchasesScreenView.swift in Sources */,
 				32C1A7BB48AC2A5CB88C448B /* NonSubscriptionTransaction.swift in Sources */,
@@ -5281,6 +5306,8 @@
 				9A0D436A679DD6FC72BEBE9A /* VerificationResult+Transaction.swift in Sources */,
 				EAA404AC45EFECE0C8B58140 /* View+CustomerCenter.swift in Sources */,
 				C366CDBA75B69D05DC28394A /* WaitForSubsStatusAndConfig.swift in Sources */,
+				4DB829F8A43F15DED2ED45CD /* WebApplePayProbe.swift in Sources */,
+				38BA3F4333B488A893EBBAFE /* WebApplePayReadinessTracker.swift in Sources */,
 				D89F615A7826947C9246F6B1 /* WebArchive.swift in Sources */,
 				BA1416132CD360BCBA93D698 /* WebArchiveFileSytemManager.swift in Sources */,
 				205B0A0F4179E2680B07172D /* WebArchiveManager.swift in Sources */,
@@ -5299,13 +5326,15 @@
 				AB785564D30352943FCF14C1 /* MacDeviceInfoTests.swift in Sources */,
 				D008AC9E22039C457D4D78EF /* MacReviewFollowUpTests.swift in Sources */,
 				8D24B1CC09209F9F4CE3539D /* MacTeleportReturnCoverTests.swift in Sources */,
+				D93421E71C0230B342BC2B8D /* NativeApplePayTests.swift in Sources */,
 				773F13297221A2F52297654D /* PaywallWindowTests.swift in Sources */,
-				9828A5D9B8420A57FAE97D50 /* StoreKitTransactionLookupMock.swift in Sources */,
+				60C354A0D1C0CDA8964EF2D1 /* StoreKitTransactionLookupMock.swift in Sources */,
 				41173AD080561308E8BC93E3 /* SuperscriptMacTests.swift in Sources */,
 				237E54FE1EB57DADA7FD907A /* SystemWindowHidingTests.swift in Sources */,
 				48EF2EA28361C1542A37DD3C /* TestModeAppliedSettingsTests.swift in Sources */,
 				96282E182FBF8C1F1C0D1D71 /* TestModePresentationTests.swift in Sources */,
 				E741A22748001BEE355A3FAE /* TestModeSettingsStoreTests.swift in Sources */,
+				C1F97ED04BCA3A266F008E36 /* WebApplePayReadinessTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -5564,6 +5593,7 @@
 				9CD3235CA12929304394B0A5 /* NSManagedObjectContext+mergeChanges.swift in Sources */,
 				524A6850BF306D3266686D54 /* NSView+Platform.swift in Sources */,
 				8AB9391E5C707E8F4E0AAA29 /* NSWindow+SystemHiding.swift in Sources */,
+				5812EF5C757344D06BE9A01F /* NativeApplePay.swift in Sources */,
 				47396992FEEB76F518D214BF /* Network.swift in Sources */,
 				46AE3F43BFB59D583211A331 /* NoPurchasesScreenView.swift in Sources */,
 				63C8FBF305DF047664A7BF16 /* NonSubscriptionTransaction.swift in Sources */,
@@ -5826,6 +5856,8 @@
 				F02328A3ACACB0DDEFBCD81F /* VerificationResult+Transaction.swift in Sources */,
 				8BF9628862DAF132204DB438 /* View+CustomerCenter.swift in Sources */,
 				E7596BA70AD183006EDB58AB /* WaitForSubsStatusAndConfig.swift in Sources */,
+				B920EAA8F48CE211C6997654 /* WebApplePayProbe.swift in Sources */,
+				FB960A13D427D0F1D177458B /* WebApplePayReadinessTracker.swift in Sources */,
 				C995B6FD868B1C2C1B81A343 /* WebArchive.swift in Sources */,
 				08D3B20908DCB41E9096AE63 /* WebArchiveFileSytemManager.swift in Sources */,
 				A4AE39B848142FA9527C287E /* WebArchiveManager.swift in Sources */,

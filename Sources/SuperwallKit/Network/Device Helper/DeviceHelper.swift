@@ -19,6 +19,8 @@ import StoreKit
 
 class DeviceHelper {
   private let ipCollector: DeviceIPCollector
+  let webApplePayReadiness: WebApplePayReadinessTracker
+  private let nativeApplePay: NativeApplePayReader
   /// Reads the ATT status without prompting, or `nil` where the OS has no such concept.
   /// Settable for tests.
   var attStatusProvider: () -> Int?
@@ -1025,6 +1027,8 @@ class DeviceHelper {
       & ConfigStateFactory
       & OptionsFactory,
     ipCollector: DeviceIPCollector? = nil,
+    webApplePayReadiness: WebApplePayReadinessTracker? = nil,
+    nativeApplePay: NativeApplePayReader? = nil,
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe },
     attStatusProvider: @escaping () -> Int? = { DeviceHelper.attStatus }
   ) {
@@ -1033,6 +1037,13 @@ class DeviceHelper {
       ipV4Url: api.enrichment.ipV4Url,
       ipV6Url: api.enrichment.ipV6Url
     )
+    self.webApplePayReadiness = webApplePayReadiness ?? WebApplePayReadinessTracker(
+      load: { storage.get(WebApplePayReadinessStorage.self) },
+      save: { storage.save($0, forType: WebApplePayReadinessStorage.self) }
+    )
+    // Started here so PassKit is read once, off the main thread, before the
+    // first device attributes are needed. The web check is opt-out; these aren't.
+    self.nativeApplePay = nativeApplePay ?? NativeApplePayReader()
     self.storage = storage
     self.network = network
     self.entitlementsInfo = entitlementsInfo
@@ -1173,6 +1184,49 @@ class DeviceHelper {
     }
   }
 
+  /// Starts this launch's web Apple Pay measurement once config names a web
+  /// checkout domain, so the answer is ready before most audiences ask for it.
+  @discardableResult
+  func startWebApplePayReadinessIfEnabled(for config: Config?) -> Task<Void, Never>? {
+    guard
+      factory.makeSuperwallOptions().isWebApplePayReadinessEnabled,
+      let origin = WebApplePayReadinessTracker.checkoutOrigin(from: config)
+    else {
+      return nil
+    }
+    return Task {
+      await webApplePayReadiness.refreshIfNeeded(at: origin)
+    }
+  }
+
+  /// Holds audience evaluation for the first web Apple Pay measurement, but only
+  /// when an audience in `config` uses `webApplePayReadiness`, so apps that don't
+  /// target on it never wait.
+  func waitForWebApplePayReadinessIfNeeded(for config: Config?) async {
+    guard
+      let config = config,
+      factory.makeSuperwallOptions().isWebApplePayReadinessEnabled,
+      Self.audiencesUseWebApplePayReadiness(in: config),
+      let origin = WebApplePayReadinessTracker.checkoutOrigin(from: config)
+    else {
+      return
+    }
+    await webApplePayReadiness.waitForFirstMeasurement(at: origin)
+  }
+
+  static func audiencesUseWebApplePayReadiness(in config: Config) -> Bool {
+    return config.triggers.contains { trigger in
+      trigger.audiences.contains { $0.expression?.contains("webApplePayReadiness") == true }
+    }
+  }
+
+  private func currentWebApplePayReadiness() async -> WebApplePayReadiness {
+    return await webApplePayReadiness.readiness(
+      at: WebApplePayReadinessTracker.checkoutOrigin(from: factory.makeConfigState().value.getConfig()),
+      isEnabled: factory.makeSuperwallOptions().isWebApplePayReadinessEnabled
+    )
+  }
+
   /// The device's IPv4 and IPv6 addresses for the MMP install match. Waits
   /// up to `timeout` seconds for lookups that are due or already running, so
   /// a match sent at first launch doesn't go out before they finish.
@@ -1243,6 +1297,7 @@ class DeviceHelper {
     // the same way by hand — keep them in step.
     let traits = currentUITraits
     let adConsent = reportedAdConsent
+    let nativeApplePay = await self.nativeApplePay.capabilities
     await afterAdConsentSnapshot?()
 
     let template = DeviceTemplate(
@@ -1272,7 +1327,10 @@ class DeviceHelper {
       fontScale: traits.fontScale,
       preferredContentSizeCategory: traits.preferredContentSizeCategory,
       isLowPowerModeEnabled: isLowPowerModeEnabled == "true",
-      isApplePayAvailable: true,
+      isApplePayAvailable: nativeApplePay.isApplePayAvailable,
+      hasApplePayCreditCard: nativeApplePay.hasCreditCard,
+      hasApplePayDebitCard: nativeApplePay.hasDebitCard,
+      webApplePayReadiness: await currentWebApplePayReadiness().rawValue,
       bundleId: bundleId,
       appInstallDate: appInstalledAtString,
       isMac: isMac,
