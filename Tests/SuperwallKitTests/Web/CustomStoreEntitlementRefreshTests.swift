@@ -771,7 +771,7 @@ struct CustomStoreEntitlementRefreshTests {
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
     dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
-    let refresh = Task { await superwall.refreshCustomerInfo() }
+    async let refresh = superwall.refreshCustomerInfo()
     try? await Task.sleep(nanoseconds: 100_000_000)
     // The device's purchases finish loading after the fetch failed.
     let deviceCustomerInfo = CustomerInfo(
@@ -780,7 +780,7 @@ struct CustomStoreEntitlementRefreshTests {
       entitlements: [Entitlement(id: "pro", isActive: true)]
     )
     superwall.customerInfo = deviceCustomerInfo
-    let result = await refresh.value
+    let result = await refresh
 
     #expect(network.getEntitlementsCallCount == 1)
     #expect(result.entitlements.map(\.id) == ["pro"])
@@ -795,9 +795,26 @@ struct CustomStoreEntitlementRefreshTests {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     superwall.customerInfo = .blank()
 
-    let pending = Task { await superwall.getCustomerInfo() }
+    async let pending = superwall.getCustomerInfo()
     try? await Task.sleep(nanoseconds: 100_000_000)
     dependencyContainer.configManager.configState.send(completion: .failure(NetworkError.unknown))
+    let result = await pending
+
+    #expect(result.isPlaceholder)
+  }
+
+  @available(iOS 16.0, macOS 13.0, watchOS 9.0, *)
+  @Test(
+    "getCustomerInfo stops waiting when its task is cancelled",
+    .timeLimit(.minutes(1))
+  )
+  func getCustomerInfo_cancelled_returns() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.customerInfo = .blank()
+
+    let pending = Task { await superwall.getCustomerInfo() }
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    pending.cancel()
     let result = await pending.value
 
     #expect(result.isPlaceholder)

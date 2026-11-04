@@ -1554,8 +1554,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// Gets the latest ``CustomerInfo``.
   ///
   /// If the customer info hasn't loaded yet, this waits for it. If the SDK can't
-  /// load it, because configuration failed, this returns the current, empty
-  /// ``customerInfo``.
+  /// load it, because configuration failed, or the calling task is cancelled,
+  /// this returns the current, empty ``customerInfo``.
   ///
   /// - Returns: A ``CustomerInfo`` object.
   public func getCustomerInfo() async -> CustomerInfo {
@@ -1574,16 +1574,13 @@ public final class Superwall: NSObject, ObservableObject {
       .filter { !$0.isPlaceholder }
       .map { Optional($0) }
 
-    return await withCheckedContinuation { continuation in
-      var cancellable: AnyCancellable?
-      cancellable = loaded
-        .merge(with: configFailed)
-        .first()
-        .sink { [weak self] newInfo in
-          continuation.resume(returning: newInfo ?? self?.customerInfo ?? .blank())
-          cancellable?.cancel()
-        }
-    }
+    // The stream ends early if the waiting task is cancelled.
+    do {
+      for try await newInfo in loaded.merge(with: configFailed).values {
+        return newInfo ?? customerInfo
+      }
+    } catch {}
+    return customerInfo
   }
 
   /// Gets the latest ``CustomerInfo``.
