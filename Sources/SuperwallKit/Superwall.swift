@@ -1553,6 +1553,10 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Gets the latest ``CustomerInfo``.
   ///
+  /// If the customer info hasn't loaded yet, this waits for it. If the SDK can't
+  /// load it, because configuration failed, this returns the current, empty
+  /// ``customerInfo``.
+  ///
   /// - Returns: A ``CustomerInfo`` object.
   public func getCustomerInfo() async -> CustomerInfo {
     // If we already have a non-placeholder customerInfo, return it immediately
@@ -1560,14 +1564,23 @@ public final class Superwall: NSObject, ObservableObject {
       return customerInfo
     }
 
-    // Otherwise, await the first non-placeholder emission from the publisher
+    // The device's customer info loads once config is retrieved, so it never
+    // arrives if config fails.
+    let configFailed = dependencyContainer.configManager.configState
+      .ignoreOutput()
+      .map { _ -> CustomerInfo? in nil }
+      .catch { _ in Just(nil) }
+    let loaded = $customerInfo
+      .filter { !$0.isPlaceholder }
+      .map { Optional($0) }
+
     return await withCheckedContinuation { continuation in
       var cancellable: AnyCancellable?
-      cancellable = $customerInfo
-        .removeDuplicates()
-        .filter { !$0.isPlaceholder }
-        .sink { newInfo in
-          continuation.resume(returning: newInfo)
+      cancellable = loaded
+        .merge(with: configFailed)
+        .first()
+        .sink { [weak self] newInfo in
+          continuation.resume(returning: newInfo ?? self?.customerInfo ?? .blank())
           cancellable?.cancel()
         }
     }
@@ -1591,8 +1604,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// product sold through your own checkout, and you want the device to reflect it now.
   ///
   /// The fetched entitlements update ``customerInfo`` and ``entitlements``. If the fetch
-  /// fails, this returns the current ``customerInfo``. In test mode, nothing is fetched
-  /// and the test mode customer info is returned.
+  /// fails, this returns the same as ``getCustomerInfo()``. In test mode, nothing is
+  /// fetched and the test mode customer info is returned.
   ///
   /// - Note: The SDK already refreshes entitlements after a custom product purchase that
   /// your ``PurchaseController`` reports as `.purchased`.
@@ -1604,11 +1617,8 @@ public final class Superwall: NSObject, ObservableObject {
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    if dependencyContainer.testModeManager?.isTestMode != true,
-      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements() == nil {
-      // The fetch failed. `getCustomerInfo()` would wait for customer info that,
-      // on a first launch without a connection, never arrives.
-      return customerInfo
+    if dependencyContainer.testModeManager?.isTestMode != true {
+      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements()
     }
     return await getCustomerInfo()
   }

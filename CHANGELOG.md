@@ -7,6 +7,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+- Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
+- Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
+- Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
 
 ## 4.19.0
 
