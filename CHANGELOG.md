@@ -19,6 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
 - Apps without web paywalls now also refresh entitlements when they come to the foreground.
 - Improves MMP install matching.
+- Adds bundled paywalls. Add the `Superwall.bundle` written by `superwall bundle` to your app, and a first launch can show its paywalls without the network.
 
 ### Fixes
 
