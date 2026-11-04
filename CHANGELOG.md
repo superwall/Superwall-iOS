@@ -6,7 +6,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ### Enhancements
 
-- Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown on these platforms, so `register` returns an error when a campaign would show one. Audience filters don't match on tvOS yet.
+- Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown on these platforms, so `register` treats a matched paywall as one that failed to load, as on iOS without internet. Audience filters don't match on tvOS yet.
 
 ## 4.19.0
 

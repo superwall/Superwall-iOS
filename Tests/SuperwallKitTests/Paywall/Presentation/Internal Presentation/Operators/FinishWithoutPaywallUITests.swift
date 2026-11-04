@@ -18,9 +18,12 @@ final class FinishWithoutPaywallUITests {
     return .init(id: id, groupId: "", variant: .init(id: "", type: .treatment, paywallId: ""))
   }
 
+  private struct FetchFailed: Error {}
+
   /// Runs the step and returns the states it sent, and whether it threw.
   private func run(
-    _ triggerResult: InternalTriggerResult
+    _ triggerResult: InternalTriggerResult,
+    getPaywall: @escaping (PaywallRequest) async throws -> Paywall = { _ in .stub() }
   ) async -> (states: [PaywallState], didThrow: Bool, didFinish: Bool) {
     let statePublisher = PassthroughSubject<PaywallState, Never>()
     var states: [PaywallState] = []
@@ -38,7 +41,8 @@ final class FinishWithoutPaywallUITests {
         request: .stub(),
         audienceOutcome: AudienceFilterEvaluationOutcome(triggerResult: triggerResult),
         debugInfo: [:],
-        publisher: statePublisher
+        publisher: statePublisher,
+        getPaywall: getPaywall
       )
     } catch {
       didThrow = true
@@ -46,19 +50,73 @@ final class FinishWithoutPaywallUITests {
     return (states, didThrow, didFinish)
   }
 
-  @Test func paywall_sendsUnavailableError() async {
-    let result = await run(.paywall(experiment()))
+  private func paywall(gating: FeatureGatingBehavior) -> Paywall {
+    var paywall = Paywall.stub()
+    paywall.featureGating = gating
+    return paywall
+  }
+
+  /// Checks the step declined the paywall as if its page failed to load,
+  /// which is what iOS does without an internet connection.
+  private func expectDeclinedAsFailedToLoad(
+    _ result: (states: [PaywallState], didThrow: Bool, didFinish: Bool),
+    gating: FeatureGatingBehavior
+  ) {
+    #expect(!result.didThrow)
+    #expect(result.didFinish)
+    guard
+      result.states.count == 1,
+      case let .dismissed(paywallInfo, paywallResult) = result.states[0]
+    else {
+      Issue.record("Expected a dismissal, got \(result.states)")
+      return
+    }
+    guard case .declined = paywallResult else {
+      Issue.record("Expected the paywall to be declined, got \(paywallResult)")
+      return
+    }
+    #expect(paywallInfo.closeReason == .webViewFailedToLoad)
+    #expect(paywallInfo.featureGatingBehavior == gating)
+  }
+
+  @Test func nonGatedPaywall_isDeclinedAsFailedToLoad() async {
+    let result = await run(.paywall(experiment())) { _ in
+      self.paywall(gating: .nonGated)
+    }
+    expectDeclinedAsFailedToLoad(result, gating: .nonGated)
+  }
+
+  @Test func gatedPaywall_isDeclinedAsFailedToLoad() async {
+    let result = await run(.paywall(experiment())) { _ in
+      self.paywall(gating: .gated)
+    }
+    expectDeclinedAsFailedToLoad(result, gating: .gated)
+  }
+
+  @Test func paywallFetchFailure_sendsError() async {
+    let result = await run(.paywall(experiment())) { _ in
+      throw FetchFailed()
+    }
 
     #expect(result.didThrow)
     #expect(result.didFinish)
-    #expect(result.states.count == 1)
-    guard case .presentationError(let error) = result.states.first else {
+    guard
+      result.states.count == 1,
+      case .presentationError(let error) = result.states[0]
+    else {
       Issue.record("Expected a presentation error, got \(result.states)")
       return
     }
-    let nsError = error as NSError
-    #expect(nsError.domain == "SWKPresentationError")
-    #expect(nsError.code == 108)
+    #expect(error is FetchFailed)
+  }
+
+  @Test func paywallRequest_usesTheExperimentsPaywall() async {
+    var requestedPaywallId: String?
+    _ = await run(.paywall(.init(id: "exp", groupId: "", variant: .init(id: "", type: .treatment, paywallId: "pw")))) {
+      requestedPaywallId = $0.responseIdentifiers.paywallId
+      return .stub()
+    }
+    #expect(requestedPaywallId == "pw")
   }
 
   @Test func noAudienceMatch_isSkipped() async {

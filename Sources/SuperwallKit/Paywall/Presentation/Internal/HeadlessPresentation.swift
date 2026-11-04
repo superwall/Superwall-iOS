@@ -66,20 +66,27 @@ extension Superwall {
   /// Ends a `register` call once the audience filters have run, on a platform
   /// that can't show paywalls.
   ///
-  /// A holdout or a placement with no matching audience is skipped and runs
-  /// the feature, as it would on iOS. When a paywall would be shown, the
-  /// handler gets an error instead and the feature doesn't run, the same as
-  /// when a paywall fails to load on iOS.
+  /// It ends the way iOS does when it has no internet connection:
+  ///
+  /// - A holdout or a placement with no matching audience is skipped, and the
+  ///   feature runs.
+  /// - If the paywall can't be fetched, the handler gets the error and the
+  ///   feature doesn't run.
+  /// - Otherwise the paywall is declined as if its page failed to load. A
+  ///   non-gated feature runs, and a gated one gets an error instead.
   ///
   /// Built on every platform so the iOS tests cover it.
+  ///
+  /// - Parameter getPaywall: Fetches the paywall. Replaced in tests.
   func finishWithoutPaywallUI(
     request: PresentationRequest,
     audienceOutcome: AudienceFilterEvaluationOutcome,
     debugInfo: [String: Any],
-    publisher: PassthroughSubject<PaywallState, Never>
+    publisher: PassthroughSubject<PaywallState, Never>,
+    getPaywall: ((PaywallRequest) async throws -> Paywall)? = nil
   ) async throws {
     // Sends `skipped` and throws for anything other than a paywall.
-    _ = try await getExperiment(
+    let experiment = try await getExperiment(
       request: request,
       audienceOutcome: audienceOutcome,
       debugInfo: debugInfo,
@@ -87,20 +94,47 @@ extension Superwall {
       storage: dependencyContainer.storage
     )
 
+    let paywallRequest = dependencyContainer.makePaywallRequest(
+      placementData: request.presentationInfo.placementData,
+      responseIdentifiers: ResponseIdentifiers(
+        paywallId: experiment.variant.paywallId,
+        experiment: experiment
+      ),
+      overrides: .init(
+        isFreeTrial: request.presentationInfo.freeTrialOverride,
+        featureGatingBehavior: request.paywallOverrides?.featureGatingBehavior
+      ),
+      isDebuggerLaunched: request.flags.isDebuggerLaunched,
+      presentationSourceType: request.presentationSourceType
+    )
+
+    var paywall: Paywall
+    do {
+      let getPaywall = getPaywall ?? dependencyContainer.paywallManager.getPaywall(from:)
+      paywall = try await getPaywall(paywallRequest)
+    } catch {
+      Logger.debug(
+        logLevel: .error,
+        scope: .paywallPresentation,
+        message: "Error Getting Paywall",
+        info: debugInfo,
+        error: error
+      )
+      publisher.send(.presentationError(error))
+      publisher.send(completion: .finished)
+      throw PresentationPipelineError.noPaywallViewController
+    }
+
     Logger.debug(
       logLevel: .warn,
       scope: .paywallPresentation,
-      message: "A campaign matched, but paywalls can't be shown on this platform.",
+      message: "A campaign matched, but paywalls can't be shown on this platform. "
+        + "It's declined as if the paywall failed to load.",
       info: debugInfo
     )
-    let error = InternalPresentationLogic.presentationError(
-      domain: "SWKPresentationError",
-      code: 108,
-      title: "Paywalls Unavailable",
-      value: "Paywalls can't be shown on watchOS or tvOS."
-    )
-    publisher.send(.presentationError(error))
+    paywall.closeReason = .webViewFailedToLoad
+    let paywallInfo = paywall.getInfo(fromPlacement: request.presentationInfo.placementData)
+    publisher.send(.dismissed(paywallInfo, .declined))
     publisher.send(completion: .finished)
-    throw PresentationPipelineError.noPaywallViewController
   }
 }

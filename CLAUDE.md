@@ -67,7 +67,7 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 ### watchOS and tvOS
 
 - Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
-- `register` evaluates audience filters, then sends `skipped` or a code 108 error (`finishWithoutPaywallUI`). Implicit triggers and paywall preloading do nothing.
+- `register` evaluates audience filters, then ends as iOS does without internet (`finishWithoutPaywallUI`): skipped, or the paywall is fetched and declined with `webViewFailedToLoad`, so non-gated features run and gated ones get an error. Implicit triggers and paywall preloading do nothing.
 - Superscript has no tvOS build, so `Package.swift` drops it on tvOS and `CELEvaluator` reports no match for any filter. Remove the condition once Superscript ships a tvOS slice.
 - When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
 
