@@ -315,6 +315,26 @@ public final class SuperwallOptions: NSObject, Encodable {
       }
     }
 
+    /// Host for the SDK API (the `apps/sdk-api` Cloudflare Worker), which serves the
+    /// Apple Search Ads token exchange under the same `/api/v1/` path as the legacy
+    /// v1 API on ``baseHost``.
+    ///
+    /// Local and custom environments keep ``baseHost``: a local server and a custom
+    /// proxy still serve these routes there, and a custom proxy is the host the
+    /// developer asked every request to go through.
+    var sdkApiHost: String {
+      switch self {
+      case .release,
+        .releaseCandidate:
+        return "sdk-api.superwall.com"
+      case .developer:
+        return "sdk-api.superwall.dev"
+      case .local,
+        .custom:
+        return baseHost
+      }
+    }
+
     var mmpHost: String {
       switch self {
       case .developer,

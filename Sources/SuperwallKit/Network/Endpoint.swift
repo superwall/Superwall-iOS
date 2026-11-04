@@ -343,7 +343,7 @@ extension Endpoint where
       retryCount: 3,
       retryInterval: 5,
       components: Components(
-        host: .base,
+        host: .sdkApi,
         path: "apple-search-ads/token",
         bodyData: bodyData
       ),
