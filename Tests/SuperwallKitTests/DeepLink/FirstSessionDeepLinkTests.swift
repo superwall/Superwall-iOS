@@ -98,44 +98,43 @@ struct FirstSessionDeepLinkRouterTests {
     dependencyContainer.identityManager.mergeUserAttributes(removal)
   }
 
+  /// Reads the attribute through the identity manager's serial queue, so it
+  /// waits for any merge the router queued before it.
   private var storedAttribute: String? {
     dependencyContainer.identityManager
       .userAttributes[DeepLinkRouter.firstDeepLinkUrlAttributeKey] as? String
   }
 
   @Test("Routing a deep link during the first session sets the firstDeepLinkUrl user attribute")
-  func route_firstSession_setsUserAttribute() async throws {
+  func route_firstSession_setsUserAttribute() throws {
     let url = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
 
     router.route(url: url)
-    try await Task.sleep(nanoseconds: 500_000_000)
 
     #expect(storage.get(FirstSessionDeepLinkURL.self) == url.absoluteString)
     #expect(storedAttribute == url.absoluteString)
   }
 
   @Test("Only the first deep link of the first session is captured")
-  func route_secondLink_keepsFirstAttribute() async throws {
+  func route_secondLink_keepsFirstAttribute() throws {
     let firstUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
     let secondUrl = try #require(URL(string: "myapp://home?promo=\(UUID().uuidString)"))
 
     router.route(url: firstUrl)
     router.route(url: secondUrl)
-    try await Task.sleep(nanoseconds: 500_000_000)
 
     #expect(storage.get(FirstSessionDeepLinkURL.self) == firstUrl.absoluteString)
     #expect(storedAttribute == firstUrl.absoluteString)
   }
 
   @Test("Superwall app-link deep links are captured in their mapped form")
-  func route_superwallAppLink_capturesMappedUrl() async throws {
+  func route_superwallAppLink_capturesMappedUrl() throws {
     let promo = UUID().uuidString
     let url = try #require(
       URL(string: "https://myapp.superwall.app/app-link/home?promo=\(promo)")
     )
 
     router.route(url: url)
-    try await Task.sleep(nanoseconds: 500_000_000)
 
     // The mapped form is captured, consistent with the deepLink_open event.
     #expect(storage.get(FirstSessionDeepLinkURL.self) == "myapp://home?promo=\(promo)")
@@ -180,20 +179,18 @@ struct FirstSessionDeepLinkRouterTests {
   }
 
   @Test("Re-applies the stored deep link to user attributes after a reset")
-  func reapply_appliesStoredLink() async throws {
+  func reapply_appliesStoredLink() {
     let urlString = "myapp://home?promo=\(UUID().uuidString)"
     storage.save(urlString, forType: FirstSessionDeepLinkURL.self)
 
     router.reapplyFirstSessionDeepLinkAttribute()
-    try await Task.sleep(nanoseconds: 500_000_000)
 
     #expect(storedAttribute == urlString)
   }
 
   @Test("Reapply is a no-op when no deep link was stored")
-  func reapply_noStoredLink_doesNotSetAttribute() async throws {
+  func reapply_noStoredLink_doesNotSetAttribute() {
     router.reapplyFirstSessionDeepLinkAttribute()
-    try await Task.sleep(nanoseconds: 300_000_000)
 
     #expect(storedAttribute == nil)
   }

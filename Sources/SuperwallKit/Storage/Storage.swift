@@ -49,6 +49,10 @@ class Storage {
   }
   private var _didTrackFirstSession = false
 
+  /// Whether a first-session deep link has been stored. Kept in memory so
+  /// later deep links don't read the disk.
+  private var _didRecordFirstSessionDeepLink = false
+
   /// Indicates whether static config hasn't been called before.
   ///
   /// Users upgrading from older SDK versions will not have called static config.
@@ -107,6 +111,8 @@ class Storage {
     } else {
       self._didTrackFirstSession = self.cache.read(DidTrackFirstSession.self) == true
     }
+
+    self._didRecordFirstSessionDeepLink = self.cache.read(FirstSessionDeepLinkURL.self) != nil
   }
 
   func configure(apiKey: String) {
@@ -371,10 +377,11 @@ extension Storage {
       if _didTrackFirstSession {
         return false
       }
-      if get(FirstSessionDeepLinkURL.self) != nil {
+      if _didRecordFirstSessionDeepLink {
         return false
       }
       save(url.absoluteString, forType: FirstSessionDeepLinkURL.self)
+      _didRecordFirstSessionDeepLink = true
       return true
     }
   }

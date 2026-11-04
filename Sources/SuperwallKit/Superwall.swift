@@ -1177,6 +1177,11 @@ public final class Superwall: NSObject, ObservableObject {
   /// [In-App Previews](https://docs.superwall.com/docs/in-app-paywall-previews) for
   /// more.
   ///
+  /// The first deep link received during the first app session after install is
+  /// also saved as the `firstDeepLinkUrl` user attribute. If you assign deep links
+  /// to your App Store custom product pages, you can use this attribute to break
+  /// down results and filter audiences by the product page that drove the install.
+  ///
   /// - Parameters:
   ///   - url: The URL of the deep link.
   /// - Returns: A `Bool` that is `true` if the deep link was handled.
