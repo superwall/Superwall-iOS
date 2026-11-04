@@ -259,6 +259,20 @@ extension IdentityManager {
     }
   }
 
+  /// Marks the identity as not ready while `Superwall.reset()` cleans up
+  /// after the user it's replacing, so that no paywall is presented in the
+  /// middle of that. Pass the result to ``endReset(_:)`` when it's done.
+  func beginReset() -> UUID {
+    let id = UUID()
+    store.update(IdentityUpdate.begin(.reset(id)))
+    return id
+  }
+
+  /// Ends the cleanup that ``beginReset()`` started.
+  func endReset(_ id: UUID) {
+    store.update(IdentityUpdate.end(.reset(id)))
+  }
+
   /// Saves the identity again after the user's storage has been wiped. From
   /// inside an identify, it runs once the identify has finished.
   func didResetStorage() {

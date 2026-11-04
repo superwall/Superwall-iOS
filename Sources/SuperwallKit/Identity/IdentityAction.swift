@@ -194,7 +194,12 @@ enum IdentityInterceptors {
     persist: @escaping (_ before: IdentityState, _ after: IdentityState) -> Void,
     readinessChanged: @escaping (Bool) -> Void
   ) {
-    let readinessLock = NSRecursiveLock()
+    // Held across the whole update. Updates outside dispatched actions, such
+    // as pending work finishing in a side effect, run on other threads, and
+    // without it one could save a snapshot taken before a later update had
+    // saved its own, such as restoring a user a reset had just replaced.
+    // Recursive, since an observer's work can update the store again.
+    let lock = NSRecursiveLock()
     var lastReadiness = store.state.isReady
 
     // Weak: the store holds this closure.
@@ -202,20 +207,18 @@ enum IdentityInterceptors {
       guard let store = store else {
         return next()
       }
+      lock.lock()
+      defer { lock.unlock() }
+
       let before = store.state
       next()
       let after = store.state
       persist(before, after)
 
-      // Read and report under one lock so concurrent updates can't report
-      // readiness out of order.
-      readinessLock.lock()
-      let ready = store.state.isReady
-      if ready != lastReadiness {
-        lastReadiness = ready
-        readinessChanged(ready)
+      if after.isReady != lastReadiness {
+        lastReadiness = after.isReady
+        readinessChanged(after.isReady)
       }
-      readinessLock.unlock()
     }
   }
 }

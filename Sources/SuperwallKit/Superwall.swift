@@ -1258,6 +1258,14 @@ public final class Superwall: NSObject, ObservableObject {
           + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
       )
     }
+    // Not ready until the cleanup below is done. During an identify, the
+    // identify keeps the identity from being ready itself.
+    let pendingReset = duringIdentify ? nil : dependencyContainer.identityManager.beginReset()
+    defer {
+      if let pendingReset = pendingReset {
+        dependencyContainer.identityManager.endReset(pendingReset)
+      }
+    }
     dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
     // Cancel any in-flight attribution post before wiping its storage, so a
     // late-completing post can't race the new user's state.

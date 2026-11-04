@@ -170,6 +170,8 @@ extension IdentityState {
         return "seed:\(operation.userId)"
       case .assignments(let operation):
         return "assignments:\(operation.userId)"
+      case .reset:
+        return "reset"
       }
     }
     .sorted()
@@ -515,6 +517,74 @@ struct IdentityActionTests {
     await context.settle()
     #expect(context.persisted.last?.appUserId == nil)
     #expect(context.persisted.last?.aliasId == context.state.aliasId)
+  }
+
+  // MARK: - Observers
+
+  @Test("Updates from different threads save one at a time, in order")
+  func persistenceIsSerialized() {
+    let store = IdentityStore(initial: readyState())
+    let firstSaving = DispatchSemaphore(value: 0)
+    let release = DispatchSemaphore(value: 0)
+    let lock = NSLock()
+    var saves: [String] = []
+    var isFirstSave = true
+
+    IdentityInterceptors.installObservers(
+      on: store,
+      persist: { _, after in
+        lock.lock()
+        let first = isFirstSave
+        isFirstSave = false
+        saves.append("start \(after.appUserId ?? "anonymous")")
+        lock.unlock()
+        if first {
+          firstSaving.signal()
+          // Hold the first save. Another update meanwhile must wait for it
+          // rather than save alongside it, or the two can land out of order.
+          _ = release.wait(timeout: .now() + 0.5)
+        }
+        lock.lock()
+        saves.append("end \(after.appUserId ?? "anonymous")")
+        lock.unlock()
+      },
+      readinessChanged: { _ in }
+    )
+
+    let finished = DispatchSemaphore(value: 0)
+    Thread {
+      store.update(IdentityUpdate.identify(IdentifyOperation(userId: "user-1")))
+      finished.signal()
+    }
+    .start()
+    firstSaving.wait()
+
+    Thread {
+      store.update(IdentityUpdate.reset(aliasId: "$SuperwallAlias:new", seed: 1))
+      finished.signal()
+    }
+    .start()
+    // Give the second update the chance to save alongside the first.
+    Thread.sleep(forTimeInterval: 0.1)
+    release.signal()
+    finished.wait()
+    finished.wait()
+
+    #expect(saves == ["start user-1", "end user-1", "start anonymous", "end anonymous"])
+  }
+
+  @Test("A pending reset keeps the identity from being ready until it ends")
+  func pendingResetBlocksReadiness() {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+    let reset = UUID()
+
+    context.update(.begin(.reset(reset)))
+    context.dispatch(.reset)
+    #expect(context.state.isReady == false)
+
+    context.update(.end(.reset(reset)))
+    #expect(context.state.isReady)
+    #expect(context.readiness == [false, true])
   }
 
   @Test("Debug descriptions leave out user ids and attribute values")

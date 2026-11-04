@@ -35,6 +35,8 @@ struct IdentityState {
     /// Assignments are being restored for this identify's user before the
     /// identity is ready.
     case assignments(IdentifyOperation)
+    /// `Superwall.reset()` is cleaning up after the user it replaced.
+    case reset(UUID)
   }
 
   enum Keys {
