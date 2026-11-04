@@ -178,6 +178,8 @@ extension Superwall {
     paywallOverrides: PaywallOverrides?,
     delegate: PaywallViewControllerDelegateAdapter
   ) async throws -> PaywallViewController {
+    try TrackingLogic.checkNotSuperwallEvent(placement)
+
     let userInitiatedPlacement = UserInitiatedPlacement.Track(
       rawName: placement,
       canImplicitlyTriggerPaywall: false,
