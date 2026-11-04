@@ -7,17 +7,6 @@
 
 import Foundation
 
-/// Identifies the store job that the current task is running, so a store can
-/// tell a call made from inside one of its own actions from one made outside.
-private struct StoreJob: Hashable {
-  let store: ObjectIdentifier
-  let job: UInt64
-}
-
-private enum StoreExecution {
-  @TaskLocal static var current: StoreJob?
-}
-
 /// Holds a piece of state and runs the actions that change it one at a time,
 /// in the order they were dispatched.
 ///
@@ -36,14 +25,16 @@ private enum StoreExecution {
 ///   from inside an action on the same store, it runs the action inline, since
 ///   waiting for the queue from inside the queue would never finish.
 /// - ``dispatch(_:in:)`` runs a ``SyncStoreAction`` one at a time with other
-///   dispatches, on the calling thread when it can, for state whose changes
-///   never wait and whose callers read it back synchronously.
+///   dispatches and returns once it has run, for state whose changes never
+///   wait and whose callers read it back synchronously.
 /// - ``flush()`` waits for everything queued so far, which makes tests
 ///   deterministic without sleeping.
 ///
-/// An unstructured `Task` started inside an action shares that action's
-/// identity until the action finishes. Use ``effect(_:in:)`` for follow-up
-/// work instead of starting a `Task` that calls back into the store.
+/// Only the task running an action counts as inside it. Any other task,
+/// including one the action starts or a child task it awaits, is outside it:
+/// its ``immediate(_:in:)`` waits for the action to finish. So an action must
+/// not await a task that calls ``immediate(_:in:)`` or ``flush()`` on the
+/// same store. Use ``effect(_:in:)`` for follow-up work instead.
 ///
 /// ## Interceptors
 ///
@@ -82,8 +73,9 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
   private var _state: State
   private var waiters: [Waiter] = []
   private var nextWaiterId: UInt64 = 0
-  private var nextJobId: UInt64 = 0
-  private var activeJob: UInt64?
+  /// The task running the current action, while one runs. Only compared,
+  /// never used to reach the task, and cleared before that task finishes.
+  private var activeJobTask: UnsafeCurrentTask?
 
   private var updateInterceptors: [UpdateInterceptor] = []
   private var actionInterceptors: [ActionInterceptor] = []
@@ -277,21 +269,20 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
   }
 
   /// Runs a ``SyncStoreAction``, one at a time with other dispatched actions,
-  /// in dispatch order. Never blocks.
+  /// in dispatch order, and normally returns once it has run, so a read on
+  /// this thread straight after sees it.
   ///
-  /// Use this instead of ``effect(_:in:)`` for actions that never wait, when
-  /// callers need to read their result straight after:
+  /// Use this instead of ``effect(_:in:)`` for actions that never wait:
   /// - When no other thread is running dispatched actions, `action` runs on
-  ///   the calling thread before this returns, followed by any actions
-  ///   dispatched meanwhile. A read on this thread then sees it.
+  ///   the calling thread, followed by any actions dispatched meanwhile.
   /// - From inside a dispatched action, it runs once that action finishes,
   ///   before the outer dispatch returns.
-  /// - While another thread is running dispatched actions, it's queued for
-  ///   that thread and this returns straight away. Waiting instead could
-  ///   deadlock: the running action may itself be waiting on something the
-  ///   caller holds.
+  /// - While another thread is running dispatched actions, this waits for
+  ///   that thread to run it. Unless that thread is inside ``callingOut(_:)``:
+  ///   then this returns straight away and the action runs later, since the
+  ///   running action may be waiting on something the caller holds.
   ///
-  /// Execution interceptors don't apply.
+  /// Execution interceptors don't apply. See ``SerialDispatcher``.
   func dispatch<A: SyncStoreAction>(
     _ action: A,
     in context: Context
@@ -303,6 +294,13 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
     }
 
     dispatcher.run(run)
+  }
+
+  /// Runs `body` from inside a dispatched action, letting ``dispatch(_:in:)``
+  /// callers on other threads return without waiting while it runs. Wrap
+  /// calls that can block on something such a caller might hold.
+  func callingOut<T>(_ body: () -> T) -> T {
+    dispatcher.callingOut(body)
   }
 
   /// Returns once everything queued before this call has finished.
@@ -322,15 +320,18 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
 
   // MARK: - Private
 
-  /// Whether the current task is running this store's active job.
+  /// Whether the current task is the one running this store's action.
+  ///
+  /// Tasks are compared rather than tracked with a task-local value, which
+  /// every task started inside the action would inherit. Those would then
+  /// run their own actions inline, alongside the one still running.
   private var isRunningOwnJob: Bool {
-    guard let current = StoreExecution.current else {
-      return false
+    withUnsafeCurrentTask { current in
+      guard let current = current else {
+        return false
+      }
+      return withLock { activeJobTask == current }
     }
-    guard current.store == ObjectIdentifier(self) else {
-      return false
-    }
-    return withLock { activeJob == current.job }
   }
 
   /// Runs `body` while holding the lock. Synchronous, so it can't hold the
@@ -343,24 +344,20 @@ final class SequentialStore<Context, State>: @unchecked Sendable {
 
   private func enqueue(_ work: @escaping () async -> Void) {
     coordinator.enqueue { [self] in
-      let job = beginJob()
-      await StoreExecution.$current.withValue(job) {
-        await work()
-      }
+      beginJob()
+      await work()
       endJob()
     }
   }
 
-  private func beginJob() -> StoreJob {
-    withLock {
-      nextJobId += 1
-      activeJob = nextJobId
-      return StoreJob(store: ObjectIdentifier(self), job: nextJobId)
+  private func beginJob() {
+    withUnsafeCurrentTask { current in
+      withLock { activeJobTask = current }
     }
   }
 
   private func endJob() {
-    withLock { activeJob = nil }
+    withLock { activeJobTask = nil }
   }
 
   private func runActionInterceptors(

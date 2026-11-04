@@ -46,6 +46,11 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   var seeds: [String: Int] = [:]
   var configLatch: Latch?
   var assignmentsLatch: Latch?
+  /// One latch per assignments fetch, used in call order. Takes precedence
+  /// over `assignmentsLatch`.
+  var assignmentsLatches: [Latch] = []
+  /// Whether the identity counted as ready while the reset for a new user ran.
+  private(set) var wasReadyDuringReset: Bool?
   /// Attributes the reset for a new user merges, as the SDK re-applies
   /// install-scoped attribution.
   var attributesMergedOnReset: [String: Any?]?
@@ -111,7 +116,10 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
 
   func fetchAssignments() async {
     record("fetchAssignments")
-    await assignmentsLatch?.wait()
+    let latch: Latch? = locked {
+      assignmentsLatches.isEmpty ? assignmentsLatch : assignmentsLatches.removeFirst()
+    }
+    await latch?.wait()
   }
 
   func redeemExistingWebEntitlements() async {
@@ -122,6 +130,7 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
     record("resetForNewUser")
     // What `Superwall.reset(duringIdentify: true)` does to this store.
     store.update(IdentityUpdate.reset(aliasId: "$SuperwallAlias:after-reset", seed: 5))
+    wasReadyDuringReset = store.state.isReady
     if let attributes = attributesMergedOnReset {
       dispatch(.mergeAttributes(attributes, shouldTrack: false, shouldNotify: false))
     }
@@ -225,7 +234,7 @@ struct IdentityActionTests {
   }
 
   @Test("Attributes the switch's reset merges land on the new user before identify returns")
-  func resetMergesLandOnNewUser() {
+  func resetMergesLandOnNewUser() async {
     let context = FakeIdentityContext(readyState(appUserId: "user-1"))
     context.attributesMergedOnReset = ["acquisition_source": "network"]
 
@@ -233,6 +242,42 @@ struct IdentityActionTests {
 
     #expect(context.state.appUserId == "user-2")
     #expect(context.state.userAttributes["acquisition_source"] as? String == "network")
+    await context.settle()
+  }
+
+  @Test("A user switch isn't ready while it resets, before the new id is set")
+  func switchIsNotReadyDuringReset() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: false))
+
+    #expect(context.wasReadyDuringReset == false)
+    await context.settle()
+    #expect(context.state.isReady)
+  }
+
+  @Test("Restoring an earlier user's assignments doesn't make the next user ready")
+  func staleAssignmentsDontMakeNextUserReady() async throws {
+    let context = FakeIdentityContext(readyState())
+    let first = Latch()
+    let second = Latch()
+    context.assignmentsLatches = [first, second]
+
+    context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
+    // So that user-1's fetch takes the first latch.
+    while !context.events.contains("fetchAssignments") {
+      try await Task.sleep(nanoseconds: 1_000_000)
+    }
+    context.dispatch(.identify(userId: "user-2", restoreAssignments: true))
+    first.open()
+    try await context.store.waitUntil { !$0.pending.contains(.assignments("user-1")) }
+
+    #expect(context.state.pending.contains(.assignments("user-2")))
+    #expect(context.state.isReady == false)
+
+    second.open()
+    await context.settle()
+    #expect(context.state.isReady)
   }
 
   @Test("identify waits for assignments only when restoring them")
@@ -243,7 +288,7 @@ struct IdentityActionTests {
 
     context.dispatch(.identify(userId: "user-1", restoreAssignments: true))
     await context.store.flush()
-    #expect(context.state.pending.contains(.assignments))
+    #expect(context.state.pending.contains(.assignments("user-1")))
     #expect(context.state.isReady == false)
 
     assignments.open()

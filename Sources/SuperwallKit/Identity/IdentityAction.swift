@@ -25,8 +25,9 @@ protocol IdentityContext: AnyObject {
   func redeemExistingWebEntitlements() async
 
   /// Resets the rest of the SDK for a new user. Called from inside the
-  /// identify action, before the new user id is set, so it must not wait on
-  /// the identity store.
+  /// identify action, before the new user id is set. Anything in it that can
+  /// block must run in `store.callingOut(_:)`, so that threads waiting to
+  /// change the identity stop waiting.
   func resetForNewUser()
 
   func trackIdentityAlias()
@@ -119,6 +120,13 @@ enum IdentityAction: SyncStoreAction {
       return
     }
 
+    // Not ready from here on: otherwise the anonymous user the reset below
+    // leaves would count as ready until the new id is set.
+    context.update(.begin(.seed(userId)))
+    if restoreAssignments {
+      context.update(.begin(.assignments(userId)))
+    }
+
     if context.state.appUserId != nil {
       // Resets this store inline through `IdentityManager.reset(duringIdentify:)`
       // and wipes the user's storage, so it has to come before the new id
@@ -127,9 +135,6 @@ enum IdentityAction: SyncStoreAction {
     }
 
     context.update(.identify(userId: userId))
-    if restoreAssignments {
-      context.update(.begin(.assignments))
-    }
     // The reset above may have wiped every identity field from storage, not
     // just the ones this identify changed.
     context.persistIdentity(context.state)
@@ -153,7 +158,7 @@ enum IdentityAction: SyncStoreAction {
     context.sideEffect { [weak context] in
       await context?.fetchAssignments()
       if restoreAssignments {
-        context?.update(.end(.assignments))
+        context?.update(.end(.assignments(userId)))
       }
     }
   }
@@ -190,7 +195,11 @@ enum IdentityInterceptors {
     let readinessLock = NSRecursiveLock()
     var lastReadiness = store.state.isReady
 
-    store.onUpdate { _, next in
+    // Weak: the store holds this closure.
+    store.onUpdate { [weak store] _, next in
+      guard let store = store else {
+        return next()
+      }
       let before = store.state
       next()
       let after = store.state

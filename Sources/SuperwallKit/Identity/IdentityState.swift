@@ -20,8 +20,9 @@ struct IdentityState {
     /// Keyed by user id so a lookup that's overtaken by a reset or another
     /// identify still resolves its own entry.
     case seed(String)
-    /// Assignments are being restored before the identity is ready.
-    case assignments
+    /// Assignments are being restored for this user before the identity is
+    /// ready. Keyed by user id for the same reason as the seed.
+    case assignments(String)
   }
 
   enum Keys {

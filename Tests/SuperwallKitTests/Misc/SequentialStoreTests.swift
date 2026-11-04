@@ -81,6 +81,29 @@ private struct SetValue: Reducer {
   }
 }
 
+/// A mutable value shared with closures that run on other threads.
+private final class Box<Value>: @unchecked Sendable {
+  private let lock = NSLock()
+  private var _value: Value
+
+  init(_ value: Value) {
+    _value = value
+  }
+
+  var value: Value {
+    get {
+      lock.lock()
+      defer { lock.unlock() }
+      return _value
+    }
+    set {
+      lock.lock()
+      defer { lock.unlock() }
+      _value = newValue
+    }
+  }
+}
+
 /// Lets a test hold an action at a known point until it says so.
 private final class Gate: @unchecked Sendable {
   private let lock = NSLock()
@@ -268,6 +291,31 @@ struct SequentialStoreTests {
     blocker.open()
 
     #expect(await stray?.value == ["blocker", "stray"])
+  }
+
+  @Test("A task started inside an action is outside it, even while the action runs")
+  func taskStartedInsideActionIsQueued() async {
+    let context = TestContext()
+    let spawned = Box<Task<Void, Never>?>(nil)
+
+    await context.store.immediate(
+      Run { context in
+        spawned.value = Task {
+          // Would run inline, alongside this action, if the task inherited
+          // the action's identity.
+          await context.store.immediate(
+            Run { $0.store.update(Log(entry: "spawned")) },
+            in: context
+          )
+        }
+        try? await Task.sleep(nanoseconds: 50_000_000)
+        context.store.update(Log(entry: "action end"))
+      },
+      in: context
+    )
+    await spawned.value?.value
+
+    #expect(context.store.state.log == ["action end", "spawned"])
   }
 
   @Test("waitUntil returns at once when the state already matches")
@@ -489,21 +537,62 @@ struct SequentialStoreTests {
     #expect(context.store.state.value == 500)
   }
 
-  @Test("dispatch while another thread is running actions queues and returns without waiting")
-  func contendedDispatchDoesNotBlock() {
+  @Test("dispatch while another thread is running actions waits for its own action")
+  func contendedDispatchWaits() {
     let context = TestContext()
     let started = DispatchSemaphore(value: 0)
     let proceed = DispatchSemaphore(value: 0)
-    let finished = DispatchSemaphore(value: 0)
-    var proceeded = false
+    let secondReturned = DispatchSemaphore(value: 0)
+    let firstFinished = DispatchSemaphore(value: 0)
+    let box = Box<[String]>([])
 
     Thread {
       context.store.dispatch(
         SyncRun { context in
           started.signal()
-          // Waits for the other dispatch to return. If it waited for this
-          // action instead, both would be stuck.
-          proceeded = proceed.wait(timeout: .now() + 5) == .success
+          _ = proceed.wait(timeout: .now() + 5)
+          context.store.update(Log(entry: "first"))
+        },
+        in: context
+      )
+      firstFinished.signal()
+    }
+    .start()
+    started.wait()
+
+    Thread {
+      context.store.dispatch(SyncRun { $0.store.update(Log(entry: "second")) }, in: context)
+      box.value = context.store.state.log
+      secondReturned.signal()
+    }
+    .start()
+
+    // Still waiting behind the first action.
+    #expect(secondReturned.wait(timeout: .now() + 0.1) == .timedOut)
+    proceed.signal()
+    #expect(secondReturned.wait(timeout: .now() + 5) == .success)
+    firstFinished.wait()
+    // Its read straight after dispatch saw its own action.
+    #expect(box.value == ["first", "second"])
+  }
+
+  @Test("dispatch while the running action calls out returns without waiting")
+  func dispatchDuringCalloutDoesNotWait() {
+    let context = TestContext()
+    let started = DispatchSemaphore(value: 0)
+    let proceed = DispatchSemaphore(value: 0)
+    let finished = DispatchSemaphore(value: 0)
+    let box = Box(false)
+
+    Thread {
+      context.store.dispatch(
+        SyncRun { context in
+          context.store.callingOut {
+            started.signal()
+            // Stands in for a call that waits on something the other
+            // dispatcher holds. If that dispatcher waited, both would be stuck.
+            box.value = proceed.wait(timeout: .now() + 5) == .success
+          }
           context.store.update(Log(entry: "first"))
         },
         in: context
@@ -514,13 +603,52 @@ struct SequentialStoreTests {
 
     started.wait()
     context.store.dispatch(SyncRun { $0.store.update(Log(entry: "second")) }, in: context)
-    // Queued behind the running action rather than run.
     #expect(context.store.state.log.isEmpty)
     proceed.signal()
     finished.wait()
 
-    #expect(proceeded)
-    // The running thread picked it up before its dispatch returned.
+    #expect(box.value)
+    #expect(context.store.state.log == ["first", "second"])
+  }
+
+  @Test("A caller already waiting stops waiting when the running action calls out")
+  func calloutReleasesWaitingCallers() {
+    let context = TestContext()
+    let started = DispatchSemaphore(value: 0)
+    let calloutStarted = DispatchSemaphore(value: 0)
+    let proceed = DispatchSemaphore(value: 0)
+    let secondReturned = DispatchSemaphore(value: 0)
+    let finished = DispatchSemaphore(value: 0)
+
+    Thread {
+      context.store.dispatch(
+        SyncRun { context in
+          started.signal()
+          // Give the second caller time to start waiting.
+          Thread.sleep(forTimeInterval: 0.05)
+          context.store.callingOut {
+            calloutStarted.signal()
+            _ = proceed.wait(timeout: .now() + 5)
+          }
+          context.store.update(Log(entry: "first"))
+        },
+        in: context
+      )
+      finished.signal()
+    }
+    .start()
+    started.wait()
+
+    Thread {
+      context.store.dispatch(SyncRun { $0.store.update(Log(entry: "second")) }, in: context)
+      secondReturned.signal()
+    }
+    .start()
+
+    calloutStarted.wait()
+    #expect(secondReturned.wait(timeout: .now() + 2) == .success)
+    proceed.signal()
+    finished.wait()
     #expect(context.store.state.log == ["first", "second"])
   }
 

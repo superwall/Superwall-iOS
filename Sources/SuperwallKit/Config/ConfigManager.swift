@@ -100,19 +100,24 @@ class ConfigManager {
     )
 
     store.onUpdate { [weak self] reducer, next in
-      next()
-      guard let publication = (reducer as? ConfigUpdate)?.publication else {
-        return
+      guard
+        let self = self,
+        let publication = (reducer as? ConfigUpdate)?.publication
+      else {
+        return next()
       }
-      self?.publish(publication)
+      // Applied and sent under one lock, so changes made on different
+      // threads reach subscribers in the order they were applied.
+      self.publicationLock.lock()
+      defer { self.publicationLock.unlock() }
+      next()
+      self.publish(publication)
     }
   }
 
-  /// Sends a change to `configState`. Under a lock so that changes made on
-  /// different threads reach subscribers in the order they were made.
+  /// Sends a change to `configState`. Once a failure has completed it,
+  /// `configState` sends nothing more, though the store can still change.
   private func publish(_ publication: ConfigPublication) {
-    publicationLock.lock()
-    defer { publicationLock.unlock() }
     switch publication {
     case .value(let state):
       configState.send(state)

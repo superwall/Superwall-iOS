@@ -21,8 +21,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `reset()` leaving the new anonymous user's attributes without `aliasId` and `seed` until the next identity change, so audience filters on them didn't match.
 - Fixes `reset()` occasionally deleting the new anonymous user's alias and seed from disk, which gave the user yet another alias on the next launch.
 - Fixes the seed derived from the user ID, when that's enabled, being applied to a user who had since logged out or been switched for another.
-- Fixes `identify(userId:)` and `reset()` sending several `user_attributes` events for one change.
-- Fixes config refreshes, such as one from `refreshConfiguration()` and one on app foreground, being able to run at the same time and apply their configs out of order. They now run one after the other, after the launch config fetch.
+- Fixes `reset()`, and `identify(userId:)` switching from one user to another, sending several `user_attributes` events for one change.
+- Fixes config refreshes, such as one from `refreshConfiguration()` and one on app foreground, being able to run at the same time and apply their configs out of order. They now run one after the other. A refresh called after the config has arrived but before the launch config fetch has finished, such as while it loads purchases from the App Store or shows the test mode modal, now waits for the fetch to finish.
 
 ## 4.18.3
 
