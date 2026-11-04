@@ -185,6 +185,17 @@ enum SdkVersion: Storable {
   typealias Value = String
 }
 
+/// The hash of the SDKs the app was last sent with, so the list goes up only when
+/// it changes. One per install, not per app version, and app-specific so it
+/// survives `reset()`.
+enum SDKEnvironmentHash: Storable {
+  static var key: String {
+    "store.sdkEnvironmentHash"
+  }
+  static var directory: SearchPathDirectory = .appSpecificDocuments
+  typealias Value = String
+}
+
 enum EntitlementsByProductId: Storable {
   static var key: String {
     "store.entitlementsByProductId"

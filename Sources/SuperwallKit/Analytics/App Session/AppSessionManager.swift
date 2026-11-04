@@ -21,6 +21,8 @@ class AppSessionManager {
   private unowned let delegate: DeviceHelperFactory & UserAttributesPlacementFactory
   /// Catches ATT changes made while the app was in the background, e.g. in Settings.
   private let republishIfAdConsentChanged: () async -> Void
+  /// Sends the SDKs the app includes if they've changed. Tests pass their own.
+  private let trackSDKEnvironment: () async -> Void
   /// Where app lifecycle notifications are observed. Tests pass their own.
   private let notificationCenter: NotificationCenter
 
@@ -32,9 +34,15 @@ class AppSessionManager {
     republishIfAdConsentChanged: @escaping () async -> Void = {
       await Superwall.shared.republishDeviceAttributesIfAdConsentChanged()
     },
-    notificationCenter: NotificationCenter = .default
+    notificationCenter: NotificationCenter = .default,
+    trackSDKEnvironment: @escaping () async -> Void = {
+      await SDKEnvironmentReportOnce.shared.run {
+        SDKEnvironmentReporter.live(storage: Superwall.shared.dependencyContainer.storage)
+      }
+    }
   ) {
     self.republishIfAdConsentChanged = republishIfAdConsentChanged
+    self.trackSDKEnvironment = trackSDKEnvironment
     self.notificationCenter = notificationCenter
     self.configManager = configManager
     self.storage = storage
@@ -180,5 +188,7 @@ class AppSessionManager {
     }
     await Superwall.shared.track(InternalSuperwallEvent.AppLaunch())
     didTrackAppLaunch = true
+    // Once per app open: the SDKs can only change with a new build.
+    await trackSDKEnvironment()
   }
 }

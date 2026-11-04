@@ -19,6 +19,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Entitlements your server has already reported for a custom product purchase now show up in the app straight after the purchase. If it reports them later, call `refreshCustomerInfo()` once it has.
 - Apps without web paywalls now also refresh entitlements when they come to the foreground.
 - Improves MMP install matching.
+- Sends Superwall the list of third-party SDKs your app includes, on app open when that list has changed since it was last sent, so the dashboard can suggest integrations for SDKs you already use and support can spot conflicts with other SDKs. It covers the Swift modules and Objective-C classes linked into your app and its embedded frameworks and resource bundles, without Apple's frameworks or your app's main module, and sends their names only as hashes. It describes your app's build, not your users, isn't passed to `SuperwallDelegate`, and isn't sent when `eventTrackingBehavior` is `.none`.
 
 ### Fixes
 

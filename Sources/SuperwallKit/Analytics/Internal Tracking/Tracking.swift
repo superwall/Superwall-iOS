@@ -63,7 +63,10 @@ extension Superwall {
         from: event
       )
     }
-    dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
+    // Stored events only feed audience filters, which private events can't be part of.
+    if !(event is TrackablePrivateEvent) {
+      dependencyContainer.storage.coreDataManager.savePlacementData(eventData)
+    }
 
     // Only what actually goes to the server counts as sent. The queue learns of a
     // tracking-behavior change asynchronously, so check the options too.
@@ -86,10 +89,7 @@ extension Superwall {
       }
 		}
 
-    let result = TrackingResult(
-      data: eventData,
-      parameters: parameters
-    )
+    let result = TrackingResult(data: eventData, parameters: parameters, isQueuedForSending: isQueuedForSending)
 		return result
   }
 
