@@ -188,6 +188,15 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Paywall view controller cache store
+
+`PaywallViewControllerCache` keeps its controllers and the active paywall's key in a `StateStore`,
+changed only by `PaywallViewControllerCacheUpdate` reducers. Anything that can drop a controller
+(saving over one, removing, `removeAll`) is a `PaywallViewControllerCacheAction`: it collects what it
+drops and hands it to `release` with `deferUntilUnlocked`, which lets go of it on the main thread.
+Never let a controller's last reference go with the store locked or off the main thread, since that
+tears down its views. `removeAll` keeps the paywall on screen.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
