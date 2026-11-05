@@ -1224,18 +1224,43 @@ class DeviceHelper {
     return false
   }
 
+  private func isEnrichmentBlockedByTracking() -> Bool {
+    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /enrich",
+        info: ["reason": "Event tracking turned off"]
+      )
+      return true
+    }
+    return false
+  }
+
   /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
   @discardableResult
   func startIPCollectionIfEnabled() -> Task<Void, Never>? {
     return startIPCollectionIfEnabled(for: factory.currentConfig())
   }
 
+  /// Fetches enrichment, such as the demand score, for the user and device.
+  ///
+  /// Skipped while `eventTrackingBehavior` is ``EventTrackingBehavior/none``,
+  /// because the request posts the user and device attributes. It runs again on
+  /// the next config refresh or when the app opts back in.
   func getEnrichment(
     maxRetry: Int? = nil,
     timeout: Seconds? = nil
   ) async throws {
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
     let identityManager = factory.makeIdentityManager()
     let deviceAttributes = await getTemplateDevice()
+    // The app can opt out of tracking while the attributes are built.
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
     let request = EnrichmentRequest(
       user: JSON(identityManager.userAttributes),
       device: JSON(deviceAttributes)
