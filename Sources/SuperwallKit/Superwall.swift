@@ -83,6 +83,15 @@ public final class Superwall: NSObject, ObservableObject {
         dependencyContainer.mmpAttributionManager.startMatchIfEnabled()
       }
 
+      // Enrichment is skipped while opted out, so fetch it now rather than at the
+      // next config refresh.
+      if oldValue == .none && newValue != .none {
+        let deviceHelper = dependencyContainer.deviceHelper
+        Task {
+          try? await deviceHelper?.getEnrichment()
+        }
+      }
+
       Task {
         await dependencyContainer.placementsQueue.setTrackingBehavior(newValue)
         // Re-send the device attributes once the queue has the new behavior. Leaving

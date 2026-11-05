@@ -247,8 +247,20 @@ class Network {
     maxRetry: Int?,
     timeout: Seconds?
   ) async throws -> Enrichment {
+    let configManager = factory.configManager
+    let canSend: @Sendable () -> Bool = { [weak configManager] in
+      guard let behavior = configManager?.options.eventTrackingBehavior else {
+        return false
+      }
+      return behavior != .none
+    }
     do {
       try await appInForeground(injectedApplicationStatePublisher)
+
+      // The app can opt out while waiting for the foreground.
+      if !canSend() {
+        throw NetworkError.trackingDisabled
+      }
 
       let start = InternalSuperwallEvent.EnrichmentLoad(state: .start)
       await Superwall.shared.track(start)
@@ -257,7 +269,8 @@ class Network {
         .enrichment(
           request: request,
           maxRetry: maxRetry ?? options.maxConfigRetryCount,
-          timeout: timeout
+          timeout: timeout,
+          canSend: canSend
         ),
         data: SuperwallRequestData(factory: factory)
       )
@@ -268,6 +281,14 @@ class Network {
       await Superwall.shared.track(complete)
 
       return response
+    } catch NetworkError.trackingDisabled {
+      Logger.debug(
+        logLevel: .debug,
+        scope: .network,
+        message: "Skipped: /enrich",
+        info: ["reason": "Event tracking turned off"]
+      )
+      throw NetworkError.trackingDisabled
     } catch {
       Logger.debug(
         logLevel: .error,
