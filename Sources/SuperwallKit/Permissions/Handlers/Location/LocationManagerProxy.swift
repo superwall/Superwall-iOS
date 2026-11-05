@@ -11,6 +11,7 @@
 // that don't actually use location services. Class and selector names are
 // ROT13-encoded to avoid static analysis detection.
 
+#if canImport(WebKit)
 import Foundation
 import ObjectiveC.runtime
 
@@ -119,3 +120,4 @@ final class LocationManagerProxy: NSObject {
     return true
   }
 }
+#endif

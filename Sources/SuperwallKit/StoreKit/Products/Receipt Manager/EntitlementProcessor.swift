@@ -62,7 +62,7 @@ protocol SubscriptionStatusProvider {
   func getWillAutoRenew(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Bool
   func getSubscriptionState(from status: StoreKit.Product.SubscriptionInfo.Status?) -> LatestSubscription.State?
   func getGracePeriodExpirationDate(from status: StoreKit.Product.SubscriptionInfo.Status?) -> Date?
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
+  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, visionOS 1.1, *)
   func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType?
 }
 
@@ -106,7 +106,7 @@ struct StoreKitSubscriptionStatusProvider: SubscriptionStatusProvider {
     return nil
   }
 
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *)
+  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, visionOS 1.1, *)
   func getOfferType(from transaction: any EntitlementTransaction) -> LatestSubscription.OfferType? {
     guard let transaction = transaction as? Transaction else {
       return nil
@@ -402,7 +402,7 @@ enum EntitlementProcessor {
           }
         }
 
-        if #available(iOS 17.2, visionOS 1.1, *) {
+        if #available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *) {
           offerType = subscriptionStatusProvider.getOfferType(from: renewableTransaction)
         }
 
@@ -504,7 +504,7 @@ extension Transaction: EntitlementTransaction {
   }
 
   var offerType: LatestSubscription.OfferType? {
-    if #available(iOS 17.2, macOS 14.2, watchOS 10.2, visionOS 1.1, *) {
+    if #available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, visionOS 1.1, *) {
       if offer?.type == .winBack {
         return .winback
       }

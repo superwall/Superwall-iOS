@@ -5,6 +5,8 @@
 //  Created by Jake Mor on 8/27/21.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import Foundation
 import UIKit
 import AVFoundation
@@ -205,3 +207,5 @@ final class SWBounceButton: UIButton {
     return (largerFrame.contains(point)) ? self : nil
   }
 }
+#endif
+#endif

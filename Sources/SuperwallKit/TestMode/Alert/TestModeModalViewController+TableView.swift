@@ -5,6 +5,8 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 /// Action type for a row in the test mode modal.
@@ -208,3 +210,5 @@ extension TestModeModalViewController: UITableViewDataSource, UITableViewDelegat
     }
   }
 }
+#endif
+#endif

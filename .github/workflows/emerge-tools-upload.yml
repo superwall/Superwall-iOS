@@ -1,8 +1,9 @@
 name: Emerge Tools Upload
 
+# Run by the release workflow after a release is published, or by hand.
 on:
-  push:
-    branches: [ master ]
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   build:

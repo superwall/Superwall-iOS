@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 11/15/21.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 final class LocalizationManager {
@@ -41,3 +42,4 @@ final class LocalizationManager {
     return output.filter { !$0.localizations.isEmpty }
 	}
 }
+#endif

@@ -6,13 +6,18 @@
 //
 // swiftlint:disable strict_fileprivate
 
+#if canImport(WebKit)
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 
 struct PresentablePipelineOutput {
   let debugInfo: [String: Any]
   let paywallViewController: PaywallViewController
-  let presenter: UIViewController
+  let presenter: PlatformViewController
   let assignment: Assignment?
 }
 
@@ -35,7 +40,7 @@ extension Superwall {
     request: PresentationRequest,
     debugInfo: [String: Any],
     paywallStatePublisher: PassthroughSubject<PaywallState, Never>? = nil
-  ) async throws -> UIViewController? {
+  ) async throws -> PlatformViewController? {
     switch request.flags.type {
     case .getPaywall:
       await attemptTriggerFire(
@@ -53,15 +58,25 @@ extension Superwall {
       break
     }
 
+    // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
+    #if os(macOS)
+    let presenter: PlatformViewController?
+    if let providedViewController = request.presenter {
+      presenter = providedViewController
+    } else {
+      presenter = await macPresenter()
+    }
+    #else
     if request.presenter == nil {
       await createPresentingWindowIfNeeded()
     }
 
-    // Make sure there's a presenter. If there isn't throw an error if no paywall is being presented
     let providedViewController = request.presenter
     let rootViewController = await Superwall.shared.presentationItems.window?.rootViewController
+    let presenter = providedViewController ?? rootViewController
+    #endif
 
-    guard let presenter = (providedViewController ?? rootViewController) else {
+    guard let presenter = presenter else {
       Logger.debug(
         logLevel: .error,
         scope: .paywallPresentation,
@@ -89,41 +104,46 @@ extension Superwall {
     return presenter
   }
 
-  func attemptTriggerFire(
-    for request: PresentationRequest,
-    triggerResult: InternalTriggerResult
-  ) async {
-    guard let placementName = request.presentationInfo.placementName else {
-      // The paywall is being presented by identifier, which is what the debugger uses and that's not supported.
-      return
+  #if os(macOS)
+  /// What the app is showing on top, or a window of the SDK's own when the app
+  /// has none, as a menu bar app might not.
+  ///
+  /// iOS covers the app with a window of its own every time. A Mac app's
+  /// windows are its own to arrange, so the paywall attaches to them instead.
+  @MainActor
+  fileprivate func macPresenter() -> PlatformViewController? {
+    if let topViewController = PlatformViewController.topMostViewController {
+      return topViewController
     }
-    switch request.presentationInfo {
-    case .implicitTrigger,
-      .explicitTrigger:
-      switch triggerResult {
-      case .error,
-        .placementNotFound:
-        return
-      default:
-        break
-      }
-    case .fromIdentifier:
-      break
+    if presentationItems.window == nil {
+      let window = PaywallHostWindow(
+        contentRect: NSRect(origin: .zero, size: PaywallSheetSize.fitting(nil)),
+        styleMask: [.titled, .closable, .fullSizeContentView]
+      )
+      window.titlebarAppearsTransparent = true
+      window.titleVisibility = .hidden
+      window.delegate = presentationItems.windowDelegate
+      window.center()
+      presentationItems.window = window
     }
-
-    let triggerFire = InternalSuperwallEvent.TriggerFire(
-      triggerResult: triggerResult,
-      triggerName: placementName
-    )
-    await Superwall.shared.track(triggerFire)
+    // It stays hidden until the paywall is in it, so it can't be closed empty
+    // while the presentation is still on its way.
+    return presentationItems.window?.rootViewController
   }
 
+  @MainActor
+  func destroyPresentingWindow() {
+    presentationItems.window?.delegate = nil
+    presentationItems.window?.close()
+    presentationItems.window = nil
+  }
+  #else
   @MainActor
   fileprivate func createPresentingWindowIfNeeded() {
     guard presentationItems.window == nil else {
       return
     }
-    guard let sharedApplication = UIApplication.sharedApplication else {
+    guard let sharedApplication = PlatformApplication.sharedApplication else {
       return
     }
     let activeWindow = sharedApplication.activeWindow
@@ -142,4 +162,6 @@ extension Superwall {
     presentationItems.window?.windowScene = nil
     presentationItems.window = nil
   }
+  #endif
 }
+#endif

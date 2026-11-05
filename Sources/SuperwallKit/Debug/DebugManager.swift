@@ -5,11 +5,18 @@
 //  Created by Jake Mor on 8/27/21.
 //
 
+#if canImport(WebKit)
 import Foundation
+#if !os(macOS)
 import UIKit
+#endif
 
 final class DebugManager {
+  #if os(macOS)
+  @MainActor private var macDebugger: MacDebugger?
+  #else
   @MainActor var viewController: DebugViewController?
+  #endif
 	var isDebuggerLaunched = false
 
   /// The surfaces a running `superwall dev` server exposes, and where it lives.
@@ -76,6 +83,14 @@ final class DebugManager {
     withPaywallId paywallDatabaseId: String? = nil,
     devSurfaceId: String? = nil
   ) async {
+    #if os(macOS)
+    await Superwall.shared.dismiss()
+    macDebugger?.close()
+    let debugger = MacDebugger(manager: self)
+    macDebugger = debugger
+    isDebuggerLaunched = true
+    await debugger.show(paywallId: paywallDatabaseId, surfaceId: devSurfaceId)
+    #else
     if Superwall.shared.isPaywallPresented {
       await Superwall.shared.dismiss()
       await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
@@ -90,8 +105,10 @@ final class DebugManager {
         await launchDebugger(withPaywallId: paywallDatabaseId, devSurfaceId: devSurfaceId)
 			}
 		}
+    #endif
 	}
 
+  #if !os(macOS)
   @MainActor
 	func presentDebugger(
     withPaywallId paywallDatabaseId: String? = nil,
@@ -106,7 +123,7 @@ final class DebugManager {
       viewController.devServer = devServer
       viewController.selectDevSurface(id: devSurfaceId)
 			await viewController.loadPreview()
-			await UIViewController.topMostViewController?.present(
+			await PlatformViewController.topMostViewController?.present(
         viewController,
         animated: true
       )
@@ -114,7 +131,7 @@ final class DebugManager {
       let viewController = factory.makeDebugViewController(withDatabaseId: paywallDatabaseId)
       viewController.devServer = devServer
       viewController.selectDevSurface(id: devSurfaceId)
-			UIViewController.topMostViewController?.present(
+			PlatformViewController.topMostViewController?.present(
         viewController,
         animated: true,
         completion: nil
@@ -123,8 +140,14 @@ final class DebugManager {
 		}
 	}
 
+  #endif
+
   @MainActor
   func closeDebugger(animated: Bool) async {
+    #if os(macOS)
+    macDebugger?.close()
+    macDebugger = nil
+    #else
     func dismissViewController() async {
       return await withCheckedContinuation { continuation in
         viewController?.dismiss(animated: animated) { [weak self] in
@@ -141,5 +164,7 @@ final class DebugManager {
 		} else {
       await dismissViewController()
 		}
+    #endif
 	}
 }
+#endif

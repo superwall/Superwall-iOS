@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 8/3/22.
 //
 
+#if !os(macOS) && !os(watchOS)
 import Foundation
 import UIKit
 
@@ -51,3 +52,4 @@ extension UIApplication {
     return sharedApplication.connectedScenes.compactMap { $0 as? UIWindowScene }.first
   }
 }
+#endif

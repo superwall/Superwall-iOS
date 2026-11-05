@@ -6,7 +6,11 @@
 //
 // swiftlint:disable function_body_length file_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 import Combine
 import UserNotifications
 
@@ -30,9 +34,14 @@ final class DependencyContainer {
   var paywallRequestManager: PaywallRequestManager!
   var deviceHelper: DeviceHelper!
   var placementsQueue: PlacementsQueue!
+  #if canImport(WebKit)
   var debugManager: DebugManager!
+  #endif
   var api: Api!
   var transactionManager: TransactionManager!
+  #if canImport(WebKit)
+  var customStoreCheckoutHandler: CustomStoreCheckoutHandler!
+  #endif
   var delegateAdapter: SuperwallDelegateAdapter!
   var purchaseManager: PurchaseManager!
   var receiptManager: ReceiptManager!
@@ -46,11 +55,14 @@ final class DependencyContainer {
   var attributionFetcher: AttributionFetcher!
   var testModeManager: TestModeManager!
   var notificationTokenManager: NotificationTokenManager!
+  #if canImport(WebKit)
   let permissionHandler = PermissionHandler()
+  #endif
   let customCallbackRegistry = CustomCallbackRegistry()
   // swiftlint:enable implicitly_unwrapped_optional
   let paywallArchiveManager = PaywallArchiveManager()
 
+  #if canImport(WebKit)
   private var _customerCenterManager: CustomerCenterManager?
 
   /// Builds the dependencies backing the Customer Center and owns its presentation state.
@@ -68,6 +80,16 @@ final class DependencyContainer {
     let manager = CustomerCenterManager(container: self)
     _customerCenterManager = manager
     return manager
+  }
+
+  #endif
+  /// Whether the debugger is open. watchOS and tvOS have no debugger.
+  var isDebuggerLaunchedNow: Bool {
+    #if canImport(WebKit)
+    return debugManager.isDebuggerLaunched
+    #else
+    return false
+    #endif
   }
 
   init(
@@ -237,6 +259,7 @@ final class DependencyContainer {
 
     tcfConsentObserver = TCFConsentObserver()
 
+    #if canImport(WebKit)
     debugManager = DebugManager(
       storage: storage,
       factory: self
@@ -246,6 +269,12 @@ final class DependencyContainer {
       debugManager: debugManager,
       configManager: configManager
     )
+    #else
+    deepLinkRouter = DeepLinkRouter(
+      webEntitlementRedeemer: webEntitlementRedeemer,
+      configManager: configManager
+    )
+    #endif
     purchaseManager = PurchaseManager(
       storeKitVersion: options.storeKitVersion,
       storeKitManager: storeKitManager,
@@ -262,8 +291,16 @@ final class DependencyContainer {
       placementsQueue: placementsQueue,
       purchaseManager: purchaseManager,
       productsManager: productsManager,
+      postPurchaseRedeemer: webEntitlementRedeemer,
       factory: self
     )
+    #if canImport(WebKit)
+    customStoreCheckoutHandler = CustomStoreCheckoutHandler(
+      transactionManager: transactionManager,
+      storeKitManager: storeKitManager,
+      factory: self
+    )
+    #endif
   }
 }
 
@@ -294,6 +331,7 @@ extension DependencyContainer: TestModeManagerFactory {
   }
 }
 
+#if canImport(WebKit)
 // MARK: - CacheFactory
 extension DependencyContainer: CacheFactory {
   func makeCache() -> PaywallViewControllerCache {
@@ -301,6 +339,7 @@ extension DependencyContainer: CacheFactory {
   }
 }
 
+#endif
 // MARK: - PaywallArchiveManagerFactory
 extension DependencyContainer: PaywallArchiveManagerFactory {
   func makePaywallArchiveManager() -> PaywallArchiveManager {
@@ -345,6 +384,7 @@ extension DependencyContainer: LocaleIdentifierFactory {
   }
 }
 
+#if canImport(WebKit)
 // MARK: - ViewControllerFactory
 extension DependencyContainer: ViewControllerFactory {
   @MainActor
@@ -361,7 +401,7 @@ extension DependencyContainer: ViewControllerFactory {
       customCallbackRegistry: customCallbackRegistry
     )
     let webView = SWWebView(
-      isMac: deviceHelper.isMac,
+      isiOSAppOnMac: deviceHelper.isiOSAppOnMac,
       messageHandler: messageHandler,
       isOnDeviceCacheEnabled: paywall.onDeviceCache == .enabled,
       factory: self
@@ -387,6 +427,7 @@ extension DependencyContainer: ViewControllerFactory {
     return paywallViewController
   }
 
+  #if !os(macOS)
   @MainActor
   func makeDebugViewController(withDatabaseId id: String?) -> DebugViewController {
     let viewController = DebugViewController(
@@ -401,6 +442,7 @@ extension DependencyContainer: ViewControllerFactory {
     viewController.modalPresentationStyle = .overFullScreen
     return viewController
   }
+  #endif
 }
 
 extension DependencyContainer: VariablesFactory {
@@ -423,6 +465,7 @@ extension DependencyContainer: VariablesFactory {
   }
 }
 
+#endif
 // MARK: - PaywallRequestFactory
 extension DependencyContainer: RequestFactory {
   func makePaywallRequest(
@@ -445,7 +488,7 @@ extension DependencyContainer: RequestFactory {
   func makePresentationRequest(
     _ presentationInfo: PresentationInfo,
     paywallOverrides: PaywallOverrides? = nil,
-    presenter: UIViewController? = nil,
+    presenter: PlatformViewController? = nil,
     isDebuggerLaunched: Bool? = nil,
     isPaywallPresented: Bool,
     type: PresentationRequestType
@@ -455,7 +498,7 @@ extension DependencyContainer: RequestFactory {
       presenter: presenter,
       paywallOverrides: paywallOverrides,
       flags: .init(
-        isDebuggerLaunched: isDebuggerLaunched ?? debugManager.isDebuggerLaunched,
+        isDebuggerLaunched: isDebuggerLaunched ?? isDebuggerLaunchedNow,
         subscriptionStatus: Superwall.shared.$subscriptionStatus.eraseToAnyPublisher(),
         isPaywallPresented: isPaywallPresented,
         type: type
@@ -777,6 +820,10 @@ extension DependencyContainer: RestoreAccessFactory {
 extension DependencyContainer: ConfigStateFactory {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
     return configManager.configState
+  }
+
+  func currentConfig() -> Config? {
+    return configManager.config
   }
 }
 

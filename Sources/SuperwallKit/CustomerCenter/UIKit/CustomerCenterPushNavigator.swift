@@ -5,6 +5,8 @@
 //  Created by Jordan Morgan on 28/08/2026.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import SwiftUI
 import UIKit
 
@@ -113,3 +115,5 @@ private final class CustomerCenterPushedHostingController<Content: View>: UIHost
     onRemovedFromParent?()
   }
 }
+#endif
+#endif

@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 extension PermissionHandler {
@@ -43,3 +44,4 @@ extension PermissionHandler {
     return permissionStatus
   }
 }
+#endif

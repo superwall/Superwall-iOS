@@ -44,3 +44,9 @@ struct ConfigCaching: Capability {
 struct WebViewTextInteractionCapability: Capability {
   let name = "webview_text_interaction"
 }
+
+/// The SDK finishes custom store checkouts that the paywall runs itself, through
+/// the checkout endpoint configured on the custom store, without a `PurchaseController`.
+struct CustomStoreCheckoutCapability: Capability {
+  let name = "custom_store_checkout"
+}

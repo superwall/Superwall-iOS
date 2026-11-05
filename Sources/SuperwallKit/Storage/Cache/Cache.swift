@@ -7,7 +7,7 @@
 //
 // swiftlint:disable file_length large_tuple type_body_length
 
-import UIKit
+import Foundation
 
 class Cache {
   static let userSpecificDocumentDirectoryPrefix = "com.superwall.document.userSpecific.Store"
@@ -64,17 +64,17 @@ class Cache {
 
     self.ioQueue = ioQueue
 
-    #if !os(OSX) && !os(watchOS)
+    #if !os(watchOS)
       NotificationCenter.default.addObserver(
         self,
         selector: #selector(cleanExpiredDiskCache),
-        name: UIApplication.willTerminateNotification,
+        name: SystemInfo.applicationWillTerminateNotification,
         object: nil
       )
       NotificationCenter.default.addObserver(
         self,
         selector: #selector(cleanExpiredDiskCache),
-        name: UIApplication.didEnterBackgroundNotification,
+        name: SystemInfo.applicationDidEnterBackgroundNotification,
         object: nil
       )
     #endif

@@ -8,9 +8,14 @@
 //  dev mode override then points at the local bytes).
 //
 
+#if canImport(WebKit)
 import Combine
 import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 enum DevServerPreview {
   struct DeepLinkOutcome: Equatable {
@@ -168,3 +173,4 @@ enum DevServerPreview {
     )
   }
 }
+#endif

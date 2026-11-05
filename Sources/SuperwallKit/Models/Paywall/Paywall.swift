@@ -6,7 +6,12 @@
 //
 // swiftlint:disable function_body_length type_body_length file_length
 
+import Foundation
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
 
 struct Paywall: Codable {
   /// The id of the paywall in the database.
@@ -37,10 +42,10 @@ struct Paywall: Codable {
   let presentation: PaywallPresentationInfo
 
   let darkBackgroundColorHex: String?
-  let darkBackgroundColor: UIColor?
+  let darkBackgroundColor: PlatformColor?
 
   let backgroundColorHex: String
-  let backgroundColor: UIColor
+  let backgroundColor: PlatformColor
 
   let computedPropertyRequests: [ComputedPropertyRequest]
 
@@ -82,6 +87,34 @@ struct Paywall: Codable {
   /// The custom products associated with the paywall.
   var customProducts: [Product] {
     return PaywallLogic.getCustomProducts(from: products)
+  }
+
+  /// The cache key of the slot a purchase message from the paywall refers to.
+  ///
+  /// The message's `id` can't tell two slots selling the same product on
+  /// different billing plans apart, so `referenceName` picks the slot. Paywalls
+  /// that don't send one get the first slot with that `id`.
+  func cacheKey(forProductId id: String, referenceName: String?) -> String {
+    let slot = products.first { $0.id == id && $0.name == referenceName }
+      ?? products.first { $0.id == id }
+    return slot?.cacheKey ?? id
+  }
+
+  /// The slot name to report back to the paywall for a purchase, for when the
+  /// product identifier alone can't identify the slot.
+  ///
+  /// `nil` unless several slots share the product and this key identifies just
+  /// one of them, so every other paywall gets the same messages as before.
+  func referenceName(forCacheKey cacheKey: String) -> String? {
+    let slots = products.filter { $0.cacheKey == cacheKey }
+    guard
+      slots.count == 1,
+      let slot = slots.first,
+      products.filter({ $0.id == slot.id }).count > 1
+    else {
+      return nil
+    }
+    return slot.name
   }
 
   /// Indicates whether scrolling is enabled on the webview.
@@ -238,11 +271,11 @@ struct Paywall: Codable {
     )
 
     backgroundColorHex = try values.decode(String.self, forKey: .backgroundColorHex)
-    let backgroundColor = UIColor(hexString: backgroundColorHex)
+    let backgroundColor = PlatformColor(hexString: backgroundColorHex)
     self.backgroundColor = backgroundColor
 
     if let darkBackgroundColorHex = try values.decodeIfPresent(String.self, forKey: .darkBackgroundColorHex) {
-      let darkBackgroundColor = UIColor(hexString: darkBackgroundColorHex)
+      let darkBackgroundColor = PlatformColor(hexString: darkBackgroundColorHex)
       self.darkBackgroundColor = darkBackgroundColor
       self.darkBackgroundColorHex = darkBackgroundColorHex
     } else {
@@ -386,9 +419,9 @@ struct Paywall: Codable {
     htmlSubstitutions: String,
     presentation: PaywallPresentationInfo,
     backgroundColorHex: String,
-    backgroundColor: UIColor,
+    backgroundColor: PlatformColor,
     darkBackgroundColorHex: String?,
-    darkBackgroundColor: UIColor?,
+    darkBackgroundColor: PlatformColor?,
     productItems: [Product],
     productIds: [String],
     appStoreProductIds: [String],
@@ -508,6 +541,10 @@ extension Paywall: Equatable {
 // MARK: - Stubbable
 extension Paywall: Stubbable {
   static func stub() -> Paywall {
+    return stub(style: .modal)
+  }
+
+  static func stub(style: PaywallPresentationStyle) -> Paywall {
     return Paywall(
       databaseId: "id",
       identifier: "identifier",
@@ -518,7 +555,7 @@ extension Paywall: Stubbable {
       urlConfig: .init(endpoints: [], maxAttempts: 0),
       htmlSubstitutions: "",
       presentation: PaywallPresentationInfo(
-        style: .modal,
+        style: style,
         delay: 0
       ),
       backgroundColorHex: "",

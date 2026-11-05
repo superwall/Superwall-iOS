@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import UIKit
 
 /// Manages intro offer eligibility tokens for StoreKit 2 purchases.
 /// Handles fetching, caching, expiry checking, and automatic refreshing when app returns to foreground.
@@ -54,7 +53,7 @@ final class IntroOfferTokenManager {
     }
 
     appLifecycleObserver = NotificationCenter.default.addObserver(
-      forName: UIApplication.willEnterForegroundNotification,
+      forName: SystemInfo.applicationWillEnterForegroundNotification,
       object: nil,
       queue: .main
     ) { [weak self] _ in

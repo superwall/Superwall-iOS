@@ -5,9 +5,18 @@
 //
 // swiftlint:disable type_body_length file_length function_body_length
 
+#if os(macOS)
+import AppKit
+#else
 import UIKit
+#endif
+#if os(watchOS)
+import WatchKit
+#endif
 import Foundation
+#if canImport(SystemConfiguration)
 import SystemConfiguration
+#endif
 #if canImport(CoreTelephony)
 import CoreTelephony
 #endif
@@ -44,6 +53,7 @@ class DeviceHelper {
 
   let appInstalledAtString: String
 
+  #if canImport(SystemConfiguration)
   private let reachability: SCNetworkReachability?
   var reachabilityFlags: SCNetworkReachabilityFlags? {
     guard let reachability = reachability else {
@@ -54,6 +64,7 @@ class DeviceHelper {
 
     return flags
   }
+  #endif
 
   let appVersion = Bundle.main.releaseVersionNumber ?? ""
 
@@ -65,13 +76,28 @@ class DeviceHelper {
     )
   }()
 
+  /// Whether this is an iPhone or iPad app running on a Mac. Unlike `isMac`,
+  /// it's `false` for native macOS apps.
+  let isiOSAppOnMac = ProcessInfo.processInfo.isiOSAppOnMac
+
+  #if os(macOS)
+  let isMac = true
+
+  let model: String = MacDeviceInfo.model
+  #else
   let isMac = ProcessInfo.processInfo.isiOSAppOnMac
 
   let model: String = {
-    UIDevice.modelName
+    PlatformDevice.modelName
   }()
+  #endif
 
-  var simulatorModel = UIDevice.simulatorModelName
+  #if os(macOS)
+  /// A native Mac app never runs in a simulator.
+  var simulatorModel: String?
+  #else
+  var simulatorModel = PlatformDevice.simulatorModelName
+  #endif
 
   private let vendorIdLock = NSLock()
   private var cachedVendorId = ""
@@ -97,12 +123,18 @@ class DeviceHelper {
     if !cachedVendorId.isEmpty {
       return cachedVendorId
     }
+    #if os(macOS)
+    cachedVendorId = MacDeviceInfo.vendorId()
+    #elseif os(watchOS)
+    cachedVendorId = WKInterfaceDevice.current().identifierForVendor?.uuidString ?? ""
+    #else
     cachedVendorId = UIDevice.current.identifierForVendor?.uuidString ?? ""
+    #endif
     return cachedVendorId
   }
 
   var languageCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, watchOS 9, tvOS 16, *) {
       return Locale.autoupdatingCurrent.language.languageCode?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.languageCode ?? ""
@@ -113,7 +145,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return languageCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, watchOS 9, tvOS 16, *) {
       return Locale(identifier: preferredIdentifier).language.languageCode?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).languageCode ?? ""
@@ -121,7 +153,7 @@ class DeviceHelper {
   }
 
   private var regionCode: String {
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, watchOS 9, tvOS 16, *) {
       return Locale.autoupdatingCurrent.language.region?.identifier ?? ""
     } else {
       return Locale.autoupdatingCurrent.regionCode ?? ""
@@ -132,7 +164,7 @@ class DeviceHelper {
     guard let preferredIdentifier = Locale.preferredLanguages.first else {
       return regionCode
     }
-    if #available(iOS 16, *) {
+    if #available(iOS 16, macOS 13.0, watchOS 9, tvOS 16, *) {
       return Locale(identifier: preferredIdentifier).language.region?.identifier ?? ""
     } else {
       return Locale(identifier: preferredIdentifier).regionCode ?? ""
@@ -222,11 +254,18 @@ class DeviceHelper {
   /// `UIScreen.main` freely, and waiting there would leave placeholder values
   /// forever. Only app bundles run `UIApplicationMain`, so the bundle type
   /// disambiguates.
+  ///
+  /// None of this applies to AppKit, whose screen and appearance can be read at
+  /// any point, so on macOS it's always safe.
   static var isUIKitReadSafe: Bool {
+    #if os(macOS) || os(watchOS)
+    return true
+    #else
     return isUIKitReadSafe(
-      hasApplication: UIApplication.sharedApplication != nil,
+      hasApplication: PlatformApplication.sharedApplication != nil,
       bundleURL: Bundle.main.bundleURL
     )
+    #endif
   }
 
   /// The decision above, split from the globals it reads.
@@ -259,6 +298,21 @@ class DeviceHelper {
   ) -> ScreenMetrics? {
     #if os(visionOS)
     return .placeholder
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.screenMetrics()
+    #elseif os(watchOS)
+    let read = { () -> ScreenMetrics? in
+      let device = WKInterfaceDevice.current()
+      return ScreenMetrics(
+        width: Int(device.screenBounds.width.rounded()),
+        height: Int(device.screenBounds.height.rounded()),
+        scale: Double(device.screenScale)
+      )
+    }
+    return Thread.isMainThread ? read() : DispatchQueue.main.sync(execute: read)
     #else
     let read = { () -> ScreenMetrics? in
       guard isUIKitReadSafe() else {
@@ -266,7 +320,7 @@ class DeviceHelper {
       }
       // Prefer the connected window scene's screen; fall back to the
       // deprecated `UIScreen.main` only when no scene is attached yet.
-      let screen = UIApplication.sharedApplication?
+      let screen = PlatformApplication.sharedApplication?
         .connectedScenes
         .compactMap { $0 as? UIWindowScene }
         .first?
@@ -287,11 +341,19 @@ class DeviceHelper {
   }
 
   var radioType: String {
+    #if !canImport(SystemConfiguration)
+    // watchOS can't read reachability flags, so the connection type is unknown.
+    return "Unknown"
+    #else
     guard let flags = reachabilityFlags else {
       return "No Internet"
     }
 
     let isReachable = flags.contains(.reachable)
+    #if os(macOS)
+    // A Mac has no cellular radio, so any connection reports as Wi-Fi.
+    return isReachable ? "Wifi" : "No Internet"
+    #else
     let isWWAN = flags.contains(.isWWAN)
 
     if isReachable {
@@ -303,6 +365,8 @@ class DeviceHelper {
     } else {
       return "No Internet"
     }
+    #endif
+    #endif
   }
 
   var interfaceStyleOverride: InterfaceStyle?
@@ -363,7 +427,9 @@ class DeviceHelper {
   /// multi-window host can keep the scene alive in the background while another
   /// becomes active — where trait updates are deferred, so flips the user can see
   /// never fire it. Both show up as this no longer matching the active scene.
+  #if !os(macOS) && !os(watchOS)
   private weak var observedTraitScene: UIWindowScene?
+  #endif
 
   /// The current traits, served from the cache on every version.
   ///
@@ -386,7 +452,7 @@ class DeviceHelper {
   }
 
   private func refreshUITraits() {
-    #if !os(visionOS)
+    #if !os(visionOS) && !os(watchOS)
     // The wrapper's setter and getter share one serial queue, so this write is
     // ordered ahead of `currentUITraits`' read and the caller sees it.
     if Thread.isMainThread {
@@ -436,20 +502,20 @@ class DeviceHelper {
   /// observers cover this instead, rather than injecting a view into the host's
   /// window to reach `traitCollectionDidChange`.
   private func registerForTraitChanges() {
-    #if !os(visionOS)
+    #if !os(visionOS) && !os(macOS) && !os(watchOS)
     Task { @MainActor [weak self] in
-      if #available(iOS 17.0, *) {
+      if #available(iOS 17.0, watchOS 10.0, tvOS 17.0, *) {
         self?.performTraitChangeRegistration()
       }
     }
     #endif
   }
 
-  #if !os(visionOS)
-  @available(iOS 17.0, *)
+  #if !os(visionOS) && !os(macOS) && !os(watchOS)
+  @available(iOS 17.0, watchOS 10.0, tvOS 17.0, *)
   @MainActor
   private func performTraitChangeRegistration() {
-    guard let scene = UIApplication.sharedApplication?.activeWindowScene else {
+    guard let scene = PlatformApplication.sharedApplication?.activeWindowScene else {
       return
     }
     // Already armed against the scene that's currently active.
@@ -499,14 +565,19 @@ class DeviceHelper {
   static func makeUITraits(
     isUIKitReadSafe: @escaping () -> Bool = { DeviceHelper.isUIKitReadSafe }
   ) -> UITraits? {
-    #if os(visionOS)
+    #if os(visionOS) || os(watchOS)
     return .unavailable
+    #elseif os(macOS)
+    guard isUIKitReadSafe() else {
+      return nil
+    }
+    return MacDeviceInfo.uiTraits()
     #else
     let read = { () -> UITraits? in
       guard isUIKitReadSafe() else {
         return nil
       }
-      let category = UIApplication.sharedApplication?.preferredContentSizeCategory
+      let category = PlatformApplication.sharedApplication?.preferredContentSizeCategory
         ?? UIScreen.main.traitCollection.preferredContentSizeCategory
       // Scale against `category` explicitly. The implicit `scaledValue(for:)` resolves
       // against `UITraitCollection.current`, which Apple documents as undefined outside
@@ -540,7 +611,34 @@ class DeviceHelper {
   /// likely to exist by then than when `DeviceHelper` was created, and fills the
   /// screen-metrics cache when init ran too early to read the screen.
   private func observeUITraitChanges() {
-    #if !os(visionOS)
+    #if os(macOS)
+    // AppKit posts no notification when the appearance changes, but the app's
+    // effective appearance can be observed directly.
+    let refreshTraits = { [weak self] in
+      guard let self = self else {
+        return
+      }
+      if let traits = DeviceHelper.makeUITraits(isUIKitReadSafe: self.isUIKitReadSafe) {
+        self.uiTraits = traits
+      }
+    }
+    let activation = NotificationCenter.default.addObserver(
+      forName: SystemInfo.applicationDidBecomeActiveNotification,
+      object: nil,
+      queue: .main
+    ) { _ in
+      refreshTraits()
+    }
+    traitObservers = [activation]
+    if let application = PlatformApplication.sharedApplication {
+      let appearance = application.observe(\.effectiveAppearance) { _, _ in
+        DispatchQueue.main.async {
+          refreshTraits()
+        }
+      }
+      traitObservers.append(appearance)
+    }
+    #elseif !os(visionOS) && !os(watchOS)
     let names: [Notification.Name] = [
       UIContentSizeCategory.didChangeNotification,
       UIApplication.didBecomeActiveNotification
@@ -567,6 +665,7 @@ class DeviceHelper {
     #endif
   }
 
+  #if !os(macOS) && !os(watchOS)
   /// Maps a `UIUserInterfaceStyle` to the fixed dashboard token string used by
   /// backend audience filters. These tokens are a backend contract and must not change.
   static func interfaceStyleToken(for style: UIUserInterfaceStyle) -> String {
@@ -601,6 +700,7 @@ class DeviceHelper {
     default: return "unspecified"
     }
   }
+  #endif
 
   var platformWrapper: String?
 
@@ -676,6 +776,11 @@ class DeviceHelper {
   }()
 
   let interfaceType: String = {
+    #if os(macOS)
+    return "mac"
+    #elseif os(watchOS)
+    return "watch"
+    #else
     switch UIDevice.current.userInterfaceIdiom {
     case .pad:
       return "ipad"
@@ -694,6 +799,7 @@ class DeviceHelper {
     @unknown default:
       return "unspecified"
     }
+    #endif
   }()
 
   private let appInstallDate: Date? = {
@@ -919,7 +1025,8 @@ class DeviceHelper {
     MultiplePaywallUrlsCapability(),
     ConfigRefreshCapability(),
     WebViewTextInteractionCapability(),
-    ConfigCaching()
+    ConfigCaching(),
+    CustomStoreCheckoutCapability()
   ]
 
   private unowned let network: Network
@@ -958,7 +1065,9 @@ class DeviceHelper {
     self.appInstalledAtString = appInstallDate?.isoString ?? ""
     self.receiptManager = receiptManager
     self.factory = factory
-      reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
+    #if canImport(SystemConfiguration)
+    reachability = SCNetworkReachabilityCreateWithName(kCFAllocatorDefault, api.base.host)
+    #endif
     self.sdkVersionPadded = Self.makePaddedVersion(using: sdkVersion)
     self.appVersionPadded = Self.makePaddedVersion(using: appVersion)
     self.isUIKitReadSafe = isUIKitReadSafe
@@ -1109,7 +1218,7 @@ class DeviceHelper {
   }
 
   private func collectsIPsForMMP() -> Bool {
-    if case .all = ipCollection(for: factory.makeConfigState().value.getConfig()) {
+    if case .all = ipCollection(for: factory.currentConfig()) {
       return true
     }
     return false
@@ -1118,7 +1227,7 @@ class DeviceHelper {
   /// Starts the IP lookups with the current config, for when an AppsFlyer ID is set.
   @discardableResult
   func startIPCollectionIfEnabled() -> Task<Void, Never>? {
-    return startIPCollectionIfEnabled(for: factory.makeConfigState().value.getConfig())
+    return startIPCollectionIfEnabled(for: factory.currentConfig())
   }
 
   func getEnrichment(
@@ -1252,7 +1361,7 @@ class DeviceHelper {
     await ipCollector.record(enrichmentDict.compactMapValues { $0 as? String })
     // IP collection is for the MMP, which is off unless the backend turns it on,
     // and for AppsFlyer, which only gets the IPv4 address.
-    switch ipCollection(for: factory.makeConfigState().value.getConfig()) {
+    switch ipCollection(for: factory.currentConfig()) {
     case .none:
       break
     case .ipV4ForAppsFlyer:
@@ -1267,7 +1376,7 @@ class DeviceHelper {
       deviceDictionary["storeFrontCountryCode"] = storefront.countryCode
       deviceDictionary["storeFrontId"] = storefront.id
 
-      if #available(iOS 17.0, *) {
+      if #available(iOS 17.0, macOS 14.0, watchOS 10.0, tvOS 17.0, *) {
         deviceDictionary["storeFrontCurrency"] = storefront.currency?.identifier
       }
     }

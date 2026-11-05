@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 struct PathResolutionContext {
@@ -139,7 +140,10 @@ enum CustomerCenterPathResolver {
       return manageSubscriptionDestination(context: context)
 
     case .refund(let window):
-      guard isAppStore, let sub, !sub.isRevoked, sub.offerType != .trial, !context.isFamilyShared else { return nil }
+      guard
+        CustomerCenterPlatform.isRefundSheetAvailable,
+        isAppStore, let sub, !sub.isRevoked, sub.offerType != .trial, !context.isFamilyShared
+      else { return nil }
       if let price = context.product?.price, price <= 0 { return nil }
       if let window, sub.purchaseDate.addingTimeInterval(window) < context.now { return nil }
       return .refund(productId: sub.productId)
@@ -157,3 +161,4 @@ enum CustomerCenterPathResolver {
     }
   }
 }
+#endif

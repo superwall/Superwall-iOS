@@ -2,16 +2,23 @@ name: Run Tests
 
 on:
   push:
+    # master is tested by the release workflow, which calls this one.
+    branches-ignore: [master]
     paths:
       - '.github/workflows/tests.yml'
       - 'project.yml'
+      - 'SuperwallKit.podspec'
       - 'scripts/**'
       - '**/*.swift'
       - '!Examples/**'
   workflow_dispatch:
+  workflow_call:
 
+# A fixed prefix, not github.workflow: when the release workflow calls this
+# one, github.workflow is the caller's name, and sharing its group would
+# deadlock.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: unit-tests-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -21,6 +28,9 @@ jobs:
     steps:
       - name: Git Checkout
         uses: actions/checkout@v3
+      # The release workflow reads the version this way; fail here, not at release time.
+      - name: Check the version
+        run: scripts/sdk-version.sh --check
       - name: Select Xcode
         # macos-26 runners ship multiple Xcodes but `xcodebuild` defaults
         # to whatever the runner image picked at provision time, which

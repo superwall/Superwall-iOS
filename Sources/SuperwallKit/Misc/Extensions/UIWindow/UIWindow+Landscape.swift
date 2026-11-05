@@ -5,6 +5,8 @@
 //  Created by Yusuf Tör on 28/02/2022.
 //
 
+#if canImport(WebKit)
+#if !os(macOS)
 import UIKit
 
 extension UIWindow {
@@ -12,3 +14,5 @@ extension UIWindow {
     return UIApplication.sharedApplication?.activeWindowScene?.interfaceOrientation.isLandscape ?? false
   }
 }
+#endif
+#endif

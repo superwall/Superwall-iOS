@@ -5,15 +5,21 @@
 //  Created by Yusuf Tör on 07/03/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum PaywallWebEvent: Equatable {
   case closed
+  /// `productId` is the slot's `Product.cacheKey`, which also carries its billing plan.
   case initiatePurchase(
     productId: String,
     shouldDismiss: Bool
   )
   case initiateRestore
+  case customStoreCheckout(CustomStoreCheckout)
+  /// Sent by the SDK, not the page: the paywall was dismissed or presented
+  /// again, so a custom store checkout it started can't report how it ends.
+  case endCustomStoreCheckout
   case custom(string: String)
   case openedURL(url: URL)
   case openedUrlInSafari(_ url: URL)
@@ -28,3 +34,4 @@ enum PaywallWebEvent: Equatable {
     variables: JSON?
   )
 }
+#endif
