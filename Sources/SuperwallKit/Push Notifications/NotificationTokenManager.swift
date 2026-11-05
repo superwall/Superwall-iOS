@@ -176,6 +176,14 @@ final class NotificationTokenManager {
     }
   }
 
+  /// Forgets the last `notification_token` event sent, so the next refresh
+  /// sends it again. Called when the event queue is emptied before it was sent.
+  func forgetLastSent() {
+    enqueue { manager in
+      manager.storage.delete(NotificationTokenLastSentStorage.self)
+    }
+  }
+
   /// Tracks `notification_open` if Superwall sent the notification and the
   /// `user_notifications` feature flag is on.
   func trackOpen(userInfo: [AnyHashable: Any]) {

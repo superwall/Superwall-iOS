@@ -389,6 +389,23 @@ struct NotificationTokenManagerTests {
     #expect(harness.storage.get(NotificationTokenLastSentStorage.self) == nil)
   }
 
+  @Test func queueEmptied_resendsUnchangedState() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.count == 1)
+
+    // A tracking change empties the queue before the event was sent.
+    manager.forgetLastSent()
+    manager.refresh()
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.count == 2)
+    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) != nil)
+  }
+
   // MARK: - Opens
 
   @Test func trackOpen_onlyForSuperwallNotifications() async {
