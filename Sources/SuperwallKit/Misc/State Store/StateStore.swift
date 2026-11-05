@@ -107,8 +107,13 @@ final class StateStore<Context, State>: @unchecked Sendable {
   /// in and the store is unlocked, before that update or dispatch returns.
   /// Called outside one, `work` runs straight away.
   ///
-  /// Deferred work runs in the order it was deferred. It may wait on other
-  /// objects, and update the store or dispatch actions.
+  /// Work deferred within one outermost update or dispatch runs in the order
+  /// it was deferred. It may wait on other objects, and update the store or
+  /// dispatch actions. An update or dispatch made from deferred work is
+  /// outermost too, so the work it defers runs before it returns, ahead of
+  /// work the outer one deferred after the running item. That keeps the
+  /// promise that a dispatch has finished everything it deferred when it
+  /// returns, wherever it's called from.
   func deferUntilUnlocked(_ work: @escaping () -> Void) {
     lock.lock()
     // While this thread holds the lock, no other thread can be inside an

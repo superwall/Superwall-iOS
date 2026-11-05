@@ -471,6 +471,35 @@ struct StateStoreTests {
     ])
   }
 
+  @Test("Work deferred by a dispatch inside deferred work runs before that dispatch returns")
+  func nestedDeferredWorkRunsBeforeLaterDeferredWork() {
+    // A and B are deferred by one action. A dispatches an action that defers
+    // C. C belongs to that inner dispatch, so it has run by the time the
+    // dispatch returns, before A goes on and before B.
+    let context = TestContext()
+    context.store.dispatch(
+      Run { context in
+        context.store.deferUntilUnlocked {
+          context.store.update(Log(entry: "A start"))
+          context.store.dispatch(
+            Run { context in
+              context.store.deferUntilUnlocked {
+                context.store.update(Log(entry: "C"))
+              }
+            },
+            in: context
+          )
+          context.store.update(Log(entry: "A end"))
+        }
+        context.store.deferUntilUnlocked {
+          context.store.update(Log(entry: "B"))
+        }
+      },
+      in: context
+    )
+    #expect(context.store.state.log == ["A start", "C", "A end", "B"])
+  }
+
   @Test("Work deferred by an observer runs after the update, unlocked")
   func observerDeferredWork() {
     let store = TestStore(initial: Counter())
