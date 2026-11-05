@@ -78,20 +78,15 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     guard let product = product.sk1Product else {
       return .failed(PurchaseError.noSk1Product)
     }
-    let task = Task {
-      return await withCheckedContinuation { continuation in
-        Task {
-          await coordinator.setCompletion { result in
-            continuation.resume(returning: result)
-          }
-        }
+    return await withCheckedContinuation { continuation in
+      // Set before the payment is queued, so its result can't arrive first.
+      coordinator.setCompletion { result in
+        continuation.resume(returning: result)
       }
+      let payment = SKMutablePayment(product: product)
+      payment.applicationUsername = identityManager.appAccountToken?.uuidString
+      SKPaymentQueue.default().add(payment)
     }
-    let payment = SKMutablePayment(product: product)
-    payment.applicationUsername = identityManager.appAccountToken?.uuidString
-    SKPaymentQueue.default().add(payment)
-
-    return await task.value
   }
 
   func restorePurchases() async -> RestorationResult {
@@ -186,7 +181,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     // state, or observing. The transaction may be readded to the queue if
     // finishing fails so we need to make sure we can re-finish the transaction.
     // It doesn't matter if purchased internally or externally.
-    let source = await coordinator.source
+    let source = coordinator.source
     if let source = source {
       switch source {
       #if canImport(WebKit)
@@ -206,7 +201,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       }
     }
 
-    let purchaseDate = await coordinator.purchaseDate
+    let purchaseDate = coordinator.purchaseDate
     let options = factory.makeSuperwallOptions()
 
     switch skTransaction.transactionState {
@@ -295,7 +290,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     var source: InternalSuperwallEvent.Transaction.Source = .internal
 
     var isObserved = false
-    switch await coordinator.source {
+    switch coordinator.source {
     case .observeFunc:
       isObserved = true
       source = .external

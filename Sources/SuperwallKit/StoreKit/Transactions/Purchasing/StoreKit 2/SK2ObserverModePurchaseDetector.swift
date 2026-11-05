@@ -73,7 +73,7 @@ actor SK2ObserverModePurchaseDetector {
     await cacheLegacyTransactionTask.value
 
     let coordinator = factory.makePurchasingCoordinator()
-    let source = await coordinator.source
+    let source = coordinator.source
 
     // Check that a Superwall purchase hasn't already started.
     // This could race with a transactionDidSucceed, however, in that function

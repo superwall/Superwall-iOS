@@ -188,6 +188,18 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Purchase and restore stores
+
+`PurchasingCoordinator` keeps the purchase flow's state (the purchase in progress, its StoreKit 1
+completion and the transactions the SDK's purchasers got back) in a `StateStore`, changed only by
+`PurchaseUpdate` reducers. A read-then-change, such as taking the completion or setting a purchase
+aside, is a `PurchaseAction`, so two threads can't take the same value. Purchases still run in the
+caller's task: StoreKit, the purchase controller and transaction lookups are awaited with the store
+unlocked, and a purchase's completion is called after it's taken, never inside the store.
+`RestoreFlow` runs restores the same way, counting running restores in a `RestoreStore` through
+`RestoreUpdate`. Restores aren't deduplicated, and a purchase controller's restore can start another.
+Observer-mode tracking stays in `TransactionManager`.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.

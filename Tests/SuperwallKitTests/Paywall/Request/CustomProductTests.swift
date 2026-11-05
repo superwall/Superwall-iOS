@@ -396,7 +396,7 @@ struct CustomProductTests {
     )
 
     let coordinator = dependencyContainer.makePurchasingCoordinator()
-    #expect(await coordinator.isFreeTrialAvailable)
+    #expect(coordinator.isFreeTrialAvailable)
   }
 
   @Test
@@ -429,7 +429,7 @@ struct CustomProductTests {
     )
 
     let coordinator = dependencyContainer.makePurchasingCoordinator()
-    #expect(!(await coordinator.isFreeTrialAvailable))
+    #expect(!coordinator.isFreeTrialAvailable)
   }
 
   // MARK: - Custom Trial Eligibility

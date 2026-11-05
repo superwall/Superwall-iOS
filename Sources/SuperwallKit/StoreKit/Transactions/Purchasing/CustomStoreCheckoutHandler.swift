@@ -113,7 +113,7 @@ final class CustomStoreCheckoutHandler {
     }
 
     if ownership == .otherCustomStoreCheckout,
-      let staleSource = await factory.makePurchasingCoordinator().source {
+      let staleSource = factory.makePurchasingCoordinator().source {
       // The page has moved on from a stale checkout of its own, so only another
       // paywall's page is told of its abandon.
       var isOnOtherPaywall = true
@@ -148,7 +148,7 @@ final class CustomStoreCheckoutHandler {
     case let .complete(_, customTransactionId, shouldDismiss):
       product.customTransactionId = customTransactionId
       let coordinator = factory.makePurchasingCoordinator()
-      let otherPurchase = ownership == .otherPurchase ? await coordinator.setAsidePurchase() : nil
+      let otherPurchase = ownership == .otherPurchase ? coordinator.setAsidePurchase() : nil
       // The purchase still counts, but a closing paywall isn't dismissed again.
       let source = await resumeCustomStoreCheckout(
         of: product,
@@ -159,7 +159,7 @@ final class CustomStoreCheckoutHandler {
       )
       await transactionManager.handle(result: .purchased, state: .purchasing(source))
       if let otherPurchase {
-        await coordinator.restore(otherPurchase)
+        coordinator.restore(otherPurchase)
       }
     case .abandon(_, let reason):
       _ = await resumeCustomStoreCheckout(
@@ -169,7 +169,7 @@ final class CustomStoreCheckoutHandler {
         isInProgress: ownership == .thisCheckout
       )
       await transactionManager.trackCancelled(canTriggerPaywall: reason.isBuyersChoice && isPaywallOpen)
-      await factory.makePurchasingCoordinator().reset()
+      factory.makePurchasingCoordinator().reset()
     case .fail(_, let message):
       if !isPaywallOpen {
         // Closing the paywall ends its checkout, so there's no failure to report.
@@ -226,8 +226,8 @@ final class CustomStoreCheckoutHandler {
   ) async -> PurchaseSource? {
     let coordinator = factory.makePurchasingCoordinator()
     guard
-      await coordinator.isCustomStoreCheckout,
-      let source = await coordinator.source,
+      coordinator.isCustomStoreCheckout,
+      let source = coordinator.source,
       case let .internal(_, checkoutPaywall, _) = source,
       checkoutPaywall === paywallViewController
     else {
@@ -254,7 +254,7 @@ final class CustomStoreCheckoutHandler {
       }
     }
     await transactionManager.trackCancelled(canTriggerPaywall: false, notifiesPage: notifiesPage)
-    await factory.makePurchasingCoordinator().reset()
+    factory.makePurchasingCoordinator().reset()
   }
 
   private func customStoreCheckoutOwnership(
@@ -262,15 +262,15 @@ final class CustomStoreCheckoutHandler {
     paywallViewController: PaywallViewController
   ) async -> CustomStoreCheckoutOwnership {
     let coordinator = factory.makePurchasingCoordinator()
-    guard let source = await coordinator.source else {
+    guard let source = coordinator.source else {
       return .none
     }
-    guard await coordinator.isCustomStoreCheckout else {
+    guard coordinator.isCustomStoreCheckout else {
       return .otherPurchase
     }
     if case let .internal(_, checkoutPaywall, _) = source,
       checkoutPaywall === paywallViewController,
-      await coordinator.product?.productIdentifier == product.productIdentifier {
+      coordinator.product?.productIdentifier == product.productIdentifier {
       return .thisCheckout
     }
     return .otherCustomStoreCheckout
@@ -326,9 +326,9 @@ final class CustomStoreCheckoutHandler {
     let coordinator = factory.makePurchasingCoordinator()
     let source = PurchaseSource.internal(productId, paywallViewController, shouldDismiss)
     if isInProgress {
-      await coordinator.setSource(source)
+      coordinator.setSource(source)
     } else {
-      await coordinator.beginPurchase(
+      coordinator.beginPurchase(
         of: product,
         source: source,
         isFreeTrialAvailable: await transactionManager.isFreeTrialAvailable(for: product),

@@ -8,40 +8,61 @@
 import Foundation
 import StoreKit
 
-/// An actor that manages and coordinates the storing of types associated with purchasing.
-actor PurchasingCoordinator {
-  var lastInternalTransaction: StoreTransaction?
-  var purchaseDate: Date?
-  var source: PurchaseSource?
-  var transactions: [String: StoreTransaction] = [:]
-  var isFreeTrialAvailable = false
-  var product: StoreProduct?
-  /// Whether the purchase is a custom store checkout that the paywall runs itself.
-  var isCustomStoreCheckout = false
-  private var completion: ((PurchaseResult) -> Void)?
+/// Holds the purchase flow's state: the purchase in progress and the
+/// transactions the SDK's purchasers got back.
+///
+/// The state lives in a ``StateStore``, so reads and changes are synchronous
+/// and safe from any thread. Nothing here waits with the store locked:
+/// looking up transactions and calling a purchase's completion happen once
+/// it's unlocked.
+final class PurchasingCoordinator: PurchaseContext, @unchecked Sendable {
+  let store = PurchaseStore(initial: PurchaseState())
   private let factory: StoreTransactionFactory
 
   init(factory: StoreTransactionFactory) {
     self.factory = factory
   }
 
-  func setIsFreeTrialAvailable(to newValue: Bool) {
-    isFreeTrialAvailable = newValue
+  /// The purchase in progress.
+  var purchase: InFlightPurchase? {
+    store.state.purchase
   }
 
-  /// A boolean indicating whether the given `date` is within an hour of the `purchaseDate`.
-  func dateIsWithinLastHour(_ transactionDate: Date?) -> Bool {
-    guard
-      let transactionDate = transactionDate,
-      let purchaseDate = purchaseDate
-    else {
-      return false
-    }
-    return transactionDate.isWithinAnHourBefore(purchaseDate)
+  var source: PurchaseSource? {
+    purchase?.source
+  }
+
+  var product: StoreProduct? {
+    purchase?.product
+  }
+
+  var purchaseDate: Date? {
+    purchase?.purchaseDate
+  }
+
+  var isFreeTrialAvailable: Bool {
+    purchase?.isFreeTrialAvailable ?? false
+  }
+
+  /// Whether the purchase is a custom store checkout that the paywall runs itself.
+  var isCustomStoreCheckout: Bool {
+    purchase?.isCustomStoreCheckout ?? false
+  }
+
+  var lastInternalTransaction: StoreTransaction? {
+    store.state.lastInternalTransaction
+  }
+
+  var transactions: [String: StoreTransaction] {
+    store.state.transactionsByProductId
+  }
+
+  func setIsFreeTrialAvailable(to newValue: Bool) {
+    store.update(PurchaseUpdate.isFreeTrialAvailable(newValue))
   }
 
   func setCompletion(_ completion: @escaping (PurchaseResult) -> Void) {
-    self.completion = completion
+    store.update(PurchaseUpdate.completion(completion))
   }
 
   func beginPurchase(
@@ -50,53 +71,31 @@ actor PurchasingCoordinator {
     isFreeTrialAvailable: Bool,
     isCustomStoreCheckout: Bool = false
   ) {
-    self.purchaseDate = Date()
-    self.source = source
-    self.isFreeTrialAvailable = isFreeTrialAvailable
-    self.product = product
-    self.isCustomStoreCheckout = isCustomStoreCheckout
-  }
-
-  /// A purchase in progress, set aside while another is handled.
-  struct Purchase {
-    let purchaseDate: Date?
-    let source: PurchaseSource?
-    let isFreeTrialAvailable: Bool
-    let product: StoreProduct?
-    let isCustomStoreCheckout: Bool
-    let completion: ((PurchaseResult) -> Void)?
+    let purchase = InFlightPurchase(
+      product: product,
+      source: source,
+      purchaseDate: Date(),
+      isFreeTrialAvailable: isFreeTrialAvailable,
+      isCustomStoreCheckout: isCustomStoreCheckout
+    )
+    store.update(PurchaseUpdate.begin(purchase))
   }
 
   /// Takes the purchase in progress out of the coordinator, leaving it free.
-  func setAsidePurchase() -> Purchase {
-    let purchase = Purchase(
-      purchaseDate: purchaseDate,
-      source: source,
-      isFreeTrialAvailable: isFreeTrialAvailable,
-      product: product,
-      isCustomStoreCheckout: isCustomStoreCheckout,
-      completion: completion
-    )
-    reset()
-    return purchase
+  func setAsidePurchase() -> SetAsidePurchase {
+    let taken = Taken<SetAsidePurchase>()
+    store.dispatch(PurchaseAction.setAside(taken), in: self)
+    return taken.value ?? SetAsidePurchase(purchase: nil, completion: nil)
   }
 
   /// Puts back a purchase that was set aside, unless another purchase began meanwhile.
-  func restore(_ purchase: Purchase) {
-    if source != nil {
-      return
-    }
-    purchaseDate = purchase.purchaseDate
-    source = purchase.source
-    isFreeTrialAvailable = purchase.isFreeTrialAvailable
-    product = purchase.product
-    isCustomStoreCheckout = purchase.isCustomStoreCheckout
-    completion = purchase.completion
+  func restore(_ purchase: SetAsidePurchase) {
+    store.update(PurchaseUpdate.putBack(purchase))
   }
 
   /// Replaces the source of the purchase in progress, keeping when it started.
   func setSource(_ source: PurchaseSource) {
-    self.source = source
+    store.update(PurchaseUpdate.source(source))
   }
 
   /// Gets the latest transaction of a specified product ID. Used with purchases, including when a purchase has
@@ -141,14 +140,13 @@ actor PurchasingCoordinator {
 
     // If no transaction retrieved, try to get last transaction if
     // the SDK handled purchasing.
-    if let transaction = lastInternalTransaction {
-      lastInternalTransaction = nil
+    if let transaction = takeLastInternalTransaction() {
       return transaction
     }
 
-    func getLastExternalStoreTransaction() async -> StoreTransaction? {
+    func getLastExternalStoreTransaction() -> StoreTransaction? {
       if let transaction = transactions[productId],
-        dateIsWithinLastHour(transaction.transactionDate) {
+        transaction.transactionDate?.isWithinAnHourBefore(purchaseDate) == true {
         return transaction
       }
       return nil
@@ -158,7 +156,7 @@ actor PurchasingCoordinator {
     // transaction from the payment queue. This won't work
     // with a purchase that results in a restore. That
     // should be caught by the above  instead.
-    if let transaction = await getLastExternalStoreTransaction() {
+    if let transaction = getLastExternalStoreTransaction() {
       return transaction
     }
 
@@ -169,7 +167,7 @@ actor PurchasingCoordinator {
     // If still no transaction, wait 500ms and try again before returning nil.
     try? await Task.sleep(nanoseconds: 500_000_000)
 
-    if let transaction = await getLastExternalStoreTransaction() {
+    if let transaction = getLastExternalStoreTransaction() {
       return transaction
     }
 
@@ -186,42 +184,32 @@ actor PurchasingCoordinator {
     return nil
   }
 
-  /// Stores the transaction if purchased and is the latest for a specific product ID.
-  /// This is used as a fallback if we can't retrieve the transaction using SK2.
-  func storeIfPurchased(_ transaction: StoreTransaction) {
-    guard case .purchased = transaction.state else {
-      return
-    }
-    let productId = transaction.payment.productIdentifier
-
-    // If there is an existing transaction, which has a transaction date...
-    if let existingTransaction = transactions[productId],
-      let existingTransactionDate = existingTransaction.transactionDate {
-      // And if the new transaction date was after the stored transaction, update.
-      // Else, ignore.
-      if transaction.transactionDate?.compare(existingTransactionDate) == .orderedDescending {
-        transactions[productId] = transaction
-      }
-    } else {
-      // If there isn't an existing transaction, store.
-      transactions[productId] = transaction
-    }
+  private func takeLastInternalTransaction() -> StoreTransaction? {
+    let taken = Taken<StoreTransaction>()
+    store.dispatch(PurchaseAction.takeLastInternalTransaction(taken), in: self)
+    return taken.value
   }
 
+  /// Stores the transaction and, if the purchase in progress is of its product,
+  /// calls the purchase's completion with `result`, once.
   func completePurchase(
     of transaction: SK1Transaction,
     result: PurchaseResult
   ) async {
+    let productId = transaction.payment.productIdentifier
     // Only complete if the product ID of the transaction is the same as
     // the purchasing transaction.
-    guard product?.productIdentifier == transaction.payment.productIdentifier else {
+    guard product?.productIdentifier == productId else {
       return
     }
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    storeTransaction(transaction, result: result)
+    store.update(PurchaseUpdate.transaction(transaction, result: result))
 
-    completion?(result)
-    completion = nil
+    // The purchase may have changed while the transaction was made, so the
+    // product is checked again as the completion is taken.
+    let taken = Taken<(PurchaseResult) -> Void>()
+    store.dispatch(PurchaseAction.takeCompletion(productId: productId, taken), in: self)
+    taken.value?(result)
   }
 
   func storeTransaction(
@@ -229,25 +217,10 @@ actor PurchasingCoordinator {
     result: PurchaseResult
   ) async {
     let transaction = await factory.makeStoreTransaction(from: transaction)
-    storeTransaction(transaction, result: result)
-  }
-
-  private func storeTransaction(
-    _ transaction: StoreTransaction,
-    result: PurchaseResult
-  ) {
-    if result == .purchased {
-      storeIfPurchased(transaction)
-    }
-    lastInternalTransaction = transaction
+    store.update(PurchaseUpdate.transaction(transaction, result: result))
   }
 
   func reset() {
-    purchaseDate = nil
-    completion = nil
-    product = nil
-    source = nil
-    isFreeTrialAvailable = false
-    isCustomStoreCheckout = false
+    store.update(PurchaseUpdate.finish)
   }
 }
