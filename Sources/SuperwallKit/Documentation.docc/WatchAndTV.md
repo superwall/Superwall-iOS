@@ -27,7 +27,7 @@ Neither platform has a web view, so paywalls, the debugger, Test Mode and Custom
 
 ## Platform differences
 
-- tvOS: audience filters don't match yet, because the rules engine has no tvOS build. Audiences without a filter still match. Local notifications, such as free trial reminders, aren't scheduled because tvOS notifications can't show text.
+- tvOS: local notifications, such as free trial reminders, aren't scheduled because tvOS notifications can't show text.
 - watchOS: the connection type is reported as `Unknown`. The device's interface type is `watch`.
 - MMP install matching and Apple Search Ads attribution don't run on either platform.
 - CocoaPods doesn't install SuperwallKit on these platforms.

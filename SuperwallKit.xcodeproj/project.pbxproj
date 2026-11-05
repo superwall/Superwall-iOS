@@ -6276,7 +6276,7 @@
 			repositoryURL = "https://github.com/superwall/superscript-ios-next";
 			requirement = {
 				kind = exactVersion;
-				version = 1.0.17;
+				version = 1.0.18;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

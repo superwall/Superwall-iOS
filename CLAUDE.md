@@ -22,7 +22,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Package Management
 - Swift Package Manager: Primary dependency management via `Package.swift`
 - CocoaPods: Also supported via `SuperwallKit.podspec`
-- Dependencies: `superscript-ios-next` at exact version 1.0.17 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones)
+- Dependencies: `superscript-ios-next` at exact version 1.0.18 (slim binary-target distribution; replaces the legacy `Superscript-iOS` repo whose committed xcframework bloated clones). The podspec stays on the `Superscript` pod 1.0.17, since CocoaPods Trunk didn't accept 1.0.18; 1.0.18 only adds watchOS and tvOS slices, which CocoaPods doesn't install anyway
 
 ## Architecture Overview
 
@@ -68,7 +68,6 @@ SuperwallKit is an iOS SDK for remote paywall configuration and A/B testing. The
 
 - Neither has WebKit, so `#if canImport(WebKit)` marks everything that needs a paywall on screen: the paywall view controller and presentation, debugger, Test Mode, Customer Center, permissions and the SDK's alerts. Build both after any change (`build-platforms.yml` shows the commands); the iOS build won't catch a paywall type leaking into shared code.
 - `register` evaluates audience filters, then `finishWithoutPaywallUI` unlocks the feature as iOS does when a paywall fails to load: skipped, or the paywall is fetched and a non-gated feature runs while a gated one gets error 106. No present or dismiss state is sent, so `register` passes the feature block down. Implicit triggers and paywall preloading do nothing.
-- Superscript has no tvOS build, so `Package.swift` drops it on tvOS and `CELEvaluator` reports no match for any filter. Remove the condition once Superscript ships a tvOS slice.
 - When a shared `@available`/`#available` names iOS, also name the matching watchOS and tvOS versions, or the `*` lets them through.
 
 ### Code Conventions
