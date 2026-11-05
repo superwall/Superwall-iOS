@@ -684,7 +684,7 @@ public final class Superwall: NSObject, ObservableObject {
     listenToCustomerInfo()
   }
 
-  private func listenToConfig() {
+  func listenToConfig() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
       .subscribe(

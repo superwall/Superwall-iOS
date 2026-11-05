@@ -17,6 +17,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
 - Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
 - Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
+- Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
 
 ## 4.19.0
 

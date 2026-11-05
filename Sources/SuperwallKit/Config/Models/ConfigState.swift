@@ -24,7 +24,8 @@ enum ConfigState: Equatable {
   case retrieving
   case retrying
   case retrieved(Config)
-  /// The config couldn't be fetched. `configState` has completed with this error.
+  /// The config couldn't be fetched. `configState` sends this, then completes
+  /// with the error.
   case failed(Error)
 
   /// Why the config couldn't be fetched, if it couldn't.

@@ -150,7 +150,7 @@ struct ConfigManagerStoreTests {
     #expect(received == [.retrieving, .retrieved(config), .retrieved(config)])
   }
 
-  @Test("Setting a failed state completes configState, and nothing is sent after")
+  @Test("A failure is sent, then completes configState, and nothing is sent after")
   func setFailedCompletes() {
     let (configManager, _, container) = makeConfigManager()
     defer { withExtendedLifetime(container) {} }
@@ -165,7 +165,8 @@ struct ConfigManagerStoreTests {
     configManager.store.update(ConfigUpdate.set(.failed(TestError("offline"))))
     configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
-    #expect(received == [.retrieving])
+    #expect(received == [.retrieving, .failed(TestError("offline"))])
+    #expect((received.last?.failure as? TestError)?.message == "offline")
     if case .failure(let error)? = completion {
       #expect((error as? TestError)?.message == "offline")
     } else {
@@ -173,6 +174,22 @@ struct ConfigManagerStoreTests {
     }
     // The store still changes.
     #expect(configManager.config != nil)
+  }
+
+  @Test("configurationStatus becomes failed when the config can't be fetched")
+  func configurationStatusFails() async {
+    let dependencyContainer = DependencyContainer()
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.listenToConfig()
+    #expect(superwall.configurationStatus == .pending)
+
+    dependencyContainer.configManager.store.update(ConfigUpdate.failed(TestError("offline")))
+
+    // The status is set on the main queue.
+    for _ in 0..<200 where superwall.configurationStatus != .failed {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(superwall.configurationStatus == .failed)
   }
 
   @Test("Updates from many threads are sent in the order they were applied")
@@ -263,6 +280,43 @@ struct ConfigManagerStoreTests {
     defer { withExtendedLifetime(container) {} }
     await configManager.refreshConfiguration(isUserInitiated: true)
     #expect(network.getConfigCalled == false)
+  }
+
+  @Test("A refresh called during the launch fetch waits for the fetch to finish")
+  func refreshWaitsForFetch() async {
+    let (configManager, network, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
+    let fetchResponse = ResponseGate()
+    let requests = RequestCounter()
+    network.getConfigHandler = {
+      switch requests.next() {
+      case 1:
+        await fetchResponse.wait()
+        return .stub().setting(\.buildId, to: "fetched")
+      default:
+        return .stub().setting(\.buildId, to: "refreshed")
+      }
+    }
+
+    async let fetch: Void = configManager.fetchConfiguration()
+    for _ in 0..<1_000 where requests.count == 0 {
+      try? await Task.sleep(nanoseconds: 1_000_000)
+    }
+    #expect(requests.count == 1)
+
+    async let refresh: Void = configManager.refreshConfiguration(
+      oldConfig: .stub().setting(\.buildId, to: "old"),
+      isUserInitiated: true
+    )
+    // Give a refresh that didn't wait every chance to send its request.
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(requests.count == 1)
+
+    await fetchResponse.open()
+    _ = await (fetch, refresh)
+
+    #expect(requests.count == 2)
+    #expect(configManager.config?.buildId == "refreshed")
   }
 
   @Test("Refreshes called together run one after the other")

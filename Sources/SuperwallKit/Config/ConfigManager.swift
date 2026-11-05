@@ -111,12 +111,12 @@ class ConfigManager {
     // Subscribers can take other locks, so they're sent changes once the
     // store is unlocked, in the order the changes were applied.
     let publications = OrderedDelivery<ConfigState> { [weak self] state in
-      // Once a failure has completed `configState`, it sends nothing more,
+      self?.configState.send(state)
+      // A failure is sent as a value too, so `configurationStatus` sees it,
+      // then completes `configState`. Once completed it sends nothing more,
       // though the store can still change.
       if let error = state.failure {
         self?.configState.send(completion: .failure(error))
-      } else {
-        self?.configState.send(state)
       }
     }
     store.observe { [weak store] before, after in

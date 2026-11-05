@@ -336,6 +336,62 @@ struct SerialTaskCoordinatorTests {
     #expect(await recorder.finished == Array(0..<5))
   }
 
+  @Test("Cancelling a run's caller doesn't stop the operation or the wait")
+  func runIgnoresCancellation() async {
+    let coordinator = SerialTaskCoordinator()
+    let recorder = Recorder()
+    let gate = Gate()
+    coordinator.enqueue {
+      await gate.wait()
+    }
+
+    let caller = Task {
+      await coordinator.run {
+        await recorder.didStart(0)
+        await recorder.didFinish(0)
+      }
+      await recorder.didStart(1)
+    }
+    caller.cancel()
+    for _ in 0..<50 {
+      await Task.yield()
+    }
+    // Still waiting behind the held operation.
+    #expect(await recorder.order.isEmpty)
+
+    await gate.open()
+    await caller.value
+    // The operation ran, and `run` returned only after it.
+    #expect(await recorder.order == [0, 1])
+    #expect(await recorder.finished == [0])
+  }
+
+  @Test("A task started from an operation can wait on the coordinator")
+  func taskFromOperationCanRun() async {
+    let coordinator = SerialTaskCoordinator()
+    let recorder = Recorder()
+    let started = Gate()
+    let followUp = LockedTask()
+
+    await coordinator.run {
+      // Like a subscriber that refreshes the config in a `Task` while a
+      // fetch publishes it: the operation doesn't wait for the task.
+      followUp.set(Task {
+        await started.open()
+        await coordinator.run {
+          await recorder.didStart(1)
+          await recorder.didFinish(1)
+        }
+      })
+      await started.wait()
+      await recorder.didStart(0)
+      await recorder.didFinish(0)
+    }
+    await followUp.value?.value
+
+    #expect(await recorder.finished == [0, 1])
+  }
+
   /// Holds operations until it's opened.
   private actor Gate {
     private var isOpen = false
@@ -356,5 +412,23 @@ struct SerialTaskCoordinatorTests {
         waiter.resume()
       }
     }
+  }
+}
+
+/// A task handed between tasks.
+private final class LockedTask: @unchecked Sendable {
+  private let lock = NSLock()
+  private var task: Task<Void, Never>?
+
+  var value: Task<Void, Never>? {
+    lock.lock()
+    defer { lock.unlock() }
+    return task
+  }
+
+  func set(_ task: Task<Void, Never>) {
+    lock.lock()
+    self.task = task
+    lock.unlock()
   }
 }
