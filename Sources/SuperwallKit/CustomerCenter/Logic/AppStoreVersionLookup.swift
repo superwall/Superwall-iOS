@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 26/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 import StoreKit
 
@@ -181,3 +182,4 @@ struct AppStoreVersionLookup: CustomerCenterAppStoreVersionProviding {
     defaults.set(region, forKey: Self.regionKey)
   }
 }
+#endif

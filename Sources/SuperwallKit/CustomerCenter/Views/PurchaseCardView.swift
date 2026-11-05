@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct PurchaseCardView: View {
@@ -95,3 +96,4 @@ struct BadgeView: View {
       .accessibilityIdentifier(rowId.map { "customer_center.badge.\(key).\($0)" } ?? "customer_center.badge.\(key)")
   }
 }
+#endif

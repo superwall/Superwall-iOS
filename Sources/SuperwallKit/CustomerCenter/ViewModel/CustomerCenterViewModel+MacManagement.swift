@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 16/10/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 #if os(macOS)
@@ -49,4 +50,5 @@ extension CustomerCenterViewModel {
     await apply(customerInfo: info, refetchProducts: true)
   }
 }
+#endif
 #endif

@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// An adapter between the internal SDK and the public swift/objective-c ``CustomerCenterDelegate``.
@@ -86,3 +87,4 @@ final class FirstRestoreAnswer: @unchecked Sendable {
     continuation?.resume(returning: proceed)
   }
 }
+#endif

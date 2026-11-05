@@ -6,6 +6,7 @@
 //
 // swiftlint:disable function_body_length type_body_length file_length
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -907,3 +908,4 @@ final class PaywallMessageHandler: WebEventDelegate {
     await passMessageToWebView(base64Event)
   }
 }
+#endif

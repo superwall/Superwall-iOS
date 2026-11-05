@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Delegate class to handle location authorization callbacks.
@@ -53,3 +54,4 @@ final class LocationPermissionDelegate: NSObject {
     onStatusChange(status)
   }
 }
+#endif

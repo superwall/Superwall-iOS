@@ -6,6 +6,7 @@
 //
 // swiftlint:disable file_length type_body_length function_body_length
 
+#if canImport(WebKit)
 import Combine
 #if !os(macOS)
 import SafariServices
@@ -2621,4 +2622,5 @@ extension PaywallViewController {
     }
   }
 }
+#endif
 #endif

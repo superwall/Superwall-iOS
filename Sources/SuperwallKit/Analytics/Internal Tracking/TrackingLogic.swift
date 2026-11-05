@@ -185,6 +185,7 @@ enum TrackingLogic {
     )
   }
 
+  #if canImport(WebKit)
   static func canTriggerPaywall(
     _ event: Trackable,
     triggers: Set<String>,
@@ -246,4 +247,5 @@ enum TrackingLogic {
 
     return .triggerPaywall
   }
+  #endif
 }

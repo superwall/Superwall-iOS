@@ -4,6 +4,10 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.19.1
 
+### Enhancements
+
+- Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
+
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.

@@ -7,8 +7,10 @@
 
 /// The source of the purchase initiation.
 enum PurchaseSource {
+  #if canImport(WebKit)
   /// The purchase was initiated internally by the SDK.
   case `internal`(String, PaywallViewController, Bool)
+  #endif
 
   /// The purchase was initiated externally by the user calling ``Superwall/purchase(_:)-7gwwe``.
   case purchaseFunc(StoreProduct)
@@ -17,7 +19,9 @@ enum PurchaseSource {
 
   func toRestoreSource() -> RestoreSource {
     switch self {
+    #if canImport(WebKit)
     case .internal(_, let paywallViewController, _): return .internal(paywallViewController)
+    #endif
     case .purchaseFunc: return .external
     case .observeFunc: return .external
     }
@@ -30,8 +34,10 @@ enum PurchaseSource {
 
 /// The source of the restore initiation.
 enum RestoreSource: Equatable {
+  #if canImport(WebKit)
   /// Initiated internally by the SDK.
   case `internal`(PaywallViewController)
+  #endif
 
   /// Initiated externally by the user.
   case external

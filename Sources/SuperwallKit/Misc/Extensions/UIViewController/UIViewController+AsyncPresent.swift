@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/10/2022.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 
@@ -18,4 +19,5 @@ extension UIViewController {
     }
   }
 }
+#endif
 #endif

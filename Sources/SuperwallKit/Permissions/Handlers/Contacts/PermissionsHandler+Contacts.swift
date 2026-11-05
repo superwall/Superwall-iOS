@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
+#if canImport(WebKit)
 extension PermissionHandler {
   func checkContactsPermission() -> PermissionStatus {
     let proxy = ContactStoreProxy()
@@ -41,3 +42,4 @@ extension PermissionHandler {
     }
   }
 }
+#endif

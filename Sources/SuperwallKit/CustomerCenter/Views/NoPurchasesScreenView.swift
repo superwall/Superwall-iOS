@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct NoPurchasesScreenView: View {
@@ -35,3 +36,4 @@ struct NoPurchasesScreenView: View {
     #endif
   }
 }
+#endif

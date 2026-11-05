@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 29/10/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Runs the custom store checkouts that a paywall handles itself, without a
@@ -385,3 +386,4 @@ private enum CustomStoreCheckoutOwnership {
     }
   }
 }
+#endif

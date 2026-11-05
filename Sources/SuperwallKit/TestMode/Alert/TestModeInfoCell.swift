@@ -5,6 +5,7 @@
 //  Created by Claude on 2026-02-05.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 
@@ -139,4 +140,5 @@ final class TestModeInfoCell: UITableViewCell {
     }
   }
 }
+#endif
 #endif

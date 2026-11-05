@@ -5,6 +5,7 @@
 //  Created by Brian Anglin on 13/10/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// The tester's choices in the test mode modal: the state of each entitlement
@@ -100,3 +101,4 @@ enum TestModeSettingsStore {
     return entitlements
   }
 }
+#endif

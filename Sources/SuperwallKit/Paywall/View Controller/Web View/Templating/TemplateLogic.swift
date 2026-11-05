@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 11/10/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum TemplateLogic {
@@ -70,3 +71,4 @@ enum TemplateLogic {
     }
   }
 }
+#endif
