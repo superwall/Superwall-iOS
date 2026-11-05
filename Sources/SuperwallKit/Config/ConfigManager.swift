@@ -921,16 +921,8 @@ class ConfigManager {
   /// starts inactive so paywalls present, and purchases flip them for real.
   @MainActor
   private func applyDefaultTestModeState(testModeManager: TestModeManager) async {
-    testModeManager.setEntitlements([])
-    let testModeCustomerInfo = CustomerInfo(
-      subscriptions: [],
-      nonSubscriptions: [],
-      entitlements: []
-    )
-    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
-    Superwall.shared.customerInfo = testModeCustomerInfo
-    testModeManager.overriddenSubscriptionStatus = .inactive
-    Superwall.shared.setSubscriptionStatus(assigned: .inactive)
+    let session = testModeManager.choose([])
+    testModeManager.sendOverrides(of: session)
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
@@ -976,35 +968,12 @@ class ConfigManager {
       freeTrialOverride: result.freeTrialOverride.rawValue
     ))
 
-    // Set the selected entitlements on the test mode manager
-    let entitlementIds = Set(result.entitlements.map { $0.id })
-    testModeManager.setEntitlements(entitlementIds)
+    testModeManager.setFreeTrialOverride(result.freeTrialOverride)
+    let session = testModeManager.choose(result.entitlements)
+    testModeManager.sendOverrides(of: session)
 
-    // Apply the free trial override
-    testModeManager.freeTrialOverride = result.freeTrialOverride
-
-    // Create test mode CustomerInfo with selected entitlements
-    // This is separate from real device purchases
-    let testModeCustomerInfo = CustomerInfo(
-      subscriptions: [],
-      nonSubscriptions: [],
-      entitlements: Array(result.entitlements)
-    )
-    testModeManager.overriddenCustomerInfo = testModeCustomerInfo
-    Superwall.shared.customerInfo = testModeCustomerInfo
-
-    // Update subscription status based on whether any entitlements are active
     let hasActiveEntitlements = result.entitlements.contains { $0.isActive }
-    if hasActiveEntitlements {
-      let status = SubscriptionStatus.active(result.entitlements)
-      testModeManager.overriddenSubscriptionStatus = status
-      Superwall.shared.setSubscriptionStatus(assigned: status)
-      storage.save(true, forType: IsTestModeActiveSubscription.self)
-    } else {
-      testModeManager.overriddenSubscriptionStatus = .inactive
-      Superwall.shared.setSubscriptionStatus(assigned: .inactive)
-      storage.save(false, forType: IsTestModeActiveSubscription.self)
-    }
+    storage.save(hasActiveEntitlements, forType: IsTestModeActiveSubscription.self)
     #endif
   }
 }

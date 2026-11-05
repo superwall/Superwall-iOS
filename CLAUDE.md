@@ -188,6 +188,17 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Test mode store
+
+`TestModeManager` keeps test mode in a `StateStore` too: `.inactive`, or `.active` with the reason
+and a session (products, entitlements, free trial override, and the customer info and subscription
+status test mode keeps). Change it only with `TestModeUpdate` reducers. Everything but `activate`
+leaves an inactive state alone, and `deactivate` drops the whole session, so the getters return
+empty values and `nil` overrides while test mode is off. Build the overrides in a reducer
+(`purchased`/`chose`) rather than reading the state and writing it back, so concurrent changes
+aren't lost. Storage and `UserDefaults` writes, and handing the overrides to `Superwall.shared`
+(`sendOverrides(of:)`, on the main actor), happen after the update returns, never in an observer.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
