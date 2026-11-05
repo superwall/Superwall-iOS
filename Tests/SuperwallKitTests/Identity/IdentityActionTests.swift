@@ -717,6 +717,85 @@ struct IdentityActionTests {
     #expect(saves.value == ["start user-1", "end user-1", "start anonymous", "end anonymous"])
   }
 
+  @Test("Readiness is reported with the store unlocked, before the update returns")
+  func readinessReportedUnlocked() {
+    let store = IdentityStore(initial: readyState())
+    let otherThreadRead = LockedFlag()
+    let reported = LockedValue<[Bool]>([])
+    IdentityObservers.install(
+      on: store,
+      persist: { _, _ in },
+      readinessChanged: { isReady in
+        reported.mutate { $0.append(isReady) }
+        // A subscriber may take locks another thread holds while reading the
+        // identity, so the store mustn't be locked here.
+        let done = DispatchSemaphore(value: 0)
+        Thread {
+          _ = store.state
+          done.signal()
+        }
+        .start()
+        otherThreadRead.set(done.wait(timeout: .now() + 2) == .success)
+      }
+    )
+
+    store.update(IdentityUpdate.begin(.configuration))
+    #expect(reported.value == [false])
+    #expect(otherThreadRead.value)
+
+    store.update(IdentityUpdate.end(.configuration))
+    #expect(reported.value == [false, true])
+  }
+
+  @Test("An identify and a reset on different threads both finish and leave a consistent identity")
+  func concurrentIdentifyAndReset() async {
+    for _ in 0..<50 {
+      let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+      // Outside 0..<100, so it can't be a reset's random seed.
+      context.seeds["user-2"] = 1_000
+      let start = DispatchSemaphore(value: 0)
+      let changes: [() -> Void] = [
+        { context.dispatch(identify("user-2", keptAttributes: [:])) },
+        { context.dispatch(.reset(keptAttributes: [:])) }
+      ]
+      await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+        let group = DispatchGroup()
+        for change in changes {
+          group.enter()
+          Thread {
+            start.wait()
+            change()
+            group.leave()
+          }
+          .start()
+        }
+        start.signal()
+        start.signal()
+        group.notify(queue: .global()) {
+          continuation.resume()
+        }
+      }
+      await context.settle()
+
+      let state = context.state
+      let resets = context.events.filter { $0 == "resetRestOfSDK" }.count
+      #expect(state.isReady)
+      #expect(state.pendingSummary.isEmpty)
+      if state.appUserId == "user-2" {
+        // The reset ran first, then user-2 logged in on the anonymous user,
+        // so only the reset replaced anyone.
+        #expect(resets == 1)
+        #expect(state.seed == 1_000)
+      } else {
+        // The identify replaced user-1, then the reset replaced user-2, whose
+        // seed must not reach the anonymous user.
+        #expect(state.appUserId == nil)
+        #expect(resets == 2)
+        #expect(state.seed != 1_000)
+      }
+    }
+  }
+
   @Test("A side effect that finishes after the identity is gone does nothing")
   func sideEffectAfterContextIsGone() async {
     var context: FakeIdentityContext? = FakeIdentityContext(readyState())

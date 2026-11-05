@@ -25,7 +25,7 @@ protocol Reducer {
 /// An action runs with the store locked, so it must not wait on anything:
 /// no `queue.sync`, semaphores or calls into other objects that might.
 /// Work that has to, such as resetting other parts of the SDK, goes in
-/// ``StateStore/afterDispatch(_:)``, which runs once the lock is released.
+/// ``StateStore/deferUntilUnlocked(_:)``, which runs once the lock is released.
 /// Async work starts in a `Task`.
 protocol StoreAction {
   associatedtype Context

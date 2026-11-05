@@ -240,20 +240,31 @@ extension IdentityAction: CustomStringConvertible {
 /// Observers that keep storage and readiness in step with the identity.
 enum IdentityObservers {
   /// Saves identity fields that an update changed, and reports readiness
-  /// whenever it changes. The store runs observers one update at a time, in
-  /// the order the updates are applied, so an older update can't save over a
-  /// newer one.
+  /// whenever it changes.
+  ///
+  /// `persist` runs with the store locked, one update at a time, in the order
+  /// the updates are applied, so an older update can't save over a newer one.
+  /// It mustn't wait on anything.
+  ///
+  /// `readinessChanged` runs once the store is unlocked, so it can call
+  /// anything, in the order the changes were applied. While another thread
+  /// is reporting readiness, that thread reports this change too, after the
+  /// ones before it.
   static func install(
     on store: IdentityStore,
     persist: @escaping (_ before: IdentityState, _ after: IdentityState) -> Void,
     readinessChanged: @escaping (Bool) -> Void
   ) {
+    let readiness = OrderedDelivery(readinessChanged)
     var lastReadiness = store.state.isReady
-    store.observe { before, after in
+    store.observe { [weak store] before, after in
       persist(before, after)
       if after.isReady != lastReadiness {
         lastReadiness = after.isReady
-        readinessChanged(after.isReady)
+        readiness.add(after.isReady)
+        store?.deferUntilUnlocked {
+          readiness.deliver()
+        }
       }
     }
   }

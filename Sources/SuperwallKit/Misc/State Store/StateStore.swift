@@ -105,7 +105,8 @@ final class StateStore<Context, State>: @unchecked Sendable {
 
   /// Runs `work` once this thread has finished the update or dispatch it's
   /// in and the store is unlocked, before that update or dispatch returns.
-  /// Called outside one, `work` runs straight away.
+  /// Called outside one, `work` runs before this returns, once any update or
+  /// dispatch running on another thread has released the lock.
   ///
   /// Work deferred within one outermost update or dispatch runs in the order
   /// it was deferred. It may wait on other objects, and update the store or
