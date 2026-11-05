@@ -162,6 +162,17 @@ ATT revocation. ATT is serialized as a numeric string in integration attributes.
 change to that set in the changelog and the online docs. Don't gate the IDFA on
 the ATT status: `identifierForAdvertisers` already filters the all-zero id.
 
+### Identity store
+
+`IdentityManager` keeps its state in a `StateStore`, guarded by one recursive lock. Identity
+actions, reducers and store observers run with that lock held, so they must never wait on another
+thread: no `queue.sync`, semaphores, `DispatchQueue.main.sync`, or calls into objects that do. A
+thread reading the identity may hold what they'd wait for, and the two deadlock. Storage writes are
+fine (they hand off to a background queue). Anything that can wait, such as resetting the rest of
+the SDK, goes in `deferUntilUnlocked`; async work starts in a `Task` through `sideEffect`.
+`IdentityResetHandling.attributesKeptAcrossReset()` runs before the lock is taken and
+`identityDidReset()` after it's released; neither may change the identity.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
