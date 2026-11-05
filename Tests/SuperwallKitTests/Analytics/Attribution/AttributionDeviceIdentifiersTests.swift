@@ -174,6 +174,17 @@ struct AttributionDeviceIdentifiersTests {
     #expect(syncCount == 1)
     #expect(syncedAttributes["appsflyerId"] == nil)
 
+    // Before a reset, the identity asks what the new user keeps. That
+    // changes nothing yet.
+    let kept = fetcher.integrationAttributesKeptAcrossReset()
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == "person-1")
+
+    // The kept ids go to the new user, alongside the device ones. The
+    // identity merges them itself, so the fetcher doesn't sync them.
+    #expect(kept["appsflyerId"] as? String == "af-1")
+    #expect(kept.keys.contains("amplitudeUserId") == false)
+    #expect(kept["idfv"] as? String == "vendor-1")
+
     // A reset deletes the user-specific copy and empties the user's attributes.
     container.storage.delete(IntegrationAttributes.self)
     fetcher.resetIntegrationAttributes()
@@ -183,12 +194,7 @@ struct AttributionDeviceIdentifiersTests {
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(fetcher.integrationAttributes["amplitudeUserId"] == nil)
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
-    #expect(syncCount == 2)
-
-    // The kept ids go back to the new user, alongside the device ones.
-    #expect(syncedAttributes["appsflyerId"] as? String == "af-1")
-    #expect(syncedAttributes["amplitudeUserId"] == nil)
-    #expect(syncedAttributes["idfv"] as? String == "vendor-1")
+    #expect(syncCount == 1)
 
     // And they're on disk again, so the next launch still refreshes and the
     // redeem that follows the reset doesn't ship empty metadata.

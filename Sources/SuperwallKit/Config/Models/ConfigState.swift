@@ -24,16 +24,7 @@ enum ConfigState: Equatable {
   case retrieving
   case retrying
   case retrieved(Config)
-  /// The config couldn't be fetched. `configState` has completed with this error.
-  case failed(Error)
-
-  /// Why the config couldn't be fetched, if it couldn't.
-  var failure: Error? {
-    if case .failed(let error) = self {
-      return error
-    }
-    return nil
-  }
+  case failed
 
   func getConfig() -> Config? {
     switch self {

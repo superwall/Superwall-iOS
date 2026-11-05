@@ -128,7 +128,7 @@ struct AdServicesAttributionTests {
       lastAttemptDate: Date()
     )
     storage.save(saturated, forType: AdServicesAttributionAttemptsStorage.self)
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 
@@ -155,7 +155,7 @@ struct AdServicesAttributionTests {
       lastAttemptDate: firstAttempt.addingTimeInterval(30)
     )
     storage.save(expired, forType: AdServicesAttributionAttemptsStorage.self)
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 
@@ -186,18 +186,26 @@ struct AdServicesAttributionTests {
   }
 
   @Test
-  func reapplyCachedAttribution_noCrashWhenNothingCached() {
-    // The user-attribute side effect happens on Superwall.shared (the global
-    // singleton) and is detached from the test's local DependencyContainer,
-    // so asserting on the resulting attributes from inside this test isn't
-    // reliable. Just confirm the no-op path doesn't crash with empty state.
+  func cachedAttribution_emptyWhenNothingCached() {
     let dependencyContainer = DependencyContainer()
     let storage = dependencyContainer.storage!
     let poster = dependencyContainer.attributionPoster!
 
     storage.delete(AdServicesAttributionDataStorage.self)
 
-    poster.reapplyCachedAttribution()
+    #expect(poster.cachedAttribution().isEmpty)
+  }
+
+  @Test
+  func cachedAttribution_returnsTheCachedCampaign() {
+    let dependencyContainer = DependencyContainer()
+    let storage = dependencyContainer.storage!
+    let poster = dependencyContainer.attributionPoster!
+    defer { storage.delete(AdServicesAttributionDataStorage.self) }
+
+    storage.save(["campaignId": JSON(1234)], forType: AdServicesAttributionDataStorage.self)
+
+    #expect(poster.cachedAttribution()["campaignId"] as? Int == 1234)
   }
 
   @Test
@@ -209,7 +217,7 @@ struct AdServicesAttributionTests {
     storage.delete(AdServicesTokenStorage.self)
     storage.delete(AdServicesAttributionAttemptsStorage.self)
     storage.save(true, forType: AdServicesAttributionUnsupportedStorage.self)
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     await poster.getAdServicesTokenIfNeeded()
 

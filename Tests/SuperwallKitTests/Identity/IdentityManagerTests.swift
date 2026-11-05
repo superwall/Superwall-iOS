@@ -30,8 +30,7 @@ struct IdentityManagerTests {
     // When
     identityManager.mergeUserAttributesAndNotify(["testKey": "testValue"])
 
-    // Then
-    await identityManager.flush()
+    // Then: merges apply before they return.
 
     #expect(notifiedAttributes != nil, "notifyUserChange should have been called")
     #expect(notifiedAttributes?["testKey"] as? String == "testValue")
@@ -56,8 +55,7 @@ struct IdentityManagerTests {
     // When
     identityManager.mergeUserAttributes(["testKey": "testValue"])
 
-    // Then
-    await identityManager.flush()
+    // Then: merges apply before they return.
 
     #expect(notifyCallCount == 0, "notifyUserChange should NOT have been called for regular mergeUserAttributes")
   }
@@ -83,7 +81,6 @@ struct IdentityManagerTests {
 
     // When - add new attributes via mergeUserAttributesAndNotify
     identityManager.mergeUserAttributesAndNotify(["newKey": "newValue"])
-    await identityManager.flush()
 
     // Then - callback should receive merged attributes
     #expect(notifiedAttributes != nil)

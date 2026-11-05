@@ -343,20 +343,8 @@ struct ConfigManagerEarlyPublishTests {
     }
   }
 
-  private func settle(_ configManager: ConfigManager) async {
-    // Let the background refresh finish before the container goes away. It's
-    // queued behind the fetch, so wait for the queue, then for anything it
-    // started in the background.
-    let flushed = FlushFlag()
-    Task {
-      await configManager.store.flush()
-      flushed.set()
-    }
-    let deadline = Date().addingTimeInterval(5)
-    while !flushed.isSet, Date() < deadline {
-      try? await Task.sleep(nanoseconds: 10_000_000)
-    }
-    #expect(flushed.isSet, "the config refresh queued behind the fetch didn't finish")
+  private func settle() async {
+    // Let the background refresh finish before the container goes away.
     try? await Task.sleep(nanoseconds: 300_000_000)
   }
 
@@ -382,7 +370,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.receipt.didFinishLoad, "fetchConfiguration still waits for the purchases load")
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("While StoreKit loads, purchase state comes from the saved customer info")
@@ -409,7 +397,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.isActive == true)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A second subscription that lapsed since the last launch is restored inactive")
@@ -434,7 +422,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("The restore publishes the lapse-corrected status and customer info")
@@ -463,7 +451,7 @@ struct ConfigManagerEarlyPublishTests {
     guard case .active(let entitlements) = Superwall.shared.subscriptionStatus else {
       Issue.record("expected an active status, got \(Superwall.shared.subscriptionStatus)")
       await fetch.value
-      await settle(harness.configManager)
+      await settle()
       return
     }
     #expect(entitlements.contains { $0.id == "pro" && $0.isActive })
@@ -480,7 +468,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(customerInfo.subscriptions.first { $0.productId == Self.webProductId }?.isActive == true)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("The read replaces everything the restore seeded")
@@ -519,7 +507,7 @@ struct ConfigManagerEarlyPublishTests {
     // The seeded group is gone too, so the upgrade is trial-eligible again.
     #expect(await harness.receiptManager.isFreeTrialAvailable(for: gold) == true)
 
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("Trial eligibility waits for the purchases load that config no longer waits for")
@@ -544,7 +532,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(harness.receipt.didFinishLoad, "eligibility was answered before the load finished")
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A web-only subscriber takes the fast path with no device purchases seeded")
@@ -573,7 +561,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.store == .stripe)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A developer-granted entitlement takes the fast path with nothing else saved")
@@ -603,7 +591,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.isActive == true)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A grant survives a saved row with the same id that has lapsed")
@@ -630,7 +618,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A subscription saved with no expiry is not restored active")
@@ -651,7 +639,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(await harness.receiptManager.isSubscribed(to: Self.legacyProductId) == false)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A lifetime purchase has no expiry and takes the fast path")
@@ -677,7 +665,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(await harness.receiptManager.isSubscribed(to: Self.coinsProductId) == false)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("StoreKit 1 has no saved device rows to restore from, so config waits")
@@ -696,7 +684,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.configManager.config != nil)
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("Saved entitlement still flagged active but past its expiry: config waits")
@@ -715,7 +703,7 @@ struct ConfigManagerEarlyPublishTests {
     await fetch.value
     #expect(harness.receipt.didFinishLoad)
     #expect(harness.configManager.config != nil)
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("An active status on disk with a blank saved customer info is not enough")
@@ -735,7 +723,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.configManager.config != nil)
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("Unknown subscriber: purchases still load before config is published")
@@ -754,7 +742,7 @@ struct ConfigManagerEarlyPublishTests {
     await fetch.value
     #expect(harness.receipt.didFinishLoad)
     #expect(harness.configManager.config != nil)
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("A purchase controller takes the fast path too")
@@ -778,7 +766,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(!harness.receipt.didFinishLoad)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 
   @Test("With a purchase controller the restore seeds purchases but leaves the status and customer info alone")
@@ -834,7 +822,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(Superwall.shared.subscriptionStatus == statusBefore)
 
     await fetch.value
-    await settle(harness.configManager)
+    await settle()
   }
 }
 
@@ -877,23 +865,5 @@ private final class SlowReceiptManagerType: ReceiptManagerType, @unchecked Senda
 
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     return true
-  }
-}
-
-/// Set once, read from any thread.
-private final class FlushFlag: @unchecked Sendable {
-  private let lock = NSLock()
-  private var value = false
-
-  var isSet: Bool {
-    lock.lock()
-    defer { lock.unlock() }
-    return value
-  }
-
-  func set() {
-    lock.lock()
-    value = true
-    lock.unlock()
   }
 }

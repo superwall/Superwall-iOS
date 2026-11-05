@@ -18,7 +18,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   }
   
   override func setUp() async throws {
-    identityManager.reset(duringIdentify: false)
+    identityManager.reset()
   }
 
   func test_waitForEntitlementsAndConfig_noIdentity_unknownStatus() async {
@@ -54,7 +54,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     Task.detached {
       try? await Task.sleep(nanoseconds: 500_000_000)
-      self.dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+      self.dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     }
 
     await fulfillment(of: [expectation1, stateExpectation], timeout: 6.5)
@@ -117,7 +117,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
 
     Task.detached {
       try? await Task.sleep(nanoseconds: 500_000_000)
-      self.dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+      self.dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     }
 
     do {
@@ -196,7 +196,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     .store(in: &cancellables)
 
     let error = NetworkError.noInternet
-    dependencyContainer.configManager.store.update(ConfigUpdate.failed(error))
+    dependencyContainer.configManager.configState.send(completion: .failure(error))
 
     Task {
       try await Superwall.shared.waitForSubsStatusAndConfig(
@@ -236,7 +236,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     let truePublisher = CurrentValueSubject<Bool, Never>(true)
       .eraseToAnyPublisher()
 
@@ -275,7 +275,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
     }
     .store(in: &cancellables)
 
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
 
     Task {
       // Sleep to allow reset to complete, then set identity as true.

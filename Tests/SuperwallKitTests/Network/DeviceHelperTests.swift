@@ -411,7 +411,7 @@ struct DeviceHelperTests {
   }
 
   private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: isEnabled)))
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: isEnabled)))
   }
 
   /// On a cold launch the first enrichment is read before config arrives. Its
@@ -441,7 +441,7 @@ struct DeviceHelperTests {
     await deviceHelper.startIPCollectionIfEnabled(for: config)?.value
     #expect(await fetches.count == 1)
 
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
+    dependencyContainer.configManager.configState.send(.retrieved(config))
     deviceHelper.enrichment = nil
     let afterConfig = await deviceHelper.getTemplateDevice()
     #expect(afterConfig["ipV6"] as? String == "2001:db8::1")

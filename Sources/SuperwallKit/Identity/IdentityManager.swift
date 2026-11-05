@@ -8,17 +8,34 @@
 import Foundation
 import Combine
 
+/// What the identity needs from the rest of the SDK when it replaces the user
+/// with a new anonymous one, on `reset()` or on identifying a different user.
+protocol IdentityResetHandling: AnyObject {
+  /// The attributes a new user keeps, such as install-scoped attribution and
+  /// the device identifiers. Called before the identity changes, with it
+  /// unlocked. Changes nothing.
+  func attributesKeptAcrossReset() -> [String: Any?]
+
+  /// Resets the rest of the SDK for the new user. Called once the identity
+  /// has changed, with it unlocked. The identity isn't ready until this
+  /// returns. Must not change the identity: it already holds what the new
+  /// user keeps.
+  func identityDidReset()
+}
+
 /// Holds the user's identity and serializes every change to it.
 ///
-/// The identity lives in an ``IdentityState`` on a ``SequentialStore``.
-/// Reads are synchronous and never wait. Changes are ``IdentityAction``s,
-/// run one at a time in call order, and a change returns once it has run, so
-/// a read straight after it sees it and a merge called after
-/// `identify(userId:)` lands on the identified user. The one exception: a
-/// change made while an identify on another thread is resetting for a new
-/// user runs after that reset, once the call has returned. Waiting on the
-/// config or on assignments happens in side effects, tracked as pending work
-/// in the state, so it never holds up later changes.
+/// The identity lives in an ``IdentityState`` on a ``StateStore``. Changes
+/// are ``IdentityAction``s, which run one at a time with the store locked and
+/// have run when the call returns, so a read straight after a change sees it
+/// and a merge called after `identify(userId:)` lands on the identified user.
+/// Waiting on the config or on assignments happens in side effects, tracked
+/// as pending work in the state, so it never holds up later changes.
+///
+/// Replacing the user with a new anonymous one works as on Android: the
+/// identity owns it. The rest of the SDK hands over what the new user keeps
+/// beforehand, and resets itself afterwards, through ``resetHandler``. So
+/// nothing calls back into the identity while it changes.
 class IdentityManager: IdentityContext {
   /// The appUserId or the aliasId, depending on whether the user is logged in
   /// or not.
@@ -85,13 +102,15 @@ class IdentityManager: IdentityContext {
 
   let store: IdentityStore
 
+  /// Resets the rest of the SDK when the identity replaces the user.
+  weak var resetHandler: IdentityResetHandling?
+
   // Weak rather than unowned: side effects and queued actions can outlive
   // these, and then they should do nothing rather than crash.
   private weak var storage: Storage?
   private weak var configManager: ConfigManager?
   private weak var webEntitlementRedeemer: WebEntitlementRedeemer?
   private let notifyUserChangeHandler: (([String: Any]) -> Void)?
-  private let resetForNewUserHandler: () -> Void
   private let trackHandler: (Trackable) async -> Void
 
   init(
@@ -100,9 +119,6 @@ class IdentityManager: IdentityContext {
     configManager: ConfigManager,
     webEntitlementRedeemer: WebEntitlementRedeemer,
     notifyUserChange: (([String: Any]) -> Void)? = nil,
-    resetForNewUser: @escaping () -> Void = {
-      Superwall.shared.reset(duringIdentify: true)
-    },
     track: @escaping (Trackable) async -> Void = {
       _ = await Superwall.shared.track($0)
     }
@@ -111,7 +127,6 @@ class IdentityManager: IdentityContext {
     self.configManager = configManager
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.notifyUserChangeHandler = notifyUserChange
-    self.resetForNewUserHandler = resetForNewUser
     self.trackHandler = track
 
     let initialState = IdentityState.load(
@@ -121,7 +136,7 @@ class IdentityManager: IdentityContext {
     store = IdentityStore(initial: initialState)
     identitySubject.send(initialState.isReady)
 
-    IdentityInterceptors.installObservers(
+    IdentityObservers.install(
       on: store,
       persist: { [weak self] before, after in
         self?.persistChanges(from: before, to: after)
@@ -164,62 +179,30 @@ class IdentityManager: IdentityContext {
       return
     }
 
+    // Gathered before the identity is locked, since the rest of the SDK reads
+    // them under its own locks. If another thread changes the user in the
+    // meantime, the action sorts it out.
+    let currentUserId = store.state.appUserId
+    let switchesUser = currentUserId != nil && currentUserId != userId
+    let keptAttributes = switchesUser ? attributesKeptAcrossReset() : nil
+
     dispatch(
       .identify(
         userId: userId,
-        restoreAssignments: options?.restorePaywallAssignments ?? false
+        restoreAssignments: options?.restorePaywallAssignments ?? false,
+        keptAttributes: keptAttributes
       )
     )
-  }
-
-  /// Returns once identity changes dispatched so far, from any thread, have
-  /// run. Doesn't wait for their side effects, such as the seed waiting for
-  /// the config, or for changes handed over while a user switch was resetting.
-  func flush() async {
-    store.dispatch(IdentityBarrier(), in: self)
-    await store.flush()
   }
 }
 
 // MARK: - Reset
 extension IdentityManager {
-  /// Clears all stored user-specific variables.
-  ///
-  /// - Parameters:
-  ///   - duringIdentify: Whether the reset is part of `identify(userId:)`
-  ///   switching user. Then it's running inside the identify action, so it
-  ///   applies straight away instead of after that action.
-  func reset(duringIdentify: Bool) {
-    if duringIdentify {
-      store.update(
-        IdentityUpdate.reset(
-          aliasId: IdentityLogic.generateAlias(),
-          seed: IdentityLogic.generateSeed()
-        )
-      )
-    } else {
-      dispatch(.reset)
-    }
-  }
-
-  /// Marks the identity as not ready while `Superwall.reset()` cleans up
-  /// after the user it's replacing, so that no paywall is presented in the
-  /// middle of that. Pass the result to ``endReset(_:)`` when it's done.
-  func beginReset() -> UUID {
-    let id = UUID()
-    store.update(IdentityUpdate.begin(.reset(id)))
-    return id
-  }
-
-  /// Ends the cleanup that ``beginReset()`` started.
-  func endReset(_ id: UUID) {
-    store.update(IdentityUpdate.end(.reset(id)))
-  }
-
-  /// Saves the identity again after the user's storage has been wiped. From
-  /// inside an identify, it runs once the identify has finished.
-  func didResetStorage() {
-    dispatch(.persist)
+  /// Replaces the user with a new anonymous one, then resets the rest of the
+  /// SDK through ``resetHandler``, before returning. The identity isn't ready
+  /// until both are done.
+  func reset() {
+    dispatch(.reset(keptAttributes: attributesKeptAcrossReset()))
   }
 }
 
@@ -279,10 +262,12 @@ extension IdentityManager {
     await webEntitlementRedeemer?.redeem(.existingCodes)
   }
 
-  func resetForNewUser() {
-    // Resets the rest of the SDK, which takes other objects' queues that may
-    // be held by threads waiting to change the identity.
-    store.callingOut(resetForNewUserHandler)
+  func attributesKeptAcrossReset() -> [String: Any?] {
+    resetHandler?.attributesKeptAcrossReset() ?? [:]
+  }
+
+  func resetRestOfSDK() {
+    resetHandler?.identityDidReset()
   }
 
   func trackIdentityAlias() {
@@ -348,9 +333,4 @@ extension IdentityManager {
       storage.save(after.userAttributes, forType: UserAttributes.self)
     }
   }
-}
-
-/// Does nothing. Dispatched to wait for the identity changes before it.
-private struct IdentityBarrier: SyncStoreAction {
-  func execute(in context: IdentityContext) {}
 }

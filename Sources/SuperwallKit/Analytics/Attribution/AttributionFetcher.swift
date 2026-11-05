@@ -348,51 +348,53 @@ extension AttributionFetcher {
     }
   }
 
-  /// Re-scopes the integration attributes for the user that `reset()` just
-  /// created.
-  ///
-  /// Identifiers that describe the person — see `isInstallScoped` — belong to
-  /// whoever was just signed out, so they go. The install-scoped ones describe
-  /// the same device either way and stay, along with the device identifiers.
-  ///
-  /// A reset clears the user's attributes and deletes the stored copy, which
-  /// lives in the user-specific directory, while the in-memory copy outlives
-  /// it. So write what's kept back to disk and hand all of it — not just what
-  /// changed — to the new user, who has none of it. Without the file the next
-  /// cold launch would start empty and the activation refresh would never run
-  /// again, so a later consent change would never clear the IDFA.
-  ///
-  /// Runs synchronously: `identify` redeems for the new user right after the
-  /// reset, and that request reads the stored attributes rather than this
-  /// object. No redeem is scheduled here; the identity redeems on its own.
+  /// What a reset's new user keeps: device identifiers and install-scoped ids.
+  func integrationAttributesKeptAcrossReset() -> [String: Any?] {
+    queue.sync {
+      guard let (kept, device) = _integrationAttributesKeptAcrossReset() else {
+        return [:]
+      }
+      var userAttributes = DeviceIdentifiers.userAttributes(for: device)
+      for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
+        userAttributes[key] = value
+      }
+      return userAttributes
+    }
+  }
+
+  /// Drops the ids that describe the person (see `isInstallScoped`) after a
+  /// reset, and writes the rest back to the disk it wiped, or the next launch
+  /// would start empty and a later consent change would never clear the IDFA.
+  /// Synchronous, since the redeem after an identify reads the stored copy.
   func resetIntegrationAttributes() {
     queue.sync {
       if _integrationAttributes.isEmpty {
         return
       }
-      var kept = _integrationAttributes.filter { key, _ in
-        DeviceIdentifiers.keys.contains(key)
-          || IntegrationAttribute.installScopedKeys.contains(key)
-      }
-      if kept.isEmpty {
+      guard let (kept, device) = _integrationAttributesKeptAcrossReset() else {
         _integrationAttributes = [:]
         _lastSyncedDeviceIdentifiers = nil
         return
       }
-
-      let device = currentDeviceIdentifiers
-      for key in DeviceIdentifiers.keys {
-        kept[key] = device[key]
-      }
       _integrationAttributes = kept
       _lastSyncedDeviceIdentifiers = device
       storage.save(kept, forType: IntegrationAttributes.self)
-
-      var userAttributes = DeviceIdentifiers.userAttributes(for: device)
-      for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
-        userAttributes[key] = value
-      }
-      syncUserAttributes(userAttributes)
     }
+  }
+
+  /// What survives a reset, with fresh device identifiers. Call on `queue`.
+  private func _integrationAttributesKeptAcrossReset() -> (kept: [String: String], device: [String: String])? {
+    var kept = _integrationAttributes.filter { key, _ in
+      DeviceIdentifiers.keys.contains(key)
+        || IntegrationAttribute.installScopedKeys.contains(key)
+    }
+    if kept.isEmpty {
+      return nil
+    }
+    let device = currentDeviceIdentifiers
+    for key in DeviceIdentifiers.keys {
+      kept[key] = device[key]
+    }
+    return (kept, device)
   }
 }

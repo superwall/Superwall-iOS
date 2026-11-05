@@ -7,7 +7,7 @@
 
 import Foundation
 
-typealias IdentityStore = SequentialStore<IdentityContext, IdentityState>
+typealias IdentityStore = StateStore<IdentityContext, IdentityState>
 
 /// Everything identity actions need. ``IdentityManager`` provides it in the
 /// SDK, and tests provide a fake.
@@ -24,11 +24,14 @@ protocol IdentityContext: AnyObject {
   /// Redeems any web entitlement codes the device already has.
   func redeemExistingWebEntitlements() async
 
-  /// Resets the rest of the SDK for a new user. Called from inside the
-  /// identify action, before the new user id is set. Anything in it that can
-  /// block must run in `store.callingOut(_:)`, so that threads waiting to
-  /// change the identity stop waiting.
-  func resetForNewUser()
+  /// The attributes a new user keeps across a reset, such as install-scoped
+  /// attribution. Called with the identity unlocked; changes nothing.
+  func attributesKeptAcrossReset() -> [String: Any?]
+
+  /// Resets the rest of the SDK for the new user, once the identity has
+  /// changed. Called with the identity unlocked, while it isn't ready.
+  /// Doesn't change the identity.
+  func resetRestOfSDK()
 
   func trackIdentityAlias()
   func trackUserAttributes(_ attributes: [String: Any])
@@ -37,8 +40,7 @@ protocol IdentityContext: AnyObject {
   /// Writes every identity field to storage.
   func persistIdentity(_ state: IdentityState)
 
-  /// Starts work that runs outside the store's queue, so that waiting on it
-  /// doesn't hold up later identity actions.
+  /// Starts async work, such as waiting for the config, outside the store.
   func sideEffect(_ work: @escaping () async -> Void)
 }
 
@@ -51,37 +53,41 @@ extension IdentityContext {
     store.update(update)
   }
 
-  /// Runs `action`, normally before returning so that reads on this thread
-  /// see it. From inside another identity action, it runs once that one
-  /// finishes. See ``SequentialStore/dispatch(_:in:)``.
+  /// Runs `action` before returning, so a read straight after sees it.
   func dispatch(_ action: IdentityAction) {
     store.dispatch(action, in: self)
   }
 }
 
-/// The changes to the identity. None of them wait on anything: the config
-/// and assignments are waited for in side effects, tracked as pending work
-/// in the state. So they're dispatched synchronously, one at a time, and a
-/// read straight after a change normally sees it, as callers of the public
-/// identity API expect.
-enum IdentityAction: SyncStoreAction {
-  /// Logs in as `userId`, resetting first if another user is logged in.
-  case identify(userId: String, restoreAssignments: Bool)
+/// The changes to the identity. Each runs with the identity store locked, so
+/// none of them waits on anything: the config and assignments are waited for
+/// in side effects, tracked as pending work in the state, and resetting the
+/// rest of the SDK runs once the store is unlocked.
+enum IdentityAction: StoreAction {
+  /// Logs in as `userId`, first replacing another logged in user with a new
+  /// anonymous one. `keptAttributes` are those the new user keeps across that
+  /// reset, gathered beforehand, or `nil` if no reset was expected.
+  case identify(userId: String, restoreAssignments: Bool, keptAttributes: [String: Any?]?)
   /// Applies the seed for an identify's user once the config has said
   /// whether to derive it from the user id.
   case resolveSeed(IdentifyOperation, seed: Int?)
   /// Merges attributes into the user's attributes.
   case mergeAttributes([String: Any?], shouldTrack: Bool, shouldNotify: Bool)
-  /// Replaces the user with a new anonymous one.
-  case reset
+  /// Replaces the user with a new anonymous one, who keeps `keptAttributes`.
+  case reset(keptAttributes: [String: Any?])
   /// Writes the current identity to storage, for after the storage has been
   /// wiped.
   case persist
 
   func execute(in context: IdentityContext) {
     switch self {
-    case let .identify(userId, restoreAssignments):
-      identify(userId: userId, restoreAssignments: restoreAssignments, in: context)
+    case let .identify(userId, restoreAssignments, keptAttributes):
+      identify(
+        userId: userId,
+        restoreAssignments: restoreAssignments,
+        keptAttributes: keptAttributes,
+        in: context
+      )
     case let .resolveSeed(operation, seed):
       let seedBefore = context.state.seed
       context.update(.resolveSeed(operation, seed: seed))
@@ -97,13 +103,8 @@ enum IdentityAction: SyncStoreAction {
       if shouldNotify {
         context.notifyUserChange(merged)
       }
-    case .reset:
-      context.update(
-        .reset(
-          aliasId: IdentityLogic.generateAlias(),
-          seed: IdentityLogic.generateSeed()
-        )
-      )
+    case .reset(let keptAttributes):
+      replaceUser(keptAttributes: keptAttributes, in: context)
       context.update(.established)
       context.trackUserAttributes(context.state.userAttributes)
     case .persist:
@@ -114,6 +115,7 @@ enum IdentityAction: SyncStoreAction {
   private func identify(
     userId: String,
     restoreAssignments: Bool,
+    keptAttributes: [String: Any?]?,
     in context: IdentityContext
   ) {
     guard userId != context.state.appUserId else {
@@ -121,24 +123,16 @@ enum IdentityAction: SyncStoreAction {
     }
 
     let operation = IdentifyOperation(userId: userId)
-
-    // Not ready from here on: otherwise the anonymous user the reset below
-    // leaves would count as ready until the new id is set.
     context.update(.begin(.seed(operation)))
     if restoreAssignments {
       context.update(.begin(.assignments(operation)))
     }
 
     if context.state.appUserId != nil {
-      // Resets this store inline through `IdentityManager.reset(duringIdentify:)`
-      // and wipes the user's storage, so it has to come before the new id
-      // is set and saved. Identity changes it makes run after this one.
-      context.resetForNewUser()
+      replaceUser(keptAttributes: keptAttributes, in: context)
     }
 
     context.update(.identify(operation))
-    // The reset above may have wiped every identity field from storage, not
-    // just the ones this identify changed.
     context.persistIdentity(context.state)
     context.update(.established)
 
@@ -164,57 +158,83 @@ enum IdentityAction: SyncStoreAction {
       }
     }
   }
+
+  /// Replaces the user with a new anonymous one who keeps `keptAttributes`,
+  /// then, once the store is unlocked, resets the rest of the SDK. The
+  /// identity isn't ready until that has finished.
+  ///
+  /// `keptAttributes` is `nil` when another thread changed the user between
+  /// the caller deciding no reset was needed and this action running. Then
+  /// they're gathered once the store is unlocked.
+  private func replaceUser(
+    keptAttributes: [String: Any?]?,
+    in context: IdentityContext
+  ) {
+    let resetId = UUID()
+    context.update(.begin(.reset(resetId)))
+    context.update(
+      .reset(
+        aliasId: IdentityLogic.generateAlias(),
+        seed: IdentityLogic.generateSeed()
+      )
+    )
+    if let keptAttributes = keptAttributes {
+      context.update(.mergeAttributes(keptAttributes))
+    }
+
+    // Runs before the dispatch returns, so holding the context is fine.
+    context.store.deferUntilUnlocked {
+      if keptAttributes == nil {
+        context.dispatch(
+          .mergeAttributes(
+            context.attributesKeptAcrossReset(),
+            shouldTrack: true,
+            shouldNotify: false
+          )
+        )
+      }
+      context.resetRestOfSDK()
+      // The reset wipes the user's storage, identity included.
+      context.dispatch(.persist)
+      context.update(.end(.reset(resetId)))
+    }
+  }
 }
 
 extension IdentityAction: CustomStringConvertible {
-  /// Leaves out attribute values, which can be personal data.
+  /// Leaves out user ids and attribute values, which can be personal data.
   var description: String {
     switch self {
-    case let .identify(_, restoreAssignments):
-      return "identify(restoreAssignments: \(restoreAssignments))"
+    case let .identify(_, restoreAssignments, keptAttributes):
+      return "identify(restoreAssignments: \(restoreAssignments), "
+        + "keptAttributes: \(keptAttributes?.keys.sorted().description ?? "nil"))"
     case let .resolveSeed(_, seed):
       return "resolveSeed(seed: \(seed.map(String.init) ?? "nil"))"
     case let .mergeAttributes(attributes, shouldTrack, shouldNotify):
       return "mergeAttributes(keys: \(attributes.keys.sorted()), "
         + "shouldTrack: \(shouldTrack), shouldNotify: \(shouldNotify))"
-    case .reset:
-      return "reset"
+    case .reset(let keptAttributes):
+      return "reset(keptAttributes: \(keptAttributes.keys.sorted()))"
     case .persist:
       return "persist"
     }
   }
 }
 
-/// Interceptors that keep the identity's observers in step with the store.
-enum IdentityInterceptors {
+/// Observers that keep storage and readiness in step with the identity.
+enum IdentityObservers {
   /// Saves identity fields that an update changed, and reports readiness
-  /// whenever it might have changed.
-  static func installObservers(
+  /// whenever it changes. The store runs observers one update at a time, in
+  /// the order the updates are applied, so an older update can't save over a
+  /// newer one.
+  static func install(
     on store: IdentityStore,
     persist: @escaping (_ before: IdentityState, _ after: IdentityState) -> Void,
     readinessChanged: @escaping (Bool) -> Void
   ) {
-    // Held across the whole update. Updates outside dispatched actions, such
-    // as pending work finishing in a side effect, run on other threads, and
-    // without it one could save a snapshot taken before a later update had
-    // saved its own, such as restoring a user a reset had just replaced.
-    // Recursive, since an observer's work can update the store again.
-    let lock = NSRecursiveLock()
     var lastReadiness = store.state.isReady
-
-    // Weak: the store holds this closure.
-    store.onUpdate { [weak store] _, next in
-      guard let store = store else {
-        return next()
-      }
-      lock.lock()
-      defer { lock.unlock() }
-
-      let before = store.state
-      next()
-      let after = store.state
+    store.observe { before, after in
       persist(before, after)
-
       if after.isReady != lastReadiness {
         lastReadiness = after.isReady
         readinessChanged(after.isReady)

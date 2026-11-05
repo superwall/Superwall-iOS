@@ -59,6 +59,36 @@ private final class AssignmentsSpyConfigManager: ConfigManager, @unchecked Senda
   }
 }
 
+/// Records how the identity uses it, and wipes the identity's storage on
+/// reset as the SDK does.
+private final class FakeResetHandler: IdentityResetHandling {
+  var kept: [String: Any?] = [:]
+  var onDidReset: (() -> Void)?
+  private(set) var keptCount = 0
+  private(set) var didResetCount = 0
+  private(set) var stateAtDidReset: IdentityState?
+  private weak var identityManager: IdentityManager?
+  private let storage: StorageMock
+
+  init(identityManager: IdentityManager, storage: StorageMock) {
+    self.identityManager = identityManager
+    self.storage = storage
+  }
+
+  func attributesKeptAcrossReset() -> [String: Any?] {
+    keptCount += 1
+    return kept
+  }
+
+  func identityDidReset() {
+    didResetCount += 1
+    stateAtDidReset = identityManager?.store.state
+    storage.delete(AliasId.self)
+    storage.delete(UserAttributes.self)
+    onDidReset?()
+  }
+}
+
 /// Builds an identity manager on its own storage, so tests don't share state.
 private struct Harness {
   let dependencyContainer: DependencyContainer
@@ -95,12 +125,11 @@ private struct Harness {
       configManager: configManager,
       webEntitlementRedeemer: dependencyContainer.webEntitlementRedeemer,
       notifyUserChange: notifyUserChange,
-      // Kept off the shared instance, which the defaults would reset and track to.
-      resetForNewUser: {},
+      // Kept off the shared instance, which the default would track to.
       track: { _ in }
     )
     if publishConfig {
-      configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
+      configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
     }
   }
 
@@ -363,7 +392,7 @@ struct IdentityManagerBehaviorTests {
   func identifyDerivesSeed() async throws {
     let harness = Harness()
     defer { withExtendedLifetime(harness) {} }
-    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: true)))
+    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: true)))
     let expectedSeed = try #require("user-1".sha256MappedToRange())
 
     harness.identityManager.identify(userId: "user-1", options: nil)
@@ -380,7 +409,7 @@ struct IdentityManagerBehaviorTests {
     let harness = Harness()
     defer { withExtendedLifetime(harness) {} }
     let seed = harness.identityManager.seed
-    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
+    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
 
     harness.identityManager.identify(userId: "user-1", options: nil)
     #expect(await eventually { harness.identityManager.identitySubject.value })
@@ -406,7 +435,7 @@ struct IdentityManagerBehaviorTests {
     identityManager.mergeUserAttributes(["plan": "pro"])
     #expect(await eventually { identityManager.userAttributes["plan"] as? String == "pro" })
 
-    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
+    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
     #expect(await eventually { identityManager.identitySubject.value })
   }
 
@@ -460,7 +489,7 @@ struct IdentityManagerBehaviorTests {
     })
     let oldAliasId = identityManager.aliasId
 
-    identityManager.reset(duringIdentify: false)
+    identityManager.reset()
 
     #expect(await eventually { identityManager.appUserId == nil })
     #expect(identityManager.isLoggedIn == false)
@@ -476,6 +505,74 @@ struct IdentityManagerBehaviorTests {
     #expect(attributes["seed"] as? Int == identityManager.seed)
     #expect(harness.storage.get(AliasId.self) == identityManager.aliasId)
     #expect(harness.storage.get(Seed.self) == identityManager.seed)
+  }
+
+  @Test("reset hands over to the reset handler, then saves and becomes ready")
+  func resetUsesTheHandler() {
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
+    let handler = FakeResetHandler(identityManager: identityManager, storage: harness.storage)
+    handler.kept = ["acquisition_source": "network", "idfv": "vendor-1"]
+    identityManager.resetHandler = handler
+    identityManager.identify(userId: "user-1", options: nil)
+    identityManager.mergeUserAttributes(["custom": "value"])
+
+    identityManager.reset()
+
+    // All done when reset returns.
+    #expect(handler.didResetCount == 1)
+    #expect(identityManager.appUserId == nil)
+    #expect(identityManager.userAttributes["custom"] == nil)
+    #expect(identityManager.userAttributes["acquisition_source"] as? String == "network")
+    #expect(identityManager.userAttributes["idfv"] as? String == "vendor-1")
+    // The handler saw the new user, before the identity was ready again.
+    #expect(handler.stateAtDidReset?.appUserId == nil)
+    #expect(handler.stateAtDidReset?.isReady == false)
+    #expect(handler.stateAtDidReset?.userAttributes["acquisition_source"] as? String == "network")
+    // The handler wiped storage, and the identity saved itself again after.
+    #expect(harness.storage.get(AliasId.self) == identityManager.aliasId)
+    #expect(harness.storage.get(UserAttributes.self)?["acquisition_source"] as? String == "network")
+  }
+
+  @Test("Switching user hands over to the reset handler; identifying from anonymous doesn't")
+  func identifyUsesTheHandlerOnlyWhenSwitching() {
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
+    let handler = FakeResetHandler(identityManager: identityManager, storage: harness.storage)
+    handler.kept = ["acquisition_source": "network"]
+    identityManager.resetHandler = handler
+
+    identityManager.identify(userId: "user-1", options: nil)
+    #expect(handler.keptCount == 0)
+    #expect(handler.didResetCount == 0)
+
+    identityManager.identify(userId: "user-2", options: nil)
+    #expect(handler.keptCount == 1)
+    #expect(handler.didResetCount == 1)
+    #expect(handler.stateAtDidReset?.appUserId == "user-2")
+    #expect(identityManager.appUserId == "user-2")
+    #expect(identityManager.userAttributes["acquisition_source"] as? String == "network")
+    #expect(harness.storage.get(AppUserId.self) == "user-2")
+  }
+
+  @Test("The reset handler can change user attributes without deadlocking")
+  func handlerCanMergeAttributes() {
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    let identityManager = harness.identityManager
+    let handler = FakeResetHandler(identityManager: identityManager, storage: harness.storage)
+    handler.onDidReset = {
+      identityManager.mergeUserAttributes(["set_during_reset": true])
+    }
+    identityManager.resetHandler = handler
+    identityManager.identify(userId: "user-1", options: nil)
+
+    identityManager.identify(userId: "user-2", options: nil)
+
+    #expect(identityManager.userAttributes["set_during_reset"] as? Bool == true)
+    #expect(identityManager.appUserId == "user-2")
   }
 
   // MARK: - User attributes

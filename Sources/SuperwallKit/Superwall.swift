@@ -550,6 +550,7 @@ public final class Superwall: NSObject, ObservableObject {
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
     self.dependencyContainer = dependencyContainer
     super.init()
+    dependencyContainer.identityManager.resetHandler = self
   }
 
   private convenience init(
@@ -1239,69 +1240,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// its lifecycle. Set it again immediately after calling this if the next
   /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
-    reset(duringIdentify: false)
-  }
-
-  /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
-  ///
-  /// When `duringIdentify` is true this runs inside the identity manager's
-  /// identify action. Identity changes it makes, such as merging attributes,
-  /// land once the identify has finished.
-  func reset(duringIdentify: Bool) {
-    // Warn here rather than in the public reset() so the identify-triggered
-    // reset — the actual user-switch moment — warns too.
-    if !grantedEntitlements.isEmpty {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .grantedEntitlements,
-        message: "The user was reset but grantedEntitlements persist across reset() "
-          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
-      )
-    }
-    // Not ready until the cleanup below is done. During an identify, the
-    // identify keeps the identity from being ready itself.
-    let pendingReset = duringIdentify ? nil : dependencyContainer.identityManager.beginReset()
-    defer {
-      if let pendingReset = pendingReset {
-        dependencyContainer.identityManager.endReset(pendingReset)
-      }
-    }
-    dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
-    // Cancel any in-flight attribution post before wiping its storage, so a
-    // late-completing post can't race the new user's state.
-    dependencyContainer.attributionPoster.cancelInFlight()
-    dependencyContainer.storage.reset()
-    // The wipe above deletes the ids the identity's reset just saved, so
-    // save them again.
-    dependencyContainer.identityManager.didResetStorage()
-
-    // ASA attribution is install-scoped, so re-apply the cached campaign
-    // dict to the new user's attributes after the wipe. AdServices state
-    // itself lives in app-specific storage and is preserved through reset.
-    dependencyContainer.attributionPoster.reapplyCachedAttribution()
-
-    // MMP install attribution is likewise install-scoped. Re-apply the cached
-    // `acquisition_*` payload to the new user rather than re-running the match
-    // — the backend match only succeeds within the 7-day install window, so a
-    // logout after that would otherwise leave the new user without attributes.
-    dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
-
-    // Integration attributes are part install-scoped, part tied to the person
-    // signing out, and the reset just wiped them out of the user's attributes
-    // and off disk. Keep the install-scoped half for the new user, drop the rest.
-    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
-    resetEnqueuedIntegrationAttributes()
-
-    dependencyContainer.paywallManager.resetCache()
-    presentationItems.reset()
-    Task {
-      await dependencyContainer.configManager.reset()
-      await Superwall.shared.track(InternalSuperwallEvent.Reset())
-
-      #if os(iOS) || os(macOS) || os(visionOS)
-        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-      #endif
-    }
+    dependencyContainer.identityManager.reset()
   }
 
   // MARK: - External Purchasing
@@ -1754,5 +1693,78 @@ extension Superwall: PaywallViewControllerEventDelegate {
       purchaseTask = nil
     }
     await purchaseTask?.value
+  }
+}
+
+// MARK: - IdentityResetHandling
+extension Superwall: IdentityResetHandling {
+  func attributesKeptAcrossReset() -> [String: Any?] {
+    Self.attributesKeptAcrossReset(
+      adServicesAttribution: dependencyContainer.attributionPoster.cachedAttribution(),
+      acquisitionAttributes: dependencyContainer.mmpAttributionManager.cachedAcquisitionAttributes(),
+      integrationAttributes: dependencyContainer.attributionFetcher.integrationAttributesKeptAcrossReset()
+    )
+  }
+
+  /// Combines what a new user keeps across a reset, cleaned as
+  /// `setUserAttributes(_:)` cleans attributes. Later sources win a clash.
+  ///
+  /// - Parameters:
+  ///   - adServicesAttribution: The cached ASA attribution. Install-scoped;
+  ///     AdServices state lives in app-specific storage and survives a reset.
+  ///   - acquisitionAttributes: The cached MMP `acquisition_*` payload, also
+  ///     install-scoped. The new user gets it rather than a new match: the
+  ///     backend only matches within the 7-day install window, so a logout
+  ///     after that would otherwise leave the new user without attributes.
+  ///   - integrationAttributes: The install-scoped half of the integration
+  ///     attributes and the device identifiers. The other half describes the
+  ///     person signing out.
+  static func attributesKeptAcrossReset(
+    adServicesAttribution: [String: Any],
+    acquisitionAttributes: [String: Any],
+    integrationAttributes: [String: Any?]
+  ) -> [String: Any?] {
+    var kept: [String: Any?] = [:]
+    for (key, value) in adServicesAttribution {
+      kept[key] = value
+    }
+    for (key, value) in acquisitionAttributes {
+      kept[key] = value
+    }
+    for (key, value) in integrationAttributes {
+      kept[key] = value
+    }
+    return sanitizedUserAttributes(kept)
+  }
+
+  func identityDidReset() {
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "The user was reset but grantedEntitlements persist across reset() "
+          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
+      )
+    }
+    // Cancel any in-flight attribution post before wiping its storage, so a
+    // late-completing post can't race the new user's state.
+    dependencyContainer.attributionPoster.cancelInFlight()
+    dependencyContainer.storage.reset()
+
+    // Drops the person-scoped integration attributes and saves the rest
+    // again, since the wipe above deleted them from disk.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
+
+    dependencyContainer.paywallManager.resetCache()
+    presentationItems.reset()
+    Task {
+      await dependencyContainer.configManager.reset()
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+
+      #if os(iOS) || os(macOS) || os(visionOS)
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+      #endif
+    }
   }
 }

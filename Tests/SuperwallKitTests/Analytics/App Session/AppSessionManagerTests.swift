@@ -59,7 +59,7 @@ class AppSessionManagerTests: XCTestCase {
 
   func testAppWillBecomeActive_newSession() async {
     let oldAppSession = appSessionManager.appSession
-    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
     try? await Task.sleep(nanoseconds: 10_000_000)
 
     await NotificationCenter.default.post(
