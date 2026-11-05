@@ -304,79 +304,9 @@ public final class Superwall: NSObject, ObservableObject {
   /// ``subscriptionStatus`` is always derived from this, never the reverse,
   /// so clearing granted entitlements can recompute it.
   ///
-  /// Read and written under `subscriptionStatusLock`, like ``subscriptionStatus``.
+  /// Both live in the entitlements store, so they're read and changed together.
   var assignedSubscriptionStatus: SubscriptionStatus {
-    get {
-      subscriptionStatusLock.lock()
-      defer {
-        subscriptionStatusLock.unlock()
-      }
-      return lockedAssignedSubscriptionStatus
-    }
-    set {
-      subscriptionStatusLock.lock()
-      lockedAssignedSubscriptionStatus = newValue
-      subscriptionStatusLock.unlock()
-    }
-  }
-  private var lockedAssignedSubscriptionStatus: SubscriptionStatus = .unknown
-
-  /// Serializes every read and write of the status across threads. Recursive so
-  /// a subscriber that assigns the status from within an emission re-enters
-  /// the pipeline instead of deadlocking.
-  let subscriptionStatusLock = NSRecursiveLock()
-
-  /// Merged statuses that have been stored but not yet emitted, oldest first.
-  /// Guarded by `subscriptionStatusLock`.
-  private var pendingSubscriptionStatusEmissions: [SubscriptionStatus] = []
-
-  /// Whether a thread is currently emitting the pending statuses. Guarded by
-  /// `subscriptionStatusLock`.
-  private var isEmittingSubscriptionStatus = false
-
-  /// Whether the one-time warning about granted entitlements overriding an
-  /// `.inactive` assignment has been logged.
-  var hasLoggedGrantedEntitlementsWarning = false
-
-  /// Stores the merged status and queues it for emission. Only
-  /// `publishSubscriptionStatus` calls this, with `subscriptionStatusLock`
-  /// held; `emitSubscriptionStatus()` sends it once the lock is released.
-  func storeMergedSubscriptionStatus(_ merged: SubscriptionStatus) {
-    _subscriptionStatus.store(merged)
-    pendingSubscriptionStatusEmissions.append(merged)
-  }
-
-  /// Emits every stored status to `$subscriptionStatus` subscribers in the
-  /// order it was stored, with the lock released while subscribers run.
-  ///
-  /// One thread drains the queue at a time. A writer that stores while a
-  /// drain is in progress returns straight away and the draining thread
-  /// sends its value next, so each value is emitted once, none is emitted
-  /// behind a newer one, and no writer ever waits on a subscriber. That last
-  /// point is what stops a subscriber that blocks on another thread from
-  /// deadlocking a writer on that thread.
-  func emitSubscriptionStatus() {
-    subscriptionStatusLock.lock()
-    if isEmittingSubscriptionStatus {
-      subscriptionStatusLock.unlock()
-      return
-    }
-    isEmittingSubscriptionStatus = true
-    subscriptionStatusLock.unlock()
-
-    while true {
-      subscriptionStatusLock.lock()
-      if pendingSubscriptionStatusEmissions.isEmpty {
-        isEmittingSubscriptionStatus = false
-        subscriptionStatusLock.unlock()
-        return
-      }
-      let next = pendingSubscriptionStatusEmissions.removeFirst()
-      subscriptionStatusLock.unlock()
-
-      objectWillChange.send()
-      _subscriptionStatus.emit(next)
-    }
+    return entitlements.assignedStatus
   }
 
   /// Contains the latest information about all of the customer's purchase and subscription data.
@@ -576,6 +506,15 @@ public final class Superwall: NSObject, ObservableObject {
     self.dependencyContainer = dependencyContainer
     super.init()
     dependencyContainer.identityManager.resetHandler = self
+
+    // Changes are sent once the entitlements store is unlocked, in the order
+    // they were applied, so a subscriber that blocks on another thread can't
+    // deadlock a writer.
+    let statusSubject = _subscriptionStatus.subject
+    dependencyContainer.entitlementsInfo.publishStatusChanges { [weak self] status in
+      self?.objectWillChange.send()
+      statusSubject.send(status)
+    }
   }
 
   private convenience init(
@@ -594,7 +533,6 @@ public final class Superwall: NSObject, ObservableObject {
     customerInfo = dependencyContainer.storage.get(LatestCustomerInfo.self) ?? .blank()
 
     setSubscriptionStatus(assigned: dependencyContainer.storage.get(SubscriptionStatusKey.self) ?? .unknown)
-    dependencyContainer.entitlementsInfo.subscriptionStatusDidSet(subscriptionStatus)
 
     addListeners()
 

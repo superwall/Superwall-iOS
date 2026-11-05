@@ -637,8 +637,8 @@ struct ConfigManagerEarlyPublishTests {
   @Test("A developer-granted entitlement takes the fast path with nothing else saved")
   func publishesEarlyForGrantedEntitlement() async {
     // Granted entitlements carry whatever the developer set; usually no expiry.
-    dependencyContainer.entitlementsInfo.setGranted([Entitlement(id: "pro")])
-    defer { dependencyContainer.entitlementsInfo.setGranted([]) }
+    dependencyContainer.entitlementsInfo.publish(.grantChange([Entitlement(id: "pro")]))
+    defer { dependencyContainer.entitlementsInfo.publish(.grantChange([])) }
     let harness = makeHarness(
       isSubscribed: true,
       savedCustomerInfo: nil,
@@ -668,8 +668,8 @@ struct ConfigManagerEarlyPublishTests {
   func grantSurvivesLapsedSavedRowWithSameId() async {
     // The grant and the saved `pro` row share an id, and the saved row lapsed
     // since the last launch. The developer's verdict has to win.
-    dependencyContainer.entitlementsInfo.setGranted([Entitlement(id: "pro")])
-    defer { dependencyContainer.entitlementsInfo.setGranted([]) }
+    dependencyContainer.entitlementsInfo.publish(.grantChange([Entitlement(id: "pro")]))
+    defer { dependencyContainer.entitlementsInfo.publish(.grantChange([])) }
     let harness = makeHarness(
       isSubscribed: true,
       savedCustomerInfo: savedCustomerInfo(expiresIn: -60),

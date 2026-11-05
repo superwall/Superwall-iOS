@@ -23,11 +23,12 @@ import Foundation
 /// The assigned value is kept because the published one can't be un-merged:
 /// clearing granted entitlements recomputes the published status from it.
 ///
-/// Every writer — the public setter included, via ``PublishedSubscriptionStatus``
-/// — ends up in `publishSubscriptionStatus`, the one critical section under
-/// `subscriptionStatusLock`. The merged value is stored under the lock and
-/// emitted to subscribers after it's released. Every read of either value
-/// takes the same lock, so readers never race a writer.
+/// Both values and the granted entitlements live in the entitlements store
+/// (``EntitlementsState``). Every writer — the public setter included, via
+/// ``PublishedSubscriptionStatus`` — ends up in `publishSubscriptionStatus`,
+/// which changes them in one reducer. The store's observers save the
+/// assigned value and emit the merged one to subscribers once the store is
+/// unlocked, in the order the changes were applied.
 extension Superwall {
   // MARK: - Granted entitlements
 
@@ -53,7 +54,6 @@ extension Superwall {
       return entitlements.granted
     }
     set {
-      entitlements.setGranted(newValue)
       Logger.debug(
         logLevel: .debug,
         scope: .grantedEntitlements,
@@ -61,7 +61,7 @@ extension Superwall {
           ? "Granted entitlements cleared."
           : "Granted entitlements set: \(newValue.map(\.id).sorted().joined(separator: ", "))"
       )
-      publishSubscriptionStatus(.grantChange)
+      publishSubscriptionStatus(.grantChange(newValue))
       refreshAutomaticCustomerInfoAfterGrantChange()
     }
   }
@@ -101,7 +101,7 @@ extension Superwall {
       deviceAndWebStatus = activeWebEntitlements.isEmpty ? .inactive : .active(activeWebEntitlements)
     case .unknown:
       // Neither web nor granted entitlements turn .unknown into a decision
-      // (see mergedSubscriptionStatus). This branch only runs without an
+      // (see EntitlementsUpdate.mergedStatus). This branch only runs without an
       // external purchase controller, where the AutomaticPurchaseController
       // replaces .unknown after loading purchased products, so it's always
       // transient here anyway.
@@ -112,9 +112,9 @@ extension Superwall {
 
   // MARK: - Publishing
 
-  /// Records the assigned status, stores the merged status and persists the
-  /// assigned value under the lock, then emits the merged status and runs the
-  /// remaining side effects outside it.
+  /// Records the change and works out the merged status in one update of the
+  /// entitlements store, which saves the assigned value and emits the merged
+  /// one once it's unlocked.
   ///
   /// A developer assignment gets two extra treatments: records identical to a
   /// current grant are stripped, because a developer who reads the published
@@ -123,84 +123,12 @@ extension Superwall {
   /// while active grants exist logs a one-time warning, since the status
   /// publishes as active and otherwise looks ignored.
   func publishSubscriptionStatus(_ change: SubscriptionStatusChange) {
-    subscriptionStatusLock.lock()
-
-    // Snapshot once, under the lock, so a concurrent grant write can't slip
-    // between the read and the store. Active grants are merged here so two
-    // grants sharing an ID collapse to one record on every path.
-    let granted = entitlements.granted
-    let activeGrants = Entitlement.mergePrioritized(Array(granted.filter(\.isActive)))
-
-    var assigned: SubscriptionStatus
-    let isDeveloperAssignment: Bool
-    switch change {
-    case .developerAssignment(let status):
-      assigned = status
-      isDeveloperAssignment = true
-    case .sdkAssignment(let status):
-      assigned = status
-      isDeveloperAssignment = false
-    case .grantChange:
-      // The assigned status is unchanged; only the grants merged into it are.
-      assigned = assignedSubscriptionStatus
-      isDeveloperAssignment = false
+    var testModeOverride: SubscriptionStatus?
+    if let testModeManager = dependencyContainer.testModeManager,
+      testModeManager.isTestMode {
+      testModeOverride = testModeManager.overriddenSubscriptionStatus
     }
-
-    if isDeveloperAssignment {
-      if case .active(let assignedEntitlements) = assigned {
-        // Compared ignoring product IDs: the merge unions those across a
-        // shared ID, so a grant that won a collision comes back carrying the
-        // loser's product IDs.
-        assigned = .active(
-          assignedEntitlements.filter { record in
-            !granted.contains { $0.isEqualIgnoringProductIds(to: record) }
-          }
-        )
-      }
-      if case .inactive = assigned,
-        !activeGrants.isEmpty,
-        !hasLoggedGrantedEntitlementsWarning {
-        hasLoggedGrantedEntitlementsWarning = true
-        Logger.debug(
-          logLevel: .warn,
-          scope: .grantedEntitlements,
-          message: "subscriptionStatus was set to .inactive but grantedEntitlements "
-            + "is not empty, so the status remains active. Assigning subscriptionStatus "
-            + "doesn't clear granted entitlements — set grantedEntitlements to an empty set to revoke them."
-        )
-      }
-    }
-
-    let previouslyAssigned = assignedSubscriptionStatus
-    assignedSubscriptionStatus = assigned
-
-    let merged = mergedSubscriptionStatus(assigned: assigned, activeGrants: activeGrants)
-    let statusChanged = merged != subscriptionStatus
-    if statusChanged {
-      storeMergedSubscriptionStatus(merged)
-    }
-
-    // Persist the assigned value, not the merged one: restoring a merged
-    // value would bake granted entitlements into the assigned status for
-    // good, making them impossible to clear after a relaunch.
-    //
-    // Saved here rather than in the status listener so that metadata-only
-    // updates, which the listener dedupes, still refresh the cache. Identical
-    // writes are skipped so they don't re-encode and rewrite the file.
-    if previouslyAssigned != assigned {
-      dependencyContainer.storage.save(assigned, forType: SubscriptionStatusKey.self)
-    }
-    // Hands the merged value to the entitlements queue while the lock is
-    // still held, so two publishes reach it in the order they were stored.
-    // It only enqueues, so nothing waits on it.
-    entitlements.subscriptionStatusDidSet(merged)
-    subscriptionStatusLock.unlock()
-
-    // Subscribers and customer info observers run outside the lock, so a
-    // subscriber that blocks on another thread can't deadlock a writer.
-    if statusChanged {
-      emitSubscriptionStatus()
-    }
+    entitlements.publish(change, testModeOverride: testModeOverride)
 
     // When using an external purchase controller, update CustomerInfo.entitlements
     // to reflect the entitlements from the purchase controller.
@@ -211,19 +139,15 @@ extension Superwall {
     }
   }
 
-  /// A consistent pair of the published status and the granted set, read
-  /// under the lock.
+  /// A consistent pair of the published status and the granted set.
   private struct PublishedSnapshot: Equatable {
     let status: SubscriptionStatus
     let granted: Set<Entitlement>
   }
 
   private func publishedSnapshot() -> PublishedSnapshot {
-    subscriptionStatusLock.lock()
-    defer {
-      subscriptionStatusLock.unlock()
-    }
-    return PublishedSnapshot(status: subscriptionStatus, granted: entitlements.granted)
+    let state = entitlements.store.state
+    return PublishedSnapshot(status: state.status, granted: state.granted)
   }
 
   /// Recomputes `customerInfo` for the external purchase controller path
@@ -248,51 +172,10 @@ extension Superwall {
     }
   }
 
-  /// The status the SDK reports for `assigned`: active granted entitlements
-  /// merged in, any test-mode override applied, and an empty `.active`
-  /// collapsed to `.inactive`.
-  private func mergedSubscriptionStatus(
-    assigned: SubscriptionStatus,
-    activeGrants: Set<Entitlement>
-  ) -> SubscriptionStatus {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenSubscriptionStatus {
-      return override
-    }
-    var status = assigned
-    // Only active grants merge into the status, mirroring how web
-    // entitlements merge (EntitlementsInfo.web filters to active).
-    // Inactive grants still reach customerInfo for round-trip visibility.
-    if !activeGrants.isEmpty {
-      switch status {
-      case .active(let entitlements):
-        // Set<Entitlement>.union merges by priority, keeping one record per ID.
-        status = .active(entitlements.union(activeGrants))
-      case .inactive:
-        status = .active(activeGrants)
-      case .unknown:
-        // Left alone, exactly like web entitlements: .unknown means the
-        // status hasn't been determined yet, and grants don't determine it
-        // — they merge as soon as it is. Reporting active here would open
-        // the paywall presentation gate, which waits for a status other
-        // than .unknown, before a purchase controller has answered.
-        break
-      }
-    }
-    // This must run after the granted merge, or a developer-assigned
-    // .active([]) would collapse to .inactive before granted is applied.
-    if case .active(let entitlements) = status,
-      entitlements.isEmpty {
-      return .inactive
-    }
-    return status
-  }
-
   /// Recomputes `customerInfo` on the automatic path after a grant change,
   /// rebuilding from the stored device and web sources so cleared grants
   /// actually disappear. The external purchase controller path is recomputed
-  /// inside `publishSubscriptionStatus`; test mode manages its own customer
+  /// by `publishSubscriptionStatus`; test mode manages its own customer
   /// info.
   private func refreshAutomaticCustomerInfoAfterGrantChange() {
     if dependencyContainer.makeHasExternalPurchaseController() {

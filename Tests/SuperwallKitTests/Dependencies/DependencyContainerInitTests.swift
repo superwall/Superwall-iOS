@@ -83,14 +83,14 @@ struct AppStoreEntitlementLookupTests {
     // load has nothing to add either way.
     let automatic = DependencyContainer()
     automatic.configManager.store.update(ConfigUpdate.retrieved(webOnly))
-    automatic.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
-    defer { automatic.entitlementsInfo.setGranted([]) }
+    automatic.entitlementsInfo.publish(.grantChange([Entitlement(id: "web_only")]))
+    defer { automatic.entitlementsInfo.publish(.grantChange([])) }
     #expect(automatic.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
 
     let controlled = DependencyContainer(purchaseController: MockPurchaseController())
     controlled.configManager.store.update(ConfigUpdate.retrieved(webOnly))
-    controlled.entitlementsInfo.setGranted([Entitlement(id: "web_only")])
-    defer { controlled.entitlementsInfo.setGranted([]) }
+    controlled.entitlementsInfo.publish(.grantChange([Entitlement(id: "web_only")]))
+    defer { controlled.entitlementsInfo.publish(.grantChange([])) }
     #expect(controlled.purchasesLoadCouldChange(entitlementIds: ["web_only"]) == false)
   }
 }

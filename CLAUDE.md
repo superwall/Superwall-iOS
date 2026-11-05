@@ -188,6 +188,18 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Entitlements store
+
+`EntitlementsInfo` keeps the entitlements in a `StateStore` (`EntitlementsState`), changed only by
+`EntitlementsUpdate` reducers: the by-product map, granted entitlements, and both the assigned and
+the published subscription status, so `Superwall.subscriptionStatus` and `entitlements.active`
+always change together. `active`, `all` and `inactive` are worked out from the state on each read;
+don't store anything derived from the status or from `isActive`, or it can fall behind it. Every
+status write goes through `publishSubscriptionStatus`, which reads the test-mode override before the
+update and passes it in, since a reducer may not read other objects. Observers save changes with the
+store locked (storage writes hand off) and emit `$subscriptionStatus` through `OrderedDelivery` once
+it's unlocked. `web` still reads the saved redeem response, outside the store.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
