@@ -93,10 +93,8 @@ public final class Superwall: NSObject, ObservableObject {
         if newValue != .none && (newValue != oldValue || newValue != .all) {
           await republishDeviceAttributes(onlyIfAdConsentChanged: false)
         }
-        // The emptied queue may have held a token event that's recorded as sent.
-        if newValue != .all {
-          dependencyContainer.notificationTokenManager.forgetLastSent()
-        }
+        // Sends a token event the queue dropped while tracking was off or that
+        // was emptied from it just now.
         if newValue != .none {
           dependencyContainer.notificationTokenManager.refresh()
         }

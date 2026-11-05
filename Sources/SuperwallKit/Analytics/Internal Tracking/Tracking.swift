@@ -15,6 +15,20 @@ extension Superwall {
   ///   - event: The event you want to track.
 	@discardableResult
   func track(_ event: Trackable) async -> TrackingResult {
+    return await track(event, onDelivery: nil)
+  }
+
+  /// Tracks an event like ``track(_:)``.
+  ///
+  /// - Parameters:
+  ///   - event: The event you want to track.
+  ///   - onDelivery: Called with whether the event reached Superwall, if it
+  ///     was queued for sending.
+  @discardableResult
+  func track(
+    _ event: Trackable,
+    onDelivery: PlacementsQueue.DeliveryHandler?
+  ) async -> TrackingResult {
     // Get parameters to be sent to the delegate and stored in an event.
     let eventCreatedAt = Date()
     let parameters = await TrackingLogic.processParameters(
@@ -60,7 +74,8 @@ extension Superwall {
     ) {
       isQueuedForSending = await dependencyContainer.placementsQueue.enqueue(
         data: eventData.jsonData,
-        from: event
+        from: event,
+        onDelivery: onDelivery
       )
     }
     saveOnDevice(eventData, from: event)
@@ -86,12 +101,11 @@ extension Superwall {
       }
 		}
 
-    let result = TrackingResult(
+    return TrackingResult(
       data: eventData,
       parameters: parameters,
       isQueuedForSending: isQueuedForSending
     )
-		return result
   }
 
   /// Stores the placement on-device, where audience filters count it.

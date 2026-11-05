@@ -29,10 +29,17 @@ private final class Harness: @unchecked Sendable {
   var settingsReads = 0
   /// Whether the queue accepts the events it's given.
   var isQueueAccepting = true
+  /// Whether queued events reach Superwall straight away. When `false`, the
+  /// delivery handlers wait in `pendingDeliveries`.
+  var deliversImmediately = true
+  var pendingDeliveries: [PlacementsQueue.DeliveryHandler] = []
 
   private var _tracked: [Trackable] = []
   var tracked: [Trackable] {
     lock.withLock { _tracked }
+  }
+  func recordForTest(_ event: Trackable) {
+    lock.withLock { _tracked.append(event) }
   }
   var tokenEvents: [PrivateSuperwallEvents.NotificationToken] {
     tracked.compactMap { $0 as? PrivateSuperwallEvents.NotificationToken }
@@ -52,11 +59,20 @@ private final class Harness: @unchecked Sendable {
         return self.settings
       },
       isFeatureEnabled: { [unowned self] in self.featureEnabled },
+      isFeatureEnabledOnceConfigured: { [unowned self] in self.featureEnabled },
       isTrackingAllowed: { [unowned self] in self.trackingAllowed },
       identity: { [unowned self] in self.identity },
-      track: { [unowned self] event in
+      track: { [unowned self] event, onDelivery in
         self.lock.withLock { self._tracked.append(event) }
-        return self.isQueueAccepting
+        if !self.isQueueAccepting {
+          return false
+        }
+        if self.deliversImmediately {
+          onDelivery(true)
+        } else {
+          self.pendingDeliveries.append(onDelivery)
+        }
+        return true
       },
       apnsEnvironment: { .sandbox },
       apnsTopic: "com.example.app",
@@ -363,47 +379,46 @@ struct NotificationTokenManagerTests {
     #expect(harness.storage.get(NotificationTokenLastSentStorage.self) != nil)
   }
 
-  @Test func trackingTurnedOffWhileSending_isNotMarkedAsSent() async {
+  @Test func failedDelivery_isResent() async {
     let harness = Harness()
-    let manager = NotificationTokenManager(
-      storage: harness.storage,
-      notificationSettings: { harness.settings },
-      isFeatureEnabled: { true },
-      isTrackingAllowed: { harness.trackingAllowed },
-      identity: { harness.identity },
-      track: { _ in
-        // Tracking is turned off while the event is being tracked.
-        harness.trackingAllowed = false
-        return true
-      },
-      apnsEnvironment: { .sandbox },
-      apnsTopic: "com.example.app",
-      appVersion: "2.3.4",
-      sdkVersion: "4.18.3",
-      now: { harness.now }
-    )
-
-    manager.setPushToken(token)
-    await manager.waitUntilIdle()
-
-    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) == nil)
-  }
-
-  @Test func queueEmptied_resendsUnchangedState() async {
-    let harness = Harness()
+    harness.deliversImmediately = false
     let manager = harness.makeManager()
 
+    manager.setEnabled(false)
     manager.setPushToken(token)
     await manager.waitUntilIdle()
     #expect(harness.tokenEvents.count == 1)
 
-    // A tracking change empties the queue before the event was sent.
-    manager.forgetLastSent()
+    // Still on its way, so it isn't queued again.
     manager.refresh()
     await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.count == 1)
+
+    // The upload fails, or the queue is emptied by a tracking change.
+    harness.pendingDeliveries.removeFirst()(false)
+    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) == nil)
+
+    harness.deliversImmediately = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [false, false])
+    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) != nil)
+  }
+
+  @Test func undeliveredEvent_isResentAfterRelaunch() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    // The app quits before the queue is flushed.
+    harness.deliversImmediately = true
+    let relaunched = harness.makeManager()
+    relaunched.refresh()
+    await relaunched.waitUntilIdle()
 
     #expect(harness.tokenEvents.count == 2)
-    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) != nil)
   }
 
   // MARK: - Opens
@@ -420,6 +435,37 @@ struct NotificationTokenManagerTests {
     #expect(harness.tracked.count == 1)
     #expect(opens.first?.sendId == "send_1")
     #expect(opens.first?.contactPointId == "cp_1")
+  }
+
+  @Test func trackOpen_waitsForConfig() async throws {
+    let harness = Harness()
+    let config = PassthroughSubject<Bool, Never>()
+    let manager = NotificationTokenManager(
+      storage: harness.storage,
+      notificationSettings: { harness.settings },
+      isFeatureEnabled: { false },
+      isFeatureEnabledOnceConfigured: {
+        await config.values.first { _ in true } ?? false
+      },
+      isTrackingAllowed: { true },
+      identity: { harness.identity },
+      track: { event, _ in
+        harness.recordForTest(event)
+        return true
+      },
+      appVersion: "2.3.4",
+      sdkVersion: "4.18.3"
+    )
+
+    // A tap launches the app before config has arrived.
+    manager.trackOpen(userInfo: ["sw": ["sendId": "send_1"]])
+    try await Task.sleep(nanoseconds: 50_000_000)
+    #expect(harness.tracked.isEmpty)
+
+    config.send(true)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    await manager.waitUntilIdle()
+    #expect(harness.tracked.count == 1)
   }
 
   @Test func trackOpen_flagOff_sendsNothing() async {

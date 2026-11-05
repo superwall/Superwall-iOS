@@ -39,8 +39,11 @@ final class NetworkMock: Network {
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
 
-  override func sendEvents(events: EventsRequest) async {
+  var sendEventsSucceeds = true
+
+  override func sendEvents(events: EventsRequest) async -> Bool {
     sentEvents.append(events)
+    return sendEventsSucceeds
   }
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {

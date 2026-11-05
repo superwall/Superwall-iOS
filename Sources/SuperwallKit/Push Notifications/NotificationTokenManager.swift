@@ -82,24 +82,35 @@ final class NotificationTokenManager {
   private let coordinator = SerialTaskCoordinator()
   private let notificationSettings: () async -> NotificationSettingsSnapshot
   private let isFeatureEnabled: () -> Bool
+  /// Whether the feature flag is on, waiting for config if it hasn't arrived.
+  private let isFeatureEnabledOnceConfigured: () async -> Bool
   private let isTrackingAllowed: () -> Bool
   private let identity: () -> Identity
   /// Tracks the event and returns whether it was queued for sending.
-  private let track: (Trackable) async -> Bool
+  /// The handler is called with whether the event reached Superwall, if it
+  /// was queued.
+  private let track: (Trackable, @escaping PlacementsQueue.DeliveryHandler) async -> Bool
   private let apnsEnvironment: () -> ApnsEnvironment
   private let apnsTopic: String
   private let appVersion: String
   private let sdkVersion: String
   private let now: () -> Date
   private var cancellables: Set<AnyCancellable> = []
+  private let inFlightLock = NSLock()
+  /// Fingerprints of the token events queued but not yet delivered, so they
+  /// aren't queued twice.
+  private var inFlightFingerprints: Set<String> = []
+  /// Opens waiting for config.
+  private var pendingOpens: [UUID: Task<Void, Never>] = [:]
 
   init(
     storage: Storage,
     notificationSettings: @escaping () async -> NotificationSettingsSnapshot,
     isFeatureEnabled: @escaping () -> Bool,
+    isFeatureEnabledOnceConfigured: @escaping () async -> Bool,
     isTrackingAllowed: @escaping () -> Bool,
     identity: @escaping () -> Identity,
-    track: @escaping (Trackable) async -> Bool,
+    track: @escaping (Trackable, @escaping PlacementsQueue.DeliveryHandler) async -> Bool,
     apnsEnvironment: @escaping () -> ApnsEnvironment = { NotificationTokenLogic.currentApnsEnvironment },
     apnsTopic: String = Bundle.main.bundleIdentifier ?? "",
     appVersion: String,
@@ -109,6 +120,7 @@ final class NotificationTokenManager {
     self.storage = storage
     self.notificationSettings = notificationSettings
     self.isFeatureEnabled = isFeatureEnabled
+    self.isFeatureEnabledOnceConfigured = isFeatureEnabledOnceConfigured
     self.isTrackingAllowed = isTrackingAllowed
     self.identity = identity
     self.track = track
@@ -176,30 +188,41 @@ final class NotificationTokenManager {
     }
   }
 
-  /// Forgets the last `notification_token` event sent, so the next refresh
-  /// sends it again. Called when the event queue is emptied before it was sent.
-  func forgetLastSent() {
-    enqueue { manager in
-      manager.storage.delete(NotificationTokenLastSentStorage.self)
-    }
-  }
-
   /// Tracks `notification_open` if Superwall sent the notification and the
   /// `user_notifications` feature flag is on.
+  ///
+  /// A tap that launches the app usually arrives before config, so this waits
+  /// for it. It waits outside the queue so token updates aren't held up.
   func trackOpen(userInfo: [AnyHashable: Any]) {
     guard let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo) else {
       return
     }
-    enqueue { manager in
-      if !manager.isFeatureEnabled() {
+    let id = UUID()
+    // Held while the task is stored, so it can't remove itself before that.
+    inFlightLock.lock()
+    defer { inFlightLock.unlock() }
+    pendingOpens[id] = Task { [weak self] in
+      guard let self = self else {
         return
       }
-      _ = await manager.track(event)
+      if await self.isFeatureEnabledOnceConfigured() {
+        self.enqueue { manager in
+          _ = await manager.track(event) { _ in }
+        }
+      }
+      self.inFlightLock.withLock {
+        self.pendingOpens[id] = nil
+      }
     }
   }
 
-  /// Waits for every operation enqueued so far to finish.
+  /// Waits for every operation enqueued so far, and opens waiting for config,
+  /// to finish.
   func waitUntilIdle() async {
+    let opens = inFlightLock.withLock { Array(pendingOpens.values) }
+    for open in opens {
+      await open.value
+    }
     await withCheckedContinuation { continuation in
       coordinator.enqueue {
         continuation.resume()
@@ -257,26 +280,45 @@ final class NotificationTokenManager {
     }
 
     let fingerprint = Self.fingerprint(of: payload, for: identity())
-    let lastSent = storage.get(NotificationTokenLastSentStorage.self)
-    guard Self.shouldSend(
-      fingerprint: fingerprint,
-      lastSent: lastSent,
-      now: now()
-    ) else {
+    let shouldSend = inFlightLock.withLock {
+      if inFlightFingerprints.contains(fingerprint) {
+        return false
+      }
+      let shouldSend = Self.shouldSend(
+        fingerprint: fingerprint,
+        lastSent: storage.get(NotificationTokenLastSentStorage.self),
+        now: now()
+      )
+      if shouldSend {
+        inFlightFingerprints.insert(fingerprint)
+      }
+      return shouldSend
+    }
+    if !shouldSend {
       return
     }
 
-    let isQueued = await track(PrivateSuperwallEvents.NotificationToken(payload: payload))
-    // The queue hears about a tracking change after the options do, so it can
-    // still drop the event. Only mark it as sent if it went on the queue and
-    // tracking wasn't turned off meanwhile; otherwise it goes on the next refresh.
-    if !isQueued || !isTrackingAllowed() {
-      return
+    // Only marked as sent once Superwall has it. If the upload fails, the
+    // queue is emptied first or the app quits before it's sent, the next
+    // refresh sends it again.
+    let isQueued = await track(PrivateSuperwallEvents.NotificationToken(payload: payload)) { [weak self] isDelivered in
+      self?.finishSending(fingerprint, isDelivered: isDelivered)
     }
-    storage.save(
-      NotificationTokenLastSent(fingerprint: fingerprint, sentAt: now()),
-      forType: NotificationTokenLastSentStorage.self
-    )
+    if !isQueued {
+      finishSending(fingerprint, isDelivered: false)
+    }
+  }
+
+  private func finishSending(_ fingerprint: String, isDelivered: Bool) {
+    inFlightLock.withLock {
+      inFlightFingerprints.remove(fingerprint)
+      if isDelivered {
+        storage.save(
+          NotificationTokenLastSent(fingerprint: fingerprint, sentAt: now()),
+          forType: NotificationTokenLastSentStorage.self
+        )
+      }
+    }
   }
 
   private func save(

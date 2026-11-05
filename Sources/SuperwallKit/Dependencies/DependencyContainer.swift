@@ -231,6 +231,13 @@ final class DependencyContainer {
       isFeatureEnabled: { [weak configManager] in
         configManager?.config?.featureFlags.userNotifications == true
       },
+      isFeatureEnabledOnceConfigured: { [weak configManager] in
+        guard let configManager = configManager else {
+          return false
+        }
+        let config = try? await configManager.hasConfig.throwableAsync()
+        return config?.featureFlags.userNotifications == true
+      },
       isTrackingAllowed: { [weak configManager] in
         guard let configManager = configManager else {
           return false
@@ -243,8 +250,8 @@ final class DependencyContainer {
           appUserId: identityManager?.appUserId
         )
       },
-      track: { event in
-        await Superwall.shared.track(event).isQueuedForSending
+      track: { event, onDelivery in
+        await Superwall.shared.track(event, onDelivery: onDelivery).isQueuedForSending
       },
       appVersion: deviceHelper.appVersion,
       sdkVersion: sdkVersion
