@@ -18,7 +18,7 @@ final class WaitForEntitlementsAndConfigTests: XCTestCase {
   }
   
   override func setUp() async throws {
-    identityManager.reset(duringIdentify: false)
+    identityManager.reset()
   }
 
   func test_waitForEntitlementsAndConfig_noIdentity_unknownStatus() async {

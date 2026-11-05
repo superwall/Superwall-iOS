@@ -174,6 +174,17 @@ struct AttributionDeviceIdentifiersTests {
     #expect(syncCount == 1)
     #expect(syncedAttributes["appsflyerId"] == nil)
 
+    // Before a reset, the identity asks what the new user keeps. That
+    // changes nothing yet.
+    let kept = fetcher.integrationAttributesKeptAcrossReset()
+    #expect(fetcher.integrationAttributes["amplitudeUserId"] == "person-1")
+
+    // The kept ids go to the new user, alongside the device ones. The
+    // identity merges them itself, so the fetcher doesn't sync them.
+    #expect(kept["appsflyerId"] as? String == "af-1")
+    #expect(kept.keys.contains("amplitudeUserId") == false)
+    #expect(kept["idfv"] as? String == "vendor-1")
+
     // A reset deletes the user-specific copy and empties the user's attributes.
     container.storage.delete(IntegrationAttributes.self)
     fetcher.resetIntegrationAttributes()
@@ -183,18 +194,59 @@ struct AttributionDeviceIdentifiersTests {
     #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(fetcher.integrationAttributes["amplitudeUserId"] == nil)
     #expect(fetcher.integrationAttributes["idfa"] == "advertiser-1")
-    #expect(syncCount == 2)
-
-    // The kept ids go back to the new user, alongside the device ones.
-    #expect(syncedAttributes["appsflyerId"] as? String == "af-1")
-    #expect(syncedAttributes["amplitudeUserId"] == nil)
-    #expect(syncedAttributes["idfv"] as? String == "vendor-1")
+    #expect(syncCount == 1)
 
     // And they're on disk again, so the next launch still refreshes and the
     // redeem that follows the reset doesn't ship empty metadata.
     let stored = container.storage.get(IntegrationAttributes.self)
     #expect(stored?["appsflyerId"] == "af-1")
     #expect(stored?["amplitudeUserId"] == nil)
+  }
+
+  @Test func resetSyncsIdentifiersThatChangedAfterTheNewUserGotThem() {
+    let container = DependencyContainer()
+    var status: Int? = 3
+    var idfa: String? = "advertiser-1"
+    var syncedAttributes: [String: Any?] = [:]
+    var syncCount = 0
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { status },
+      idfa: { idfa },
+      sync: {
+        syncedAttributes = $0
+        syncCount += 1
+      }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    // The merge runs on the fetcher's queue. Reading waits for it.
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
+    #expect(syncCount == 1)
+
+    let kept = fetcher.integrationAttributesKeptAcrossReset()
+    #expect(kept["idfa"] as? String == "advertiser-1")
+
+    // Consent is revoked between the new user getting the identifiers and
+    // the reset finishing.
+    status = 2
+    idfa = nil
+    container.storage.delete(IntegrationAttributes.self)
+    fetcher.resetIntegrationAttributes()
+
+    // The new user's attributes are corrected, rather than the newer
+    // identifiers being recorded as already sent.
+    #expect(syncCount == 2)
+    #expect(syncedAttributes.keys.contains("idfa"))
+    #expect(syncedAttributes["idfa"] as? String == nil)
+    #expect(syncedAttributes["attStatus"] as? String == "2")
+    #expect(fetcher.integrationAttributes["idfa"] == nil)
+
+    // A later refresh with nothing new stays quiet.
+    fetcher.refreshDeviceIdentifiers()
+    _ = fetcher.integrationAttributes
+    #expect(syncCount == 2)
   }
 
   @Test func resetKeepsTheDeviceKeysWhenNoProviderIdIsInstallScoped() {
