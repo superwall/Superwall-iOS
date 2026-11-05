@@ -203,6 +203,50 @@ struct AttributionDeviceIdentifiersTests {
     #expect(stored?["amplitudeUserId"] == nil)
   }
 
+  @Test func resetSyncsIdentifiersThatChangedAfterTheNewUserGotThem() {
+    let container = DependencyContainer()
+    var status: Int? = 3
+    var idfa: String? = "advertiser-1"
+    var syncedAttributes: [String: Any?] = [:]
+    var syncCount = 0
+    let fetcher = makeFetcher(
+      container: container,
+      attStatus: { status },
+      idfa: { idfa },
+      sync: {
+        syncedAttributes = $0
+        syncCount += 1
+      }
+    )
+    defer { fetcher.cancelPendingOperations() }
+
+    fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    #expect(syncCount == 1)
+
+    let kept = fetcher.integrationAttributesKeptAcrossReset()
+    #expect(kept["idfa"] as? String == "advertiser-1")
+
+    // Consent is revoked between the new user getting the identifiers and
+    // the reset finishing.
+    status = 2
+    idfa = nil
+    container.storage.delete(IntegrationAttributes.self)
+    fetcher.resetIntegrationAttributes()
+
+    // The new user's attributes are corrected, rather than the newer
+    // identifiers being recorded as already sent.
+    #expect(syncCount == 2)
+    #expect(syncedAttributes.keys.contains("idfa"))
+    #expect(syncedAttributes["idfa"] as? String == nil)
+    #expect(syncedAttributes["attStatus"] as? String == "2")
+    #expect(fetcher.integrationAttributes["idfa"] == nil)
+
+    // A later refresh with nothing new stays quiet.
+    fetcher.refreshDeviceIdentifiers()
+    _ = fetcher.integrationAttributes
+    #expect(syncCount == 2)
+  }
+
   @Test func resetKeepsTheDeviceKeysWhenNoProviderIdIsInstallScoped() {
     let container = DependencyContainer()
     let fetcher = makeFetcher(container: container)

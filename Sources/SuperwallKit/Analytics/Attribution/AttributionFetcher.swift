@@ -30,6 +30,8 @@ final class AttributionFetcher {
   /// is worth syncing: every sync costs a `user_attributes` event, a delegate
   /// callback, a Core Data row and a re-encode of the whole attribute dict.
   private var _lastSyncedDeviceIdentifiers: [String: String]?
+  /// The identifiers a reset's new user was given, until the reset finishes.
+  private var _resetDeviceIdentifiers: [String: String]?
 
   private unowned let storage: Storage
   private unowned let webEntitlementRedeemer: WebEntitlementRedeemer
@@ -267,20 +269,11 @@ final class AttributionFetcher {
 
 // MARK: - Device identifiers
 extension AttributionFetcher {
-  /// Forgets what was last synced when a write lands on one of the SDK's keys
-  /// carrying something other than what the SDK put there, so the next merge
-  /// puts its own value back.
-  ///
-  /// The sync gate compares against what the SDK last sent rather than what the
-  /// user's attributes actually hold, so without this an app that removed
-  /// `idfv` would keep it missing until an identifier itself changed — which on
-  /// a settled device may be never.
-  ///
-  /// Compares the values rather than just the keys because the SDK's own sync
-  /// comes back through this same setter, as do internal writers like the
-  /// enrichment response, which echoes the user's attributes back verbatim. A
-  /// write that agrees with what was sent isn't an overwrite and mustn't cost a
-  /// resync.
+  /// Forgets what was last synced when a write puts something other than the
+  /// SDK's value on one of its keys, so the next merge restores it. Otherwise
+  /// an app that removed `idfv` would keep it missing until an identifier
+  /// changed. Compares values: the SDK's own sync and the enrichment echo come
+  /// back through this setter, and those aren't overwrites.
   func forgetSyncedDeviceIdentifiers(ifChangedBy attributes: [String: Any?]) {
     let touched = attributes.filter { DeviceIdentifiers.keys.contains($0.key) }
     if touched.isEmpty {
@@ -354,6 +347,7 @@ extension AttributionFetcher {
       guard let (kept, device) = _integrationAttributesKeptAcrossReset() else {
         return [:]
       }
+      _resetDeviceIdentifiers = device
       var userAttributes = DeviceIdentifiers.userAttributes(for: device)
       for (key, value) in kept where !DeviceIdentifiers.keys.contains(key) {
         userAttributes[key] = value
@@ -362,12 +356,14 @@ extension AttributionFetcher {
     }
   }
 
-  /// Drops the ids that describe the person (see `isInstallScoped`) after a
-  /// reset, and writes the rest back to the disk it wiped, or the next launch
-  /// would start empty and a later consent change would never clear the IDFA.
-  /// Synchronous, since the redeem after an identify reads the stored copy.
+  /// After a reset, drops the ids that describe the person (see
+  /// `isInstallScoped`) and saves the rest to the wiped disk, or a later
+  /// consent change would never clear the IDFA. Synchronous, since the redeem
+  /// after an identify reads the stored copy.
   func resetIntegrationAttributes() {
     queue.sync {
+      let given = _resetDeviceIdentifiers
+      _resetDeviceIdentifiers = nil
       if _integrationAttributes.isEmpty {
         return
       }
@@ -379,6 +375,10 @@ extension AttributionFetcher {
       _integrationAttributes = kept
       _lastSyncedDeviceIdentifiers = device
       storage.save(kept, forType: IntegrationAttributes.self)
+      // ATT or the IDFA changed since the new user was given identifiers.
+      if device != given {
+        syncUserAttributes(DeviceIdentifiers.userAttributes(for: device))
+      }
     }
   }
 

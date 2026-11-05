@@ -191,6 +191,85 @@ struct StateStoreTests {
     #expect(seen == [1, 11])
   }
 
+  @Test("Every observer hears about an update made by an observer after the one in progress")
+  func observerUpdateIsHeardInOrder() {
+    let store = TestStore(initial: Counter())
+    var first: [String] = []
+    var second: [String] = []
+    var valueSeenByUpdater: Int?
+    store.observe { before, after in
+      first.append("\(before.value)→\(after.value)")
+      if after.value == 1 {
+        store.update(Add(amount: 10))
+        // The update is applied before it returns.
+        valueSeenByUpdater = store.state.value
+      }
+    }
+    store.observe { before, after in
+      second.append("\(before.value)→\(after.value)")
+    }
+
+    store.update(Add(amount: 1))
+
+    #expect(valueSeenByUpdater == 11)
+    #expect(first == ["0→1", "1→11"])
+    #expect(second == ["0→1", "1→11"])
+    #expect(store.state.value == 11)
+  }
+
+  @Test("Updates made by several observers, and by their nested updates, are heard in order")
+  func chainedObserverUpdates() {
+    let store = TestStore(initial: Counter())
+    var heard: [[String]] = [[], [], []]
+    store.observe { before, after in
+      heard[0].append("\(before.value)→\(after.value)")
+      if after.value == 1 {
+        store.update(Add(amount: 10))
+      }
+    }
+    store.observe { before, after in
+      heard[1].append("\(before.value)→\(after.value)")
+      if after.value == 1 {
+        store.update(Add(amount: 100))
+      }
+      if after.value == 11 {
+        store.update(Add(amount: 1_000))
+      }
+    }
+    store.observe { before, after in
+      heard[2].append("\(before.value)→\(after.value)")
+    }
+
+    store.update(Add(amount: 1))
+
+    // 0→1 is heard first. The updates it caused are heard in the order they
+    // were applied (+10, then +100), then the one +10 caused (+1000). Each
+    // `before` is the previous `after`, and the last `after` is the state.
+    let expected = ["0→1", "1→11", "11→111", "111→1111"]
+    #expect(heard[0] == expected)
+    #expect(heard[1] == expected)
+    #expect(heard[2] == expected)
+    #expect(store.state.value == 1_111)
+  }
+
+  @Test("After an observer's nested update, a later top-level update notifies straight away")
+  func notifyingResetsAfterNestedUpdates() {
+    let store = TestStore(initial: Counter())
+    var heard: [Int] = []
+    store.observe { _, after in
+      heard.append(after.value)
+      if after.value == 1 {
+        store.update(Add(amount: 1))
+      }
+    }
+
+    store.update(Add(amount: 1))
+    #expect(heard == [1, 2])
+
+    store.update(Add(amount: 5))
+    #expect(heard == [1, 2, 7])
+  }
+
   // MARK: - dispatch
 
   @Test("dispatch runs the action before returning, so a read straight after sees it")

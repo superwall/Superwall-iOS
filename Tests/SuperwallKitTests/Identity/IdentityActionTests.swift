@@ -45,6 +45,9 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   let store: IdentityStore
   var seeds: [String: Int] = [:]
   var configLatch: Latch?
+  /// Holds every side effect back until it opens, so a test can decide what
+  /// happens before they start.
+  var sideEffectGate: Latch?
   var assignmentsLatch: Latch?
   /// One latch per assignments fetch, used in call order. Takes precedence
   /// over `assignmentsLatch`.
@@ -165,7 +168,11 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   }
 
   func sideEffect(_ work: @escaping () async -> Void) {
-    let task = Task { await work() }
+    let gate = sideEffectGate
+    let task = Task {
+      await gate?.wait()
+      await work()
+    }
     locked { sideEffects.append(task) }
   }
 }
@@ -547,7 +554,8 @@ struct IdentityActionTests {
   @Test("A reset while the seed is pending doesn't leave the identity stuck")
   func resetDuringPendingSeed() async {
     let context = FakeIdentityContext(readyState())
-    context.seeds["user-1"] = 7
+    // Outside 0..<100, so the reset's random seed can't match it by chance.
+    context.seeds["user-1"] = 1_000
     let config = Latch()
     context.configLatch = config
 
@@ -559,7 +567,8 @@ struct IdentityActionTests {
     config.open()
     await context.settle()
     #expect(context.state.isReady)
-    #expect(context.state.seed != 7)
+    #expect(context.state.seed != 1_000)
+    #expect((0..<100).contains(context.state.seed))
   }
 
   // MARK: - Attributes
@@ -688,18 +697,20 @@ struct IdentityActionTests {
   @Test("A side effect that finishes after the identity is gone does nothing")
   func sideEffectAfterContextIsGone() async {
     var context: FakeIdentityContext? = FakeIdentityContext(readyState())
-    let config = Latch()
-    context?.configLatch = config
+    let start = Latch()
+    context?.sideEffectGate = start
     context?.dispatch(identify("user-1"))
     let sideEffects = context?.takeSideEffects() ?? []
+    #expect(sideEffects.count == 3)
     weak var released = context
 
-    // The side effects hold the context weakly, so this frees it while the
-    // seed lookup is still waiting for the config.
+    // The side effects hold the context weakly until they start, so this
+    // frees it.
     context = nil
     #expect(released == nil)
 
-    config.open()
+    // They then find it gone and return without doing anything.
+    start.open()
     for task in sideEffects {
       await task.value
     }

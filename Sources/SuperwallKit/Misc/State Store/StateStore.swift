@@ -25,7 +25,9 @@ import Foundation
 ///
 /// The lock is recursive, so an action or observer can read the state,
 /// update it, or dispatch another action without deadlocking. A nested
-/// dispatch runs straight away, inside the outer action.
+/// dispatch runs straight away, inside the outer action. An update made by
+/// an observer is applied straight away too, but observers hear about it
+/// only once all of them have heard about the update in progress.
 final class StateStore<Context, State>: @unchecked Sendable {
   /// Told about every update, with the state before and after it.
   typealias Observer = (_ before: State, _ after: State) -> Void
@@ -37,6 +39,10 @@ final class StateStore<Context, State>: @unchecked Sendable {
   private var depth = 0
   /// Work deferred until the outermost update or dispatch finishes.
   private var deferredWork: [() -> Void] = []
+  /// Updates the observers haven't heard about yet, oldest first.
+  private var pendingNotifications: [(before: State, after: State)] = []
+  /// Whether the observers are being told about an update.
+  private var isNotifying = false
 
   /// The current state.
   var state: State {
@@ -58,14 +64,27 @@ final class StateStore<Context, State>: @unchecked Sendable {
   }
 
   /// Applies `reducer` to the state atomically, then tells the observers.
+  ///
+  /// Called from an observer, it returns once the state has changed, and the
+  /// observers are told about it after the update they're being told about.
+  /// So each observer hears about every update in the order they were
+  /// applied, and the last `after` it hears is the current state.
   func update<R: Reducer>(_ reducer: R) where R.State == State {
     locked {
       let before = _state
       _state = reducer.reduce(before)
-      let after = _state
-      for observer in observers {
-        observer(before, after)
+      pendingNotifications.append((before, _state))
+      guard !isNotifying else {
+        return
       }
+      isNotifying = true
+      while !pendingNotifications.isEmpty {
+        let notification = pendingNotifications.removeFirst()
+        for observer in observers {
+          observer(notification.before, notification.after)
+        }
+      }
+      isNotifying = false
     }
   }
 
