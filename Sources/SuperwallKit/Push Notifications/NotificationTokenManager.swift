@@ -82,8 +82,8 @@ final class NotificationTokenManager {
   private let coordinator = SerialTaskCoordinator()
   private let notificationSettings: () async -> NotificationSettingsSnapshot
   private let isFeatureEnabled: () -> Bool
-  /// Whether the feature flag is on, waiting for config if it hasn't arrived.
-  private let isFeatureEnabledOnceConfigured: () async -> Bool
+  /// Returns once config has arrived.
+  private let waitForConfig: () async -> Void
   private let isTrackingAllowed: () -> Bool
   private let identity: () -> Identity
   /// Tracks the event and returns whether it was queued for sending.
@@ -97,9 +97,11 @@ final class NotificationTokenManager {
   private let now: () -> Date
   private var cancellables: Set<AnyCancellable> = []
   private let inFlightLock = NSLock()
-  /// The fingerprint of the latest token event queued but not yet delivered,
-  /// so it isn't queued twice. Superwall ends up with this state once it lands.
-  private var pendingFingerprint: String?
+  /// The latest token event queued but not yet delivered. Superwall ends up
+  /// with its state once it lands, so it isn't queued twice. Each event gets
+  /// its own number, since the same state can be queued more than once.
+  private var pendingEvent: (number: Int, fingerprint: String)?
+  private var lastEventNumber = 0
   /// Opens waiting for config.
   private var pendingOpens: [UUID: Task<Void, Never>] = [:]
 
@@ -107,7 +109,7 @@ final class NotificationTokenManager {
     storage: Storage,
     notificationSettings: @escaping () async -> NotificationSettingsSnapshot,
     isFeatureEnabled: @escaping () -> Bool,
-    isFeatureEnabledOnceConfigured: @escaping () async -> Bool,
+    waitForConfig: @escaping () async -> Void,
     isTrackingAllowed: @escaping () -> Bool,
     identity: @escaping () -> Identity,
     track: @escaping (Trackable, @escaping PlacementsQueue.DeliveryHandler) async -> Bool,
@@ -120,7 +122,7 @@ final class NotificationTokenManager {
     self.storage = storage
     self.notificationSettings = notificationSettings
     self.isFeatureEnabled = isFeatureEnabled
-    self.isFeatureEnabledOnceConfigured = isFeatureEnabledOnceConfigured
+    self.waitForConfig = waitForConfig
     self.isTrackingAllowed = isTrackingAllowed
     self.identity = identity
     self.track = track
@@ -205,10 +207,12 @@ final class NotificationTokenManager {
       guard let self = self else {
         return
       }
-      if await self.isFeatureEnabledOnceConfigured() {
-        self.enqueue { manager in
-          _ = await manager.track(event) { _ in }
+      await self.waitForConfig()
+      self.enqueue { manager in
+        if !manager.isFeatureEnabled() {
+          return
         }
+        _ = await manager.track(event) { _ in }
       }
       self.inFlightLock.withLock {
         self.pendingOpens[id] = nil
@@ -280,27 +284,27 @@ final class NotificationTokenManager {
     }
 
     let fingerprint = Self.fingerprint(of: payload, for: identity())
-    let shouldSend = inFlightLock.withLock {
-      if let pendingFingerprint = pendingFingerprint {
-        if pendingFingerprint == fingerprint {
-          return false
+    let eventNumber: Int? = inFlightLock.withLock {
+      if let pendingEvent = pendingEvent {
+        // The same state is on its way. A different one would land after the
+        // last one sent, so this has to follow it even if it matches that.
+        if pendingEvent.fingerprint == fingerprint {
+          return nil
         }
-        // A different state is on its way and would land after the last one
-        // sent, so this one has to follow it even if it matches what was sent.
-        self.pendingFingerprint = fingerprint
-        return true
-      }
-      let shouldSend = Self.shouldSend(
+      } else if !Self.shouldSend(
         fingerprint: fingerprint,
         lastSent: storage.get(NotificationTokenLastSentStorage.self),
         now: now()
-      )
-      if shouldSend {
-        pendingFingerprint = fingerprint
+      ) {
+        return nil
       }
-      return shouldSend
+      lastEventNumber += 1
+      pendingEvent = (lastEventNumber, fingerprint)
+      // Superwall's state isn't known again until this lands.
+      storage.delete(NotificationTokenLastSentStorage.self)
+      return lastEventNumber
     }
-    if !shouldSend {
+    guard let eventNumber = eventNumber else {
       return
     }
 
@@ -308,20 +312,22 @@ final class NotificationTokenManager {
     // queue is emptied first or the app quits before it's sent, the next
     // refresh sends it again.
     let isQueued = await track(PrivateSuperwallEvents.NotificationToken(payload: payload)) { [weak self] isDelivered in
-      self?.finishSending(fingerprint, isDelivered: isDelivered)
+      self?.finishSending(eventNumber, isDelivered: isDelivered)
     }
     if !isQueued {
-      finishSending(fingerprint, isDelivered: false)
+      finishSending(eventNumber, isDelivered: false)
     }
   }
 
-  private func finishSending(_ fingerprint: String, isDelivered: Bool) {
+  private func finishSending(_ eventNumber: Int, isDelivered: Bool) {
     inFlightLock.withLock {
       // An older event landing says nothing about the latest one.
-      if fingerprint != pendingFingerprint {
+      guard let pendingEvent = pendingEvent,
+        pendingEvent.number == eventNumber else {
         return
       }
-      pendingFingerprint = nil
+      let fingerprint = pendingEvent.fingerprint
+      self.pendingEvent = nil
       if isDelivered {
         storage.save(
           NotificationTokenLastSent(fingerprint: fingerprint, sentAt: now()),

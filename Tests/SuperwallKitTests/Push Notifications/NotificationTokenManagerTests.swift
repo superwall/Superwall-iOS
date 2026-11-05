@@ -59,7 +59,7 @@ private final class Harness: @unchecked Sendable {
         return self.settings
       },
       isFeatureEnabled: { [unowned self] in self.featureEnabled },
-      isFeatureEnabledOnceConfigured: { [unowned self] in self.featureEnabled },
+      waitForConfig: {},
       isTrackingAllowed: { [unowned self] in self.trackingAllowed },
       identity: { [unowned self] in self.identity },
       track: { [unowned self] event, onDelivery in
@@ -442,6 +442,55 @@ struct NotificationTokenManagerTests {
     #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, true])
   }
 
+  @Test func repeatedState_onlyTheLatestDeliveryCounts() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+    harness.pendingDeliveries.removeFirst()(true)
+
+    // Opt out, in and out again; the first opt-out lands but the last is rejected.
+    manager.setEnabled(false)
+    manager.setEnabled(true)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+    let deliveries = harness.pendingDeliveries
+    harness.pendingDeliveries = []
+    deliveries[0](true)
+    deliveries[1](true)
+    deliveries[2](false)
+    #expect(harness.storage.get(NotificationTokenLastSentStorage.self) == nil)
+
+    harness.deliversImmediately = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.last?.payload.enabled == false)
+    #expect(harness.tokenEvents.count == 5)
+  }
+
+  @Test func failedReversion_isResent() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    // Opt in lands, then the opt-out back to the sent state fails.
+    harness.deliversImmediately = false
+    manager.setEnabled(true)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+    harness.pendingDeliveries[0](true)
+    harness.pendingDeliveries[1](false)
+
+    harness.deliversImmediately = true
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, true, false, false])
+  }
+
   @Test func undeliveredEvent_isResentAfterRelaunch() async {
     let harness = Harness()
     harness.deliversImmediately = false
@@ -480,9 +529,9 @@ struct NotificationTokenManagerTests {
     let manager = NotificationTokenManager(
       storage: harness.storage,
       notificationSettings: { harness.settings },
-      isFeatureEnabled: { false },
-      isFeatureEnabledOnceConfigured: {
-        await config.values.first { _ in true } ?? false
+      isFeatureEnabled: { harness.featureEnabled },
+      waitForConfig: {
+        _ = await config.values.first { _ in true }
       },
       isTrackingAllowed: { true },
       identity: { harness.identity },

@@ -231,12 +231,8 @@ final class DependencyContainer {
       isFeatureEnabled: { [weak configManager] in
         configManager?.config?.featureFlags.userNotifications == true
       },
-      isFeatureEnabledOnceConfigured: { [weak configManager] in
-        guard let configManager = configManager else {
-          return false
-        }
-        let config = try? await configManager.hasConfig.throwableAsync()
-        return config?.featureFlags.userNotifications == true
+      waitForConfig: { [weak configManager] in
+        _ = try? await configManager?.hasConfig.throwableAsync()
       },
       isTrackingAllowed: { [weak configManager] in
         guard let configManager = configManager else {
