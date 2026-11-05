@@ -173,6 +173,11 @@ the SDK, goes in `deferUntilUnlocked`; async work starts in a `Task` through `si
 `IdentityResetHandling.attributesKeptAcrossReset()` runs before the lock is taken and
 `identityDidReset()` after it's released; neither may change the identity.
 
+`identify` and `reset` also hold `userChangeLock`, taken before the store lock, until their
+deferred cleanup (wiping storage and caches) has finished, so user changes on different threads run
+one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
+action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
