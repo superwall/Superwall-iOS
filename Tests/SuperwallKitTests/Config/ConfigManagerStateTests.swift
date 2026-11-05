@@ -70,7 +70,6 @@ struct ConfigUpdateTests {
     #expect(ConfigUpdate.retrying(attempt: 1).reduce(start).publications == 1)
     #expect(ConfigUpdate.retrieved(.stub()).reduce(start).publications == 1)
     #expect(ConfigUpdate.failed(TestError("e")).reduce(start).publications == 1)
-    #expect(ConfigUpdate.set(.retrieving).reduce(start).publications == 1)
   }
 }
 
@@ -162,7 +161,7 @@ struct ConfigManagerStoreTests {
     )
     defer { cancellable.cancel() }
 
-    configManager.store.update(ConfigUpdate.set(.failed(TestError("offline"))))
+    configManager.store.update(ConfigUpdate.failed(TestError("offline")))
     configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
     #expect(received == [.retrieving, .failed(TestError("offline"))])

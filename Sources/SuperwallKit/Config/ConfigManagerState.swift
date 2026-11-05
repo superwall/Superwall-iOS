@@ -52,8 +52,6 @@ enum ConfigUpdate: Reducer {
   case initialPurchasesLoad(Task<Void, Never>)
   case retrieved(Config)
   case failed(Error)
-  /// Sets the config state directly.
-  case set(ConfigState)
 
   func reduce(_ state: ConfigManagerState) -> ConfigManagerState {
     var state = state
@@ -73,9 +71,6 @@ enum ConfigUpdate: Reducer {
       state.publications += 1
     case .failed(let error):
       state.configState = .failed(error)
-      state.publications += 1
-    case .set(let configState):
-      state.configState = configState
       state.publications += 1
     }
     return state
