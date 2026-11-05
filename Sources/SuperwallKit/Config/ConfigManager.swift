@@ -32,7 +32,9 @@ class ConfigManager {
   /// The configuration of the Superwall dashboard.
   ///
   /// Mirrors the store, so change it through `store.update(_:)` with a
-  /// ``ConfigUpdate`` rather than by sending to it.
+  /// ``ConfigUpdate`` rather than by sending to it. Sent changes with the
+  /// store unlocked, so it can lag the store while another thread is
+  /// sending: read ``config`` for the current config.
   let configState = CurrentValueSubject<ConfigState, Error>(.retrieving)
 
   /// Convenience variable to access config.
@@ -106,21 +108,24 @@ class ConfigManager {
       factory: self.factory
     )
 
-    // Observers run under the store's lock, so changes made on different
-    // threads are sent in the order they were applied.
-    store.observe { [weak self] before, after in
-      guard
-        let self = self,
-        after.publications != before.publications
-      else {
-        return
-      }
+    // Subscribers can take other locks, so they're sent changes once the
+    // store is unlocked, in the order the changes were applied.
+    let publications = OrderedDelivery<ConfigState> { [weak self] state in
       // Once a failure has completed `configState`, it sends nothing more,
       // though the store can still change.
-      if let error = after.configState.failure {
-        self.configState.send(completion: .failure(error))
+      if let error = state.failure {
+        self?.configState.send(completion: .failure(error))
       } else {
-        self.configState.send(after.configState)
+        self?.configState.send(state)
+      }
+    }
+    store.observe { [weak store] before, after in
+      guard after.publications != before.publications else {
+        return
+      }
+      publications.add(after.configState)
+      store?.deferUntilUnlocked {
+        publications.deliver()
       }
     }
   }

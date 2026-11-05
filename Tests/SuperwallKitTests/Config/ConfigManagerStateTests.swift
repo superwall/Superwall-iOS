@@ -210,6 +210,53 @@ struct ConfigManagerStoreTests {
     #expect(configManager.configState.value == configManager.store.state.configState)
   }
 
+  @Test("A subscriber that takes a lock can't deadlock with a thread holding it that reads the config")
+  func publishingDoesNotHoldTheStoreLock() {
+    // As with the MMP manager: its subscriber takes its lock, and it reads
+    // `config` while holding that lock.
+    let (configManager, _, container) = makeConfigManager()
+    defer { withExtendedLifetime(container) {} }
+    let otherLock = NSLock()
+    let subscriberWaiting = DispatchSemaphore(value: 0)
+    let cancellable = configManager.configState
+      .dropFirst()
+      .sink(
+        receiveCompletion: { _ in },
+        receiveValue: { _ in
+          subscriberWaiting.signal()
+          otherLock.lock()
+          otherLock.unlock()
+        }
+      )
+    defer { cancellable.cancel() }
+
+    otherLock.lock()
+    let updated = DispatchSemaphore(value: 0)
+    let config = Config.stub().setting(\.buildId, to: "build")
+    Thread {
+      configManager.store.update(ConfigUpdate.retrieved(config))
+      updated.signal()
+    }
+    .start()
+    subscriberWaiting.wait()
+
+    // The publishing thread waits for `otherLock` in the subscriber. If it
+    // still held the store's lock, this read would never return.
+    let read = DispatchSemaphore(value: 0)
+    var buildId: String?
+    Thread {
+      buildId = configManager.config?.buildId
+      read.signal()
+    }
+    .start()
+    let didRead = read.wait(timeout: .now() + 2) == .success
+    otherLock.unlock()
+
+    #expect(didRead)
+    #expect(buildId == "build")
+    #expect(updated.wait(timeout: .now() + 2) == .success)
+  }
+
   @Test("Refreshing without a config does nothing")
   func refreshWithoutConfig() async {
     let (configManager, network, container) = makeConfigManager()
