@@ -5,6 +5,7 @@
 //  Created by Brian Anglin on 13/10/2026.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 
@@ -269,4 +270,5 @@ final class PaywallOverlayAnimator: NSObject, NSViewControllerPresentationAnimat
     )
   }
 }
+#endif
 #endif

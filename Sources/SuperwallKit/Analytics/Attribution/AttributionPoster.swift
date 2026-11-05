@@ -84,9 +84,11 @@ final class AttributionPoster {
           // Match applicationWillEnterForeground's priority: default-priority
           // tasks can be deferred under load, and attribution is bounded by
           // Apple's 24h install window.
+          #if os(iOS) || os(macOS) || os(visionOS)
           Task(priority: .utility) {
             await self?.getAdServicesTokenIfNeeded()
           }
+          #endif
         }
       )
       .store(in: &cancellables)

@@ -6,44 +6,40 @@
 //
 // swiftlint:disable identifier_name
 
-#if os(iOS) || os(visionOS) || targetEnvironment(macCatalyst)
-import UIKit
-#elseif os(watchOS)
-import UIKit
-import WatchKit
-#elseif os(macOS)
+#if os(macOS)
 import AppKit
+#elseif os(watchOS)
+import WatchKit
+#else
+import UIKit
 #endif
 
 enum SystemInfo {
   static var applicationWillEnterForegroundNotification: Notification.Name {
-    #if os(iOS) || os(visionOS)
-    UIApplication.willEnterForegroundNotification
-    #elseif os(macOS)
+    #if os(macOS)
     NSApplication.willBecomeActiveNotification
     #elseif os(watchOS)
-    Notification.Name.NSExtensionHostWillEnterForeground
+    WKExtension.applicationWillEnterForegroundNotification
+    #else
+    UIApplication.willEnterForegroundNotification
     #endif
   }
 
   static var applicationDidBecomeActiveNotification: Notification.Name? {
-    #if os(iOS) || os(visionOS) || targetEnvironment(macCatalyst)
-    return UIApplication.didBecomeActiveNotification
-    #elseif os(macOS)
+    #if os(macOS)
     return NSApplication.didBecomeActiveNotification
     #elseif os(watchOS)
-    if #available(watchOS 9, *) {
-      return WKApplication.didBecomeActiveNotification
-    } else {
-      // Work around for "Symbol not found" dyld crashes on watchOS 8.0..<9.0
-      return Notification.Name("WKApplicationDidBecomeActiveNotification")
-    }
+    return WKExtension.applicationDidBecomeActiveNotification
+    #else
+    return UIApplication.didBecomeActiveNotification
     #endif
   }
 
   static var applicationWillResignActiveNotification: Notification.Name {
     #if os(macOS)
     NSApplication.willResignActiveNotification
+    #elseif os(watchOS)
+    WKExtension.applicationWillResignActiveNotification
     #else
     UIApplication.willResignActiveNotification
     #endif
@@ -57,14 +53,20 @@ enum SystemInfo {
   static var applicationDidEnterBackgroundNotification: Notification.Name {
     #if os(macOS)
     NSApplication.didResignActiveNotification
+    #elseif os(watchOS)
+    WKExtension.applicationDidEnterBackgroundNotification
     #else
     UIApplication.didEnterBackgroundNotification
     #endif
   }
 
-  static var applicationWillTerminateNotification: Notification.Name {
+  /// When the app is about to quit. watchOS doesn't announce this, so there
+  /// it's `nil`.
+  static var applicationWillTerminateNotification: Notification.Name? {
     #if os(macOS)
     NSApplication.willTerminateNotification
+    #elseif os(watchOS)
+    nil
     #else
     UIApplication.willTerminateNotification
     #endif
@@ -78,6 +80,8 @@ enum SystemInfo {
   static var notificationSettingsURL: URL? {
     #if os(macOS)
     URL(string: "x-apple.systempreferences:com.apple.preference.notifications")
+    #elseif os(watchOS)
+    nil
     #else
     URL(string: UIApplication.openSettingsURLString)
     #endif

@@ -1,3 +1,4 @@
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 import WebKit
@@ -63,4 +64,5 @@ final class TeleportReturnCover: NSObject {
     )
   }
 }
+#endif
 #endif

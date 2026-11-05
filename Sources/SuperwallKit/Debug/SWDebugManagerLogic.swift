@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 19/04/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum SWDebugManagerLogic {
@@ -30,3 +31,4 @@ enum SWDebugManagerLogic {
     return item.value
   }
 }
+#endif

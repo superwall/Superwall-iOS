@@ -25,8 +25,8 @@ enum MMPMatchError: Error {
 /// mirroring how `AttributionPoster` owns the Apple Search Ads flow.
 final class MMPAttributionManager {
   // The install-matching backend currently accepts only iOS and Android.
-  // Do not send native Mac installs into the iOS attribution pool.
-  #if os(macOS)
+  // Do not send native Mac, watch or TV installs into the iOS attribution pool.
+  #if os(macOS) || os(watchOS) || os(tvOS)
   static let isSupported = false
   #else
   static let isSupported = true

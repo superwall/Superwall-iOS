@@ -609,7 +609,7 @@ class ConfigManager {
     if triggers.contains(where: { $0.placementName == SuperwallEvent.touchesBegan.description }) {
       #if os(macOS)
       await FirstClickMonitor.start()
-      #else
+      #elseif canImport(WebKit)
       await UIWindow.swizzleSendEvent()
       #endif
     }
@@ -709,7 +709,10 @@ class ConfigManager {
   }
 
   /// Preloads paywalls referenced by triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadAllPaywalls() async {
+    #if canImport(WebKit)
     // Queue the preload behind any that's already in flight and return. It's
     // kicked off from several places (config refresh, retry, reset, public
     // API), so the queue has to be safe to add to from any thread.
@@ -752,10 +755,14 @@ class ConfigManager {
       }
       await self.preloadPaywalls(withIdentifiers: paywallIds)
     }
+    #endif
   }
 
   /// Preloads paywalls referenced by the provided triggers.
+  ///
+  /// watchOS and tvOS can't show paywalls, so they preload nothing.
   func preloadPaywalls(for placementNames: Set<String>) async {
+    #if canImport(WebKit)
     guard
       let config =
         try? await configState
@@ -771,8 +778,10 @@ class ConfigManager {
       paywallIds.remove(presentedPaywallId)
     }
     await preloadPaywalls(withIdentifiers: paywallIds)
+    #endif
   }
 
+  #if canImport(WebKit)
   /// Preloads paywalls referenced by triggers.
   private func preloadPaywalls(withIdentifiers paywallIdentifiers: Set<String>) async {
     let paywallCount = paywallIdentifiers.count
@@ -817,6 +826,7 @@ class ConfigManager {
     )
     await Superwall.shared.track(preloadComplete)
   }
+  #endif
 
   // MARK: - Test Mode
 
@@ -865,8 +875,11 @@ class ConfigManager {
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }
 
+  /// Test mode never turns on where the SDK has no screens to show, so this
+  /// is never reached on watchOS or tvOS.
   @MainActor
   private func presentTestModeModal(reason: TestModeReason, config: Config) async {
+    #if canImport(WebKit)
     #if os(macOS)
     // Without a window to attach to, as in a menu bar app, the modal opens a window of its own.
     let rootVC = PlatformApplication.sharedApplication?.activeWindow?.rootViewController
@@ -933,5 +946,6 @@ class ConfigManager {
       Superwall.shared.setSubscriptionStatus(assigned: .inactive)
       storage.save(false, forType: IsTestModeActiveSubscription.self)
     }
+    #endif
   }
 }

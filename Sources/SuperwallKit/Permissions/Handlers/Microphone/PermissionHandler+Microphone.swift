@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 13/01/2026.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AVFoundation
 #endif
@@ -48,3 +49,4 @@ extension PermissionHandler {
     return granted ? .granted : .denied
   }
 }
+#endif

@@ -113,6 +113,7 @@ The campaign decides whether a paywall shows. With no paywall set up, the closur
 | iOS | iOS 15+ · UIKit and SwiftUI |
 | macOS | macOS 12+ · native AppKit and SwiftUI · [Mac guide](Sources/SuperwallKit/Documentation.docc/macOS.md) |
 | Mac Catalyst · visionOS | Uses the iOS API |
+| watchOS · tvOS | watchOS 8+ and tvOS 15+ · purchases and entitlements, no paywalls · [watchOS and tvOS guide](Sources/SuperwallKit/Documentation.docc/WatchAndTV.md) |
 
 ## What you get with Superwall
 

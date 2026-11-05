@@ -7,13 +7,13 @@
 
 import Combine
 import StoreKit
-import SystemConfiguration
 #if os(macOS)
 import AppKit
 #else
 import UIKit
 #endif
 
+#if canImport(WebKit)
 protocol ViewControllerFactory: AnyObject {
   @MainActor
   func makePaywallViewController(
@@ -33,10 +33,12 @@ protocol CacheFactory: AnyObject {
   func makeCache() -> PaywallViewControllerCache
 }
 
+#endif
 protocol PaywallArchiveManagerFactory: AnyObject {
   func makePaywallArchiveManager() -> PaywallArchiveManager
 }
 
+#if canImport(WebKit)
 protocol VariablesFactory: AnyObject {
   func makeJsonVariables(
     products: [ProductVariable]?,
@@ -45,6 +47,7 @@ protocol VariablesFactory: AnyObject {
   ) async -> JSON
 }
 
+#endif
 protocol RequestFactory: AnyObject {
   func makePaywallRequest(
     placementData: PlacementData?,

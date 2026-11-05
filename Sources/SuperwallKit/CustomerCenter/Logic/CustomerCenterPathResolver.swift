@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 struct PathResolutionContext {
@@ -160,3 +161,4 @@ enum CustomerCenterPathResolver {
     }
   }
 }
+#endif

@@ -50,8 +50,10 @@ final class PresentationItems: @unchecked Sendable {
   ///
   /// On macOS this is an overlay child window, or a standalone window when
   /// the app has no window to show the paywall in.
+  #if canImport(WebKit)
   @MainActor
   var window: PlatformWindow?
+  #endif
 
   #if os(macOS)
   /// Closes the paywall when the window above is closed.

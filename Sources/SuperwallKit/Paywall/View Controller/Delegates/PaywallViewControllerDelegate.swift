@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 09/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// An interface for responding to user interactions with a ``PaywallViewController`` that
@@ -100,3 +101,4 @@ protocol PaywallViewControllerEventDelegate: AnyObject {
     on paywallViewController: PaywallViewController
   ) async
 }
+#endif

@@ -95,11 +95,13 @@ public final class Superwall: NSObject, ObservableObject {
         }
       }
 
+      #if canImport(WebKit)
       let behavior = newValue
       Task { @MainActor [weak self] in
         self?.paywallViewController?.webView.messageHandler
           .passEventTrackingBehaviorToWebView(behavior)
       }
+      #endif
 
       // When opting out entirely, don't emit the config-attributes event. It
       // races the `setTrackingBehavior(.none)` Task above, so a flush could
@@ -232,15 +234,23 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.isLoggedIn
   }
 
+  #if canImport(WebKit)
   /// The presented paywall view controller.
   public var presentedViewController: PlatformViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
+  #endif
 
   /// The ``PaywallInfo`` object of the most recently presented view controller.
+  ///
+  /// Always `nil` on watchOS and tvOS, which can't show paywalls.
   public var latestPaywallInfo: PaywallInfo? {
+    #if canImport(WebKit)
     let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.info
     return presentedPaywallInfo ?? presentationItems.paywallInfo
+    #else
+    return nil
+    #endif
   }
 
   /// A published property that indicates the configuration status of the SDK.
@@ -458,10 +468,12 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
+  #if canImport(WebKit)
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
+  #endif
 
   /// A convenience variable to access and change the paywall options that you passed
   /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
@@ -477,7 +489,11 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Determines whether a paywall is being presented.
   public var isPaywallPresented: Bool {
-    paywallViewController != nil
+    #if canImport(WebKit)
+    return paywallViewController != nil
+    #else
+    return false
+    #endif
   }
 
   /// Handles all dependencies.
@@ -620,8 +636,13 @@ public final class Superwall: NSObject, ObservableObject {
           if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
             return nil
           }
+          #if canImport(WebKit)
           let advertiserTrackingEnabled =
             dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+          #else
+          // Install matching doesn't run on watchOS or tvOS.
+          let advertiserTrackingEnabled = false
+          #endif
 
           // We deliberately fire the match once and don't retry after ATT is
           // granted: the backend matches on IP + device fingerprint + time decay,
@@ -1223,6 +1244,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameters:
   ///   - isHidden: Toggles the paywall loading spinner on and off.
   public func togglePaywallSpinner(isHidden: Bool) {
+    #if canImport(WebKit)
     Task { @MainActor in
       guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController
       else {
@@ -1230,6 +1252,7 @@ public final class Superwall: NSObject, ObservableObject {
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
     }
+    #endif
   }
 
   // MARK: - Reset
@@ -1579,6 +1602,7 @@ public final class Superwall: NSObject, ObservableObject {
 }
 
 // MARK: - PaywallViewControllerDelegate
+#if canImport(WebKit)
 extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
   // swiftlint:disable:next function_body_length
@@ -1695,6 +1719,7 @@ extension Superwall: PaywallViewControllerEventDelegate {
     await purchaseTask?.value
   }
 }
+#endif
 
 // MARK: - IdentityResetHandling
 extension Superwall: IdentityResetHandling {
@@ -1756,7 +1781,9 @@ extension Superwall: IdentityResetHandling {
     dependencyContainer.attributionFetcher.resetIntegrationAttributes()
     resetEnqueuedIntegrationAttributes()
 
+    #if canImport(WebKit)
     dependencyContainer.paywallManager.resetCache()
+    #endif
     presentationItems.reset()
     Task {
       await dependencyContainer.configManager.reset()
