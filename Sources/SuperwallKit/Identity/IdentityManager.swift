@@ -109,6 +109,7 @@ class IdentityManager: IdentityContext {
   let identitySubject = CurrentValueSubject<Bool, Never>(false)
 
   let store: IdentityStore
+  let userChangeLock = NSRecursiveLock()
 
   /// Resets the rest of the SDK when the identity replaces the user.
   weak var resetHandler: IdentityResetHandling?
