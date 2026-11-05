@@ -221,6 +221,8 @@ struct AttributionDeviceIdentifiersTests {
     defer { fetcher.cancelPendingOperations() }
 
     fetcher.mergeIntegrationAttributes(attributes: ["appsflyerId": "af-1"])
+    // The merge runs on the fetcher's queue. Reading waits for it.
+    #expect(fetcher.integrationAttributes["appsflyerId"] == "af-1")
     #expect(syncCount == 1)
 
     let kept = fetcher.integrationAttributesKeptAcrossReset()
