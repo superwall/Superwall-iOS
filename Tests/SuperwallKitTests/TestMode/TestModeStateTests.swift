@@ -189,12 +189,24 @@ struct TestModeManagerStoreTests {
 
   @Test("Turning test mode off forgets the session and the saved settings")
   func deactivationForgetsEverything() {
-    let (manager, container) = makeActiveManager()
+    let dependencyContainer = DependencyContainer()
+    let isolated = IsolatedDefaults()
+    defer { isolated.remove() }
+    let manager = TestModeManager(
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      storage: dependencyContainer.storage,
+      defaults: isolated.defaults
+    )
+    let options = SuperwallOptions()
+    options.testModeBehavior = .always
+    manager.evaluateTestMode(config: .stub(), options: options)
     manager.setFreeTrialOverride(.forceAvailable)
     manager.recordPurchase(of: [SuperwallEntitlementRef(identifier: "pro", type: "SERVICE_LEVEL")])
     TestModeSettingsStore.save(
       ["pro": EntitlementSelection(state: .subscribed, offerType: nil)],
-      freeTrialOverride: .forceAvailable
+      freeTrialOverride: .forceAvailable,
+      in: isolated.defaults
     )
 
     manager.evaluateTestMode(config: .stub(), options: SuperwallOptions())
@@ -205,8 +217,8 @@ struct TestModeManagerStoreTests {
     #expect(manager.freeTrialOverride == .useDefault)
     #expect(manager.overriddenSubscriptionStatus == nil)
     #expect(manager.overriddenCustomerInfo == nil)
-    #expect(TestModeSettingsStore.loadSelections().isEmpty)
-    withExtendedLifetime(container) {}
+    #expect(TestModeSettingsStore.loadSelections(from: isolated.defaults).isEmpty)
+    #expect(isolated.defaults.object(forKey: TestModeSettingsStore.freeTrialOverrideKey) == nil)
   }
 }
 

@@ -134,15 +134,19 @@ final class TestModeManager {
   unowned let identityManager: IdentityManager
   private unowned let deviceHelper: DeviceHelper
   private unowned let storage: Storage
+  /// Where the test mode modal saves the tester's choices.
+  let defaults: UserDefaults
 
   init(
     identityManager: IdentityManager,
     deviceHelper: DeviceHelper,
-    storage: Storage
+    storage: Storage,
+    defaults: UserDefaults = .standard
   ) {
     self.identityManager = identityManager
     self.deviceHelper = deviceHelper
     self.storage = storage
+    self.defaults = defaults
   }
 
   /// Evaluates whether the current user should be in test mode based on the config
@@ -273,7 +277,7 @@ final class TestModeManager {
   /// on starts from the defaults.
   private func clearSavedSettings() {
     #if canImport(WebKit)
-    TestModeSettingsStore.clear()
+    TestModeSettingsStore.clear(in: defaults)
     #endif
     storage.save(false, forType: IsTestModeActiveSubscription.self)
   }

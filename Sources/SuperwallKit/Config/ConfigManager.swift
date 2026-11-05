@@ -960,6 +960,7 @@ class ConfigManager {
       initialFreeTrialOverride: testModeManager.freeTrialOverride,
       apiKey: storage.apiKey,
       networkEnvironment: options.networkEnvironment,
+      defaults: testModeManager.defaults,
       from: rootVC
     )
 

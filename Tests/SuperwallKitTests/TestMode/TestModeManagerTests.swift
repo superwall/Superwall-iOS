@@ -69,8 +69,15 @@ struct TestModeManagerTests {
   @Test
   func evaluateTestMode_clearsStateWhenDeactivated() {
     let dependencyContainer = DependencyContainer()
-    let manager = dependencyContainer.testModeManager!
     let storage = dependencyContainer.storage!
+    let isolated = IsolatedDefaults()
+    defer { isolated.remove() }
+    let manager = TestModeManager(
+      identityManager: dependencyContainer.identityManager,
+      deviceHelper: dependencyContainer.deviceHelper,
+      storage: storage,
+      defaults: isolated.defaults
+    )
 
     let aliasId = dependencyContainer.identityManager.aliasId
 
@@ -87,11 +94,11 @@ struct TestModeManagerTests {
     manager.setFreeTrialOverride(.forceAvailable)
 
     // Save settings to UserDefaults (as the modal would)
-    UserDefaults.standard.set(
+    isolated.defaults.set(
       ["premium": true, "pro": true],
       forKey: "com.superwall.testmode.entitlementSettings"
     )
-    UserDefaults.standard.set(
+    isolated.defaults.set(
       "forceAvailable",
       forKey: "com.superwall.testmode.freeTrialOverride"
     )
@@ -111,10 +118,10 @@ struct TestModeManagerTests {
 
     // Verify persisted settings are cleared
     #expect(
-      UserDefaults.standard.object(forKey: "com.superwall.testmode.entitlementSettings") == nil
+      isolated.defaults.object(forKey: "com.superwall.testmode.entitlementSettings") == nil
     )
     #expect(
-      UserDefaults.standard.object(forKey: "com.superwall.testmode.freeTrialOverride") == nil
+      isolated.defaults.object(forKey: "com.superwall.testmode.freeTrialOverride") == nil
     )
     #expect(
       (storage.get(IsTestModeActiveSubscription.self) ?? false) == false
