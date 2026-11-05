@@ -270,15 +270,111 @@ struct ConfigManagerStoreTests {
     let (configManager, network, container) = makeConfigManager()
     defer { withExtendedLifetime(container) {} }
     configManager.store.update(ConfigUpdate.retrieved(.stub().setting(\.buildId, to: "old")))
-    network.configReturnValue = .success(.stub().setting(\.buildId, to: "new"))
+
+    // The first request is held open until the test releases it. If the
+    // refreshes overlapped, the second request would start meanwhile.
+    let firstResponse = ResponseGate()
+    let requests = RequestCounter()
+    network.getConfigHandler = {
+      switch requests.next() {
+      case 1:
+        await firstResponse.wait()
+        return .stub().setting(\.buildId, to: "first")
+      default:
+        return .stub().setting(\.buildId, to: "second")
+      }
+    }
+    let published = PublishedBuildIds()
+    let cancellable = configManager.configState.sink(
+      receiveCompletion: { _ in },
+      receiveValue: { published.append($0.getConfig()?.buildId ?? "none") }
+    )
+    defer { cancellable.cancel() }
 
     async let first: Void = configManager.refreshConfiguration(isUserInitiated: true)
     async let second: Void = configManager.refreshConfiguration(isUserInitiated: true)
+
+    for _ in 0..<1_000 where requests.count == 0 {
+      try? await Task.sleep(nanoseconds: 1_000_000)
+    }
+    #expect(requests.count == 1)
+    // Give an overlapping second refresh every chance to start.
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    #expect(requests.count == 1)
+    #expect(configManager.config?.buildId == "old")
+
+    await firstResponse.open()
     _ = await (first, second)
 
-    #expect(configManager.config?.buildId == "new")
-    // Nothing is left running once both have returned.
-    await configManager.configTaskCoordinator.flush()
-    #expect(configManager.config?.buildId == "new")
+    #expect(requests.count == 2)
+    // Each refresh's config is published in turn, the first's before the
+    // second's.
+    let inOrder = published.values.reduce(into: [String]()) { result, value in
+      if result.last != value {
+        result.append(value)
+      }
+    }
+    #expect(inOrder == ["old", "first", "second"])
+    #expect(configManager.config?.buildId == "second")
+  }
+}
+
+/// Holds a request open until it's opened.
+private actor ResponseGate {
+  private var isOpen = false
+  private var waiters: [CheckedContinuation<Void, Never>] = []
+
+  func wait() async {
+    if isOpen {
+      return
+    }
+    await withCheckedContinuation { waiters.append($0) }
+  }
+
+  func open() {
+    isOpen = true
+    let waiters = self.waiters
+    self.waiters = []
+    for waiter in waiters {
+      waiter.resume()
+    }
+  }
+}
+
+/// Counts requests across threads.
+private final class RequestCounter: @unchecked Sendable {
+  private let lock = NSLock()
+  private var _count = 0
+
+  var count: Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return _count
+  }
+
+  /// Counts a request and returns its number, from 1.
+  func next() -> Int {
+    lock.lock()
+    defer { lock.unlock() }
+    _count += 1
+    return _count
+  }
+}
+
+/// The build ids `configState` sent, from any thread.
+private final class PublishedBuildIds: @unchecked Sendable {
+  private let lock = NSLock()
+  private var _values: [String] = []
+
+  var values: [String] {
+    lock.lock()
+    defer { lock.unlock() }
+    return _values
+  }
+
+  func append(_ value: String) {
+    lock.lock()
+    _values.append(value)
+    lock.unlock()
   }
 }
