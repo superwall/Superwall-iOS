@@ -7,6 +7,11 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+- Fixes a user attribute being deleted when one with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
+- Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
+- Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
+- Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
+- Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
 
 ## 4.19.0
 
@@ -24,11 +29,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 - Fixes newer entitlements sometimes being overwritten, or saved to the wrong user after logging out.
 - Fixes custom product purchases being reported as App Store purchases.
-- Fixes a user attribute being deleted when one with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
-- Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
-- Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
-- Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
-- Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
 
 ## 4.18.3
 
