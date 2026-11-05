@@ -7,7 +7,7 @@
 
 /// The source of the purchase initiation.
 enum PurchaseSource {
-  /// The purchase was initiated internally by the SDK.
+  /// The purchase was initiated internally by the SDK, for the slot with this `Product.cacheKey`.
   case `internal`(String, PaywallViewController, Bool)
 
   /// The purchase was initiated externally by the user calling ``Superwall/purchase(_:)-7gwwe``.

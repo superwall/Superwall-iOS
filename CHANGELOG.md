@@ -7,6 +7,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+- Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
 
 ## 4.19.0
 

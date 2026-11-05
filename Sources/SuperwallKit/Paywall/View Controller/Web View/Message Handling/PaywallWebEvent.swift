@@ -9,6 +9,7 @@ import Foundation
 
 enum PaywallWebEvent: Equatable {
   case closed
+  /// `productId` is the slot's `Product.cacheKey`, which also carries its billing plan.
   case initiatePurchase(
     productId: String,
     shouldDismiss: Bool

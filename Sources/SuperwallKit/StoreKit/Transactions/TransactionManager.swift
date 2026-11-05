@@ -77,11 +77,10 @@ final class TransactionManager {
 
     switch purchaseSource {
     case .internal(let productId, _, _):
-      // The JS bridge passes `Product.id` (composite when a billing plan is
-      // configured on the Product, otherwise equal to the Apple product ID).
-      // `product(withId:)` resolves against the composite-keyed map first and
-      // falls back to the Apple-ID map for custom and externally cached
-      // products that aren't part of a paywall.
+      // This is the slot's `Product.cacheKey`, which includes its billing plan
+      // when it has one. `product(withId:)` resolves against the composite-keyed
+      // map first and falls back to the Apple-ID map for custom and externally
+      // cached products that aren't part of a paywall.
       let resolvedProduct = await storeKitManager.product(withId: productId)
       guard let storeProduct = resolvedProduct else {
         Logger.debug(
@@ -1176,16 +1175,18 @@ final class TransactionManager {
     let didStartFreeTrial = type == .freeTrialStart
     let trialEndDate = didStartFreeTrial ? product.trialPeriodEndDate : nil
     switch source {
-    case .internal(_, let paywallViewController, _):
+    case let .internal(cacheKey, paywallViewController, _):
       paywallInfo = await paywallViewController.info
       eventSource = .internal
       await paywallViewController.markPurchaseCompleted(product)
+      let referenceName = await paywallViewController.paywall.referenceName(forCacheKey: cacheKey)
       await paywallViewController.webView.messageHandler
         .handle(
           .transactionComplete(
             trialEndDate: trialEndDate,
             productIdentifier: product.productIdentifier,
-            didStartFreeTrial: didStartFreeTrial
+            didStartFreeTrial: didStartFreeTrial,
+            product: referenceName
           )
         )
     case .purchaseFunc,

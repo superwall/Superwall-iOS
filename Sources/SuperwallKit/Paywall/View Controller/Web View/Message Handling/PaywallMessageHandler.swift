@@ -156,14 +156,18 @@ final class PaywallMessageHandler: WebEventDelegate {
       Task {
         await self.pass(placement: transactionStart, from: paywall)
       }
-    case let .transactionComplete(trialEndDate, productIdentifier, didStartFreeTrial):
+    case let .transactionComplete(trialEndDate, productIdentifier, didStartFreeTrial, product):
       Task {
         // Send transaction_complete to trigger post-purchase actions
         let transactionComplete = SuperwallEventObjc.transactionComplete.description
+        var transactionCompletePayload: [String: Any] = ["product_identifier": productIdentifier]
+        if let product {
+          transactionCompletePayload["product"] = product
+        }
         await self.pass(
           placement: transactionComplete,
           from: paywall,
-          payload: ["product_identifier": productIdentifier]
+          payload: transactionCompletePayload
         )
 
         // Only tell the paywall a trial started when one actually did. The paywall
@@ -218,8 +222,8 @@ final class PaywallMessageHandler: WebEventDelegate {
       openDeepLink(url)
     case .restore:
       restorePurchases()
-    case let .purchase(productId: id, shouldDismiss: shouldDismiss):
-      purchaseProduct(withId: id, shouldDismiss: shouldDismiss)
+    case let .purchase(productId: id, shouldDismiss: shouldDismiss, product: product):
+      purchaseProduct(withId: id, referenceName: product, shouldDismiss: shouldDismiss)
     case .custom(data: let name):
       handleCustomEvent(name)
     case let .customPlacement(name: name, params: params):
@@ -638,13 +642,15 @@ final class PaywallMessageHandler: WebEventDelegate {
 
   private func purchaseProduct(
     withId id: String,
+    referenceName: String?,
     shouldDismiss: Bool
   ) {
     detectHiddenPaywallEvent("purchase")
     hapticFeedback()
+    let cacheKey = delegate?.paywall.cacheKey(forProductId: id, referenceName: referenceName) ?? id
     delegate?.eventDidOccur(
       .initiatePurchase(
-        productId: id,
+        productId: cacheKey,
         shouldDismiss: shouldDismiss
       )
     )
