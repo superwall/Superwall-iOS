@@ -282,43 +282,6 @@ struct ConfigManagerStoreTests {
     #expect(network.getConfigCalled == false)
   }
 
-  @Test("A refresh called during the launch fetch waits for the fetch to finish")
-  func refreshWaitsForFetch() async {
-    let (configManager, network, container) = makeConfigManager()
-    defer { withExtendedLifetime(container) {} }
-    let fetchResponse = ResponseGate()
-    let requests = RequestCounter()
-    network.getConfigHandler = {
-      switch requests.next() {
-      case 1:
-        await fetchResponse.wait()
-        return .stub().setting(\.buildId, to: "fetched")
-      default:
-        return .stub().setting(\.buildId, to: "refreshed")
-      }
-    }
-
-    async let fetch: Void = configManager.fetchConfiguration()
-    for _ in 0..<1_000 where requests.count == 0 {
-      try? await Task.sleep(nanoseconds: 1_000_000)
-    }
-    #expect(requests.count == 1)
-
-    async let refresh: Void = configManager.refreshConfiguration(
-      oldConfig: .stub().setting(\.buildId, to: "old"),
-      isUserInitiated: true
-    )
-    // Give a refresh that didn't wait every chance to send its request.
-    try? await Task.sleep(nanoseconds: 100_000_000)
-    #expect(requests.count == 1)
-
-    await fetchResponse.open()
-    _ = await (fetch, refresh)
-
-    #expect(requests.count == 2)
-    #expect(configManager.config?.buildId == "refreshed")
-  }
-
   @Test("Refreshes called together run one after the other")
   func refreshesAreSerialized() async {
     let (configManager, network, container) = makeConfigManager()
@@ -374,7 +337,7 @@ struct ConfigManagerStoreTests {
 }
 
 /// Holds a request open until it's opened.
-private actor ResponseGate {
+actor ResponseGate {
   private var isOpen = false
   private var waiters: [CheckedContinuation<Void, Never>] = []
 
@@ -396,7 +359,7 @@ private actor ResponseGate {
 }
 
 /// Counts requests across threads.
-private final class RequestCounter: @unchecked Sendable {
+final class RequestCounter: @unchecked Sendable {
   private let lock = NSLock()
   private var _count = 0
 

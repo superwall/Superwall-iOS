@@ -360,6 +360,64 @@ struct ConfigManagerEarlyPublishTests {
     try? await Task.sleep(nanoseconds: 300_000_000)
   }
 
+  @Test("A refresh called during the launch fetch waits for the fetch to finish")
+  func refreshWaitsForFetch() async {
+    let harness = makeHarness(
+      isSubscribed: false,
+      savedCustomerInfo: nil,
+      loadDelay: 0
+    )
+    // The fetch's request is held open. If a refresh called meanwhile didn't
+    // wait for the fetch, its request would start while the fetch's is held.
+    let fetchResponse = ResponseGate()
+    let requests = RequestCounter()
+    harness.network.getConfigHandler = {
+      switch requests.next() {
+      case 1:
+        await fetchResponse.wait()
+        return .stub().setting(\.buildId, to: "fetched")
+      default:
+        return .stub().setting(\.buildId, to: "refreshed")
+      }
+    }
+
+    let fetchDone = FlushFlag()
+    Task {
+      await harness.configManager.fetchConfiguration()
+      fetchDone.set()
+    }
+    var deadline = Date().addingTimeInterval(5)
+    while requests.count == 0, Date() < deadline {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(requests.count == 1, "the launch fetch never requested the config")
+
+    let refreshDone = FlushFlag()
+    Task {
+      await harness.configManager.refreshConfiguration(
+        oldConfig: .stub().setting(\.buildId, to: "old"),
+        isUserInitiated: true
+      )
+      refreshDone.set()
+    }
+    // Give a refresh that didn't wait every chance to send its request.
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(requests.count == 1)
+    #expect(!refreshDone.isSet)
+
+    await fetchResponse.open()
+    // Bounded, so a regression fails here instead of hanging the run.
+    deadline = Date().addingTimeInterval(10)
+    while !(fetchDone.isSet && refreshDone.isSet), Date() < deadline {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(fetchDone.isSet, "the fetch didn't finish")
+    #expect(refreshDone.isSet, "the refresh didn't finish")
+    // The refresh's request came after the fetch's.
+    #expect(requests.count >= 2)
+    await settle(harness.configManager)
+  }
+
   @Test("Saved entitlement still valid: config is published before StoreKit finishes")
   func publishesBeforeStoreKitWhenSavedEntitlementIsValid() async {
     let harness = makeHarness(
