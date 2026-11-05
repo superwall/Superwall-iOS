@@ -43,6 +43,7 @@ private final class Latch: @unchecked Sendable {
 /// config and assignments open.
 private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   let store: IdentityStore
+  let userChangeLock = NSRecursiveLock()
   var seeds: [String: Int] = [:]
   var configLatch: Latch?
   /// Holds every side effect back until it opens, so a test can decide what
@@ -745,6 +746,76 @@ struct IdentityActionTests {
 
     store.update(IdentityUpdate.end(.configuration))
     #expect(reported.value == [false, true])
+  }
+
+  @Test(
+    "A user change on another thread waits for a reset's cleanup to finish",
+    arguments: [true, false]
+  )
+  func userChangeWaitsForResetCleanup(secondIsSwitch: Bool) async {
+    // The first change resets the SDK for its new user and is held during
+    // that cleanup, which wipes storage. A second change on another thread,
+    // either switching users again or logging in after a reset, must not
+    // start restoring its user's data until that wipe is done, or the wipe
+    // would delete it.
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+    let inCleanup = DispatchSemaphore(value: 0)
+    let release = DispatchSemaphore(value: 0)
+    let cleanups = LockedValue(0)
+    context.onResetRestOfSDK = { _ in
+      var count = 0
+      cleanups.mutate {
+        $0 += 1
+        count = $0
+      }
+      if count == 1 {
+        inCleanup.signal()
+        _ = release.wait(timeout: .now() + 5)
+      }
+    }
+
+    let firstDone = DispatchSemaphore(value: 0)
+    Thread {
+      if secondIsSwitch {
+        context.dispatch(identify("user-2", keptAttributes: [:]))
+      } else {
+        context.dispatch(.reset(keptAttributes: [:]))
+      }
+      firstDone.signal()
+    }
+    .start()
+    inCleanup.wait()
+
+    let secondDone = LockedFlag()
+    let secondFinished = DispatchSemaphore(value: 0)
+    Thread {
+      context.dispatch(identify("user-3", keptAttributes: [:]))
+      secondDone.set(true)
+      secondFinished.signal()
+    }
+    .start()
+    // Give a change that didn't wait every chance to run.
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(secondDone.value == false)
+    #expect(context.events.contains("sideEffect") == false)
+
+    release.signal()
+    #expect(firstDone.wait(timeout: .now() + 5) == .success)
+    #expect(secondFinished.wait(timeout: .now() + 5) == .success)
+
+    // The second change's side effects, such as restoring assignments,
+    // started only after every cleanup had wiped storage.
+    let events = context.events
+    let lastCleanup = events.lastIndex(of: "resetRestOfSDK")
+    let lastSideEffects = events.indices.filter { events[$0] == "sideEffect" }.suffix(3)
+    #expect(lastCleanup != nil)
+    #expect(lastSideEffects.count == 3)
+    #expect(lastSideEffects.allSatisfy { $0 > lastCleanup! })
+    #expect(cleanups.value == (secondIsSwitch ? 2 : 1))
+    #expect(context.state.appUserId == "user-3")
+
+    await context.settle()
+    #expect(context.state.isReady)
   }
 
   @Test("An identify and a reset on different threads both finish and leave a consistent identity")

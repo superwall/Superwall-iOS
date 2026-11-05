@@ -14,6 +14,11 @@ typealias IdentityStore = StateStore<IdentityContext, IdentityState>
 protocol IdentityContext: AnyObject {
   var store: IdentityStore { get }
 
+  /// Held while an identify or reset runs, including the cleanup it defers,
+  /// so user changes on different threads run one after another. See
+  /// ``dispatch(_:)``.
+  var userChangeLock: NSRecursiveLock { get }
+
   /// Waits for the config. Returns the seed derived from `userId` if the
   /// config enables user id seeds, or `nil` if it doesn't or never arrives.
   func userIdSeed(for userId: String) async -> Int?
@@ -55,7 +60,20 @@ extension IdentityContext {
   }
 
   /// Runs `action` before returning, so a read straight after sees it.
+  ///
+  /// An identify or reset holds ``userChangeLock`` until its deferred cleanup
+  /// has finished. Otherwise a reset's cleanup, which wipes the user's
+  /// storage once the identity is unlocked, could run after a user change on
+  /// another thread had already restored that user's assignments, and delete
+  /// them. The lock is taken before the identity's, never with it held, so
+  /// don't dispatch an identify or reset from inside an action or observer.
   func dispatch(_ action: IdentityAction) {
+    guard action.changesUser else {
+      store.dispatch(action, in: self)
+      return
+    }
+    userChangeLock.lock()
+    defer { userChangeLock.unlock() }
     store.dispatch(action, in: self)
   }
 }
@@ -79,6 +97,16 @@ enum IdentityAction: StoreAction {
   /// Writes the current identity to storage, for after the storage has been
   /// wiped.
   case persist
+
+  /// Whether this can replace the user, and so starts a reset's cleanup.
+  var changesUser: Bool {
+    switch self {
+    case .identify, .reset:
+      return true
+    case .resolveSeed, .mergeAttributes, .persist:
+      return false
+    }
+  }
 
   func execute(in context: IdentityContext) {
     switch self {
