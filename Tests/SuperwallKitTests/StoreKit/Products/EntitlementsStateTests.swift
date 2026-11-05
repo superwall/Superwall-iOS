@@ -214,6 +214,51 @@ final class EntitlementsInfoStoreTests {
     #expect(readFinished.value)
   }
 
+  /// A publish on another thread can't land between reading the test-mode
+  /// override and applying it, so an older override is never published after
+  /// a newer one.
+  @Test func testModeOverride_isReadWithTheStoreLocked() {
+    let info = makeInfo(isTesting: true)
+    let override = Locked<SubscriptionStatus?>(.inactive)
+    let firstIsReading = DispatchSemaphore(value: 0)
+    let secondReturned = DispatchSemaphore(value: 0)
+    let secondReturnedWhileFirstRead = Locked(false)
+    let firstReturned = DispatchSemaphore(value: 0)
+
+    DispatchQueue.global().async {
+      info.publish(.sdkAssignment(.unknown)) {
+        firstIsReading.signal()
+        // A simulated purchase on another thread changes the override and
+        // publishes. It has to wait for this publish to finish.
+        let returned = secondReturned.wait(timeout: .now() + 0.3) == .success
+        secondReturnedWhileFirstRead.mutate { $0 = returned }
+        return override.value
+      }
+      firstReturned.signal()
+    }
+
+    #expect(firstIsReading.wait(timeout: .now() + 2) == .success)
+    override.mutate { $0 = self.status("simulated") }
+    info.publish(.sdkAssignment(.unknown)) { override.value }
+    secondReturned.signal()
+
+    #expect(firstReturned.wait(timeout: .now() + 2) == .success)
+    #expect(!secondReturnedWhileFirstRead.value)
+    #expect(info.status == status("simulated"))
+  }
+
+  /// However the writers interleave, the last override set is the one
+  /// published.
+  @Test func concurrentOverrideChanges_publishTheLatestOverride() {
+    let info = makeInfo(isTesting: true)
+    let override = Locked<SubscriptionStatus?>(nil)
+    DispatchQueue.concurrentPerform(iterations: 200) { index in
+      override.mutate { $0 = self.status("e\(index)") }
+      info.publish(.sdkAssignment(.inactive)) { override.value }
+    }
+    #expect(info.status == override.value)
+  }
+
   @Test func superwall_activeEntitlementsFollowTheStatus() {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     let received = Locked<[SubscriptionStatus]>([])

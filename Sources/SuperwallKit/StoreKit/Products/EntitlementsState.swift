@@ -7,10 +7,29 @@
 
 import Foundation
 
-/// Holds ``EntitlementsState``. Entitlements have no store actions: every
-/// change is a single ``EntitlementsUpdate``, and saving and publishing are
-/// done by observers.
-typealias EntitlementsStore = StateStore<Void, EntitlementsState>
+/// Holds ``EntitlementsState``. Most changes are a single
+/// ``EntitlementsUpdate``; saving and publishing are done by observers.
+typealias EntitlementsStore = StateStore<EntitlementsInfo, EntitlementsState>
+
+/// Publishes a subscription status change, reading the test-mode override
+/// with the store locked.
+///
+/// Reading it before taking the lock would let a writer read an override,
+/// lose the race for the lock to a writer that read a newer one, and then
+/// publish the older override last. Read with the lock held, the writer that
+/// applies last also read last.
+struct PublishSubscriptionStatus: StoreAction {
+  let change: SubscriptionStatusChange
+  /// Returns the test-mode override, if test mode has one. Runs with the
+  /// store locked, so it must only read values, never wait.
+  let testModeOverride: () -> SubscriptionStatus?
+
+  func execute(in context: EntitlementsInfo) {
+    context.store.update(
+      EntitlementsUpdate.publish(change, testModeOverride: testModeOverride())
+    )
+  }
+}
 
 /// What the SDK knows about the user's entitlements and subscription status.
 /// Changed only by ``EntitlementsUpdate`` reducers on its store.

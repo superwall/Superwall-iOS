@@ -113,8 +113,9 @@ extension Superwall {
   // MARK: - Publishing
 
   /// Records the change and works out the merged status in one update of the
-  /// entitlements store, which saves the assigned value and emits the merged
-  /// one once it's unlocked.
+  /// entitlements store, reading the test-mode override with the store
+  /// locked so a stale override can't be published last. The store saves the
+  /// assigned value and emits the merged one once it's unlocked.
   ///
   /// A developer assignment gets two extra treatments: records identical to a
   /// current grant are stripped, because a developer who reads the published
@@ -123,12 +124,14 @@ extension Superwall {
   /// while active grants exist logs a one-time warning, since the status
   /// publishes as active and otherwise looks ignored.
   func publishSubscriptionStatus(_ change: SubscriptionStatusChange) {
-    var testModeOverride: SubscriptionStatus?
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode {
-      testModeOverride = testModeManager.overriddenSubscriptionStatus
+    let dependencyContainer = dependencyContainer
+    entitlements.publish(change) {
+      if let testModeManager = dependencyContainer.testModeManager,
+        testModeManager.isTestMode {
+        return testModeManager.overriddenSubscriptionStatus
+      }
+      return nil
     }
-    entitlements.publish(change, testModeOverride: testModeOverride)
 
     // When using an external purchase controller, update CustomerInfo.entitlements
     // to reflect the entitlements from the purchase controller.

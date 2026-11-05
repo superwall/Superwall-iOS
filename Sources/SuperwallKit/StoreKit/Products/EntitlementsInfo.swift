@@ -117,6 +117,8 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   // MARK: - Internal API
 
   /// Applies `change` and works out the published status from it.
+  /// `testModeOverride` is called with the store locked, so it must only read
+  /// values, never wait.
   ///
   /// When this returns, ``status`` and ``active`` reflect the change, and any
   /// receiver given to ``publishStatusChanges(to:)`` has been handed the new
@@ -124,9 +126,12 @@ public final class EntitlementsInfo: NSObject, ObservableObject, @unchecked Send
   /// thread hands this one over next.
   func publish(
     _ change: SubscriptionStatusChange,
-    testModeOverride: SubscriptionStatus? = nil
+    testModeOverride: @escaping () -> SubscriptionStatus? = { nil }
   ) {
-    store.update(EntitlementsUpdate.publish(change, testModeOverride: testModeOverride))
+    store.dispatch(
+      PublishSubscriptionStatus(change: change, testModeOverride: testModeOverride),
+      in: self
+    )
   }
 
   func setEntitlementsFromConfig(_ entitlementsByProductId: [String: Set<Entitlement>]) {

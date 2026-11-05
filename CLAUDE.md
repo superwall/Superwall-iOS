@@ -195,8 +195,9 @@ behind itself. Use `enqueue` for follow-up work, as the fetch does for its refre
 the published subscription status, so `Superwall.subscriptionStatus` and `entitlements.active`
 always change together. `active`, `all` and `inactive` are worked out from the state on each read;
 don't store anything derived from the status or from `isActive`, or it can fall behind it. Every
-status write goes through `publishSubscriptionStatus`, which reads the test-mode override before the
-update and passes it in, since a reducer may not read other objects. Observers save changes with the
+status write goes through `publishSubscriptionStatus`, which dispatches `PublishSubscriptionStatus`:
+it reads the test-mode override with the store locked, then hands it to the reducer, so the
+writer that publishes last read the override last. Don't read it before the dispatch. Observers save changes with the
 store locked (storage writes hand off) and emit `$subscriptionStatus` through `OrderedDelivery` once
 it's unlocked. `web` still reads the saved redeem response, outside the store.
 
