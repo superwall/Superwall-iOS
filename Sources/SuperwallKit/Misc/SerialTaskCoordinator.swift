@@ -71,4 +71,31 @@ final class SerialTaskCoordinator: Sendable {
       .value
     }
   }
+
+  /// Adds `operation` to the end of the queue and waits for it to finish.
+  ///
+  /// Don't call this from an operation on the same coordinator: that operation
+  /// would wait on one queued behind it, which never starts, and nothing
+  /// enqueued after it would ever run. Use ``enqueue(_:)`` there instead. A
+  /// `Task` started from an operation may call it, since the operation doesn't
+  /// wait for that task.
+  ///
+  /// Cancelling the caller doesn't stop the wait or the operation: once
+  /// queued, `operation` runs, and this returns when it has finished.
+  func run(_ operation: @escaping Operation) async {
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      enqueue {
+        await operation()
+        continuation.resume()
+      }
+    }
+  }
+
+  /// Waits for everything enqueued so far to finish.
+  ///
+  /// Like ``run(_:)``, don't call this from an operation on the same
+  /// coordinator, and cancelling the caller doesn't stop the wait.
+  func flush() async {
+    await run {}
+  }
 }

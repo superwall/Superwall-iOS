@@ -178,6 +178,16 @@ deferred cleanup (wiping storage and caches) has finished, so user changes on di
 one after another. That cleanup waits on other objects' queues, so nothing those queues run, and no
 action or observer, may call `identify` or `reset`: that would wait on the lock it's already behind.
 
+### Config store
+
+`ConfigManager` keeps the config in a `StateStore` too, changed only by `ConfigUpdate` reducers.
+`configState` is a copy sent to subscribers after the lock is released, so it can briefly lag:
+subscribe to it to hear about changes, but read `configManager.config` (or the factory's
+`currentConfig()`) for the current value. Fetches and refreshes run one at a time on a
+`SerialTaskCoordinator`. An operation on it must never `await` the coordinator's `run` or `flush`,
+directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
+behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.

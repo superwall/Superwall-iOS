@@ -16,6 +16,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
 - Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
 - Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
+- Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
+- Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
 - Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
 - Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
 - Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.

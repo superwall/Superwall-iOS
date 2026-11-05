@@ -23,10 +23,8 @@ extension Superwall {
   ) async throws {
     let dependencyContainer = dependencyContainer ?? self.dependencyContainer
 
-    let configState = dependencyContainer.configManager.configState
-
     // First try to get config. If no config, wait for it.
-    if configState.value.getConfig() == nil {
+    if dependencyContainer.configManager.config == nil {
       do {
         try await dependencyContainer.configManager.configState
           .compactMap { $0.getConfig() }

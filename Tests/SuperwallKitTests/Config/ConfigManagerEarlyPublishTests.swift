@@ -343,9 +343,79 @@ struct ConfigManagerEarlyPublishTests {
     }
   }
 
-  private func settle() async {
-    // Let the background refresh finish before the container goes away.
+  private func settle(_ configManager: ConfigManager) async {
+    // Let the background refresh finish before the container goes away. It's
+    // queued behind the fetch, so wait for the queue, then for anything it
+    // started in the background.
+    let flushed = FlushFlag()
+    Task {
+      await configManager.configTaskCoordinator.flush()
+      flushed.set()
+    }
+    let deadline = Date().addingTimeInterval(5)
+    while !flushed.isSet, Date() < deadline {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(flushed.isSet, "the config refresh queued behind the fetch didn't finish")
     try? await Task.sleep(nanoseconds: 300_000_000)
+  }
+
+  @Test("A refresh called during the launch fetch waits for the fetch to finish")
+  func refreshWaitsForFetch() async {
+    let harness = makeHarness(
+      isSubscribed: false,
+      savedCustomerInfo: nil,
+      loadDelay: 0
+    )
+    // The fetch's request is held open. If a refresh called meanwhile didn't
+    // wait for the fetch, its request would start while the fetch's is held.
+    let fetchResponse = ResponseGate()
+    let requests = RequestCounter()
+    harness.network.getConfigHandler = {
+      switch requests.next() {
+      case 1:
+        await fetchResponse.wait()
+        return .stub().setting(\.buildId, to: "fetched")
+      default:
+        return .stub().setting(\.buildId, to: "refreshed")
+      }
+    }
+
+    let fetchDone = FlushFlag()
+    Task {
+      await harness.configManager.fetchConfiguration()
+      fetchDone.set()
+    }
+    var deadline = Date().addingTimeInterval(5)
+    while requests.count == 0, Date() < deadline {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(requests.count == 1, "the launch fetch never requested the config")
+
+    let refreshDone = FlushFlag()
+    Task {
+      await harness.configManager.refreshConfiguration(
+        oldConfig: .stub().setting(\.buildId, to: "old"),
+        isUserInitiated: true
+      )
+      refreshDone.set()
+    }
+    // Give a refresh that didn't wait every chance to send its request.
+    try? await Task.sleep(nanoseconds: 200_000_000)
+    #expect(requests.count == 1)
+    #expect(!refreshDone.isSet)
+
+    await fetchResponse.open()
+    // Bounded, so a regression fails here instead of hanging the run.
+    deadline = Date().addingTimeInterval(10)
+    while !(fetchDone.isSet && refreshDone.isSet), Date() < deadline {
+      try? await Task.sleep(nanoseconds: 10_000_000)
+    }
+    #expect(fetchDone.isSet, "the fetch didn't finish")
+    #expect(refreshDone.isSet, "the refresh didn't finish")
+    // The refresh's request came after the fetch's.
+    #expect(requests.count >= 2)
+    await settle(harness.configManager)
   }
 
   @Test("Saved entitlement still valid: config is published before StoreKit finishes")
@@ -370,7 +440,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.receipt.didFinishLoad, "fetchConfiguration still waits for the purchases load")
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("While StoreKit loads, purchase state comes from the saved customer info")
@@ -397,7 +467,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.isActive == true)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A second subscription that lapsed since the last launch is restored inactive")
@@ -422,7 +492,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(legacyEntitlements.first?.willRenew == true, "the rest of the saved copy carries over")
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("The restore publishes the lapse-corrected status and customer info")
@@ -451,7 +521,7 @@ struct ConfigManagerEarlyPublishTests {
     guard case .active(let entitlements) = Superwall.shared.subscriptionStatus else {
       Issue.record("expected an active status, got \(Superwall.shared.subscriptionStatus)")
       await fetch.value
-      await settle()
+      await settle(harness.configManager)
       return
     }
     #expect(entitlements.contains { $0.id == "pro" && $0.isActive })
@@ -468,7 +538,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(customerInfo.subscriptions.first { $0.productId == Self.webProductId }?.isActive == true)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("The read replaces everything the restore seeded")
@@ -507,7 +577,7 @@ struct ConfigManagerEarlyPublishTests {
     // The seeded group is gone too, so the upgrade is trial-eligible again.
     #expect(await harness.receiptManager.isFreeTrialAvailable(for: gold) == true)
 
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("Trial eligibility waits for the purchases load that config no longer waits for")
@@ -532,7 +602,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(harness.receipt.didFinishLoad, "eligibility was answered before the load finished")
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A web-only subscriber takes the fast path with no device purchases seeded")
@@ -561,7 +631,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.store == .stripe)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A developer-granted entitlement takes the fast path with nothing else saved")
@@ -591,7 +661,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(silverEntitlements.first?.isActive == true)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A grant survives a saved row with the same id that has lapsed")
@@ -618,7 +688,7 @@ struct ConfigManagerEarlyPublishTests {
     )
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A subscription saved with no expiry is not restored active")
@@ -639,7 +709,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(await harness.receiptManager.isSubscribed(to: Self.legacyProductId) == false)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A lifetime purchase has no expiry and takes the fast path")
@@ -665,7 +735,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(await harness.receiptManager.isSubscribed(to: Self.coinsProductId) == false)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("StoreKit 1 has no saved device rows to restore from, so config waits")
@@ -684,7 +754,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.configManager.config != nil)
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("Saved entitlement still flagged active but past its expiry: config waits")
@@ -703,7 +773,7 @@ struct ConfigManagerEarlyPublishTests {
     await fetch.value
     #expect(harness.receipt.didFinishLoad)
     #expect(harness.configManager.config != nil)
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("An active status on disk with a blank saved customer info is not enough")
@@ -723,7 +793,7 @@ struct ConfigManagerEarlyPublishTests {
 
     await fetch.value
     #expect(harness.configManager.config != nil)
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("Unknown subscriber: purchases still load before config is published")
@@ -742,7 +812,7 @@ struct ConfigManagerEarlyPublishTests {
     await fetch.value
     #expect(harness.receipt.didFinishLoad)
     #expect(harness.configManager.config != nil)
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("A purchase controller takes the fast path too")
@@ -766,7 +836,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(!harness.receipt.didFinishLoad)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 
   @Test("With a purchase controller the restore seeds purchases but leaves the status and customer info alone")
@@ -822,7 +892,7 @@ struct ConfigManagerEarlyPublishTests {
     #expect(Superwall.shared.subscriptionStatus == statusBefore)
 
     await fetch.value
-    await settle()
+    await settle(harness.configManager)
   }
 }
 
@@ -865,5 +935,23 @@ private final class SlowReceiptManagerType: ReceiptManagerType, @unchecked Senda
 
   func isEligibleForIntroOffer(_ storeProduct: StoreProduct) async -> Bool {
     return true
+  }
+}
+
+/// Set once, read from any thread.
+private final class FlushFlag: @unchecked Sendable {
+  private let lock = NSLock()
+  private var value = false
+
+  var isSet: Bool {
+    lock.lock()
+    defer { lock.unlock() }
+    return value
+  }
+
+  func set() {
+    lock.lock()
+    value = true
+    lock.unlock()
   }
 }

@@ -791,6 +791,10 @@ extension DependencyContainer: ConfigStateFactory {
   func makeConfigState() -> CurrentValueSubject<ConfigState, any Error> {
     return configManager.configState
   }
+
+  func currentConfig() -> Config? {
+    return configManager.config
+  }
 }
 
 // MARK: - AppIdFactory

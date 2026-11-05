@@ -695,7 +695,7 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([customEntitlement])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 1)
@@ -730,7 +730,7 @@ struct CustomStoreEntitlementRefreshTests {
     )
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
@@ -750,7 +750,7 @@ struct CustomStoreEntitlementRefreshTests {
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
     // No response: the fetch fails, as it does offline.
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
-    dependencyContainer.configManager.configState.send(completion: .failure(NetworkError.unknown))
+    dependencyContainer.configManager.store.update(ConfigUpdate.failed(NetworkError.unknown))
 
     let result = await superwall.refreshCustomerInfo()
 
@@ -769,7 +769,7 @@ struct CustomStoreEntitlementRefreshTests {
     let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
     // No response: the fetch fails.
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
 
     async let refresh = superwall.refreshCustomerInfo()
     try? await Task.sleep(nanoseconds: 100_000_000)
@@ -797,7 +797,7 @@ struct CustomStoreEntitlementRefreshTests {
 
     async let pending = superwall.getCustomerInfo()
     try? await Task.sleep(nanoseconds: 100_000_000)
-    dependencyContainer.configManager.configState.send(completion: .failure(NetworkError.unknown))
+    dependencyContainer.configManager.store.update(ConfigUpdate.failed(NetworkError.unknown))
     let result = await pending
 
     #expect(result.isPlaceholder)
@@ -830,7 +830,7 @@ struct CustomStoreEntitlementRefreshTests {
     network.getEntitlementsResponse = entitlementsResponse([Entitlement(id: "pro", isActive: true)])
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
 
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     let customerInfo = await superwall.refreshCustomerInfo()
 
     #expect(network.getEntitlementsCallCount == 0)
@@ -850,7 +850,7 @@ struct CustomStoreEntitlementRefreshTests {
     try? await Task.sleep(nanoseconds: 100_000_000)
     // Config arrives and turns test mode on.
     turnOnTestMode()
-    dependencyContainer.configManager.configState.send(.retrieved(.stub()))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
     _ = await refresh.value
 
     #expect(network.getEntitlementsCallCount == 0)
