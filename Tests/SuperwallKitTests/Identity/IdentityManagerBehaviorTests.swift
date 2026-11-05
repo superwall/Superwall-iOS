@@ -6,6 +6,7 @@
 //
 // swiftlint:disable all
 
+import Combine
 import Foundation
 import Testing
 @testable import SuperwallKit
@@ -324,6 +325,48 @@ struct IdentityManagerBehaviorTests {
       return
     }
     #expect(try await emitted.value == true)
+  }
+
+  @Test("hasIdentity ignores a ready value the identity has already moved past")
+  func hasIdentityIgnoresStaleReadiness() async {
+    let harness = Harness()
+    defer { withExtendedLifetime(harness) {} }
+    harness.storage.neverCalledStaticConfig = false
+    await harness.identityManager.configure()
+    guard await eventually({ harness.identityManager.identitySubject.value }) else {
+      Issue.record("the identity never became ready")
+      return
+    }
+    let identityManager = harness.identityManager
+    var received: [Bool] = []
+    var subjectWasStale = false
+    var cancellable: AnyCancellable?
+    identityManager.store.observe { [weak identityManager] before, after in
+      guard
+        let identityManager = identityManager,
+        before.isReady,
+        !after.isReady,
+        cancellable == nil
+      else {
+        return
+      }
+      // The identity has just stopped being ready, but the subject hears about
+      // it only once the store is unlocked. A subscriber arriving now, as a
+      // paywall presentation on another thread could, sees the old `true`.
+      subjectWasStale = identityManager.identitySubject.value
+      cancellable = identityManager.hasIdentity.sink(
+        receiveCompletion: { _ in },
+        receiveValue: { received.append($0) }
+      )
+    }
+
+    identityManager.store.update(IdentityUpdate.begin(.configuration))
+    #expect(subjectWasStale)
+    #expect(received.isEmpty)
+
+    identityManager.store.update(IdentityUpdate.end(.configuration))
+    #expect(received == [true])
+    cancellable?.cancel()
   }
 
   // MARK: - Identify

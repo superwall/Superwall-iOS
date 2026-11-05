@@ -90,7 +90,13 @@ class IdentityManager: IdentityContext {
   /// it means the SDK is ready to fire triggers.
   var hasIdentity: AnyPublisher<Bool, Error> {
     identitySubject
-      .filter { $0 == true }
+      // Readiness reaches the subject once the store is unlocked, so while a
+      // change is being applied the subject can still say ready. A `true` only
+      // counts if the identity is still ready. If it isn't, the subject hears
+      // `false` and then `true` again once it is.
+      .filter { [weak self] isReady in
+        isReady && self?.store.state.isReady == true
+      }
       .setFailureType(to: Error.self)
       .eraseToAnyPublisher()
   }
