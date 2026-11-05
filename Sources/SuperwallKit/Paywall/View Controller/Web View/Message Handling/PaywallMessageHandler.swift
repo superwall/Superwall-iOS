@@ -19,7 +19,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   var paywall: Paywall { get set }
   var info: PaywallInfo { get }
   var webView: SWWebView { get }
-  var loadingState: PaywallLoadingState { get set }
+  var loadingState: PaywallLoadingState { get }
   var isActive: Bool { get }
 
   func eventDidOccur(_ paywallWebEvent: PaywallWebEvent)
@@ -39,6 +39,7 @@ protocol PaywallMessageHandlerDelegate: AnyObject {
   func handleStripeCheckoutAbandon(checkoutContextId: String, productId: String)
   func handleCustomStoreCheckout(_ checkout: CustomStoreCheckout)
   func revealWebViewBehindSpinner()
+  func setLoadingState(_ loadingState: PaywallLoadingState)
 }
 
 @MainActor
@@ -535,7 +536,7 @@ final class PaywallMessageHandler: WebEventDelegate {
             // but keep the spinner visible until the poll finishes.
             delegate.revealWebViewBehindSpinner()
           } else {
-            delegate.loadingState = .ready
+            delegate.setLoadingState(.ready)
           }
         }
       }

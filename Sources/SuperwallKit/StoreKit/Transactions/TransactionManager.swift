@@ -380,7 +380,7 @@ final class TransactionManager {
     switch restoreSource {
     #if canImport(WebKit)
     case .internal(let paywallViewController):
-      paywallViewController.loadingState = .loadingPurchase
+      paywallViewController.setLoadingState(.loadingPurchase)
 
       await logAndTrack(
         state: .start,
@@ -743,7 +743,7 @@ final class TransactionManager {
 
       if customStoreCheckoutTransactionId == nil {
         await MainActor.run {
-          paywallViewController.loadingState = .loadingPurchase
+          paywallViewController.setLoadingState(.loadingPurchase)
         }
       }
     #endif
@@ -1020,7 +1020,7 @@ final class TransactionManager {
       }
 
       await MainActor.run {
-        paywallViewController.loadingState = .ready
+        paywallViewController.setLoadingState(.ready)
       }
     #endif
     case .purchaseFunc,

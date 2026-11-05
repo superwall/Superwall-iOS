@@ -188,6 +188,20 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Paywall view store
+
+`PaywallViewController` keeps its paywall, request, claims, loading state and presentation,
+dismissal and checkout flags in a `PaywallViewStore`, changed only by `PaywallViewUpdate` reducers.
+Views, timers, tasks, continuations and other UIKit/AppKit objects stay on the view controller.
+Nothing in a reducer or store observer touches UIKit or waits on the main thread: the loading state
+observer hands changes to an `OrderedDelivery`, delivered on the main thread once the store is
+unlocked, which sets the public `@Published loadingState`, updates the loading views and tells the
+delegate. That property is a mirror and can briefly lag the store while a change is being
+published, so SDK code reads `viewState.loadingState` to decide things and changes it with
+`setLoadingState(_:)` (or `togglePaywallSpinner`/`endManualLoading()` for conditional changes),
+never by assigning the property. Every loading state write bumps `loadingStatePublications`, so
+setting the same state again is still published, as it always was.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.

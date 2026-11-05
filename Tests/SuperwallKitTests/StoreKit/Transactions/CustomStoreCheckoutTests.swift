@@ -292,7 +292,7 @@ struct CustomStoreCheckoutTests {
   func start_tracksTransactionStart() async throws {
     let (checkoutHandler, product) = await makeCheckoutHandler()
     let (paywallVc, _) = makePaywall()
-    paywallVc.loadingState = .ready
+    paywallVc.setLoadingState(.ready)
 
     await checkoutHandler.handle(
       .start(productId: productId, customTransactionId: serverTransactionId),

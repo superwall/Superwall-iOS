@@ -129,4 +129,8 @@ final class PaywallMessageHandlerDelegateMock: PaywallMessageHandlerDelegate {
   }
 
   func revealWebViewBehindSpinner() {}
+
+  func setLoadingState(_ loadingState: SuperwallKit.PaywallLoadingState) {
+    self.loadingState = loadingState
+  }
 }
