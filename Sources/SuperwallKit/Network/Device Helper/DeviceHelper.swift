@@ -1224,8 +1224,12 @@ class DeviceHelper {
     return false
   }
 
+  private var isEventTrackingOff: Bool {
+    return factory.makeSuperwallOptions().eventTrackingBehavior == .none
+  }
+
   private func isEnrichmentBlockedByTracking() -> Bool {
-    if factory.makeSuperwallOptions().eventTrackingBehavior == .none {
+    if isEventTrackingOff {
       Logger.debug(
         logLevel: .debug,
         scope: .network,
@@ -1246,7 +1250,8 @@ class DeviceHelper {
   /// Fetches enrichment, such as the demand score, for the user and device.
   ///
   /// Skipped while `eventTrackingBehavior` is ``EventTrackingBehavior/none``,
-  /// because the request posts the user and device attributes. It runs again on
+  /// because the request posts the user and device attributes, and the request
+  /// isn't sent if the app opts out while it waits or retries. It runs again on
   /// the next config refresh or when the app opts back in.
   func getEnrichment(
     maxRetry: Int? = nil,
@@ -1265,11 +1270,21 @@ class DeviceHelper {
       user: JSON(identityManager.userAttributes),
       device: JSON(deviceAttributes)
     )
-    enrichment = try await network.getEnrichment(
-      request: request,
-      maxRetry: maxRetry,
-      timeout: timeout
-    )
+    let response: Enrichment
+    do {
+      response = try await network.getEnrichment(
+        request: request,
+        maxRetry: maxRetry,
+        timeout: timeout
+      )
+    } catch NetworkError.trackingDisabled {
+      return
+    }
+    // A reply that arrives after the app opts out isn't used.
+    if isEnrichmentBlockedByTracking() {
+      return
+    }
+    enrichment = response
 
     $enrichment.withSnapshot { enrichment in
       if let enrichment = enrichment {
@@ -1372,9 +1387,13 @@ class DeviceHelper {
         : JSONEncoder()
     )
 
-    let enrichmentDict: [String: Any] = $enrichment.withSnapshot { enrichment in
-      enrichment?.device.dictionaryObject ?? [:]
-    }
+    // Enrichment fetched before the app opted out, or restored from disk, isn't
+    // used while tracking is off.
+    let enrichmentDict: [String: Any] = isEventTrackingOff
+      ? [:]
+      : $enrichment.withSnapshot { enrichment in
+        enrichment?.device.dictionaryObject ?? [:]
+      }
     // Merge in enrichment dictionary, giving priority to
     // the existing values.
     deviceDictionary.merge(enrichmentDict) { current, _ in current }
