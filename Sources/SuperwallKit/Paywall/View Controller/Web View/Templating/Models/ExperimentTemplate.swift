@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 09/05/2025.
 //
 
+#if canImport(WebKit)
 struct ExperimentTemplate: Codable {
   var eventName = "experiment"
 
@@ -19,3 +20,4 @@ struct ExperimentTemplate: Codable {
     case campaignId
   }
 }
+#endif

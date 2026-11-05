@@ -39,6 +39,7 @@ public extension UNUserNotificationCenter {
     }
   }
 
+  #if !os(tvOS)
   /// Removes all of Superwall's delivered notifications from Notification Center.
   ///
   /// Use this method to remove all of your app’s delivered notifications from Notification Center while keeping Superwall's
@@ -72,4 +73,5 @@ public extension UNUserNotificationCenter {
       UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: nonSuperwallIds)
     }
   }
+  #endif
 }

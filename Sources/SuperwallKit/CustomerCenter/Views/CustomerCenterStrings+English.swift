@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Minimal string provider so logic/tests don't depend on bundles.
@@ -121,3 +122,4 @@ let englishStrings: [String: String] = [
   "customer_center_support_body": "Please describe your issue or question.",
   "customer_center_no_mail_app": "No mail app is configured on this device. You can reach us at %@."
 ]
+#endif

@@ -16,6 +16,9 @@ final class NetworkMock: Network {
   var assignmentsConfirmed = false
   var assignments: [PostbackAssignment] = []
   var configReturnValue: Result<Config, Error> = .success(.stub())
+  /// When set, `getConfig` returns what this returns instead of
+  /// `configReturnValue`, so a test can hold a request open.
+  var getConfigHandler: (() async throws -> Config)?
   var getWebEntitlementsResponse: RedeemResponse?
   var getEntitlementsResponse: EntitlementsResponse?
   /// Returned in order, one per call, before falling back to `getEntitlementsResponse`.
@@ -52,6 +55,9 @@ final class NetworkMock: Network {
     timeout: Seconds? = nil
   ) async throws -> Config {
     getConfigCalled = true
+    if let getConfigHandler = getConfigHandler {
+      return try await getConfigHandler()
+    }
 
     switch configReturnValue {
     case .success(let success):

@@ -4,6 +4,7 @@
 //
 //  Created by Claude on 2026-02-09.
 //
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -303,4 +304,5 @@ extension TestModeRestoreViewController: UIAdaptivePresentationControllerDelegat
     }
   }
 }
+#endif
 #endif

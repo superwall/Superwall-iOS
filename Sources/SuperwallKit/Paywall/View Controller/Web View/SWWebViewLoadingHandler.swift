@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 27/06/2024.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 protocol SWWebViewLoadingDelegate: AnyObject {
@@ -129,3 +130,4 @@ final class SWWebViewLoadingHandler {
     await Superwall.shared.track(webviewLoad)
   }
 }
+#endif

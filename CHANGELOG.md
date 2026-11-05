@@ -4,9 +4,23 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 
 ## 4.19.1
 
+### Enhancements
+
+- Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
+
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+- Fixes setting a `$`-prefixed attribute from a paywall deleting the existing attribute with the same name. Keys beginning with `$` are reserved, so they're now ignored.
+- Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
+- Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
+- Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
+- Fixes `reset()`, and `identify(userId:)` switching user, sending several `user_attributes` events for one change. The new user's Apple Search Ads, MMP and install-scoped integration attributes are now in place when the call returns.
+- Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
+- Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
+- Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
+- Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
+- Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
 - Fixes a paywall showing and charging the wrong billing plan when the same App Store product is sold on both the up-front and monthly plans, on one paywall or across paywalls. Each paywall slot now keeps its own plan. Product identifiers are unchanged.
 
 ## 4.19.0

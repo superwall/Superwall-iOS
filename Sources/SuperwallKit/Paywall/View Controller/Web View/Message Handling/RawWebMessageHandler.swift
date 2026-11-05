@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 03/03/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 import WebKit
 
@@ -84,3 +85,4 @@ final class RawWebMessageHandler: NSObject, WKScriptMessageHandler {
     }
   }
 }
+#endif

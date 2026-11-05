@@ -5,6 +5,7 @@
 //  Created by Jake Mor on 11/13/21.
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import Foundation
 import UIKit
@@ -109,4 +110,5 @@ extension SWLocalizationViewController: UISearchBarDelegate {
 		tableView.reloadData()
 	}
 }
+#endif
 #endif

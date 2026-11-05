@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 /// Navigation behaviour of ``CustomerCenterView``.
@@ -239,3 +240,4 @@ public struct CustomerCenterView: View {
 
   private var themeAccent: Color? { theme.accent }
 }
+#endif

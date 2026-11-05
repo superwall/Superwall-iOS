@@ -6,6 +6,7 @@
 //
 // swiftlint:disable implicitly_unwrapped_optional function_body_length
 
+#if canImport(WebKit)
 import Foundation
 import WebKit
 
@@ -354,3 +355,4 @@ extension SWWebView: WKNavigationDelegate {
     }
   }
 }
+#endif

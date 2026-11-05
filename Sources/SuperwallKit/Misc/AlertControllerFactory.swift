@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 12/10/2022.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -100,4 +101,5 @@ enum AlertControllerFactory {
     return alertController
   }
 }
+#endif
 #endif

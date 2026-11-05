@@ -95,11 +95,13 @@ public final class Superwall: NSObject, ObservableObject {
         }
       }
 
+      #if canImport(WebKit)
       let behavior = newValue
       Task { @MainActor [weak self] in
         self?.paywallViewController?.webView.messageHandler
           .passEventTrackingBehaviorToWebView(behavior)
       }
+      #endif
 
       // When opting out entirely, don't emit the config-attributes event. It
       // races the `setTrackingBehavior(.none)` Task above, so a flush could
@@ -232,15 +234,23 @@ public final class Superwall: NSObject, ObservableObject {
     return dependencyContainer.identityManager.isLoggedIn
   }
 
+  #if canImport(WebKit)
   /// The presented paywall view controller.
   public var presentedViewController: PlatformViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
+  #endif
 
   /// The ``PaywallInfo`` object of the most recently presented view controller.
+  ///
+  /// Always `nil` on watchOS and tvOS, which can't show paywalls.
   public var latestPaywallInfo: PaywallInfo? {
+    #if canImport(WebKit)
     let presentedPaywallInfo = dependencyContainer.paywallManager.presentedViewController?.info
     return presentedPaywallInfo ?? presentationItems.paywallInfo
+    #else
+    return nil
+    #endif
   }
 
   /// A published property that indicates the configuration status of the SDK.
@@ -458,10 +468,12 @@ public final class Superwall: NSObject, ObservableObject {
   // MARK: - Non-public Properties
   private static var superwall: Superwall?
 
+  #if canImport(WebKit)
   /// The presented paywall view controller.
   var paywallViewController: PaywallViewController? {
     return dependencyContainer.paywallManager.presentedViewController
   }
+  #endif
 
   /// A convenience variable to access and change the paywall options that you passed
   /// to ``configure(apiKey:purchaseController:options:completion:)-52tke``.
@@ -477,7 +489,11 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Determines whether a paywall is being presented.
   public var isPaywallPresented: Bool {
-    paywallViewController != nil
+    #if canImport(WebKit)
+    return paywallViewController != nil
+    #else
+    return false
+    #endif
   }
 
   /// Handles all dependencies.
@@ -550,6 +566,7 @@ public final class Superwall: NSObject, ObservableObject {
   init(dependencyContainer: DependencyContainer = DependencyContainer()) {
     self.dependencyContainer = dependencyContainer
     super.init()
+    dependencyContainer.identityManager.resetHandler = self
   }
 
   private convenience init(
@@ -619,8 +636,13 @@ public final class Superwall: NSObject, ObservableObject {
           if dependencyContainer.configManager.options.eventTrackingBehavior == .none {
             return nil
           }
+          #if canImport(WebKit)
           let advertiserTrackingEnabled =
             dependencyContainer.permissionHandler.checkTrackingPermission() == .granted
+          #else
+          // Install matching doesn't run on watchOS or tvOS.
+          let advertiserTrackingEnabled = false
+          #endif
 
           // We deliberately fire the match once and don't retry after ATT is
           // granted: the backend matches on IP + device fingerprint + time decay,
@@ -662,7 +684,7 @@ public final class Superwall: NSObject, ObservableObject {
     listenToCustomerInfo()
   }
 
-  private func listenToConfig() {
+  func listenToConfig() {
     dependencyContainer.configManager.configState
       .receive(on: DispatchQueue.main)
       .subscribe(
@@ -1222,6 +1244,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// - Parameters:
   ///   - isHidden: Toggles the paywall loading spinner on and off.
   public func togglePaywallSpinner(isHidden: Bool) {
+    #if canImport(WebKit)
     Task { @MainActor in
       guard let paywallViewController = dependencyContainer.paywallManager.presentedViewController
       else {
@@ -1229,6 +1252,7 @@ public final class Superwall: NSObject, ObservableObject {
       }
       paywallViewController.togglePaywallSpinner(isHidden: isHidden)
     }
+    #endif
   }
 
   // MARK: - Reset
@@ -1239,58 +1263,7 @@ public final class Superwall: NSObject, ObservableObject {
   /// its lifecycle. Set it again immediately after calling this if the next
   /// user shouldn't inherit the previous user's granted entitlements.
   public func reset() {
-    reset(duringIdentify: false)
-  }
-
-  /// Asynchronously resets. Presentation of paywalls is suspended until reset completes.
-  ///
-  /// When `duringIdentify` is true this runs on the identity manager's queue,
-  /// so nothing it calls may wait on that queue, such as reading
-  /// `identityManager.userAttributes`, or the queue hangs for good.
-  func reset(duringIdentify: Bool) {
-    // Warn here rather than in the public reset() so the identify-triggered
-    // reset — the actual user-switch moment — warns too.
-    if !grantedEntitlements.isEmpty {
-      Logger.debug(
-        logLevel: .warn,
-        scope: .grantedEntitlements,
-        message: "The user was reset but grantedEntitlements persist across reset() "
-          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
-      )
-    }
-    dependencyContainer.identityManager.reset(duringIdentify: duringIdentify)
-    // Cancel any in-flight attribution post before wiping its storage, so a
-    // late-completing post can't race the new user's state.
-    dependencyContainer.attributionPoster.cancelInFlight()
-    dependencyContainer.storage.reset()
-
-    // ASA attribution is install-scoped, so re-apply the cached campaign
-    // dict to the new user's attributes after the wipe. AdServices state
-    // itself lives in app-specific storage and is preserved through reset.
-    dependencyContainer.attributionPoster.reapplyCachedAttribution()
-
-    // MMP install attribution is likewise install-scoped. Re-apply the cached
-    // `acquisition_*` payload to the new user rather than re-running the match
-    // — the backend match only succeeds within the 7-day install window, so a
-    // logout after that would otherwise leave the new user without attributes.
-    dependencyContainer.mmpAttributionManager.reapplyCachedAcquisitionAttributes()
-
-    // Integration attributes are part install-scoped, part tied to the person
-    // signing out, and the reset just wiped them out of the user's attributes
-    // and off disk. Keep the install-scoped half for the new user, drop the rest.
-    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
-    resetEnqueuedIntegrationAttributes()
-
-    dependencyContainer.paywallManager.resetCache()
-    presentationItems.reset()
-    Task {
-      await dependencyContainer.configManager.reset()
-      await Superwall.shared.track(InternalSuperwallEvent.Reset())
-
-      #if os(iOS) || os(macOS) || os(visionOS)
-        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
-      #endif
-    }
+    dependencyContainer.identityManager.reset()
   }
 
   // MARK: - External Purchasing
@@ -1553,6 +1526,10 @@ public final class Superwall: NSObject, ObservableObject {
 
   /// Gets the latest ``CustomerInfo``.
   ///
+  /// If the customer info hasn't loaded yet, this waits for it. If the SDK can't
+  /// load it, because configuration failed, or the calling task is cancelled,
+  /// this returns the current, empty ``customerInfo``.
+  ///
   /// - Returns: A ``CustomerInfo`` object.
   public func getCustomerInfo() async -> CustomerInfo {
     // If we already have a non-placeholder customerInfo, return it immediately
@@ -1560,17 +1537,23 @@ public final class Superwall: NSObject, ObservableObject {
       return customerInfo
     }
 
-    // Otherwise, await the first non-placeholder emission from the publisher
-    return await withCheckedContinuation { continuation in
-      var cancellable: AnyCancellable?
-      cancellable = $customerInfo
-        .removeDuplicates()
-        .filter { !$0.isPlaceholder }
-        .sink { newInfo in
-          continuation.resume(returning: newInfo)
-          cancellable?.cancel()
-        }
-    }
+    // The device's customer info loads once config is retrieved, so it never
+    // arrives if config fails.
+    let configFailed = dependencyContainer.configManager.configState
+      .ignoreOutput()
+      .map { _ -> CustomerInfo? in nil }
+      .catch { _ in Just(nil) }
+    let loaded = $customerInfo
+      .filter { !$0.isPlaceholder }
+      .map { Optional($0) }
+
+    // The stream ends early if the waiting task is cancelled.
+    do {
+      for try await newInfo in loaded.merge(with: configFailed).values {
+        return newInfo ?? customerInfo
+      }
+    } catch {}
+    return customerInfo
   }
 
   /// Gets the latest ``CustomerInfo``.
@@ -1591,8 +1574,8 @@ public final class Superwall: NSObject, ObservableObject {
   /// product sold through your own checkout, and you want the device to reflect it now.
   ///
   /// The fetched entitlements update ``customerInfo`` and ``entitlements``. If the fetch
-  /// fails, this returns the current ``customerInfo``. In test mode, nothing is fetched
-  /// and the test mode customer info is returned.
+  /// fails, this returns the same as ``getCustomerInfo()``. In test mode, nothing is
+  /// fetched and the test mode customer info is returned.
   ///
   /// - Note: The SDK already refreshes entitlements after a custom product purchase that
   /// your ``PurchaseController`` reports as `.purchased`.
@@ -1604,11 +1587,8 @@ public final class Superwall: NSObject, ObservableObject {
     _ = try? await dependencyContainer.configManager.configState
       .compactMap { $0.getConfig() }
       .throwableAsync()
-    if dependencyContainer.testModeManager?.isTestMode != true,
-      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements() == nil {
-      // The fetch failed. `getCustomerInfo()` would wait for customer info that,
-      // on a first launch without a connection, never arrives.
-      return customerInfo
+    if dependencyContainer.testModeManager?.isTestMode != true {
+      await dependencyContainer.webEntitlementRedeemer.refreshWebEntitlements()
     }
     return await getCustomerInfo()
   }
@@ -1629,6 +1609,7 @@ public final class Superwall: NSObject, ObservableObject {
 }
 
 // MARK: - PaywallViewControllerDelegate
+#if canImport(WebKit)
 extension Superwall: PaywallViewControllerEventDelegate {
   @MainActor
   // swiftlint:disable:next function_body_length
@@ -1743,5 +1724,81 @@ extension Superwall: PaywallViewControllerEventDelegate {
       purchaseTask = nil
     }
     await purchaseTask?.value
+  }
+}
+#endif
+
+// MARK: - IdentityResetHandling
+extension Superwall: IdentityResetHandling {
+  func attributesKeptAcrossReset() -> [String: Any?] {
+    Self.attributesKeptAcrossReset(
+      adServicesAttribution: dependencyContainer.attributionPoster.cachedAttribution(),
+      acquisitionAttributes: dependencyContainer.mmpAttributionManager.cachedAcquisitionAttributes(),
+      integrationAttributes: dependencyContainer.attributionFetcher.integrationAttributesKeptAcrossReset()
+    )
+  }
+
+  /// Combines what a new user keeps across a reset, cleaned as
+  /// `setUserAttributes(_:)` cleans attributes. Later sources win a clash.
+  ///
+  /// - Parameters:
+  ///   - adServicesAttribution: The cached ASA attribution. Install-scoped;
+  ///     AdServices state lives in app-specific storage and survives a reset.
+  ///   - acquisitionAttributes: The cached MMP `acquisition_*` payload, also
+  ///     install-scoped. The new user gets it rather than a new match: the
+  ///     backend only matches within the 7-day install window, so a logout
+  ///     after that would otherwise leave the new user without attributes.
+  ///   - integrationAttributes: The install-scoped half of the integration
+  ///     attributes and the device identifiers. The other half describes the
+  ///     person signing out.
+  static func attributesKeptAcrossReset(
+    adServicesAttribution: [String: Any],
+    acquisitionAttributes: [String: Any],
+    integrationAttributes: [String: Any?]
+  ) -> [String: Any?] {
+    var kept: [String: Any?] = [:]
+    for (key, value) in adServicesAttribution {
+      kept[key] = value
+    }
+    for (key, value) in acquisitionAttributes {
+      kept[key] = value
+    }
+    for (key, value) in integrationAttributes {
+      kept[key] = value
+    }
+    return sanitizedUserAttributes(kept)
+  }
+
+  func identityDidReset() {
+    if !grantedEntitlements.isEmpty {
+      Logger.debug(
+        logLevel: .warn,
+        scope: .grantedEntitlements,
+        message: "The user was reset but grantedEntitlements persist across reset() "
+          + "and identify(). Set grantedEntitlements again if the new user shouldn't inherit them."
+      )
+    }
+    // Cancel any in-flight attribution post before wiping its storage, so a
+    // late-completing post can't race the new user's state.
+    dependencyContainer.attributionPoster.cancelInFlight()
+    dependencyContainer.storage.reset()
+
+    // Drops the person-scoped integration attributes and saves the rest
+    // again, since the wipe above deleted them from disk.
+    dependencyContainer.attributionFetcher.resetIntegrationAttributes()
+    resetEnqueuedIntegrationAttributes()
+
+    #if canImport(WebKit)
+    dependencyContainer.paywallManager.resetCache()
+    #endif
+    presentationItems.reset()
+    Task {
+      await dependencyContainer.configManager.reset()
+      await Superwall.shared.track(InternalSuperwallEvent.Reset())
+
+      #if os(iOS) || os(macOS) || os(visionOS)
+        await dependencyContainer.attributionPoster.getAdServicesTokenIfNeeded()
+      #endif
+    }
   }
 }

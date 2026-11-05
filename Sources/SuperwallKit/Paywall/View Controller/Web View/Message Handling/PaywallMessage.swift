@@ -6,6 +6,7 @@
 //
 // swiftlint:disable function_body_length file_length
 
+#if canImport(WebKit)
 import Foundation
 
 /*
@@ -35,11 +36,6 @@ struct PayloadMessages: Decodable {
   private enum CodingKeys: String, CodingKey {
     case messages = "events"
   }
-}
-
-enum ReviewType: String, Decodable {
-  case inApp = "in-app"
-  case external
 }
 
 // swiftlint:disable:next type_body_length
@@ -416,3 +412,4 @@ enum PaywallMessage: Decodable, Equatable {
     throw PaywallMessageError.decoding("Whoops! \(dump(values))")
   }
 }
+#endif

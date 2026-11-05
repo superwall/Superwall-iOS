@@ -30,8 +30,7 @@ struct IdentityManagerTests {
     // When
     identityManager.mergeUserAttributesAndNotify(["testKey": "testValue"])
 
-    // Then - wait for async operation
-    try await Task.sleep(nanoseconds: 500_000_000)
+    // Then: merges apply before they return.
 
     #expect(notifiedAttributes != nil, "notifyUserChange should have been called")
     #expect(notifiedAttributes?["testKey"] as? String == "testValue")
@@ -56,8 +55,7 @@ struct IdentityManagerTests {
     // When
     identityManager.mergeUserAttributes(["testKey": "testValue"])
 
-    // Then - wait for async operation
-    try await Task.sleep(nanoseconds: 500_000_000)
+    // Then: merges apply before they return.
 
     #expect(notifyCallCount == 0, "notifyUserChange should NOT have been called for regular mergeUserAttributes")
   }
@@ -80,11 +78,9 @@ struct IdentityManagerTests {
 
     // First set some initial attributes
     identityManager.mergeUserAttributes(["existingKey": "existingValue"])
-    try await Task.sleep(nanoseconds: 300_000_000)
 
     // When - add new attributes via mergeUserAttributesAndNotify
     identityManager.mergeUserAttributesAndNotify(["newKey": "newValue"])
-    try await Task.sleep(nanoseconds: 300_000_000)
 
     // Then - callback should receive merged attributes
     #expect(notifiedAttributes != nil)

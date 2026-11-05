@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 07/03/2022.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 enum PaywallWebEvent: Equatable {
@@ -33,3 +34,4 @@ enum PaywallWebEvent: Equatable {
     variables: JSON?
   )
 }
+#endif

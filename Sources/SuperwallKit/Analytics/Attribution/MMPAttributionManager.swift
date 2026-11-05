@@ -25,8 +25,8 @@ enum MMPMatchError: Error {
 /// mirroring how `AttributionPoster` owns the Apple Search Ads flow.
 final class MMPAttributionManager {
   // The install-matching backend currently accepts only iOS and Android.
-  // Do not send native Mac installs into the iOS attribution pool.
-  #if os(macOS)
+  // Do not send native Mac, watch or TV installs into the iOS attribution pool.
+  #if os(macOS) || os(watchOS) || os(tvOS)
   static let isSupported = false
   #else
   static let isSupported = true
@@ -216,9 +216,8 @@ final class MMPAttributionManager {
       )
 
       if let acquisitionAttributes = response.acquisitionAttributes {
-        // Cache the resolved payload (install-scoped) so it can be re-applied
-        // to a new user's attributes after `reset(duringIdentify:)` without
-        // re-matching against the backend.
+        // Cache the resolved payload (install-scoped) so a reset can hand it
+        // to the new user without re-matching against the backend.
         storage.save(acquisitionAttributes, forType: MMPAcquisitionDataStorage.self)
         mergeAcquisitionAttributesIfNeeded(acquisitionAttributes)
       }
@@ -262,24 +261,15 @@ final class MMPAttributionManager {
     }
   }
 
-  /// Re-applies the cached MMP `acquisition_*` payload to the current user's
-  /// attributes. Called from `reset(duringIdentify:)` after user files are
-  /// wiped so the new user identity inherits the install-scoped attribution
-  /// without re-matching against the backend (which only succeeds within the
-  /// 7-day install window). No-op if no match ever resolved.
-  func reapplyCachedAcquisitionAttributes() {
+  /// The cached MMP `acquisition_*` payload, as user attributes. It's
+  /// install-scoped, so a reset hands it to the new user without re-matching
+  /// against the backend, which only succeeds within the 7-day install
+  /// window. Empty if no match ever resolved.
+  func cachedAcquisitionAttributes() -> [String: Any] {
     guard let cached = storage.get(MMPAcquisitionDataStorage.self) else {
-      return
+      return [:]
     }
-    let attributes = convertJSONToDictionary(attribution: cached)
-    if attributes.isEmpty {
-      return
-    }
-    // Merged without checking the current attributes first. The reset just
-    // wiped them, so there is nothing to compare against, and on the
-    // `identify()` path this runs on the identity manager's queue, where
-    // reading `userAttributes` would wait on that same queue and hang it.
-    Superwall.shared.setUserAttributes(attributes)
+    return convertJSONToDictionary(attribution: cached)
   }
 
   private func mergeAcquisitionAttributesIfNeeded(_ acquisitionAttributes: [String: JSON]) {
