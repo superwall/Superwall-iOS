@@ -37,7 +37,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   private let storeKitManager: StoreKitManager
   private let receiptManager: ReceiptManager
   private let identityManager: IdentityManager
-  private let storage: Storage
+  private let observerModeTracker: ObserverModeTracker
   private let factory:
     HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
@@ -54,7 +54,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     receiptManager: ReceiptManager,
     identityManager: IdentityManager,
     coordinator: PurchasingCoordinator,
-    storage: Storage,
+    observerModeTracker: ObserverModeTracker,
     factory: HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
@@ -64,7 +64,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
     self.identityManager = identityManager
-    self.storage = storage
+    self.observerModeTracker = observerModeTracker
     self.factory = factory
     self.shouldFinishTransaction = shouldFinishTransactions
 
@@ -166,15 +166,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     _ queue: SKPaymentQueue,
     removedTransactions transactions: [SKPaymentTransaction]
   ) {
-    var storedIds = storage.get(PurchasingProductIds.self) ?? []
-    for transaction in transactions {
-      if let id = storedIds.first(where: {
-        $0 == transaction.payment.productIdentifier
-      }) {
-        storedIds.remove(id)
-      }
-    }
-    storage.save(storedIds, forType: PurchasingProductIds.self)
+    observerModeTracker.removeFromQueue(
+      productIds: Set(transactions.map { $0.payment.productIdentifier })
+    )
   }
 
   /// Sends a `PurchaseResult` to the completion block and stores the latest purchased transaction.
@@ -216,14 +210,9 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       // a purchase that's been readded to the queue. Then start observing it.
       if source == nil,
         options.shouldObservePurchases {
-        var storedIds = storage.get(PurchasingProductIds.self) ?? []
-        let isExistingTransaction = storedIds.contains { $0 == skTransaction.payment.productIdentifier }
-        if !isExistingTransaction {
-          let transactionManager = factory.makeTransactionManager()
-          await transactionManager.observeSK1Transaction(for: skTransaction.payment.productIdentifier)
-          storedIds.insert(skTransaction.payment.productIdentifier)
-          storage.save(storedIds, forType: PurchasingProductIds.self)
-        }
+        await observerModeTracker.observeSK1Purchase(
+          ofProductId: skTransaction.payment.productIdentifier
+        )
       }
     case .purchased:
       finishTransaction(skTransaction)

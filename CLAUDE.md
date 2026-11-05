@@ -188,6 +188,18 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Observer mode store
+
+`ObserverModeTracker` keeps what observer mode remembers (the StoreKit 1 products being purchased,
+the StoreKit 2 transactions already handled, and whether the legacy transactions were cached) in a
+`StateStore`, changed only by `ObserverModeUpdate` reducers. Its observer saves each change to
+storage, which only hands the write to a background queue, so it's safe with the lock held. Read the
+state from the store, not storage. Checking and marking a purchase as handled happens in one
+`ObserverModeAction`, so two threads can't both track it. Product lookups and tracking run outside
+the lock. StoreKit 2 legacy caching and detection run one at a time on a `SerialTaskCoordinator`;
+nothing they call may `await` that coordinator's `run` or `flush`, including
+`detectUnobservedTransactions()`.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
