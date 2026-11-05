@@ -102,6 +102,11 @@ public final class Superwall: NSObject, ObservableObject {
         if newValue != .none && (newValue != oldValue || newValue != .all) {
           await republishDeviceAttributes(onlyIfAdConsentChanged: false)
         }
+        // Sends a token event the queue dropped while tracking was off or that
+        // was emptied from it just now.
+        if newValue != .none {
+          dependencyContainer.notificationTokenManager.refresh()
+        }
       }
 
       #if canImport(WebKit)
@@ -691,6 +696,10 @@ public final class Superwall: NSObject, ObservableObject {
     listenToConfig()
     listenToSubscriptionStatus()
     listenToCustomerInfo()
+    dependencyContainer.notificationTokenManager.listen(
+      configState: dependencyContainer.configManager.configState,
+      hasIdentity: dependencyContainer.identityManager.hasIdentity
+    )
   }
 
   func listenToConfig() {

@@ -27,6 +27,66 @@ struct CustomURLSessionLoggingTests {
     #expect(logged.contains("2026-09-15T20:43:00Z"))
   }
 
+  /// An events batch as the queue sends it: a push token event alongside an
+  /// unrelated event that has its own `address` parameter.
+  private func eventsRequestWithPushToken() -> EventsRequest {
+    let tokenEvent = PlacementData(
+      name: PrivateSuperwallEvents.NotificationToken.name,
+      parameters: JSON(
+        NotificationTokenPayload(
+          address: "deadbeefcafef00d",
+          apnsEnvironment: .production,
+          apnsTopic: "com.example.app",
+          authorizationOptions: 7,
+          permissionStatus: .authorized,
+          enabled: true,
+          appVersion: "2.3.4",
+          sdkVersion: "4.18.4"
+        ).parameters
+      ),
+      createdAt: Date()
+    )
+    let otherEvent = PlacementData(
+      name: "custom_placement",
+      parameters: JSON(["address": "1 Infinite Loop"]),
+      createdAt: Date()
+    )
+    return EventsRequest(events: [tokenEvent.jsonData, otherEvent.jsonData])
+  }
+
+  /// Request logs reach the app's logging delegate, so an events batch is
+  /// logged without the push token but with everything else.
+  @Test func redactsPushTokensFromLoggedEventBodies() throws {
+    let body = try EndpointKinds.Superwall.jsonEncoder.encode(eventsRequestWithPushToken())
+    #expect(String(data: body, encoding: .utf8)?.contains("deadbeefcafef00d") == true)
+
+    let logged = CustomURLSession.loggableBody(body)
+
+    #expect(!logged.contains("deadbeefcafef00d"))
+    #expect(logged.contains(#""address":"<redacted>""#))
+    #expect(logged.contains(#""event_name":"notification_token""#))
+    #expect(logged.contains(#""apnsTopic":"com.example.app""#))
+    #expect(logged.contains(#""permissionStatus":"AUTHORIZED""#))
+    // An `address` on any other event is not a push token.
+    #expect(logged.contains(#""address":"1 Infinite Loop""#))
+  }
+
+  /// A body that might hold a token but isn't valid JSON is never logged raw.
+  @Test func neverLogsUnparseableSensitiveBodies() {
+    let body = Data(#"{"event_name":"notification_token","address":"deadbeef""#.utf8)
+    #expect(!CustomURLSession.loggableBody(body).contains("deadbeef"))
+  }
+
+  /// The `/events` failure log reaches the logging delegate too, so it names
+  /// the events rather than carrying their parameters.
+  @Test func eventsFailureLogInfoHasNoPushToken() {
+    let info = eventsRequestWithPushToken().loggableSummary
+
+    #expect(!String(describing: info).contains("deadbeefcafef00d"))
+    #expect(info["event_count"] as? Int == 2)
+    #expect(info["event_names"] as? [String] == ["notification_token", "custom_placement"])
+  }
+
   @Test func logsOtherBodiesUnchanged() {
     let body = Data(#"{"b":1,"a":"x"}"#.utf8)
     #expect(CustomURLSession.loggableBody(body) == #"{"b":1,"a":"x"}"#)

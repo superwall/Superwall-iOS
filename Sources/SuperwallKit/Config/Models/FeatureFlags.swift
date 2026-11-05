@@ -23,6 +23,9 @@ struct FeatureFlags: Codable, Equatable {
   var enableConfigRefresh: Bool
   var enableTextInteraction: Bool
   var enableIframeNavigation: Bool
+  /// Whether the SDK reports the device's push token to Superwall, so
+  /// Superwall can send it notifications.
+  var userNotifications: Bool
 
   enum CodingKeys: String, CodingKey {
     case toggles
@@ -45,6 +48,7 @@ struct FeatureFlags: Codable, Equatable {
     enableConfigRefresh = rawFeatureFlags.value(forKey: "enable_config_refresh_v2", default: false)
     enableTextInteraction = rawFeatureFlags.value(forKey: "enable_text_interaction", default: false)
     enableIframeNavigation = rawFeatureFlags.value(forKey: "enable_iframe_navigation", default: false)
+    userNotifications = rawFeatureFlags.value(forKey: "user_notifications", default: false)
   }
 
   func encode(to encoder: Encoder) throws {
@@ -60,7 +64,8 @@ struct FeatureFlags: Codable, Equatable {
       RawFeatureFlag(key: "enable_multiple_paywall_urls", enabled: enableMultiplePaywallUrls),
       RawFeatureFlag(key: "enable_config_refresh_v2", enabled: enableConfigRefresh),
       RawFeatureFlag(key: "enable_text_interaction", enabled: enableTextInteraction),
-      RawFeatureFlag(key: "enable_iframe_navigation", enabled: enableIframeNavigation)
+      RawFeatureFlag(key: "enable_iframe_navigation", enabled: enableIframeNavigation),
+      RawFeatureFlag(key: "user_notifications", enabled: userNotifications)
     ]
 
     try container.encode(rawFeatureFlags, forKey: .toggles)
@@ -77,7 +82,8 @@ struct FeatureFlags: Codable, Equatable {
     enableConfigRefresh: Bool,
     enableTextInteraction: Bool,
     enableCELLogging: Bool,
-    enableIframeNavigation: Bool
+    enableIframeNavigation: Bool,
+    userNotifications: Bool = false
   ) {
     self.enableExpressionParameters = enableExpressionParameters
     self.enableUserIdSeed = enableUserIdSeed
@@ -89,6 +95,7 @@ struct FeatureFlags: Codable, Equatable {
     self.enableConfigRefresh = enableConfigRefresh
     self.enableTextInteraction = enableTextInteraction
     self.enableIframeNavigation = enableIframeNavigation
+    self.userNotifications = userNotifications
   }
 }
 
@@ -117,7 +124,8 @@ extension FeatureFlags: Stubbable {
       enableConfigRefresh: true,
       enableTextInteraction: true,
       enableCELLogging: true,
-      enableIframeNavigation: true
+      enableIframeNavigation: true,
+      userNotifications: true
     )
   }
 }

@@ -7,6 +7,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
+- Adds `Superwall.shared.setPushToken(_:)` so Superwall can send push notifications to the device. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`; the SDK doesn't swizzle or ask for notification permission itself.
+- Adds `optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications on the device.
+- Adds `handleNotificationResponse(_:)` to count opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`.
 
 ### Fixes
 

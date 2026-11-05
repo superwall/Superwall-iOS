@@ -76,6 +76,75 @@ struct PlacementsQueueTests {
     #expect(setup.network.sentEvents.count == 1)
   }
 
+  // MARK: - Delivery
+
+  private final class DeliveryRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _results: [Bool] = []
+    var results: [Bool] { lock.withLock { _results } }
+    func record(_ result: Bool) { lock.withLock { _results.append(result) } }
+  }
+
+  @Test
+  func delivery_reportsTheUploadResult() async throws {
+    for succeeds in [true, false] {
+      let setup = makeQueue(behavior: .all)
+      setup.network.sendEventsResult = succeeds ? .delivered(rejectedIndexes: []) : .failed
+      let recorder = DeliveryRecorder()
+
+      await setup.queue.enqueue(
+        data: stubJSON,
+        from: InternalSuperwallEvent.AppOpen(),
+        onDelivery: { recorder.record($0) }
+      )
+      await setup.queue.flushInternal()
+      try await Task.sleep(nanoseconds: 100_000_000)
+
+      #expect(recorder.results == [succeeds])
+    }
+  }
+
+  @Test
+  func delivery_rejectedEventsReportFailure() async throws {
+    let setup = makeQueue(behavior: .all)
+    setup.network.sendEventsResult = .delivered(rejectedIndexes: [1])
+    let first = DeliveryRecorder()
+    let second = DeliveryRecorder()
+    let third = DeliveryRecorder()
+
+    // An event without a handler still takes up an index.
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+    for recorder in [first, second, third] {
+      await setup.queue.enqueue(
+        data: stubJSON,
+        from: InternalSuperwallEvent.AppOpen(),
+        onDelivery: { recorder.record($0) }
+      )
+    }
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(first.results == [false])
+    #expect(second.results == [true])
+    #expect(third.results == [true])
+  }
+
+  @Test
+  func delivery_discardedEventsReportFailure() async throws {
+    let setup = makeQueue(behavior: .all)
+    let recorder = DeliveryRecorder()
+
+    await setup.queue.enqueue(
+      data: stubJSON,
+      from: InternalSuperwallEvent.AppOpen(),
+      onDelivery: { recorder.record($0) }
+    )
+    await setup.queue.setTrackingBehavior(.superwallOnly)
+
+    #expect(recorder.results == [false])
+    #expect(setup.network.sentEvents.isEmpty)
+  }
+
   // MARK: - EventTrackingBehavior.superwallOnly
 
   @Test

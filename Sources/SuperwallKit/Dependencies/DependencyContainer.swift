@@ -12,6 +12,7 @@ import AppKit
 import UIKit
 #endif
 import Combine
+import UserNotifications
 
 /// Contains all of the SDK's core utility objects that are normally directly injected as dependencies.
 ///
@@ -53,6 +54,7 @@ final class DependencyContainer {
   var deepLinkRouter: DeepLinkRouter!
   var attributionFetcher: AttributionFetcher!
   var testModeManager: TestModeManager!
+  var notificationTokenManager: NotificationTokenManager!
   #if canImport(WebKit)
   let permissionHandler = PermissionHandler()
   #endif
@@ -219,6 +221,37 @@ final class DependencyContainer {
     )
 
     deviceHelper.testModeManager = testModeManager
+
+    notificationTokenManager = NotificationTokenManager(
+      storage: storage,
+      notificationSettings: {
+        let settings: UNNotificationSettings = await UNUserNotificationCenter.current().notificationSettings()
+        return NotificationSettingsSnapshot(settings)
+      },
+      isFeatureEnabled: { [weak configManager] in
+        configManager?.config?.featureFlags.userNotifications == true
+      },
+      waitForConfig: { [weak configManager] in
+        _ = try? await configManager?.hasConfig.throwableAsync()
+      },
+      isTrackingAllowed: { [weak configManager] in
+        guard let configManager = configManager else {
+          return false
+        }
+        return configManager.options.eventTrackingBehavior != .none
+      },
+      identity: { [weak identityManager] in
+        NotificationTokenManager.Identity(
+          aliasId: identityManager?.aliasId ?? "",
+          appUserId: identityManager?.appUserId
+        )
+      },
+      track: { event, onDelivery in
+        await Superwall.shared.track(event, onDelivery: onDelivery).isQueuedForSending
+      },
+      appVersion: deviceHelper.appVersion,
+      sdkVersion: sdkVersion
+    )
 
     appSessionManager = AppSessionManager(
       configManager: configManager,

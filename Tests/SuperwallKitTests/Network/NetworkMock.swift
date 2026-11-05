@@ -41,8 +41,11 @@ final class NetworkMock: Network {
   var getEnrichmentCallCount = 0
   var onGetEnrichment: (() -> Void)?
 
-  override func sendEvents(events: EventsRequest) async {
+  var sendEventsResult: EventsDelivery = .delivered(rejectedIndexes: [])
+
+  override func sendEvents(events: EventsRequest) async -> EventsDelivery {
     sentEvents.append(events)
+    return sendEventsResult
   }
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {

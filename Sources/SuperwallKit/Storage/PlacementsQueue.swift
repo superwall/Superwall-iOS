@@ -12,8 +12,17 @@ import Combine
 ///
 /// **Note**: this currently has a limit of 500 events per flush.
 actor PlacementsQueue {
+  /// Called once with whether the event reached Superwall. Events dropped from
+  /// the queue before they're sent count as not reaching it.
+  typealias DeliveryHandler = @Sendable (Bool) -> Void
+
+  private struct QueuedEvent {
+    let data: JSON
+    let onDelivery: DeliveryHandler?
+  }
+
   private let maxEventCount = 50
-  private var elements: [JSON] = []
+  private var elements: [QueuedEvent] = []
   private var timer: Timer?
   private unowned let network: Network
   private var trackingBehavior: EventTrackingBehavior
@@ -74,27 +83,37 @@ actor PlacementsQueue {
   }
 
   /// Queues `data` for sending. Returns whether the tracking behavior allowed it.
+  /// `onDelivery` is only called for queued events.
   @discardableResult
   func enqueue(
     data: JSON,
-    from placement: Trackable
+    from placement: Trackable,
+    onDelivery: DeliveryHandler? = nil
   ) -> Bool {
     guard trackingAllowed(from: placement) else {
       return false
     }
-    elements.append(data)
+    elements.append(QueuedEvent(data: data, onDelivery: onDelivery))
     return true
   }
 
   /// The names of the events waiting to be flushed. For tests.
   var queuedEventNames: [String] {
-    elements.compactMap { $0["event_name"].string }
+    elements.compactMap { $0.data["event_name"].string }
+  }
+
+  private func discardQueuedEvents() {
+    let discarded = elements
+    elements.removeAll()
+    for event in discarded {
+      event.onDelivery?(false)
+    }
   }
 
   func setTrackingBehavior(_ behavior: EventTrackingBehavior) {
     trackingBehavior = behavior
     if behavior != .all {
-      elements.removeAll()
+      discardQueuedEvents()
     }
   }
 
@@ -116,11 +135,11 @@ actor PlacementsQueue {
 
   func flushInternal(depth: Int = 10) {
     if trackingBehavior == .none {
-      elements.removeAll()
+      discardQueuedEvents()
       return
     }
 
-    var eventsToSend: [JSON] = []
+    var eventsToSend: [QueuedEvent] = []
 
     var i = 0
     while i < maxEventCount && !elements.isEmpty {
@@ -130,8 +149,14 @@ actor PlacementsQueue {
 
     if !eventsToSend.isEmpty {
       // Send to network
-      let events = EventsRequest(events: eventsToSend)
-      Task { await network.sendEvents(events: events) }
+      let events = EventsRequest(events: eventsToSend.map { $0.data })
+      let handlers = eventsToSend.map { $0.onDelivery }
+      Task { [network] in
+        let delivery = await network.sendEvents(events: events)
+        for (index, handler) in handlers.enumerated() {
+          handler?(delivery.isDelivered(at: index))
+        }
+      }
     }
 
     if !elements.isEmpty && depth > 0 {
