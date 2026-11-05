@@ -62,9 +62,9 @@ class Network {
     applicationStateSubject.send(sharedApplication.applicationState)
   }
 
-  /// Returns whether the events reached Superwall.
+  /// Returns which of the events reached Superwall.
   @discardableResult
-  func sendEvents(events: EventsRequest) async -> Bool {
+  func sendEvents(events: EventsRequest) async -> EventsDelivery {
     do {
       let result = try await urlSession.request(
         .events(eventsRequest: events),
@@ -72,7 +72,7 @@ class Network {
       )
       switch result.status {
       case .ok:
-        return true
+        return .delivered(rejectedIndexes: [])
       case .partialSuccess:
         Logger.debug(
           logLevel: .warn,
@@ -80,7 +80,7 @@ class Network {
           message: "Request had partial success: /events",
           info: ["payload": result.invalidIndexes as Any]
         )
-        return true
+        return .delivered(rejectedIndexes: Set(result.invalidIndexes ?? []))
       }
     } catch {
       Logger.debug(
@@ -90,7 +90,7 @@ class Network {
         info: events.loggableSummary,
         error: error
       )
-      return false
+      return .failed
     }
   }
 

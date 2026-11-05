@@ -39,11 +39,11 @@ final class NetworkMock: Network {
   var onRedeemEntitlements: (() -> Void)?
   var onPollRedemptionResult: (() -> Void)?
 
-  var sendEventsSucceeds = true
+  var sendEventsResult: EventsDelivery = .delivered(rejectedIndexes: [])
 
-  override func sendEvents(events: EventsRequest) async -> Bool {
+  override func sendEvents(events: EventsRequest) async -> EventsDelivery {
     sentEvents.append(events)
-    return sendEventsSucceeds
+    return sendEventsResult
   }
 
   override func sendSessionEvents(_ session: SessionEventsRequest) async {

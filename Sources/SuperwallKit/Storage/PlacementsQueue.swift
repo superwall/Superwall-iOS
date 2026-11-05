@@ -150,11 +150,11 @@ actor PlacementsQueue {
     if !eventsToSend.isEmpty {
       // Send to network
       let events = EventsRequest(events: eventsToSend.map { $0.data })
-      let handlers = eventsToSend.compactMap { $0.onDelivery }
+      let handlers = eventsToSend.map { $0.onDelivery }
       Task { [network] in
-        let isDelivered = await network.sendEvents(events: events)
-        for handler in handlers {
-          handler(isDelivered)
+        let delivery = await network.sendEvents(events: events)
+        for (index, handler) in handlers.enumerated() {
+          handler?(delivery.isDelivered(at: index))
         }
       }
     }

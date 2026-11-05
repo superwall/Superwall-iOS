@@ -97,9 +97,9 @@ final class NotificationTokenManager {
   private let now: () -> Date
   private var cancellables: Set<AnyCancellable> = []
   private let inFlightLock = NSLock()
-  /// Fingerprints of the token events queued but not yet delivered, so they
-  /// aren't queued twice.
-  private var inFlightFingerprints: Set<String> = []
+  /// The fingerprint of the latest token event queued but not yet delivered,
+  /// so it isn't queued twice. Superwall ends up with this state once it lands.
+  private var pendingFingerprint: String?
   /// Opens waiting for config.
   private var pendingOpens: [UUID: Task<Void, Never>] = [:]
 
@@ -281,8 +281,14 @@ final class NotificationTokenManager {
 
     let fingerprint = Self.fingerprint(of: payload, for: identity())
     let shouldSend = inFlightLock.withLock {
-      if inFlightFingerprints.contains(fingerprint) {
-        return false
+      if let pendingFingerprint = pendingFingerprint {
+        if pendingFingerprint == fingerprint {
+          return false
+        }
+        // A different state is on its way and would land after the last one
+        // sent, so this one has to follow it even if it matches what was sent.
+        self.pendingFingerprint = fingerprint
+        return true
       }
       let shouldSend = Self.shouldSend(
         fingerprint: fingerprint,
@@ -290,7 +296,7 @@ final class NotificationTokenManager {
         now: now()
       )
       if shouldSend {
-        inFlightFingerprints.insert(fingerprint)
+        pendingFingerprint = fingerprint
       }
       return shouldSend
     }
@@ -311,7 +317,11 @@ final class NotificationTokenManager {
 
   private func finishSending(_ fingerprint: String, isDelivered: Bool) {
     inFlightLock.withLock {
-      inFlightFingerprints.remove(fingerprint)
+      // An older event landing says nothing about the latest one.
+      if fingerprint != pendingFingerprint {
+        return
+      }
+      pendingFingerprint = nil
       if isDelivered {
         storage.save(
           NotificationTokenLastSent(fingerprint: fingerprint, sentAt: now()),

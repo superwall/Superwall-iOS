@@ -405,6 +405,43 @@ struct NotificationTokenManagerTests {
     #expect(harness.storage.get(NotificationTokenLastSentStorage.self) != nil)
   }
 
+  @Test func optOutInOut_whileUndelivered_endsOptedOut() async {
+    let harness = Harness()
+    harness.deliversImmediately = false
+    let manager = harness.makeManager()
+
+    manager.setPushToken(token)
+    manager.setEnabled(false)
+    manager.setEnabled(true)
+    manager.setEnabled(false)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, true, false])
+
+    // They land in order; only the last one is recorded as sent.
+    for deliver in harness.pendingDeliveries {
+      deliver(true)
+    }
+    manager.refresh()
+    await manager.waitUntilIdle()
+    #expect(harness.tokenEvents.count == 4)
+  }
+
+  @Test func revertingToTheSentState_whileAnotherIsUndelivered_isSent() async {
+    let harness = Harness()
+    let manager = harness.makeManager()
+    manager.setPushToken(token)
+    await manager.waitUntilIdle()
+
+    // Opting out is on its way when the app opts back in.
+    harness.deliversImmediately = false
+    manager.setEnabled(false)
+    manager.setEnabled(true)
+    await manager.waitUntilIdle()
+
+    #expect(harness.tokenEvents.map { $0.payload.enabled } == [true, false, true])
+  }
+
   @Test func undeliveredEvent_isResentAfterRelaunch() async {
     let harness = Harness()
     harness.deliversImmediately = false

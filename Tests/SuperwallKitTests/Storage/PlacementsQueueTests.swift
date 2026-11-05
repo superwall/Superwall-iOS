@@ -89,7 +89,7 @@ struct PlacementsQueueTests {
   func delivery_reportsTheUploadResult() async throws {
     for succeeds in [true, false] {
       let setup = makeQueue(behavior: .all)
-      setup.network.sendEventsSucceeds = succeeds
+      setup.network.sendEventsResult = succeeds ? .delivered(rejectedIndexes: []) : .failed
       let recorder = DeliveryRecorder()
 
       await setup.queue.enqueue(
@@ -102,6 +102,31 @@ struct PlacementsQueueTests {
 
       #expect(recorder.results == [succeeds])
     }
+  }
+
+  @Test
+  func delivery_rejectedEventsReportFailure() async throws {
+    let setup = makeQueue(behavior: .all)
+    setup.network.sendEventsResult = .delivered(rejectedIndexes: [1])
+    let first = DeliveryRecorder()
+    let second = DeliveryRecorder()
+    let third = DeliveryRecorder()
+
+    // An event without a handler still takes up an index.
+    await setup.queue.enqueue(data: stubJSON, from: InternalSuperwallEvent.AppOpen())
+    for recorder in [first, second, third] {
+      await setup.queue.enqueue(
+        data: stubJSON,
+        from: InternalSuperwallEvent.AppOpen(),
+        onDelivery: { recorder.record($0) }
+      )
+    }
+    await setup.queue.flushInternal()
+    try await Task.sleep(nanoseconds: 100_000_000)
+
+    #expect(first.results == [false])
+    #expect(second.results == [true])
+    #expect(third.results == [true])
   }
 
   @Test
