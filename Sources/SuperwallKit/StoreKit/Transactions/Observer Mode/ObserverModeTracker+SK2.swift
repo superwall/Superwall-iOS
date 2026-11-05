@@ -15,7 +15,7 @@
 import Foundation
 import StoreKit
 
-@available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
+@available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
 extension ObserverModeTracker {
   /// Records the transactions made before observer mode was turned on as
   /// handled, the first time it's on, so detection doesn't track them.

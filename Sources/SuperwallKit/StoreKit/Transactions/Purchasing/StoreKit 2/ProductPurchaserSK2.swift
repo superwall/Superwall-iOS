@@ -33,7 +33,7 @@ final class ProductPurchaserSK2: Purchasing {
     self.factory = factory
 
     // Cache legacy transactions if observer mode turned on.
-    if #available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *),
+    if #available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *),
       factory.makeSuperwallOptions().shouldObservePurchases {
       observerModeTracker.cacheLegacyTransactions()
     }

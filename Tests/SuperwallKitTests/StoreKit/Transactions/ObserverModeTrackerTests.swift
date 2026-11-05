@@ -293,7 +293,7 @@ struct ObserverModeTrackerTests {
     #expect(storage.saves.transactions.isEmpty)
   }
 
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
+  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   @Test("legacy transactions are cached once")
   func cachesLegacyTransactionsOnce() async {
     let provider = SlowEmptyTransactionsProvider()
@@ -310,7 +310,7 @@ struct ObserverModeTrackerTests {
     #expect(storage.get(DidCacheLegacyTransactions.self) == true)
   }
 
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
+  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   @Test("detection waits for the legacy transactions to be cached")
   func detectionNeedsLegacyCache() async {
     let provider = SlowEmptyTransactionsProvider()
@@ -324,7 +324,7 @@ struct ObserverModeTrackerTests {
     #expect(provider.counts.calls == 2)
   }
 
-  @available(iOS 17.2, macOS 14.2, watchOS 10.2, tvOS 17.2, *)
+  @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
   @Test("detections run one at a time")
   func detectionsDontOverlap() async {
     let provider = SlowEmptyTransactionsProvider()
