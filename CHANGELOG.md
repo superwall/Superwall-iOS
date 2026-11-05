@@ -7,6 +7,9 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Enhancements
 
 - Adds watchOS 8+ and tvOS 15+ support through Swift Package Manager, for purchases, subscription status, entitlements, user attributes and events. Paywalls can't be shown there, so when one would show, `register` runs non-gated features and returns an error for gated ones.
+- Adds `Superwall.shared.setPushToken(_:)` so Superwall can send push notifications to the device. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`; the SDK doesn't swizzle or ask for notification permission itself.
+- Adds `optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications on the device.
+- Adds `handleNotificationResponse(_:)` to count opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`.
 
 ### Fixes
 
@@ -41,12 +44,6 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes custom product purchases being reported as App Store purchases.
 
 ## 4.18.3
-
-### Enhancements
-
-- Adds `Superwall.shared.setPushToken(_:)` to register the device's APNs token with Superwall, so Superwall can send it push notifications. Call it from `application(_:didRegisterForRemoteNotificationsWithDeviceToken:)`. The SDK doesn't swizzle your app delegate or request notification permission itself. Along with the token, Superwall receives the notification permission the user has granted, which is checked again whenever the app becomes active. The token is only sent to Superwall: it doesn't appear in `SuperwallDelegate.handleSuperwallEvent(withInfo:)`, user attributes or audience filters. Nothing is sent until Superwall notifications are turned on for your app, and nothing is sent while `eventTrackingBehavior` is `.none`.
-- Adds `Superwall.shared.optOutOfNotifications()` and `optInToNotifications()` to stop and resume Superwall push notifications for the device. The choice is remembered across launches, `reset()` and `identify(userId:)`.
-- Adds `Superwall.shared.handleNotificationResponse(_:)` to measure opens of the notifications Superwall sends. Call it from `userNotificationCenter(_:didReceive:)`; notifications Superwall didn't send are ignored.
 
 ### Fixes
 

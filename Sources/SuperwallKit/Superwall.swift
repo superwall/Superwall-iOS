@@ -93,6 +93,9 @@ public final class Superwall: NSObject, ObservableObject {
         if newValue != .none && (newValue != oldValue || newValue != .all) {
           await republishDeviceAttributes(onlyIfAdConsentChanged: false)
         }
+        if newValue != .none {
+          dependencyContainer.notificationTokenManager.refresh()
+        }
       }
 
       #if canImport(WebKit)

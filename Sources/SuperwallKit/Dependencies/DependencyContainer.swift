@@ -244,7 +244,7 @@ final class DependencyContainer {
         )
       },
       track: { event in
-        await Superwall.shared.track(event)
+        await Superwall.shared.track(event).isQueuedForSending
       },
       appVersion: deviceHelper.appVersion,
       sdkVersion: sdkVersion

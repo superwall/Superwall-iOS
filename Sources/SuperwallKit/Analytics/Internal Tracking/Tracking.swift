@@ -88,7 +88,8 @@ extension Superwall {
 
     let result = TrackingResult(
       data: eventData,
-      parameters: parameters
+      parameters: parameters,
+      isQueuedForSending: isQueuedForSending
     )
 		return result
   }

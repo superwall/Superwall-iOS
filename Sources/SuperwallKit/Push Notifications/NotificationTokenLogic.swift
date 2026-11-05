@@ -42,12 +42,17 @@ struct NotificationSettingsSnapshot: Equatable {
 extension NotificationSettingsSnapshot {
   init(_ settings: UNNotificationSettings) {
     authorizationStatus = settings.authorizationStatus
-    alertSetting = settings.alertSetting
-    soundSetting = settings.soundSetting
-    criticalAlertSetting = settings.criticalAlertSetting
-    timeSensitiveSetting = settings.timeSensitiveSetting
+    // tvOS notifications can only badge the app icon.
+    #if !os(tvOS)
+      alertSetting = settings.alertSetting
+      soundSetting = settings.soundSetting
+      criticalAlertSetting = settings.criticalAlertSetting
+      timeSensitiveSetting = settings.timeSensitiveSetting
+    #endif
     #if !os(watchOS)
       badgeSetting = settings.badgeSetting
+    #endif
+    #if !os(watchOS) && !os(tvOS)
       providesAppNotificationSettings = settings.providesAppNotificationSettings
     #endif
     #if os(iOS) && !targetEnvironment(macCatalyst)

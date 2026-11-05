@@ -84,7 +84,8 @@ final class NotificationTokenManager {
   private let isFeatureEnabled: () -> Bool
   private let isTrackingAllowed: () -> Bool
   private let identity: () -> Identity
-  private let track: (Trackable) async -> Void
+  /// Tracks the event and returns whether it was queued for sending.
+  private let track: (Trackable) async -> Bool
   private let apnsEnvironment: () -> ApnsEnvironment
   private let apnsTopic: String
   private let appVersion: String
@@ -98,7 +99,7 @@ final class NotificationTokenManager {
     isFeatureEnabled: @escaping () -> Bool,
     isTrackingAllowed: @escaping () -> Bool,
     identity: @escaping () -> Identity,
-    track: @escaping (Trackable) async -> Void,
+    track: @escaping (Trackable) async -> Bool,
     apnsEnvironment: @escaping () -> ApnsEnvironment = { NotificationTokenLogic.currentApnsEnvironment },
     apnsTopic: String = Bundle.main.bundleIdentifier ?? "",
     appVersion: String,
@@ -175,13 +176,17 @@ final class NotificationTokenManager {
     }
   }
 
-  /// Tracks `notification_open` if Superwall sent the notification.
+  /// Tracks `notification_open` if Superwall sent the notification and the
+  /// `user_notifications` feature flag is on.
   func trackOpen(userInfo: [AnyHashable: Any]) {
     guard let event = NotificationTokenLogic.notificationOpen(fromUserInfo: userInfo) else {
       return
     }
     enqueue { manager in
-      await manager.track(event)
+      if !manager.isFeatureEnabled() {
+        return
+      }
+      _ = await manager.track(event)
     }
   }
 
@@ -253,7 +258,13 @@ final class NotificationTokenManager {
       return
     }
 
-    await track(PrivateSuperwallEvents.NotificationToken(payload: payload))
+    let isQueued = await track(PrivateSuperwallEvents.NotificationToken(payload: payload))
+    // The queue hears about a tracking change after the options do, so it can
+    // still drop the event. Only mark it as sent if it went on the queue and
+    // tracking wasn't turned off meanwhile; otherwise it goes on the next refresh.
+    if !isQueued || !isTrackingAllowed() {
+      return
+    }
     storage.save(
       NotificationTokenLastSent(fingerprint: fingerprint, sentAt: now()),
       forType: NotificationTokenLastSentStorage.self

@@ -61,6 +61,8 @@ extension Superwall {
     dependencyContainer.notificationTokenManager.setEnabled(true)
   }
 
+  // tvOS has no notification responses: its notifications only badge the app icon.
+  #if !os(tvOS)
   /// Tells Superwall the user opened a notification, so it can measure the
   /// notifications it sends.
   ///
@@ -89,4 +91,5 @@ extension Superwall {
       userInfo: response.notification.request.content.userInfo
     )
   }
+  #endif
 }
