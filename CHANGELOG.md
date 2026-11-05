@@ -11,7 +11,7 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 ### Fixes
 
 - Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
-- Fixes a user attribute being deleted when one with the same name and a leading `$` was set from a paywall. Keys beginning with `$` are reserved and are now just dropped.
+- Fixes setting a `$`-prefixed attribute from a paywall deleting the existing attribute with the same name. Keys beginning with `$` are reserved, so they're now ignored.
 - Fixes `reset()` leaving the new user's attributes without `aliasId` and `seed`, so audience filters on them didn't match.
 - Fixes `reset()` occasionally deleting the new user's alias and seed from disk, giving them another alias on the next launch.
 - Fixes the seed derived from the user ID being applied to a user who had since logged out or switched.
