@@ -130,7 +130,7 @@ private struct Harness {
       track: { _ in }
     )
     if publishConfig {
-      configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
+      configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
     }
   }
 
@@ -435,7 +435,7 @@ struct IdentityManagerBehaviorTests {
   func identifyDerivesSeed() async throws {
     let harness = Harness()
     defer { withExtendedLifetime(harness) {} }
-    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: true)))
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: true)))
     let expectedSeed = try #require("user-1".sha256MappedToRange())
 
     harness.identityManager.identify(userId: "user-1", options: nil)
@@ -452,7 +452,7 @@ struct IdentityManagerBehaviorTests {
     let harness = Harness()
     defer { withExtendedLifetime(harness) {} }
     let seed = harness.identityManager.seed
-    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
 
     harness.identityManager.identify(userId: "user-1", options: nil)
     #expect(await eventually { harness.identityManager.identitySubject.value })
@@ -478,7 +478,7 @@ struct IdentityManagerBehaviorTests {
     identityManager.mergeUserAttributes(["plan": "pro"])
     #expect(await eventually { identityManager.userAttributes["plan"] as? String == "pro" })
 
-    harness.configManager.configState.send(.retrieved(config(enableUserIdSeed: false)))
+    harness.configManager.store.update(ConfigUpdate.retrieved(config(enableUserIdSeed: false)))
     #expect(await eventually { identityManager.identitySubject.value })
   }
 

@@ -71,4 +71,23 @@ final class SerialTaskCoordinator: Sendable {
       .value
     }
   }
+
+  /// Adds `operation` to the end of the queue and waits for it to finish.
+  ///
+  /// Don't call this from an operation on the same coordinator: that operation
+  /// would wait on one queued behind it, which never starts. Use
+  /// ``enqueue(_:)`` there instead.
+  func run(_ operation: @escaping Operation) async {
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      enqueue {
+        await operation()
+        continuation.resume()
+      }
+    }
+  }
+
+  /// Waits for everything enqueued so far to finish.
+  func flush() async {
+    await run {}
+  }
 }
