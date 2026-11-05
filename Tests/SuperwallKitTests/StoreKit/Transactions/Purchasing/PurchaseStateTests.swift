@@ -268,6 +268,46 @@ struct PurchasingCoordinatorTests {
   }
 }
 
+@Suite("ProductPurchaserSK1 purchase")
+struct ProductPurchaserSK1PurchaseTests {
+  @Test("a result reported as soon as the payment is queued is returned")
+  func immediateResult() async {
+    let dependencyContainer = DependencyContainer()
+    let coordinator = PurchasingCoordinator(factory: FakeStoreTransactionFactory())
+    let purchaser = ProductPurchaserSK1(
+      shouldFinishTransactions: false,
+      storeKitManager: dependencyContainer.storeKitManager,
+      receiptManager: dependencyContainer.receiptManager,
+      identityManager: dependencyContainer.identityManager,
+      coordinator: coordinator,
+      storage: dependencyContainer.storage,
+      factory: dependencyContainer
+    )
+    let product = makeProduct()
+    coordinator.beginPurchase(of: product, source: .purchaseFunc(product), isFreeTrialAvailable: false)
+
+    let hadCompletionWhenQueued = Counter()
+    purchaser.addPayment = { payment in
+      if coordinator.store.state.completion != nil {
+        hadCompletionWhenQueued.increment()
+      }
+      // The device refuses the payment straight away.
+      Task {
+        await coordinator.completePurchase(
+          of: FakeSK1Transaction(productId: payment.productIdentifier, state: .failed),
+          result: .cancelled
+        )
+      }
+    }
+
+    let result = await purchaser.purchase(product: product)
+
+    #expect(result == .cancelled)
+    #expect(hadCompletionWhenQueued.value == 1)
+    #expect(coordinator.store.state.completion == nil)
+  }
+}
+
 private final class Counter: @unchecked Sendable {
   private let lock = NSLock()
   private var count = 0

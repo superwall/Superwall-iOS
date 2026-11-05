@@ -55,7 +55,7 @@ final class RestoreFlow {
     _ restoreSource: RestoreSource,
     presentsFailureAlert: Bool = true
   ) async -> RestorationResult {
-    store.update(RestoreUpdate.begin(restoreSource))
+    store.update(RestoreUpdate.begin)
     let result = await performRestore(
       restoreSource,
       presentsFailureAlert: presentsFailureAlert

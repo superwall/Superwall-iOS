@@ -12,26 +12,24 @@ import Testing
 
 @Suite("RestoreUpdate reducers")
 struct RestoreUpdateTests {
-  @Test("begin counts a running restore and keeps its source")
+  @Test("begin counts a running restore")
   func begin() {
-    let state = RestoreUpdate.begin(.external).reduce(RestoreState())
+    let state = RestoreUpdate.begin.reduce(RestoreState())
     #expect(state.running == 1)
-    #expect(state.source == .external)
     #expect(state.isRestoring)
   }
 
-  @Test("finish ends the restores one at a time, then clears the source")
+  @Test("finish ends the restores one at a time")
   func finish() {
-    var state = RestoreUpdate.begin(.external).reduce(RestoreState())
-    state = RestoreUpdate.begin(.external).reduce(state)
+    var state = RestoreUpdate.begin.reduce(RestoreState())
+    state = RestoreUpdate.begin.reduce(state)
 
     state = RestoreUpdate.finish.reduce(state)
     #expect(state.running == 1)
-    #expect(state.source == .external)
+    #expect(state.isRestoring)
 
     state = RestoreUpdate.finish.reduce(state)
     #expect(state.running == 0)
-    #expect(state.source == nil)
     #expect(!state.isRestoring)
   }
 
@@ -54,7 +52,7 @@ struct RestoreFlowTests {
     await withTaskGroup(of: Void.self) { group in
       for _ in 0..<200 {
         group.addTask {
-          store.update(RestoreUpdate.begin(.external))
+          store.update(RestoreUpdate.begin)
           store.update(RestoreUpdate.finish)
         }
       }
@@ -89,7 +87,6 @@ struct RestoreFlowTests {
     #expect(runningDuringRestore.value == 1)
     #expect(observed.value == 1)
     #expect(!flow.isRestoring)
-    #expect(flow.store.state.source == nil)
   }
 }
 

@@ -33,6 +33,12 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   private let restoration = Restoration()
   private let shouldFinishTransaction: Bool
 
+  /// Queues a payment with StoreKit. Replaced in tests, which can report a
+  /// result as soon as the payment is queued.
+  var addPayment: (SKPayment) -> Void = { payment in
+    SKPaymentQueue.default().add(payment)
+  }
+
   // MARK: Dependencies
   private let storeKitManager: StoreKitManager
   private let receiptManager: ReceiptManager
@@ -85,7 +91,7 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
       }
       let payment = SKMutablePayment(product: product)
       payment.applicationUsername = identityManager.appAccountToken?.uuidString
-      SKPaymentQueue.default().add(payment)
+      addPayment(payment)
     }
   }
 
