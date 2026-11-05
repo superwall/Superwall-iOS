@@ -347,6 +347,113 @@ struct ObserverModeTrackerTests {
   }
 }
 
+/// Returns the products it was given, or none, and counts the lookups.
+private final class FakeProductsFetcher: ProductFetchable, @unchecked Sendable {
+  private let lock = NSLock()
+  private let products: Set<StoreProduct>
+  private var internalLookups = 0
+
+  init(products: Set<StoreProduct>) {
+    self.products = products
+  }
+
+  var lookups: Int {
+    lock.lock()
+    defer { lock.unlock() }
+    return internalLookups
+  }
+
+  func products(
+    identifiers: Set<String>,
+    forPaywall paywall: Paywall?,
+    placement: PlacementData?
+  ) async throws -> Set<StoreProduct> {
+    lock.lock()
+    internalLookups += 1
+    lock.unlock()
+    return products.filter { identifiers.contains($0.productIdentifier) }
+  }
+}
+
+private final class TrackedEvents: @unchecked Sendable {
+  private let lock = NSLock()
+  private var events: [Trackable] = []
+
+  func add(_ event: Trackable) {
+    lock.lock()
+    events.append(event)
+    lock.unlock()
+  }
+
+  var transactions: [InternalSuperwallEvent.Transaction] {
+    lock.lock()
+    defer { lock.unlock() }
+    return events.compactMap { $0 as? InternalSuperwallEvent.Transaction }
+  }
+}
+
+@Suite("ObserverModeTracker StoreKit 1 purchases")
+struct ObserverModeSK1PurchaseTests {
+  private func makeSK1Tracker(
+    products: Set<StoreProduct>
+  ) -> (ObserverModeTracker, DependencyContainer, FakeProductsFetcher, TrackedEvents) {
+    let options = SuperwallOptions()
+    options.shouldObservePurchases = true
+    options.storeKitVersion = .storeKit1
+    let container = DependencyContainer(options: options, cache: CacheMock())
+    let tracked = TrackedEvents()
+    container.transactionManager.trackEvent = { tracked.add($0) }
+    let fetcher = FakeProductsFetcher(products: products)
+    let tracker = ObserverModeTracker(
+      storage: ObserverModeStorage(),
+      productsManager: ProductsManager(
+        entitlementsInfo: container.entitlementsInfo,
+        storeKitVersion: .storeKit1,
+        productsFetcher: fetcher
+      ),
+      factory: container
+    )
+    return (tracker, container, fetcher, tracked)
+  }
+
+  @Test("observing a purchase starts an observed transaction once")
+  func observesOnce() async {
+    let product = StoreProduct(sk1Product: MockSkProduct(productIdentifier: "monthly"))
+    let (tracker, container, fetcher, tracked) = makeSK1Tracker(products: [product])
+
+    await tracker.observeSK1Purchase(ofProductId: "monthly")
+    await tracker.observeSK1Purchase(ofProductId: "monthly")
+
+    #expect(fetcher.lookups == 1)
+    let coordinator = container.makePurchasingCoordinator()
+    #expect(await coordinator.product?.productIdentifier == "monthly")
+    if case .observeFunc(let observed) = await coordinator.source {
+      #expect(observed.productIdentifier == "monthly")
+    } else {
+      Issue.record("Expected an observed purchase")
+    }
+    let starts = tracked.transactions.filter {
+      if case .start = $0.state { return true }
+      return false
+    }
+    #expect(starts.count == 1)
+    #expect(starts.first?.isObserved == true)
+    #expect(tracker.state.purchasingProductIds == ["monthly"])
+  }
+
+  @Test("a product that can't be found is still remembered, and nothing starts")
+  func missingProduct() async {
+    let (tracker, container, fetcher, tracked) = makeSK1Tracker(products: [])
+
+    await tracker.observeSK1Purchase(ofProductId: "missing")
+
+    #expect(fetcher.lookups == 1)
+    #expect(await container.makePurchasingCoordinator().source == nil)
+    #expect(tracked.transactions.isEmpty)
+    #expect(tracker.state.purchasingProductIds == ["missing"])
+  }
+}
+
 private final class Claims: @unchecked Sendable {
   private let lock = NSLock()
   private var results: [Bool] = []
