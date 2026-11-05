@@ -270,6 +270,52 @@ struct PaywallViewControllerCacheStoreTests {
     #expect(Set(seen.value.compactMap(\.after)).count == 200)
   }
 
+  @Test("reading the cache on another thread never lets a removed controller go off the main thread")
+  @MainActor
+  func readsDontOutliveRemovals() async {
+    let dependencyContainer = DependencyContainer()
+    let cache = PaywallViewControllerCache(deviceLocaleString: "en")
+    let active = makeController(dependencyContainer, cache: cache)
+    cache.save(active, forKey: "active")
+    cache.activePaywallVcKey = "active"
+    let offMainReleases = Box(0)
+    let lock = NSLock()
+    let stop = Box(false)
+
+    let readers = (0..<4).map { _ in
+      Thread {
+        while !lock.withLock({ stop.value }) {
+          _ = cache.activePaywallViewController
+          _ = cache.getPaywallViewController(forKey: "active")
+          _ = cache.activePaywallVcKey
+        }
+      }
+    }
+    readers.forEach { $0.start() }
+
+    for _ in 0..<60 {
+      let controller = makeController(dependencyContainer, cache: cache)
+      objc_setAssociatedObject(
+        controller,
+        &releaseSentinelKey,
+        ReleaseSentinel {
+          if !Thread.isMainThread {
+            lock.withLock { offMainReleases.value += 1 }
+          }
+        },
+        .OBJC_ASSOCIATION_RETAIN
+      )
+      cache.save(controller, forKey: "victim")
+      cache.removePaywallViewController(forKey: "victim")
+    }
+
+    lock.withLock { stop.value = true }
+    await withCheckedContinuation { continuation in
+      DispatchQueue.main.async { continuation.resume() }
+    }
+    #expect(lock.withLock { offMainReleases.value } == 0)
+  }
+
   @Test("resetting the cache keeps the paywall on screen")
   @MainActor
   func resetKeepsActive() {
@@ -286,6 +332,19 @@ struct PaywallViewControllerCacheStoreTests {
     #expect(cache.getPaywallViewController(forKey: "active") === active)
     #expect(cache.getPaywallViewController(forKey: "other") == nil)
     #expect(cache.activePaywallViewController === active)
+  }
+}
+
+nonisolated(unsafe) private var releaseSentinelKey: UInt8 = 0
+
+/// Runs `onRelease` when it's let go of, on the thread that lets it go.
+private final class ReleaseSentinel {
+  let onRelease: () -> Void
+  init(_ onRelease: @escaping () -> Void) {
+    self.onRelease = onRelease
+  }
+  deinit {
+    onRelease()
   }
 }
 

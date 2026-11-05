@@ -51,6 +51,19 @@ final class StateStore<Context, State>: @unchecked Sendable {
     return _state
   }
 
+  /// Returns what `body` reads from the state, with the store locked.
+  ///
+  /// Use it to read part of the state without copying all of it out of the
+  /// store, for state whose last reference must be let go of in a certain
+  /// place. A copy from ``state`` can outlive a change that removes
+  /// something from the store, and become its last owner. `body` must not
+  /// wait on another thread.
+  func read<Value>(_ body: (State) -> Value) -> Value {
+    lock.lock()
+    defer { lock.unlock() }
+    return body(_state)
+  }
+
   init(initial: State) {
     _state = initial
   }

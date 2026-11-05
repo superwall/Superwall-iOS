@@ -107,6 +107,44 @@ struct StateStoreTests {
     #expect(store.state.value == 5)
   }
 
+  @Test("read returns what the body reads from the current state")
+  func read() {
+    let context = TestContext()
+    context.store.update(Add(amount: 3))
+    context.store.update(Log(entry: "a"))
+    #expect(context.store.read { $0.value } == 3)
+    #expect(context.store.read { $0.log.first } == "a")
+  }
+
+  @Test("An update on another thread waits for a read in progress")
+  func updateWaitsForRead() {
+    let context = TestContext()
+    let readStarted = DispatchSemaphore(value: 0)
+    let finishRead = DispatchSemaphore(value: 0)
+    let updated = DispatchSemaphore(value: 0)
+    let seenInRead = Box<Int?>(nil)
+
+    Thread {
+      context.store.read { state in
+        readStarted.signal()
+        finishRead.wait()
+        seenInRead.value = state.value
+      }
+    }.start()
+    readStarted.wait()
+
+    Thread {
+      context.store.update(Add(amount: 1))
+      updated.signal()
+    }.start()
+
+    #expect(updated.wait(timeout: .now() + 0.2) == .timedOut)
+    finishRead.signal()
+    #expect(updated.wait(timeout: .now() + 2) == .success)
+    #expect(seenInRead.value == 0)
+    #expect(context.store.state.value == 1)
+  }
+
   @Test("Observers see the state before and after each update, in order")
   func observersSeeBeforeAndAfter() {
     let store = TestStore(initial: Counter())

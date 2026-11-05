@@ -195,7 +195,9 @@ changed only by `PaywallViewControllerCacheUpdate` reducers. Anything that can d
 (saving over one, removing, `removeAll`) is a `PaywallViewControllerCacheAction`: it collects what it
 drops and hands it to `release` with `deferUntilUnlocked`, which lets go of it on the main thread.
 Never let a controller's last reference go with the store locked or off the main thread, since that
-tears down its views. `removeAll` keeps the paywall on screen.
+tears down its views. Read the cache through `store.read`, never `store.state`: a copy of the
+controllers can outlive a removal on main and become a controller's last owner on another thread.
+`removeAll` keeps the paywall on screen.
 
 ### Native macOS
 

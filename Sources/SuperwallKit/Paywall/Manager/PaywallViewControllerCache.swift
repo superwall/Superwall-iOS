@@ -13,13 +13,15 @@ import Foundation
 ///
 /// View controllers the cache drops are let go of on the main thread, after
 /// the store is unlocked, so their views are never torn down on another
-/// thread or with the store locked.
+/// thread or with the store locked. Reads go through
+/// ``StateStore/read(_:)``, so a copy of the controllers never outlives the
+/// lock and becomes the last owner of one that's removed meanwhile.
 final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unchecked Sendable {
   let store = PaywallViewControllerCacheStore(initial: PaywallViewControllerCacheState())
 
   var activePaywallVcKey: String? {
     get {
-      store.state.activeKey
+      store.read { $0.activeKey }
     }
     set {
       store.update(PaywallViewControllerCacheUpdate.activeKey(newValue))
@@ -27,7 +29,7 @@ final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unch
   }
 
   var activePaywallViewController: PaywallViewController? {
-    store.state.activeController
+    store.read { $0.activeController }
   }
 
   private let deviceLocaleString: String
@@ -44,7 +46,7 @@ final class PaywallViewControllerCache: PaywallViewControllerCacheContext, @unch
   }
 
   func getPaywallViewController(forKey key: String) -> PaywallViewController? {
-    store.state.controllers[key]
+    store.read { $0.controllers[key] }
   }
 
   func removePaywallViewController(forKey key: String) {
