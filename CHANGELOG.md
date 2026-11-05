@@ -2,6 +2,12 @@
 
 The changelog for `SuperwallKit`. Also see the [releases](https://github.com/superwall/Superwall-iOS/releases) on GitHub.
 
+## 4.19.1
+
+### Fixes
+
+- Placements named after a standard Superwall event are now rejected by `getPaywall` and `PaywallView` too, and `register` reports this to its error handler instead of silently doing nothing.
+
 ## 4.19.0
 
 ### Enhancements
