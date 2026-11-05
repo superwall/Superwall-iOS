@@ -664,6 +664,23 @@ struct DeviceHelperTests {
     #expect(await fetches.count == 0)
   }
 
+  /// `configState` can briefly lag the store while another thread is still
+  /// publishing. The gate reads the store, so the MMP being turned off counts
+  /// straight away.
+  @Test func mmpMatchAddresses_whenPublishedStateLagsTheStore_followsTheStore() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    // Stands in for a publication that hasn't caught up yet.
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
   @Test func mmpMatchAddresses_withEventTrackingOff_returnsNothing() async {
     let fetches = FetchCount()
     let (deviceHelper, dependencyContainer) = makeDeviceHelper(
