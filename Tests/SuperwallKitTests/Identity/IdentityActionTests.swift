@@ -127,9 +127,11 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   }
 
   func fetchAssignments() async {
-    record("fetchAssignments")
+    // Recorded with the latch taken, so a test that has seen this fetch start
+    // knows which latch it holds.
     let latch: Latch? = locked {
-      assignmentsLatches.isEmpty ? assignmentsLatch : assignmentsLatches.removeFirst()
+      _events.append("fetchAssignments")
+      return assignmentsLatches.isEmpty ? assignmentsLatch : assignmentsLatches.removeFirst()
     }
     await latch?.wait()
   }
@@ -168,6 +170,7 @@ private final class FakeIdentityContext: IdentityContext, @unchecked Sendable {
   }
 
   func sideEffect(_ work: @escaping () async -> Void) {
+    record("sideEffect")
     let gate = sideEffectGate
     let task = Task {
       await gate?.wait()
@@ -359,6 +362,26 @@ struct IdentityActionTests {
     config.open()
     await context.settle()
     #expect(context.state.isReady)
+  }
+
+  @Test("Switching user starts the identify's side effects only after the reset has wiped storage")
+  func sideEffectsStartAfterSwitchReset() async {
+    let context = FakeIdentityContext(readyState(appUserId: "user-1"))
+
+    context.dispatch(identify("user-2", restoreAssignments: true, keptAttributes: [:]))
+
+    // The assignments fetch saves what it gets back, so starting it before
+    // the reset wipes storage could lose that.
+    let events = context.events
+    let resetIndex = events.firstIndex(of: "resetRestOfSDK")
+    let firstSideEffect = events.firstIndex(of: "sideEffect")
+    #expect(resetIndex != nil)
+    #expect(firstSideEffect != nil && firstSideEffect! > resetIndex!)
+    #expect(events.filter { $0 == "sideEffect" }.count == 3)
+
+    await context.settle()
+    #expect(context.state.isReady)
+    #expect(context.events.contains("fetchAssignments"))
   }
 
   @Test("A change from another thread during the reset applies before that call returns")

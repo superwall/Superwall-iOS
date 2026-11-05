@@ -139,11 +139,27 @@ enum IdentityAction: StoreAction {
     context.trackIdentityAlias()
     context.trackUserAttributes(context.state.userAttributes)
 
+    // Started once the store is unlocked, after any reset above has wiped
+    // the old user's storage, so what they save isn't wiped with it.
+    context.store.deferUntilUnlocked {
+      startSideEffects(
+        of: operation,
+        restoreAssignments: restoreAssignments,
+        in: context
+      )
+    }
+  }
+
+  private func startSideEffects(
+    of operation: IdentifyOperation,
+    restoreAssignments: Bool,
+    in context: IdentityContext
+  ) {
     context.sideEffect { [weak context] in
       guard let context = context else {
         return
       }
-      let seed = await context.userIdSeed(for: userId)
+      let seed = await context.userIdSeed(for: operation.userId)
       context.dispatch(.resolveSeed(operation, seed: seed))
     }
 
