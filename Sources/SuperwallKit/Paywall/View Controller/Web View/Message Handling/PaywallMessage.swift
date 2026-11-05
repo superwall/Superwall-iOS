@@ -54,7 +54,7 @@ enum PaywallMessage: Decodable, Equatable {
   case teleportWatchEnd
   case openPaymentSheet(_ url: URL)
   case openDeepLink(url: URL)
-  case purchase(productId: String, shouldDismiss: Bool)
+  case purchase(productId: String, shouldDismiss: Bool, product: String? = nil)
   case custom(data: String)
   case customPlacement(name: String, params: JSON)
   case userAttributesUpdated(attributes: JSON)
@@ -97,7 +97,12 @@ enum PaywallMessage: Decodable, Equatable {
 
   case transactionRestore
   case transactionStart
-  case transactionComplete(trialEndDate: Date?, productIdentifier: String, didStartFreeTrial: Bool)
+  case transactionComplete(
+    trialEndDate: Date?,
+    productIdentifier: String,
+    didStartFreeTrial: Bool,
+    product: String? = nil
+  )
   case transactionFail
   case transactionAbandon
   case transactionTimeout
@@ -147,6 +152,7 @@ enum PaywallMessage: Decodable, Equatable {
   private enum CodingKeys: String, CodingKey {
     case messageType = "eventName"
     case productId = "productIdentifier"
+    case product
     case shouldDismiss
     case url
     case link
@@ -198,7 +204,8 @@ enum PaywallMessage: Decodable, Equatable {
       case .purchase:
         if let productId = try? values.decode(String.self, forKey: .productId) {
           let shouldDismiss = try values.decodeIfPresent(Bool.self, forKey: .shouldDismiss) ?? true
-          self = .purchase(productId: productId, shouldDismiss: shouldDismiss)
+          let product = try? values.decode(String.self, forKey: .product)
+          self = .purchase(productId: productId, shouldDismiss: shouldDismiss, product: product)
           return
         }
       case .restore:

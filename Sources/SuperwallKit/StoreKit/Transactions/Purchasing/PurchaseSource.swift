@@ -8,7 +8,7 @@
 /// The source of the purchase initiation.
 enum PurchaseSource {
   #if canImport(WebKit)
-  /// The purchase was initiated internally by the SDK.
+  /// The purchase was initiated internally by the SDK, for the slot with this `Product.cacheKey`.
   case `internal`(String, PaywallViewController, Bool)
   #endif
 
