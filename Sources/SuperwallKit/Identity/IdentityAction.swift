@@ -25,7 +25,8 @@ protocol IdentityContext: AnyObject {
   func redeemExistingWebEntitlements() async
 
   /// The attributes a new user keeps across a reset, such as install-scoped
-  /// attribution. Called with the identity unlocked; changes nothing.
+  /// attribution. Called with the identity unlocked; doesn't change the
+  /// identity.
   func attributesKeptAcrossReset() -> [String: Any?]
 
   /// Resets the rest of the SDK for the new user, once the identity has

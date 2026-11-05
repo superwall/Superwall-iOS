@@ -12,8 +12,8 @@ import Combine
 /// with a new anonymous one, on `reset()` or on identifying a different user.
 protocol IdentityResetHandling: AnyObject {
   /// The attributes a new user keeps, such as install-scoped attribution and
-  /// the device identifiers. Called with the identity unlocked, and changes
-  /// nothing. Usually called before the identity changes. When another
+  /// the device identifiers. Called with the identity unlocked, and doesn't
+  /// change the identity. Usually called before the identity changes. When another
   /// thread changed the user at the same moment, it's called afterwards
   /// instead, and what it returns is merged into the new user then.
   func attributesKeptAcrossReset() -> [String: Any?]

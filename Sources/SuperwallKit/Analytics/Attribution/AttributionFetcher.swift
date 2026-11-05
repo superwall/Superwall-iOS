@@ -30,7 +30,7 @@ final class AttributionFetcher {
   /// is worth syncing: every sync costs a `user_attributes` event, a delegate
   /// callback, a Core Data row and a re-encode of the whole attribute dict.
   private var _lastSyncedDeviceIdentifiers: [String: String]?
-  /// The identifiers a reset's new user was given, until the reset finishes.
+  /// The identifiers last handed to a reset's new user. The next read replaces them.
   private var _resetDeviceIdentifiers: [String: String]?
 
   private unowned let storage: Storage

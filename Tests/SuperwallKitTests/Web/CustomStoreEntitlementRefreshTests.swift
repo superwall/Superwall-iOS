@@ -737,8 +737,13 @@ struct CustomStoreEntitlementRefreshTests {
     #expect(superwall.customerInfo.subscriptions.map(\.transactionId) == ["renewal_1"])
   }
 
-  @Test("refreshCustomerInfo returns the current customer info when config and the fetch fail")
-  func refreshCustomerInfo_offlineFirstLaunch_returns() async throws {
+  // A hang fails these after the time limit instead of stalling the run.
+  @available(iOS 16.0, macOS 13.0, watchOS 9.0, *)
+  @Test(
+    "refreshCustomerInfo returns the current customer info when config and the fetch fail",
+    .timeLimit(.minutes(1))
+  )
+  func refreshCustomerInfo_offlineFirstLaunch_returns() async {
     let superwall = Superwall(dependencyContainer: dependencyContainer)
     // A first launch: nothing has been loaded yet.
     superwall.customerInfo = .blank()
@@ -747,19 +752,72 @@ struct CustomStoreEntitlementRefreshTests {
     dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
     dependencyContainer.configManager.store.update(ConfigUpdate.failed(NetworkError.unknown))
 
-    // Polled with a time limit, so a refresh that never returns fails the test
-    // instead of hanging it.
-    let box = RefreshResultBox()
-    Task { box.result = await superwall.refreshCustomerInfo() }
-    for _ in 0..<150 where box.result == nil {
-      try await Task.sleep(nanoseconds: 20_000_000)
-    }
-    let result = box.result
-    let didReturn = result != nil
+    let result = await superwall.refreshCustomerInfo()
 
-    #expect(didReturn, "refreshCustomerInfo never returned")
     #expect(network.getEntitlementsCallCount == 1)
-    #expect(result?.isPlaceholder == true)
+    #expect(result.isPlaceholder)
+  }
+
+  @available(iOS 16.0, macOS 13.0, watchOS 9.0, *)
+  @Test(
+    "refreshCustomerInfo waits for the device's customer info when the fetch fails",
+    .timeLimit(.minutes(1))
+  )
+  func refreshCustomerInfo_fetchFails_waitsForDeviceCustomerInfo() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.customerInfo = .blank()
+    let network = NetworkMock(options: dependencyContainer.makeSuperwallOptions(), factory: dependencyContainer)
+    // No response: the fetch fails.
+    dependencyContainer.webEntitlementRedeemer = makeRedeemer(network: network, superwall: superwall)
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(.stub()))
+
+    async let refresh = superwall.refreshCustomerInfo()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    // The device's purchases finish loading after the fetch failed.
+    let deviceCustomerInfo = CustomerInfo(
+      subscriptions: [],
+      nonSubscriptions: [],
+      entitlements: [Entitlement(id: "pro", isActive: true)]
+    )
+    superwall.customerInfo = deviceCustomerInfo
+    let result = await refresh
+
+    #expect(network.getEntitlementsCallCount == 1)
+    #expect(result.entitlements.map(\.id) == ["pro"])
+  }
+
+  @available(iOS 16.0, macOS 13.0, watchOS 9.0, *)
+  @Test(
+    "getCustomerInfo returns once config fails instead of waiting forever",
+    .timeLimit(.minutes(1))
+  )
+  func getCustomerInfo_configFails_returns() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.customerInfo = .blank()
+
+    async let pending = superwall.getCustomerInfo()
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    dependencyContainer.configManager.store.update(ConfigUpdate.failed(NetworkError.unknown))
+    let result = await pending
+
+    #expect(result.isPlaceholder)
+  }
+
+  @available(iOS 16.0, macOS 13.0, watchOS 9.0, *)
+  @Test(
+    "getCustomerInfo stops waiting when its task is cancelled",
+    .timeLimit(.minutes(1))
+  )
+  func getCustomerInfo_cancelled_returns() async {
+    let superwall = Superwall(dependencyContainer: dependencyContainer)
+    superwall.customerInfo = .blank()
+
+    let pending = Task { await superwall.getCustomerInfo() }
+    try? await Task.sleep(nanoseconds: 100_000_000)
+    pending.cancel()
+    let result = await pending.value
+
+    #expect(result.isPlaceholder)
   }
 
   @Test("refreshCustomerInfo doesn't fetch in test mode")
@@ -796,15 +854,5 @@ struct CustomStoreEntitlementRefreshTests {
     _ = await refresh.value
 
     #expect(network.getEntitlementsCallCount == 0)
-  }
-}
-
-/// Written by the refresh's task and read by the test, so it's locked.
-private final class RefreshResultBox: @unchecked Sendable {
-  private let lock = NSLock()
-  private var value: CustomerInfo?
-  var result: CustomerInfo? {
-    get { lock.lock(); defer { lock.unlock() }; return value }
-    set { lock.lock(); defer { lock.unlock() }; value = newValue }
   }
 }
