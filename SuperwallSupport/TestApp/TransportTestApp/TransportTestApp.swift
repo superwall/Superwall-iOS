@@ -81,7 +81,13 @@ final class TransportModel: ObservableObject {
     let defaults = UserDefaults.standard
     baseURL = URL(string: defaults.string(forKey: "baseURL") ?? "http://localhost:8791")!
     let apiKey = defaults.string(forKey: "apiKey") ?? "pk_fixture_billing-question"
-    let install = defaults.string(forKey: "install") ?? UUID().uuidString
+    // 256 random bits, as inbox-api requires of an install secret.
+    let install = defaults.string(forKey: "install") ?? {
+      var bytes = [UInt8](repeating: 0, count: 32)
+      _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+      return Data(bytes).base64EncodedString().replacingOccurrences(of: "+", with: "-")
+        .replacingOccurrences(of: "/", with: "_").replacingOccurrences(of: "=", with: "")
+    }()
     var configuration = SupportTransport.Configuration(
       baseURL: baseURL, apiKey: apiKey,
       sdk: SupportSdk(platform: "ios", version: "test", addonVersion: "transport-m1"),

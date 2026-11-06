@@ -1,3 +1,6 @@
+// One actor owns the transport's state; splitting it across files would widen every
+// private member to internal.
+// swiftlint:disable file_length
 import Foundation
 
 /// What the transport tells its owner (the chat UI, M2).
@@ -114,6 +117,9 @@ public actor SupportTransport {
   /// `stop()` was called: terminal, a later `start()` throws.
   private var stoppedByCaller = false
   private var consecutiveResyncs = 0
+  /// When the socket went live. A drop after it lasted a ping interval starts backoff over;
+  /// a server that accepts and drops at once keeps backing off.
+  private var liveSince: Date?
   private var stopped = false
   /// A start that failed retryably: retried on backoff, and at once on network or foreground.
   private var startWanted = false
@@ -197,13 +203,13 @@ public actor SupportTransport {
   /// session can't start (call again to retry). A window that fails to load doesn't
   /// stop it: the socket's catch-up reads it over HTTP instead.
   public func start(conversationId: String? = nil) async throws {
+    guard !stoppedByCaller else { throw SupportTransportError.notStarted }
     guard !started else { return }
     // A start already running (the background retry, or another caller): share its outcome.
     if let inFlight = startInFlight {
       try await inFlight.value
       return
     }
-    guard !stoppedByCaller else { throw SupportTransportError.notStarted }
     let task = Task { try await self.startOnce(conversationId: conversationId) }
     startInFlight = task
     try await task.value
@@ -212,6 +218,8 @@ public actor SupportTransport {
   private func startOnce(conversationId: String?) async throws {
     // Cleared on the actor before the task completes, so a retry can't join a finished start.
     defer { startInFlight = nil }
+    // stop() can run between start() and this task's first line: it wins.
+    if stoppedByCaller { throw SupportTransportError.notStarted }
     startRetryTask?.cancel()
     // A previous start that ended in a redirect may be retried.
     stopped = false
@@ -245,6 +253,7 @@ public actor SupportTransport {
       logger("first window failed (\(error)); the socket catches up")
     }
     httpBusy = false
+    if stoppedByCaller { throw SupportTransportError.notStarted }
     started = true
     connect()
     flushSends()
@@ -384,13 +393,18 @@ public actor SupportTransport {
     session = started
     logger("session started, conversation \(started.conversationId)")
     if switched, let previous {
+      var dropped = 0
       // The old conversation's queued sends can't go anywhere now: fail them visibly.
       for item in queue.all where item.conversationId == previous && item.state == .pending {
         queue.update(clientMessageId: item.clientMessageId) {
           $0.state = .failed
           $0.failure = "conversation_changed"
         }
+        dropped += 1
       }
+      if dropped > 0 { emit(.error(code: "conversation_changed", retryable: false)) }
+      emit(.pendingChanged)
+      emit(.logChanged)
     }
     // The socket was closed for the old conversation: open one for the new one.
     if switched, self.started { connect() }
@@ -573,6 +587,7 @@ public actor SupportTransport {
       case .accept:
         consecutiveGaps = 0
         consecutiveResyncs = 0
+        sessionRenewals = 0
         // Progress: the path works, so a drop after this retries from the first step.
         backoff = configuration.backoffInitial
         let entry = log.entriesBySeq[seq]
@@ -635,8 +650,8 @@ public actor SupportTransport {
   private func checkCaughtUp() {
     guard state == .catchingUp, let readyHead, log.cursor >= readyHead else { return }
     state = .live
-    backoff = configuration.backoffInitial
-    sessionRenewals = 0
+    consecutiveResyncs = 0
+    liveSince = Date()
   }
 
   /// Drops this socket, runs `work` (an HTTP read), then reconnects.
@@ -676,11 +691,18 @@ public actor SupportTransport {
   /// The socket closed or failed under us.
   private func dropped(closeCode: Int?, reason: String) {
     stats.drops += 1
+    if let liveSince, Date().timeIntervalSince(liveSince) >= configuration.pingInterval {
+      backoff = configuration.backoffInitial
+      sessionRenewals = 0
+    }
+    liveSince = nil
     logger("socket dropped: code \(closeCode.map(String.init) ?? "none"), \(reason)")
     closeSocket(reason: "dropped")
     switch closeCode {
     case SupportCloseCode.sessionInvalid:
       state = .connecting
+      // Set now, before the task runs, so no socket opens with the old token meanwhile.
+      renewing = true
       Task { await self.renewSessionThenConnect() }
     case SupportCloseCode.protocolUnsupported:
       stopForGood(reason: "protocol_unsupported")
@@ -866,7 +888,8 @@ public actor SupportTransport {
         }
         sendBackoff = configuration.backoffInitial
         queue.remove(clientMessageId: next.clientMessageId)
-        log.holdOutOfBand(WireEntry.decode(accepted.entry))
+        // Only into the log of the conversation it was sent to.
+        if session?.conversationId == conversationId { log.holdOutOfBand(WireEntry.decode(accepted.entry)) }
         emit(.pendingChanged)
         emit(.logChanged)
       } catch let error as SupportTransportError where error.isRetryable {
@@ -933,11 +956,13 @@ public actor SupportTransport {
   }
 
   public func cardAction(cardId: String, _ request: CardActionRequest) async throws {
+    let conversationId = session?.conversationId
     let accepted = try await withRetries {
       try await self.authenticated { token, _ in
         try await self.http.cardAction(token: token, cardId: cardId, request)
       }
     }
+    guard session?.conversationId == conversationId else { return }
     for raw in accepted.entries { log.holdOutOfBand(WireEntry.decode(raw)) }
     emit(.logChanged)
   }

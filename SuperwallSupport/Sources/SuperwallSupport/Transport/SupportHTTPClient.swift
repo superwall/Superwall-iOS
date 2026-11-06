@@ -144,7 +144,8 @@ final class SupportHTTPClient: @unchecked Sendable {
       return try decoder.decode(Response.self, from: data)
     } catch {
       // A 2xx we can't read: retrying the same idempotent command is the safe answer.
-      throw SupportTransportError.network("Undecodable response: \(error)")
+      // Only the type: a decoding error can quote what it failed on.
+      throw SupportTransportError.network("Undecodable response: \(type(of: error))")
     }
   }
 
