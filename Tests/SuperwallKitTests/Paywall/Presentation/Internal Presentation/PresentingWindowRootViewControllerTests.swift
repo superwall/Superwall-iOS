@@ -10,32 +10,12 @@ import UIKit
 @MainActor
 @Suite(.serialized)
 struct PresentingWindowRootViewControllerTests {
-  /// Reports whether its view controller fills the window, as UIKit's sheet and full-screen
-  /// presentation controllers do.
-  private final class FakePresentationController: UIPresentationController {
-    let fillsWindow: Bool
-
-    init(presentedViewController: UIViewController, fillsWindow: Bool) {
-      self.fillsWindow = fillsWindow
-      super.init(presentedViewController: presentedViewController, presenting: nil)
-    }
-
-    override var shouldPresentInFullscreen: Bool {
-      return fillsWindow
-    }
-  }
-
   /// Stands in for an app view controller that locks its own orientation, the way Unity's does.
   private final class OrientationLockedViewController: UIViewController {
     let orientations: UIInterfaceOrientationMask
     let presented: OrientationLockedViewController?
-    let fillsWindow: Bool
     weak var presenter: UIViewController?
     private(set) var orientationUpdateCount = 0
-    private lazy var fakePresentationController = FakePresentationController(
-      presentedViewController: self,
-      fillsWindow: fillsWindow
-    )
 
     init(
       _ orientations: UIInterfaceOrientationMask,
@@ -43,9 +23,9 @@ struct PresentingWindowRootViewControllerTests {
       presenting presented: OrientationLockedViewController? = nil
     ) {
       self.orientations = orientations
-      self.fillsWindow = fillsWindow
       self.presented = presented
       super.init(nibName: nil, bundle: nil)
+      modalPresentationStyle = fillsWindow ? .fullScreen : .pageSheet
       presented?.presenter = self
     }
 
@@ -63,10 +43,6 @@ struct PresentingWindowRootViewControllerTests {
 
     override var presentingViewController: UIViewController? {
       return presenter
-    }
-
-    override var presentationController: UIPresentationController? {
-      return presenter == nil ? nil : fakePresentationController
     }
 
     override func setNeedsUpdateOfSupportedInterfaceOrientations() {

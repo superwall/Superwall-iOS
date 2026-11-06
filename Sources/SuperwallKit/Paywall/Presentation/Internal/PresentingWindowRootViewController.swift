@@ -53,11 +53,22 @@ final class PresentingWindowRootViewController: UIViewController {
 extension UIViewController {
   /// Whether this view controller was presented over the whole window, rather than as a sheet,
   /// popover or alert.
+  ///
+  /// This goes by the presentation style, not by what's on screen: on an iPhone in landscape a
+  /// sheet covers the window too, but UIKit still doesn't ask it about orientation.
   var isPresentedFullScreen: Bool {
     if presentingViewController == nil {
       return false
     }
-    return presentationController?.shouldPresentInFullscreen ?? false
+    switch modalPresentationStyle {
+    case .fullScreen,
+      .overFullScreen:
+      return true
+    case .custom:
+      return presentationController?.shouldPresentInFullscreen ?? false
+    default:
+      return false
+    }
   }
 
   /// The view controller UIKit asks for the window's orientations when this one is its root:
