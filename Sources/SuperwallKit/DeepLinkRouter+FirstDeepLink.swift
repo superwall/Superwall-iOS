@@ -28,24 +28,44 @@ extension DeepLinkRouter {
   /// page. When the config lists the app's custom product pages, the page
   /// the deep link belongs to is saved too.
   ///
-  /// - Parameters:
-  ///   - url: The deep link, mapped from a Superwall app-link if it was one.
-  ///   - originalUrl: The deep link as the app received it. A custom product
-  ///     page's deep link can be a Superwall app-link, so both are matched.
-  func captureFirstSessionDeepLink(_ url: URL, originalUrl: URL) {
+  /// - Parameter url: The deep link, mapped from a Superwall app-link if it
+  ///   was one.
+  func captureFirstSessionDeepLink(_ url: URL) {
     if !storage.recordFirstSessionDeepLink(url) {
       return
     }
-    let page = CustomProductPage.matching(
-      [url, originalUrl],
-      in: configManager.config?.customProductPages ?? []
-    )
-    if let page {
-      storage.save(page, forType: FirstSessionCustomProductPage.self)
+    if matchFirstDeepLinkToCustomProductPage() {
+      return
     }
     identityManager.mergeUserAttributes(
-      Self.firstDeepLinkAttributes(url: url.absoluteString, page: page)
+      Self.firstDeepLinkAttributes(url: url.absoluteString, page: nil)
     )
+  }
+
+  /// Saves the custom product page whose deep link is the first deep link,
+  /// and sets it as user attributes.
+  ///
+  /// Runs when the first deep link arrives and again whenever config arrives,
+  /// because the deep link can come before the config that lists the pages.
+  ///
+  /// - Returns: `true` if a page was found and saved.
+  @discardableResult
+  func matchFirstDeepLinkToCustomProductPage() -> Bool {
+    guard
+      let pages = configManager.config?.customProductPages,
+      !pages.isEmpty,
+      storage.get(FirstSessionCustomProductPage.self) == nil,
+      let urlString = storage.get(FirstSessionDeepLinkURL.self),
+      let url = URL(string: urlString),
+      let page = CustomProductPage.matching(url, in: pages)
+    else {
+      return false
+    }
+    storage.save(page, forType: FirstSessionCustomProductPage.self)
+    identityManager.mergeUserAttributes(
+      Self.firstDeepLinkAttributes(url: urlString, page: page)
+    )
+    return true
   }
 
   /// The first deep link's user attributes, which a new user keeps across a

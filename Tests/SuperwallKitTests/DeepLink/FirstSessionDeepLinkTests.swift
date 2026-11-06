@@ -221,6 +221,23 @@ struct FirstSessionDeepLinkRouterTests {
     #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-2")
   }
 
+  @Test("Sets the custom product page when config arrives after the first deep link")
+  func route_beforeConfig_matchesWhenConfigArrives() throws {
+    clearPageAttributes()
+    let deepLink = "myapp://home?promo=\(UUID().uuidString)"
+    router.route(url: try #require(URL(string: deepLink)))
+    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == nil)
+
+    let page = CustomProductPage(id: "ppid-3", name: "Sleep", deepLink: deepLink)
+    var config = Config.stub()
+    config.customProductPages = [page]
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
+
+    #expect(storage.get(FirstSessionCustomProductPage.self) == page)
+    #expect(storedAttribute(DeepLinkRouter.customProductPageIdAttributeKey) == "ppid-3")
+    #expect(storedAttribute(DeepLinkRouter.customProductPageNameAttributeKey) == "Sleep")
+  }
+
   @Test("Sets only the deep link when no custom product page matches it")
   func route_noMatchingPage_setsOnlyUrl() throws {
     clearPageAttributes()
@@ -271,15 +288,15 @@ struct CustomProductPageMatchingTests {
     let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
     let other = CustomProductPage(id: "b", name: "B", deepLink: "myapp://other")
 
-    #expect(CustomProductPage.matching([url], in: [other, page]) == page)
+    #expect(CustomProductPage.matching(url, in: [other, page]) == page)
   }
 
   @Test("Finds nothing when no page has the URL as its deep link")
   func matching_noMatch_isNil() {
     let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://other")
 
-    #expect(CustomProductPage.matching([url], in: [page]) == nil)
-    #expect(CustomProductPage.matching([url], in: []) == nil)
+    #expect(CustomProductPage.matching(url, in: [page]) == nil)
+    #expect(CustomProductPage.matching(url, in: []) == nil)
   }
 
   @Test("Finds nothing when different pages share the deep link")
@@ -287,22 +304,26 @@ struct CustomProductPageMatchingTests {
     let first = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
     let second = CustomProductPage(id: "b", name: "B", deepLink: "myapp://home")
 
-    #expect(CustomProductPage.matching([url], in: [first, second]) == nil)
+    #expect(CustomProductPage.matching(url, in: [first, second]) == nil)
   }
 
   @Test("Finds the page when several of its versions have the deep link")
   func matching_samePageTwice_findsPage() {
     let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
 
-    #expect(CustomProductPage.matching([url], in: [page, page]) == page)
+    #expect(CustomProductPage.matching(url, in: [page, page]) == page)
   }
 
-  @Test("Matches any of the given URLs")
-  func matching_secondUrl_findsPage() {
-    let page = CustomProductPage(id: "a", name: "A", deepLink: "myapp://home")
-    let original = URL(string: "https://myapp.superwall.app/app-link/x")!
+  @Test("Matches a page whose deep link is a Superwall app-link against its mapped form")
+  func matching_appLinkPage_matchesMappedUrl() {
+    let page = CustomProductPage(
+      id: "a",
+      name: "A",
+      deepLink: "https://myapp.superwall.app/app-link/home?promo=1"
+    )
+    let mapped = URL(string: "myapp://home?promo=1")!
 
-    #expect(CustomProductPage.matching([original, url], in: [page]) == page)
+    #expect(CustomProductPage.matching(mapped, in: [page]) == page)
   }
 }
 

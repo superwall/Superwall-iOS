@@ -105,7 +105,7 @@ final class DeepLinkRouter {
       deepLinkUrl = url
     }
 
-    captureFirstSessionDeepLink(deepLinkUrl, originalUrl: url)
+    captureFirstSessionDeepLink(deepLinkUrl)
 
     let trackEvent = self.trackEvent
     Task {
@@ -180,6 +180,7 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
+              self?.matchFirstDeepLinkToCustomProductPage()
             default:
               break
             }
@@ -331,7 +332,7 @@ extension URL {
   /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
   ///
   /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
-  fileprivate var superwallDeepLinkMappedURL: URL {
+  var superwallDeepLinkMappedURL: URL {
     guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }

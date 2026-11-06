@@ -23,18 +23,20 @@ struct CustomProductPage: Codable, Equatable {
   /// this page.
   let deepLink: String
 
-  /// The page whose deep link is one of `urls`.
+  /// The page whose deep link is `url`.
+  ///
+  /// `url` is mapped from a Superwall app-link if it was one, so a page's
+  /// app-link deep link is mapped the same way before comparing.
   ///
   /// The list can hold the same page more than once, once for each of its
   /// versions. Returns `nil` when no page matches, or when different pages
   /// share the deep link, because then there's no telling which one the user
   /// came from.
   static func matching(
-    _ urls: [URL],
+    _ url: URL,
     in pages: [CustomProductPage]
   ) -> CustomProductPage? {
-    let urlStrings = Set(urls.map(\.absoluteString))
-    let matches = pages.filter { urlStrings.contains($0.deepLink) }
+    let matches = pages.filter { $0.mappedDeepLink == url.absoluteString }
 
     guard let match = matches.first else {
       return nil
@@ -43,5 +45,17 @@ struct CustomProductPage: Codable, Equatable {
       return nil
     }
     return match
+  }
+
+  /// The deep link as the router sees it, mapped from a Superwall app-link if
+  /// it is one.
+  private var mappedDeepLink: String {
+    guard
+      let url = URL(string: deepLink),
+      url.isSuperwallDeepLink
+    else {
+      return deepLink
+    }
+    return url.superwallDeepLinkMappedURL.absoluteString
   }
 }
