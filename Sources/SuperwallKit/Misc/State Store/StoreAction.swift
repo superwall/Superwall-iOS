@@ -26,8 +26,17 @@ protocol Reducer {
 /// no `queue.sync`, semaphores or calls into other objects that might.
 /// Work that has to, such as resetting other parts of the SDK, goes in
 /// ``StateStore/deferUntilUnlocked(_:)``, which runs once the lock is released.
-/// Async work starts in a `Task`.
+/// Async work that must not overlap runs on a ``SerialTaskCoordinator``
+/// owned by the same object, and each step of it dispatches actions.
+///
+/// Side effects (storage, tracking, publishing, delegate calls) are methods
+/// on the context, so the context is the full list of what an action can
+/// cause, and tests can swap in a fake that records each call.
+///
+/// An action can return a ``Result``, such as whether it claimed something,
+/// read in the same locked step as its update.
 protocol StoreAction {
   associatedtype Context
-  func execute(in context: Context)
+  associatedtype Result = Void
+  func execute(in context: Context) -> Result
 }
