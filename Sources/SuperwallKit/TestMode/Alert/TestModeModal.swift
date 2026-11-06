@@ -34,6 +34,7 @@ enum TestModeModal {
     initialFreeTrialOverride: FreeTrialOverride,
     apiKey: String,
     networkEnvironment: SuperwallOptions.NetworkEnvironment,
+    defaults: UserDefaults = .standard,
     from viewController: UIViewController
   ) async -> TestModeModalResult {
     await withCheckedContinuation { continuation in
@@ -45,7 +46,8 @@ enum TestModeModal {
         availableEntitlements: availableEntitlements,
         initialFreeTrialOverride: initialFreeTrialOverride,
         apiKey: apiKey,
-        networkEnvironment: networkEnvironment
+        networkEnvironment: networkEnvironment,
+        defaults: defaults
       )
       modal.onDismiss = { entitlements, freeTrialOverride in
         continuation.resume(returning: TestModeModalResult(

@@ -30,7 +30,8 @@ struct SubscriptionStatusResolutionTests {
     // Set a test mode override
     let overrideEntitlement = Entitlement(id: "test_premium")
     let overrideStatus: SubscriptionStatus = .active(Set([overrideEntitlement]))
-    testModeManager.overriddenSubscriptionStatus = overrideStatus
+    testModeManager.dispatch(.restored([overrideEntitlement]))
+    #expect(testModeManager.overriddenSubscriptionStatus == overrideStatus)
 
     // Attempt to set a different status externally
     superwall.subscriptionStatus = .inactive
@@ -54,7 +55,7 @@ struct SubscriptionStatusResolutionTests {
     testModeManager.evaluateTestMode(config: config, options: SuperwallOptions())
 
     // Set override to inactive
-    testModeManager.overriddenSubscriptionStatus = .inactive
+    testModeManager.dispatch(.restored([]))
 
     // Set the same value — should not trigger re-assignment
     superwall.subscriptionStatus = .inactive
@@ -97,7 +98,8 @@ struct SubscriptionStatusResolutionTests {
     #expect(testModeManager.isTestMode == false)
 
     // Even if someone incorrectly sets an override, it shouldn't apply
-    testModeManager.overriddenSubscriptionStatus = .active(Set([Entitlement(id: "hack")]))
+    testModeManager.dispatch(.restored([Entitlement(id: "hack")]))
+    #expect(testModeManager.overriddenSubscriptionStatus == nil)
 
     superwall.subscriptionStatus = .inactive
 
@@ -149,7 +151,8 @@ struct SubscriptionStatusResolutionTests {
       nonSubscriptions: [],
       entitlements: [Entitlement(id: "test_entitlement")]
     )
-    testModeManager.overriddenCustomerInfo = overrideInfo
+    testModeManager.dispatch(.restored([Entitlement(id: "test_entitlement")]))
+    #expect(testModeManager.overriddenCustomerInfo == overrideInfo)
 
     // Attempt to set different customer info
     let externalInfo = CustomerInfo(
@@ -186,12 +189,8 @@ struct SubscriptionStatusResolutionTests {
 
     #expect(testModeManager.isTestMode == false)
 
-    let overrideInfo = CustomerInfo(
-      subscriptions: [],
-      nonSubscriptions: [],
-      entitlements: [Entitlement(id: "should_not_apply")]
-    )
-    testModeManager.overriddenCustomerInfo = overrideInfo
+    testModeManager.dispatch(.restored([Entitlement(id: "should_not_apply")]))
+    #expect(testModeManager.overriddenCustomerInfo == nil)
 
     let externalInfo = CustomerInfo(
       subscriptions: [],

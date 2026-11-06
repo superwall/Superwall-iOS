@@ -29,18 +29,21 @@ enum TestModeModal {
     initialFreeTrialOverride: FreeTrialOverride,
     apiKey: String,
     networkEnvironment: SuperwallOptions.NetworkEnvironment,
+    defaults: UserDefaults = .standard,
     from viewController: NSViewController?
   ) async -> TestModeModalResult {
     let baseUrl = networkEnvironment.dashboardBaseUrl
     let userLinkURL = URL(string: "\(baseUrl)/sdk-link/applications/\(apiKey)/users/\(userId)")
-    let savedSelections = TestModeSettingsStore.loadSelections()
+    let savedSelections = TestModeSettingsStore.loadSelections(from: defaults)
       .filter { availableEntitlements.contains($0.key) && $0.value.state != nil }
     let freeTrialOverride = TestModeSettingsStore.loadFreeTrialOverride(
+      from: defaults,
       fallback: initialFreeTrialOverride
     )
     let appliedSettings = TestModeAppliedSettings(
       selections: savedSelections,
-      freeTrialOverride: freeTrialOverride
+      freeTrialOverride: freeTrialOverride,
+      defaults: defaults
     )
 
     return await withCheckedContinuation { continuation in
@@ -67,7 +70,7 @@ enum TestModeModal {
             onReset: appliedSettings.reset
           ) { selections, freeTrialOverride in
             guard close() else { return }
-            TestModeSettingsStore.save(selections, freeTrialOverride: freeTrialOverride)
+            TestModeSettingsStore.save(selections, freeTrialOverride: freeTrialOverride, in: defaults)
             continuation.resume(
               returning: TestModeModalResult(
                 entitlements: TestModeSettingsStore.entitlements(from: selections),

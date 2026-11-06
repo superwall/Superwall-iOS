@@ -563,9 +563,8 @@ public final class Superwall: NSObject, ObservableObject {
   private func resolvedCustomerInfo(
     _ info: CustomerInfo
   ) -> CustomerInfo {
-    if let testModeManager = dependencyContainer.testModeManager,
-      testModeManager.isTestMode,
-      let override = testModeManager.overriddenCustomerInfo {
+    // Read once: it's `nil` whenever test mode is off.
+    if let override = dependencyContainer.testModeManager?.overriddenCustomerInfo {
       return override
     }
     return info
