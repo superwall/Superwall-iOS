@@ -19,7 +19,9 @@ final class DeepLinkRouter {
   #if canImport(WebKit)
   private unowned let debugManager: DebugManager
   #endif
-  private unowned let configManager: ConfigManager
+  unowned let configManager: ConfigManager
+  unowned let storage: Storage
+  unowned let identityManager: IdentityManager
   private static var pendingDeepLink: URL?
 
   /// Tracks an event. Replaced in tests to observe what's tracked.
@@ -40,21 +42,29 @@ final class DeepLinkRouter {
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
     debugManager: DebugManager,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.debugManager = debugManager
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
   #else
   init(
     webEntitlementRedeemer: WebEntitlementRedeemer,
-    configManager: ConfigManager
+    configManager: ConfigManager,
+    storage: Storage,
+    identityManager: IdentityManager
   ) {
     self.webEntitlementRedeemer = webEntitlementRedeemer
     self.configManager = configManager
+    self.storage = storage
+    self.identityManager = identityManager
 
     listenToConfig()
   }
@@ -94,6 +104,8 @@ final class DeepLinkRouter {
     } else {
       deepLinkUrl = url
     }
+
+    captureFirstSessionDeepLink(deepLinkUrl)
 
     let trackEvent = self.trackEvent
     Task {
@@ -168,6 +180,7 @@ final class DeepLinkRouter {
                 self?.route(url: deepLink)
                 Self.pendingDeepLink = nil
               }
+              self?.matchFirstDeepLinkToCustomProductPage()
             default:
               break
             }
@@ -319,7 +332,7 @@ extension URL {
   /// Formats the URL for the deep link event, handling both Universal Link and URL Scheme.
   ///
   /// - Note: Assumes the `URL` is already verified to match the expected Superwall deep link format.
-  fileprivate var superwallDeepLinkMappedURL: URL {
+  var superwallDeepLinkMappedURL: URL {
     guard let appLinkRange = absoluteString.range(of: "/app-link/") else {
       return self
     }

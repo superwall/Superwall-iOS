@@ -49,6 +49,10 @@ class Storage {
   }
   private var _didTrackFirstSession = false
 
+  /// Whether a first-session deep link has been stored. Kept in memory so
+  /// later deep links don't read the disk.
+  private var _didRecordFirstSessionDeepLink = false
+
   /// Indicates whether static config hasn't been called before.
   ///
   /// Users upgrading from older SDK versions will not have called static config.
@@ -107,6 +111,8 @@ class Storage {
     } else {
       self._didTrackFirstSession = self.cache.read(DidTrackFirstSession.self) == true
     }
+
+    self._didRecordFirstSessionDeepLink = self.cache.read(FirstSessionDeepLinkURL.self) != nil
   }
 
   func configure(apiKey: String) {
@@ -351,5 +357,32 @@ class Storage {
 
   func delete<Key: Storable>(_ keyType: Key.Type) where Key.Value: Encodable {
     return cache.delete(keyType)
+  }
+}
+
+// MARK: - First Session Deep Link
+extension Storage {
+  /// Records the first deep link received during the first app session.
+  ///
+  /// App Store custom product pages can each specify a deep link that's
+  /// delivered on the first app open after install. Storing it allows
+  /// results to be broken down by product page. Only the first deep link
+  /// received during the first app session is recorded. The stored value
+  /// is install-scoped, surviving identity resets.
+  ///
+  /// - Returns: `true` if this call recorded the URL, `false` if the first
+  ///   app session has already ended or a deep link was already recorded.
+  func recordFirstSessionDeepLink(_ url: URL) -> Bool {
+    queue.sync {
+      if _didTrackFirstSession {
+        return false
+      }
+      if _didRecordFirstSessionDeepLink {
+        return false
+      }
+      save(url.absoluteString, forType: FirstSessionDeepLinkURL.self)
+      _didRecordFirstSessionDeepLink = true
+      return true
+    }
   }
 }

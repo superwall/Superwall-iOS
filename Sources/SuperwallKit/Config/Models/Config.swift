@@ -31,6 +31,7 @@ struct Config: Codable, Equatable {
   var iosAppId: String?
   var bundleIdConfig: String?
   var testModeUserIds: [TestStoreUser]?
+  var customProductPages: [CustomProductPage]?
 
   struct Web2AppConfig: Codable, Equatable {
     let entitlementsMaxAge: Seconds
@@ -88,6 +89,7 @@ struct Config: Codable, Equatable {
     case prioritizedCampaignId
     case bundleIdConfig
     case testModeUserIds
+    case customProductPages
   }
 
   init(from decoder: Decoder) throws {
@@ -106,6 +108,11 @@ struct Config: Codable, Equatable {
     iosAppId = try values.decodeIfPresent(String.self, forKey: .iosAppId)
     bundleIdConfig = try values.decodeIfPresent(String.self, forKey: .bundleIdConfig)
     testModeUserIds = try values.decodeIfPresent([TestStoreUser].self, forKey: .testModeUserIds)
+    let customProductPages = try values.decodeIfPresent(
+      [Throwable<CustomProductPage>].self,
+      forKey: .customProductPages
+    )
+    self.customProductPages = customProductPages?.compactMap { try? $0.result.get() }
 
     let localization = try values.decode(LocalizationConfig.self, forKey: .localization)
     locales = Set(localization.locales.map { $0.locale })
@@ -143,6 +150,7 @@ struct Config: Codable, Equatable {
     try container.encodeIfPresent(iosAppId, forKey: .iosAppId)
     try container.encodeIfPresent(bundleIdConfig, forKey: .bundleIdConfig)
     try container.encodeIfPresent(testModeUserIds, forKey: .testModeUserIds)
+    try container.encodeIfPresent(customProductPages, forKey: .customProductPages)
   }
 
   init(
