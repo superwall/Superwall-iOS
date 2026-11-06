@@ -12,16 +12,28 @@ import UIKit
 @testable import SuperwallKit
 
 /// Records the purchases and restores it's asked for.
-private final class RecordingPurchaseController: PurchaseController {
+private final class RecordingPurchaseController: PurchaseController, @unchecked Sendable {
   private(set) var purchaseCount = 0
   private(set) var restoreCount = 0
   /// How long each purchase takes.
   var purchaseDurationNs: UInt64 = 0
+  var result: PurchaseResult = .purchased
+  private let lock = NSLock()
+  private var running = 0
+  /// The most purchases that were running at once.
+  private(set) var mostRunningAtOnce = 0
 
   func purchase(product: StoreProduct) async -> PurchaseResult {
+    lock.lock()
     purchaseCount += 1
+    running += 1
+    mostRunningAtOnce = max(mostRunningAtOnce, running)
+    lock.unlock()
     try? await Task.sleep(nanoseconds: purchaseDurationNs)
-    return .purchased
+    lock.lock()
+    running -= 1
+    lock.unlock()
+    return result
   }
 
   func restorePurchases() async -> RestorationResult {
@@ -354,7 +366,7 @@ struct CustomStoreCheckoutTests {
     #expect(await waitForPageEvent("transaction_complete", in: paywallVc).contains("transaction_complete"))
     #expect(paywallVc.customStoreCheckoutProductId == nil)
     #expect(purchaseController.purchaseCount == 0)
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("Complete keeps the paywall open when the purchase action doesn't close it")
@@ -448,7 +460,7 @@ struct CustomStoreCheckoutTests {
     #expect(paywallVc.customStoreCheckoutProductId == nil)
     #expect(await finishes.waitForResults().isEmpty)
     #expect(purchaseController.purchaseCount == 0)
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("An abandon the buyer didn't choose doesn't present a paywall", arguments: [
@@ -472,7 +484,7 @@ struct CustomStoreCheckoutTests {
     let abandon = try #require(await tracked.events.last)
     #expect(abandon.canImplicitlyTriggerPaywall == false)
     #expect(paywallVc.customStoreCheckoutProductId == nil)
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("Closing a checkout sheet left open by a timeout isn't a second abandon")
@@ -575,7 +587,7 @@ struct CustomStoreCheckoutTests {
       .start(productId: productId, customTransactionId: serverTransactionId),
       paywallViewController: paywallVc
     )
-    let startedAt = try #require(dependencyContainer.makePurchasingCoordinator().purchaseDate)
+    let startedAt = try #require(dependencyContainer.makePurchasingCoordinator().purchase?.purchaseDate)
     try? await Task.sleep(nanoseconds: 100_000_000)
     await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: false),
@@ -615,12 +627,48 @@ struct CustomStoreCheckoutTests {
     await checkoutHandler.handle(checkout, paywallViewController: paywallVc)
 
     #expect(await tracked.waitForEvents(count: 1).isEmpty)
-    #expect(coordinator.product?.productIdentifier == "app_store_product")
-    #expect(coordinator.isCustomStoreCheckout == false)
+    #expect(coordinator.purchase?.product.productIdentifier == "app_store_product")
+    #expect(coordinator.purchase?.isCustomStoreCheckout == false)
     #expect(await finishes.waitForResults().isEmpty)
     #expect(paywallVc.alertMessages.isEmpty)
     #expect(paywallVc.customStoreCheckoutProductId == nil)
     coordinator.reset()
+  }
+
+  @Test("Purchases from two paywalls run one after the other")
+  func purchasesFromTwoPaywalls_runOneAtATime() async {
+    let appStoreProduct = StoreProduct(
+      sk1Product: MockSkProduct(productIdentifier: "app_store_product"),
+      entitlements: [.stub()]
+    )
+    await dependencyContainer.storeKitManager.setProduct(appStoreProduct, forIdentifier: "app_store_product")
+    purchaseController.purchaseDurationNs = 200_000_000
+    purchaseController.result = .cancelled
+    let transactionManager = TransactionManager(
+      storeKitManager: dependencyContainer.storeKitManager,
+      receiptManager: dependencyContainer.receiptManager,
+      purchaseController: purchaseController,
+      placementsQueue: dependencyContainer.placementsQueue,
+      purchaseManager: dependencyContainer.purchaseManager,
+      productsManager: dependencyContainer.productsManager,
+      postPurchaseRedeemer: redeemer,
+      factory: dependencyContainer
+    )
+    let tracked = tracked
+    transactionManager.trackEvent = { event in
+      await tracked.record(event)
+    }
+    let (firstPaywall, _) = makePaywall()
+    let (secondPaywall, _) = makePaywall()
+
+    async let first = transactionManager.purchase(.internal("app_store_product", firstPaywall, false))
+    async let second = transactionManager.purchase(.internal("app_store_product", secondPaywall, false))
+    let results = await [first, second]
+
+    #expect(results == [.cancelled, .cancelled])
+    #expect(purchaseController.purchaseCount == 2)
+    #expect(purchaseController.mostRunningAtOnce == 1)
+    dependencyContainer.makePurchasingCoordinator().reset()
   }
 
   @Test("A complete is handled during another purchase, since the buyer paid, and leaves it in progress")
@@ -638,7 +686,7 @@ struct CustomStoreCheckoutTests {
       source: .purchaseFunc(appStoreProduct),
       isFreeTrialAvailable: false
     )
-    let otherPurchaseDate = coordinator.purchaseDate
+    let otherPurchaseDate = coordinator.purchase?.purchaseDate
 
     await checkoutHandler.handle(
       .complete(productId: productId, customTransactionId: serverTransactionId, shouldDismiss: true),
@@ -653,14 +701,14 @@ struct CustomStoreCheckoutTests {
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
     #expect(await redeemer.redeemCountEventually() == 1)
     #expect(await finishes.waitForResults() == [.purchased(product)])
-    guard case let .purchaseFunc(otherProduct) = coordinator.source else {
+    guard case let .purchaseFunc(otherProduct) = coordinator.purchase?.source else {
       Issue.record("Expected the other purchase to stay in progress")
       return
     }
     #expect(otherProduct.productIdentifier == "app_store_product")
-    #expect(coordinator.product?.productIdentifier == "app_store_product")
-    #expect(coordinator.isCustomStoreCheckout == false)
-    #expect(coordinator.purchaseDate == otherPurchaseDate)
+    #expect(coordinator.purchase?.product.productIdentifier == "app_store_product")
+    #expect(coordinator.purchase?.isCustomStoreCheckout == false)
+    #expect(coordinator.purchase?.purchaseDate == otherPurchaseDate)
     coordinator.reset()
   }
 
@@ -748,7 +796,7 @@ struct CustomStoreCheckoutTests {
     #expect(events[1].canImplicitlyTriggerPaywall == false)
     #expect(paywallVc.customStoreCheckoutProductId == nil)
     // Nothing holds the purchasing coordinator, so observer mode sees App Store purchases again.
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
     #expect(await finishes.waitForResults().isEmpty)
   }
 
@@ -780,7 +828,7 @@ struct CustomStoreCheckoutTests {
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
     #expect(await redeemer.redeemCountEventually() == 1)
     #expect(await finishes.waitForResults() == [.purchased(product)])
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("Ending a paywall's checkout leaves other paywalls' checkouts and App Store purchases alone")
@@ -795,7 +843,7 @@ struct CustomStoreCheckoutTests {
       paywallViewController: paywallVc
     )
     await checkoutHandler.endCheckout(of: otherPaywall)
-    #expect(coordinator.isCustomStoreCheckout)
+    #expect(coordinator.purchase?.isCustomStoreCheckout == true)
     #expect(paywallVc.customStoreCheckoutProductId == productId)
     coordinator.reset()
 
@@ -805,7 +853,7 @@ struct CustomStoreCheckoutTests {
       isFreeTrialAvailable: false
     )
     await checkoutHandler.endCheckout(of: paywallVc)
-    #expect(coordinator.product?.productIdentifier == "app_store_product")
+    #expect(coordinator.purchase?.product.productIdentifier == "app_store_product")
 
     #expect(await trackedStates() == ["start"])
     coordinator.reset()
@@ -861,7 +909,7 @@ struct CustomStoreCheckoutTests {
     }
     #expect(transaction?.originalTransactionIdentifier == serverTransactionId)
     #expect(await finishes.waitForResults() == [.purchased(product)])
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("A fail of another checkout leaves the checkout in progress alone")
@@ -885,7 +933,7 @@ struct CustomStoreCheckoutTests {
     )
 
     #expect(await trackedStates() == ["start"])
-    #expect(coordinator.product?.productIdentifier == productId)
+    #expect(coordinator.purchase?.product.productIdentifier == productId)
     #expect(paywallVc.customStoreCheckoutProductId == productId)
     #expect(paywallVc.alertMessages.isEmpty)
     coordinator.reset()
@@ -917,7 +965,7 @@ struct CustomStoreCheckoutTests {
     #expect(await redeemer.redeemCountEventually() == 1)
     // There's no paywall left to dismiss.
     #expect(await finishes.waitForResults().isEmpty)
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   @Test("A checkout that completes as its paywall closes isn't dismissed again")
@@ -1012,7 +1060,7 @@ struct CustomStoreCheckoutTests {
 
     #expect(await trackedStates() == ["start", afterCompletion ? "complete" : "abandon"])
     #expect(paywallVc.customStoreCheckoutProductId == nil)
-    #expect(dependencyContainer.makePurchasingCoordinator().source == nil)
+    #expect(dependencyContainer.makePurchasingCoordinator().purchase?.source == nil)
   }
 
   // MARK: - Subscription status

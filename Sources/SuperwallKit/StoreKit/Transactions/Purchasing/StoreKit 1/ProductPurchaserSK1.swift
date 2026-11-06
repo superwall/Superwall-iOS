@@ -16,6 +16,13 @@ typealias TransactionPaywall = PaywallViewController
 typealias TransactionPaywall = Never
 #endif
 
+/// Where StoreKit 1 payments are queued.
+protocol PaymentQueue: AnyObject {
+  func add(_ payment: SKPayment)
+}
+
+extension SKPaymentQueue: PaymentQueue {}
+
 final class ProductPurchaserSK1: NSObject, Purchasing {
   // MARK: Purchasing
   let coordinator: PurchasingCoordinator
@@ -33,11 +40,9 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
   private let restoration = Restoration()
   private let shouldFinishTransaction: Bool
 
-  /// Queues a payment with StoreKit. Replaced in tests, which can report a
-  /// result as soon as the payment is queued.
-  var addPayment: (SKPayment) -> Void = { payment in
-    SKPaymentQueue.default().add(payment)
-  }
+  /// Where payments are queued. Tests pass one that reports a result as soon
+  /// as a payment is added.
+  private let payments: PaymentQueue
 
   // MARK: Dependencies
   private let storeKitManager: StoreKitManager
@@ -64,8 +69,10 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     factory: HasExternalPurchaseControllerFactory
       & StoreTransactionFactory
       & OptionsFactory
-      & TransactionManagerFactory
+      & TransactionManagerFactory,
+    payments: PaymentQueue = SKPaymentQueue.default()
   ) {
+    self.payments = payments
     self.coordinator = coordinator
     self.storeKitManager = storeKitManager
     self.receiptManager = receiptManager
@@ -86,12 +93,12 @@ final class ProductPurchaserSK1: NSObject, Purchasing {
     }
     return await withCheckedContinuation { continuation in
       // Set before the payment is queued, so its result can't arrive first.
-      coordinator.setCompletion { result in
+      coordinator.awaitResult { result in
         continuation.resume(returning: result)
       }
       let payment = SKMutablePayment(product: product)
       payment.applicationUsername = identityManager.appAccountToken?.uuidString
-      addPayment(payment)
+      payments.add(payment)
     }
   }
 
@@ -187,7 +194,8 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     // state, or observing. The transaction may be readded to the queue if
     // finishing fails so we need to make sure we can re-finish the transaction.
     // It doesn't matter if purchased internally or externally.
-    let source = coordinator.source
+    let purchase = coordinator.purchase
+    let source = purchase?.source
     if let source = source {
       switch source {
       #if canImport(WebKit)
@@ -207,7 +215,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
       }
     }
 
-    let purchaseDate = coordinator.purchaseDate
+    let purchaseDate = purchase?.purchaseDate
     let options = factory.makeSuperwallOptions()
 
     switch skTransaction.transactionState {
@@ -296,7 +304,7 @@ extension ProductPurchaserSK1: SKPaymentTransactionObserver {
     var source: InternalSuperwallEvent.Transaction.Source = .internal
 
     var isObserved = false
-    switch coordinator.source {
+    switch coordinator.purchase?.source {
     case .observeFunc:
       isObserved = true
       source = .external

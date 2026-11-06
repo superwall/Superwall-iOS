@@ -46,6 +46,16 @@ final class TransactionManager {
   /// Runs restores.
   let restoreFlow: RestoreFlow
 
+  /// Runs purchases one at a time, in the order they were asked for, so a
+  /// second purchase can't take over the first one's state while it waits on
+  /// StoreKit.
+  private let purchaseQueue = SerialTaskCoordinator()
+
+  /// Set while a purchase runs on ``purchaseQueue``. A purchase started from
+  /// inside it, such as by the app's purchase controller, runs straight away
+  /// rather than waiting behind the one it's part of.
+  @TaskLocal private static var isRunningPurchase = false
+
   init(
     storeKitManager: StoreKitManager,
     receiptManager: ReceiptManager,
@@ -64,13 +74,14 @@ final class TransactionManager {
     self.productsManager = productsManager
     self.postPurchaseRedeemer = postPurchaseRedeemer
     self.factory = factory
-    restoreFlow = RestoreFlow(
+    let restoreContext = AppRestoreContext(
       purchaseController: purchaseController,
       purchaseManager: purchaseManager,
       factory: factory
     )
+    restoreFlow = RestoreFlow(context: restoreContext)
     // Goes through `trackEvent`, so replacing it in a test covers restores too.
-    restoreFlow.trackEvent = { [weak self] event in
+    restoreContext.trackEvent = { [weak self] event in
       await self?.trackEvent(event)
     }
   }
@@ -85,6 +96,31 @@ final class TransactionManager {
   ///   purchased from.
   @discardableResult
   func purchase(_ purchaseSource: PurchaseSource) async -> PurchaseResult {
+    // The app's purchase controller calls the purchase function from inside
+    // its own purchase, which is already on the queue.
+    var isFromPurchaseController = false
+    if case .purchaseFunc = purchaseSource {
+      isFromPurchaseController = factory.makeHasExternalPurchaseController()
+    }
+    if Self.isRunningPurchase || isFromPurchaseController {
+      return await performPurchase(purchaseSource)
+    }
+    return await withCheckedContinuation { continuation in
+      purchaseQueue.enqueue { [weak self] in
+        guard let self = self else {
+          return continuation.resume(returning: .cancelled)
+        }
+        let result = await Self.$isRunningPurchase.withValue(true) {
+          await self.performPurchase(purchaseSource)
+        }
+        continuation.resume(returning: result)
+      }
+    }
+  }
+
+  /// Runs `purchase(_:)`, on the purchase queue unless it's part of a
+  /// purchase already running.
+  private func performPurchase(_ purchaseSource: PurchaseSource) async -> PurchaseResult {
     let product: StoreProduct
 
     switch purchaseSource {
@@ -112,7 +148,7 @@ final class TransactionManager {
       // This is a no-op, there's no way someone can call this func using observe.
       return .cancelled
     }
-    await prepareToPurchase(
+    let inFlightPurchase = await prepareToPurchase(
       product: product,
       purchaseSource: purchaseSource
     )
@@ -131,21 +167,34 @@ final class TransactionManager {
 
     await handle(
       result: result,
-      state: .purchasing(purchaseSource)
+      state: .purchasing(purchaseSource),
+      purchase: inFlightPurchase
     )
 
     return result
   }
 
+  /// Tracks and shows the outcome of `purchase`, then ends it.
+  ///
+  /// - Parameter purchase: The purchase the result belongs to. Defaults to the
+  ///   one in progress, read once, so a purchase that begins while this runs
+  ///   is neither reported nor ended.
   func handle(
     result: PurchaseResult,
-    state: State
+    state: State,
+    purchase: InFlightPurchase? = nil
   ) async {
     let coordinator = factory.makePurchasingCoordinator()
+    let purchase = purchase ?? coordinator.purchase
+    defer {
+      if let purchase = purchase {
+        coordinator.finish(purchase)
+      }
+    }
 
     switch result {
     case .purchased:
-      await didPurchase()
+      await didPurchase(purchase)
     case .failed(let error):
       let superwallOptions = factory.makeSuperwallOptions()
       guard
@@ -155,7 +204,7 @@ final class TransactionManager {
           shouldShowPurchaseFailureAlert: superwallOptions.paywalls.shouldShowPurchaseFailureAlert
         )
       else {
-        await trackFailure(error: error)
+        await trackFailure(error: error, purchase: purchase)
         switch state {
         case .observing:
           break
@@ -166,13 +215,13 @@ final class TransactionManager {
           }
           #endif
         }
-        return coordinator.reset()
+        return
       }
       switch outcome {
       case .cancelled:
-        await trackCancelled()
+        await trackCancelled(purchase: purchase)
       case .presentAlert:
-        await trackFailure(error: error)
+        await trackFailure(error: error, purchase: purchase)
         switch state {
         case .observing:
           break
@@ -190,12 +239,10 @@ final class TransactionManager {
         }
       }
     case .pending:
-      await handlePendingTransaction()
+      await handlePendingTransaction(purchase: purchase)
     case .cancelled:
-      await trackCancelled()
+      await trackCancelled(purchase: purchase)
     }
-
-    coordinator.reset()
   }
 
   @available(iOS 17.2, macOS 14.2, visionOS 1.1, watchOS 10.2, tvOS 17.2, *)
@@ -214,7 +261,7 @@ final class TransactionManager {
 
     let hasOffer = transaction.offer != nil
     let coordinator = factory.makePurchasingCoordinator()
-    coordinator.setIsFreeTrialAvailable(to: hasOffer)
+    coordinator.observeOffer(hasOffer)
 
     await didPurchase()
   }
@@ -294,14 +341,12 @@ final class TransactionManager {
 
   // MARK: - Transaction lifecycle
 
-  func trackFailure(error: Error) async {
-    let coordinator = factory.makePurchasingCoordinator()
-    guard
-      let source = coordinator.source,
-      let product = coordinator.product
-    else {
+  func trackFailure(error: Error, purchase: InFlightPurchase? = nil) async {
+    guard let purchase = purchase ?? factory.makePurchasingCoordinator().purchase else {
       return
     }
+    let source = purchase.source
+    let product = purchase.product
 
     var isObserved = false
     if case .observeFunc = source {
@@ -385,7 +430,7 @@ final class TransactionManager {
       product: storeProduct,
       purchaseSource: .observeFunc(storeProduct)
     )
-    coordinator.setCompletion { [weak self] result in
+    coordinator.awaitResult { [weak self] result in
       Task {
         await self?.handle(
           result: result,
@@ -401,11 +446,14 @@ final class TransactionManager {
   ///   - customStoreCheckoutTransactionId: Set when the paywall runs a custom
   ///   store checkout itself: the transaction id Superwall generated for that
   ///   checkout. The checkout's own browser owns the paywall's loading state.
+  /// - Returns: The purchase that began, or `nil` if the purchase controller
+  ///   starts it itself.
+  @discardableResult
   func prepareToPurchase(
     product: StoreProduct,
     purchaseSource: PurchaseSource,
     customStoreCheckoutTransactionId: String? = nil
-  ) async {
+  ) async -> InFlightPurchase? {
     // Always regenerate the custom transaction ID before a new purchase attempt.
     if product.isCustomProduct {
       product.customTransactionId = customStoreCheckoutTransactionId ?? UUID().uuidString
@@ -459,7 +507,7 @@ final class TransactionManager {
       let options = factory.makeSuperwallOptions()
       if !options.shouldObservePurchases,
         factory.makeHasExternalPurchaseController() {
-        return
+        return nil
       }
 
       Logger.debug(
@@ -482,11 +530,21 @@ final class TransactionManager {
       }
     }
 
-    factory.makePurchasingCoordinator().beginPurchase(
+    var method = PurchaseMethod.storeKit(purchaseSource)
+    #if canImport(WebKit)
+    if customStoreCheckoutTransactionId != nil,
+      case let .internal(productId, paywallViewController, shouldDismiss) = purchaseSource {
+      method = .customStoreCheckout(
+        paywall: paywallViewController,
+        productId: productId,
+        shouldDismiss: shouldDismiss
+      )
+    }
+    #endif
+    return factory.makePurchasingCoordinator().beginPurchase(
       of: product,
-      source: purchaseSource,
-      isFreeTrialAvailable: isFreeTrialAvailable,
-      isCustomStoreCheckout: customStoreCheckoutTransactionId != nil
+      method: method,
+      isFreeTrialAvailable: isFreeTrialAvailable
     )
   }
 
@@ -547,15 +605,15 @@ final class TransactionManager {
   }
 
   /// Dismisses the view controller, if the developer hasn't disabled the option.
-  func didPurchase() async {
-    let coordinator = factory.makePurchasingCoordinator()
-    guard
-      let source = coordinator.source,
-      let product = coordinator.product
-    else {
+  ///
+  /// - Parameter purchase: The purchase that succeeded. Defaults to the one in
+  ///   progress.
+  func didPurchase(_ purchase: InFlightPurchase? = nil) async {
+    guard let purchase = purchase ?? factory.makePurchasingCoordinator().purchase else {
       return
     }
-    let purchaseDate = coordinator.purchaseDate
+    let source = purchase.source
+    let product = purchase.product
 
     switch source {
     #if canImport(WebKit)
@@ -571,12 +629,9 @@ final class TransactionManager {
         error: nil
       )
 
-      let transaction = await latestTransaction(
-        for: product,
-        purchaseDate: purchaseDate
-      )
+      let transaction = await latestTransaction(for: purchase)
       await redeemAfterPurchase(for: product)
-      await trackTransactionDidSucceed(transaction)
+      await trackTransactionDidSucceed(transaction, purchase: purchase)
       await finalizeInternalPurchase(
         for: product,
         paywallViewController: paywallViewController,
@@ -595,36 +650,27 @@ final class TransactionManager {
         error: nil
       )
 
-      let transaction = await latestTransaction(
-        for: product,
-        purchaseDate: purchaseDate
-      )
+      let transaction = await latestTransaction(for: purchase)
       await redeemAfterPurchase(for: product)
-      await trackTransactionDidSucceed(transaction)
+      await trackTransactionDidSucceed(transaction, purchase: purchase)
     }
   }
 
   /// The purchase's transaction. For a custom product, it carries the product's
   /// `customTransactionId`, the id the purchase controller passed to its checkout.
-  func latestTransaction(
-    for product: StoreProduct,
-    purchaseDate: Date?
-  ) async -> StoreTransaction? {
+  func latestTransaction(for purchase: InFlightPurchase) async -> StoreTransaction? {
+    let product = purchase.product
     if product.isCustomProduct,
       let customTxnId = product.customTransactionId {
       let customTransaction = CustomStoreTransaction(
         customTransactionId: customTxnId,
         productIdentifier: product.productIdentifier,
-        purchaseDate: purchaseDate ?? Date()
+        purchaseDate: purchase.purchaseDate
       )
       return await factory.makeStoreTransaction(from: customTransaction)
     }
 
-    let purchasingCoordinator = factory.makePurchasingCoordinator()
-    return await purchasingCoordinator.getLatestTransaction(
-      forProductId: product.productIdentifier,
-      factory: factory
-    )
+    return await factory.makePurchasingCoordinator().getLatestTransaction(for: purchase)
   }
 
   /// Pushes a successful purchase to Superwall with `/redeem`, which links it
@@ -683,14 +729,18 @@ final class TransactionManager {
   ///   - canTriggerPaywall: Whether `transaction_abandon` may present a paywall
   ///   from a campaign that uses it as a trigger.
   ///   - notifiesPage: Whether the paywall's page is told of the abandon.
-  func trackCancelled(canTriggerPaywall: Bool = true, notifiesPage: Bool = true) async {
-    let coordinator = factory.makePurchasingCoordinator()
-    guard
-      let source = coordinator.source,
-      let product = coordinator.product
-    else {
+  ///   - purchase: The purchase that was abandoned. Defaults to the one in
+  ///   progress.
+  func trackCancelled(
+    canTriggerPaywall: Bool = true,
+    notifiesPage: Bool = true,
+    purchase: InFlightPurchase? = nil
+  ) async {
+    guard let purchase = purchase ?? factory.makePurchasingCoordinator().purchase else {
       return
     }
+    let source = purchase.source
+    let product = purchase.product
 
     var isObserved = false
     if case .observeFunc = source {
@@ -751,11 +801,11 @@ final class TransactionManager {
     }
   }
 
-  func handlePendingTransaction() async {
-    let coordinator = factory.makePurchasingCoordinator()
-    guard let source = coordinator.source else {
+  func handlePendingTransaction(purchase: InFlightPurchase? = nil) async {
+    guard let purchase = purchase ?? factory.makePurchasingCoordinator().purchase else {
       return
     }
+    let source = purchase.source
 
     var isObserved = false
     if case .observeFunc = source {
@@ -824,14 +874,15 @@ final class TransactionManager {
     )
   }
 
-  func trackTransactionDidSucceed(_ transaction: StoreTransaction?) async {
-    let coordinator = factory.makePurchasingCoordinator()
-    guard
-      let source = coordinator.source,
-      let product = coordinator.product
-    else {
+  func trackTransactionDidSucceed(
+    _ transaction: StoreTransaction?,
+    purchase: InFlightPurchase? = nil
+  ) async {
+    guard let purchase = purchase ?? factory.makePurchasingCoordinator().purchase else {
       return
     }
+    let source = purchase.source
+    let product = purchase.product
 
     // Insert the transaction ID into the cache if observing. This prevents racing with
     // the SK2 observer.
@@ -848,7 +899,7 @@ final class TransactionManager {
       let sk2Transaction = transaction?.sk2Transaction {
       didStartOffer = sk2Transaction.offer != nil
     } else {
-      didStartOffer = coordinator.isFreeTrialAvailable
+      didStartOffer = purchase.isFreeTrialAvailable
     }
 
     var isObserved = false

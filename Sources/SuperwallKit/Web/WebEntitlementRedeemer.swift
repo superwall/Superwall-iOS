@@ -1351,7 +1351,7 @@ actor WebEntitlementRedeemer: PostPurchaseRedeeming {
         // A purchase in progress, such as one in a custom store's checkout,
         // reports its own result, so its entitlements aren't a restore.
         if dismissesCoveredPaywall,
-          factory.makePurchasingCoordinator().source == nil,
+          factory.makePurchasingCoordinator().purchase == nil,
           let paywallVc = superwall.paywallViewController {
           // Get entitlement IDs of products from paywall
           var paywallEntitlementIds: Set<String> = []

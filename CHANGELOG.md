@@ -19,6 +19,8 @@ The changelog for `SuperwallKit`. Also see the [releases](https://github.com/sup
 - Fixes config refreshes being able to run at the same time and apply their configs out of order. A refresh called while the launch config fetch is still finishing now waits for it.
 - Fixes `Superwall.shared.configurationStatus` staying `.pending` when the config couldn't be fetched. It's now `.failed`.
 - Fixes a StoreKit 1 purchase that ended straight away, such as one the device refused, sometimes never returning its result.
+- Fixes a purchase never finishing, with its loading spinner left up, when another purchase started before it returned.
+- Fixes a purchase that started while another purchase's result was being handled being ended before it could report its own result.
 - Fixes `getCustomerInfo()` never returning when the SDK can't load its configuration, such as on a first launch without a connection.
 - Fixes `refreshCustomerInfo()` returning empty customer info when the fetch fails, instead of the device's purchases.
 - Fixes the Mac preview window sometimes selecting a different paywall than the one linked, without saying why.
