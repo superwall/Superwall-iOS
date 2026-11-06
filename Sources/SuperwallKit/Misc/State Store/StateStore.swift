@@ -57,11 +57,12 @@ final class StateStore<Context, State>: @unchecked Sendable {
   /// store, for state whose last reference must be let go of in a certain
   /// place. A copy from ``state`` can outlive a change that removes
   /// something from the store, and become its last owner. `body` must not
-  /// wait on another thread.
+  /// wait on another thread. If it updates the store or dispatches, the work
+  /// those defer runs once the store is unlocked, as for an update.
   func read<Value>(_ body: (State) -> Value) -> Value {
-    lock.lock()
-    defer { lock.unlock() }
-    return body(_state)
+    locked {
+      body(_state)
+    }
   }
 
   init(initial: State) {
