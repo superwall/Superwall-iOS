@@ -58,7 +58,11 @@ public struct SupportAppTool: Codable, Equatable, Sendable {
 }
 
 /// One proof the session presents. `value` is a secret: never logged.
-public struct SupportProof: Codable, Equatable, Sendable {
+public struct SupportProof: Codable, Equatable, Sendable, CustomStringConvertible,
+  CustomDebugStringConvertible
+{
+  public var description: String { "SupportProof(kind: \(kind), value: <redacted>)" }
+  public var debugDescription: String { description }
   public var kind: String
   public var value: String
   public init(kind: String, value: String) {
@@ -95,7 +99,14 @@ public struct SessionStart: Codable, Equatable, Sendable {
   }
 }
 
-public struct SessionStarted: Decodable, Equatable, Sendable {
+public struct SessionStarted: Decodable, Equatable, Sendable, CustomStringConvertible,
+  CustomDebugStringConvertible
+{
+  /// Never prints the token.
+  public var description: String {
+    "SessionStarted(sessionId: \(sessionId), conversationId: \(conversationId), sessionToken: <redacted>)"
+  }
+  public var debugDescription: String { description }
   public struct AcceptedProof: Decodable, Equatable, Sendable {
     public let kind: String
     /// `anonymous` or `identified`.
@@ -136,6 +147,17 @@ public struct EntryWindow: Decodable, Equatable, Sendable {
   public let entries: [JSONValue]
   public let head: Int
   public let hasMore: Bool
+
+  enum CodingKeys: String, CodingKey { case conversationId, entries, head, hasMore }
+
+  public init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    conversationId = try container.decode(String.self, forKey: .conversationId)
+    // Like decodeEntries in lenient.ts: anything but an array is no entries, never a failed window.
+    entries = (try? container.decode([JSONValue].self, forKey: .entries)) ?? []
+    head = try container.decode(Int.self, forKey: .head)
+    hasMore = try container.decode(Bool.self, forKey: .hasMore)
+  }
 
   public var decodedEntries: [WireEntry] { entries.map(WireEntry.decode) }
 }
@@ -268,6 +290,8 @@ public enum SupportTransportError: Error, Equatable, Sendable {
   case wire(WireErrorBody)
   /// No response, or one we couldn't read. Always safe to retry: commands are idempotent.
   case network(String)
+  /// A request this build can't even make (a bad URL). Retrying won't help.
+  case invalidRequest(String)
   case notStarted
   /// The session told this build not to open chat.
   case redirected(url: String)
@@ -278,5 +302,11 @@ public enum SupportTransportError: Error, Equatable, Sendable {
     case .network: return true
     default: return false
     }
+  }
+
+  /// How long the server asked us to wait (`RateLimited.retryAfterMs`), in seconds.
+  var retryAfter: TimeInterval? {
+    if case .wire(let body) = self, let ms = body.retryAfterMs { return Double(ms) / 1000 }
+    return nil
   }
 }

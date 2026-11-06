@@ -4,7 +4,7 @@ import Foundation
 /// `URLSessionWebSocketTask`; tests use a scripted fake.
 protocol SupportSocket: AnyObject, Sendable {
   func send(_ text: String) async throws
-  /// The next text frame. Binary frames are skipped. Throws when the socket closes.
+  /// The next frame as text (a binary frame is read as UTF-8). Throws when the socket closes.
   func receive() async throws -> String
   func close(code: Int, reason: String)
   /// The close code the server sent, once closed.
@@ -28,6 +28,8 @@ final class URLSessionSupportSocket: NSObject, SupportSocket, URLSessionWebSocke
     // A session per socket so its delegate sees this socket's close code.
     session = URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     task = session.webSocketTask(with: url)
+    // The default 1 MB cap would turn one oversized frame into a reconnect loop.
+    task.maximumMessageSize = 16 * 1024 * 1024
     // URLSessionWebSocketTask offers permessage-deflate on its own (M0 spike).
     task.resume()
   }

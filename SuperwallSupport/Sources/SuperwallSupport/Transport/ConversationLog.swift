@@ -14,6 +14,7 @@ public struct ConversationLog: Equatable, Sendable {
   /// The id of the entry at `cursor`, when it decoded far enough to have one.
   public private(set) var cursorId: String?
   public private(set) var entriesBySeq: [Int: WireEntry] = [:]
+  private var heldIds = Set<String>()
   public private(set) var tail: TailState?
   public private(set) var status: String?
   public private(set) var statusEtaSeconds: Int?
@@ -53,19 +54,18 @@ public struct ConversationLog: Equatable, Sendable {
   mutating func applyOlder(_ window: EntryWindow) {
     for entry in window.decodedEntries {
       guard let seq = entry.seq else { continue }
-      entriesBySeq[seq] = entry
+      hold(seq, entry)
     }
     hasOlder = window.hasMore
   }
 
   private mutating func insertReadInOrder(_ entry: WireEntry) {
-    // An entry with no seq can't be placed; skip it. The cursor stays, so a later
-    // socket replays it with its seq outside the entry.
+    // An entry with no seq can't be placed: it is dropped (a later entry moves the
+    // cursor past it). Over the socket the frame carries the seq, so it is kept there.
     guard let seq = entry.seq, seq > cursor else { return }
-    entriesBySeq[seq] = entry
+    hold(seq, entry)
     cursor = seq
     cursorId = entry.id
-    sealTail(by: entry)
   }
 
   /// An `entry` frame. Returns what the resume rules decided.
@@ -74,22 +74,24 @@ public struct ConversationLog: Equatable, Sendable {
     guard outcome == .accept else { return outcome }
     let entry = WireEntry.decode(raw)
     // The frame's seq is authoritative: the cursor moves even when the entry doesn't decode.
-    entriesBySeq[seq] = entry
+    hold(seq, entry)
     cursor = seq
     cursorId = entry.id
-    sealTail(by: entry)
     return outcome
   }
 
   /// An entry that arrived outside the stream (a send's response). Held, cursor unchanged.
   mutating func holdOutOfBand(_ entry: WireEntry) {
     guard let seq = entry.seq, entriesBySeq[seq] == nil else { return }
-    entriesBySeq[seq] = entry
-    sealTail(by: entry)
+    hold(seq, entry)
   }
 
-  private mutating func sealTail(by entry: WireEntry) {
-    if let tail, tail.messageId == entry.id { self.tail = nil }
+  private mutating func hold(_ seq: Int, _ entry: WireEntry) {
+    entriesBySeq[seq] = entry
+    if let id = entry.id {
+      heldIds.insert(id)
+      if tail?.messageId == id { tail = nil }
+    }
   }
 
   /// `ready`: tails are never persisted, so drop any held one; a live tail is re-sent.
@@ -99,7 +101,7 @@ public struct ConversationLog: Equatable, Sendable {
 
   mutating func applyTail(messageId: String, offset: Int, text: String) {
     // A tail for an entry already held is stale (its seal came first).
-    if entriesBySeq.values.contains(where: { $0.id == messageId }) { return }
+    if heldIds.contains(messageId) { return }
     tail = WireResume.applyTail(tail, messageId: messageId, offset: offset, text: text)
   }
 

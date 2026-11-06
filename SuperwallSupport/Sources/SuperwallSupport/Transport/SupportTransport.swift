@@ -35,7 +35,11 @@ public enum SupportConnectionState: Equatable, Sendable {
 /// - on foreground, probe a socket that survived before trusting it;
 /// - replay at most about 60 entries over the socket, anything older over HTTP windows.
 public actor SupportTransport {
-  public struct Configuration: Sendable {
+  public struct Configuration: Sendable, CustomStringConvertible, CustomDebugStringConvertible {
+    /// Never prints the API key or proof values.
+    public var description: String { "Configuration(baseURL: \(baseURL), sdk: \(sdk))" }
+    public var debugDescription: String { description }
+
     /// The inbox API origin, e.g. `https://inbox-api.superwall.com`.
     public var baseURL: URL
     public var apiKey: String
@@ -106,6 +110,16 @@ public actor SupportTransport {
   private var started = false
   private var starting = false
   private var stopped = false
+  /// An HTTP read that replaces the socket (catch-up, resync, the first window) is
+  /// running: no socket may open until it ends, or two would race over the cursor.
+  private var httpBusy = false
+  /// Bumped whenever the log is replaced, so a scroll-back that was in flight is dropped.
+  private var logEpoch = 0
+  /// Session renewals since the last progress, so a server that keeps answering 4001 backs off.
+  private var sessionRenewals = 0
+  /// The last `error` frame on this socket: its code says what a close means when the
+  /// close code itself hasn't been reported yet.
+  private var lastErrorCode: String?
 
   // The socket and everything tied to it. `generation` invalidates old loops.
   private var socket: SupportSocket?
@@ -118,6 +132,7 @@ public actor SupportTransport {
   private var consecutiveGaps = 0
 
   private var sendTask: Task<Void, Never>?
+  private var sendGeneration = 0
   private var sendBackoff: TimeInterval
 
   public init(configuration: Configuration, urlSession: URLSession = .shared) {
@@ -173,18 +188,24 @@ public actor SupportTransport {
     guard !started, !starting else { return }
     starting = true
     defer { starting = false }
+    // A previous start that ended in a redirect may be retried.
+    stopped = false
     try await startSession(conversationId: conversationId)
-    started = true
+    httpBusy = true
     do {
       try await reloadNewestWindow()
     } catch {
       logger("first window failed (\(error)); the socket catches up")
     }
+    httpBusy = false
+    started = true
     connect()
     flushSends()
   }
 
-  /// Closes the socket and stops reconnecting. Pending sends stay queued.
+  /// Closes the socket and stops reconnecting, for good: build a new transport to
+  /// start again. Pending sends stay queued on disk. The transport's tasks hold it
+  /// until this is called, so always call it when chat closes.
   public func stop() {
     stopped = true
     closeSocket(reason: "stopped")
@@ -253,13 +274,15 @@ public actor SupportTransport {
     request.protocol = SupportWire.protocolName
     let started = try await http.startSession(request)
     if let redirect = started.redirect {
-      stopped = true
-      state = .stopped(reason: "redirect")
       session = started
+      stopForGood(reason: "redirect")
       throw SupportTransportError.redirected(url: redirect.url)
     }
     if session?.conversationId != started.conversationId {
+      // A new conversation: the old socket and the old log belong to the old one.
+      if session != nil { closeSocket(reason: "new conversation") }
       log.reset(conversationId: started.conversationId)
+      logEpoch += 1
     }
     session = started
     logger("session started, conversation \(started.conversationId)")
@@ -270,7 +293,7 @@ public actor SupportTransport {
     guard let session else { throw SupportTransportError.notStarted }
     do {
       return try await call(session.sessionToken, session.conversationId)
-    } catch SupportTransportError.wire(let body) where body.tag == "SessionInvalid" {
+    } catch SupportTransportError.wire(let body) where body.tag == "SessionInvalid" || body.tag == "HTTP401" {
       try await startSession(conversationId: session.conversationId)
       guard let renewed = self.session else { throw SupportTransportError.notStarted }
       return try await call(renewed.sessionToken, renewed.conversationId)
@@ -285,13 +308,17 @@ public actor SupportTransport {
         token: token, conversationId: conversationId, limit: self.configuration.windowSize)
     }
     log.replace(with: window)
+    logEpoch += 1
+    reconcileQueue(with: window)
     emit(.logChanged)
   }
 
-  /// Reads `after=cursor` windows until caught up.
+  /// Reads `after=cursor` windows until caught up. Past `maxCatchUpWindows` it gives
+  /// up on the gap and loads the newest window instead; scrolling back fills the rest.
   private func catchUpOverHTTP() async throws {
     stats.httpCatchUps += 1
-    while true {
+    for _ in 0..<Self.maxCatchUpWindows {
+      guard foreground, !stopped else { return }
       let cursor = log.cursor
       let window = try await authenticated { token, conversationId in
         try await self.http.entries(
@@ -299,20 +326,36 @@ public actor SupportTransport {
           limit: self.configuration.windowSize)
       }
       log.applyCatchUp(window)
+      reconcileQueue(with: window)
       emit(.logChanged)
       // Stop when the server has nothing more, or a window didn't move the cursor.
-      if !window.hasMore || log.cursor == cursor { break }
+      if !window.hasMore || log.cursor == cursor { return }
     }
+    try await reloadNewestWindow()
+  }
+
+  static let maxCatchUpWindows = 5
+
+  /// Sends confirmed by an entry that arrived over HTTP leave the queue, failed ones included.
+  private func reconcileQueue(with window: EntryWindow) {
+    var changed = false
+    for entry in window.decodedEntries {
+      if let id = entry.clientMessageId, queue.remove(clientMessageId: id) { changed = true }
+    }
+    if changed { emit(.pendingChanged) }
   }
 
   /// Scrolls back: the window before the oldest entry held.
   public func loadOlder() async throws {
     guard let oldest = log.oldestSeq, log.hasOlder else { return }
+    let epoch = logEpoch
     let window = try await authenticated { token, conversationId in
       try await self.http.entries(
         token: token, conversationId: conversationId, before: oldest,
         limit: self.configuration.windowSize)
     }
+    // The log was replaced meanwhile: this window belongs to the old one.
+    guard epoch == logEpoch, log.oldestSeq == oldest else { return }
     log.applyOlder(window)
     emit(.logChanged)
   }
@@ -328,7 +371,7 @@ public actor SupportTransport {
   }
 
   private func connect() {
-    guard started, !stopped, foreground, networkAvailable, socket == nil,
+    guard started, !stopped, !httpBusy, foreground, networkAvailable, socket == nil,
       let session, let url = liveURL(conversationId: session.conversationId)
     else {
       if !networkAvailable, !stopped { state = .offline }
@@ -340,6 +383,7 @@ public actor SupportTransport {
     let socket = socketFactory.make(url: url)
     self.socket = socket
     readyHead = nil
+    lastErrorCode = nil
     lastFrameAt = Date()
     stats.connects += 1
     state = .connecting
@@ -361,7 +405,19 @@ public actor SupportTransport {
       }
     } catch {
       guard generation == self.generation else { return }
-      dropped(closeCode: socket.closeCode, reason: SupportHTTPClient.describe(error))
+      // URLSession can report the close code after `receive` throws; the `error`
+      // frame sent before the close says the same thing.
+      let code = socket.closeCode ?? Self.closeCode(forErrorFrame: lastErrorCode)
+      dropped(closeCode: code, reason: SupportHTTPClient.describe(error))
+    }
+  }
+
+  static func closeCode(forErrorFrame code: String?) -> Int? {
+    switch code {
+    case "session_invalid": return SupportCloseCode.sessionInvalid
+    case "conversation_not_found", "not_found": return SupportCloseCode.notFound
+    case "protocol_unsupported": return SupportCloseCode.protocolUnsupported
+    default: return nil
     }
   }
 
@@ -391,8 +447,8 @@ public actor SupportTransport {
         }
         return
       }
-      state = log.cursor >= head ? .live : .catchingUp
-      if state == .live { connectedLive() }
+      state = .catchingUp
+      checkCaughtUp()
 
     case .entry(let seq, let prev, let raw):
       switch log.applyEntryFrame(seq: seq, prev: prev, raw: raw) {
@@ -405,16 +461,14 @@ public actor SupportTransport {
           emit(.pendingChanged)
         }
         emit(.logChanged)
-        if state == .catchingUp, let readyHead, log.cursor >= readyHead {
-          state = .live
-          connectedLive()
-        }
+        checkCaughtUp()
         if configuration.dropAfterAcceptingForTesting?(seq) == true {
           socket.close(code: SupportCloseCode.goingAway, reason: "test drop")
           dropped(closeCode: nil, reason: "test drop after seq \(seq)")
         }
       case .duplicate:
         stats.duplicates += 1
+        checkCaughtUp()
       case .gap(let expected, let prev):
         stats.gaps += 1
         consecutiveGaps += 1
@@ -447,6 +501,7 @@ public actor SupportTransport {
       }
 
     case .error(let code, _, let retryable):
+      lastErrorCode = code
       emit(.error(code: code, retryable: retryable))
       // The close that follows carries what to do (session invalid, not found …).
 
@@ -455,8 +510,12 @@ public actor SupportTransport {
     }
   }
 
-  private func connectedLive() {
+  /// Live once the cursor reaches the head `ready` announced.
+  private func checkCaughtUp() {
+    guard state == .catchingUp, let readyHead, log.cursor >= readyHead else { return }
+    state = .live
     backoff = configuration.backoffInitial
+    sessionRenewals = 0
   }
 
   /// Drops this socket, runs `work` (an HTTP read), then reconnects.
@@ -464,13 +523,18 @@ public actor SupportTransport {
     reason: String, backoff useBackoff: Bool = false, work: () async throws -> Void
   ) async {
     closeSocket(reason: reason)
+    httpBusy = true
+    state = .catchingUp
+    defer { httpBusy = false }
     do {
       try await work()
     } catch {
+      httpBusy = false
       logger("\(reason) failed: \(error)")
       scheduleRetry()
       return
     }
+    httpBusy = false
     if useBackoff { scheduleRetry() } else { connect() }
   }
 
@@ -490,13 +554,12 @@ public actor SupportTransport {
     closeSocket(reason: "dropped")
     switch closeCode {
     case SupportCloseCode.sessionInvalid:
+      state = .connecting
       Task { await self.renewSessionThenConnect() }
     case SupportCloseCode.protocolUnsupported:
-      stopped = true
-      state = .stopped(reason: "protocol_unsupported")
+      stopForGood(reason: "protocol_unsupported")
     case SupportCloseCode.notFound:
-      stopped = true
-      state = .stopped(reason: "not_found")
+      stopForGood(reason: "not_found")
     default:
       // 1001 (going away), 1011, 4029, 4003, or a network failure: back off and retry.
       scheduleRetry()
@@ -504,12 +567,32 @@ public actor SupportTransport {
   }
 
   private func renewSessionThenConnect() async {
+    sessionRenewals += 1
     do {
       try await startSession(conversationId: session?.conversationId)
-      connect()
+      // A server that keeps refusing new tokens gets backoff, not a tight loop.
+      if sessionRenewals > 1 { scheduleRetry() } else { connect() }
     } catch {
       scheduleRetry()
     }
+  }
+
+  /// Won't reconnect: closes the socket, and fails pending sends so they don't sit forever.
+  private func stopForGood(reason: String) {
+    stopped = true
+    retryTask?.cancel()
+    closeSocket(reason: reason)
+    sendTask?.cancel()
+    var changed = false
+    for item in queue.all where item.state == .pending {
+      queue.update(clientMessageId: item.clientMessageId) {
+        $0.state = .failed
+        $0.failure = reason
+      }
+      changed = true
+    }
+    if changed { emit(.pendingChanged) }
+    state = .stopped(reason: reason)
   }
 
   private func scheduleRetry() {
@@ -527,10 +610,10 @@ public actor SupportTransport {
     let delay = Double.random(in: (backoff / 2)...backoff)
     backoff = min(backoff * 2, configuration.backoffMax)
     state = .waitingToRetry(seconds: delay)
-    retryTask = Task {
+    retryTask = Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       guard !Task.isCancelled else { return }
-      self.retryNow()
+      await self?.retryNow()
     }
   }
 
@@ -542,12 +625,13 @@ public actor SupportTransport {
 
   private func startPings(on socket: SupportSocket, generation: Int) {
     pingTask?.cancel()
-    let interval = min(configuration.pingInterval, Double(session?.heartbeatSeconds ?? 10))
-    pingTask = Task {
+    // The server's heartbeat is an upper bound; never below a second, whatever it says.
+    let interval = max(1, min(configuration.pingInterval, Double(session?.heartbeatSeconds ?? 10)))
+    pingTask = Task { [weak self] in
       while !Task.isCancelled {
         try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
         guard !Task.isCancelled else { return }
-        self.sendPing(on: socket, generation: generation)
+        await self?.sendPing(on: socket, generation: generation)
       }
     }
   }
@@ -557,11 +641,13 @@ public actor SupportTransport {
   private func sendPing(on socket: SupportSocket, generation: Int) {
     guard generation == self.generation else { return }
     let sentAt = Date()
-    let deadline = configuration.pingDeadline
-    Task {
-      try? await socket.send(SupportWire.pingFrame)
+    let deadline = max(0.5, configuration.pingDeadline)
+    // The deadline runs from the send, not from its completion: a send stuck on a
+    // dead path must still trip it.
+    Task { try? await socket.send(SupportWire.pingFrame) }
+    Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(deadline * 1_000_000_000))
-      self.checkLiveness(generation: generation, since: sentAt)
+      await self?.checkLiveness(generation: generation, since: sentAt)
     }
   }
 
@@ -610,17 +696,25 @@ public actor SupportTransport {
     if queue.remove(clientMessageId: clientMessageId) { emit(.pendingChanged) }
   }
 
+  /// Starts draining the queue. With `resetBackoff` (foreground, network back, a
+  /// manual retry) a drain asleep in backoff is woken: retrying the same id is safe.
   private func flushSends(resetBackoff: Bool = false) {
-    if resetBackoff { sendBackoff = configuration.backoffInitial }
+    if resetBackoff {
+      sendBackoff = configuration.backoffInitial
+      sendTask?.cancel()
+      sendTask = nil
+    }
     guard sendTask == nil, session != nil, !stopped else { return }
+    sendGeneration += 1
+    let generation = sendGeneration
     sendTask = Task {
       await self.drainSendQueue()
-      self.sendDrainFinished()
+      self.sendDrainFinished(generation)
     }
   }
 
-  private func sendDrainFinished() {
-    sendTask = nil
+  private func sendDrainFinished(_ generation: Int) {
+    if generation == sendGeneration { sendTask = nil }
   }
 
   private func drainSendQueue() async {
@@ -644,7 +738,7 @@ public actor SupportTransport {
         emit(.logChanged)
       } catch let error as SupportTransportError where error.isRetryable {
         logger("send retry after \(error)")
-        let delay = sendBackoff
+        let delay = max(sendBackoff, error.retryAfter ?? 0)
         sendBackoff = min(sendBackoff * 2, configuration.sendBackoffMax)
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
       } catch {
@@ -689,7 +783,7 @@ public actor SupportTransport {
     let link = try await authenticated { token, _ in
       try await self.http.attachmentURL(token: token, attachmentId: attachmentId)
     }
-    guard let url = URL(string: link.url) else { throw SupportTransportError.network("Bad URL") }
+    guard let url = URL(string: link.url) else { throw SupportTransportError.invalidRequest("Bad URL") }
     return url
   }
 
@@ -736,7 +830,7 @@ public actor SupportTransport {
         return try await call()
       } catch let error as SupportTransportError where error.isRetryable && attempt < attempts {
         attempt += 1
-        try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        try? await Task.sleep(nanoseconds: UInt64(max(delay, error.retryAfter ?? 0) * 1_000_000_000))
         delay = min(delay * 2, configuration.backoffMax)
       }
     }

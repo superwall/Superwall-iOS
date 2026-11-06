@@ -296,6 +296,76 @@ final class TransportUnitTests: XCTestCase {
     await transport.stop()
   }
 
+  /// URLSession can report the close code after `receive` throws: the `error`
+  /// frame before the close decides instead.
+  func testErrorFrameDecidesWhenTheCloseCodeIsMissing() async throws {
+    let transport = makeTransport()
+    try await transport.start()
+    try await waitUntil("socket") { self.sockets.count == 1 }
+    sockets.latest.deliver(#"{"type":"error","code":"conversation_not_found","message":"Gone","retryable":false}"#)
+    try await Task.sleep(nanoseconds: 50_000_000)
+    sockets.latest.closeFromServer(code: nil)
+    try await waitUntil("stopped") { await transport.state == .stopped(reason: "not_found") }
+  }
+
+  /// While an HTTP catch-up replaces the socket, foreground and network events
+  /// must not open a second socket from the half-caught-up cursor.
+  func testNoSecondSocketDuringHTTPCatchUp() async throws {
+    http.windowEntries = [1]
+    let transport = makeTransport()
+    try await transport.start()
+    try await waitUntil("socket") { self.sockets.count == 1 }
+    http.windowEntries = Array(1...100)
+    http.entriesDelay = 0.3
+    sockets.latest.deliver(Self.ready(after: 1, head: 100))
+    try await waitUntil("catching up") { await transport.state == .catchingUp }
+    await transport.setForeground(true)
+    await transport.setNetworkAvailable(false)
+    await transport.setNetworkAvailable(true)
+    XCTAssertEqual(sockets.count, 1)
+    try await waitUntil("caught up and reconnected") { self.sockets.count == 2 }
+    let cursor = await transport.log.cursor
+    XCTAssertEqual(cursor, 100)
+    try await Task.sleep(nanoseconds: 100_000_000)
+    XCTAssertEqual(sockets.count, 2)
+    await transport.stop()
+  }
+
+  /// A scroll-back in flight when a resync replaces the log is dropped.
+  func testStaleScrollBackIsDropped() async throws {
+    http.windowEntries = Array(50...59)
+    http.hasMore = true
+    let transport = makeTransport()
+    try await transport.start()
+    try await waitUntil("socket") { self.sockets.count == 1 }
+    http.beforeDelay = 0.4
+    let older = Task { try await transport.loadOlder() }
+    try await Task.sleep(nanoseconds: 50_000_000)
+    http.windowEntries = [100, 101, 102]
+    sockets.latest.deliver(#"{"type":"resync","reason":"boundary_mismatch","head":102}"#)
+    try await older.value
+    try await waitUntil("reconnected") { self.sockets.count == 2 }
+    let seqs = await transport.log.entries.compactMap(\.seq)
+    XCTAssertEqual(seqs, [100, 101, 102])
+    await transport.stop()
+  }
+
+  /// A redirect at session start stops the transport and fails nothing silently;
+  /// a heartbeat of 0 from the server can't spin the ping loop.
+  func testRedirectStops() async throws {
+    http.redirectSessions = true
+    let transport = makeTransport()
+    do {
+      try await transport.start()
+      XCTFail("expected a redirect")
+    } catch SupportTransportError.redirected(let url) {
+      XCTAssertEqual(url, "https://help.test")
+    }
+    let state = await transport.state
+    XCTAssertEqual(state, .stopped(reason: "redirect"))
+    XCTAssertEqual(sockets.count, 0)
+  }
+
   func testBackgroundClosesAndForegroundReconnectsAtOnce() async throws {
     let transport = makeTransport()
     try await transport.start()
@@ -392,7 +462,7 @@ final class FakeSocket: SupportSocket, @unchecked Sendable {
     }
   }
 
-  func closeFromServer(code: Int) {
+  func closeFromServer(code: Int?) {
     lock.lock()
     serverCloseCode = code
     closed = true
@@ -449,6 +519,10 @@ final class StubHTTP: @unchecked Sendable {
   var calls: [String] = []
   var failSends = 0
   var failEntries = 0
+  var hasMore = false
+  var entriesDelay: TimeInterval = 0
+  var beforeDelay: TimeInterval = 0
+  var redirectSessions = false
   var rejectSends = false
   var sendIds: [String] = []
   var uploadRequest: [String: JSONValue]?
@@ -465,6 +539,11 @@ final class StubHTTP: @unchecked Sendable {
       url.host == "uploads.test"
         ? "\(method) \(url.absoluteString)" : "\(method) \(url.path)\(url.query.map { "?" + $0 } ?? "")")
     switch (method, url.path) {
+    case ("POST", "/v1/sessions") where redirectSessions:
+      sessionsStarted += 1
+      return (200, Data(#"""
+        {"protocol":"superwall-support/1","sessionId":"sess_01M6R13Q96S0JV0S92F7TEJ3CH","sessionToken":"tok_r","expiresAt":"2026-11-06T09:55:23.174Z","applicationId":1,"conversationId":"\#(TransportUnitTests.conversation)","proofs":[],"caps":{"ui":{"v":1,"elements":{}},"cards":[],"actions":[]},"consentRequired":false,"theme":{},"human":{"available":false},"heartbeatSeconds":0,"redirect":{"reason":"sdk_blocked","url":"https://help.test"}}
+        """#.utf8))
     case ("POST", "/v1/sessions"):
       sessionsStarted += 1
       return (200, Data(#"""
@@ -474,10 +553,16 @@ final class StubHTTP: @unchecked Sendable {
       failEntries -= 1
       return (503, Data(#"{"_tag":"WireUnavailable","message":"Down"}"#.utf8))
     case ("GET", _) where url.path.hasSuffix("/entries"):
+      let delay = (url.query ?? "").contains("before=") ? beforeDelay : entriesDelay
+      if delay > 0 {
+        lock.unlock()
+        Thread.sleep(forTimeInterval: delay)
+        lock.lock()
+      }
       let entries = windowEntries.map { FixtureTests.entry(seq: $0, id: TransportUnitTests.entryId($0)) }
       let json = JSONValue.object([
         "conversationId": .string(TransportUnitTests.conversation), "entries": .array(entries),
-        "head": .number(Double(windowEntries.last ?? 0)), "hasMore": .bool(false)
+        "head": .number(Double(windowEntries.last ?? 0)), "hasMore": .bool(hasMore)
       ])
       return (200, Data(json.serialized().utf8))
     case ("POST", _) where url.path.hasSuffix("/messages"):

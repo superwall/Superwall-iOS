@@ -105,7 +105,11 @@ final class SendQueueStore: @unchecked Sendable {
     change(&items)
     let snapshot = items
     lock.unlock()
-    guard let fileURL, let data = try? Self.encoder.encode(snapshot) else { return }
+    guard var fileURL, let data = try? Self.encoder.encode(snapshot) else { return }
     try? data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+    // Message text: keep it out of iCloud and device backups.
+    var values = URLResourceValues()
+    values.isExcludedFromBackup = true
+    try? fileURL.setResourceValues(values)
   }
 }

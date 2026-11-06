@@ -74,7 +74,7 @@ final class SupportHTTPClient: @unchecked Sendable {
   /// The presigned PUT of an upload intent: straight to storage, no bearer token.
   func put(_ upload: UploadIntent.Upload, data: Data) async throws {
     guard let url = URL(string: upload.url) else {
-      throw SupportTransportError.network("Bad upload URL")
+      throw SupportTransportError.invalidRequest("Bad upload URL")
     }
     var request = URLRequest(url: url)
     request.httpMethod = upload.method
@@ -102,12 +102,12 @@ final class SupportHTTPClient: @unchecked Sendable {
     _ method: String, _ path: String, token: String?, body: Body?, query: [URLQueryItem] = []
   ) async throws -> Response {
     guard var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: false) else {
-      throw SupportTransportError.network("Bad URL")
+      throw SupportTransportError.invalidRequest("Bad URL")
     }
     let basePath = components.path.trimmingSuffix("/")
     components.path = basePath + path
     if !query.isEmpty { components.queryItems = query }
-    guard let url = components.url else { throw SupportTransportError.network("Bad URL") }
+    guard let url = components.url else { throw SupportTransportError.invalidRequest("Bad URL") }
     var request = URLRequest(url: url)
     request.httpMethod = method
     // Short, so a stalled window read fails over to a retry instead of hanging catch-up.
