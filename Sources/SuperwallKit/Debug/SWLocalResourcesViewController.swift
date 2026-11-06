@@ -3,6 +3,7 @@
 //  SuperwallKit
 //
 
+#if canImport(WebKit)
 #if !os(macOS)
 import UIKit
 import AVFoundation
@@ -333,4 +334,5 @@ private final class LocalResourceCell: UICollectionViewCell {
     errorLabel.text = text
   }
 }
+#endif
 #endif

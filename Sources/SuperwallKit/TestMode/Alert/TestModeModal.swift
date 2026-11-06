@@ -5,6 +5,7 @@
 //  Created by Claude on 2026-01-27.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -165,4 +166,5 @@ extension TestModeModalViewController {
     finish()
   }
 }
+#endif
 #endif

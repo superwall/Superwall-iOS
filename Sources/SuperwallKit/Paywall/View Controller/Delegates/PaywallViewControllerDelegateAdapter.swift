@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 09/05/2023.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// An adapter between the internal SDK and the public swift/objective c ``PaywallViewController`` delegate.
@@ -58,3 +59,4 @@ extension PaywallViewControllerDelegateAdapter: Stubbable {
     )
   }
 }
+#endif

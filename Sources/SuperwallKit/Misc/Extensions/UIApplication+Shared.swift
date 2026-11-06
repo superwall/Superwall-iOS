@@ -5,7 +5,7 @@
 //  Created by Yusuf Tör on 16/06/2025.
 //
 
-#if !os(macOS)
+#if !os(macOS) && !os(watchOS)
 import UIKit
 
 extension UIApplication {

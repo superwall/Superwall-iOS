@@ -6,9 +6,13 @@
 //
 
 #if !os(macOS)
+#if os(watchOS)
+import WatchKit
+#else
 import UIKit
+#endif
 
-extension UIDevice {
+extension PlatformDevice {
   static var modelName: String {
     var systemInfo = utsname()
     uname(&systemInfo)

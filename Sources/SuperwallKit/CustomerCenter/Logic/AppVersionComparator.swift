@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Compares marketing version strings on up to three leading numeric components.
@@ -30,3 +31,4 @@ enum AppVersionComparator {
     return result
   }
 }
+#endif

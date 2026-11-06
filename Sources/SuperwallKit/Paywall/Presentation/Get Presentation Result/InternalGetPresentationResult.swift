@@ -12,8 +12,12 @@ extension Superwall {
   @discardableResult
   func getPresentationResult(for request: PresentationRequest) async -> PresentationResult {
     do {
+      #if canImport(WebKit)
       let paywallComponents = try await getPaywallComponents(request)
       let triggerResult = paywallComponents.audienceOutcome.triggerResult
+      #else
+      let triggerResult = try await getAudienceOutcome(request).triggerResult
+      #endif
       let presentationResult = GetPresentationResultLogic.convertTriggerResult(triggerResult)
       return presentationResult
     } catch let error as PresentationPipelineError {

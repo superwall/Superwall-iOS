@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import SwiftUI
 
 struct ManagementScreenView: View {
@@ -115,3 +116,4 @@ struct PurchaseDetailScreenView: View {
     }
   }
 }
+#endif

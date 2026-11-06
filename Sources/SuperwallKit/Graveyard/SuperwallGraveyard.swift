@@ -5,6 +5,7 @@
 //  Created by Yusuf Tör on 04/10/2022.
 //
 
+#if canImport(WebKit)
 #if os(macOS)
 import AppKit
 #else
@@ -157,3 +158,4 @@ public enum Store: Int {
 
 @available(*, unavailable, renamed: "Product")
 public final class ProductInfo: NSObject, Codable, Sendable {}
+#endif

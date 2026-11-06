@@ -5,6 +5,7 @@
 //  Created by Jordan Morgan on 20/08/2026.
 //
 
+#if canImport(WebKit)
 import Foundation
 
 /// Receives Customer Center events. All methods have default implementations, and all are called
@@ -64,3 +65,4 @@ public protocol CustomerCenterDelegateObjc: AnyObject {
   @objc optional func customerCenterDidCompleteRefundRequest(productId: String, status: CustomerCenterRefundStatus)
   @objc optional func customerCenterDidDismiss()
 }
+#endif

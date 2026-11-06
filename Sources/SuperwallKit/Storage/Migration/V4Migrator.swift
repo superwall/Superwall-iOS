@@ -6,7 +6,7 @@
 import Foundation
 
 /// Pre-v5, the AdServices token sentinel lived in `.userSpecificDocuments` —
-/// it was scoped per-user so that `reset(duringIdentify:)` would wipe it and a
+/// it was scoped per-user so that `reset()` would wipe it and a
 /// new user could re-fetch. Apple Search Ads attribution is install-scoped
 /// (the campaign that drove the install doesn't change with who's logged in),
 /// so as of v5 the sentinel lives in `.appSpecificDocuments` and survives

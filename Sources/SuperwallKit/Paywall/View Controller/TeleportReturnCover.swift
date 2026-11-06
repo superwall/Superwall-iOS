@@ -4,16 +4,12 @@
 //
 // swiftlint:disable file_length type_body_length
 
+#if canImport(WebKit)
 import Foundation
 #if !os(macOS)
 import UIKit
 #endif
 import WebKit
-
-extension Notification.Name {
-  /// A Superwall return link (`scheme://superwall/return`) opened the app.
-  static let superwallReturnLinkOpened = Notification.Name("SuperwallReturnLinkOpened")
-}
 
 @MainActor
 extension TeleportReturnCover {
@@ -622,3 +618,4 @@ enum TeleportStatusCheck {
     return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
   }
 }
+#endif

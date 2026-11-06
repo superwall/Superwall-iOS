@@ -411,7 +411,7 @@ struct DeviceHelperTests {
   }
 
   private func setMMPFlag(_ isEnabled: Bool, on dependencyContainer: DependencyContainer) {
-    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: isEnabled)))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(makeConfig(mmpEnabled: isEnabled)))
   }
 
   /// On a cold launch the first enrichment is read before config arrives. Its
@@ -441,7 +441,7 @@ struct DeviceHelperTests {
     await deviceHelper.startIPCollectionIfEnabled(for: config)?.value
     #expect(await fetches.count == 1)
 
-    dependencyContainer.configManager.configState.send(.retrieved(config))
+    dependencyContainer.configManager.store.update(ConfigUpdate.retrieved(config))
     deviceHelper.enrichment = nil
     let afterConfig = await deviceHelper.getTemplateDevice()
     #expect(afterConfig["ipV6"] as? String == "2001:db8::1")
@@ -659,6 +659,23 @@ struct DeviceHelperTests {
     )
     setMMPFlag(false, on: dependencyContainer)
     setAppsflyerId(on: dependencyContainer)
+
+    #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
+    #expect(await fetches.count == 0)
+  }
+
+  /// `configState` can briefly lag the store while another thread is still
+  /// publishing. The gate reads the store, so the MMP being turned off counts
+  /// straight away.
+  @Test func mmpMatchAddresses_whenPublishedStateLagsTheStore_followsTheStore() async {
+    let fetches = FetchCount()
+    let (deviceHelper, dependencyContainer) = makeDeviceHelper(
+      gate: Gate(true),
+      ipCollector: makeCountingCollector(fetches)
+    )
+    setMMPFlag(false, on: dependencyContainer)
+    // Stands in for a publication that hasn't caught up yet.
+    dependencyContainer.configManager.configState.send(.retrieved(makeConfig(mmpEnabled: true)))
 
     #expect(await deviceHelper.ipAttributesForMMPMatch().isEmpty)
     #expect(await fetches.count == 0)
