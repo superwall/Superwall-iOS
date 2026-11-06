@@ -213,6 +213,23 @@ subscribe to it to hear about changes, but read `configManager.config` (or the f
 directly or through `fetchConfiguration()`/`refreshConfiguration()`: it would wait on work queued
 behind itself. Use `enqueue` for follow-up work, as the fetch does for its refreshes.
 
+### Entitlements store
+
+`EntitlementsInfo` keeps the entitlements in a `StateStore` (`EntitlementsState`): the by-product
+map, granted entitlements, the assigned subscription status, the test-mode override as of the last
+change (`TestModeOverride`) and the grant warning (`GrantWarning`). The published status
+(`Superwall.subscriptionStatus`), `active`, `all` and `inactive` are computed from those on each
+read; don't store anything derived from the status or from `isActive`, or it can fall behind.
+`EntitlementsUpdate` cases are named events (`developerAssignedStatus`, `grantsChanged`, ...).
+Changes go through the closed `EntitlementsAction` enum, and its side effects are the methods of
+`EntitlementsContext`, which `EntitlementsInfo` implements: saving, the warning log (deferred until
+unlocked), and queuing each change as an `EntitlementsPublication` that's delivered in order once
+the store is unlocked. The test-mode override is read inside the action, with the store locked, so
+the writer that publishes last read it last; don't read it before dispatching. `Superwall` is the
+`EntitlementsPublishing` receiver: it emits `$subscriptionStatus` and `statusWithGrants`, and
+rebuilds `customerInfo` from the publication's `after` state, never by reading the store again.
+`web` still reads the saved redeem response, outside the store.
+
 ### Native macOS
 
 - `PlatformViewController` is the public `NSViewController`/`UIViewController` alias. AppKit implementations live under `Misc/Platform` and platform-specific `AppKit` folders. Keep UIKit behavior behind compile-time guards.
