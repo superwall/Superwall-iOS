@@ -366,6 +366,19 @@ final class TransportUnitTests: XCTestCase {
     XCTAssertEqual(sockets.count, 0)
   }
 
+  /// Opened while the server is down: start throws, then keeps trying on its own.
+  func testFailedStartRetriesByItself() async throws {
+    http.failSessions = 2
+    let transport = makeTransport()
+    do {
+      try await transport.start()
+      XCTFail("expected the first start to fail")
+    } catch {}
+    try await waitUntil("connected on its own") { self.sockets.count == 1 }
+    XCTAssertEqual(http.sessionsStarted, 1)
+    await transport.stop()
+  }
+
   func testBackgroundClosesAndForegroundReconnectsAtOnce() async throws {
     let transport = makeTransport()
     try await transport.start()
@@ -523,6 +536,7 @@ final class StubHTTP: @unchecked Sendable {
   var entriesDelay: TimeInterval = 0
   var beforeDelay: TimeInterval = 0
   var redirectSessions = false
+  var failSessions = 0
   var rejectSends = false
   var sendIds: [String] = []
   var uploadRequest: [String: JSONValue]?
@@ -539,6 +553,9 @@ final class StubHTTP: @unchecked Sendable {
       url.host == "uploads.test"
         ? "\(method) \(url.absoluteString)" : "\(method) \(url.path)\(url.query.map { "?" + $0 } ?? "")")
     switch (method, url.path) {
+    case ("POST", "/v1/sessions") where failSessions > 0:
+      failSessions -= 1
+      return (503, Data(#"{"_tag":"WireUnavailable","message":"Down"}"#.utf8))
     case ("POST", "/v1/sessions") where redirectSessions:
       sessionsStarted += 1
       return (200, Data(#"""

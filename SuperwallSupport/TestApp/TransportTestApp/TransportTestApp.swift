@@ -105,12 +105,14 @@ final class TransportModel: ObservableObject {
     monitor.start()
     do {
       try await transport.start()
-      let session = await transport.session
-      // Test app only: the host script posts into this conversation with it.
-      log("started conversation \(session?.conversationId ?? "?") token \(session?.sessionToken ?? "?")")
     } catch {
-      log("start failed: \(error)")
+      // The transport keeps retrying on its own; wait for its session.
+      log("start failed: \(error); the transport retries")
     }
+    while await transport.session == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
+    let session = await transport.session
+    // Test app only: the host script posts into this conversation with it.
+    log("started conversation \(session?.conversationId ?? "?") token \(session?.sessionToken ?? "?")")
     for _ in 0..<burst { sendOne() }
     let every = UserDefaults.standard.double(forKey: "verifyEvery")
     if every > 0 {

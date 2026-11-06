@@ -110,6 +110,10 @@ public actor SupportTransport {
   private var started = false
   private var starting = false
   private var stopped = false
+  /// A start that failed retryably: retried on backoff, and at once on network or foreground.
+  private var startWanted = false
+  private var startConversationId: String?
+  private var startRetryTask: Task<Void, Never>?
   /// An HTTP read that replaces the socket (catch-up, resync, the first window) is
   /// running: no socket may open until it ends, or two would race over the cursor.
   private var httpBusy = false
@@ -188,9 +192,20 @@ public actor SupportTransport {
     guard !started, !starting else { return }
     starting = true
     defer { starting = false }
+    startRetryTask?.cancel()
     // A previous start that ended in a redirect may be retried.
     stopped = false
-    try await startSession(conversationId: conversationId)
+    do {
+      try await startSession(conversationId: conversationId)
+    } catch let error as SupportTransportError where error.isRetryable {
+      // Opened offline, or the server is down: keep trying without the caller.
+      startWanted = true
+      startConversationId = conversationId
+      state = networkAvailable ? .waitingToRetry(seconds: backoff) : .offline
+      scheduleStartRetry()
+      throw error
+    }
+    startWanted = false
     httpBusy = true
     do {
       try await reloadNewestWindow()
@@ -203,11 +218,37 @@ public actor SupportTransport {
     flushSends()
   }
 
+  private func scheduleStartRetry() {
+    startRetryTask?.cancel()
+    guard networkAvailable, foreground else { return }
+    let wait = backoff
+    backoff = min(backoff * 2, configuration.backoffMax)
+    startRetryTask = Task { [weak self] in
+      try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+      guard !Task.isCancelled else { return }
+      await self?.retryStartFromTimer()
+    }
+  }
+
+  private func retryStartFromTimer() async {
+    // Not cancelled by the start it runs.
+    startRetryTask = nil
+    await retryStart()
+  }
+
+  private func retryStart() async {
+    guard startWanted, !started, !stopped else { return }
+    // Scheduled again inside when it is still retryable.
+    try? await start(conversationId: startConversationId)
+  }
+
   /// Closes the socket and stops reconnecting, for good: build a new transport to
   /// start again. Pending sends stay queued on disk. The transport's tasks hold it
   /// until this is called, so always call it when chat closes.
   public func stop() {
     stopped = true
+    startWanted = false
+    startRetryTask?.cancel()
     closeSocket(reason: "stopped")
     retryTask?.cancel()
     sendTask?.cancel()
@@ -222,6 +263,10 @@ public actor SupportTransport {
     }
     foreground = isForeground
     if isForeground {
+      if startWanted {
+        backoff = configuration.backoffInitial
+        Task { await self.retryStart() }
+      }
       probeOrConnect()
       flushSends(resetBackoff: true)
     } else {
@@ -239,6 +284,7 @@ public actor SupportTransport {
     networkAvailable = available
     if available {
       backoff = configuration.backoffInitial
+      if startWanted { Task { await self.retryStart() } }
       if socket == nil { connect() }
       flushSends(resetBackoff: true)
     } else {

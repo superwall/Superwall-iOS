@@ -38,9 +38,11 @@ launch -apiKey pk_test_ios_bg -verifyEvery 2
 sleep 3; background; sleep 2; post 10 bg; sleep 3; foreground
 sleep 6; save 3-background-foreground
 
-# 4. Far behind: 75 messages land while backgrounded, more than the socket replay cap (60).
+# 4. Far behind: the client holds 2, then 75 land while backgrounded, more than the
+#    socket replay cap (60): one HTTP catch-up. (A client holding nothing loads the
+#    newest window instead.)
 launch -apiKey pk_test_ios_far -verifyEvery 2
-sleep 3; background; sleep 1; post 75 far; foreground
+sleep 3; post 2 held; sleep 1; background; sleep 1; post 75 far; foreground
 sleep 8; save 4-far-behind-http-catchup
 
 # 5. A paced fixture script (tail streaming) with the socket cut after every seq.
